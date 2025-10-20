@@ -1,19 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { Card } from '@/components/ui/Card'
+
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+
+const moods = [
+  { emoji: '😔', label: 'Triste', value: 'sad' },
+  { emoji: '😐', label: 'Neutro', value: 'neutral' },
+  { emoji: '🙂', label: 'OK', value: 'ok' },
+  { emoji: '😊', label: 'Feliz', value: 'happy' },
+  { emoji: '😄', label: 'Muito Feliz', value: 'very-happy' },
+]
 
 export function CheckIn() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null)
-
-  const moods = [
-    { emoji: '😔', label: 'Triste', value: 'sad' },
-    { emoji: '😐', label: 'Neutro', value: 'neutral' },
-    { emoji: '🙂', label: 'OK', value: 'ok' },
-    { emoji: '😊', label: 'Feliz', value: 'happy' },
-    { emoji: '😄', label: 'Muito Feliz', value: 'very-happy' },
-  ]
 
   const handleSubmit = () => {
     if (selectedMood) {
@@ -23,26 +24,34 @@ export function CheckIn() {
   }
 
   return (
-    <Card>
-      <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-4">😊 Como você está agora?</h2>
+    <Card className="p-7">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-left">
+          <h2 className="text-lg font-semibold text-support-1 md:text-xl">😊 Como você está agora?</h2>
+          <p className="text-sm text-support-2">
+            Escolha um mood para acompanhar seu bem-estar emocional.
+          </p>
+        </div>
+      </div>
 
-      <div className="flex justify-around gap-2 mb-6">
-        {moods.map((mood) => (
-          <button
-            key={mood.value}
-            onClick={() => setSelectedMood(mood.value)}
-            className={`flex flex-col items-center gap-1 p-2 md:p-3 rounded-lg transition-all ${
-              selectedMood === mood.value
-                ? 'bg-primary text-white scale-110'
-                : 'bg-secondary text-support-1 hover:bg-pink-200'
-            }`}
-            aria-label={mood.label}
-            title={mood.label}
-          >
-            <span className="text-2xl md:text-3xl">{mood.emoji}</span>
-            <span className="text-xs hidden md:block">{mood.label}</span>
-          </button>
-        ))}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        {moods.map((mood) => {
+          const isActive = selectedMood === mood.value
+          return (
+            <button
+              key={mood.value}
+              onClick={() => setSelectedMood(isActive ? null : mood.value)}
+              className={`flex flex-col items-center gap-1 rounded-2xl border border-white/50 px-4 py-3 text-support-1 shadow-soft transition-all duration-300 hover:shadow-elevated ${
+                isActive ? 'bg-gradient-to-br from-primary/20 via-white/80 to-white text-primary scale-105' : 'bg-white/80'
+              }`}
+              aria-label={mood.label}
+              title={mood.label}
+            >
+              <span className="text-2xl md:text-3xl">{mood.emoji}</span>
+              <span className="hidden text-xs md:block">{mood.label}</span>
+            </button>
+          )
+        })}
       </div>
 
       <Button
@@ -50,7 +59,7 @@ export function CheckIn() {
         size="sm"
         onClick={handleSubmit}
         disabled={!selectedMood}
-        className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-6 w-full"
       >
         Registrar Mood
       </Button>
