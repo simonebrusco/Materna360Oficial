@@ -19,19 +19,16 @@ export function MessageOfDay() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-secondary to-pink-100 rounded-[20px] p-4 md:p-6 shadow-sm">
-      <div className="mb-4">
-        <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-2">✨ Mensagem do Dia</h2>
-        <p className="text-sm md:text-base text-support-1 italic leading-relaxed">"{message}"</p>
+    <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
+      <div className="mb-5 flex flex-col gap-2">
+        <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem do Dia</h2>
+        <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">“{message}”</p>
       </div>
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={handleNewMessage}
-        className="w-full"
-      >
+      <Button variant="primary" size="sm" onClick={handleNewMessage} className="w-full">
         Nova Mensagem
       </Button>
-    </div>
+      <span className="pointer-events-none absolute -right-6 bottom-4 h-24 w-24 rounded-full bg-primary/15 blur-3xl" aria-hidden />
+      <span className="pointer-events-none absolute -left-8 top-2 h-16 w-16 rounded-3xl bg-white/60 blur-2xl" aria-hidden />
+    </Card>
   )
 }
