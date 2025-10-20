@@ -16,6 +16,21 @@ type MoodHistory = {
 }
 
 const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
+const MOODS = ['😔', '😐', '🙂', '😊', '😄'] as const
+const ACHIEVEMENTS = [
+  { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
+  { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
+  { emoji: '🏡', title: 'Casa Organizada', desc: '20 tarefas completas' },
+  { emoji: '💛', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
+  { emoji: '🎨', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
+  { emoji: '📚', title: 'Leitora Dedicada', desc: '5 livros lidos' },
+] as const
+const WEEKLY_SUMMARY = [
+  { label: 'Autocuidado', value: 75 },
+  { label: 'Atividades Filhos', value: 60 },
+  { label: 'Rotina Casa', value: 85 },
+  { label: 'Conexão Familiar', value: 70 },
+] as const
 
 export default function Eu360Page() {
   const [gratitude, setGratitude] = useState('')
