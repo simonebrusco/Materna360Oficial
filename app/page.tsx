@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Reveal } from '@/components/ui/Reveal'
 
 const featureCards = [
   {
@@ -63,51 +64,53 @@ export default function Home() {
       </section>
 
       <section className="relative mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
+        <Reveal className="mx-auto max-w-3xl text-center">
           <h2 className="text-2xl font-semibold text-support-1 sm:text-3xl">
             Tudo o que você precisa em um só lugar
           </h2>
           <p className="mt-3 text-sm text-support-2 sm:text-base">
             Explore espaços feitos para acolher sua rotina, oferecer apoio e inspirar novos caminhos.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2 xl:gap-8">
           {featureCards.map((feature, index) => (
-            <Card key={feature.href} className="h-full p-7">
-              <div className="flex h-full flex-col justify-between gap-6">
-                <div className="flex flex-col gap-3">
-                  <span
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-3xl shadow-soft transition-transform duration-500 group-hover/card:-translate-y-1 group-hover/card:shadow-elevated"
-                    aria-hidden
-                  >
-                    {feature.emoji}
-                  </span>
-                  <h3 className="text-2xl font-semibold text-support-1">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-support-2 leading-relaxed">
-                    {feature.description}
-                  </p>
+            <Reveal key={feature.href} delay={index * 80} className="h-full">
+              <Card className="h-full p-7">
+                <div className="flex h-full flex-col justify-between gap-6">
+                  <div className="flex flex-col gap-3">
+                    <span
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-3xl shadow-soft transition-transform duration-500 group-hover/card:-translate-y-1 group-hover/card:shadow-elevated"
+                      aria-hidden
+                    >
+                      {feature.emoji}
+                    </span>
+                    <h3 className="text-2xl font-semibold text-support-1">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-support-2 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Link href={feature.href} className="inline-flex">
+                      <Button variant="secondary" size="md">
+                        Acessar
+                      </Button>
+                    </Link>
+                    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <Link href={feature.href} className="inline-flex">
-                    <Button variant="secondary" size="md">
-                      Acessar
-                    </Button>
-                  </Link>
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </Reveal>
           ))}
         </div>
       </section>
 
       <section className="relative mt-24 overflow-hidden">
-        <div className="mx-auto max-w-5xl rounded-soft-3xl bg-gradient-to-br from-secondary/80 via-white/90 to-white px-6 py-16 text-center shadow-soft sm:px-10">
+        <Reveal className="mx-auto max-w-5xl rounded-soft-3xl bg-gradient-to-br from-secondary/80 via-white/90 to-white px-6 py-16 text-center shadow-soft sm:px-10">
           <h2 className="text-2xl font-semibold text-support-1 sm:text-3xl">
             Pronta para viver o cuidado que você merece?
           </h2>
@@ -121,7 +124,7 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-        </div>
+        </Reveal>
         <span className="pointer-events-none absolute -left-8 top-10 h-32 w-32 rounded-full bg-primary/15 blur-3xl" aria-hidden />
         <span className="pointer-events-none absolute -right-6 bottom-6 h-36 w-36 rounded-full bg-secondary/70 blur-3xl" aria-hidden />
       </section>
