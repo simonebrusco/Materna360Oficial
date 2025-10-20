@@ -1,10 +1,14 @@
 {
 stellar-den
+stellar-den
   "name": "materna360",
   "version": "1.0.0",
   "description": "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil",
 
   "name": "materna360oficial",
+main
+
+  "name": "materna360",
 main
   "private": true,
   "scripts": {
@@ -35,7 +39,12 @@ stellar-den
 
     "next": "14.2.5",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "@builder.io/react": "3.2.7",
+    "lucide-react": "0.460.0",
+    "tailwindcss": "3.4.10",
+    "postcss": "8.4.41",
+    "autoprefixer": "10.4.19"
   },
   "devDependencies": {
     "typescript": "5.4.5",
@@ -43,6 +52,12 @@ stellar-den
     "@types/node": "20.11.30",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5"
+stellar-den
+main
+
+  },
+  "engines": {
+    "node": ">=18 <21"
 main
   }
 }
