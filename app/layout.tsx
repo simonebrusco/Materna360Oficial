@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import { Navigation } from "@/components/Navigation"
 
 export const metadata: Metadata = {
   title: "Materna360",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Navigation />
+      </body>
     </html>
   )
 }
