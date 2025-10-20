@@ -176,7 +176,7 @@ export default function Eu360Page() {
           <Card className="p-7">
             <h2 className="text-lg font-semibold text-support-1 md:text-xl">📈 Resumo da Semana</h2>
             <div className="mt-5 space-y-4">
-              {weeklySummary.map((item, idx) => (
+              {WEEKLY_SUMMARY.map((item, idx) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-support-1">{item.label}</span>
