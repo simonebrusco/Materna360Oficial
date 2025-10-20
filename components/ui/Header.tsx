@@ -1,7 +1,3 @@
-'use client'
-
-import { Avatar } from './Avatar'
-
 interface HeaderProps {
   title: string
   showNotification?: boolean
@@ -12,7 +8,9 @@ export function Header({ title, showNotification = false }: HeaderProps) {
     <header className="bg-white border-b border-secondary sticky top-0 z-40">
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=mom" alt="Me" size="sm" />
+          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-primary font-semibold text-sm">
+            M
+          </div>
           <h1 className="text-lg md:text-xl font-semibold text-support-1">{title}</h1>
         </div>
         {showNotification && (
