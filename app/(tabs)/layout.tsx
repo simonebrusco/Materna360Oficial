@@ -1,5 +1,9 @@
+import dynamic from 'next/dynamic'
 import { Header } from '@/components/ui/Header'
-import { TabBar } from '@/components/ui/TabBar'
+
+const TabBar = dynamic(() => import('@/components/ui/TabBar').then(mod => ({ default: mod.TabBar })), {
+  ssr: false,
+})
 
 export default function TabsLayout({
   children,
