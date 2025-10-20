@@ -1,12 +1,23 @@
 'use client'
 
+'use client'
+
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Progress } from '@/components/ui/Progress'
+import { useMemo, useState } from 'react'
+
 import { CheckIn } from '@/components/blocks/CheckIn'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Progress } from '@/components/ui/Progress'
+import { Reveal } from '@/components/ui/Reveal'
+
+type MoodHistory = {
+  day: string
+  emoji: string
+}
+
+const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
 
 export default function Eu360Page() {
   const [gratitude, setGratitude] = useState('')
