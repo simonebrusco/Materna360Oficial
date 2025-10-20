@@ -24,44 +24,50 @@ export function FamilyPlanner() {
   const current = content[activeTab]
 
   return (
-    <Card>
-      <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-4">📋 Planejador da Família</h2>
+    <Card className="p-7">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-support-1 md:text-xl">📋 Planejador da Família</h2>
+        <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
+          Equilíbrio
+        </span>
+      </div>
 
-      {/* Tab buttons */}
-      <div className="flex gap-2 mb-4">
+      <div className="mb-5 flex gap-2 md:gap-3">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
+            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
               activeTab === tab.id
-                ? 'bg-primary text-white'
-                : 'bg-secondary text-support-1 hover:bg-pink-200'
+                ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
             }`}
           >
-            {tab.emoji} {tab.label}
+            <span className="mr-2 text-base">{tab.emoji}</span>
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Content */}
-      <div className="space-y-3 mb-4">
+      <div className="mb-5 space-y-3">
         {current.items.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-3 p-3 bg-white border border-secondary rounded-lg">
+          <label
+            key={idx}
+            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/50 bg-white/80 p-3 shadow-soft transition-all duration-300 hover:shadow-elevated"
+          >
             <input
               type="checkbox"
-              className="w-5 h-5 rounded accent-primary cursor-pointer"
+              className="h-5 w-5 rounded-full border-2 border-primary/40 bg-white accent-primary cursor-pointer"
               aria-label={item}
             />
             <span className="text-sm text-support-1">{item}</span>
-          </div>
+          </label>
         ))}
       </div>
 
-      {/* Progress */}
       <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-semibold text-support-2">Progresso</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Progresso</span>
           <span className="text-xs font-semibold text-primary">{current.progress}%</span>
         </div>
         <Progress value={current.progress} max={100} />
