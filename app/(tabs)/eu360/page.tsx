@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 export const dynamic = 'force-dynamic'
 
 import { useMemo, useState } from 'react'
@@ -39,6 +37,7 @@ export default function Eu360Page() {
     () => daysOfWeek.map((day, idx) => ({ day, emoji: moods[(idx + 2) % moods.length] })),
     []
   )
+
   const achievements = [
     { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
     { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
@@ -56,148 +55,162 @@ export default function Eu360Page() {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-6">
-      {/* Banner */}
-      <Card className="bg-gradient-to-r from-primary to-pink-400 text-white">
-        <div className="text-center">
-          <p className="text-3xl mb-2">💛</p>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Você é Importante</h1>
-          <p className="text-sm md:text-base opacity-90">Vá no seu próprio ritmo. Você está no caminho certo.</p>
-        </div>
-      </Card>
+    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(58%_58%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
+      />
 
-      {/* Progress Overview */}
-      <Card>
-        <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-4">🎯 Seu Progresso</h2>
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-support-1">Nível 5</span>
-              <span className="text-xs text-primary font-semibold">450/500 XP</span>
+      <div className="relative space-y-10">
+        <Reveal>
+          <Card className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white">
+            <div className="text-center">
+              <p className="text-4xl">💛</p>
+              <h1 className="mt-3 text-2xl font-semibold md:text-3xl">Você é Importante</h1>
+              <p className="mt-2 text-sm text-white/90 md:text-base">
+                Vá no seu próprio ritmo. Cada passo conta e você está no caminho certo.
+              </p>
             </div>
-            <Progress value={450} max={500} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-secondary rounded-lg text-center">
-              <p className="text-2xl mb-1">🔥</p>
-              <p className="text-xs text-support-2 mb-1">Sequência</p>
-              <p className="font-bold text-primary">7 dias</p>
-            </div>
-            <div className="p-3 bg-secondary rounded-lg text-center">
-              <p className="text-2xl mb-1">⭐</p>
-              <p className="text-xs text-support-2 mb-1">Selos</p>
-              <p className="font-bold text-primary">12</p>
-            </div>
-          </div>
-        </div>
-      </Card>
+          </Card>
+        </Reveal>
 
-      {/* Mood Tracker */}
-      <Card>
-        <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-4">📊 Humor da Semana</h2>
-        <div className="flex justify-between mb-4">
-          {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'].map((day, idx) => (
-            <div key={day} className="flex flex-col items-center">
-              <div className="text-xl mb-2 cursor-pointer hover:scale-125 transition-transform">
-                {moods[Math.floor(Math.random() * moods.length)]}
+        <Reveal delay={80}>
+          <Card className="p-7">
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🎯 Seu Progresso</h2>
+            <div className="mt-5 space-y-5">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-support-1">Nível 5</span>
+                  <span className="text-xs font-semibold text-primary">450/500 XP</span>
+                </div>
+                <Progress value={450} max={500} />
               </div>
-              <span className="text-xs text-support-2">{day}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-support-2 text-center">Clique no emoji para registrar seu humor do dia</p>
-      </Card>
-
-      {/* Check In */}
-      <CheckIn />
-
-      {/* Achievements */}
-      <div>
-        <h2 className="text-xl md:text-2xl font-semibold text-support-1 mb-4">🏅 Conquistas</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {achievements.map((achievement, idx) => (
-            <Card key={idx} className="text-center p-4">
-              <p className="text-3xl mb-2">{achievement.emoji}</p>
-              <h3 className="font-semibold text-support-1 text-sm mb-1">{achievement.title}</h3>
-              <p className="text-xs text-support-2">{achievement.desc}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Gratitude Section */}
-      <Card>
-        <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-4">🙏 Gratidão</h2>
-
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={gratitude}
-            onChange={(e) => setGratitude(e.target.value)}
-            placeholder="Pelo que você é grata hoje?"
-            className="flex-1 px-3 py-2 border border-secondary rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            onKeyPress={(e) => e.key === 'Enter' && handleAddGratitude()}
-          />
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleAddGratitude}
-          >
-            ＋
-          </Button>
-        </div>
-
-        {gratitudes.length > 0 ? (
-          <div className="space-y-2">
-            {gratitudes.map((item, idx) => (
-              <div key={idx} className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm text-support-1">"{item}"</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-white/50 bg-white/80 p-4 text-center shadow-soft">
+                  <p className="text-2xl">🔥</p>
+                  <p className="mt-2 text-xs text-support-2">Sequência</p>
+                  <p className="mt-1 text-sm font-semibold text-primary">7 dias</p>
+                </div>
+                <div className="rounded-2xl border border-white/50 bg-white/80 p-4 text-center shadow-soft">
+                  <p className="text-2xl">⭐</p>
+                  <p className="mt-2 text-xs text-support-2">Selos</p>
+                  <p className="mt-1 text-sm font-semibold text-primary">12 conquistas</p>
+                </div>
               </div>
+            </div>
+          </Card>
+        </Reveal>
+
+        <Reveal delay={140}>
+          <Card className="p-7">
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📊 Humor da Semana</h2>
+            <div className="mt-6 flex justify-between">
+              {moodHistory.map(({ day, emoji }) => (
+                <div key={day} className="flex flex-col items-center gap-2">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-2xl shadow-soft transition-transform duration-300 hover:-translate-y-1">
+                    {emoji}
+                  </span>
+                  <span className="text-xs text-support-2">{day}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-support-2 text-center">
+              Toque em um emoji para registrar como você se sente neste momento.
+            </p>
+          </Card>
+        </Reveal>
+
+        <Reveal delay={180}>
+          <CheckIn />
+        </Reveal>
+
+        <div className="space-y-5">
+          <Reveal>
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🏅 Conquistas</h2>
+          </Reveal>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {achievements.map((achievement, idx) => (
+              <Reveal key={achievement.title} delay={idx * 70}>
+                <Card className="h-full p-6 text-center">
+                  <p className="text-3xl">{achievement.emoji}</p>
+                  <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
+                  <p className="mt-2 text-xs text-support-2">{achievement.desc}</p>
+                </Card>
+              </Reveal>
             ))}
           </div>
-        ) : (
-          <p className="text-xs text-support-2">Comece a registrar suas gratidões do dia!</p>
-        )}
-      </Card>
+        </div>
 
-      {/* Weekly Summary */}
-      <Card>
-        <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-6">📈 Resumo da Semana</h2>
-
-        <div className="space-y-4">
-          {weeklySummary.map((item, idx) => (
-            <div key={idx}>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold text-support-1">{item.label}</span>
-                <span className="text-xs font-bold text-primary">{item.value}%</span>
-              </div>
-              <Progress value={item.value} max={100} />
+        <Reveal delay={220}>
+          <Card className="p-7">
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🙏 Gratidão</h2>
+            <p className="mt-2 text-sm text-support-2">
+              Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                value={gratitude}
+                onChange={(e) => setGratitude(e.target.value)}
+                placeholder="Pelo que você é grata hoje?"
+                className="flex-1 rounded-full border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddGratitude()}
+              />
+              <Button variant="primary" size="sm" onClick={handleAddGratitude} className="sm:w-auto">
+                ＋ Adicionar
+              </Button>
             </div>
-          ))}
-        </div>
+            {gratitudes.length > 0 ? (
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {gratitudes.map((item, idx) => (
+                  <div key={`${item}-${idx}`} className="rounded-2xl bg-secondary/70 p-4 text-sm text-support-1 shadow-soft">
+                    “{item}”
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-xs text-support-2">Comece a registrar suas gratidões do dia!</p>
+            )}
+          </Card>
+        </Reveal>
 
-        <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
-          <p className="text-xs text-support-1 italic">
-            "Você tem feito um ótimo trabalho! Continue focando em pequenos passos consistentes."
-          </p>
-        </div>
-      </Card>
+        <Reveal delay={260}>
+          <Card className="p-7">
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📈 Resumo da Semana</h2>
+            <div className="mt-5 space-y-4">
+              {weeklySummary.map((item, idx) => (
+                <div key={item.label}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-support-1">{item.label}</span>
+                    <span className="text-xs font-semibold text-primary">{item.value}%</span>
+                  </div>
+                  <Progress value={item.value} max={100} />
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 rounded-2xl bg-secondary/60 p-4 text-sm text-support-1/90">
+              “Você tem feito um ótimo trabalho! Continue focando em pequenos passos consistentes.”
+            </div>
+          </Card>
+        </Reveal>
 
-      {/* Time for Me */}
-      <Card className="bg-gradient-to-br from-primary/10 to-secondary">
-        <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-4">☕ Seu Tempo</h2>
-        <p className="text-sm text-support-2 mb-4">
-          Esta semana você se dedicou a atividades de autocuidado. Muito bem! 💚
-        </p>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="primary" size="sm">
-            Próximas Atividades
-          </Button>
-          <Button variant="outline" size="sm">
-            Ver Histórico
-          </Button>
-        </div>
-      </Card>
+        <Reveal delay={300}>
+          <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">☕ Seu Tempo</h2>
+            <p className="mt-3 text-sm text-support-2">
+              Esta semana você se dedicou a momentos de autocuidado. Continue celebrando as suas conquistas! 💚
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button variant="primary" size="sm">
+                Próximas Atividades
+              </Button>
+              <Button variant="outline" size="sm">
+                Ver Histórico
+              </Button>
+            </div>
+          </Card>
+        </Reveal>
+      </div>
     </div>
   )
 }
