@@ -67,4 +67,59 @@ Ele auxilia mães a organizarem sua rotina, cuidarem de si mesmas e acompanharem
 ---
 
 ## 📁 Estrutura de Pastas
+app/
+meu-dia/
+rotina/
+momentos/
+atividade/
+planner/
+checklist/
+cuidar/
+meditar/
+respirar/
+alegrar/
+mentoria/
+descobrir/
+eu360/
+components/
+ui/ (Card, Button, Toast, Progress, Avatar...)
+blocks/ (MensagemDoDia, Planner, CheckIn, AudioCard...)
+lib/
+supabase.ts
+storage.ts
+gamification.ts
+flags.ts
+styles/
+globals.css
 
+
+---
+
+## ⚙️ Variáveis de Ambiente
+
+| Nome | Descrição |
+|------|------------|
+| `NEXT_PUBLIC_BUILDER_API_KEY` | Chave pública do Builder.io (Fusion Space) |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave pública do Supabase |
+| `SUPABASE_SERVICE_ROLE` | Chave privada (opcional, server-side) |
+| `NEXT_PUBLIC_APP_ENV` | Ambiente (`development` | `preview` | `production`) |
+
+---
+
+## 🚀 Deploy
+
+1. **Clone o projeto:**
+   ```bash
+   git clone https://github.com/<seu-usuario>/materna360.git
+   cd materna360
+
+
+Instale as dependências:
+
+npm install
+
+
+Rode o ambiente local:
+
+npm run dev
