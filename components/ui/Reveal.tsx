@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 
 type RevealProps = {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
   delay?: number
 }
