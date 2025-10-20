@@ -15,11 +15,11 @@ export default function Home() {
             Seu ecossistema de bem-estar, organização e desenvolvimento
           </p>
           <p className="text-support-2 mb-8 max-w-2xl mx-auto">
-            Combine tecnologia, autocuidado e parentalidade consciente em uma experiência integrada e acolhedora. Organize sua rotina, cuide de si mesma e acompanhe o crescimento de seus filhos com propósito.
+            Combine tecnologia, autocuidado e parentalidade consciente em uma experiência integrada e acolhedora.
           </p>
-          <Link href="/meu-dia">
-            <Button variant="primary" size="sm" className="md:size-md">
-              Começar Agora →
+          <Link href="/meu-dia" className="inline-block">
+            <Button variant="primary" size="sm">
+              Começar Agora
             </Button>
           </Link>
         </div>
@@ -32,98 +32,53 @@ export default function Home() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <Link href="/meu-dia">
-            <Card className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">🏡</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-primary mb-2">Meu Dia</h3>
-                  <p className="text-sm text-support-2 mb-4">
-                    Saudação dinâmica, planejador familiar, rotina, checklist e notas. Celebre cada momento.
-                  </p>
-                  <Button size="sm" variant="secondary">
-                    Acessar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/cuidar">
-            <Card className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">🌿</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-primary mb-2">Cuidar</h3>
-                  <p className="text-sm text-support-2 mb-4">
-                    Meditações, respiração guiada, dicas de organização e acesso a profissionais.
-                  </p>
-                  <Button size="sm" variant="secondary">
-                    Acessar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/descobrir">
-            <Card className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">🧸</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-primary mb-2">Descobrir</h3>
-                  <p className="text-sm text-support-2 mb-4">
-                    Atividades por idade, brincadeiras, livros e produtos recomendados.
-                  </p>
-                  <Button size="sm" variant="secondary">
-                    Acessar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/eu360">
-            <Card className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">💛</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-primary mb-2">Eu360</h3>
-                  <p className="text-sm text-support-2 mb-4">
-                    Check-in emocional, conquistas, gratidão e resumo semanal de progresso.
-                  </p>
-                  <Button size="sm" variant="secondary">
-                    Acessar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Link>
-        </div>
-
-        {/* Values */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-12">
-          <div className="text-center">
-            <div className="text-5xl mb-4">💪</div>
-            <h3 className="font-bold text-support-1 mb-2">Empoderada</h3>
-            <p className="text-sm text-support-2">
-              Tenha controle total da sua rotina e bem-estar
+          <Card className="hover:shadow-md transition-all">
+            <h3 className="text-3xl font-bold text-primary mb-2">🏡 Meu Dia</h3>
+            <p className="text-sm text-support-2 mb-4">
+              Organize sua rotina e planeje com sua família.
             </p>
-          </div>
-          <div className="text-center">
-            <div className="text-5xl mb-4">🧠</div>
-            <h3 className="font-bold text-support-1 mb-2">Consciente</h3>
-            <p className="text-sm text-support-2">
-              Viva com intenção e autenticidade
+            <Link href="/meu-dia" className="inline-block">
+              <Button size="sm" variant="secondary">
+                Acessar
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-md transition-all">
+            <h3 className="text-3xl font-bold text-primary mb-2">🌿 Cuidar</h3>
+            <p className="text-sm text-support-2 mb-4">
+              Meditações, respiração e autocuidado.
             </p>
-          </div>
-          <div className="text-center">
-            <div className="text-5xl mb-4">❤️</div>
-            <h3 className="font-bold text-support-1 mb-2">Conectada</h3>
-            <p className="text-sm text-support-2">
-              Com sua família, com você mesma
+            <Link href="/cuidar" className="inline-block">
+              <Button size="sm" variant="secondary">
+                Acessar
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-md transition-all">
+            <h3 className="text-3xl font-bold text-primary mb-2">🧸 Descobrir</h3>
+            <p className="text-sm text-support-2 mb-4">
+              Atividades e brincadeiras para seus filhos.
             </p>
-          </div>
+            <Link href="/descobrir" className="inline-block">
+              <Button size="sm" variant="secondary">
+                Acessar
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-md transition-all">
+            <h3 className="text-3xl font-bold text-primary mb-2">💛 Eu360</h3>
+            <p className="text-sm text-support-2 mb-4">
+              Check-in emocional e progresso.
+            </p>
+            <Link href="/eu360" className="inline-block">
+              <Button size="sm" variant="secondary">
+                Acessar
+              </Button>
+            </Link>
+          </Card>
         </div>
       </div>
 
@@ -132,12 +87,9 @@ export default function Home() {
         <h2 className="text-2xl md:text-3xl font-bold text-support-1 mb-6">
           Pronta para começar?
         </h2>
-        <p className="text-support-2 mb-8 max-w-xl mx-auto">
-          Sua jornada de bem-estar, organização e conexão começa agora
-        </p>
-        <Link href="/meu-dia">
-          <Button variant="primary" size="sm" className="md:size-md">
-            Entrar no Materna360 →
+        <Link href="/meu-dia" className="inline-block">
+          <Button variant="primary" size="sm">
+            Entrar no Materna360
           </Button>
         </Link>
       </div>
