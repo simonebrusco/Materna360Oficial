@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -14,7 +16,7 @@ export default function DescobrirPage() {
     { id: 2, emoji: '🌳', title: 'Caça ao Tesouro no Parque', age: '4+', place: 'Parque' },
     { id: 3, emoji: '📚', title: 'Leitura em Ciranda', age: '0-7', place: 'Casa' },
     { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
-    { id: 5, emoji: '��', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
+    { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
     { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
     { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
     { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },

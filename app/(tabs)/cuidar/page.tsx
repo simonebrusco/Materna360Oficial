@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
@@ -91,7 +93,7 @@ export default function CuidarPage() {
             'Você merece descanso tanto quanto seus filhos.',
             'Sua paciência é um superpoder.',
             'Pequenos momentos de alegria contam muito.',
-            'Você está fazendo um ótimo trabalho.',
+            'Você est�� fazendo um ótimo trabalho.',
             'Cuidar de você não é egoísmo.',
           ].map((pill, idx) => (
             <div key={idx} className="p-3 bg-white rounded-lg border-l-4 border-primary">
