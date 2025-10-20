@@ -15,18 +15,22 @@ export function ActivityOfDay() {
   const activity = activities[today % activities.length]
 
   return (
-    <Card className="bg-gradient-to-br from-primary/5 to-pink-50">
-      <div className="flex items-start justify-between gap-4">
+    <Card className="bg-gradient-to-br from-primary/12 via-white/95 to-white p-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-1">Atividade do Dia</h2>
-          <p className="text-2xl md:text-3xl font-bold mb-2">{activity.emoji} {activity.title}</p>
-          <div className="flex gap-4 text-xs md:text-sm text-support-2">
-            <span>👧 {activity.age}</span>
-            <span>⏱️ {activity.time}</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
+            Atividade do Dia
+          </span>
+          <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">
+            {activity.emoji} {activity.title}
+          </p>
+          <div className="mt-3 flex gap-4 text-xs font-medium text-support-2 md:text-sm">
+            <span className="inline-flex items-center gap-1">👧 {activity.age}</span>
+            <span className="inline-flex items-center gap-1">⏱️ {activity.time}</span>
           </div>
         </div>
       </div>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <Button variant="primary" size="sm" className="flex-1">
           Ver Detalhes
         </Button>
