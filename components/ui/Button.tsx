@@ -13,24 +13,31 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const variantStyles = {
-    primary: 'bg-primary text-white hover:bg-pink-600',
-    secondary: 'bg-secondary text-support-1 hover:bg-pink-100',
-    outline: 'border-2 border-primary text-primary hover:bg-pink-50',
+  const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
+    primary:
+      'text-white bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-glow hover:shadow-elevated',
+    secondary:
+      'bg-secondary/80 text-support-1 shadow-soft hover:bg-secondary hover:shadow-elevated',
+    outline:
+      'border border-primary/60 text-primary bg-white/70 shadow-soft hover:bg-primary/10 hover:shadow-elevated',
   }
 
-  const sizeStyles = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+  const sizeStyles: Record<NonNullable<ButtonProps['size']>, string> = {
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-6 py-2.5 text-base',
+    lg: 'px-7 py-3 text-lg',
   }
 
   return (
     <button
-      className={`rounded-lg font-semibold transition-colors ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 hover:-translate-y-0.5 active:translate-y-0.5 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       {...props}
     >
-      {children}
+      <span className="absolute inset-0 -z-10 rounded-full bg-white/0 transition-opacity duration-500 group-hover:bg-white/10" />
+      <span className="absolute inset-x-4 top-1.5 -z-0 h-[10px] rounded-full bg-white/40 opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-100" />
+      <span className="relative z-10 flex items-center gap-2">
+        {children}
+      </span>
     </button>
   )
 }
