@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
+import { Progress } from '@/components/ui/Progress'
 
 interface ChecklistItem {
   id: string
