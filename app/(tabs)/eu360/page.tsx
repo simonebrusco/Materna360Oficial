@@ -35,6 +35,10 @@ export default function Eu360Page() {
   }
 
   const moods = ['😔', '😐', '🙂', '😊', '😄']
+  const moodHistory: MoodHistory[] = useMemo(
+    () => daysOfWeek.map((day, idx) => ({ day, emoji: moods[(idx + 2) % moods.length] })),
+    []
+  )
   const achievements = [
     { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
     { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
