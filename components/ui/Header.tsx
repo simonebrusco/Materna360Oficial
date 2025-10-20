@@ -1,24 +1,56 @@
+'use client'
+
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
 interface HeaderProps {
   title: string
   showNotification?: boolean
 }
 
 export function Header({ title, showNotification = false }: HeaderProps) {
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 12)
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
-    <header className="bg-white border-b border-secondary sticky top-0 z-40">
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-primary font-semibold text-sm">
+    <header
+      className={`sticky top-0 z-50 transition-all duration-500 ease-gentle backdrop-blur-xl ${
+        isScrolled ? 'bg-white/85 shadow-soft' : 'bg-white/40'
+      }`}
+    >
+      <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+        <Link href="/" className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-[#ff2f78] to-[#ff7faa] text-lg font-semibold text-white shadow-glow animate-float">
             M
-          </div>
-          <h1 className="text-lg md:text-xl font-semibold text-support-1">{title}</h1>
-        </div>
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-xs font-semibold uppercase tracking-[0.36em] text-primary/70 animate-fade-down">
+              Materna360
+            </span>
+            <span className="text-lg font-semibold text-support-1 animate-fade-down" style={{ animationDelay: '0.05s' }}>
+              {title}
+            </span>
+          </span>
+        </Link>
+
         {showNotification && (
-          <button className="relative p-2 hover:bg-secondary rounded-full transition-colors" aria-label="Notifications">
-            <span className="text-xl">🔔</span>
-            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+          <button
+            className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-xl text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
+            aria-label="Notificações"
+          >
+            <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
+            <span className="relative">🔔</span>
           </button>
         )}
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
       </div>
     </header>
   )
