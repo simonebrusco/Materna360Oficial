@@ -21,7 +21,7 @@ const ACHIEVEMENTS = [
   { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
   { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
   { emoji: '🏡', title: 'Casa Organizada', desc: '20 tarefas completas' },
-  { emoji: '💛', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
+  { emoji: '���', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
   { emoji: '🎨', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
   { emoji: '📚', title: 'Leitora Dedicada', desc: '5 livros lidos' },
 ] as const
@@ -47,27 +47,10 @@ export default function Eu360Page() {
     }
   }
 
-  const moods = ['😔', '😐', '🙂', '😊', '😄']
   const moodHistory: MoodHistory[] = useMemo(
-    () => daysOfWeek.map((day, idx) => ({ day, emoji: moods[(idx + 2) % moods.length] })),
+    () => daysOfWeek.map((day, idx) => ({ day, emoji: MOODS[(idx + 2) % MOODS.length] })),
     []
   )
-
-  const achievements = [
-    { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
-    { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
-    { emoji: '🏡', title: 'Casa Organizada', desc: '20 tarefas completas' },
-    { emoji: '💛', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
-    { emoji: '🎨', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
-    { emoji: '📚', title: 'Leitora Dedicada', desc: '5 livros lidos' },
-  ]
-
-  const weeklySummary = [
-    { label: 'Autocuidado', value: 75 },
-    { label: 'Atividades Filhos', value: 60 },
-    { label: 'Rotina Casa', value: 85 },
-    { label: 'Conexão Familiar', value: 70 },
-  ]
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
