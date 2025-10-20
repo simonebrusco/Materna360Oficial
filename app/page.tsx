@@ -37,7 +37,7 @@ export default function Home() {
     <main className="relative min-h-screen pb-20">
       <section className="relative overflow-hidden pb-20 pt-16">
         <div className="hero-gradient">
-          <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 text-center sm:px-6 md:py-24">
+          <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 text-center sm:px-6 md:py-24 animate-fade-up">
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.34em] text-primary/80">
               Bem-vinda
             </span>
