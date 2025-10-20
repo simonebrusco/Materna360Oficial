@@ -1,19 +1,25 @@
 import React from 'react'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline'
-  size?: 'sm' | 'md' | 'lg'
-  children: React.ReactNode
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
+
+type ButtonVariant = 'primary' | 'secondary' | 'outline'
+
+type ButtonSize = 'sm' | 'md' | 'lg'
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  children: ReactNode
 }
 
-export const Button: React.FC<ButtonProps> = ({
+export function Button({
   variant = 'primary',
   size = 'md',
   children,
   className = '',
   ...props
-}) => {
-  const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
+}: ButtonProps) {
+  const variantStyles: Record<ButtonVariant, string> = {
     primary:
       'text-white bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-glow hover:shadow-elevated',
     secondary:
@@ -22,7 +28,7 @@ export const Button: React.FC<ButtonProps> = ({
       'border border-primary/60 text-primary bg-white/70 shadow-soft hover:bg-primary/10 hover:shadow-elevated',
   }
 
-  const sizeStyles: Record<NonNullable<ButtonProps['size']>, string> = {
+  const sizeStyles: Record<ButtonSize, string> = {
     sm: 'px-4 py-2 text-sm',
     md: 'px-6 py-2.5 text-base',
     lg: 'px-7 py-3 text-lg',
