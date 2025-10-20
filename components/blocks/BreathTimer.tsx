@@ -44,24 +44,29 @@ export function BreathTimer() {
   }
 
   return (
-    <Card className="text-center">
-      <h2 className="text-lg md:text-xl font-semibold text-support-1 mb-6">💨 Respiração Guiada</h2>
+    <Card className="p-8 text-center">
+      <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
+      <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
 
-      <div className="flex flex-col items-center justify-center min-h-[300px]">
+      <div className="mt-8 flex min-h-[280px] flex-col items-center justify-center">
         {isRunning ? (
           <>
-            <div className={`${circleSize[phase]} rounded-full bg-primary/20 border-4 border-primary flex items-center justify-center transition-all duration-1000`}>
+            <div
+              className={`${circleSize[phase]} rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
+            >
               <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold text-primary mb-2">{4 - seconds}</p>
-                <p className="text-sm text-support-1">{phaseText[phase]}</p>
+                <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
+                <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
               </div>
             </div>
-            <p className="text-sm text-support-2 mt-8">Relaxe e siga o ritmo</p>
+            <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
           </>
         ) : (
           <>
-            <p className="text-2xl mb-4">🌬️</p>
-            <p className="text-support-2 mb-6 text-sm">Use a respiração para acalmar sua mente e corpo</p>
+            <p className="text-4xl">🌬️</p>
+            <p className="mt-4 max-w-sm text-sm text-support-2">
+              Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
+            </p>
           </>
         )}
       </div>
