@@ -16,19 +16,21 @@ export function AudioCard({ title, duration, instructor, image, description }: A
   const [isPlaying, setIsPlaying] = useState(false)
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex gap-4 mb-4">
-        <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 bg-secondary rounded-lg flex items-center justify-center text-3xl">
+    <Card className="overflow-hidden p-6">
+      <div className="mb-5 flex gap-4">
+        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-3xl bg-secondary/80 text-3xl shadow-soft md:h-24 md:w-24">
           {image}
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-support-1 mb-1 text-sm md:text-base">{title}</h3>
-          <p className="text-xs md:text-sm text-support-2 mb-2">{instructor}</p>
-          <p className="text-xs text-primary font-semibold">⏱️ {duration}</p>
+          <h3 className="text-base font-semibold text-support-1 md:text-lg">{title}</h3>
+          <p className="mt-1 text-xs font-medium uppercase tracking-[0.28em] text-support-2/70">{instructor}</p>
+          <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-primary">
+            ⏱️ {duration}
+          </p>
         </div>
       </div>
 
-      <p className="text-xs md:text-sm text-support-2 mb-4">{description}</p>
+      <p className="mb-6 text-sm text-support-2 leading-relaxed">{description}</p>
 
       <div className="flex gap-2">
         <Button
@@ -37,7 +39,7 @@ export function AudioCard({ title, duration, instructor, image, description }: A
           onClick={() => setIsPlaying(!isPlaying)}
           className="flex-1"
         >
-          {isPlaying ? 'Pausar' : '▶️ Ouvir'}
+          {isPlaying ? '⏸️ Pausar' : '▶️ Ouvir'}
         </Button>
         <Button variant="secondary" size="sm" className="flex-1">
           Salvar
