@@ -28,41 +28,41 @@ export function Checklist() {
   const progress = Math.round((completed / items.length) * 100)
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg md:text-xl font-semibold text-support-1">✅ Checklist do Dia</h2>
-        <span className="text-xs font-bold bg-primary text-white px-2 py-1 rounded-full">
+    <Card className="p-7">
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-support-1 md:text-xl">✅ Checklist do Dia</h2>
+        <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-soft">
           {completed}/{items.length}
         </span>
       </div>
 
-      <div className="space-y-2 mb-4">
+      <div className="mb-5 space-y-2">
         {items.map((item) => (
           <label
             key={item.id}
-            className="flex items-center gap-3 p-3 hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/50 bg-white/80 p-3 shadow-soft transition-all duration-300 hover:shadow-elevated"
           >
             <input
               type="checkbox"
               checked={item.completed}
               onChange={() => toggleItem(item.id)}
-              className="w-5 h-5 rounded accent-primary cursor-pointer"
+              className="h-5 w-5 rounded-full border-2 border-primary/40 bg-white accent-primary"
             />
-            <span className={`text-sm flex-1 ${item.completed ? 'line-through text-support-2' : 'text-support-1'}`}>
+            <span
+              className={`flex-1 text-sm transition-colors ${
+                item.completed ? 'text-support-2/80 line-through' : 'text-support-1'
+              }`}
+            >
               {item.text}
             </span>
           </label>
         ))}
       </div>
 
-      {/* Progress bar */}
-      <div className="w-full bg-secondary rounded-full h-2">
-        <div
-          className="bg-primary h-2 rounded-full transition-all"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <p className="text-xs text-support-2 mt-2 text-right">{progress}% completo</p>
+      <Progress value={progress} max={100} />
+      <p className="mt-3 text-xs font-medium uppercase tracking-[0.28em] text-support-2/80 text-right">
+        {progress}% completo
+      </p>
     </Card>
   )
 }
