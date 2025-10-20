@@ -21,7 +21,7 @@ const ACHIEVEMENTS = [
   { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
   { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
   { emoji: '🏡', title: 'Casa Organizada', desc: '20 tarefas completas' },
-  { emoji: '���', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
+  { emoji: '💛', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
   { emoji: '🎨', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
   { emoji: '📚', title: 'Leitora Dedicada', desc: '5 livros lidos' },
 ] as const
@@ -127,7 +127,7 @@ export default function Eu360Page() {
             <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🏅 Conquistas</h2>
           </Reveal>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {achievements.map((achievement, idx) => (
+            {ACHIEVEMENTS.map((achievement, idx) => (
               <Reveal key={achievement.title} delay={idx * 70}>
                 <Card className="h-full p-6 text-center">
                   <p className="text-3xl">{achievement.emoji}</p>
