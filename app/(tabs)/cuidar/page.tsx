@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { AudioCard } from '@/components/blocks/AudioCard'
 
@@ -61,106 +62,131 @@ export default function CuidarPage() {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
-          🌿 Cuidar de Si Mesma
-        </h1>
-        <p className="text-support-2">
-          Seu bem-estar é prioridade
-        </p>
-      </div>
+    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-10 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
+      />
 
-      {/* Breath Timer */}
-      <BreathTimer />
+      <div className="relative space-y-10">
+        <Reveal>
+          <div className="space-y-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Autocuidado</span>
+            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">🌿 Cuidar de Si Mesma</h1>
+            <p className="max-w-2xl text-sm text-support-2 md:text-base">
+              Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.
+            </p>
+          </div>
+        </Reveal>
 
-      {/* Meditations */}
-      <div>
-        <h2 className="text-xl md:text-2xl font-semibold text-support-1 mb-4">🎧 Meditações</h2>
-        <div className="space-y-4">
-          {meditations.map((med, idx) => (
-            <AudioCard key={idx} {...med} />
-          ))}
+        <Reveal delay={80}>
+          <BreathTimer />
+        </Reveal>
+
+        <div className="space-y-5">
+          <Reveal>
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🎧 Meditações</h2>
+          </Reveal>
+          <div className="space-y-4">
+            {meditations.map((med, idx) => (
+              <Reveal key={med.title} delay={idx * 90}>
+                <AudioCard {...med} />
+              </Reveal>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Positive Pills */}
-      <Card className="bg-gradient-to-br from-primary/10 to-secondary">
-        <h2 className="text-xl md:text-2xl font-semibold text-support-1 mb-4">💊 Pílulas Positivas</h2>
-        <div className="space-y-3">
-          {[
-            'Você merece descanso tanto quanto seus filhos.',
-            'Sua paciência é um superpoder.',
-            'Pequenos momentos de alegria contam muito.',
-            'Você est�� fazendo um ótimo trabalho.',
-            'Cuidar de você não é egoísmo.',
-          ].map((pill, idx) => (
-            <div key={idx} className="p-3 bg-white rounded-lg border-l-4 border-primary">
-              <p className="text-sm text-support-1 italic">{pill}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Weekly Recipes */}
-      <div>
-        <h2 className="text-xl md:text-2xl font-semibold text-support-1 mb-4">🥗 Receitas da Semana</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {recipes.map((recipe, idx) => (
-            <Card key={idx} className="cursor-pointer hover:shadow-md transition-shadow">
-              <div className="text-3xl mb-2">{recipe.emoji}</div>
-              <h3 className="font-semibold text-support-1 mb-1">{recipe.title}</h3>
-              <p className="text-xs text-support-2 mb-3">⏱️ {recipe.prep}</p>
-              <Button variant="secondary" size="sm" className="w-full">
-                Ver Receita
-              </Button>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Organization Tips */}
-      <Card>
-        <h2 className="text-xl md:text-2xl font-semibold text-support-1 mb-4">💡 Dicas de Organização</h2>
-        <div className="space-y-3">
-          {[
-            { title: 'Organize a Noite Anterior', desc: 'Prepare roupas e mochilas antes de dormir' },
-            { title: 'Use Listas de Verificação', desc: 'Simplifique tarefas recorrentes' },
-            { title: '15 Minutos de Limpeza', desc: 'Mantenha espaços organizados com pequenas sessões' },
-          ].map((tip, idx) => (
-            <div key={idx} className="p-3 bg-secondary rounded-lg">
-              <h4 className="font-semibold text-support-1 text-sm mb-1">{tip.title}</h4>
-              <p className="text-xs text-support-2">{tip.desc}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Mentorship Section */}
-      <div>
-        <h2 className="text-xl md:text-2xl font-semibold text-support-1 mb-4">👥 Profissionais de Apoio</h2>
-        <div className="space-y-4">
-          {professionals.map((prof, idx) => (
-            <Card key={idx} className="flex flex-col md:flex-row gap-4">
-              <div className="flex-shrink-0 w-16 h-16 bg-secondary rounded-lg flex items-center justify-center text-3xl">
-                {prof.emoji}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-support-1">{prof.name}</h3>
-                <p className="text-xs text-primary font-semibold mb-1">{prof.role}</p>
-                <p className="text-xs text-support-2 mb-3">{prof.bio}</p>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => window.open('https://wa.me', '_blank')}
-                  className="w-full md:w-auto"
+        <Reveal delay={140}>
+          <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💊 Pílulas Positivas</h2>
+            <div className="mt-4 space-y-3">
+              {[
+                'Você merece descanso tanto quanto seus filhos.',
+                'Sua paciência é um superpoder.',
+                'Pequenos momentos de alegria contam muito.',
+                'Você está fazendo um ótimo trabalho.',
+                'Cuidar de você não é egoísmo.',
+              ].map((pill, idx) => (
+                <div
+                  key={pill}
+                  className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-soft transition-all duration-300 hover:shadow-elevated"
                 >
-                  💬 Conversar no WhatsApp
-                </Button>
-              </div>
-            </Card>
-          ))}
+                  <p className="text-sm italic text-support-1">{pill}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Reveal>
+
+        <div className="space-y-5">
+          <Reveal>
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🥗 Receitas da Semana</h2>
+          </Reveal>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {recipes.map((recipe, idx) => (
+              <Reveal key={recipe.title} delay={idx * 70}>
+                <Card className="h-full p-6">
+                  <div className="text-3xl">{recipe.emoji}</div>
+                  <h3 className="mt-3 text-lg font-semibold text-support-1">{recipe.title}</h3>
+                  <p className="mt-2 text-xs text-support-2">⏱️ {recipe.prep}</p>
+                  <Button variant="secondary" size="sm" className="mt-6 w-full">
+                    Ver Receita
+                  </Button>
+                </Card>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+
+        <Reveal delay={200}>
+          <Card className="p-7">
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💡 Dicas de Organização</h2>
+            <div className="mt-4 space-y-3">
+              {[
+                { title: 'Organize a Noite Anterior', desc: 'Prepare roupas e mochilas antes de dormir.' },
+                { title: 'Use Listas de Verificação', desc: 'Simplifique tarefas recorrentes.' },
+                { title: '15 Minutos de Cuidado', desc: 'Mantenha espaços organizados com pequenas sessões.' },
+              ].map((tip) => (
+                <div
+                  key={tip.title}
+                  className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-soft transition-all duration-300 hover:shadow-elevated"
+                >
+                  <h4 className="text-sm font-semibold text-support-1">{tip.title}</h4>
+                  <p className="mt-1 text-xs text-support-2">{tip.desc}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Reveal>
+
+        <div className="space-y-5">
+          <Reveal>
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">👥 Profissionais de Apoio</h2>
+          </Reveal>
+          <div className="space-y-4">
+            {professionals.map((prof, idx) => (
+              <Reveal key={prof.name} delay={idx * 80}>
+                <Card className="flex flex-col items-start gap-5 p-6 md:flex-row md:items-center">
+                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-3xl bg-secondary/80 text-3xl shadow-soft">
+                    {prof.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-support-1 md:text-lg">{prof.name}</h3>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">{prof.role}</p>
+                    <p className="mt-3 text-sm text-support-2">{prof.bio}</p>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => window.open('https://wa.me', '_blank')}
+                      className="mt-4 w-full md:w-auto"
+                    >
+                      💬 Conversar no WhatsApp
+                    </Button>
+                  </div>
+                </Card>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </div>
     </div>
