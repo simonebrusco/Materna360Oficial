@@ -74,7 +74,7 @@ export default function Home() {
 
         <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2 xl:gap-8">
           {featureCards.map((feature, index) => (
-            <Card key={feature.href} className="group/card h-full p-7">
+            <Card key={feature.href} className="h-full p-7">
               <div className="flex h-full flex-col justify-between gap-6">
                 <div className="flex flex-col gap-3">
                   <span
