@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { Navigation } from "@/components/Navigation"
 
 export const metadata: Metadata = {
   title: "Materna360",
   description: "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil",
+  viewport: "width=device-width, initial-scale=1",
 }
 
 export default function RootLayout({
@@ -14,10 +14,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>
-        {children}
-        <Navigation />
-      </body>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="bg-white">{children}</body>
     </html>
   )
 }
