@@ -1,16 +1,8 @@
 {
-stellar-den
-stellar-den
   "name": "materna360",
   "version": "1.0.0",
-  "description": "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil",
-
-  "name": "materna360oficial",
-main
-
-  "name": "materna360",
-main
   "private": true,
+  "description": "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,29 +10,12 @@ main
     "lint": "next lint"
   },
   "dependencies": {
-stellar-den
-    "next": "^14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "typescript": "^5.0.0",
-    "tailwindcss": "^3.3.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0",
-    "@supabase/supabase-js": "^2.38.0",
-    "@supabase/auth-helpers-nextjs": "^0.7.0",
-    "lucide-react": "^0.263.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "eslint": "^8.48.0",
-    "eslint-config-next": "^14.0.0"
-
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "@builder.io/react": "3.2.7",
+    "@supabase/supabase-js": "2.45.4",
+    "@supabase/auth-helpers-nextjs": "0.10.0",
     "lucide-react": "0.460.0",
     "tailwindcss": "3.4.10",
     "postcss": "8.4.41",
@@ -48,16 +23,13 @@ stellar-den
   },
   "devDependencies": {
     "typescript": "5.4.5",
-    "@types/react": "18.2.66",
     "@types/node": "20.11.30",
+    "@types/react": "18.2.66",
+    "@types/react-dom": "18.2.22",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5"
-stellar-den
-main
-
   },
   "engines": {
     "node": ">=18 <21"
-main
   }
 }
