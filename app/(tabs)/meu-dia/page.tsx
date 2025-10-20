@@ -61,20 +61,6 @@ export default function MeuDiaPage() {
             </p>
           </div>
         </Reveal>
-      {/* Greeting */}
-      <div>
-        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
-          {greeting}, Mãe! 💛
-        </h1>
-        <p className="text-support-2">
-          {new Date().toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </p>
-      </div>
-
         <Reveal delay={100}>
           <MessageOfDay />
         </Reveal>
