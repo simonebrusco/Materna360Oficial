@@ -13,18 +13,19 @@ export const Progress: React.FC<ProgressProps> = ({
   className = '',
   showLabel = false,
 }) => {
-  const percentage = (value / max) * 100
+  const percentage = Math.min(100, Math.max(0, (value / max) * 100))
 
   return (
     <div className={className}>
-      <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+      <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary/60">
+        <div className="absolute inset-0 bg-white/40 blur-md" aria-hidden />
         <div
-          className="bg-primary h-full rounded-full transition-all duration-300"
+          className="relative h-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-[0_8px_30px_rgba(255,0,94,0.28)] transition-all duration-500 ease-gentle"
           style={{ width: `${percentage}%` }}
         />
       </div>
       {showLabel && (
-        <p className="text-xs text-support-2 mt-1">
+        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">
           {value} / {max}
         </p>
       )}
