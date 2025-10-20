@@ -1,4 +1,5 @@
 import { Header } from '@/components/ui/Header'
+import { Header } from '@/components/ui/Header'
 import { TabBar } from '@/components/ui/TabBar'
 
 export default function TabsLayout({
