@@ -1,14 +1,8 @@
 'use client'
 
-'use client'
-
 export const dynamic = 'force-dynamic'
 
-stellar-den
 import { useEffect, useState } from 'react'
-
-import { useState } from 'react'
-main
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -29,8 +23,6 @@ export default function MeuDiaPage() {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
-
-stellar-den
   const [motherName, setMotherName] = useState('')
   const [isLoaded, setIsLoaded] = useState(false)
 
@@ -74,11 +66,6 @@ stellar-den
     }
   }, [])
 
-
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
-main
-
   const handleAddNote = () => {
     if (noteText.trim()) {
       setNotes([noteText, ...notes])
@@ -87,7 +74,6 @@ main
     }
   }
 
-stellar-den
   if (!isLoaded) {
     return null
   }
@@ -108,9 +94,12 @@ stellar-den
 
   const displayName = motherName || 'Mãe'
   const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
+  const formattedDate = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
 
-
-main
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
       <span
@@ -120,25 +109,10 @@ main
       <div className="relative space-y-8">
         <Reveal>
           <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-              Hoje
-            </span>
-            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
-stellar-den
-              {greetingText}
-            </h1>
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Hoje</span>
+            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">{greetingText}</h1>
             <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
-
-              {greeting}, Mãe! 💛
-            </h1>
-            <p className="text-sm text-support-2 md:text-base">
-              {new Date().toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-main
+            <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
           </div>
         </Reveal>
         <Reveal delay={100}>
@@ -154,12 +128,8 @@ main
             <Reveal key={action.title} delay={index * 80}>
               <Card className="h-full">
                 <div className="mb-3 text-2xl">{action.emoji}</div>
-                <h3 className="text-base font-semibold text-support-1 md:text-lg">
-                  {action.title}
-                </h3>
-                <p className="mb-4 text-xs text-support-2 md:text-sm">
-                  {action.description}
-                </p>
+                <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
+                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="secondary" size="sm" className="w-full">
                   Acessar
                 </Button>
@@ -207,12 +177,10 @@ main
             <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
               <Card className="w-full">
                 <h3 className="mb-2 text-lg font-semibold text-support-1">Adicionar Nota</h3>
-                <p className="mb-4 text-sm text-support-2">
-                  Anote um pensamento, uma tarefa ou uma gratidão.
-                </p>
+                <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
                 <textarea
                   value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
+                  onChange={(event) => setNoteText(event.target.value)}
                   placeholder="Escreva sua nota aqui..."
                   className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   rows={4}
