@@ -2,7 +2,7 @@ import type { AgeBand } from './dailyActivity'
 
 const STORAGE_KEY = 'planner_v1'
 const WEEK_STORAGE_KEY = 'planner_last_week_start'
-const RECOMMENDATION_STORAGE_KEY = 'planner_reco_v1'
+export const RECOMMENDATION_STORAGE_KEY = 'planner_reco_v1'
 export const RECOMMENDATIONS_UPDATED_EVENT = 'planner:recommendations-updated'
 export const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
 
