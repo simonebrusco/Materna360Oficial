@@ -115,10 +115,10 @@ export function Mindfulness() {
     }
 
     try {
-      const storedLast = window.localStorage.getItem(STORAGE_LAST_KEY)
+      const storedLast = window.localStorage.getItem(LAST_TRACK_STORAGE_KEY)
       if (storedLast) {
         const parsed: LastPlayback = JSON.parse(storedLast)
-        setResumeData(parsed)
+        setLastPlayback(parsed)
       }
     } catch (error) {
       console.error('Não foi possível carregar o último áudio reproduzido.', error)
@@ -244,9 +244,9 @@ export function Mindfulness() {
 
     try {
       if (value) {
-        window.localStorage.setItem(STORAGE_LAST_KEY, JSON.stringify(value))
+        window.localStorage.setItem(LAST_TRACK_STORAGE_KEY, JSON.stringify(value))
       } else {
-        window.localStorage.removeItem(STORAGE_LAST_KEY)
+        window.localStorage.removeItem(LAST_TRACK_STORAGE_KEY)
       }
     } catch (error) {
       console.error('Não foi possível salvar o último áudio do mindfulness.', error)
