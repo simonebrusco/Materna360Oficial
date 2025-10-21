@@ -336,6 +336,9 @@ export function Mindfulness() {
   const handleToggleTrack = useCallback(
     async (theme: MindfulnessTheme, track: MindfulnessTrack) => {
       if (!track.file) return
+      const status = availability[track.id] ?? 'checking'
+      if (status !== 'available') return
+
       const audio = audioRef.current
       if (!audio) return
 
