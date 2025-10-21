@@ -378,7 +378,7 @@ export function ProfileForm() {
                         </div>
                         <div className="space-y-2">
                           <label htmlFor={`child-name-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Name (optional)
+                            Nome (opcional)
                           </label>
                           <input
                             id={`child-name-${child.id}`}
