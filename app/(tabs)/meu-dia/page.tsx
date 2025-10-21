@@ -4,7 +4,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -25,9 +25,48 @@ export default function MeuDiaPage() {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
+  const [motherName, setMotherName] = useState('')
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+  useEffect(() => {
+    let active = true
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to load profile')
+        }
+
+        const data = await response.json()
+
+        if (!active) {
+          return
+        }
+
+        setMotherName(typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : '')
+      } catch (error) {
+        console.error(error)
+        if (active) {
+          setMotherName('')
+        }
+      } finally {
+        if (active) {
+          setIsLoaded(true)
+        }
+      }
+    }
+
+    void loadProfile()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleAddNote = () => {
     if (noteText.trim()) {
@@ -36,6 +75,12 @@ export default function MeuDiaPage() {
       setShowNoteModal(false)
     }
   }
+
+  if (!isLoaded) {
+    return null
+  }
+
+  const greetingText = motherName ? `Good morning, ${motherName}!` : 'Good morning, Mom!'
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
@@ -50,15 +95,9 @@ export default function MeuDiaPage() {
               Hoje
             </span>
             <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
-              {greeting}, Mãe! 💛
+              {greetingText}
             </h1>
-            <p className="text-sm text-support-2 md:text-base">
-              {new Date().toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
+            <p className="text-sm text-support-2 md:text-base">Small moments create big memories.</p>
           </div>
         </Reveal>
         <Reveal delay={100}>
