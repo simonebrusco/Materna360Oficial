@@ -429,12 +429,16 @@ export function FamilyPlanner() {
 
       if (nextItems.length === 0) {
         delete nextState[selectedDayKey]
-        return nextState
+      } else {
+        nextState[selectedDayKey] = nextItems
       }
 
-      nextState[selectedDayKey] = nextItems
       return nextState
     })
+
+    if (USE_API_PLANNER) {
+      void plannerApi.deletePlannerItem(itemId)
+    }
   }
 
   const startEditingItem = (item: PlannerItem) => {
