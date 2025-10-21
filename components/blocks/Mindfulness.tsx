@@ -502,7 +502,7 @@ export function Mindfulness() {
                   const isPlayable = Boolean(track.file) && status === 'available'
                   const isLastPlayed = lastPlayback?.trackId === track.id
                   const ariaLabel = isTrackPlaying ? 'Pausar' : 'Tocar'
-                  const showProgress = isPlayable && progress
+                  const currentProgress = progress ?? { current: 0, duration: 0 }
 
                   return (
                     <li
