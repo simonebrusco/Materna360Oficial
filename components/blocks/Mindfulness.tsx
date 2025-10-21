@@ -239,16 +239,19 @@ export function Mindfulness() {
 
       const isSameTrack = currentPlayback?.track.id === track.id
 
+      const playFromStart = progressMap[track.id]?.current ?? 0
+
       const ensurePlayback = async () => {
         try {
-          await audio.play()
-          setIsPlaying(true)
           setCurrentPlayback({ theme, track })
           setResumeData({ themeId: theme.id, trackId: track.id })
           persistLastPlayback({ themeId: theme.id, trackId: track.id })
+          await audio.play()
+          setIsPlaying(true)
         } catch (error) {
           console.error('Falha ao iniciar reprodução do Mindfulness', error)
           setToastMessage('Não foi possível carregar este áudio.')
+          setCurrentPlayback((previous) => (previous?.track.id === track.id ? null : previous))
         }
       }
 
@@ -263,7 +266,30 @@ export function Mindfulness() {
 
       audio.pause()
       audio.src = track.file
-      audio.currentTime = progressMap[track.id]?.current ?? 0
+
+      if (playFromStart > 0) {
+        const seekToSavedPosition = () => {
+          try {
+            const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : playFromStart
+            audio.currentTime = Math.min(playFromStart, duration)
+          } catch (error) {
+            console.error('Não foi possível retomar o ponto do áudio.', error)
+          }
+        }
+
+        if (audio.readyState >= 1) {
+          seekToSavedPosition()
+        } else {
+          audio.addEventListener('loadedmetadata', seekToSavedPosition, { once: true })
+        }
+      } else {
+        try {
+          audio.currentTime = 0
+        } catch (error) {
+          console.error('Não foi possível reposicionar o áudio.', error)
+        }
+      }
+
       await ensurePlayback()
     },
     [currentPlayback, isPlaying, persistLastPlayback, progressMap]
