@@ -10,7 +10,7 @@ import {
   plannerApi,
   plannerStorage,
   type PlannerData,
-  type PlannerItemPayload,
+  type PlannerItem,
   type PlannerItemType,
   USE_API_PLANNER,
 } from '@/lib/plannerData'
