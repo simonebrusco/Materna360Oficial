@@ -1,13 +1,16 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 import {
   DEFAULT_STICKER_ID,
   STICKERS,
-  getStickerInfo,
   isProfileStickerId,
+  resolveSticker,
 } from '@/app/lib/stickers'
 
 interface HeaderProps {
@@ -22,7 +25,6 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
   const [isLoadingSticker, setIsLoadingSticker] = useState<boolean>(false)
   const [imageSrc, setImageSrc] = useState<string>(STICKERS[DEFAULT_STICKER_ID].asset)
-  const [hasTriedPngFallback, setHasTriedPngFallback] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
@@ -89,20 +91,13 @@ export function Header({ title, showNotification = false }: HeaderProps) {
     }
   }, [showNotification])
 
-  const sticker = React.useMemo(() => getStickerInfo(stickerId), [stickerId])
+  const sticker = useMemo(() => resolveSticker(stickerId), [stickerId])
 
   useEffect(() => {
     setImageSrc(sticker.asset)
-    setHasTriedPngFallback(false)
-  }, [sticker])
+  }, [sticker.asset])
 
   const handleImageError = () => {
-    if (!hasTriedPngFallback && sticker.asset.endsWith('.svg')) {
-      setHasTriedPngFallback(true)
-      setImageSrc(sticker.asset.replace('.svg', '.png'))
-      return
-    }
-
     if (imageSrc !== STICKERS[DEFAULT_STICKER_ID].asset) {
       setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
     }
@@ -142,14 +137,14 @@ export function Header({ title, showNotification = false }: HeaderProps) {
               {isLoadingSticker ? (
                 <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
               ) : (
-                <img
+                <Image
                   key={imageSrc}
                   src={imageSrc}
                   alt={sticker.label}
-                  aria-label={`Figurinha de perfil: ${sticker.label}`}
-                  className="h-7 w-7 shrink-0 object-contain"
-                  loading="lazy"
-                  decoding="async"
+                  width={44}
+                  height={44}
+                  className="h-7 w-7 shrink-0 rounded-full object-cover"
+                  priority
                   onError={handleImageError}
                 />
               )}
