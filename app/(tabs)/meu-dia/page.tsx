@@ -1,14 +1,8 @@
 'use client'
 
-'use client'
-
 export const dynamic = 'force-dynamic'
 
-stellar-den
 import { useEffect, useState } from 'react'
-
-import { useState } from 'react'
-main
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -30,7 +24,6 @@ export default function MeuDiaPage() {
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
 
-stellar-den
   const [motherName, setMotherName] = useState('')
   const [isLoaded, setIsLoaded] = useState(false)
 
@@ -43,74 +36,48 @@ stellar-den
           credentials: 'include',
           cache: 'no-store',
         })
-
-        if (!response.ok) {
-          throw new Error('Failed to load profile')
-        }
+        if (!response.ok) throw new Error('Failed to load profile')
 
         const data = await response.json()
-
-        if (!active) {
-          return
-        }
+        if (!active) return
 
         setMotherName(typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : '')
       } catch (error) {
         console.error(error)
-        if (active) {
-          setMotherName('')
-        }
+        if (active) setMotherName('')
       } finally {
-        if (active) {
-          setIsLoaded(true)
-        }
+        if (active) setIsLoaded(true)
       }
     }
 
     void loadProfile()
-
     return () => {
       active = false
     }
   }, [])
 
-
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
-main
-
   const handleAddNote = () => {
     if (noteText.trim()) {
-      setNotes([noteText, ...notes])
+      setNotes((prev) => [noteText.trim(), ...prev])
       setNoteText('')
       setShowNoteModal(false)
     }
   }
 
-stellar-den
   if (!isLoaded) {
     return null
   }
 
   const resolveGreetingPrefix = () => {
     const hour = new Date().getHours()
-
-    if (hour >= 5 && hour < 12) {
-      return 'Bom dia'
-    }
-
-    if (hour >= 12 && hour < 18) {
-      return 'Boa tarde'
-    }
-
+    if (hour >= 5 && hour < 12) return 'Bom dia'
+    if (hour >= 12 && hour < 18) return 'Boa tarde'
     return 'Boa noite'
   }
 
   const displayName = motherName || 'Mãe'
   const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
 
-
-main
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
       <span
@@ -124,12 +91,7 @@ main
               Hoje
             </span>
             <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
-stellar-den
               {greetingText}
-            </h1>
-            <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
-
-              {greeting}, Mãe! 💛
             </h1>
             <p className="text-sm text-support-2 md:text-base">
               {new Date().toLocaleDateString('pt-BR', {
@@ -138,9 +100,9 @@ stellar-den
                 day: 'numeric',
               })}
             </p>
-main
           </div>
         </Reveal>
+
         <Reveal delay={100}>
           <MessageOfDay />
         </Reveal>
@@ -157,9 +119,7 @@ main
                 <h3 className="text-base font-semibold text-support-1 md:text-lg">
                   {action.title}
                 </h3>
-                <p className="mb-4 text-xs text-support-2 md:text-sm">
-                  {action.description}
-                </p>
+                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="secondary" size="sm" className="w-full">
                   Acessar
                 </Button>
@@ -181,7 +141,9 @@ main
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas Rápidas</h2>
-                <p className="text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
+                <p className="text-xs text-support-2/80">
+                  Capture ideias e lembretes em instantes.
+                </p>
               </div>
               <Button variant="primary" size="sm" onClick={() => setShowNoteModal(true)}>
                 ＋ Adicionar
@@ -191,7 +153,10 @@ main
             {notes.length > 0 ? (
               <div className="space-y-2">
                 {notes.map((note, idx) => (
-                  <div key={idx} className="rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                  <div
+                    key={`${note}-${idx}`}
+                    className="rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft"
+                  >
                     {note}
                   </div>
                 ))}
@@ -218,7 +183,12 @@ main
                   rows={4}
                 />
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowNoteModal(false)} className="flex-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNoteModal(false)}
+                    className="flex-1"
+                  >
                     Cancelar
                   </Button>
                   <Button variant="primary" size="sm" onClick={handleAddNote} className="flex-1">
