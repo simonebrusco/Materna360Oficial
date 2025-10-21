@@ -117,10 +117,14 @@ export function Mindfulness() {
     }
 
     try {
-      const storedLast = window.localStorage.getItem(LAST_TRACK_STORAGE_KEY)
+      const storedLast =
+        window.localStorage.getItem(LAST_TRACK_STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_LAST_TRACK_KEY)
       if (storedLast) {
         const parsed: LastPlayback = JSON.parse(storedLast)
         setLastPlayback(parsed)
+        if (!window.localStorage.getItem(LAST_TRACK_STORAGE_KEY)) {
+          window.localStorage.setItem(LAST_TRACK_STORAGE_KEY, storedLast)
+        }
       }
     } catch (error) {
       console.error('Não foi possível carregar o último áudio reproduzido.', error)
