@@ -15,10 +15,6 @@ import {
   USE_API_PLANNER,
 } from '@/lib/plannerData'
 
-const STORAGE_KEY = 'planner_v1'
-const WEEK_STORAGE_KEY = 'planner_last_week_start'
-const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
-
 const TYPE_OPTIONS = ['Brincadeira', 'Receita', 'Livro', 'Brinquedo', 'Recomendação'] as const
 const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
 
