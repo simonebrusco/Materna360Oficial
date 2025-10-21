@@ -249,14 +249,23 @@ const safeHash = (value: string) => {
   return Math.abs(hash)
 }
 
-const selectActivity = (dateKey: string, ageBand: AgeBand): DailyActivity => {
-  const pool = ACTIVITIES_CATALOG.filter((activity) => activity.ageBand === ageBand)
-  const list = pool.length > 0 ? pool : ACTIVITIES_CATALOG
-  if (list.length === 0) {
-    return FALLBACK_ACTIVITY
+const selectActivity = (dateKey: string, preferredBand: AgeBand): DailyActivity => {
+  const targetIndex = AGE_BAND_ORDER.indexOf(preferredBand)
+  const prioritizedBands = AGE_BAND_ORDER
+    .map((band, index) => ({ band, distance: targetIndex >= 0 ? Math.abs(index - targetIndex) : index }))
+    .sort((a, b) => a.distance - b.distance)
+    .map((entry) => entry.band)
+
+  for (const band of prioritizedBands) {
+    const pool = ACTIVITIES_CATALOG.filter((activity) => activity.ageBand === band)
+    if (pool.length === 0) {
+      continue
+    }
+    const index = safeHash(`${dateKey}:${band}`) % pool.length
+    return pool[index]
   }
-  const index = safeHash(`${dateKey}:${ageBand}`) % list.length
-  return list[index]
+
+  return FALLBACK_ACTIVITY
 }
 
 const readStoredActivity = (): StoredDailyActivity | null => {
