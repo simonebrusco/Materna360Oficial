@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Toast } from '@/components/ui/Toast'
 import {
+  DEFAULT_AGE_BAND,
+  FALLBACK_ACTIVITY,
   getInitialDailyActivity,
   getTodayDateKey,
   resolveDailyActivity,
