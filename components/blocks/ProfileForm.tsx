@@ -343,7 +343,7 @@ export function ProfileForm() {
                       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-2">
                           <label htmlFor={`child-gender-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Gender
+                            Gênero
                           </label>
                           <select
                             id={`child-gender-${child.id}`}
