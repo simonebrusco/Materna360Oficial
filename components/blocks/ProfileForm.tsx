@@ -357,7 +357,7 @@ export function ProfileForm() {
                         </div>
                         <div className="space-y-2">
                           <label htmlFor={`child-age-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Age (months)
+                            Idade (em meses)
                           </label>
                           <input
                             id={`child-age-${child.id}`}
