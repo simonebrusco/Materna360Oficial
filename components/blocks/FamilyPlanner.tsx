@@ -122,6 +122,38 @@ const createId = () => {
   return Math.random().toString(36).slice(2, 10)
 }
 
+const mapMonthsToAgeBand = (months: number): (typeof AGE_BAND_OPTIONS)[number] => {
+  if (months <= 6) {
+    return '0-6m'
+  }
+  if (months <= 12) {
+    return '7-12m'
+  }
+  if (months <= 24) {
+    return '1-2a'
+  }
+  if (months <= 48) {
+    return '3-4a'
+  }
+  return '5-6a'
+}
+
+const pickRecommendationsForDay = (
+  ageBand: (typeof AGE_BAND_OPTIONS)[number],
+  dayIndex: number
+): RecommendationSuggestion[] => {
+  const pool = RECOMMENDATION_POOL[ageBand] ?? RECOMMENDATION_POOL[DEFAULT_AGE_BAND]
+  if (!pool || pool.length === 0) {
+    return []
+  }
+
+  const firstIndex = Math.abs(dayIndex) % pool.length
+  const secondIndex = (firstIndex + 1) % pool.length
+  const thirdIndex = (firstIndex + 2) % pool.length
+
+  return [pool[firstIndex], pool[secondIndex], pool[thirdIndex]]
+}
+
 export function FamilyPlanner() {
   const today = useMemo(() => {
     const current = new Date()
