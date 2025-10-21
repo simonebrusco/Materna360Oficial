@@ -95,7 +95,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
       isMounted = false
       window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated)
     }
-  }, [hasMounted, showNotification])
+  }, [showNotification])
 
   const sticker = useMemo(() => getStickerInfo(stickerId), [stickerId])
 
