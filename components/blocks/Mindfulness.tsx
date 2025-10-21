@@ -143,6 +143,80 @@ export function Mindfulness() {
   }, [])
 
   useEffect(() => {
+    if (!themes.length) {
+      setAvailability({})
+      setMissingFiles([])
+      return
+    }
+
+    const initialStatuses: Record<string, AvailabilityStatus> = {}
+    themes.forEach((theme) => {
+      theme.tracks.forEach((track) => {
+        initialStatuses[track.id] = track.file ? 'checking' : 'missing'
+      })
+    })
+    setAvailability(initialStatuses)
+    setMissingFiles([])
+
+    let cancelled = false
+
+    const evaluateAvailability = async () => {
+      const availabilityResults: Record<string, AvailabilityStatus> = {}
+      const missingSet = new Set<string>()
+
+      await Promise.allSettled(
+        themes.map((theme) =>
+          Promise.allSettled(
+            theme.tracks.map(async (track) => {
+              if (!track.file) {
+                return
+              }
+
+              const available = await isAudioAvailable(track.file)
+              availabilityResults[track.id] = available ? 'available' : 'missing'
+              if (!available) {
+                missingSet.add(track.file)
+              }
+            })
+          )
+        )
+      )
+
+      const finalStatuses: Record<string, AvailabilityStatus> = {}
+      themes.forEach((theme) => {
+        theme.tracks.forEach((track) => {
+          if (!track.file) {
+            finalStatuses[track.id] = 'missing'
+          } else {
+            const status = availabilityResults[track.id] ?? 'missing'
+            finalStatuses[track.id] = status
+            if (status === 'missing') {
+              missingSet.add(track.file)
+            }
+          }
+        })
+      })
+
+      if (cancelled) {
+        return
+      }
+
+      setAvailability(finalStatuses)
+      const missingArray = Array.from(missingSet)
+      if (missingArray.length > 0) {
+        missingArray.forEach((path) => console.warn('[Mindfulness] Missing audio:', path))
+      }
+      setMissingFiles(missingArray)
+    }
+
+    void evaluateAvailability()
+
+    return () => {
+      cancelled = true
+    }
+  }, [themes])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
     try {
       window.localStorage.setItem(STORAGE_PROGRESS_KEY, JSON.stringify(progressMap))
