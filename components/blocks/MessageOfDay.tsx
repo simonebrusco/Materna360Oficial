@@ -62,12 +62,12 @@ const sanitizeBaseMessage = (value: string | null | undefined) => {
 }
 
 const stripLeadingName = (text: string, name: string) => {
-  return text.replace(new RegExp(`^${escapeRegExp(name)}\s*,\s*`, 'i'), '').trim()
+  return text.replace(new RegExp(`^${escapeRegExp(name)}\\s*,\\s*`, 'i'), '').trim()
 }
 
 const stripTrailingName = (text: string, name: string) => {
   return text.replace(
-    new RegExp(`(,\s*)?${escapeRegExp(name)}([.!?])?$`, 'i'),
+    new RegExp(`(,\\s*)?${escapeRegExp(name)}([.!?])?$`, 'i'),
     (_, __, punctuation) => (punctuation ?? '')
   ).trim()
 }
@@ -96,10 +96,10 @@ const buildPersonalizedMessage = (name: string, baseMessage: string) => {
   }
 
   const replacedBody = stripExtraneousWhitespace(sanitizedBody.replaceAll('{name}', safeName))
-  const prefixPattern = new RegExp(`^${escapeRegExp(safeName)}\s*,`, 'i')
+  const prefixPattern = new RegExp(`^${escapeRegExp(safeName)}\\s*,`, 'i')
 
   if (prefixPattern.test(replacedBody)) {
-    return replacedBody.replace(prefixPattern, `${safeName},`).replace(`${safeName},`, `${safeName}, `)
+    return replacedBody.replace(prefixPattern, `${safeName}, `)
   }
 
   const withoutTrailing = stripTrailingName(stripTrailingName(replacedBody, safeName), FALLBACK_NAME)
@@ -131,10 +131,15 @@ const persistBaseMessage = (dateKey: string, baseMessage: string) => {
     return
   }
 
+  const sanitized = sanitizeBaseMessage(baseMessage)
+  if (!sanitized) {
+    return
+  }
+
   try {
     window.localStorage.setItem(
       LOCAL_STORAGE_KEY,
-      JSON.stringify({ dateKey, baseMessage })
+      JSON.stringify({ dateKey, baseMessage: sanitized })
     )
   } catch (error) {
     console.error('Falha ao salvar mensagem diária no cache:', error)
