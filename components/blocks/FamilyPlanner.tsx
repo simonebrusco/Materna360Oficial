@@ -226,7 +226,7 @@ export function FamilyPlanner() {
     }
 
     let durationValue: number | undefined
-    if (draftDuration.trim()) {
+    if (typeSupportsDuration(draftType) && draftDuration.trim()) {
       const numeric = Number(draftDuration)
       if (Number.isFinite(numeric)) {
         durationValue = Math.max(0, Math.round(numeric))
