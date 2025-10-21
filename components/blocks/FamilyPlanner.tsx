@@ -506,6 +506,57 @@ export function FamilyPlanner() {
                   placeholder="Ex.: Pintura com dedos"
                 />
               </div>
+              {typeSupportsDuration(draftType) && (
+                <div className="space-y-1">
+                  <label htmlFor="planner-duration" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                    Duração (min)
+                  </label>
+                  <input
+                    id="planner-duration"
+                    type="number"
+                    min={0}
+                    value={draftDuration}
+                    onChange={(event) => setDraftDuration(event.target.value)}
+                    className={inputClasses}
+                    placeholder="Ex.: 15"
+                  />
+                  <p className="text-[11px] text-support-2">Ex.: 10–15 minutos.</p>
+                </div>
+              )}
+              <div className="space-y-1">
+                <label htmlFor="planner-age" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                  Faixa etária
+                </label>
+                <select
+                  id="planner-age"
+                  value={draftAgeBand}
+                  onChange={(event) => {
+                    const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number] | ''
+                    setDraftAgeBand(value === '' ? '' : value)
+                  }}
+                  className={`${inputClasses} appearance-none`}
+                >
+                  <option value="">Selecione</option>
+                  {AGE_BAND_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <label htmlFor="planner-notes" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                  Notas
+                </label>
+                <textarea
+                  id="planner-notes"
+                  value={draftNotes}
+                  onChange={(event) => setDraftNotes(event.target.value)}
+                  className={`${inputClasses} min-h-[90px]`}
+                  placeholder="Use para lembrar materiais ou ajustes."
+                />
+                <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="primary" size="sm" onClick={handleSaveItem}>
