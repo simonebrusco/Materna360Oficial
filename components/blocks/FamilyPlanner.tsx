@@ -189,9 +189,11 @@ export function FamilyPlanner() {
 
   const handleSelectDay = (dayKey: string) => {
     setSelectedDayKey(dayKey)
+    resetEditState()
   }
 
   const handleChangeWeek = (direction: 'prev' | 'next') => {
+    resetEditState()
     setWeekStart((current) => addDays(current, direction === 'prev' ? -7 : 7))
   }
 
