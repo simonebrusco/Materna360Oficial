@@ -113,22 +113,6 @@ const createId = () => {
   return Math.random().toString(36).slice(2, 10)
 }
 
-const mapMonthsToAgeBand = (months: number): (typeof AGE_BAND_OPTIONS)[number] => {
-  if (months <= 6) {
-    return '0-6m'
-  }
-  if (months <= 12) {
-    return '7-12m'
-  }
-  if (months <= 24) {
-    return '1-2a'
-  }
-  if (months <= 48) {
-    return '3-4a'
-  }
-  return '5-6a'
-}
-
 const pickRecommendationsForDay = (
   ageBand: (typeof AGE_BAND_OPTIONS)[number],
   dayIndex: number
