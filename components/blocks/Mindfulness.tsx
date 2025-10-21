@@ -256,6 +256,7 @@ export function Mindfulness() {
       } else {
         window.localStorage.removeItem(LAST_TRACK_STORAGE_KEY)
       }
+      window.localStorage.removeItem(LEGACY_LAST_TRACK_KEY)
     } catch (error) {
       console.error('Não foi possível salvar o último áudio do mindfulness.', error)
     }
