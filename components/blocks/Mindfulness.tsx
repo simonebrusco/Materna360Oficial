@@ -485,29 +485,41 @@ export function Mindfulness() {
                   const isChecking = status === 'checking'
                   const isMissing = status === 'missing'
                   const isPlayable = Boolean(track.file) && status === 'available'
-                  const ariaLabel = isTrackPlaying ? 'Pausar' : isChecking ? 'Verificando disponibilidade' : 'Tocar'
+                  const isLastPlayed = lastPlayback?.trackId === track.id
+                  const ariaLabel = isTrackPlaying ? 'Pausar' : 'Tocar'
+                  const showProgress = isPlayable && progress
 
                   return (
                     <li
                       key={track.id}
-                      className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition"
+                      className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition ${
+                        isLastPlayed ? 'border-primary/50 shadow-elevated' : ''
+                      }`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => handleToggleTrack(theme, track)}
-                        disabled={!isPlayable}
-                        aria-disabled={!isPlayable}
-                        aria-label={ariaLabel}
-                        className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:cursor-not-allowed disabled:border-dashed disabled:text-support-2"
-                      >
-                        {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </button>
+                      {isPlayable ? (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleTrack(theme, track)}
+                          aria-label={ariaLabel}
+                          className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        >
+                          {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </button>
+                      ) : (
+                        <div
+                          className="shrink-0 rounded-full border border-dashed border-primary/20 bg-white p-2 text-support-2/70"
+                          aria-hidden
+                        >
+                          <Play className="h-4 w-4 opacity-30" />
+                        </div>
+                      )}
                       <div className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate text-sm font-medium text-support-1">{track.title}</span>
                         {isChecking && <span className="text-xs text-support-2">Verificando…</span>}
+                        {isPlayable && <span className="text-xs text-emerald-600">Pronto para ouvir</span>}
                         {isMissing && <span className="text-xs text-support-2">Upload pendente</span>}
                       </div>
-                      {isPlayable && progress && (
+                      {showProgress && (
                         <span className="text-xs font-medium text-support-2" aria-live="polite">
                           {formatTime(progress.current)} / {formatTime(progress.duration)}
                         </span>
