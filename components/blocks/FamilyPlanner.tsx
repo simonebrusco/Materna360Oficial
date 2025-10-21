@@ -280,15 +280,11 @@ export function FamilyPlanner() {
   }, [])
 
   useEffect(() => {
-    if (!isInitialized || typeof window === 'undefined') {
+    if (!isInitialized || USE_API_PLANNER) {
       return
     }
 
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plannerData))
-    } catch (error) {
-      console.error('Failed to persist planner data:', error)
-    }
+    plannerStorage.savePlannerData(plannerData)
   }, [plannerData, isInitialized])
 
   useEffect(() => {
