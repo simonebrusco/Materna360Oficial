@@ -291,7 +291,7 @@ export function ProfileForm() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
-                  Mother’s name
+                  Seu nome
                 </label>
                 <input
                   id="mother-name"
