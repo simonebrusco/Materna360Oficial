@@ -1,9 +1,5 @@
 'use client'
 
-'use client'
-
-export const dynamic = 'force-dynamic'
-
 import { useEffect, useState } from 'react'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
@@ -13,6 +9,8 @@ import { MessageOfDay } from '@/components/blocks/MessageOfDay'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Reveal } from '@/components/ui/Reveal'
+
+export const dynamic = 'force-dynamic'
 
 const quickActions = [
   { emoji: '🏡', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
