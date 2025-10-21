@@ -13,6 +13,8 @@ const WEEK_STORAGE_KEY = 'planner_last_week_start'
 const TYPE_OPTIONS = ['Brincadeira', 'Receita', 'Livro', 'Brinquedo', 'Recomendação'] as const
 const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
 
+const typeSupportsDuration = (type: (typeof TYPE_OPTIONS)[number]) => type === 'Brincadeira' || type === 'Receita'
+
 type PlannerItem = {
   id: string
   type: (typeof TYPE_OPTIONS)[number]
