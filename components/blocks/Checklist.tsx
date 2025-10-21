@@ -16,11 +16,14 @@ const REFERENCE_TEXTS = [
   'Brincadeira curta com meu filho (10–15 min)',
 ]
 
+type ChecklistOrigin = 'yesterday' | 'today'
+
 type ChecklistItem = {
   id: string
   text: string
   checked: boolean
   isReference: boolean
+  origin?: ChecklistOrigin
 }
 
 type ChecklistMap = Record<string, ChecklistItem[]>
@@ -45,17 +48,19 @@ const sanitizeItem = (value: unknown): ChecklistItem | null => {
     return null
   }
 
-  const item = value as Partial<ChecklistItem>
+  const item = value as Partial<ChecklistItem> & { origin?: string }
   const text = typeof item.text === 'string' ? item.text : ''
   const checked = Boolean(item.checked)
   const isReference = Boolean(item.isReference)
   const id = typeof item.id === 'string' && item.id.trim() ? item.id : createId()
+  const origin = item.origin === 'yesterday' || item.origin === 'today' ? item.origin : undefined
 
   return {
     id,
     text,
     checked,
     isReference,
+    origin,
   }
 }
 
@@ -101,7 +106,7 @@ const ensureEmptyRowLimit = (items: ChecklistItem[]): ChecklistItem[] => {
     if (item.text.trim().length > 0) {
       nonEmpty.push(item)
     } else {
-      empty.push({ ...item, text: '' })
+      empty.push({ ...item, text: '', checked: false, origin: undefined })
     }
   }
 
@@ -109,7 +114,7 @@ const ensureEmptyRowLimit = (items: ChecklistItem[]): ChecklistItem[] => {
   const combined = [...nonEmpty, ...trimmedEmpty]
 
   if (combined.length === 0) {
-    return [createEmptyItem()]
+    return Array.from({ length: MIN_EMPTY_ROWS }, () => createEmptyItem())
   }
 
   return combined
@@ -138,6 +143,20 @@ const getYesterdayDateKey = (): string => {
   yesterday.setDate(yesterday.getDate() - 1)
   return getLocalDateKey(yesterday)
 }
+
+const getTomorrowDateKey = (): string => {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return getLocalDateKey(tomorrow)
+}
+
+const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistItem => ({
+  id: createId(),
+  text,
+  checked: false,
+  isReference: false,
+  origin,
+})
 
 const fetchMotherName = async (): Promise<string> => {
   try {
@@ -225,14 +244,21 @@ export function Checklist() {
   const handleTextChange = useCallback(
     (id: string, text: string) => {
       setItemsForDate((previous) =>
-        previous.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                text,
-              }
-            : item
-        )
+        previous.map((item) => {
+          if (item.id !== id) {
+            return item
+          }
+
+          const trimmedNext = text.trim()
+          const trimmedPrevious = item.text.trim()
+          const shouldClearOrigin = item.origin && (trimmedNext.length === 0 || trimmedNext !== trimmedPrevious)
+
+          return {
+            ...item,
+            text,
+            origin: shouldClearOrigin ? undefined : item.origin,
+          }
+        })
       )
     },
     [setItemsForDate]
@@ -276,9 +302,7 @@ export function Checklist() {
       return
     }
 
-    const todayKey = getLocalDateKey()
     const yesterdayKey = getYesterdayDateKey()
-
     const map = readChecklistMap()
     const from = Array.isArray(map[yesterdayKey]) ? map[yesterdayKey] : []
 
@@ -286,52 +310,99 @@ export function Checklist() {
       return
     }
 
-    const current = Array.isArray(map[todayKey]) ? map[todayKey] : []
+    const normalized = from
+      .filter((item) => item.text?.trim())
+      .map((item) => cloneItemWithOrigin(item.text, 'yesterday'))
 
-    if (current.length > 0) {
+    const hasExisting = items.some((item) => item.text.trim().length > 0)
+
+    if (hasExisting) {
       const confirmReplace = window.confirm(
         'Você já tem itens hoje. Deseja substituir pelos de ontem?\n(OK = substituir, Cancelar = mesclar)'
       )
 
       if (confirmReplace) {
-        const next = from.map((item) => ({
-          id: createId(),
-          text: item.text,
-          checked: false,
-          isReference: false,
-        }))
-
-        setItemsForDate(next)
+        setItemsForDate(normalized)
         return
       }
     }
 
     const existingTexts = new Set(
-      current
+      items
+        .map((item) => item.text.trim().toLowerCase())
+        .filter((value) => value.length > 0)
+    )
+
+    const toAppend = normalized.filter((item) => !existingTexts.has(item.text.trim().toLowerCase()))
+
+    if (toAppend.length === 0) {
+      return
+    }
+
+    setItemsForDate((previous) => [...previous, ...toAppend])
+  }, [items, setItemsForDate])
+
+  const handleDuplicateToTomorrow = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const todayKey = getLocalDateKey()
+    const tomorrowKey = getTomorrowDateKey()
+
+    const map = readChecklistMap()
+    const current = Array.isArray(map[todayKey]) ? map[todayKey] : []
+    const meaningfulCurrent = current.filter((item) => item.text?.trim())
+
+    if (meaningfulCurrent.length === 0) {
+      return
+    }
+
+    const existingTomorrow = Array.isArray(map[tomorrowKey]) ? map[tomorrowKey] : []
+
+    if (existingTomorrow.length > 0) {
+      const confirmReplace = window.confirm(
+        'Amanhã já tem itens. Deseja substituir pelos de hoje?\n(OK = substituir, Cancelar = mesclar)'
+      )
+
+      if (confirmReplace) {
+        const next = meaningfulCurrent.map((item) => cloneItemWithOrigin(item.text, 'today'))
+        map[tomorrowKey] = next
+        persistChecklistMap(map)
+        return
+      }
+    }
+
+    const tomorrowTexts = new Set(
+      existingTomorrow
         .map((item) => item.text?.trim().toLowerCase())
         .filter((value): value is string => Boolean(value))
     )
 
-    const toAppend = from
-      .filter((item) => item.text?.trim())
-      .filter((item) => !existingTexts.has(item.text.trim().toLowerCase()))
-      .map((item) => ({
-        id: createId(),
-        text: item.text,
-        checked: false,
-        isReference: false,
-      }))
+    const toAppend = meaningfulCurrent
+      .filter((item) => !tomorrowTexts.has(item.text.trim().toLowerCase()))
+      .map((item) => cloneItemWithOrigin(item.text, 'today'))
 
-    const merged = [...current, ...toAppend]
+    if (toAppend.length === 0) {
+      return
+    }
 
-    setItemsForDate(merged)
-  }, [setItemsForDate])
+    map[tomorrowKey] = [...existingTomorrow, ...toAppend]
+    persistChecklistMap(map)
+  }, [])
 
   return (
     <Card className="p-7">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">{title}</h2>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDuplicateToTomorrow}
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
+          >
+            Duplicar para amanhã
+          </button>
           <button
             type="button"
             onClick={handleDuplicateFromYesterday}
@@ -350,38 +421,49 @@ export function Checklist() {
       </div>
 
       <div className="space-y-3">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-3 rounded-2xl border border-white/50 bg-white/80 p-3 shadow-soft transition-all duration-300 focus-within:border-primary/60 focus-within:shadow-elevated"
-          >
-            <input
-              type="checkbox"
-              checked={item.checked}
-              onChange={() => handleToggle(item.id)}
-              className="h-5 w-5 rounded-full border-2 border-primary/40 bg-white accent-primary"
-              aria-label={item.text ? `Concluir tarefa: ${item.text}` : 'Concluir tarefa'}
-            />
-            <input
-              data-check-id={item.id}
-              type="text"
-              value={item.text}
-              onChange={(event) => handleTextChange(item.id, event.target.value)}
-              onBlur={handleTextBlur}
-              placeholder="Digite uma tarefa…"
-              className="flex-1 border-none bg-transparent text-sm text-support-1 placeholder:text-support-2/70 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => handleRemove(item.id)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary/60 text-support-2 transition hover:bg-secondary/80"
-              title="Remover"
-              aria-label="Remover"
+        {items.map((item) => {
+          const originLabel = item.origin === 'yesterday' ? 'de ontem' : item.origin === 'today' ? 'de hoje' : null
+
+          return (
+            <div
+              key={item.id}
+              className="flex items-center gap-3 rounded-2xl border border-white/50 bg-white/80 p-3 shadow-soft transition-all duration-300 focus-within:border-primary/60 focus-within:shadow-elevated"
             >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
+              <input
+                type="checkbox"
+                checked={item.checked}
+                onChange={() => handleToggle(item.id)}
+                className="h-5 w-5 rounded-full border-2 border-primary/40 bg-white accent-primary"
+                aria-label={item.text ? `Concluir tarefa: ${item.text}` : 'Concluir tarefa'}
+              />
+              <div className="flex flex-1 items-center gap-2">
+                <input
+                  data-check-id={item.id}
+                  type="text"
+                  value={item.text}
+                  onChange={(event) => handleTextChange(item.id, event.target.value)}
+                  onBlur={handleTextBlur}
+                  placeholder="Digite uma tarefa…"
+                  className="flex-1 border-none bg-transparent text-sm text-support-1 placeholder:text-support-2/70 focus:outline-none"
+                />
+                {originLabel && (
+                  <span className="rounded-full bg-secondary/60 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-support-2">
+                    {originLabel}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemove(item.id)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary/60 text-support-2 transition hover:bg-secondary/80"
+                title="Remover"
+                aria-label="Remover"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )
+        })}
       </div>
 
       <div className="mt-5">
