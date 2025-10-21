@@ -63,7 +63,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
     ageBand: '0-6m',
     materials: ['Objetos sonoros seguros', 'Colchonete ou mantinha'],
     steps: [
-      'Deixe o bebê confortável de barriga para cima',
+      'Deixe o beb�� confortável de barriga para cima',
       'Apresente sons suaves como chocalhos ou guizos',
       'Observe as reações e repita os sons que agradarem',
     ],
@@ -436,10 +436,13 @@ const fetchProfileAgeBand = async (): Promise<AgeBand> => {
 
     const data = await response.json()
     const children = Array.isArray(data?.filhos) ? data.filhos : []
-    const firstChild = children.find((child: any) => Number.isFinite(Number(child?.idadeMeses)))
+    const primaryChild = children.length > 0 ? children[0] : null
 
-    if (firstChild) {
-      return mapMonthsToAgeBand(Number(firstChild.idadeMeses))
+    if (primaryChild) {
+      const months = Number(primaryChild.idadeMeses)
+      if (Number.isFinite(months) && months >= 0) {
+        return mapMonthsToAgeBand(months)
+      }
     }
   } catch (error) {
     console.error('Não foi possível determinar faixa etária do perfil:', error)
