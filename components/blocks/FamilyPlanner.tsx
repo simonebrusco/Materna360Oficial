@@ -205,6 +205,15 @@ export function FamilyPlanner() {
     setIsAdding(true)
   }
 
+  const handleQuickAdd = (type: (typeof TYPE_OPTIONS)[number], title?: string) => {
+    resetEditState()
+    resetAddDraft(type)
+    if (title) {
+      setDraftTitle(title)
+    }
+    setIsAdding(true)
+  }
+
   const handleCancelAdd = () => {
     setIsAdding(false)
     resetAddDraft(draftType)
