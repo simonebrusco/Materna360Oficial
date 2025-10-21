@@ -312,6 +312,9 @@ export function FamilyPlanner() {
     const value = event.target.value as (typeof TYPE_OPTIONS)[number]
     if (TYPE_OPTIONS.includes(value)) {
       setEditType(value)
+      if (!typeSupportsDuration(value)) {
+        setEditDuration('')
+      }
     }
   }
 
