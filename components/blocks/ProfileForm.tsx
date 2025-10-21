@@ -399,9 +399,9 @@ export function ProfileForm() {
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-support-1">Choose a profile sticker</h3>
+                <h3 className="text-lg font-semibold text-support-1">Escolha uma figurinha de perfil</h3>
                 <p className="text-xs text-support-2">
-                  Pick the vibe that best represents you today.
+                  Escolha a vibe que mais combina com você hoje.
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                   {STICKERS.map((sticker) => {
