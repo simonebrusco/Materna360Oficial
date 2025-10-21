@@ -385,19 +385,32 @@ export function FamilyPlanner() {
   }
 
   const handleToggleDone = (itemId: string) => {
+    let nextItem: PlannerItem | null = null
+
     setPlannerData((previous) => {
       const currentItems = previous[selectedDayKey]
       if (!currentItems) {
         return previous
       }
 
+      const updatedItems = currentItems.map((item) => {
+        if (item.id !== itemId) {
+          return item
+        }
+        const toggled = { ...item, done: !item.done }
+        nextItem = toggled
+        return toggled
+      })
+
       return {
         ...previous,
-        [selectedDayKey]: currentItems.map((item) =>
-          item.id === itemId ? { ...item, done: !item.done } : item
-        ),
+        [selectedDayKey]: updatedItems,
       }
     })
+
+    if (USE_API_PLANNER && nextItem) {
+      void plannerApi.savePlannerItem(selectedDayKey, nextItem)
+    }
   }
 
   const handleRemoveItem = (itemId: string) => {
