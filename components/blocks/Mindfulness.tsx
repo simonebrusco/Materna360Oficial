@@ -534,9 +534,9 @@ export function Mindfulness() {
                         {isPlayable && <span className="text-xs text-emerald-600">Pronto para ouvir</span>}
                         {isMissing && <span className="text-xs text-support-2">Upload pendente</span>}
                       </div>
-                      {showProgress && (
+                      {isPlayable && (
                         <span className="text-xs font-medium text-support-2" aria-live="polite">
-                          {formatTime(progress.current)} / {formatTime(progress.duration)}
+                          {formatTime(currentProgress.current)} / {formatTime(currentProgress.duration)}
                         </span>
                       )}
                     </li>
