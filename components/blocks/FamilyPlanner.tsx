@@ -438,37 +438,160 @@ export function FamilyPlanner() {
 
         {selectedDayItems.length > 0 ? (
           <div className="space-y-3">
-            {selectedDayItems.map((item) => (
-              <div
-                key={item.id}
-                className={`flex flex-col gap-3 rounded-2xl border border-white/50 bg-white/80 p-4 shadow-soft transition ${
-                  item.done ? 'opacity-60' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-                    {item.type}
-                  </span>
-                  <span className="text-sm font-semibold text-support-1">{item.title}</span>
+            {selectedDayItems.map((item) => {
+              const isEditing = editingItemId === item.id
+
+              return (
+                <div
+                  key={item.id}
+                  className={`flex flex-col gap-3 rounded-2xl border border-white/50 bg-white/80 p-4 shadow-soft transition ${
+                    item.done ? 'opacity-60' : ''
+                  }`}
+                >
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <label htmlFor={`planner-edit-type-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                            Tipo
+                          </label>
+                          <select
+                            id={`planner-edit-type-${item.id}`}
+                            value={editType}
+                            onChange={handleEditTypeChange}
+                            className={`${inputClasses} appearance-none`}
+                          >
+                            {TYPE_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <label htmlFor={`planner-edit-title-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                            Título
+                          </label>
+                          <input
+                            id={`planner-edit-title-${item.id}`}
+                            value={editTitle}
+                            onChange={(event) => setEditTitle(event.target.value)}
+                            className={inputClasses}
+                          />
+                        </div>
+                        {typeSupportsDuration(editType) && (
+                          <div className="space-y-1">
+                            <label htmlFor={`planner-edit-duration-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                              Duração (min)
+                            </label>
+                            <input
+                              id={`planner-edit-duration-${item.id}`}
+                              type="number"
+                              min={0}
+                              value={editDuration}
+                              onChange={(event) => setEditDuration(event.target.value)}
+                              className={inputClasses}
+                            />
+                            <p className="text-[11px] text-support-2">Ex.: 10–15 minutos.</p>
+                          </div>
+                        )}
+                        <div className="space-y-1">
+                          <label htmlFor={`planner-edit-age-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                            Faixa etária
+                          </label>
+                          <select
+                            id={`planner-edit-age-${item.id}`}
+                            value={editAgeBand}
+                            onChange={(event) => {
+                              const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number] | ''
+                              setEditAgeBand(value === '' ? '' : value)
+                            }}
+                            className={`${inputClasses} appearance-none`}
+                          >
+                            <option value="">Selecione</option>
+                            {AGE_BAND_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <label htmlFor={`planner-edit-notes-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                            Notas
+                          </label>
+                          <textarea
+                            id={`planner-edit-notes-${item.id}`}
+                            value={editNotes}
+                            onChange={(event) => setEditNotes(event.target.value)}
+                            className={`${inputClasses} min-h-[90px]`}
+                          />
+                          <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                          {item.type}
+                        </span>
+                        <span className="text-sm font-semibold text-support-1">{item.title}</span>
+                      </div>
+                      {(item.durationMin !== undefined || item.ageBand) && (
+                        <div className="flex flex-wrap gap-3 text-xs text-support-2">
+                          {item.durationMin !== undefined && <span>Duração: {item.durationMin} min</span>}
+                          {item.ageBand && <span>Faixa etária: {item.ageBand}</span>}
+                        </div>
+                      )}
+                      {item.notes && <p className="text-sm text-support-2">{item.notes}</p>}
+                    </>
+                  )}
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDone(item.id)}
+                      className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                    >
+                      {item.done ? 'Concluído' : 'Concluir'}
+                    </button>
+                    {isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleEditSave}
+                          className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleEditCancel}
+                          className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => startEditingItem(item)}
+                        className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                      >
+                        Editar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                    >
+                      Remover
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleDone(item.id)}
-                    className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                  >
-                    {item.done ? 'Concluído' : 'Concluir'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                  >
-                    Remover
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <Card className="border border-dashed border-primary/30 bg-white/70 p-5 text-center shadow-none">
