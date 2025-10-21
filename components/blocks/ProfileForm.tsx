@@ -351,8 +351,8 @@ export function ProfileForm() {
                             onChange={(event) => updateChild(child.id, 'genero', event.target.value)}
                             className={`${inputClasses} appearance-none`}
                           >
-                            <option value="menino">Boy</option>
-                            <option value="menina">Girl</option>
+                            <option value="menino">Menino</option>
+                            <option value="menina">Menina</option>
                           </select>
                         </div>
                         <div className="space-y-2">
