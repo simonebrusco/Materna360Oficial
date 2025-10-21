@@ -466,7 +466,9 @@ export function Mindfulness() {
       </div>
 
       {renderEmptyState ? (
-        <p className="mt-6 text-sm text-support-2">Em breve, novos áudios de mindfulness por aqui.</p>
+        <p className="mt-6 text-sm text-support-2">
+          {hasManifestError ? 'Não foi possível carregar os áudios agora. Tente novamente mais tarde.' : 'Em breve, novos áudios de mindfulness por aqui.'}
+        </p>
       ) : (
         <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {themes.map((theme) => (
