@@ -328,7 +328,7 @@ export function ProfileForm() {
                   {form.filhos.map((child, index) => (
                     <div key={child.id} className="rounded-2xl border border-white/50 bg-white/75 p-4 shadow-soft">
                       <div className="flex items-center justify-between gap-3">
-                        <h4 className="text-sm font-semibold text-support-1">Child {index + 1}</h4>
+                        <h4 className="text-sm font-semibold text-support-1">Filho {index + 1}</h4>
                         {form.filhos.length > 1 && (
                           <button
                             type="button"
