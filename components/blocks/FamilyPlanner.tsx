@@ -175,6 +175,7 @@ export function FamilyPlanner() {
   const [editAgeBand, setEditAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number] | ''>('')
   const [editNotes, setEditNotes] = useState('')
   const [preferredAgeBand, setPreferredAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number]>(DEFAULT_AGE_BAND)
+  const [savedRecommendations, setSavedRecommendations] = useState<PlannerRecommendation[]>([])
   const hasSyncedWeekStart = useRef(false)
 
   const resetAddDraft = (type: (typeof TYPE_OPTIONS)[number] = 'Brincadeira') => {
