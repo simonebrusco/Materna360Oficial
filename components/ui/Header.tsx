@@ -140,23 +140,32 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
         {showNotification && (
           <div className="flex items-center gap-3">
-            <Link
-              href="/eu360"
-              prefetch={false}
-              className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
-              aria-label={`Figurinha de perfil: ${sticker.label}`}
-            >
-              <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-              <span className="absolute inset-0 rounded-full border border-white/60" aria-hidden />
-              {isLoadingSticker ? (
-                <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
-              ) : (
-                renderStickerContent()
-              )}
-            </Link>
+            {hasMounted ? (
+              <Link
+                href="/eu360"
+                prefetch={false}
+                className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
+                aria-label={`Figurinha de perfil: ${sticker.label}`}
+              >
+                <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <span className="absolute inset-0 rounded-full border border-white/60" aria-hidden />
+                {isLoadingSticker ? (
+                  <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
+                ) : (
+                  renderStickerContent()
+                )}
+              </Link>
+            ) : (
+              <span
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/60 text-primary shadow-soft"
+                aria-hidden
+              >
+                <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" />
+              </span>
+            )}
 
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary shadow-soft">
-              {sticker.label}
+              {hasMounted ? sticker.label : DEFAULT_STICKER.label}
             </span>
           </div>
         )}
