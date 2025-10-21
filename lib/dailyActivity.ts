@@ -1,5 +1,3 @@
-import { USE_API_PLANNER } from './plannerData'
-
 export type AgeBand = '0-6m' | '7-12m' | '1-2a' | '3-4a' | '5-6a'
 
 export type DailyActivity = {
