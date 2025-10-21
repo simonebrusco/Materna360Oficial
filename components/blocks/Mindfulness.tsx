@@ -23,6 +23,8 @@ type ManifestResponse = {
   themes?: MindfulnessTheme[]
 }
 
+type AvailabilityStatus = 'checking' | 'available' | 'missing'
+
 type TrackProgress = {
   current: number
   duration: number
@@ -38,6 +40,28 @@ type LastPlayback = {
 const MANIFEST_URL = '/audio/mindfulness/manifest.json'
 const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
 const STORAGE_LAST_KEY = 'mindfulness_last_v1'
+
+const isAudioAvailable = async (url: string): Promise<boolean> => {
+  try {
+    const headResponse = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+    if (headResponse.ok) {
+      return true
+    }
+
+    if (headResponse.status === 405 || headResponse.status === 501) {
+      const rangeResponse = await fetch(url, {
+        method: 'GET',
+        headers: { Range: 'bytes=0-0' },
+        cache: 'no-store',
+      })
+      return rangeResponse.ok || rangeResponse.status === 206
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}
 
 const formatTime = (value: number) => {
   if (!Number.isFinite(value) || value <= 0) {
