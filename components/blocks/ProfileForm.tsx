@@ -190,8 +190,10 @@ export function ProfileForm() {
         ...child,
         nome: child.nome.trim(),
       })),
-      figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID,
+      figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : '',
     }
+
+    const figurinhaToPersist = isProfileStickerId(trimmedState.figurinha) ? trimmedState.figurinha : DEFAULT_STICKER_ID
 
     const validationErrors = validateForm(trimmedState)
     setErrors(validationErrors)
@@ -209,7 +211,10 @@ export function ProfileForm() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(trimmedState),
+        body: JSON.stringify({
+          ...trimmedState,
+          figurinha: figurinhaToPersist,
+        }),
       })
 
       if (!response.ok) {
@@ -218,17 +223,19 @@ export function ProfileForm() {
 
       const data = await response.json()
 
+      const figurinhaFromResponse = isProfileStickerId(data.figurinha) ? data.figurinha : ''
+
       setForm({
         nomeMae: data.nomeMae,
         filhos: data.filhos,
-        figurinha: data.figurinha,
+        figurinha: figurinhaFromResponse,
       })
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('materna:profile-updated', {
             detail: {
-              figurinha: data.figurinha,
+              figurinha: figurinhaFromResponse || figurinhaToPersist,
               nomeMae: data.nomeMae,
               filhos: data.filhos,
             },
