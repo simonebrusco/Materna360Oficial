@@ -100,6 +100,23 @@ export function FamilyPlanner() {
   const [editNotes, setEditNotes] = useState('')
   const hasSyncedWeekStart = useRef(false)
 
+  const resetAddDraft = (type: (typeof TYPE_OPTIONS)[number] = 'Brincadeira') => {
+    setDraftType(type)
+    setDraftTitle('')
+    setDraftDuration('')
+    setDraftAgeBand('')
+    setDraftNotes('')
+  }
+
+  const resetEditState = () => {
+    setEditingItemId(null)
+    setEditType('Brincadeira')
+    setEditTitle('')
+    setEditDuration('')
+    setEditAgeBand('')
+    setEditNotes('')
+  }
+
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart])
   const todayKey = formatDateKey(today)
   const selectedDay = parseDateKey(selectedDayKey) ?? today
