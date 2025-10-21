@@ -65,18 +65,6 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
   ],
 }
 
-type PlannerItem = {
-  id: string
-  type: (typeof TYPE_OPTIONS)[number]
-  title: string
-  done: boolean
-  durationMin?: number
-  ageBand?: (typeof AGE_BAND_OPTIONS)[number]
-  notes?: string
-}
-
-type PlannerData = Record<string, PlannerItem[]>
-
 const formatDateKey = (date: Date) => {
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
