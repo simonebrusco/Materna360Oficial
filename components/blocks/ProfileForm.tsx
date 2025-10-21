@@ -314,9 +314,9 @@ export function ProfileForm() {
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-support-1">Children</h3>
+                    <h3 className="text-lg font-semibold text-support-1">Filhos</h3>
                     <p className="text-xs text-support-2">
-                      Add each child to tailor activities and tips.
+                      Adicione cada filho para personalizar atividades e dicas.
                     </p>
                   </div>
                   <Button type="button" variant="outline" size="sm" onClick={addChild}>
