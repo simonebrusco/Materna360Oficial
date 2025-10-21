@@ -429,9 +429,9 @@ export function ProfileForm() {
 
               <div className="space-y-3">
                 <Button type="submit" variant="primary" disabled={saving} className="w-full">
-                  {saving ? 'Saving...' : 'Save and Continue'}
+                  {saving ? 'Salvando...' : 'Salvar e continuar'}
                 </Button>
-                <p className="text-center text-xs text-support-2">You can edit this information anytime in your Profile.</p>
+                <p className="text-center text-xs text-support-2">Você poderá editar essas informações no seu Perfil.</p>
                 {statusMessage && (
                   <p className="text-center text-xs font-semibold text-support-1">{statusMessage}</p>
                 )}
