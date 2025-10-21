@@ -3,7 +3,13 @@ const path = require('path')
 
 class MirrorServerChunksPlugin {
   apply(compiler) {
-    if (compiler.options.target !== 'node') {
+    const target = compiler.options.target
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[MirrorServerChunksPlugin] target:', target)
+    }
+
+    const shouldMirror = !target || target === 'node' || (Array.isArray(target) && target.includes('node'))
+    if (!shouldMirror) {
       return
     }
 
@@ -12,6 +18,10 @@ class MirrorServerChunksPlugin {
       const chunkAssets = Object.keys(compilation.assets).filter((assetName) =>
         assetName.startsWith('chunks/') && assetName.endsWith('.js')
       )
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[MirrorServerChunksPlugin] mirroring chunks:', chunkAssets)
+      }
 
       await Promise.all(
         chunkAssets.map(async (assetName) => {
