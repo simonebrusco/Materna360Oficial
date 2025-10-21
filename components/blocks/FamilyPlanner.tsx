@@ -484,28 +484,41 @@ export function FamilyPlanner() {
     const trimmedNotes = editNotes.trim()
     const itemId = editingItemId
 
+    let updatedItem: PlannerItem | null = null
+
     setPlannerData((previous) => {
       const currentItems = previous[selectedDayKey]
       if (!currentItems) {
         return previous
       }
 
+      const mapped = currentItems.map((item) => {
+        if (item.id !== itemId) {
+          return item
+        }
+
+        const nextItem: PlannerItem = {
+          ...item,
+          type: editType,
+          title: trimmedTitle,
+          durationMin: durationValue,
+          ageBand: editAgeBand || undefined,
+          notes: trimmedNotes ? trimmedNotes : undefined,
+        }
+
+        updatedItem = nextItem
+        return nextItem
+      })
+
       return {
         ...previous,
-        [selectedDayKey]: currentItems.map((item) =>
-          item.id === itemId
-            ? {
-                ...item,
-                type: editType,
-                title: trimmedTitle,
-                durationMin: durationValue,
-                ageBand: editAgeBand || undefined,
-                notes: trimmedNotes ? trimmedNotes : undefined,
-              }
-            : item
-        ),
+        [selectedDayKey]: mapped,
       }
     })
+
+    if (USE_API_PLANNER && updatedItem) {
+      void plannerApi.savePlannerItem(selectedDayKey, updatedItem)
+    }
 
     resetEditState()
   }
