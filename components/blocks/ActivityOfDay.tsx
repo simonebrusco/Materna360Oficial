@@ -36,6 +36,9 @@ export function ActivityOfDay() {
 
   const { activity } = activityState
   const cardTitle = activity.emoji ? `${activity.emoji} ${activity.title}` : activity.title
+  const hasDuration = activity.durationMin !== undefined && activity.durationMin !== null
+  const hasAgeBand = Boolean(activity.ageBand)
+  const ageChipLabel = hasAgeBand ? activity.ageBand : 'Todas as idades'
 
   useEffect(() => {
     let active = true
@@ -110,8 +113,6 @@ export function ActivityOfDay() {
     }
   }, [activity, activityState.dateKey, isSaving])
 
-  const hasDuration = activity.durationMin !== undefined && activity.durationMin !== null
-  const hasAgeBand = Boolean(activity.ageBand)
   const detailButtonLabel = isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'
 
   return (
