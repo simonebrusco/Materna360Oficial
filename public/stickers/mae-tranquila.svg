@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
+  <title>Mãe Tranquila</title>
+  <desc>Ícone minimalista de lua crescente com pequenas estrelas</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="#F9C9B7" stroke="#2F3A56" stroke-width="1.5" d="M29 12.5c-7.2 0-13 5.8-13 13s5.8 13 13 13c3.1 0 6-1.1 8.2-3-4.7-.7-8.3-4.7-8.3-9.5s3.6-8.8 8.3-9.5c-2.2-1.9-5.1-3-8.2-3Z"/>
+    <path stroke="#2F3A56" stroke-width="1.2" d="m13.5 16.3 1 .4.4-1 .4 1 1-.4-.4 1 1 .4-1 .4.4 1-1-.4-.4 1-.4-1-1 .4.4-1-1-.4 1-.4Z"/>
+    <path stroke="#2F3A56" stroke-width="1.2" d="m17.2 12.7.8.3.3-.8.3.8.8-.3-.3.8.8.3-.8.3.3.8-.8-.3-.3.8-.3-.8-.8.3.3-.8-.8-.3.8-.3Z"/>
+    <path fill="#FF6F61" stroke="#2F3A56" stroke-width="1.2" d="m33.6 34.2 1.1.4.4-1.1.4 1.1 1.1-.4-.4 1.1 1.1.4-1.1.4.4 1.1-1.1-.4-.4 1.1-.4-1.1-1.1.4.4-1.1-1.1-.4 1.1-.4Z"/>
+  </g>
+</svg>
