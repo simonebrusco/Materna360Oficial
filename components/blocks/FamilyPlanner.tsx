@@ -11,12 +11,16 @@ const STORAGE_KEY = 'planner_v1'
 const WEEK_STORAGE_KEY = 'planner_last_week_start'
 
 const TYPE_OPTIONS = ['Brincadeira', 'Receita', 'Livro', 'Brinquedo', 'Recomendação'] as const
+const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
 
 type PlannerItem = {
   id: string
   type: (typeof TYPE_OPTIONS)[number]
   title: string
   done: boolean
+  durationMin?: number
+  ageBand?: (typeof AGE_BAND_OPTIONS)[number]
+  notes?: string
 }
 
 type PlannerData = Record<string, PlannerItem[]>
