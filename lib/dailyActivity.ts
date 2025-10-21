@@ -370,5 +370,3 @@ export const getInitialDailyActivity = (): DailyActivityResult => {
 }
 
 export const getTodayDateKey = getBrazilDateKey
-
-export const shouldUsePlannerApi = () => USE_API_PLANNER
