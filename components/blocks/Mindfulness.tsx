@@ -397,7 +397,7 @@ export function Mindfulness() {
 
       await ensurePlayback()
     },
-    [currentPlayback, isPlaying, persistLastPlayback, progressMap]
+    [availability, currentPlayback, isPlaying, persistLastPlayback, progressMap]
   )
 
   const handleSeek = useCallback((value: number) => {
