@@ -115,6 +115,15 @@ const formatDayLabel = (date: Date) => {
   return `${capitalized} ${dayFormatter.format(date)}`
 }
 
+const buildRecommendationKey = (title: string, refId?: string | null) => {
+  const safeRef = refId?.trim()
+  if (safeRef) {
+    return `ref:${safeRef}`
+  }
+
+  return `title:${title.trim().toLowerCase()}`
+}
+
 const createId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID()
