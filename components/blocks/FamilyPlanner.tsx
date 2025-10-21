@@ -981,13 +981,18 @@ export function FamilyPlanner() {
             <div className="grid gap-3 sm:grid-cols-3">
               {recommendations.map((suggestion, index) => (
                 <div
-                  key={`${preferredAgeBand}-${index}-${suggestion.title}`}
+                  key={`${buildRecommendationKey(suggestion.title, suggestion.refId ?? null)}-${index}`}
                   className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
                 >
-                  <div className="mb-3 flex items-center gap-2">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
                       {suggestion.type}
                     </span>
+                    {suggestion.source === 'daily-activity' && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                        Salva hoje
+                      </span>
+                    )}
                   </div>
                   <p className="mb-3 text-sm font-semibold text-support-1">{suggestion.title}</p>
                   <Button
