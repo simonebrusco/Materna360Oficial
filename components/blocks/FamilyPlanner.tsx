@@ -269,6 +269,10 @@ export function FamilyPlanner() {
   }
 
   const handleRemoveItem = (itemId: string) => {
+    if (editingItemId === itemId) {
+      resetEditState()
+    }
+
     setPlannerData((previous) => {
       const currentItems = previous[selectedDayKey]
       if (!currentItems) {
