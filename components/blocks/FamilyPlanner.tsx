@@ -397,6 +397,7 @@ export function FamilyPlanner() {
 
   const handleToggleDone = (itemId: string) => {
     let nextItem: PlannerItem | null = null
+    const timestamp = new Date().toISOString()
 
     setPlannerData((previous) => {
       const currentItems = previous[selectedDayKey]
@@ -408,7 +409,13 @@ export function FamilyPlanner() {
         if (item.id !== itemId) {
           return item
         }
-        const toggled = { ...item, done: !item.done }
+        const toggledDone = !item.done
+        const toggled: PlannerItem = {
+          ...item,
+          done: toggledDone,
+          status: toggledDone ? 'done' : 'pending',
+          updatedAt: timestamp,
+        }
         nextItem = toggled
         return toggled
       })
