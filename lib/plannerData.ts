@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'planner_v1'
 const WEEK_STORAGE_KEY = 'planner_last_week_start'
-const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
+export const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
 
 export type PlannerItemType = 'Brincadeira' | 'Receita' | 'Livro' | 'Brinquedo' | 'Recomendação'
 
