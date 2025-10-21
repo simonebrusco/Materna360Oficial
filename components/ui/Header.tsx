@@ -33,7 +33,6 @@ const getStickerInfo = (id: string | null | undefined): StickerInfo => {
 
 export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [hasMounted, setHasMounted] = useState(false)
   const [stickerId, setStickerId] = useState<string>('')
   const [isLoadingSticker, setIsLoadingSticker] = useState<boolean>(false)
 
