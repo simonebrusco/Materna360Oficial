@@ -89,9 +89,7 @@ export function MessageOfDay() {
           console.error('Failed to fallback to cached daily message:', readError)
         }
 
-        if (!message) {
-          setMessage('Você está fazendo um ótimo trabalho!')
-        }
+        setMessage((previous) => previous || 'Você está fazendo um ótimo trabalho!')
       } finally {
         setIsLoading(false)
       }
