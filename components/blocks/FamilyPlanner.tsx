@@ -220,11 +220,24 @@ export function FamilyPlanner() {
       return
     }
 
+    let durationValue: number | undefined
+    if (draftDuration.trim()) {
+      const numeric = Number(draftDuration)
+      if (Number.isFinite(numeric)) {
+        durationValue = Math.max(0, Math.round(numeric))
+      }
+    }
+
+    const trimmedNotes = draftNotes.trim()
+
     const newItem: PlannerItem = {
       id: createId(),
       type: draftType,
       title: trimmedTitle,
       done: false,
+      durationMin: durationValue,
+      ageBand: draftAgeBand || undefined,
+      notes: trimmedNotes ? trimmedNotes : undefined,
     }
 
     setPlannerData((previous) => {
@@ -236,7 +249,7 @@ export function FamilyPlanner() {
     })
 
     setIsAdding(false)
-    setDraftTitle('')
+    resetAddDraft(draftType)
   }
 
   const handleToggleDone = (itemId: string) => {
