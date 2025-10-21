@@ -19,9 +19,13 @@ class MirrorServerChunksPlugin {
 
     compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', async (compilation) => {
       const outputPath = compiler.outputPath
-      const chunkAssets = Object.keys(compilation.assets).filter((assetName) =>
-        assetName.startsWith('chunks/') && assetName.endsWith('.js')
-      )
+      const assetNames = Object.keys(compilation.assets)
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[MirrorServerChunksPlugin] assets available:', assetNames.slice(0, 10))
+      }
+
+      const chunkAssets = assetNames.filter((assetName) => assetName.startsWith('chunks/') && assetName.endsWith('.js'))
 
       if (process.env.NODE_ENV !== 'production') {
         console.log('[MirrorServerChunksPlugin] mirroring chunks:', chunkAssets)
