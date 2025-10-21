@@ -167,7 +167,7 @@ export function Mindfulness() {
     }
 
     const initialStatuses: Record<string, AvailabilityStatus> = {}
-    const initialMissing = new Set<string>()
+    const initialMissing: string[] = []
 
     themes.forEach((theme) => {
       theme.tracks.forEach((track) => {
@@ -177,13 +177,13 @@ export function Mindfulness() {
           initialStatuses[track.id] = 'missing'
         }
         if (!track.file) {
-          initialMissing.add(`(sem arquivo) ${track.id}`)
+          initialMissing.push(track.id)
         }
       })
     })
 
     setAvailability(initialStatuses)
-    setMissingFiles(Array.from(initialMissing))
+    setMissingFiles(initialMissing)
 
     let cancelled = false
     const availabilityVersion = Date.now().toString()
