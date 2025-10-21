@@ -3,6 +3,7 @@ export type AgeBand = '0-6m' | '7-12m' | '1-2a' | '3-4a' | '5-6a'
 export type DailyActivity = {
   id: string
   title: string
+  emoji?: string
   durationMin?: number
   ageBand?: AgeBand
   materials?: string[]
