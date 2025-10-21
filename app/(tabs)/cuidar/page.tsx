@@ -6,33 +6,9 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
-import { AudioCard } from '@/components/blocks/AudioCard'
+import { Mindfulness } from '@/components/blocks/Mindfulness'
 
 export default function CuidarPage() {
-  const meditations = [
-    {
-      title: 'Meditação para Dormir',
-      duration: '10 min',
-      instructor: 'Instrutora Ana',
-      image: '🧘',
-      description: 'Relaxe antes de dormir com esta meditação guiada',
-    },
-    {
-      title: 'Meditação da Manhã',
-      duration: '5 min',
-      instructor: 'Instrutora Marina',
-      image: '🌅',
-      description: 'Comece o dia com energia e positividade',
-    },
-    {
-      title: 'Mindfulness no Caos',
-      duration: '8 min',
-      instructor: 'Instrutora Sofia',
-      image: '🧠',
-      description: 'Encontre paz mesmo em dias agitados',
-    },
-  ]
-
   const recipes = [
     { emoji: '🥗', title: 'Salada Detox', prep: '10 min' },
     { emoji: '🥤', title: 'Suco Verde Energético', prep: '5 min' },
@@ -83,18 +59,9 @@ export default function CuidarPage() {
           <BreathTimer />
         </Reveal>
 
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🎧 Meditações</h2>
-          </Reveal>
-          <div className="space-y-4">
-            {meditations.map((med, idx) => (
-              <Reveal key={med.title} delay={idx * 90}>
-                <AudioCard {...med} />
-              </Reveal>
-            ))}
-          </div>
-        </div>
+        <Reveal delay={120}>
+          <Mindfulness />
+        </Reveal>
 
         <Reveal delay={140}>
           <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
