@@ -102,9 +102,14 @@ export const plannerApi = {
     }
   },
 
-  async savePlannerItem(item: PlannerItemPayload) {
+  async savePlannerItem(dateKey: string, item: PlannerItem) {
     if (!USE_API_PLANNER) {
       return
+    }
+
+    const payload: PlannerApiItem = {
+      ...item,
+      date: dateKey,
     }
 
     try {
@@ -113,7 +118,7 @@ export const plannerApi = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(item),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
