@@ -335,7 +335,7 @@ export function ProfileForm() {
                             onClick={() => removeChild(child.id)}
                             className="text-xs font-semibold text-primary transition hover:text-primary/80"
                           >
-                            Remove child
+                            Remover filho
                           </button>
                         )}
                       </div>
