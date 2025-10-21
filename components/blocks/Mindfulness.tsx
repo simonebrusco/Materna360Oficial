@@ -84,6 +84,8 @@ export function Mindfulness() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [resumeData, setResumeData] = useState<LastPlayback | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({})
+  const [missingFiles, setMissingFiles] = useState<string[]>([])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
