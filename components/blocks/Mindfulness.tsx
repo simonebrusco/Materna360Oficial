@@ -328,8 +328,10 @@ export function Mindfulness() {
     const theme = themes.find((item) => item.id === resumeData.themeId)
     const track = theme?.tracks.find((item) => item.id === resumeData.trackId)
     if (!theme || !track || !track.file) return null
+    const status = availability[track.id] ?? (track.file ? 'checking' : 'missing')
+    if (status !== 'available') return null
     return { theme, track }
-  }, [resumeData, themes])
+  }, [availability, resumeData, themes])
 
   const handleToggleTrack = useCallback(
     async (theme: MindfulnessTheme, track: MindfulnessTrack) => {
