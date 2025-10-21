@@ -209,7 +209,7 @@ export function ProfileForm() {
     return nextErrors
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setStatusMessage('')
 
