@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
 const STORAGE_KEY = 'daily_checklist_v1'
 const FALLBACK_NAME = 'Mãe'
 const MIN_EMPTY_ROWS = 2
+const ACTION_BUTTON_BASE =
+  'rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60'
 
 const REFERENCE_TEXTS = [
   'Beber água (garrafinha por perto)',
@@ -395,25 +396,36 @@ export function Checklist() {
     <Card className="p-7">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">{title}</h2>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
-            onClick={handleDuplicateToTomorrow}
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
+            onClick={handleAddLine}
+            aria-label="+ Adicionar linha"
+            className={`${ACTION_BUTTON_BASE} border border-primary/20 bg-white text-primary hover:bg-primary/10`}
           >
-            Duplicar para amanhã
+            + Adicionar linha
           </button>
           <button
             type="button"
             onClick={handleDuplicateFromYesterday}
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
+            aria-label="Duplicar de ontem"
+            className={`${ACTION_BUTTON_BASE} border border-white/50 bg-white text-support-1 hover:bg-white/70`}
           >
             Duplicar de ontem
           </button>
           <button
             type="button"
+            onClick={handleDuplicateToTomorrow}
+            aria-label="Duplicar para amanhã"
+            className={`${ACTION_BUTTON_BASE} border border-white/50 bg-white text-support-1 hover:bg-white/70`}
+          >
+            Duplicar para amanhã
+          </button>
+          <button
+            type="button"
             onClick={handleClearChecks}
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
+            aria-label="Limpar checks"
+            className={`${ACTION_BUTTON_BASE} border border-rose-200 bg-white text-rose-600 hover:bg-rose-50`}
           >
             Limpar checks
           </button>
@@ -466,11 +478,6 @@ export function Checklist() {
         })}
       </div>
 
-      <div className="mt-5">
-        <Button type="button" variant="outline" size="sm" className="w-full" onClick={handleAddLine}>
-          + Adicionar linha
-        </Button>
-      </div>
     </Card>
   )
 }
