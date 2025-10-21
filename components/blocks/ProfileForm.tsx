@@ -9,32 +9,32 @@ import { Reveal } from '@/components/ui/Reveal'
 const STICKERS = [
   {
     id: 'mae-carinhosa',
-    name: 'Caring Mom',
-    description: 'Love in small gestures.',
+    name: 'Mãe Carinhosa',
+    description: 'Amor nos pequenos gestos.',
     emoji: '💞',
   },
   {
     id: 'mae-leve',
-    name: 'Light Mom',
-    description: 'Balance and presence.',
+    name: 'Mãe Leve',
+    description: 'Equilíbrio e presença.',
     emoji: '☁️',
   },
   {
     id: 'mae-determinada',
-    name: 'Determined Mom',
-    description: 'Strength with sweetness.',
+    name: 'Mãe Determinada',
+    description: 'Força com doçura.',
     emoji: '🌱',
   },
   {
     id: 'mae-criativa',
-    name: 'Creative Mom',
-    description: 'Turns everything into magic.',
+    name: 'Mãe Criativa',
+    description: 'Inventa e transforma.',
     emoji: '🎨',
   },
   {
     id: 'mae-tranquila',
-    name: 'Calm Mom',
-    description: 'Serenity and self-care.',
+    name: 'Mãe Tranquila',
+    description: 'Serenidade e autocuidado.',
     emoji: '🌙',
   },
 ] as const
