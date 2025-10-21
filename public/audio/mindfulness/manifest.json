@@ -1,0 +1,31 @@
+{
+  "themes": [
+    {
+      "id": "respiracao-pausa",
+      "title": "Respiração & Pausa",
+      "tracks": [
+        { "id": "acalme-sua-mente", "title": "Acalme sua mente" },
+        { "id": "respire-e-conecte-se", "title": "Respire e conecte-se" },
+        { "id": "saindo-do-piloto-automatico", "title": "Saindo do piloto automático" }
+      ]
+    },
+    {
+      "id": "autocompaixao-forca",
+      "title": "Autocompaixão & Força",
+      "tracks": [
+        { "id": "voce-esta-fazendo-o-melhor", "title": "Você está fazendo o melhor" },
+        { "id": "voce-nao-precisa-dar-conta", "title": "Você não precisa dar conta" },
+        { "id": "confie-em-voce", "title": "Confie em você" }
+      ]
+    },
+    {
+      "id": "sono-relaxamento",
+      "title": "Sono & Relaxamento",
+      "tracks": [
+        { "id": "antes-de-dormir", "title": "Antes de dormir" },
+        { "id": "um-novo-comeco", "title": "Um novo começo" },
+        { "id": "natureza-e-equilibrio", "title": "Natureza e equilíbrio" }
+      ]
+    }
+  ]
+}
