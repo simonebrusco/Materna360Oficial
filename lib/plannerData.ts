@@ -79,11 +79,11 @@ const fetchPlannerData = async (weekStart: string): Promise<PlannerData> => {
 
   const payload: { items: PlannerApiItem[] } = await response.json()
   return payload.items.reduce<PlannerData>((acc, item) => {
-    if (!acc[item.date]) {
-      acc[item.date] = []
-    }
     const { date, ...rest } = item
-    acc[item.date].push(rest)
+    if (!acc[date]) {
+      acc[date] = []
+    }
+    acc[date].push(rest)
     return acc
   }, {})
 }
