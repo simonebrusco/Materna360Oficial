@@ -198,7 +198,7 @@ export function ProfileForm() {
 
     state.filhos.forEach((child) => {
       if (child.idadeMeses < 0) {
-        childErrors[child.id] = 'Age must be 0 or greater.'
+        childErrors[child.id] = 'A idade precisa ser igual ou maior que 0.'
       }
     })
 
