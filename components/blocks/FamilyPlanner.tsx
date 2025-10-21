@@ -285,7 +285,7 @@ export function FamilyPlanner() {
                 <span>{formatDayLabel(day)}</span>
               </button>
             )
-          })
+          })}
         </div>
         <button
           type="button"
