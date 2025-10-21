@@ -25,7 +25,7 @@ type DailyActivityResult = {
 
 const DAILY_STORAGE_KEY = 'daily_activity_v1'
 const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
-const DEFAULT_AGE_BAND: AgeBand = '1-2a'
+export const DEFAULT_AGE_BAND: AgeBand = '1-2a'
 const AGE_BAND_ORDER: AgeBand[] = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a']
 
 const ACTIVITIES_CATALOG: DailyActivity[] = [
