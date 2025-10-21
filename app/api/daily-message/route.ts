@@ -55,10 +55,29 @@ const deterministicMessageFor = (dateKey: string) => {
   return MESSAGE_POOL[index] ?? FALLBACK_MESSAGE
 }
 
-async function generateMessageWithAI(dateKey: string): Promise<string | null> {
+const sanitizeName = (rawName: string | null): string | null => {
+  if (!rawName) {
+    return null
+  }
+
+  const trimmed = rawName.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  return trimmed
+}
+
+async function generateMessageWithAI(dateKey: string, name: string | null): Promise<string | null> {
   if (!shouldUseAI()) {
     return null
   }
+
+  const target = name ?? 'a mãe usuária do Materna360'
+  const systemPrompt = `Você é a voz acolhedora do app Materna360. Gere UMA frase curta, em português (Brasil), positiva e realista para uma mãe ocupada, incentivando leveza, presença e autocuidado. Até ~140 caracteres, sem hashtags. Fale diretamente com ${target}.`
+  const userPrompt = name
+    ? `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora falando diretamente com ${name}.`
+    : `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora para uma mãe.`
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -72,12 +91,11 @@ async function generateMessageWithAI(dateKey: string): Promise<string | null> {
         messages: [
           {
             role: 'system',
-            content:
-              'Você é a voz acolhedora do app Materna360. Gere UMA frase curta, em português (Brasil), positiva e realista para uma mãe ocupada, incentivando leveza, presença e autocuidado. Até ~140 caracteres, sem hashtags.',
+            content: systemPrompt,
           },
           {
             role: 'user',
-            content: `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora.`,
+            content: userPrompt,
           },
         ],
         max_tokens: 80,
@@ -103,12 +121,14 @@ async function generateMessageWithAI(dateKey: string): Promise<string | null> {
   }
 }
 
-export async function GET(): Promise<NextResponse<DailyMessageResponse>> {
+export async function GET(request: Request): Promise<NextResponse<DailyMessageResponse>> {
   const now = new Date()
   const dateKey = getDateKey(now)
+  const url = new URL(request.url)
+  const providedName = sanitizeName(url.searchParams.get('name'))
 
   try {
-    const candidate = await generateMessageWithAI(dateKey)
+    const candidate = await generateMessageWithAI(dateKey, providedName)
     const message = candidate ?? deterministicMessageFor(dateKey)
 
     return NextResponse.json(
