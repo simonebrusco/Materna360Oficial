@@ -1,6 +1,5 @@
 'use client'
 
-stellar-den
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
@@ -153,6 +152,33 @@ const pickRecommendationsForDay = (
   }))
 }
 
+const sanitizePlannerItem = (item: PlannerItem): PlannerItem => ({
+  ...item,
+  title: item.title.trim(),
+  durationMin:
+    item.durationMin !== undefined && item.durationMin !== null
+      ? Math.max(0, Math.round(item.durationMin))
+      : undefined,
+  notes: item.notes?.trim() ?? undefined,
+})
+
+const normalizeAgeBand = (ageBand?: string | null) => {
+  if (!ageBand) {
+    return ''
+  }
+
+  if (AGE_BAND_OPTIONS.includes(ageBand as (typeof AGE_BAND_OPTIONS)[number])) {
+    return ageBand as (typeof AGE_BAND_OPTIONS)[number]
+  }
+
+  const mapped = mapMonthsToAgeBand(Number(ageBand) || 0)
+  if (mapped && AGE_BAND_OPTIONS.includes(mapped as (typeof AGE_BAND_OPTIONS)[number])) {
+    return mapped as (typeof AGE_BAND_OPTIONS)[number]
+  }
+
+  return ''
+}
+
 export function FamilyPlanner() {
   const today = useMemo(() => {
     const current = new Date()
@@ -160,10 +186,23 @@ export function FamilyPlanner() {
     return current
   }, [])
 
-  const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()))
-  const [selectedDayKey, setSelectedDayKey] = useState(() => formatDateKey(new Date()))
+  const initialWeekStart = useMemo(() => {
+    const stored = plannerStorage.getStoredWeekStart?.()
+    if (stored) {
+      const parsed = parseDateKey(stored)
+      if (parsed) {
+        return getWeekStart(parsed)
+      }
+    }
+
+    return getWeekStart(new Date())
+  }, [])
+
+  const [weekStart, setWeekStart] = useState<Date>(initialWeekStart)
+  const [selectedDayKey, setSelectedDayKey] = useState(() => formatDateKey(today))
   const [plannerData, setPlannerData] = useState<PlannerData>({})
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [draftType, setDraftType] = useState<(typeof TYPE_OPTIONS)[number]>('Brincadeira')
   const [draftTitle, setDraftTitle] = useState('')
@@ -178,180 +217,49 @@ export function FamilyPlanner() {
   const [editNotes, setEditNotes] = useState('')
   const [preferredAgeBand, setPreferredAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number]>(DEFAULT_AGE_BAND)
   const [savedRecommendations, setSavedRecommendations] = useState<PlannerRecommendation[]>([])
+  const [suggestedRecommendations, setSuggestedRecommendations] = useState<RecommendationSuggestion[]>([])
   const hasSyncedWeekStart = useRef(false)
-
-  const resetAddDraft = (type: (typeof TYPE_OPTIONS)[number] = 'Brincadeira') => {
-    setDraftType(type)
-    setDraftTitle('')
-    setDraftDuration('')
-    setDraftAgeBand('')
-    setDraftNotes('')
-  }
-
-  const resetEditState = () => {
-    setEditingItemId(null)
-    setEditType('Brincadeira')
-    setEditTitle('')
-    setEditDuration('')
-    setEditAgeBand('')
-    setEditNotes('')
-  }
 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart])
   const todayKey = formatDateKey(today)
   const selectedDay = parseDateKey(selectedDayKey) ?? today
-  const selectedDayItems = plannerData[selectedDayKey] ?? []
-  const recommendations = useMemo(() => {
-    const dayIndex = (selectedDay.getDay() + 6) % 7
-    const autoSuggestions = pickRecommendationsForDay(preferredAgeBand, dayIndex)
-
-    const seen = new Set<string>()
-    const entries: RecommendationSuggestion[] = []
-
-    const register = (suggestion: RecommendationSuggestion) => {
-      const key = buildRecommendationKey(suggestion.title, suggestion.refId)
-      if (seen.has(key)) {
-        return
-      }
-      seen.add(key)
-      entries.push(suggestion)
-    }
-
-    savedRecommendations.forEach((item) => {
-      register({
-        type: item.type,
-        title: item.title,
-        refId: item.refId ?? null,
-        durationMin: item.durationMin ?? null,
-        ageBand: item.ageBand ?? null,
-        link: item.link ?? null,
-        source: item.source ?? 'daily-activity',
-        createdAt: item.createdAt,
-      })
-    })
-
-    autoSuggestions.forEach((suggestion) => {
-      register(suggestion)
-    })
-
-    return entries.slice(0, 3)
-  }, [preferredAgeBand, savedRecommendations, selectedDay])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const loadSavedRecommendations = () => {
-      setSavedRecommendations(recommendationStorage.getForDate(selectedDayKey))
-    }
-
-    loadSavedRecommendations()
-
-    const handleRecommendationsUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{ dateKey?: string }>
-      if (!customEvent.detail?.dateKey || customEvent.detail.dateKey === selectedDayKey) {
-        loadSavedRecommendations()
-      }
-    }
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === RECOMMENDATION_STORAGE_KEY) {
-        loadSavedRecommendations()
-      }
-    }
-
-    window.addEventListener(RECOMMENDATIONS_UPDATED_EVENT, handleRecommendationsUpdated)
-    window.addEventListener('storage', handleStorage)
-
-    return () => {
-      window.removeEventListener(RECOMMENDATIONS_UPDATED_EVENT, handleRecommendationsUpdated)
-      window.removeEventListener('storage', handleStorage)
-    }
-  }, [selectedDayKey])
+  const selectedDayItems = useMemo(() => plannerData[selectedDayKey] ?? [], [plannerData, selectedDayKey])
 
   useEffect(() => {
     let active = true
 
-    const loadProfile = async () => {
+    const loadPlannerData = async () => {
+      setIsLoading(true)
       try {
-        const response = await fetch('/api/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to load profile')
-        }
-
-        const data = await response.json()
-
+        const weekStartKey = formatDateKey(weekStart)
+        const data = await plannerApi.getPlannerData(weekStartKey)
         if (!active) {
           return
         }
 
-        const children = Array.isArray(data?.filhos) ? data.filhos : []
-        const firstChildWithAge = children.find((child: any) => Number.isFinite(Number(child?.idadeMeses)))
-        if (firstChildWithAge) {
-          const ageBand = mapMonthsToAgeBand(Number(firstChildWithAge.idadeMeses))
-          setPreferredAgeBand(ageBand)
-        }
+        setPlannerData(data)
+        setIsInitialized(true)
       } catch (error) {
-        console.error('Failed to determine age band from profile:', error)
-      }
-    }
-
-    void loadProfile()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  useEffect(() => {
-    let active = true
-
-    const initializePlanner = async () => {
-      let initialWeekStart = getWeekStart(new Date())
-
-      const storedWeekStartKey = plannerStorage.getStoredWeekStart()
-      if (storedWeekStartKey) {
-        const parsedDate = parseDateKey(storedWeekStartKey)
-        if (parsedDate) {
-          initialWeekStart = getWeekStart(parsedDate)
-          if (active) {
-            setWeekStart(initialWeekStart)
-            if (!hasSyncedWeekStart.current) {
-              setSelectedDayKey(formatDateKey(parsedDate))
-              hasSyncedWeekStart.current = true
-            }
-          }
-        }
-      }
-
-      try {
-        const data = await plannerApi.getPlannerData(formatDateKey(initialWeekStart))
+        console.error('Falha ao carregar planner:', error)
         if (active) {
-          setPlannerData(data)
+          setPlannerData(plannerStorage.getPlannerData())
         }
-      } catch (error) {
-        console.error('Failed to initialize planner data:', error)
       } finally {
         if (active) {
-          setIsInitialized(true)
+          setIsLoading(false)
         }
       }
     }
 
-    void initializePlanner()
+    void loadPlannerData()
 
     return () => {
       active = false
     }
-  }, [])
+  }, [weekStart])
 
   useEffect(() => {
-    if (!isInitialized || USE_API_PLANNER) {
+    if (!isInitialized) {
       return
     }
 
@@ -359,282 +267,179 @@ export function FamilyPlanner() {
   }, [plannerData, isInitialized])
 
   useEffect(() => {
-    if (!isInitialized || USE_API_PLANNER) {
-      return
+    if (hasSyncedWeekStart.current) {
+      plannerStorage.saveWeekStart?.(formatDateKey(weekStart))
+    } else {
+      hasSyncedWeekStart.current = true
     }
-
-    plannerStorage.saveWeekStart(formatDateKey(weekStart))
-  }, [weekStart, isInitialized])
+  }, [weekStart])
 
   useEffect(() => {
-    if (!isInitialized || !USE_API_PLANNER) {
-      return
-    }
+    const list = recommendationStorage.getForDate(selectedDayKey)
+    setSavedRecommendations(list)
 
-    let active = true
+    const dayIndex = weekDays.findIndex((day) => formatDateKey(day) === selectedDayKey)
+    setSuggestedRecommendations(pickRecommendationsForDay(preferredAgeBand, dayIndex === -1 ? 0 : dayIndex))
+  }, [selectedDayKey, preferredAgeBand, weekDays])
 
-    const fetchWeek = async () => {
-      try {
-        const data = await plannerApi.getPlannerData(formatDateKey(weekStart))
-        if (active) {
-          setPlannerData(data)
-        }
-      } catch (error) {
-        console.error('Failed to load planner data for week:', error)
+  useEffect(() => {
+    const handleRecommendationsUpdate = (event: Event) => {
+      const custom = event as CustomEvent<{ dateKey?: string }>
+      const targetDate = custom.detail?.dateKey
+
+      if (!targetDate || targetDate === selectedDayKey) {
+        const list = recommendationStorage.getForDate(selectedDayKey)
+        setSavedRecommendations(list)
       }
     }
 
-    void fetchWeek()
+    window.addEventListener(RECOMMENDATIONS_UPDATED_EVENT, handleRecommendationsUpdate)
 
     return () => {
-      active = false
+      window.removeEventListener(RECOMMENDATIONS_UPDATED_EVENT, handleRecommendationsUpdate)
     }
-  }, [weekStart, isInitialized])
+  }, [selectedDayKey])
 
-  useEffect(() => {
-    const isDayWithinWeek = weekDays.some((day) => formatDateKey(day) === selectedDayKey)
-    if (!isDayWithinWeek) {
-      setSelectedDayKey(formatDateKey(weekDays[0]))
-    }
-  }, [weekDays, selectedDayKey])
+  const updatePlannerForDay = (dateKey: string, updater: (items: PlannerItem[]) => PlannerItem[]) => {
+    setPlannerData((previous) => {
+      const currentItems = previous[dateKey] ?? []
+      const nextItems = updater(currentItems.map(sanitizePlannerItem))
+      return {
+        ...previous,
+        [dateKey]: nextItems,
+      }
+    })
+  }
 
-  const handleSelectDay = (dayKey: string) => {
-    setSelectedDayKey(dayKey)
-    resetEditState()
+  const handleSelectDay = (dateKey: string) => {
+    setSelectedDayKey(dateKey)
   }
 
   const handleChangeWeek = (direction: 'prev' | 'next') => {
-    resetEditState()
     setWeekStart((current) => addDays(current, direction === 'prev' ? -7 : 7))
+    if (direction === 'next') {
+      const nextDay = addDays(parseDateKey(selectedDayKey) ?? new Date(), 7)
+      setSelectedDayKey(formatDateKey(nextDay))
+    } else {
+      const prevDay = addDays(parseDateKey(selectedDayKey) ?? new Date(), -7)
+      setSelectedDayKey(formatDateKey(prevDay))
+    }
   }
 
-  const handleStartAdd = (type?: (typeof TYPE_OPTIONS)[number]) => {
-    resetEditState()
-    resetAddDraft(type ?? 'Brincadeira')
+  const resetDraft = (type: (typeof TYPE_OPTIONS)[number] = 'Brincadeira') => {
+    setDraftType(type)
+    setDraftTitle('')
+    setDraftDuration('')
+    setDraftAgeBand('')
+    setDraftNotes('')
+  }
+
+  const handleStartAdd = (type?: (typeof TYPE_OPTIONS)[number], title?: string) => {
     setIsAdding(true)
-  }
-
-  const handleQuickAdd = (type: (typeof TYPE_OPTIONS)[number], title?: string) => {
-    resetEditState()
-    resetAddDraft(type)
+    resetDraft(type ?? 'Brincadeira')
     if (title) {
       setDraftTitle(title)
     }
-    setIsAdding(true)
   }
 
   const handleCancelAdd = () => {
     setIsAdding(false)
-    resetAddDraft(draftType)
+    resetDraft()
   }
 
-  const handleTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value as (typeof TYPE_OPTIONS)[number]
-    if (TYPE_OPTIONS.includes(value)) {
-      setDraftType(value)
-      if (!typeSupportsDuration(value)) {
-        setDraftDuration('')
-      }
-    }
-  }
-
-  const handleSaveItem = () => {
-    const trimmedTitle = draftTitle.trim()
-    if (!trimmedTitle) {
+  const handleSaveItem = async () => {
+    if (!draftTitle.trim()) {
       return
     }
 
-    let durationValue: number | undefined
-    if (typeSupportsDuration(draftType) && draftDuration.trim()) {
-      const numeric = Number(draftDuration)
-      if (Number.isFinite(numeric)) {
-        durationValue = Math.max(0, Math.round(numeric))
-      }
-    }
-
-    const trimmedNotes = draftNotes.trim()
-    const timestamp = new Date().toISOString()
-
-    const newItem: PlannerItem = {
+    const newItem: PlannerItem = sanitizePlannerItem({
       id: createId(),
       type: draftType,
-      title: trimmedTitle,
+      title: draftTitle,
       done: false,
-      durationMin: durationValue,
+      durationMin: draftDuration ? Number(draftDuration) : undefined,
       ageBand: draftAgeBand || undefined,
-      notes: trimmedNotes ? trimmedNotes : undefined,
-      status: 'pending',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }
-
-    setPlannerData((previous) => {
-      const currentItems = previous[selectedDayKey] ?? []
-      return {
-        ...previous,
-        [selectedDayKey]: [...currentItems, newItem],
-      }
+      notes: draftNotes || undefined,
     })
 
-    if (USE_API_PLANNER) {
-      void plannerApi.savePlannerItem(selectedDayKey, newItem)
-    }
-
+    updatePlannerForDay(selectedDayKey, (items) => [newItem, ...items])
     setIsAdding(false)
-    resetAddDraft(draftType)
-  }
-
-  const handleToggleDone = (itemId: string) => {
-    let nextItem: PlannerItem | null = null
-    const timestamp = new Date().toISOString()
-
-    setPlannerData((previous) => {
-      const currentItems = previous[selectedDayKey]
-      if (!currentItems) {
-        return previous
-      }
-
-      const updatedItems = currentItems.map((item) => {
-        if (item.id !== itemId) {
-          return item
-        }
-        const toggledDone = !item.done
-        const toggled: PlannerItem = {
-          ...item,
-          done: toggledDone,
-          status: toggledDone ? 'done' : 'pending',
-          updatedAt: timestamp,
-        }
-        nextItem = toggled
-        return toggled
-      })
-
-      return {
-        ...previous,
-        [selectedDayKey]: updatedItems,
-      }
-    })
-
-    if (USE_API_PLANNER && nextItem) {
-      void plannerApi.savePlannerItem(selectedDayKey, nextItem)
-    }
-  }
-
-  const handleRemoveItem = (itemId: string) => {
-    if (editingItemId === itemId) {
-      resetEditState()
-    }
-
-    setPlannerData((previous) => {
-      const currentItems = previous[selectedDayKey]
-      if (!currentItems) {
-        return previous
-      }
-
-      const nextItems = currentItems.filter((item) => item.id !== itemId)
-      const nextState = { ...previous }
-
-      if (nextItems.length === 0) {
-        delete nextState[selectedDayKey]
-      } else {
-        nextState[selectedDayKey] = nextItems
-      }
-
-      return nextState
-    })
+    resetDraft()
 
     if (USE_API_PLANNER) {
-      void plannerApi.deletePlannerItem(itemId)
+      await plannerApi.savePlannerItem(selectedDayKey, newItem)
+    }
+  }
+
+  const handleRemoveItem = async (id: string) => {
+    updatePlannerForDay(selectedDayKey, (items) => items.filter((item) => item.id !== id))
+
+    if (USE_API_PLANNER) {
+      await plannerApi.deletePlannerItem(id)
+    }
+  }
+
+  const handleToggleDone = async (id: string) => {
+    updatePlannerForDay(selectedDayKey, (items) =>
+      items.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
+    )
+
+    if (USE_API_PLANNER) {
+      const updated = plannerData[selectedDayKey]?.find((item) => item.id === id)
+      if (updated) {
+        await plannerApi.savePlannerItem(selectedDayKey, { ...updated, done: !updated.done })
+      }
     }
   }
 
   const startEditingItem = (item: PlannerItem) => {
-    setIsAdding(false)
     setEditingItemId(item.id)
     setEditType(item.type)
     setEditTitle(item.title)
-    setEditDuration(
-      item.durationMin !== undefined && item.durationMin !== null ? String(item.durationMin) : ''
-    )
-    setEditAgeBand(item.ageBand ?? '')
+    setEditDuration(item.durationMin !== undefined ? String(item.durationMin) : '')
+    setEditAgeBand(normalizeAgeBand(item.ageBand))
     setEditNotes(item.notes ?? '')
   }
 
-  const handleEditTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value as (typeof TYPE_OPTIONS)[number]
-    if (TYPE_OPTIONS.includes(value)) {
-      setEditType(value)
-      if (!typeSupportsDuration(value)) {
-        setEditDuration('')
-      }
-    }
+  const handleEditCancel = () => {
+    setEditingItemId(null)
   }
 
-  const handleEditSave = () => {
-    if (!editingItemId) {
+  const handleEditSave = async () => {
+    if (!editingItemId || !editTitle.trim()) {
       return
     }
 
-    const trimmedTitle = editTitle.trim()
-    if (!trimmedTitle) {
-      return
-    }
-
-    let durationValue: number | undefined
-    if (typeSupportsDuration(editType) && editDuration.trim()) {
-      const numeric = Number(editDuration)
-      if (Number.isFinite(numeric)) {
-        durationValue = Math.max(0, Math.round(numeric))
-      }
-    }
-
-    const trimmedNotes = editNotes.trim()
-    const itemId = editingItemId
-    const timestamp = new Date().toISOString()
-
-    let updatedItem: PlannerItem | null = null
-
-    setPlannerData((previous) => {
-      const currentItems = previous[selectedDayKey]
-      if (!currentItems) {
-        return previous
-      }
-
-      const mapped = currentItems.map((item) => {
-        if (item.id !== itemId) {
-          return item
-        }
-
-        const nextItem: PlannerItem = {
-          ...item,
-          type: editType,
-          title: trimmedTitle,
-          durationMin: durationValue,
-          ageBand: editAgeBand || undefined,
-          notes: trimmedNotes ? trimmedNotes : undefined,
-          status: item.done ? 'done' : 'pending',
-          updatedAt: timestamp,
-        }
-
-        updatedItem = nextItem
-        return nextItem
-      })
-
-      return {
-        ...previous,
-        [selectedDayKey]: mapped,
-      }
+    const nextItem = sanitizePlannerItem({
+      id: editingItemId,
+      type: editType,
+      title: editTitle,
+      done: plannerData[selectedDayKey]?.find((item) => item.id === editingItemId)?.done ?? false,
+      durationMin: editDuration ? Number(editDuration) : undefined,
+      ageBand: editAgeBand || undefined,
+      notes: editNotes || undefined,
     })
 
-    if (USE_API_PLANNER && updatedItem) {
-      void plannerApi.savePlannerItem(selectedDayKey, updatedItem)
-    }
+    updatePlannerForDay(selectedDayKey, (items) =>
+      items.map((item) => (item.id === editingItemId ? nextItem : item))
+    )
 
-    resetEditState()
+    setEditingItemId(null)
+
+    if (USE_API_PLANNER) {
+      await plannerApi.savePlannerItem(selectedDayKey, nextItem)
+    }
   }
 
-  const handleEditCancel = () => {
-    resetEditState()
+  const handleQuickAdd = (type: (typeof TYPE_OPTIONS)[number], title?: string) => {
+    handleStartAdd(type, title)
+  }
+
+  const handlePreferredAgeBandChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number]
+    if (AGE_BAND_OPTIONS.includes(value)) {
+      setPreferredAgeBand(value)
+    }
   }
 
   const inputClasses =
@@ -644,41 +449,11 @@ export function FamilyPlanner() {
     <Card className="p-7">
       <div className="mb-6 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">🗓️ Planner</h2>
-
-import { useState } from 'react'
-import { Card } from '@/components/ui/Card'
-import { Progress } from '@/components/ui/Progress'
-
-type PlannerTab = 'casa' | 'filhos' | 'eu'
-
-export function FamilyPlanner() {
-  const [activeTab, setActiveTab] = useState<PlannerTab>('casa')
-
-  const tabs: { id: PlannerTab; label: string; emoji: string }[] = [
-    { id: 'casa', label: 'Casa', emoji: '🏡' },
-    { id: 'filhos', label: 'Filhos', emoji: '👶' },
-    { id: 'eu', label: 'Eu', emoji: '💆' },
-  ]
-
-  const content = {
-    casa: { items: ['Limpeza do quarto', 'Lavar louça', 'Tirar roupa do varal'], progress: 33 },
-    filhos: { items: ['Desjejum', 'Escola', 'Hora do banho'], progress: 66 },
-    eu: { items: ['Meditação', 'Alongamento', 'Chá tranquilo'], progress: 0 },
-  }
-
-  const current = content[activeTab]
-
-  return (
-    <Card className="p-7">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-support-1 md:text-xl">📋 Planejador da Família</h2>
-main
         <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
           Equilíbrio
         </span>
       </div>
 
-stellar-den
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
@@ -720,369 +495,337 @@ stellar-den
         </button>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {TYPE_OPTIONS.map((option) => (
-            <Button key={option} type="button" variant="outline" size="sm" onClick={() => handleQuickAdd(option)}>
-              + {option}
-            </Button>
-          ))}
-        </div>
+      {isLoading ? (
+        <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {TYPE_OPTIONS.map((option) => (
+              <Button key={option} type="button" variant="outline" size="sm" onClick={() => handleQuickAdd(option)}>
+                + {option}
+              </Button>
+            ))}
+          </div>
 
-        <div>
-          <h3 className="text-base font-semibold text-support-1">Agenda do dia</h3>
-          <p className="text-xs text-support-2/90">
-            {new Intl.DateTimeFormat('pt-BR', {
-              weekday: 'long',
-              day: '2-digit',
-              month: 'long',
-            }).format(selectedDay)}
-          </p>
-        </div>
+          <div>
+            <h3 className="text-base font-semibold text-support-1">Agenda do dia</h3>
+            <p className="text-xs text-support-2/90">
+              {new Intl.DateTimeFormat('pt-BR', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+              }).format(selectedDay)}
+            </p>
+          </div>
 
-        {selectedDayItems.length > 0 ? (
-          <div className="space-y-3">
-            {selectedDayItems.map((item) => {
-              const isEditing = editingItemId === item.id
+          {selectedDayItems.length > 0 ? (
+            <div className="space-y-3">
+              {selectedDayItems.map((item) => {
+                const isEditing = editingItemId === item.id
 
-              return (
-                <div
-                  key={item.id}
-                  className={`flex flex-col gap-3 rounded-2xl border border-white/50 bg-white/80 p-4 shadow-soft transition ${
-                    item.done ? 'opacity-60' : ''
-                  }`}
-                >
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1">
-                          <label htmlFor={`planner-edit-type-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                            Tipo
-                          </label>
-                          <select
-                            id={`planner-edit-type-${item.id}`}
-                            value={editType}
-                            onChange={handleEditTypeChange}
-                            className={`${inputClasses} appearance-none`}
-                          >
-                            {TYPE_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-1 sm:col-span-2">
-                          <label htmlFor={`planner-edit-title-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                            Título
-                          </label>
-                          <input
-                            id={`planner-edit-title-${item.id}`}
-                            value={editTitle}
-                            onChange={(event) => setEditTitle(event.target.value)}
-                            className={inputClasses}
-                          />
-                        </div>
-                        {typeSupportsDuration(editType) && (
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex flex-col gap-3 rounded-2xl border border-white/50 bg-white/80 p-4 shadow-soft transition ${
+                      item.done ? 'opacity-60' : ''
+                    }`}
+                  >
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <div className="grid gap-3 sm:grid-cols-2">
                           <div className="space-y-1">
-                            <label htmlFor={`planner-edit-duration-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                              Duração (min)
+                            <label htmlFor={`planner-edit-type-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                              Tipo
+                            </label>
+                            <select
+                              id={`planner-edit-type-${item.id}`}
+                              value={editType}
+                              onChange={(event) => setEditType(event.target.value as (typeof TYPE_OPTIONS)[number])}
+                              className={`${inputClasses} appearance-none`}
+                            >
+                              {TYPE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1 sm:col-span-2">
+                            <label htmlFor={`planner-edit-title-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                              Título
                             </label>
                             <input
-                              id={`planner-edit-duration-${item.id}`}
-                              type="number"
-                              min={0}
-                              value={editDuration}
-                              onChange={(event) => setEditDuration(event.target.value)}
+                              id={`planner-edit-title-${item.id}`}
+                              value={editTitle}
+                              onChange={(event) => setEditTitle(event.target.value)}
                               className={inputClasses}
                             />
-                            <p className="text-[11px] text-support-2">Ex.: 10–15 minutos.</p>
+                          </div>
+                          {typeSupportsDuration(editType) && (
+                            <div className="space-y-1">
+                              <label htmlFor={`planner-edit-duration-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                                Duração (min)
+                              </label>
+                              <input
+                                id={`planner-edit-duration-${item.id}`}
+                                type="number"
+                                min={0}
+                                value={editDuration}
+                                onChange={(event) => setEditDuration(event.target.value)}
+                                className={inputClasses}
+                              />
+                              <p className="text-[11px] text-support-2">Ex.: 10–15 minutos.</p>
+                            </div>
+                          )}
+                          <div className="space-y-1">
+                            <label htmlFor={`planner-edit-age-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                              Faixa etária
+                            </label>
+                            <select
+                              id={`planner-edit-age-${item.id}`}
+                              value={editAgeBand}
+                              onChange={(event) => setEditAgeBand(event.target.value as (typeof AGE_BAND_OPTIONS)[number] | '')}
+                              className={`${inputClasses} appearance-none`}
+                            >
+                              <option value="">Selecione</option>
+                              {AGE_BAND_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1 sm:col-span-2">
+                            <label htmlFor={`planner-edit-notes-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                              Notas
+                            </label>
+                            <textarea
+                              id={`planner-edit-notes-${item.id}`}
+                              value={editNotes}
+                              onChange={(event) => setEditNotes(event.target.value)}
+                              className={`${inputClasses} min-h-[90px]`}
+                            />
+                            <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                          <button
+                            type="button"
+                            onClick={handleEditSave}
+                            className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                          >
+                            Salvar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleEditCancel}
+                            className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                            {item.type}
+                          </span>
+                          <span className="text-sm font-semibold text-support-1">{item.title}</span>
+                        </div>
+                        {(item.durationMin !== undefined || item.ageBand) && (
+                          <div className="flex flex-wrap gap-3 text-xs text-support-2">
+                            {item.durationMin !== undefined && <span>Duração: {item.durationMin} min</span>}
+                            {item.ageBand && <span>Faixa etária: {item.ageBand}</span>}
                           </div>
                         )}
-                        <div className="space-y-1">
-                          <label htmlFor={`planner-edit-age-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                            Faixa etária
-                          </label>
-                          <select
-                            id={`planner-edit-age-${item.id}`}
-                            value={editAgeBand}
-                            onChange={(event) => {
-                              const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number] | ''
-                              setEditAgeBand(value === '' ? '' : value)
-                            }}
-                            className={`${inputClasses} appearance-none`}
+                        {item.notes && <p className="text-sm text-support-2">{item.notes}</p>}
+                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleDone(item.id)}
+                            className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                           >
-                            <option value="">Selecione</option>
-                            {AGE_BAND_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
+                            {item.done ? 'Concluído' : 'Concluir'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => startEditingItem(item)}
+                            className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                          >
+                            Remover
+                          </button>
                         </div>
-                        <div className="space-y-1 sm:col-span-2">
-                          <label htmlFor={`planner-edit-notes-${item.id}`} className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                            Notas
-                          </label>
-                          <textarea
-                            id={`planner-edit-notes-${item.id}`}
-                            value={editNotes}
-                            onChange={(event) => setEditNotes(event.target.value)}
-                            className={`${inputClasses} min-h-[90px]`}
-                          />
-                          <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-                          {item.type}
-                        </span>
-                        <span className="text-sm font-semibold text-support-1">{item.title}</span>
-                      </div>
-                      {(item.durationMin !== undefined || item.ageBand) && (
-                        <div className="flex flex-wrap gap-3 text-xs text-support-2">
-                          {item.durationMin !== undefined && <span>Duração: {item.durationMin} min</span>}
-                          {item.ageBand && <span>Faixa etária: {item.ageBand}</span>}
-                        </div>
-                      )}
-                      {item.notes && <p className="text-sm text-support-2">{item.notes}</p>}
-                    </>
-                  )}
-                  <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleDone(item.id)}
-                      className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                    >
-                      {item.done ? 'Concluído' : 'Concluir'}
-                    </button>
-                    {isEditing ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleEditSave}
-                          className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                        >
-                          Salvar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleEditCancel}
-                          className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                        >
-                          Cancelar
-                        </button>
                       </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => startEditingItem(item)}
-                        className="rounded-full border border-primary/40 px-3 py-1 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                      >
-                        Editar
-                      </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                    >
-                      Remover
-                    </button>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <Card className="border border-dashed border-primary/30 bg-white/70 p-5 text-center shadow-none">
-            <p className="text-sm text-support-2">Nada por aqui ainda. Que tal planejar algo rápido?</p>
-          </Card>
-        )}
+                )
+              })}
+            </div>
+          ) : (
+            <Card className="border border-dashed border-primary/30 bg-white/70 p-5 text-center shadow-none">
+              <p className="text-sm text-support-2">Nada por aqui ainda. Que tal planejar algo rápido?</p>
+            </Card>
+          )}
 
-        {isAdding ? (
-          <div className="space-y-3 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label htmlFor="planner-type" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                  Tipo
-                </label>
-                <select
-                  id="planner-type"
-                  value={draftType}
-                  onChange={handleTypeChange}
-                  className={`${inputClasses} appearance-none`}
-                >
-                  {TYPE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1 sm:col-span-2">
-                <label htmlFor="planner-title" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                  Título
-                </label>
-                <input
-                  id="planner-title"
-                  value={draftTitle}
-                  onChange={(event) => setDraftTitle(event.target.value)}
-                  className={inputClasses}
-                  placeholder="Ex.: Pintura com dedos"
-                />
-              </div>
-              {typeSupportsDuration(draftType) && (
+          {isAdding ? (
+            <div className="space-y-3 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <label htmlFor="planner-duration" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                    Duração (min)
+                  <label htmlFor="planner-type" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                    Tipo
+                  </label>
+                  <select
+                    id="planner-type"
+                    value={draftType}
+                    onChange={(event) => setDraftType(event.target.value as (typeof TYPE_OPTIONS)[number])}
+                    className={`${inputClasses} appearance-none`}
+                  >
+                    {TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label htmlFor="planner-title" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                    Título
                   </label>
                   <input
-                    id="planner-duration"
-                    type="number"
-                    min={0}
-                    value={draftDuration}
-                    onChange={(event) => setDraftDuration(event.target.value)}
+                    id="planner-title"
+                    value={draftTitle}
+                    onChange={(event) => setDraftTitle(event.target.value)}
                     className={inputClasses}
-                    placeholder="Ex.: 15"
+                    placeholder="Ex.: Pintura com dedos"
                   />
-                  <p className="text-[11px] text-support-2">Ex.: 10–15 minutos.</p>
                 </div>
-              )}
-              <div className="space-y-1">
-                <label htmlFor="planner-age" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                  Faixa etária
-                </label>
+                {typeSupportsDuration(draftType) && (
+                  <div className="space-y-1">
+                    <label htmlFor="planner-duration" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                      Duração (min)
+                    </label>
+                    <input
+                      id="planner-duration"
+                      type="number"
+                      min={0}
+                      value={draftDuration}
+                      onChange={(event) => setDraftDuration(event.target.value)}
+                      className={inputClasses}
+                      placeholder="Ex.: 15"
+                    />
+                    <p className="text-[11px] text-support-2">Ex.: 10–15 minutos.</p>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <label htmlFor="planner-age" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                    Faixa etária
+                  </label>
+                  <select
+                    id="planner-age"
+                    value={draftAgeBand}
+                    onChange={(event) => {
+                      const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number] | ''
+                      setDraftAgeBand(value === '' ? '' : value)
+                    }}
+                    className={`${inputClasses} appearance-none`}
+                  >
+                    <option value="">Selecione</option>
+                    {AGE_BAND_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label htmlFor="planner-notes" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
+                    Notas
+                  </label>
+                  <textarea
+                    id="planner-notes"
+                    value={draftNotes}
+                    onChange={(event) => setDraftNotes(event.target.value)}
+                    className={`${inputClasses} min-h-[90px]`}
+                    placeholder="Use para lembrar materiais ou ajustes."
+                  />
+                  <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="primary" size="sm" onClick={handleSaveItem}>
+                  Salvar
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleCancelAdd}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" size="sm" onClick={() => handleStartAdd()}>
+              Adicionar item
+            </Button>
+          )}
+
+          {savedRecommendations.length > 0 || suggestedRecommendations.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
                 <select
-                  id="planner-age"
-                  value={draftAgeBand}
-                  onChange={(event) => {
-                    const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number] | ''
-                    setDraftAgeBand(value === '' ? '' : value)
-                  }}
-                  className={`${inputClasses} appearance-none`}
+                  value={preferredAgeBand}
+                  onChange={handlePreferredAgeBandChange}
+                  className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
-                  <option value="">Selecione</option>
                   {AGE_BAND_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      Faixa {option}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="space-y-1 sm:col-span-2">
-                <label htmlFor="planner-notes" className="text-xs font-semibold uppercase tracking-[0.12em] text-support-2/80">
-                  Notas
-                </label>
-                <textarea
-                  id="planner-notes"
-                  value={draftNotes}
-                  onChange={(event) => setDraftNotes(event.target.value)}
-                  className={`${inputClasses} min-h-[90px]`}
-                  placeholder="Use para lembrar materiais ou ajustes."
-                />
-                <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[...savedRecommendations, ...suggestedRecommendations].map((suggestion, index) => {
+                  const key = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
+                  const savedKey = `${key}-${index}`
+                  const isSaved = suggestion.hasOwnProperty('createdAt')
+
+                  return (
+                    <div key={savedKey} className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                          {suggestion.type}
+                        </span>
+                        {isSaved && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                            Salva hoje
+                          </span>
+                        )}
+                      </div>
+                      <p className="mb-3 text-sm font-semibold text-support-1">{suggestion.title}</p>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
+                      >
+                        Salvar no Planner
+                      </Button>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="primary" size="sm" onClick={handleSaveItem}>
-                Salvar
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={handleCancelAdd}>
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button type="button" variant="outline" size="sm" onClick={() => handleStartAdd()}>
-            Adicionar item
-          </Button>
-        )}
-
-        {recommendations.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">
-                Faixa {preferredAgeBand}
-              </span>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {recommendations.map((suggestion, index) => (
-                <div
-                  key={`${buildRecommendationKey(suggestion.title, suggestion.refId ?? null)}-${index}`}
-                  className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
-                >
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-                      {suggestion.type}
-                    </span>
-                    {suggestion.source === 'daily-activity' && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                        Salva hoje
-                      </span>
-                    )}
-                  </div>
-                  <p className="mb-3 text-sm font-semibold text-support-1">{suggestion.title}</p>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
-                  >
-                    Salvar no Planner
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-      <div className="mb-5 flex gap-2 md:gap-3">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
-              activeTab === tab.id
-                ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-            }`}
-          >
-            <span className="mr-2 text-base">{tab.emoji}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-5 space-y-3">
-        {current.items.map((item, idx) => (
-          <label
-            key={idx}
-            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/50 bg-white/80 p-3 shadow-soft transition-all duration-300 hover:shadow-elevated"
-          >
-            <input
-              type="checkbox"
-              className="h-5 w-5 rounded-full border-2 border-primary/40 bg-white accent-primary cursor-pointer"
-              aria-label={item}
-            />
-            <span className="text-sm text-support-1">{item}</span>
-          </label>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Progresso</span>
-          <span className="text-xs font-semibold text-primary">{current.progress}%</span>
+          ) : null}
         </div>
-        <Progress value={current.progress} max={100} />
-main
-      </div>
+      )}
     </Card>
   )
 }
