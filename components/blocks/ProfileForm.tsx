@@ -1,6 +1,6 @@
 'use client'
 
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 
 import { DEFAULT_STICKER_ID, ProfileStickerId, STICKER_OPTIONS, isProfileStickerId } from '@/app/lib/stickers'
 import { Button } from '@/components/ui/Button'
@@ -63,10 +63,6 @@ export function ProfileForm() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [statusMessage, setStatusMessage] = useState('')
 
-  const stickerDescriptions = useMemo(
-    () => STICKER_DESCRIPTIONS,
-    []
-  )
 
   useEffect(() => {
     let isMounted = true
@@ -419,7 +415,7 @@ export function ProfileForm() {
                           />
                         </span>
                         <span className="text-sm font-semibold text-support-1">{sticker.label}</span>
-                        <span className="text-[11px] text-support-2">{stickerDescriptions[sticker.id]}</span>
+                        <span className="text-[11px] text-support-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
                       </button>
                     )
                   })}
