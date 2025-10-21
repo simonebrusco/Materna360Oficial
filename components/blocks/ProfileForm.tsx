@@ -271,13 +271,13 @@ export function ProfileForm() {
         <form className="space-y-7" onSubmit={handleSubmit} noValidate>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-              onboarding
+              boas-vindas
             </p>
             <h2 className="text-xl font-semibold text-support-1 md:text-2xl">
-              Before we start, tell us a little about you
+              Antes de começarmos, me conte um pouquinho sobre você
             </h2>
             <p className="text-sm text-support-2 md:text-base">
-              This helps personalize your experience and make your daily journey easier.
+              Isso personaliza sua experiência e deixa tudo mais prático no dia a dia.
             </p>
           </div>
 
