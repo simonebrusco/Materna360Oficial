@@ -203,6 +203,44 @@ export function FamilyPlanner() {
   const selectedDayItems = plannerData[selectedDayKey] ?? []
 
   useEffect(() => {
+    let active = true
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to load profile')
+        }
+
+        const data = await response.json()
+
+        if (!active) {
+          return
+        }
+
+        const children = Array.isArray(data?.filhos) ? data.filhos : []
+        const firstChildWithAge = children.find((child: any) => Number.isFinite(Number(child?.idadeMeses)))
+        if (firstChildWithAge) {
+          const ageBand = mapMonthsToAgeBand(Number(firstChildWithAge.idadeMeses))
+          setPreferredAgeBand(ageBand)
+        }
+      } catch (error) {
+        console.error('Failed to determine age band from profile:', error)
+      }
+    }
+
+    void loadProfile()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return
     }
