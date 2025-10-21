@@ -501,6 +501,7 @@ export function FamilyPlanner() {
 
     const trimmedNotes = editNotes.trim()
     const itemId = editingItemId
+    const timestamp = new Date().toISOString()
 
     let updatedItem: PlannerItem | null = null
 
@@ -522,6 +523,8 @@ export function FamilyPlanner() {
           durationMin: durationValue,
           ageBand: editAgeBand || undefined,
           notes: trimmedNotes ? trimmedNotes : undefined,
+          status: item.done ? 'done' : 'pending',
+          updatedAt: timestamp,
         }
 
         updatedItem = nextItem
