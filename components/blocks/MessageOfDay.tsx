@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/Card'
 
 const LOCAL_STORAGE_KEY = 'materna_daily_message'
+const FALLBACK_NAME = 'Mãe'
+const FALLBACK_MESSAGE = 'Você está fazendo um ótimo trabalho!'
 
 const getCurrentDateKey = () => {
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -22,6 +24,49 @@ type CachedDailyMessage = {
   dateKey: string
 }
 
+const sanitizeMessage = (value: string | null | undefined) => {
+  if (!value) {
+    return FALLBACK_MESSAGE
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return FALLBACK_MESSAGE
+  }
+
+  const withoutQuotes = trimmed.replace(/^["“”]+/, '').replace(/["“”]+$/, '').trim()
+  return withoutQuotes || FALLBACK_MESSAGE
+}
+
+const hasPersonalizedPrefix = (value: string) => /^[^,]+,\s/.test(value.trim())
+
+const personalizeMessage = (name: string, baseMessage: string) => {
+  const safeName = name.trim() || FALLBACK_NAME
+  const safeMessage = sanitizeMessage(baseMessage)
+  return `${safeName}, ${safeMessage}`
+}
+
+const fetchMotherName = async (): Promise<string> => {
+  try {
+    const response = await fetch('/api/profile', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to load profile (${response.status})`)
+    }
+
+    const data = await response.json()
+    const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
+
+    return rawName || FALLBACK_NAME
+  } catch (error) {
+    console.error('Não foi possível carregar o nome da mãe:', error)
+    return FALLBACK_NAME
+  }
+}
+
 export function MessageOfDay() {
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -31,27 +76,55 @@ export function MessageOfDay() {
       return
     }
 
-    const dateKey = getCurrentDateKey()
+    let active = true
 
-    try {
-      const cachedRaw = window.localStorage.getItem(LOCAL_STORAGE_KEY)
+    const loadMessage = async () => {
+      const dateKey = getCurrentDateKey()
+      const motherName = await fetchMotherName()
 
-      if (cachedRaw) {
-        const cached: CachedDailyMessage = JSON.parse(cachedRaw)
-
-        if (cached?.dateKey === dateKey && cached?.message) {
-          setMessage(cached.message)
-          setIsLoading(false)
-          return
-        }
+      if (!active) {
+        return
       }
-    } catch (error) {
-      console.error('Failed to read cached daily message:', error)
-    }
 
-    const fetchMessage = async () => {
       try {
-        const response = await fetch('/api/daily-message', {
+        const cachedRaw = window.localStorage.getItem(LOCAL_STORAGE_KEY)
+
+        if (cachedRaw) {
+          const cached: CachedDailyMessage = JSON.parse(cachedRaw)
+
+          if (cached?.dateKey === dateKey && cached?.message) {
+            const cachedMessage = cached.message
+
+            if (hasPersonalizedPrefix(cachedMessage)) {
+              setMessage(cachedMessage)
+              setIsLoading(false)
+              return
+            }
+
+            const updated = personalizeMessage(motherName, cachedMessage)
+            setMessage(updated)
+            setIsLoading(false)
+
+            try {
+              window.localStorage.setItem(
+                LOCAL_STORAGE_KEY,
+                JSON.stringify({ message: updated, dateKey })
+              )
+            } catch (writeError) {
+              console.error('Falha ao atualizar mensagem diária em cache:', writeError)
+            }
+
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Falha ao ler mensagem diária em cache:', error)
+      }
+
+      const params = new URLSearchParams({ name: motherName })
+
+      try {
+        const response = await fetch(`/api/daily-message?${params.toString()}`, {
           cache: 'no-store',
         })
 
@@ -60,42 +133,52 @@ export function MessageOfDay() {
         }
 
         const data = (await response.json()) as CachedDailyMessage & { generatedAt?: string }
+        const baseMessage = sanitizeMessage(data?.message)
+        const personalized = personalizeMessage(motherName, baseMessage)
 
-        if (data?.message) {
-          setMessage(data.message)
+        if (!active) {
+          return
+        }
 
-          try {
-            window.localStorage.setItem(
-              LOCAL_STORAGE_KEY,
-              JSON.stringify({ message: data.message, dateKey })
-            )
-          } catch (error) {
-            console.error('Failed to cache daily message:', error)
-          }
+        setMessage(personalized)
+
+        try {
+          window.localStorage.setItem(
+            LOCAL_STORAGE_KEY,
+            JSON.stringify({ message: personalized, dateKey })
+          )
+        } catch (error) {
+          console.error('Failed to cache daily message:', error)
         }
       } catch (error) {
         console.error('Failed to load daily message:', error)
 
-        try {
-          const cachedRaw = window.localStorage.getItem(LOCAL_STORAGE_KEY)
-          if (cachedRaw) {
-            const cached: CachedDailyMessage = JSON.parse(cachedRaw)
-            if (cached?.message) {
-              setMessage(cached.message)
-              return
-            }
-          }
-        } catch (readError) {
-          console.error('Failed to fallback to cached daily message:', readError)
-        }
+        const fallbackPersonalized = personalizeMessage(motherName, FALLBACK_MESSAGE)
 
-        setMessage((previous) => previous || 'Você está fazendo um ótimo trabalho!')
+        if (active) {
+          setMessage((previous) => previous || fallbackPersonalized)
+
+          try {
+            window.localStorage.setItem(
+              LOCAL_STORAGE_KEY,
+              JSON.stringify({ message: fallbackPersonalized, dateKey })
+            )
+          } catch (writeError) {
+            console.error('Failed to cache fallback daily message:', writeError)
+          }
+        }
       } finally {
-        setIsLoading(false)
+        if (active) {
+          setIsLoading(false)
+        }
       }
     }
 
-    void fetchMessage()
+    void loadMessage()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   return (
