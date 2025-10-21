@@ -200,6 +200,7 @@ export function FamilyPlanner() {
   }
 
   const handleStartAdd = (type?: (typeof TYPE_OPTIONS)[number]) => {
+    resetEditState()
     resetAddDraft(type ?? 'Brincadeira')
     setIsAdding(true)
   }
