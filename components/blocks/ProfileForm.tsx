@@ -254,10 +254,10 @@ export function ProfileForm() {
       })
 
       setErrors({})
-      setStatusMessage('Saved successfully!')
+      setStatusMessage('Salvo com carinho!')
     } catch (error) {
       console.error(error)
-      setStatusMessage('Unable to save right now. Please try again.')
+      setStatusMessage('Não foi possível salvar agora. Tente novamente em instantes.')
     } finally {
       setSaving(false)
     }
