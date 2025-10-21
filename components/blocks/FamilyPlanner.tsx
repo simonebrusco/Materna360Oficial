@@ -201,6 +201,10 @@ export function FamilyPlanner() {
   const todayKey = formatDateKey(today)
   const selectedDay = parseDateKey(selectedDayKey) ?? today
   const selectedDayItems = plannerData[selectedDayKey] ?? []
+  const recommendations = useMemo(() => {
+    const dayIndex = (selectedDay.getDay() + 6) % 7
+    return pickRecommendationsForDay(preferredAgeBand, dayIndex)
+  }, [preferredAgeBand, selectedDay])
 
   useEffect(() => {
     let active = true
