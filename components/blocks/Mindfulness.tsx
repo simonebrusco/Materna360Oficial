@@ -137,10 +137,12 @@ export function Mindfulness() {
         const data: ManifestResponse = await response.json()
         if (!active) return
         setThemes(data.themes ?? [])
+        setHasManifestError(false)
       } catch (error) {
         console.error('Não foi possível carregar a lista de mindfulness.', error)
         if (active) {
           setThemes([])
+          setHasManifestError(true)
         }
       } finally {
         if (active) {
