@@ -39,7 +39,7 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
     { type: 'Brinquedo', title: 'Caixa sensorial com texturas' },
     { type: 'Recomendação', title: 'Cantar músicas com gestos' },
     { type: 'Receita', title: 'Papinha nutritiva colorida' },
-    { type: 'Livro', title: 'Hist��ria curta com rimas' },
+    { type: 'Livro', title: 'História curta com rimas' },
   ],
   '1-2a': [
     { type: 'Brincadeira', title: 'Caça ao tesouro com objetos simples' },
@@ -292,6 +292,31 @@ export function FamilyPlanner() {
     }
 
     plannerStorage.saveWeekStart(formatDateKey(weekStart))
+  }, [weekStart, isInitialized])
+
+  useEffect(() => {
+    if (!isInitialized || !USE_API_PLANNER) {
+      return
+    }
+
+    let active = true
+
+    const fetchWeek = async () => {
+      try {
+        const data = await plannerApi.getPlannerData(formatDateKey(weekStart))
+        if (active) {
+          setPlannerData(data)
+        }
+      } catch (error) {
+        console.error('Failed to load planner data for week:', error)
+      }
+    }
+
+    void fetchWeek()
+
+    return () => {
+      active = false
+    }
   }, [weekStart, isInitialized])
 
   useEffect(() => {
