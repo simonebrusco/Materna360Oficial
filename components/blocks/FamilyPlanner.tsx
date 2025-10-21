@@ -299,6 +299,7 @@ export function FamilyPlanner() {
   }
 
   const startEditingItem = (item: PlannerItem) => {
+    setIsAdding(false)
     setEditingItemId(item.id)
     setEditType(item.type)
     setEditTitle(item.title)
