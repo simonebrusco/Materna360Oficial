@@ -63,7 +63,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
     ageBand: '0-6m',
     materials: ['Objetos sonoros seguros', 'Colchonete ou mantinha'],
     steps: [
-      'Deixe o beb�� confortável de barriga para cima',
+      'Deixe o bebê confortável de barriga para cima',
       'Apresente sons suaves como chocalhos ou guizos',
       'Observe as reações e repita os sons que agradarem',
     ],
@@ -135,7 +135,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   },
   {
     id: 'dança-com-paninhos',
-    title: 'Dança com paninhos coloridos',
+    title: 'Dan��a com paninhos coloridos',
     emoji: '🎏',
     durationMin: 15,
     ageBand: '1-2a',
@@ -453,27 +453,30 @@ const fetchProfileAgeBand = async (): Promise<AgeBand> => {
 
 export const resolveDailyActivity = async (): Promise<DailyActivityResult> => {
   const todayKey = getBrazilDateKey()
-  const cached = readStoredActivity()
-
-  if (cached?.dateKey === todayKey && cached.activity) {
-    return {
-      dateKey: cached.dateKey,
-      activity: cached.activity,
-      ageBand: cached.activity.ageBand ?? DEFAULT_AGE_BAND,
-    }
-  }
-
   const ageBand = await fetchProfileAgeBand()
-  const activity = selectActivity(todayKey, ageBand)
-  const record = { dateKey: todayKey, activity }
+  const cached = readStoredActivity(ageBand)
 
-  writeStoredActivity(record)
-
-  return {
-    dateKey: todayKey,
-    activity,
-    ageBand,
+  if (cached?.dateKey === todayKey) {
+    return createResultFromRecord(cached)
   }
+
+  const legacy = readLegacyStoredActivity()
+  if (legacy?.dateKey === todayKey && legacy.band === ageBand) {
+    const record: StoredDailyActivity = {
+      dateKey: legacy.dateKey,
+      band: ageBand,
+      activity: legacy.activity,
+    }
+    writeStoredActivity(ageBand, record)
+    return createResultFromRecord(record)
+  }
+
+  const activity = selectActivity(todayKey, ageBand)
+  const record: StoredDailyActivity = { dateKey: todayKey, band: ageBand, activity }
+
+  writeStoredActivity(ageBand, record)
+
+  return createResultFromRecord(record)
 }
 
 export const getInitialDailyActivity = (): DailyActivityResult => {
