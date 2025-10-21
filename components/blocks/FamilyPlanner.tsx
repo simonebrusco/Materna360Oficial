@@ -329,7 +329,7 @@ export function FamilyPlanner() {
     }
 
     let durationValue: number | undefined
-    if (editDuration.trim()) {
+    if (typeSupportsDuration(editType) && editDuration.trim()) {
       const numeric = Number(editDuration)
       if (Number.isFinite(numeric)) {
         durationValue = Math.max(0, Math.round(numeric))
