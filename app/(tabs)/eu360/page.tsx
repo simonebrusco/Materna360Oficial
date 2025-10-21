@@ -5,7 +5,10 @@ export const dynamic = 'force-dynamic'
 import { useMemo, useState } from 'react'
 
 import { CheckIn } from '@/components/blocks/CheckIn'
+stellar-den
 import { ProfileForm } from '@/components/blocks/ProfileForm'
+
+main
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/Progress'
@@ -61,7 +64,10 @@ export default function Eu360Page() {
       />
 
       <div className="relative space-y-10">
+stellar-den
         <ProfileForm />
+
+main
         <Reveal>
           <Card className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white">
             <div className="text-center">
