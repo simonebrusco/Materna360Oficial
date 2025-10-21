@@ -39,17 +39,30 @@ type LastPlayback = {
 
 const MANIFEST_URL = '/audio/mindfulness/manifest.json'
 const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
-const STORAGE_LAST_KEY = 'mindfulness_last_v1'
+const LAST_TRACK_STORAGE_KEY = 'm360:lastMindfulnessTrack'
 
-const isAudioAvailable = async (url: string): Promise<boolean> => {
+const appendCacheBuster = (source: string, version: string) => {
+  if (!version) return source
   try {
-    const headResponse = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+    const url = new URL(source, window.location.origin)
+    url.searchParams.set('v', version)
+    return url.toString()
+  } catch (error) {
+    const separator = source.includes('?') ? '&' : '?'
+    return `${source}${separator}v=${version}`
+  }
+}
+
+const isAudioAvailable = async (url: string, version: string): Promise<boolean> => {
+  try {
+    const target = appendCacheBuster(url, version)
+    const headResponse = await fetch(target, { method: 'HEAD', cache: 'no-store' })
     if (headResponse.ok) {
       return true
     }
 
     if (headResponse.status === 405 || headResponse.status === 501) {
-      const rangeResponse = await fetch(url, {
+      const rangeResponse = await fetch(target, {
         method: 'GET',
         headers: { Range: 'bytes=0-0' },
         cache: 'no-store',
