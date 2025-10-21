@@ -338,14 +338,14 @@ export function Mindfulness() {
   }, [])
 
   const resumeTarget = useMemo(() => {
-    if (!resumeData) return null
-    const theme = themes.find((item) => item.id === resumeData.themeId)
-    const track = theme?.tracks.find((item) => item.id === resumeData.trackId)
+    if (!lastPlayback) return null
+    const theme = themes.find((item) => item.id === lastPlayback.themeId)
+    const track = theme?.tracks.find((item) => item.id === lastPlayback.trackId)
     if (!theme || !track || !track.file) return null
     const status = availability[track.id] ?? (track.file ? 'checking' : 'missing')
     if (status !== 'available') return null
     return { theme, track }
-  }, [availability, resumeData, themes])
+  }, [availability, lastPlayback, themes])
 
   const handleToggleTrack = useCallback(
     async (theme: MindfulnessTheme, track: MindfulnessTrack) => {
@@ -363,7 +363,7 @@ export function Mindfulness() {
       const ensurePlayback = async () => {
         try {
           setCurrentPlayback({ theme, track })
-          setResumeData({ themeId: theme.id, trackId: track.id })
+          setLastPlayback({ themeId: theme.id, trackId: track.id })
           persistLastPlayback({ themeId: theme.id, trackId: track.id })
           await audio.play()
           setIsPlaying(true)
