@@ -166,66 +166,66 @@ export function Mindfulness() {
     }
 
     const initialStatuses: Record<string, AvailabilityStatus> = {}
+    const initialMissing = new Set<string>()
+
     themes.forEach((theme) => {
       theme.tracks.forEach((track) => {
-        initialStatuses[track.id] = track.file ? 'checking' : 'missing'
+        if (track.file) {
+          initialStatuses[track.id] = 'checking'
+        } else {
+          initialStatuses[track.id] = 'missing'
+        }
+        if (!track.file) {
+          initialMissing.add(`(sem arquivo) ${track.id}`)
+        }
       })
     })
+
     setAvailability(initialStatuses)
-    setMissingFiles([])
+    setMissingFiles(Array.from(initialMissing))
 
     let cancelled = false
+    const availabilityVersion = Date.now().toString()
+    const missingSet = new Set<string>(initialMissing)
 
-    const evaluateAvailability = async () => {
-      const availabilityResults: Record<string, AvailabilityStatus> = {}
-      const missingSet = new Set<string>()
+    const updateMissingState = () => {
+      setMissingFiles(Array.from(missingSet))
+    }
 
-      await Promise.allSettled(
-        themes.map((theme) =>
-          Promise.allSettled(
-            theme.tracks.map(async (track) => {
-              if (!track.file) {
-                return
-              }
-
-              const available = await isAudioAvailable(track.file)
-              availabilityResults[track.id] = available ? 'available' : 'missing'
-              if (!available) {
-                missingSet.add(track.file)
-              }
-            })
-          )
-        )
-      )
-
-      const finalStatuses: Record<string, AvailabilityStatus> = {}
-      themes.forEach((theme) => {
-        theme.tracks.forEach((track) => {
-          if (!track.file) {
-            finalStatuses[track.id] = 'missing'
-          } else {
-            const status = availabilityResults[track.id] ?? 'missing'
-            finalStatuses[track.id] = status
-            if (status === 'missing') {
-              missingSet.add(track.file)
-            }
-          }
-        })
-      })
-
-      if (cancelled) {
+    const evaluateTrack = async (track: MindfulnessTrack) => {
+      if (!track.file) {
         return
       }
 
-      setAvailability(finalStatuses)
-      const missingArray = Array.from(missingSet)
-      if (missingArray.length > 0) {
-        missingArray.forEach((path) => console.warn('[Mindfulness] Missing audio:', path))
+      const available = await isAudioAvailable(track.file, availabilityVersion)
+      if (cancelled) return
+
+      setAvailability((previous) => {
+        const nextStatus: AvailabilityStatus = available ? 'available' : 'missing'
+        if (previous[track.id] === nextStatus) {
+          return previous
+        }
+        return {
+          ...previous,
+          [track.id]: nextStatus,
+        }
+      })
+
+      if (available) {
+        missingSet.delete(track.file)
+      } else {
+        const wasAlreadyMissing = missingSet.has(track.file)
+        missingSet.add(track.file)
+        if (!wasAlreadyMissing) {
+          console.warn('[Mindfulness] Missing audio:', track.file)
+        }
       }
-      setMissingFiles(missingArray)
+
+      updateMissingState()
     }
 
-    void evaluateAvailability()
+    const tasks = themes.flatMap((theme) => theme.tracks.map((track) => evaluateTrack(track)))
+    void Promise.allSettled(tasks)
 
     return () => {
       cancelled = true
