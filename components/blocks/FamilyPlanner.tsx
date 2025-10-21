@@ -11,7 +11,6 @@ import {
   plannerStorage,
   type PlannerData,
   type PlannerItem,
-  type PlannerItemType,
   USE_API_PLANNER,
 } from '@/lib/plannerData'
 
@@ -40,7 +39,7 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
     { type: 'Brinquedo', title: 'Caixa sensorial com texturas' },
     { type: 'Recomendação', title: 'Cantar músicas com gestos' },
     { type: 'Receita', title: 'Papinha nutritiva colorida' },
-    { type: 'Livro', title: 'História curta com rimas' },
+    { type: 'Livro', title: 'Hist��ria curta com rimas' },
   ],
   '1-2a': [
     { type: 'Brincadeira', title: 'Caça ao tesouro com objetos simples' },
