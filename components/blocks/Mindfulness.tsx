@@ -537,7 +537,7 @@ export function Mindfulness() {
         <>
           {hasManifestError && (
             <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-800">
-              Não encontramos os áudios originais no momento. Os itens abaixo aparecerão como “Upload pendente” até que os arquivos sejam disponibilizados.
+              Não encontramos os áudios originais no momento. Os itens abaixo aparecerão como "Upload pendente" até que os arquivos sejam disponibilizados.
             </div>
           )}
           <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
