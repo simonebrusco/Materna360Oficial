@@ -44,11 +44,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   }, [])
 
   useEffect(() => {
-    setHasMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!showNotification || !hasMounted) {
+    if (!showNotification) {
       return
     }
 
