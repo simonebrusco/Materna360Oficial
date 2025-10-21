@@ -128,7 +128,7 @@ const getFallbackTemplate = (dateKey: string) => {
     return DEFAULT_FALLBACK_TEMPLATE
   }
 
-  const hash = [...dateKey].reduce((accumulator, character) => accumulator + character.charCodeAt(0), 0)
+  const hash = safeHash(dateKey)
   const index = Math.abs(hash) % pool.length
   return pool[index]?.text ?? DEFAULT_FALLBACK_TEMPLATE
 }
