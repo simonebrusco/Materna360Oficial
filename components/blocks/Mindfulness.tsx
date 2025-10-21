@@ -365,21 +365,29 @@ export function Mindfulness() {
       const audio = audioRef.current
       if (!audio) return
 
+      const previousPlayback = currentPlayback
+      const previousLastPlayback = lastPlayback
+
       const isSameTrack = currentPlayback?.track.id === track.id
 
       const playFromStart = progressMap[track.id]?.current ?? 0
 
       const ensurePlayback = async () => {
+        const nextPlayback = { theme, track }
+        const nextLast: LastPlayback = { themeId: theme.id, trackId: track.id }
+        setCurrentPlayback(nextPlayback)
+        setLastPlayback(nextLast)
+        persistLastPlayback(nextLast)
+
         try {
-          setCurrentPlayback({ theme, track })
-          setLastPlayback({ themeId: theme.id, trackId: track.id })
-          persistLastPlayback({ themeId: theme.id, trackId: track.id })
           await audio.play()
           setIsPlaying(true)
         } catch (error) {
           console.error('Falha ao iniciar reprodução do Mindfulness', error)
           setToastMessage('Não foi possível tocar este áudio.')
-          setCurrentPlayback((previous) => (previous?.track.id === track.id ? null : previous))
+          setCurrentPlayback(previousPlayback ?? null)
+          setLastPlayback(previousLastPlayback ?? null)
+          persistLastPlayback(previousLastPlayback ?? null)
         }
       }
 
@@ -420,7 +428,7 @@ export function Mindfulness() {
 
       await ensurePlayback()
     },
-    [availability, currentPlayback, isPlaying, persistLastPlayback, progressMap]
+    [availability, currentPlayback, isPlaying, lastPlayback, persistLastPlayback, progressMap]
   )
 
   const handleSeek = useCallback((value: number) => {
