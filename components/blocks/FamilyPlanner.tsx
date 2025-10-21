@@ -288,15 +288,11 @@ export function FamilyPlanner() {
   }, [plannerData, isInitialized])
 
   useEffect(() => {
-    if (!isInitialized || typeof window === 'undefined') {
+    if (!isInitialized || USE_API_PLANNER) {
       return
     }
 
-    try {
-      window.localStorage.setItem(WEEK_STORAGE_KEY, formatDateKey(weekStart))
-    } catch (error) {
-      console.error('Failed to persist planner week:', error)
-    }
+    plannerStorage.saveWeekStart(formatDateKey(weekStart))
   }, [weekStart, isInitialized])
 
   useEffect(() => {
