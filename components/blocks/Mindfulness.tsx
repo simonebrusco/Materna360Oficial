@@ -42,6 +42,48 @@ const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
 const LAST_TRACK_STORAGE_KEY = 'm360:lastMindfulnessTrack'
 const LEGACY_LAST_TRACK_KEY = 'mindfulness_last_v1'
 
+const FALLBACK_THEMES: MindfulnessTheme[] = [
+  {
+    id: 'respiracao-pausa',
+    title: 'Respiração & Pausa',
+    tracks: [
+      { id: 'acalme-sua-mente', title: 'Acalme sua mente', file: '/audio/mindfulness/acalme-sua-mente.mp3' },
+      { id: 'respire-e-conecte-se', title: 'Respire e conecte-se', file: '/audio/mindfulness/respire-e-conecte-se.mp3' },
+      {
+        id: 'saindo-do-piloto-automatico',
+        title: 'Saindo do piloto automático',
+        file: '/audio/mindfulness/saindo-do-piloto-automatico.mp3',
+      },
+    ],
+  },
+  {
+    id: 'autocompaixao-forca',
+    title: 'Autocompaixão & Força',
+    tracks: [
+      {
+        id: 'voce-esta-fazendo-o-melhor',
+        title: 'Você está fazendo o melhor',
+        file: '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3',
+      },
+      {
+        id: 'voce-nao-precisa-dar-conta',
+        title: 'Você não precisa dar conta',
+        file: '/audio/mindfulness/voce-nao-precisa-dar-conta.mp3',
+      },
+      { id: 'confie-em-voce', title: 'Confie em você', file: '/audio/mindfulness/confie-em-voce.mp3' },
+    ],
+  },
+  {
+    id: 'sono-relaxamento',
+    title: 'Sono & Relaxamento',
+    tracks: [
+      { id: 'antes-de-dormir', title: 'Antes de dormir', file: '/audio/mindfulness/antes-de-dormir.mp3' },
+      { id: 'um-novo-comeco', title: 'Um novo começo', file: '/audio/mindfulness/um-novo-comeco.mp3' },
+      { id: 'natureza-e-equilibrio', title: 'Natureza e equilíbrio', file: '/audio/mindfulness/natureza-e-equilibrio.mp3' },
+    ],
+  },
+]
+
 const appendCacheBuster = (source: string, version: string) => {
   if (!version) return source
   try {
@@ -142,12 +184,19 @@ export function Mindfulness() {
         }
         const data: ManifestResponse = await response.json()
         if (!active) return
-        setThemes(data.themes ?? [])
-        setHasManifestError(false)
+
+        const receivedThemes = Array.isArray(data?.themes) ? data.themes : []
+        if (receivedThemes.length > 0) {
+          setThemes(receivedThemes)
+          setHasManifestError(false)
+        } else {
+          setThemes(FALLBACK_THEMES)
+          setHasManifestError(true)
+        }
       } catch (error) {
         console.error('Não foi possível carregar a lista de mindfulness.', error)
         if (active) {
-          setThemes([])
+          setThemes(FALLBACK_THEMES)
           setHasManifestError(true)
         }
       } finally {
