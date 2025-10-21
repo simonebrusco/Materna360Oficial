@@ -434,6 +434,14 @@ export function FamilyPlanner() {
       </div>
 
       <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {TYPE_OPTIONS.map((option) => (
+            <Button key={option} type="button" variant="outline" size="sm" onClick={() => handleQuickAdd(option)}>
+              + {option}
+            </Button>
+          ))}
+        </div>
+
         <div>
           <h3 className="text-base font-semibold text-support-1">Agenda do dia</h3>
           <p className="text-xs text-support-2/90">
