@@ -105,16 +105,11 @@ const ensureEmptyRowLimit = (items: ChecklistItem[]): ChecklistItem[] => {
     }
   }
 
-  let trimmedEmpty = empty.slice(-MIN_EMPTY_ROWS)
-
-  while (trimmedEmpty.length < MIN_EMPTY_ROWS) {
-    trimmedEmpty = [...trimmedEmpty, createEmptyItem()]
-  }
-
+  const trimmedEmpty = empty.slice(-MIN_EMPTY_ROWS)
   const combined = [...nonEmpty, ...trimmedEmpty]
 
   if (combined.length === 0) {
-    return [createEmptyItem(), createEmptyItem()]
+    return [createEmptyItem()]
   }
 
   return combined
