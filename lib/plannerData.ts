@@ -1,3 +1,5 @@
+import type { AgeBand } from './dailyActivity'
+
 const STORAGE_KEY = 'planner_v1'
 const WEEK_STORAGE_KEY = 'planner_last_week_start'
 export const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
@@ -10,8 +12,12 @@ export type PlannerItem = {
   title: string
   done: boolean
   durationMin?: number
-  ageBand?: '0-6m' | '7-12m' | '1-2a' | '3-4a' | '5-6a'
+  ageBand?: AgeBand
   notes?: string
+  refId?: string
+  status?: 'pending' | 'done'
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type PlannerData = Record<string, PlannerItem[]>
