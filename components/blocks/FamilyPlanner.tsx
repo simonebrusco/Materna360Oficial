@@ -238,37 +238,45 @@ export function FamilyPlanner() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
+    let active = true
 
-    try {
-      const storedPlanner = window.localStorage.getItem(STORAGE_KEY)
-      if (storedPlanner) {
-        const parsed = JSON.parse(storedPlanner) as PlannerData
-        setPlannerData(parsed)
-      }
-    } catch (error) {
-      console.error('Failed to load planner data:', error)
-    }
+    const initializePlanner = async () => {
+      let initialWeekStart = getWeekStart(new Date())
 
-    try {
-      const storedWeekStart = window.localStorage.getItem(WEEK_STORAGE_KEY)
-      if (storedWeekStart) {
-        const parsedDate = parseDateKey(storedWeekStart)
+      const storedWeekStartKey = plannerStorage.getStoredWeekStart()
+      if (storedWeekStartKey) {
+        const parsedDate = parseDateKey(storedWeekStartKey)
         if (parsedDate) {
-          setWeekStart(getWeekStart(parsedDate))
-          if (!hasSyncedWeekStart.current) {
-            setSelectedDayKey(formatDateKey(parsedDate))
-            hasSyncedWeekStart.current = true
+          initialWeekStart = getWeekStart(parsedDate)
+          if (active) {
+            setWeekStart(initialWeekStart)
+            if (!hasSyncedWeekStart.current) {
+              setSelectedDayKey(formatDateKey(parsedDate))
+              hasSyncedWeekStart.current = true
+            }
           }
         }
       }
-    } catch (error) {
-      console.error('Failed to load planner week:', error)
+
+      try {
+        const data = await plannerApi.getPlannerData(formatDateKey(initialWeekStart))
+        if (active) {
+          setPlannerData(data)
+        }
+      } catch (error) {
+        console.error('Failed to initialize planner data:', error)
+      } finally {
+        if (active) {
+          setIsInitialized(true)
+        }
+      }
     }
 
-    setIsInitialized(true)
+    void initializePlanner()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   useEffect(() => {
