@@ -3,38 +3,26 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
+import {
+  DEFAULT_STICKER_ID,
+  STICKERS,
+  getStickerInfo,
+  isProfileStickerId,
+} from '@/app/lib/stickers'
+
 interface HeaderProps {
   title: string
   showNotification?: boolean
 }
 
-type StickerInfo = {
-  label: string
-  asset: string
-}
-
-const STICKERS: Record<string, StickerInfo> = {
-  'mae-carinhosa': { label: 'Mãe Carinhosa', asset: 'emoji:💞' },
-  'mae-leve': { label: 'Mãe Leve', asset: 'emoji:☁️' },
-  'mae-determinada': { label: 'Mãe Determinada', asset: 'emoji:🌱' },
-  'mae-criativa': { label: 'Mãe Criativa', asset: 'emoji:🎨' },
-  'mae-tranquila': { label: 'Mãe Tranquila', asset: 'emoji:🌙' },
-}
-
-const DEFAULT_STICKER: StickerInfo = { label: 'Minha Figurinha', asset: 'emoji:✨' }
 const PROFILE_UPDATED_EVENT = 'materna:profile-updated'
-
-const getStickerInfo = (id: string | null | undefined): StickerInfo => {
-  if (!id) {
-    return DEFAULT_STICKER
-  }
-  return STICKERS[id] ?? DEFAULT_STICKER
-}
 
 export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [stickerId, setStickerId] = useState<string>('')
+  const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
   const [isLoadingSticker, setIsLoadingSticker] = useState<boolean>(false)
+  const [imageSrc, setImageSrc] = useState<string>(STICKERS[DEFAULT_STICKER_ID].asset)
+  const [hasTriedPngFallback, setHasTriedPngFallback] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
@@ -67,11 +55,12 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           return
         }
 
-        setStickerId(typeof data?.figurinha === 'string' ? data.figurinha : '')
+        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
+        setStickerId(nextStickerId)
       } catch (error) {
         console.error('Não foi possível obter o perfil para a figurinha:', error)
         if (isMounted) {
-          setStickerId('')
+          setStickerId(DEFAULT_STICKER_ID)
         }
       } finally {
         if (isMounted) {
@@ -82,9 +71,12 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
     const handleProfileUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ figurinha?: string }>
-      if (customEvent.detail && isMounted) {
-        setStickerId(typeof customEvent.detail.figurinha === 'string' ? customEvent.detail.figurinha : '')
+      if (!isMounted) {
+        return
       }
+
+      const figurinhaId = customEvent.detail?.figurinha
+      setStickerId(isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID)
     }
 
     void loadProfile()
@@ -99,17 +91,21 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
   const sticker = useMemo(() => getStickerInfo(stickerId), [stickerId])
 
-  const renderStickerContent = () => {
-    if (sticker.asset.startsWith('emoji:')) {
-      const emoji = sticker.asset.replace('emoji:', '')
-      return <span className="text-2xl" aria-hidden>{emoji}</span>
+  useEffect(() => {
+    setImageSrc(sticker.asset)
+    setHasTriedPngFallback(false)
+  }, [sticker])
+
+  const handleImageError = () => {
+    if (!hasTriedPngFallback && sticker.asset.endsWith('.svg')) {
+      setHasTriedPngFallback(true)
+      setImageSrc(sticker.asset.replace('.svg', '.png'))
+      return
     }
 
-    return (
-      <span className="text-lg font-semibold text-primary" aria-hidden>
-        ☆
-      </span>
-    )
+    if (imageSrc !== STICKERS[DEFAULT_STICKER_ID].asset) {
+      setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
+    }
   }
 
   return (
@@ -146,7 +142,16 @@ export function Header({ title, showNotification = false }: HeaderProps) {
               {isLoadingSticker ? (
                 <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
               ) : (
-                renderStickerContent()
+                <img
+                  key={imageSrc}
+                  src={imageSrc}
+                  alt={sticker.label}
+                  aria-label={`Figurinha de perfil: ${sticker.label}`}
+                  className="h-7 w-7 shrink-0 object-contain"
+                  loading="lazy"
+                  decoding="async"
+                  onError={handleImageError}
+                />
               )}
             </Link>
 
