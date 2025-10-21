@@ -227,6 +227,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
 export const FALLBACK_ACTIVITY: DailyActivity = {
   id: 'contato-afetuoso',
   title: 'Momento de contato afetuoso',
+  emoji: '🤗',
   durationMin: 10,
   ageBand: DEFAULT_AGE_BAND,
   materials: ['Cobertor macio', 'Música calma'],
