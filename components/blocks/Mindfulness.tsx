@@ -40,6 +40,7 @@ type LastPlayback = {
 const MANIFEST_URL = '/audio/mindfulness/manifest.json'
 const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
 const LAST_TRACK_STORAGE_KEY = 'm360:lastMindfulnessTrack'
+const LEGACY_LAST_TRACK_KEY = 'mindfulness_last_v1'
 
 const appendCacheBuster = (source: string, version: string) => {
   if (!version) return source
