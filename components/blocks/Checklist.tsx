@@ -1,11 +1,10 @@
-'use client'
+'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { getTodayDateKey } from '@/lib/dailyActivity'
 
 const STORAGE_KEY = 'daily_checklist_v1'
 const FALLBACK_NAME = 'Mãe'
@@ -31,7 +30,7 @@ const createId = () => {
     return crypto.randomUUID()
   }
 
-  return Math.random().toString(36).slice(2, 11)
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 const createEmptyItem = (): ChecklistItem => ({
@@ -132,6 +131,19 @@ const seedChecklist = (): ChecklistItem[] => {
   return ensureEmptyRowLimit([...referenceItems, createEmptyItem(), createEmptyItem()])
 }
 
+const getLocalDateKey = (date = new Date()): string => {
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getYesterdayDateKey = (): string => {
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  return getLocalDateKey(yesterday)
+}
+
 const fetchMotherName = async (): Promise<string> => {
   try {
     const response = await fetch('/api/profile', {
@@ -155,13 +167,12 @@ const fetchMotherName = async (): Promise<string> => {
 export function Checklist() {
   const [items, setItems] = useState<ChecklistItem[]>([])
   const [profileName, setProfileName] = useState(FALLBACK_NAME)
-  const [dateKey, setDateKey] = useState(() => getTodayDateKey())
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [dateKey, setDateKey] = useState(() => getLocalDateKey())
 
   const title = useMemo(() => `Checklist da ${profileName}`, [profileName])
 
   useEffect(() => {
-    const todayKey = getTodayDateKey()
+    const todayKey = getLocalDateKey()
     setDateKey(todayKey)
 
     const map = readChecklistMap()
@@ -178,8 +189,6 @@ export function Checklist() {
       setItems(seeded)
       persistChecklistMap({ ...map, [todayKey]: seeded })
     }
-
-    setIsInitialized(true)
   }, [])
 
   useEffect(() => {
@@ -188,23 +197,23 @@ export function Checklist() {
     })
   }, [])
 
-  useEffect(() => {
-    if (!isInitialized) {
-      return
-    }
-
-    const map = readChecklistMap()
-    map[dateKey] = items
-    persistChecklistMap(map)
-  }, [items, dateKey, isInitialized])
-
-  const updateItems = useCallback((updater: (previous: ChecklistItem[]) => ChecklistItem[]) => {
-    setItems((previous) => ensureEmptyRowLimit(updater(previous)))
-  }, [])
+  const setItemsForDate = useCallback(
+    (next: ChecklistItem[] | ((previous: ChecklistItem[]) => ChecklistItem[])) => {
+      setItems((previous) => {
+        const rawNext = typeof next === 'function' ? next(previous) : next
+        const ensured = ensureEmptyRowLimit(rawNext)
+        const map = readChecklistMap()
+        map[dateKey] = ensured
+        persistChecklistMap(map)
+        return ensured
+      })
+    },
+    [dateKey]
+  )
 
   const handleToggle = useCallback(
     (id: string) => {
-      updateItems((previous) =>
+      setItemsForDate((previous) =>
         previous.map((item) =>
           item.id === id
             ? {
@@ -215,12 +224,12 @@ export function Checklist() {
         )
       )
     },
-    [updateItems]
+    [setItemsForDate]
   )
 
   const handleTextChange = useCallback(
     (id: string, text: string) => {
-      updateItems((previous) =>
+      setItemsForDate((previous) =>
         previous.map((item) =>
           item.id === id
             ? {
@@ -231,39 +240,118 @@ export function Checklist() {
         )
       )
     },
-    [updateItems]
+    [setItemsForDate]
   )
 
   const handleTextBlur = useCallback(() => {
-    updateItems((previous) => ensureEmptyRowLimit(previous))
-  }, [updateItems])
+    setItemsForDate((previous) => previous)
+  }, [setItemsForDate])
 
-  const handleAddRow = useCallback(() => {
-    updateItems((previous) => [...previous, createEmptyItem()])
-  }, [updateItems])
+  const handleAddLine = useCallback(() => {
+    const emptyCount = items.filter((item) => !item.text.trim()).length
+
+    if (emptyCount >= MIN_EMPTY_ROWS) {
+      return
+    }
+
+    const newItem = createEmptyItem()
+
+    setItemsForDate((previous) => [...previous, newItem])
+
+    requestAnimationFrame(() => {
+      const element = document.querySelector<HTMLInputElement>(`[data-check-id="${newItem.id}"]`)
+      element?.focus()
+      element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    })
+  }, [items, setItemsForDate])
 
   const handleRemove = useCallback(
     (id: string) => {
-      updateItems((previous) => previous.filter((item) => item.id !== id))
+      setItemsForDate((previous) => previous.filter((item) => item.id !== id))
     },
-    [updateItems]
+    [setItemsForDate]
   )
 
   const handleClearChecks = useCallback(() => {
-    updateItems((previous) => previous.map((item) => ({ ...item, checked: false })))
-  }, [updateItems])
+    setItemsForDate((previous) => previous.map((item) => ({ ...item, checked: false })))
+  }, [setItemsForDate])
+
+  const handleDuplicateFromYesterday = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const todayKey = getLocalDateKey()
+    const yesterdayKey = getYesterdayDateKey()
+
+    const map = readChecklistMap()
+    const from = Array.isArray(map[yesterdayKey]) ? map[yesterdayKey] : []
+
+    if (from.length === 0) {
+      return
+    }
+
+    const current = Array.isArray(map[todayKey]) ? map[todayKey] : []
+
+    if (current.length > 0) {
+      const confirmReplace = window.confirm(
+        'Você já tem itens hoje. Deseja substituir pelos de ontem?\n(OK = substituir, Cancelar = mesclar)'
+      )
+
+      if (confirmReplace) {
+        const next = from.map((item) => ({
+          id: createId(),
+          text: item.text,
+          checked: false,
+          isReference: false,
+        }))
+
+        setItemsForDate(next)
+        return
+      }
+    }
+
+    const existingTexts = new Set(
+      current
+        .map((item) => item.text?.trim().toLowerCase())
+        .filter((value): value is string => Boolean(value))
+    )
+
+    const toAppend = from
+      .filter((item) => item.text?.trim())
+      .filter((item) => !existingTexts.has(item.text.trim().toLowerCase()))
+      .map((item) => ({
+        id: createId(),
+        text: item.text,
+        checked: false,
+        isReference: false,
+      }))
+
+    const merged = [...current, ...toAppend]
+
+    setItemsForDate(merged)
+  }, [setItemsForDate])
 
   return (
     <Card className="p-7">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">{title}</h2>
-        <button
-          type="button"
-          onClick={handleClearChecks}
-          className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
-        >
-          Limpar checks
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDuplicateFromYesterday}
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
+          >
+            Duplicar de ontem
+          </button>
+          <button
+            type="button"
+            onClick={handleClearChecks}
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-primary transition hover:text-primary/80"
+          >
+            Limpar checks
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -280,6 +368,7 @@ export function Checklist() {
               aria-label={item.text ? `Concluir tarefa: ${item.text}` : 'Concluir tarefa'}
             />
             <input
+              data-check-id={item.id}
               type="text"
               value={item.text}
               onChange={(event) => handleTextChange(item.id, event.target.value)}
@@ -301,7 +390,7 @@ export function Checklist() {
       </div>
 
       <div className="mt-5">
-        <Button type="button" variant="outline" size="sm" className="w-full" onClick={handleAddRow}>
+        <Button type="button" variant="outline" size="sm" className="w-full" onClick={handleAddLine}>
           + Adicionar linha
         </Button>
       </div>
