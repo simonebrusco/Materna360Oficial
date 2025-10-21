@@ -65,6 +65,8 @@ export const plannerStorage = {
   },
 }
 
+type PlannerApiItem = PlannerItem & { date: string }
+
 const fetchPlannerData = async (weekStart: string): Promise<PlannerData> => {
   const url = `/api/planner?weekStart=${encodeURIComponent(weekStart)}`
   const response = await fetch(url, {
@@ -75,12 +77,13 @@ const fetchPlannerData = async (weekStart: string): Promise<PlannerData> => {
     throw new Error(`Failed to fetch planner data (${response.status})`)
   }
 
-  const payload: { items: PlannerItemPayload[] } = await response.json()
+  const payload: { items: PlannerApiItem[] } = await response.json()
   return payload.items.reduce<PlannerData>((acc, item) => {
     if (!acc[item.date]) {
       acc[item.date] = []
     }
-    acc[item.date].push(item)
+    const { date, ...rest } = item
+    acc[item.date].push(rest)
     return acc
   }, {})
 }
