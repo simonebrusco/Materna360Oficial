@@ -4,9 +4,8 @@ export const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
 
 export type PlannerItemType = 'Brincadeira' | 'Receita' | 'Livro' | 'Brinquedo' | 'Recomendação'
 
-export type PlannerItemPayload = {
+export type PlannerItem = {
   id: string
-  date: string
   type: PlannerItemType
   title: string
   done: boolean
@@ -15,7 +14,7 @@ export type PlannerItemPayload = {
   notes?: string
 }
 
-export type PlannerData = Record<string, PlannerItemPayload[]>
+export type PlannerData = Record<string, PlannerItem[]>
 
 export const plannerStorage = {
   getPlannerData(): PlannerData {
