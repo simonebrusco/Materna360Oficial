@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Pause, Play, SkipBack, SkipForward } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
 
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -350,9 +350,9 @@ export function Mindfulness() {
                         <span className="truncate text-sm font-medium text-support-1">{track.title}</span>
                         {!hasFile && <span className="text-xs text-support-2">Upload pendente</span>}
                       </div>
-                      {hasFile && progress && (
+                      {hasFile && (
                         <span className="text-xs font-medium text-support-2" aria-live="polite">
-                          {formatTime(progress.current)} / {formatTime(progress.duration)}
+                          {formatTime(progress?.current ?? 0)} / {formatTime(progress?.duration ?? 0)}
                         </span>
                       )}
                     </li>
