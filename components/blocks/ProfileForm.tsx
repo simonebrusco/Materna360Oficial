@@ -1,6 +1,7 @@
 'use client'
 
 import { type FormEvent, useEffect, useState } from 'react'
+import Image from 'next/image'
 
 import { DEFAULT_STICKER_ID, ProfileStickerId, STICKER_OPTIONS, isProfileStickerId } from '@/app/lib/stickers'
 import { Button } from '@/components/ui/Button'
@@ -403,15 +404,16 @@ export function ProfileForm() {
                         aria-pressed={isActive}
                         aria-label={`Selecionar figurinha ${sticker.label}`}
                       >
-                        <span className={`inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-soft transition-transform duration-300 group-hover:scale-105 ${
+                        <span className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-soft transition-transform duration-300 group-hover:scale-105 ${
                           isActive ? 'ring-2 ring-primary/40' : ''
                         }`}>
-                          <img
+                          <Image
                             src={sticker.asset}
                             alt={sticker.label}
-                            className="h-11 w-11 object-contain"
+                            width={128}
+                            height={128}
+                            className="h-11 w-11 object-cover"
                             loading="lazy"
-                            decoding="async"
                           />
                         </span>
                         <span className="text-sm font-semibold text-support-1">{sticker.label}</span>
