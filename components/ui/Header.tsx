@@ -160,7 +160,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/60 text-primary shadow-soft"
                 aria-hidden
               >
-                <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" />
+                <span className="h-5 w-5 rounded-full bg-primary/30" />
               </span>
             )}
 
