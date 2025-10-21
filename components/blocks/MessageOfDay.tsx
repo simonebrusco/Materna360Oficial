@@ -130,6 +130,14 @@ export function MessageOfDay() {
     }
 
     const load = async () => {
+      /**
+       * We do NOT cache the user's name:
+       * - Name can change in the eu360 form; we want it to update immediately.
+       * - Daily cache stores only the base message; the NAME is resolved at runtime.
+       * - Single source of truth: /api/profile (avoids stale data).
+       * - Prevents cross-device inconsistencies and simplifies cache invalidation.
+       * - Minimal cost to read name; UX stays always fresh.
+       */
       const name = await fetchMotherName()
       if (!active) {
         return
