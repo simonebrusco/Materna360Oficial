@@ -534,67 +534,74 @@ export function Mindfulness() {
           {hasManifestError ? 'Não foi possível carregar os áudios agora. Tente novamente mais tarde.' : 'Em breve, novos áudios de mindfulness por aqui.'}
         </p>
       ) : (
-        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {themes.map((theme) => (
-            <div key={theme.id} className="flex flex-col gap-4 rounded-3xl border border-white/60 bg-white/80 p-5 shadow-soft">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">{theme.title}</p>
-              </div>
-              <ul className="space-y-2">
-                {theme.tracks.map((track) => {
-                  const progress = progressMap[track.id]
-                  const isCurrent = currentPlayback?.track.id === track.id
-                  const isTrackPlaying = isCurrent && isPlaying
-                  const status = availability[track.id] ?? (track.file ? 'checking' : 'missing')
-                  const isChecking = status === 'checking'
-                  const isMissing = status === 'missing'
-                  const isPlayable = Boolean(track.file) && status === 'available'
-                  const isLastPlayed = lastPlayback?.trackId === track.id
-                  const ariaLabel = isTrackPlaying ? 'Pausar' : 'Tocar'
-                  const currentProgress = progress ?? { current: 0, duration: 0 }
-
-                  return (
-                    <li
-                      key={track.id}
-                      className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition ${
-                        isLastPlayed ? 'border-primary/50 shadow-elevated' : ''
-                      }`}
-                    >
-                      {isPlayable ? (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleTrack(theme, track)}
-                          aria-label={ariaLabel}
-                          className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                        >
-                          {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </button>
-                      ) : (
-                        <div
-                          className="shrink-0 rounded-full border border-dashed border-primary/20 bg-white p-2 text-support-2/70"
-                          aria-hidden
-                        >
-                          <Play className="h-4 w-4 opacity-30" />
-                        </div>
-                      )}
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-sm font-medium text-support-1">{track.title}</span>
-                        {isChecking && <span className="text-xs text-support-2">Verificando…</span>}
-                        {isPlayable && <span className="text-xs text-emerald-600">Pronto para ouvir</span>}
-                        {isMissing && <span className="text-xs text-support-2">Upload pendente</span>}
-                      </div>
-                      {isPlayable && (
-                        <span className="text-xs font-medium text-support-2" aria-live="polite">
-                          {formatTime(currentProgress.current)} / {formatTime(currentProgress.duration)}
-                        </span>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
+        <>
+          {hasManifestError && (
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-800">
+              Não encontramos os áudios originais no momento. Os itens abaixo aparecerão como “Upload pendente” até que os arquivos sejam disponibilizados.
             </div>
-          ))}
-        </div>
+          )}
+          <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {themes.map((theme) => (
+              <div key={theme.id} className="flex flex-col gap-4 rounded-3xl border border-white/60 bg-white/80 p-5 shadow-soft">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">{theme.title}</p>
+                </div>
+                <ul className="space-y-2">
+                  {theme.tracks.map((track) => {
+                    const progress = progressMap[track.id]
+                    const isCurrent = currentPlayback?.track.id === track.id
+                    const isTrackPlaying = isCurrent && isPlaying
+                    const status = availability[track.id] ?? (track.file ? 'checking' : 'missing')
+                    const isChecking = status === 'checking'
+                    const isMissing = status === 'missing'
+                    const isPlayable = Boolean(track.file) && status === 'available'
+                    const isLastPlayed = lastPlayback?.trackId === track.id
+                    const ariaLabel = isTrackPlaying ? 'Pausar' : 'Tocar'
+                    const currentProgress = progress ?? { current: 0, duration: 0 }
+
+                    return (
+                      <li
+                        key={track.id}
+                        className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition ${
+                          isLastPlayed ? 'border-primary/50 shadow-elevated' : ''
+                        }`}
+                      >
+                        {isPlayable ? (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTrack(theme, track)}
+                            aria-label={ariaLabel}
+                            className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                          >
+                            {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                          </button>
+                        ) : (
+                          <div
+                            className="shrink-0 rounded-full border border-dashed border-primary/20 bg-white p-2 text-support-2/70"
+                            aria-hidden
+                          >
+                            <Play className="h-4 w-4 opacity-30" />
+                          </div>
+                        )}
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-sm font-medium text-support-1">{track.title}</span>
+                          {isChecking && <span className="text-xs text-support-2">Verificando…</span>}
+                          {isPlayable && <span className="text-xs text-emerald-600">Pronto para ouvir</span>}
+                          {isMissing && <span className="text-xs text-support-2">Upload pendente</span>}
+                        </div>
+                        {isPlayable && (
+                          <span className="text-xs font-medium text-support-2" aria-live="polite">
+                            {formatTime(currentProgress.current)} / {formatTime(currentProgress.duration)}
+                          </span>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {process.env.NODE_ENV !== 'production' && missingFiles.length > 0 && (
