@@ -366,6 +366,32 @@ const writeStoredActivity = (band: AgeBand, record: StoredDailyActivity) => {
   }
 }
 
+const findCachedActivityForDate = (dateKey: string): StoredDailyActivity | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  for (const band of AGE_BAND_ORDER) {
+    const record = readStoredActivity(band)
+    if (record?.dateKey === dateKey) {
+      return record
+    }
+  }
+
+  const legacy = readLegacyStoredActivity()
+  if (legacy?.dateKey === dateKey) {
+    return legacy
+  }
+
+  return null
+}
+
+const createResultFromRecord = (record: StoredDailyActivity): DailyActivityResult => ({
+  dateKey: record.dateKey,
+  activity: record.activity,
+  ageBand: record.band,
+})
+
 const getBrazilDateKey = (date = new Date()): string => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: BRAZIL_TIMEZONE,
