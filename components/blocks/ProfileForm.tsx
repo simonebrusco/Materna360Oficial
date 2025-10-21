@@ -83,7 +83,7 @@ const defaultState = (): ProfileFormState => ({
 })
 
 export function ProfileForm() {
-  const [form, setForm] = useState<ProfileFormState>(defaultState)
+  const [form, setForm] = useState<ProfileFormState>(() => defaultState())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
