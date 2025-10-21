@@ -364,6 +364,7 @@ export function FamilyPlanner() {
     }
 
     const trimmedNotes = draftNotes.trim()
+    const timestamp = new Date().toISOString()
 
     const newItem: PlannerItem = {
       id: createId(),
@@ -373,6 +374,9 @@ export function FamilyPlanner() {
       durationMin: durationValue,
       ageBand: draftAgeBand || undefined,
       notes: trimmedNotes ? trimmedNotes : undefined,
+      status: 'pending',
+      createdAt: timestamp,
+      updatedAt: timestamp,
     }
 
     setPlannerData((previous) => {
