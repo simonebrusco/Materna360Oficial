@@ -35,6 +35,7 @@ export function ActivityOfDay() {
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const { activity } = activityState
+  const cardTitle = activity.emoji ? `${activity.emoji} ${activity.title}` : activity.title
 
   useEffect(() => {
     let active = true
@@ -121,7 +122,7 @@ export function ActivityOfDay() {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
               Atividade do Dia
             </span>
-            <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">{activity.title}</p>
+            <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">{cardTitle}</p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
               {hasAgeBand && (
                 <span className="inline-flex items-center gap-1">👧 {activity.ageBand}</span>
@@ -161,7 +162,7 @@ export function ActivityOfDay() {
             <div className="space-y-4">
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Título</h4>
-                <p className="mt-1 font-semibold text-support-1">{activity.title}</p>
+                <p className="mt-1 font-semibold text-support-1">{cardTitle}</p>
               </div>
               {hasDuration && (
                 <div>
