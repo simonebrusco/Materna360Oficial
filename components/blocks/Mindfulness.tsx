@@ -367,7 +367,8 @@ export function Mindfulness() {
                         type="button"
                         onClick={() => handleToggleTrack(theme, track)}
                         disabled={!hasFile}
-                        aria-label={isTrackPlaying ? 'Pausar' : 'Tocar'}
+                        aria-disabled={!hasFile}
+                        aria-label={hasFile ? (isTrackPlaying ? 'Pausar' : 'Tocar') : 'Tocar'}
                         className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:cursor-not-allowed disabled:border-dashed disabled:text-support-2"
                       >
                         {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
