@@ -549,7 +549,7 @@ export function FamilyPlanner() {
           className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
           aria-label="Próxima semana"
         >
-          ›
+          ��
         </button>
       </div>
 
@@ -833,6 +833,41 @@ export function FamilyPlanner() {
           <Button type="button" variant="outline" size="sm" onClick={() => handleStartAdd()}>
             Adicionar item
           </Button>
+        )}
+
+        {recommendations.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">
+                Faixa {preferredAgeBand}
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {recommendations.map((suggestion, index) => (
+                <div
+                  key={`${preferredAgeBand}-${index}-${suggestion.title}`}
+                  className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
+                >
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                      {suggestion.type}
+                    </span>
+                  </div>
+                  <p className="mb-3 text-sm font-semibold text-support-1">{suggestion.title}</p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
+                  >
+                    Salvar no Planner
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </Card>
