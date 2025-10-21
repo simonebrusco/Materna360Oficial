@@ -116,7 +116,7 @@ export function Mindfulness() {
 
     const loadManifest = async () => {
       try {
-        const response = await fetch(MANIFEST_URL)
+        const response = await fetch(MANIFEST_URL, { cache: 'no-store' })
         if (!response.ok) {
           throw new Error('Manifesto indisponível')
         }
