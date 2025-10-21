@@ -30,6 +30,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'massagem-afetuosa',
     title: 'Massagem afetuosa',
+    emoji: '💞',
     durationMin: 10,
     ageBand: '0-6m',
     materials: ['Óleo vegetal morno', 'Toalha macia'],
@@ -42,6 +43,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'mobile-contraste',
     title: 'Explorar móbile de contraste',
+    emoji: '🎠',
     durationMin: 8,
     ageBand: '0-6m',
     materials: ['Móbile de alto contraste', 'Berço ou tapete de atividades'],
@@ -54,6 +56,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'sons-da-casa',
     title: 'Sons da casa',
+    emoji: '🎶',
     durationMin: 12,
     ageBand: '0-6m',
     materials: ['Objetos sonoros seguros', 'Colchonete ou mantinha'],
@@ -66,6 +69,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'caixa-de-tesouros',
     title: 'Caixa de tesouros sensoriais',
+    emoji: '🪄',
     durationMin: 15,
     ageBand: '7-12m',
     materials: ['Caixa rasa', 'Objetos seguros de diferentes texturas'],
@@ -78,6 +82,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'brincar-de-imitar',
     title: 'Brincar de imitar',
+    emoji: '🐒',
     durationMin: 10,
     ageBand: '7-12m',
     materials: ['Espaço livre para brincar'],
@@ -90,6 +95,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'esconde-objetos',
     title: 'Esconde-esconde com objetos',
+    emoji: '🙈',
     durationMin: 12,
     ageBand: '7-12m',
     materials: ['Pano leve ou fralda de tecido', 'Brinquedo favorito'],
@@ -102,6 +108,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'pintura-com-dedos',
     title: 'Pintura com dedos colorida',
+    emoji: '🎨',
     durationMin: 20,
     ageBand: '1-2a',
     materials: ['Papel grosso', 'Tinta atóxica lavável', 'Avental ou camiseta velha'],
@@ -114,6 +121,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'exploracao-na-cozinha',
     title: 'Exploração sensorial na cozinha',
+    emoji: '🥣',
     durationMin: 18,
     ageBand: '1-2a',
     materials: ['Panelas pequenas', 'Colheres de madeira', 'Potes vazios'],
@@ -126,6 +134,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'dança-com-paninhos',
     title: 'Dança com paninhos coloridos',
+    emoji: '🎏',
     durationMin: 15,
     ageBand: '1-2a',
     materials: ['Tecidos leves coloridos', 'Playlist alegre'],
@@ -138,6 +147,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'contacao-de-historias',
     title: 'Contação de histórias com fantoches',
+    emoji: '🧸',
     durationMin: 25,
     ageBand: '3-4a',
     materials: ['Fantoches de mão', 'Tapete confortável'],
@@ -150,6 +160,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'jardim-de-copos',
     title: 'Jardim de copos coloridos',
+    emoji: '🌈',
     durationMin: 20,
     ageBand: '3-4a',
     materials: ['Copos plásticos coloridos', 'Água', 'Conta-gotas'],
@@ -162,6 +173,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'oficina-de-colagem',
     title: 'Oficina de colagem criativa',
+    emoji: '✂️',
     durationMin: 30,
     ageBand: '3-4a',
     materials: ['Papéis coloridos', 'Revistas velhas', 'Tesoura sem ponta', 'Cola branca'],
@@ -174,6 +186,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'roteiro-de-aventura',
     title: 'Roteiro de aventura no quintal',
+    emoji: '🗺️',
     durationMin: 35,
     ageBand: '5-6a',
     materials: ['Mapa desenhado à mão', 'Objetos para pistas', 'Bolsa ou mochila pequena'],
@@ -186,6 +199,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'laboratorio-de-sombras',
     title: 'Laboratório de sombras',
+    emoji: '🔦',
     durationMin: 25,
     ageBand: '5-6a',
     materials: ['Lanterna', 'Objetos translúcidos', 'Papel sulfite', 'Lápis'],
@@ -198,6 +212,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   {
     id: 'historia-em-quadrinhos',
     title: 'História em quadrinhos em família',
+    emoji: '🖍️',
     durationMin: 40,
     ageBand: '5-6a',
     materials: ['Folhas em branco', 'Lápis de cor', 'Régua'],
