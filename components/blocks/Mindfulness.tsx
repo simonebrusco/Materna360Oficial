@@ -44,7 +44,8 @@ const LAST_TRACK_STORAGE_KEY = 'm360:lastMindfulnessTrack'
 const appendCacheBuster = (source: string, version: string) => {
   if (!version) return source
   try {
-    const url = new URL(source, window.location.origin)
+    const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+    const url = new URL(source, base)
     url.searchParams.set('v', version)
     return url.toString()
   } catch (error) {
