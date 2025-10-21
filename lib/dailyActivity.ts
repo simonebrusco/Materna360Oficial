@@ -135,7 +135,7 @@ const ACTIVITIES_CATALOG: DailyActivity[] = [
   },
   {
     id: 'dança-com-paninhos',
-    title: 'Dan��a com paninhos coloridos',
+    title: 'Dança com paninhos coloridos',
     emoji: '🎏',
     durationMin: 15,
     ageBand: '1-2a',
@@ -481,14 +481,10 @@ export const resolveDailyActivity = async (): Promise<DailyActivityResult> => {
 
 export const getInitialDailyActivity = (): DailyActivityResult => {
   const todayKey = getBrazilDateKey()
-  const cached = readStoredActivity()
+  const cached = findCachedActivityForDate(todayKey)
 
-  if (cached?.dateKey === todayKey && cached.activity) {
-    return {
-      dateKey: cached.dateKey,
-      activity: cached.activity,
-      ageBand: cached.activity.ageBand ?? DEFAULT_AGE_BAND,
-    }
+  if (cached) {
+    return createResultFromRecord(cached)
   }
 
   return {
