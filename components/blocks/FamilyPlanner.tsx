@@ -198,16 +198,13 @@ export function FamilyPlanner() {
   }
 
   const handleStartAdd = (type?: (typeof TYPE_OPTIONS)[number]) => {
-    if (type) {
-      setDraftType(type)
-    }
-    setDraftTitle('')
+    resetAddDraft(type ?? 'Brincadeira')
     setIsAdding(true)
   }
 
   const handleCancelAdd = () => {
     setIsAdding(false)
-    setDraftTitle('')
+    resetAddDraft(draftType)
   }
 
   const handleTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
