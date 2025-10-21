@@ -2,42 +2,18 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 
+import { DEFAULT_STICKER_ID, ProfileStickerId, STICKER_OPTIONS, isProfileStickerId } from '@/app/lib/stickers'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Reveal } from '@/components/ui/Reveal'
 
-const STICKERS = [
-  {
-    id: 'mae-carinhosa',
-    name: 'Mãe Carinhosa',
-    description: 'Amor nos pequenos gestos.',
-    emoji: '💞',
-  },
-  {
-    id: 'mae-leve',
-    name: 'Mãe Leve',
-    description: 'Equilíbrio e presença.',
-    emoji: '☁️',
-  },
-  {
-    id: 'mae-determinada',
-    name: 'Mãe Determinada',
-    description: 'Força com doçura.',
-    emoji: '🌱',
-  },
-  {
-    id: 'mae-criativa',
-    name: 'Mãe Criativa',
-    description: 'Inventa e transforma.',
-    emoji: '🎨',
-  },
-  {
-    id: 'mae-tranquila',
-    name: 'Mãe Tranquila',
-    description: 'Serenidade e autocuidado.',
-    emoji: '🌙',
-  },
-] as const
+const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
+  'mae-carinhosa': 'Amor nos pequenos gestos.',
+  'mae-leve': 'Equilíbrio e presença.',
+  'mae-determinada': 'Força com doçura.',
+  'mae-criativa': 'Inventa e transforma.',
+  'mae-tranquila': 'Serenidade e autocuidado.',
+}
 
 const createId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -46,8 +22,6 @@ const createId = () => {
 
   return Math.random().toString(36).slice(2, 11)
 }
-
-type StickerId = (typeof STICKERS)[number]['id']
 
 type ChildProfile = {
   id: string
@@ -59,7 +33,7 @@ type ChildProfile = {
 type ProfileFormState = {
   nomeMae: string
   filhos: ChildProfile[]
-  figurinha: StickerId | ''
+  figurinha: ProfileStickerId | ''
 }
 
 type FormErrors = {
@@ -90,11 +64,7 @@ export function ProfileForm() {
   const [statusMessage, setStatusMessage] = useState('')
 
   const stickerDescriptions = useMemo(
-    () =>
-      STICKERS.reduce<Record<StickerId, string>>((acc, sticker) => {
-        acc[sticker.id] = sticker.description
-        return acc
-      }, {} as Record<StickerId, string>),
+    () => STICKER_DESCRIPTIONS,
     []
   )
 
@@ -128,7 +98,7 @@ export function ProfileForm() {
             idadeMeses: Number.isFinite(Number(child?.idadeMeses)) && Number(child?.idadeMeses) >= 0 ? Number(child.idadeMeses) : 0,
             nome: typeof child?.nome === 'string' ? child.nome : '',
           })),
-          figurinha: STICKERS.some((sticker) => sticker.id === data?.figurinha) ? data.figurinha : '',
+          figurinha: isProfileStickerId(data?.figurinha) ? data.figurinha : '',
         })
       } catch (error) {
         console.error(error)
@@ -220,6 +190,7 @@ export function ProfileForm() {
         ...child,
         nome: child.nome.trim(),
       })),
+      figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID,
     }
 
     const validationErrors = validateForm(trimmedState)
@@ -416,7 +387,7 @@ export function ProfileForm() {
                   Escolha a vibe que mais combina com você hoje.
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  {STICKERS.map((sticker) => {
+                  {STICKER_OPTIONS.map((sticker) => {
                     const isActive = form.figurinha === sticker.id
                     return (
                       <button
@@ -427,11 +398,20 @@ export function ProfileForm() {
                           isActive ? 'scale-[1.02] ring-2 ring-primary/50 shadow-glow' : 'hover:-translate-y-1'
                         }`}
                         aria-pressed={isActive}
+                        aria-label={`Selecionar figurinha ${sticker.label}`}
                       >
-                        <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-secondary/80 text-2xl shadow-soft transition-transform duration-300 group-hover:scale-105">
-                          {sticker.emoji}
+                        <span className={`inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-soft transition-transform duration-300 group-hover:scale-105 ${
+                          isActive ? 'ring-2 ring-primary/40' : ''
+                        }`}>
+                          <img
+                            src={sticker.asset}
+                            alt={sticker.label}
+                            className="h-11 w-11 object-contain"
+                            loading="lazy"
+                            decoding="async"
+                          />
                         </span>
-                        <span className="text-sm font-semibold text-support-1">{sticker.name}</span>
+                        <span className="text-sm font-semibold text-support-1">{sticker.label}</span>
                         <span className="text-[11px] text-support-2">{stickerDescriptions[sticker.id]}</span>
                       </button>
                     )
