@@ -201,8 +201,39 @@ export function FamilyPlanner() {
   const selectedDayItems = plannerData[selectedDayKey] ?? []
   const recommendations = useMemo(() => {
     const dayIndex = (selectedDay.getDay() + 6) % 7
-    return pickRecommendationsForDay(preferredAgeBand, dayIndex)
-  }, [preferredAgeBand, selectedDay])
+    const autoSuggestions = pickRecommendationsForDay(preferredAgeBand, dayIndex)
+
+    const seen = new Set<string>()
+    const entries: RecommendationSuggestion[] = []
+
+    const register = (suggestion: RecommendationSuggestion) => {
+      const key = buildRecommendationKey(suggestion.title, suggestion.refId)
+      if (seen.has(key)) {
+        return
+      }
+      seen.add(key)
+      entries.push(suggestion)
+    }
+
+    savedRecommendations.forEach((item) => {
+      register({
+        type: item.type,
+        title: item.title,
+        refId: item.refId ?? null,
+        durationMin: item.durationMin ?? null,
+        ageBand: item.ageBand ?? null,
+        link: item.link ?? null,
+        source: item.source ?? 'daily-activity',
+        createdAt: item.createdAt,
+      })
+    })
+
+    autoSuggestions.forEach((suggestion) => {
+      register(suggestion)
+    })
+
+    return entries.slice(0, 3)
+  }, [preferredAgeBand, savedRecommendations, selectedDay])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
