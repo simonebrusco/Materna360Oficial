@@ -205,6 +205,39 @@ export function FamilyPlanner() {
   }, [preferredAgeBand, selectedDay])
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const loadSavedRecommendations = () => {
+      setSavedRecommendations(recommendationStorage.getForDate(selectedDayKey))
+    }
+
+    loadSavedRecommendations()
+
+    const handleRecommendationsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ dateKey?: string }>
+      if (!customEvent.detail?.dateKey || customEvent.detail.dateKey === selectedDayKey) {
+        loadSavedRecommendations()
+      }
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === RECOMMENDATION_STORAGE_KEY) {
+        loadSavedRecommendations()
+      }
+    }
+
+    window.addEventListener(RECOMMENDATIONS_UPDATED_EVENT, handleRecommendationsUpdated)
+    window.addEventListener('storage', handleStorage)
+
+    return () => {
+      window.removeEventListener(RECOMMENDATIONS_UPDATED_EVENT, handleRecommendationsUpdated)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [selectedDayKey])
+
+  useEffect(() => {
     let active = true
 
     const loadProfile = async () => {
