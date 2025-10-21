@@ -11,7 +11,11 @@ import {
   getTodayDateKey,
   resolveDailyActivity,
 } from '@/lib/dailyActivity'
-import { plannerApi, plannerStorage, type PlannerItem, USE_API_PLANNER } from '@/lib/plannerData'
+import {
+  recommendationStorage,
+  RECOMMENDATIONS_UPDATED_EVENT,
+  type PlannerRecommendation,
+} from '@/lib/plannerData'
 
 type ActivityState = ReturnType<typeof getInitialDailyActivity>
 
@@ -78,33 +82,30 @@ export function ActivityOfDay() {
     const dateKey = activityState.dateKey || getTodayDateKey()
     const nowIso = new Date().toISOString()
 
-    const newItem: PlannerItem = {
+    const recommendation: PlannerRecommendation = {
       id: createId(),
-      type: 'Brincadeira',
+      type: 'Recomendação',
       title: activity.title,
-      done: false,
-      durationMin: activity.durationMin,
-      ageBand: activity.ageBand,
-      notes: '',
-      refId: activity.refId,
-      status: 'pending',
+      durationMin: activity.durationMin ?? null,
+      ageBand: activity.ageBand ?? null,
+      refId: activity.refId ?? null,
+      link: null,
+      source: 'daily-activity',
       createdAt: nowIso,
-      updatedAt: nowIso,
     }
 
     try {
-      if (USE_API_PLANNER) {
-        await plannerApi.savePlannerItem(dateKey, newItem)
-      } else {
-        const currentData = plannerStorage.getPlannerData()
-        const currentItems = currentData[dateKey] ?? []
-        plannerStorage.savePlannerData({
-          ...currentData,
-          [dateKey]: [...currentItems, newItem],
-        })
+      recommendationStorage.upsert(dateKey, recommendation)
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent(RECOMMENDATIONS_UPDATED_EVENT, {
+            detail: { dateKey },
+          })
+        )
       }
 
-      setToast({ message: 'Atividade adicionada ao Planner de hoje.', type: 'success' })
+      setToast({ message: 'Atividade adicionada às Recomendações de hoje.', type: 'success' })
     } catch (error) {
       console.error('Falha ao salvar atividade no Planner:', error)
       setToast({ message: 'Não foi possível salvar agora. Tente novamente.', type: 'error' })
