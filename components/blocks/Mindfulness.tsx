@@ -502,6 +502,17 @@ export function Mindfulness() {
         </div>
       )}
 
+      {process.env.NODE_ENV !== 'production' && missingFiles.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800">
+          <p className="font-semibold">Áudios ausentes:</p>
+          <ul className="mt-1 space-y-1">
+            {missingFiles.map((path) => (
+              <li key={path} className="font-mono">{path}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {currentPlayback && currentPlayback.track.file && (
         <div
           className="mt-6 rounded-3xl border border-primary/20 bg-white/95 p-5 shadow-elevated"
