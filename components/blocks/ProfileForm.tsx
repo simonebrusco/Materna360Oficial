@@ -412,7 +412,7 @@ export function ProfileForm() {
                             alt={sticker.label}
                             width={128}
                             height={128}
-                            className="h-11 w-11 object-cover"
+                            className="h-11 w-11 object-contain"
                             loading="lazy"
                           />
                         </span>
