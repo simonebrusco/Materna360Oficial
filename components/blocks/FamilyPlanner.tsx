@@ -27,6 +27,12 @@ const DEFAULT_AGE_BAND: (typeof AGE_BAND_OPTIONS)[number] = '1-2a'
 type RecommendationSuggestion = {
   type: (typeof TYPE_OPTIONS)[number]
   title: string
+  refId?: string | null
+  durationMin?: number | null
+  ageBand?: (typeof AGE_BAND_OPTIONS)[number] | null
+  link?: string | null
+  source?: PlannerRecommendationSource
+  createdAt?: string
 }
 
 const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], RecommendationSuggestion[]> = {
