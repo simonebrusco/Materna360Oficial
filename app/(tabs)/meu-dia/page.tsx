@@ -4,7 +4,11 @@
 
 export const dynamic = 'force-dynamic'
 
+stellar-den
 import { useEffect, useState } from 'react'
+
+import { useState } from 'react'
+main
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -25,6 +29,8 @@ export default function MeuDiaPage() {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
+
+stellar-den
   const [motherName, setMotherName] = useState('')
   const [isLoaded, setIsLoaded] = useState(false)
 
@@ -68,6 +74,11 @@ export default function MeuDiaPage() {
     }
   }, [])
 
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+main
+
   const handleAddNote = () => {
     if (noteText.trim()) {
       setNotes([noteText, ...notes])
@@ -76,6 +87,7 @@ export default function MeuDiaPage() {
     }
   }
 
+stellar-den
   if (!isLoaded) {
     return null
   }
@@ -97,6 +109,8 @@ export default function MeuDiaPage() {
   const displayName = motherName || 'Mãe'
   const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
 
+
+main
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
       <span
@@ -110,9 +124,21 @@ export default function MeuDiaPage() {
               Hoje
             </span>
             <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
+stellar-den
               {greetingText}
             </h1>
             <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
+
+              {greeting}, Mãe! 💛
+            </h1>
+            <p className="text-sm text-support-2 md:text-base">
+              {new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </p>
+main
           </div>
         </Reveal>
         <Reveal delay={100}>
