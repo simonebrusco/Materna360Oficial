@@ -253,6 +253,18 @@ export function ProfileForm() {
         figurinha: data.figurinha,
       })
 
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('materna:profile-updated', {
+            detail: {
+              figurinha: data.figurinha,
+              nomeMae: data.nomeMae,
+              filhos: data.filhos,
+            },
+          })
+        )
+      }
+
       setErrors({})
       setStatusMessage('Salvo com carinho!')
     } catch (error) {
