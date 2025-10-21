@@ -388,6 +388,7 @@ export function Mindfulness() {
           setCurrentPlayback(previousPlayback ?? null)
           setLastPlayback(previousLastPlayback ?? null)
           persistLastPlayback(previousLastPlayback ?? null)
+          setIsPlaying(false)
         }
       }
 
