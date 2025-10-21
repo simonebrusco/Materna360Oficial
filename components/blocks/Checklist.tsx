@@ -94,30 +94,30 @@ const persistChecklistMap = (data: ChecklistMap) => {
 }
 
 const ensureEmptyRowLimit = (items: ChecklistItem[]): ChecklistItem[] => {
-  const trimmed = items.map((item) => ({ ...item, text: item.text }))
-  let emptyCount = 0
-  const result: ChecklistItem[] = []
+  const nonEmpty: ChecklistItem[] = []
+  const empty: ChecklistItem[] = []
 
-  for (const item of trimmed) {
-    const isEmpty = item.text.trim().length === 0
-    if (isEmpty) {
-      emptyCount += 1
-      if (emptyCount > MIN_EMPTY_ROWS) {
-        continue
-      }
+  for (const item of items) {
+    if (item.text.trim().length > 0) {
+      nonEmpty.push(item)
+    } else {
+      empty.push({ ...item, text: '' })
     }
-    result.push(item)
   }
 
-  if (result.length === 0) {
+  let trimmedEmpty = empty.slice(-MIN_EMPTY_ROWS)
+
+  while (trimmedEmpty.length < MIN_EMPTY_ROWS) {
+    trimmedEmpty = [...trimmedEmpty, createEmptyItem()]
+  }
+
+  const combined = [...nonEmpty, ...trimmedEmpty]
+
+  if (combined.length === 0) {
     return [createEmptyItem(), createEmptyItem()]
   }
 
-  while (result.filter((item) => item.text.trim().length === 0).length < MIN_EMPTY_ROWS) {
-    result.push(createEmptyItem())
-  }
-
-  return result
+  return combined
 }
 
 const seedChecklist = (): ChecklistItem[] => {
