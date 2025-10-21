@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
+  <title>Minha Figurinha</title>
+  <desc>Ícone neutro de círculo com pequeno coração</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="14.5" fill="#FFFFFF" stroke="#2F3A56" stroke-width="1.5"/>
+    <path fill="#FF6F61" d="M24 21.8c-.8-1.1-2.5-1-3.2.2-.8 1.3.2 2.6 3.2 4.5 3-1.9 4-3.2 3.2-4.5-.7-1.1-2.4-1.3-3.2-.2Z"/>
+    <path fill="#F9C9B7" d="M27.6 20.9c.6 0 1 .5 1 1.1 0 .5-.4 1-1 1a1 1 0 0 1 0-2.1Z"/>
+  </g>
+</svg>

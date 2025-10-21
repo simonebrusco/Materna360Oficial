@@ -4,7 +4,11 @@
 
 export const dynamic = 'force-dynamic'
 
+stellar-den
+import { useEffect, useState } from 'react'
+
 import { useState } from 'react'
+main
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -26,8 +30,54 @@ export default function MeuDiaPage() {
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
 
+stellar-den
+  const [motherName, setMotherName] = useState('')
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to load profile')
+        }
+
+        const data = await response.json()
+
+        if (!active) {
+          return
+        }
+
+        setMotherName(typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : '')
+      } catch (error) {
+        console.error(error)
+        if (active) {
+          setMotherName('')
+        }
+      } finally {
+        if (active) {
+          setIsLoaded(true)
+        }
+      }
+    }
+
+    void loadProfile()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+main
 
   const handleAddNote = () => {
     if (noteText.trim()) {
@@ -37,6 +87,30 @@ export default function MeuDiaPage() {
     }
   }
 
+stellar-den
+  if (!isLoaded) {
+    return null
+  }
+
+  const resolveGreetingPrefix = () => {
+    const hour = new Date().getHours()
+
+    if (hour >= 5 && hour < 12) {
+      return 'Bom dia'
+    }
+
+    if (hour >= 12 && hour < 18) {
+      return 'Boa tarde'
+    }
+
+    return 'Boa noite'
+  }
+
+  const displayName = motherName || 'Mãe'
+  const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
+
+
+main
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
       <span
@@ -50,6 +124,11 @@ export default function MeuDiaPage() {
               Hoje
             </span>
             <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
+stellar-den
+              {greetingText}
+            </h1>
+            <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
+
               {greeting}, Mãe! 💛
             </h1>
             <p className="text-sm text-support-2 md:text-base">
@@ -59,6 +138,7 @@ export default function MeuDiaPage() {
                 day: 'numeric',
               })}
             </p>
+main
           </div>
         </Reveal>
         <Reveal delay={100}>
