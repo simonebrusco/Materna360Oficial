@@ -320,7 +320,7 @@ export function ProfileForm() {
                     </p>
                   </div>
                   <Button type="button" variant="outline" size="sm" onClick={addChild}>
-                    ＋ Add another child
+                    ＋ Adicionar outro filho
                   </Button>
                 </div>
 
