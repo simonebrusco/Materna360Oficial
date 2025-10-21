@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card'
 
 const STORAGE_KEY = 'planner_v1'
 const WEEK_STORAGE_KEY = 'planner_last_week_start'
+const USE_API_PLANNER = process.env.NEXT_PUBLIC_USE_API_PLANNER === '1'
 
 const TYPE_OPTIONS = ['Brincadeira', 'Receita', 'Livro', 'Brinquedo', 'Recomendação'] as const
 const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
@@ -549,7 +550,7 @@ export function FamilyPlanner() {
           className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
           aria-label="Próxima semana"
         >
-          ��
+          ›
         </button>
       </div>
 
