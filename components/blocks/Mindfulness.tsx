@@ -95,10 +95,11 @@ export function Mindfulness() {
   const [progressMap, setProgressMap] = useState<ProgressMap>({})
   const [currentPlayback, setCurrentPlayback] = useState<{ theme: MindfulnessTheme; track: MindfulnessTrack } | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [resumeData, setResumeData] = useState<LastPlayback | null>(null)
+  const [lastPlayback, setLastPlayback] = useState<LastPlayback | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({})
   const [missingFiles, setMissingFiles] = useState<string[]>([])
+  const [hasManifestError, setHasManifestError] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
