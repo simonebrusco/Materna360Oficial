@@ -376,6 +376,10 @@ export function FamilyPlanner() {
       }
     })
 
+    if (USE_API_PLANNER) {
+      void plannerApi.savePlannerItem(selectedDayKey, newItem)
+    }
+
     setIsAdding(false)
     resetAddDraft(draftType)
   }
