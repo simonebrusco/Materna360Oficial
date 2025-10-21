@@ -80,7 +80,7 @@ export default function MeuDiaPage() {
     return null
   }
 
-  const greetingText = motherName ? `Good morning, ${motherName}!` : 'Good morning, Mom!'
+  const greetingText = motherName ? `Bom dia, ${motherName}!` : 'Bom dia, Mãe!'
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
@@ -97,7 +97,7 @@ export default function MeuDiaPage() {
             <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
               {greetingText}
             </h1>
-            <p className="text-sm text-support-2 md:text-base">Small moments create big memories.</p>
+            <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
           </div>
         </Reveal>
         <Reveal delay={100}>
