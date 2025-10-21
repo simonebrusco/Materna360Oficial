@@ -145,7 +145,10 @@ const pickRecommendationsForDay = (
   const secondIndex = (firstIndex + 1) % pool.length
   const thirdIndex = (firstIndex + 2) % pool.length
 
-  return [pool[firstIndex], pool[secondIndex], pool[thirdIndex]]
+  return [pool[firstIndex], pool[secondIndex], pool[thirdIndex]].map((item) => ({
+    ...item,
+    source: 'suggested' as PlannerRecommendationSource,
+  }))
 }
 
 export function FamilyPlanner() {
