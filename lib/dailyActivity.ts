@@ -268,7 +268,55 @@ const selectActivity = (dateKey: string, preferredBand: AgeBand): DailyActivity 
   return FALLBACK_ACTIVITY
 }
 
-const readStoredActivity = (): StoredDailyActivity | null => {
+const buildStorageKey = (band: AgeBand) => `${DAILY_STORAGE_KEY}:${band}`
+
+const sanitizeStoredActivity = (value: unknown, fallbackBand: AgeBand): StoredDailyActivity | null => {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const raw = value as Record<string, unknown>
+  const dateKey = typeof raw.dateKey === 'string' ? raw.dateKey : null
+  const activity = raw.activity
+  const rawBand = typeof raw.band === 'string' ? (raw.band as AgeBand) : undefined
+
+  if (!dateKey || !activity || typeof activity !== 'object') {
+    return null
+  }
+
+  const resolvedBand = AGE_BAND_ORDER.includes(rawBand as AgeBand) ? (rawBand as AgeBand) : fallbackBand
+
+  return {
+    dateKey,
+    band: resolvedBand,
+    activity: activity as DailyActivity,
+  }
+}
+
+const readStoredActivity = (band: AgeBand): StoredDailyActivity | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const raw = window.localStorage.getItem(buildStorageKey(band))
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw)
+    const sanitized = sanitizeStoredActivity(parsed, band)
+    if (sanitized && sanitized.band === band) {
+      return sanitized
+    }
+  } catch (error) {
+    console.error('Falha ao ler atividade diária do armazenamento:', error)
+  }
+
+  return null
+}
+
+const readLegacyStoredActivity = (): StoredDailyActivity | null => {
   if (typeof window === 'undefined') {
     return null
   }
@@ -278,20 +326,41 @@ const readStoredActivity = (): StoredDailyActivity | null => {
     if (!raw) {
       return null
     }
-    return JSON.parse(raw) as StoredDailyActivity
+
+    const parsed = JSON.parse(raw)
+    const activityBand =
+      typeof parsed?.activity?.ageBand === 'string' && AGE_BAND_ORDER.includes(parsed.activity.ageBand as AgeBand)
+        ? (parsed.activity.ageBand as AgeBand)
+        : DEFAULT_AGE_BAND
+
+    const sanitized = sanitizeStoredActivity({ ...parsed, band: parsed?.band ?? activityBand }, activityBand)
+    if (sanitized) {
+      return sanitized
+    }
   } catch (error) {
-    console.error('Falha ao ler atividade diária do armazenamento:', error)
-    return null
+    console.error('Falha ao ler atividade diária legada do armazenamento:', error)
   }
+
+  return null
 }
 
-const writeStoredActivity = (record: StoredDailyActivity) => {
+const writeStoredActivity = (band: AgeBand, record: StoredDailyActivity) => {
   if (typeof window === 'undefined') {
     return
   }
 
+  const payload: StoredDailyActivity = {
+    dateKey: record.dateKey,
+    band,
+    activity: {
+      ...record.activity,
+      ageBand: record.activity.ageBand ?? band,
+    },
+  }
+
   try {
-    window.localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(record))
+    window.localStorage.setItem(buildStorageKey(band), JSON.stringify(payload))
+    window.localStorage.removeItem(DAILY_STORAGE_KEY)
   } catch (error) {
     console.error('Falha ao salvar atividade diária no armazenamento:', error)
   }
