@@ -8,8 +8,12 @@ class MirrorServerChunksPlugin {
       console.log('[MirrorServerChunksPlugin] target:', target)
     }
 
-    const shouldMirror = !target || target === 'node' || (Array.isArray(target) && target.includes('node'))
-    if (!shouldMirror) {
+    const isNodeTarget =
+      !target ||
+      (typeof target === 'string' && target.startsWith('node')) ||
+      (Array.isArray(target) && target.some((value) => typeof value === 'string' && value.startsWith('node')))
+
+    if (!isNodeTarget) {
       return
     }
 
