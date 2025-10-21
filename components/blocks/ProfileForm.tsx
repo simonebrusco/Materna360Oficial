@@ -187,11 +187,11 @@ export function ProfileForm() {
     const nextErrors: FormErrors = {}
 
     if (!state.nomeMae.trim()) {
-      nextErrors.nomeMae = 'Please enter your name.'
+      nextErrors.nomeMae = 'Informe seu nome.'
     }
 
     if (!state.filhos.length) {
-      nextErrors.general = 'Please add at least one child.'
+      nextErrors.general = 'Adicione pelo menos um filho.'
     }
 
     const childErrors: Record<string, string> = {}
