@@ -1,0 +1,429 @@
+'use client'
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Pause, Play, SkipBack, SkipForward } from 'lucide-react'
+
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Toast } from '@/components/ui/Toast'
+
+type MindfulnessTrack = {
+  id: string
+  title: string
+  file?: string
+}
+
+type MindfulnessTheme = {
+  id: string
+  title: string
+  tracks: MindfulnessTrack[]
+}
+
+type ManifestResponse = {
+  themes?: MindfulnessTheme[]
+}
+
+type TrackProgress = {
+  current: number
+  duration: number
+}
+
+type ProgressMap = Record<string, TrackProgress>
+
+type LastPlayback = {
+  themeId: string
+  trackId: string
+}
+
+const MANIFEST_URL = '/audio/mindfulness/manifest.json'
+const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
+const STORAGE_LAST_KEY = 'mindfulness_last_v1'
+
+const formatTime = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) {
+    return '00:00'
+  }
+
+  const totalSeconds = Math.floor(value)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+export function Mindfulness() {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [themes, setThemes] = useState<MindfulnessTheme[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [progressMap, setProgressMap] = useState<ProgressMap>({})
+  const [currentPlayback, setCurrentPlayback] = useState<{ theme: MindfulnessTheme; track: MindfulnessTrack } | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [resumeData, setResumeData] = useState<LastPlayback | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const storedProgress = window.localStorage.getItem(STORAGE_PROGRESS_KEY)
+      if (storedProgress) {
+        const parsed: ProgressMap = JSON.parse(storedProgress)
+        setProgressMap(parsed)
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar o progresso salvo.', error)
+    }
+
+    try {
+      const storedLast = window.localStorage.getItem(STORAGE_LAST_KEY)
+      if (storedLast) {
+        const parsed: LastPlayback = JSON.parse(storedLast)
+        setResumeData(parsed)
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar o último áudio reproduzido.', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    const loadManifest = async () => {
+      try {
+        const response = await fetch(MANIFEST_URL)
+        if (!response.ok) {
+          throw new Error('Manifesto indisponível')
+        }
+        const data: ManifestResponse = await response.json()
+        if (!active) return
+        setThemes(data.themes ?? [])
+      } catch (error) {
+        console.error('Não foi possível carregar a lista de mindfulness.', error)
+        if (active) {
+          setThemes([])
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadManifest()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(STORAGE_PROGRESS_KEY, JSON.stringify(progressMap))
+    } catch (error) {
+      console.error('Não foi possível salvar o progresso do mindfulness.', error)
+    }
+  }, [progressMap])
+
+  const persistLastPlayback = useCallback((value: LastPlayback | null) => {
+    if (typeof window === 'undefined') return
+
+    try {
+      if (value) {
+        window.localStorage.setItem(STORAGE_LAST_KEY, JSON.stringify(value))
+      } else {
+        window.localStorage.removeItem(STORAGE_LAST_KEY)
+      }
+    } catch (error) {
+      console.error('Não foi possível salvar o último áudio do mindfulness.', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!audioRef.current) return
+
+    const audio = audioRef.current
+
+    const handleTimeUpdate = () => {
+      if (!currentPlayback) return
+      setProgressMap((previous) => {
+        const existing = previous[currentPlayback.track.id] ?? { current: 0, duration: audio.duration || 0 }
+        const current = audio.currentTime
+        const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : existing.duration
+
+        if (Math.abs(existing.current - current) < 0.25 && existing.duration === duration) {
+          return previous
+        }
+
+        return {
+          ...previous,
+          [currentPlayback.track.id]: {
+            current,
+            duration,
+          },
+        }
+      })
+    }
+
+    const handleLoadedMetadata = () => {
+      if (!currentPlayback) return
+      const duration = audio.duration
+      if (!Number.isFinite(duration) || duration <= 0) return
+      setProgressMap((previous) => ({
+        ...previous,
+        [currentPlayback.track.id]: {
+          current: previous[currentPlayback.track.id]?.current ?? 0,
+          duration,
+        },
+      }))
+    }
+
+    const handleEnded = () => {
+      if (!currentPlayback) return
+      setIsPlaying(false)
+      setProgressMap((previous) => ({
+        ...previous,
+        [currentPlayback.track.id]: {
+          current: previous[currentPlayback.track.id]?.duration ?? audio.duration ?? 0,
+          duration: previous[currentPlayback.track.id]?.duration ?? audio.duration ?? 0,
+        },
+      }))
+    }
+
+    const handlePlay = () => setIsPlaying(true)
+    const handlePause = () => setIsPlaying(false)
+
+    const handleError = () => {
+      setToastMessage('Não foi possível carregar este áudio.')
+      setIsPlaying(false)
+    }
+
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+    audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('play', handlePlay)
+    audio.addEventListener('pause', handlePause)
+    audio.addEventListener('error', handleError)
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate)
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('play', handlePlay)
+      audio.removeEventListener('pause', handlePause)
+      audio.removeEventListener('error', handleError)
+    }
+  }, [currentPlayback])
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
+    }
+  }, [])
+
+  const resumeTarget = useMemo(() => {
+    if (!resumeData) return null
+    const theme = themes.find((item) => item.id === resumeData.themeId)
+    const track = theme?.tracks.find((item) => item.id === resumeData.trackId)
+    if (!theme || !track || !track.file) return null
+    return { theme, track }
+  }, [resumeData, themes])
+
+  const handleToggleTrack = useCallback(
+    async (theme: MindfulnessTheme, track: MindfulnessTrack) => {
+      if (!track.file) return
+      const audio = audioRef.current
+      if (!audio) return
+
+      const isSameTrack = currentPlayback?.track.id === track.id
+
+      const ensurePlayback = async () => {
+        try {
+          await audio.play()
+          setIsPlaying(true)
+          setCurrentPlayback({ theme, track })
+          setResumeData({ themeId: theme.id, trackId: track.id })
+          persistLastPlayback({ themeId: theme.id, trackId: track.id })
+        } catch (error) {
+          console.error('Falha ao iniciar reprodução do Mindfulness', error)
+          setToastMessage('Não foi possível carregar este áudio.')
+        }
+      }
+
+      if (isSameTrack) {
+        if (isPlaying) {
+          audio.pause()
+        } else {
+          await ensurePlayback()
+        }
+        return
+      }
+
+      audio.pause()
+      audio.src = track.file
+      audio.currentTime = progressMap[track.id]?.current ?? 0
+      await ensurePlayback()
+    },
+    [currentPlayback, isPlaying, persistLastPlayback, progressMap]
+  )
+
+  const handleSeek = useCallback((value: number) => {
+    const audio = audioRef.current
+    if (!audio || !currentPlayback) return
+    audio.currentTime = value
+    setProgressMap((previous) => ({
+      ...previous,
+      [currentPlayback.track.id]: {
+        current: value,
+        duration: previous[currentPlayback.track.id]?.duration ?? audio.duration ?? value,
+      },
+    }))
+  }, [currentPlayback])
+
+  const handleSkip = useCallback(
+    (delta: number) => {
+      const audio = audioRef.current
+      if (!audio || !currentPlayback) return
+      const nextTime = Math.max(0, Math.min((audio.duration || Infinity), audio.currentTime + delta))
+      handleSeek(nextTime)
+    },
+    [currentPlayback, handleSeek]
+  )
+
+  const handleResume = useCallback(() => {
+    if (!resumeTarget) return
+    handleToggleTrack(resumeTarget.theme, resumeTarget.track)
+  }, [handleToggleTrack, resumeTarget])
+
+  const nowPlayingProgress = currentPlayback ? progressMap[currentPlayback.track.id] : undefined
+  const currentDuration = nowPlayingProgress?.duration ?? audioRef.current?.duration ?? 0
+  const currentPosition = nowPlayingProgress?.current ?? audioRef.current?.currentTime ?? 0
+
+  const renderEmptyState = !isLoading && themes.length === 0
+
+  return (
+    <Card className="bg-gradient-to-br from-primary/10 via-white to-white p-7 shadow-soft">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Autocuidado guiado</span>
+          <h2 className="mt-2 text-xl font-semibold text-support-1 md:text-2xl">Mindfulness</h2>
+        </div>
+        {resumeTarget && (
+          <Button variant="outline" size="sm" onClick={handleResume}>
+            Continuar de onde parei
+          </Button>
+        )}
+      </div>
+
+      {renderEmptyState ? (
+        <p className="mt-6 text-sm text-support-2">Em breve, novos áudios de mindfulness por aqui.</p>
+      ) : (
+        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {themes.map((theme) => (
+            <div key={theme.id} className="flex flex-col gap-4 rounded-3xl border border-white/60 bg-white/80 p-5 shadow-soft">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">{theme.title}</p>
+              </div>
+              <ul className="space-y-2">
+                {theme.tracks.map((track) => {
+                  const hasFile = Boolean(track.file)
+                  const progress = progressMap[track.id]
+                  const isCurrent = currentPlayback?.track.id === track.id
+                  const isTrackPlaying = isCurrent && isPlaying
+
+                  return (
+                    <li
+                      key={track.id}
+                      className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTrack(theme, track)}
+                        disabled={!hasFile}
+                        aria-label={isTrackPlaying ? 'Pausar' : 'Tocar'}
+                        className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:cursor-not-allowed disabled:border-dashed disabled:text-support-2"
+                      >
+                        {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </button>
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-sm font-medium text-support-1">{track.title}</span>
+                        {!hasFile && <span className="text-xs text-support-2">Upload pendente</span>}
+                      </div>
+                      {hasFile && progress && (
+                        <span className="text-xs font-medium text-support-2" aria-live="polite">
+                          {formatTime(progress.current)} / {formatTime(progress.duration)}
+                        </span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {currentPlayback && currentPlayback.track.file && (
+        <div
+          className="mt-6 rounded-3xl border border-primary/20 bg-white/95 p-5 shadow-elevated"
+          role="region"
+          aria-label="Reprodução de áudio Mindfulness"
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleSkip(-15)}
+                className="rounded-full border border-primary/30 bg-white px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              >
+                Voltar 15s
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleTrack(currentPlayback.theme, currentPlayback.track)}
+                className="rounded-full border border-primary/30 bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                aria-label={isPlaying ? 'Pausar' : 'Tocar'}
+              >
+                <span className="flex items-center gap-2">
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  {isPlaying ? 'Pausar' : 'Tocar'}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSkip(15)}
+                className="rounded-full border border-primary/30 bg-white px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              >
+                Avançar 15s
+              </button>
+              <div className="flex-1 min-w-[160px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-support-2">{formatTime(currentPosition)}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={Number.isFinite(currentDuration) && currentDuration > 0 ? currentDuration : 0}
+                    step={0.1}
+                    value={Number.isFinite(currentPosition) ? currentPosition : 0}
+                    onChange={(event) => handleSeek(Number(event.target.value))}
+                    className="h-1 flex-1 appearance-none rounded-full bg-primary/20 accent-primary"
+                    aria-label="Linha do tempo do áudio"
+                  />
+                  <span className="text-xs font-medium text-support-2">{formatTime(currentDuration)}</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-sm font-medium text-support-1">
+              Reproduzindo: {currentPlayback.track.title}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <audio ref={audioRef} preload="none" hidden />
+
+      {toastMessage && <Toast message={toastMessage} type="error" onClose={() => setToastMessage(null)} />}
+    </Card>
+  )
+}
