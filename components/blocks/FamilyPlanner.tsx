@@ -292,6 +292,75 @@ export function FamilyPlanner() {
     })
   }
 
+  const startEditingItem = (item: PlannerItem) => {
+    setEditingItemId(item.id)
+    setEditType(item.type)
+    setEditTitle(item.title)
+    setEditDuration(
+      item.durationMin !== undefined && item.durationMin !== null ? String(item.durationMin) : ''
+    )
+    setEditAgeBand(item.ageBand ?? '')
+    setEditNotes(item.notes ?? '')
+  }
+
+  const handleEditTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as (typeof TYPE_OPTIONS)[number]
+    if (TYPE_OPTIONS.includes(value)) {
+      setEditType(value)
+    }
+  }
+
+  const handleEditSave = () => {
+    if (!editingItemId) {
+      return
+    }
+
+    const trimmedTitle = editTitle.trim()
+    if (!trimmedTitle) {
+      return
+    }
+
+    let durationValue: number | undefined
+    if (editDuration.trim()) {
+      const numeric = Number(editDuration)
+      if (Number.isFinite(numeric)) {
+        durationValue = Math.max(0, Math.round(numeric))
+      }
+    }
+
+    const trimmedNotes = editNotes.trim()
+    const itemId = editingItemId
+
+    setPlannerData((previous) => {
+      const currentItems = previous[selectedDayKey]
+      if (!currentItems) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        [selectedDayKey]: currentItems.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                type: editType,
+                title: trimmedTitle,
+                durationMin: durationValue,
+                ageBand: editAgeBand || undefined,
+                notes: trimmedNotes ? trimmedNotes : undefined,
+              }
+            : item
+        ),
+      }
+    })
+
+    resetEditState()
+  }
+
+  const handleEditCancel = () => {
+    resetEditState()
+  }
+
   const inputClasses =
     'w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft transition-all duration-300 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30'
 
