@@ -7,20 +7,25 @@ import { Card } from '@/components/ui/Card'
 const LOCAL_STORAGE_KEY = 'materna_daily_message'
 const FALLBACK_NAME = 'Mãe'
 
-const MESSAGE_POOL = [
-  'lembre-se: o amor que você dá é o que seu filho mais precisa hoje.',
-  'você não precisa ser perfeita, só precisa estar presente.',
-  'pequenos gestos de carinho fazem grandes memórias, {name}.',
-  'você está fazendo um ótimo trabalho — mesmo nos dias em que duvida disso.',
-  'respire fundo, {name}. ser mãe é um exercício diário de amor e paciência.',
-  'hoje é um bom dia pra desacelerar e abraçar um pouquinho mais.',
-  'cada sorriso do seu filho é um lembrete de que você está no caminho certo.',
-  '{name}, confie em você — ninguém entende seu filho como você.',
-  'às vezes cuidar de si é o melhor jeito de cuidar deles também.',
-  'você é a calma no meio do caos. não se esqueça disso, {name}.',
-] as const
+type MessageTemplate = {
+  id: string
+  text: string
+}
 
-const DEFAULT_FALLBACK_TEMPLATE = MESSAGE_POOL[3]
+export const MESSAGE_POOL: ReadonlyArray<MessageTemplate> = [
+  { id: 'amor-necessario', text: 'lembre-se: o amor que você dá é o que seu filho mais precisa hoje.' },
+  { id: 'presenca', text: 'você não precisa ser perfeita, só precisa estar presente.' },
+  { id: 'gestos-carinho', text: 'pequenos gestos de carinho fazem grandes memórias, {name}.' },
+  { id: 'duvidas', text: 'você está fazendo um ótimo trabalho — mesmo nos dias em que duvida disso.' },
+  { id: 'respire', text: 'respire fundo, {name}. ser mãe é um exercício diário de amor e paciência.' },
+  { id: 'desacelerar', text: 'hoje é um bom dia pra desacelerar e abraçar um pouquinho mais.' },
+  { id: 'sorrisos', text: 'cada sorriso do seu filho é um lembrete de que você está no caminho certo.' },
+  { id: 'confie', text: '{name}, confie em você — ninguém entende seu filho como você.' },
+  { id: 'cuidar-de-si', text: 'às vezes cuidar de si é o melhor jeito de cuidar deles também.' },
+  { id: 'calma', text: 'você é a calma no meio do caos. não se esqueça disso, {name}.' },
+]
+
+const DEFAULT_FALLBACK_TEMPLATE = MESSAGE_POOL[3]?.text ?? MESSAGE_POOL[0]?.text ?? 'você está fazendo um ótimo trabalho — mesmo nos dias em que duvida disso.'
 
 const getCurrentDateKey = () => {
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -118,12 +123,14 @@ const safeHash = (value: string) => {
 }
 
 const getFallbackTemplate = (dateKey: string) => {
-  if (MESSAGE_POOL.length === 0) {
+  const pool = MESSAGE_POOL
+  if (pool.length === 0) {
     return DEFAULT_FALLBACK_TEMPLATE
   }
 
-  const index = safeHash(dateKey) % MESSAGE_POOL.length
-  return MESSAGE_POOL[index] ?? DEFAULT_FALLBACK_TEMPLATE
+  const hash = [...dateKey].reduce((accumulator, character) => accumulator + character.charCodeAt(0), 0)
+  const index = Math.abs(hash) % pool.length
+  return pool[index]?.text ?? DEFAULT_FALLBACK_TEMPLATE
 }
 
 const persistBaseMessage = (dateKey: string, baseMessage: string) => {
