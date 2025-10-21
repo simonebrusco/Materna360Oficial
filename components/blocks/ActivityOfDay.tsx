@@ -35,7 +35,11 @@ const createId = () => {
 }
 
 export function ActivityOfDay() {
-  const [activityState, setActivityState] = useState<ActivityState>(() => getInitialDailyActivity())
+  const [activityState, setActivityState] = useState<ActivityState>(() => ({
+    dateKey: getTodayDateKey(),
+    activity: FALLBACK_ACTIVITY,
+    ageBand: DEFAULT_AGE_BAND,
+  }))
   const [isExpanded, setIsExpanded] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -48,6 +52,17 @@ export function ActivityOfDay() {
 
   useEffect(() => {
     let active = true
+
+    const loadCached = () => {
+      try {
+        const cached = getInitialDailyActivity()
+        if (active) {
+          setActivityState(cached)
+        }
+      } catch (error) {
+        console.error('Falha ao carregar atividade do cache:', error)
+      }
+    }
 
     const loadActivity = async () => {
       try {
@@ -63,6 +78,7 @@ export function ActivityOfDay() {
       }
     }
 
+    loadCached()
     void loadActivity()
 
     return () => {
