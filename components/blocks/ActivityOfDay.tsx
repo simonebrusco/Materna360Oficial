@@ -125,9 +125,7 @@ export function ActivityOfDay() {
             </span>
             <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">{cardTitle}</p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
-              {hasAgeBand && (
-                <span className="inline-flex items-center gap-1">👧 {activity.ageBand}</span>
-              )}
+              <span className="inline-flex items-center gap-1">👧 {ageChipLabel}</span>
               {hasDuration && (
                 <span className="inline-flex items-center gap-1">⏱️ {activity.durationMin} min</span>
               )}
