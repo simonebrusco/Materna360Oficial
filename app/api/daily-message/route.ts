@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
 
 const MESSAGE_POOL = [
