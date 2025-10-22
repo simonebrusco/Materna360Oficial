@@ -1,11 +1,11 @@
 'use client'
 
-'use client'
+'use client';
 
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { mapMonthsToAgeBand } from '@/lib/dailyActivity'
 import {
   plannerApi,
