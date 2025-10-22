@@ -1,5 +1,3 @@
-const path = require('path')
-
 class FixServerRuntimeChunkPathsPlugin {
   apply(compiler) {
     const target = compiler.options.target
