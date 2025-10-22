@@ -17,36 +17,39 @@ class MirrorServerChunksPlugin {
       return
     }
 
-    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', async (compilation) => {
+    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', async () => {
       const outputPath = compiler.outputPath
-      const assetNames = Object.keys(compilation.assets)
+      const chunksDir = path.join(outputPath, 'chunks')
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[MirrorServerChunksPlugin] assets available:', assetNames.slice(0, 10))
+      try {
+        const entries = await fs.readdir(chunksDir)
+        const chunkFiles = entries.filter((file) => file.endsWith('.js'))
+
+        if (chunkFiles.length === 0) {
+          return
+        }
+
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[MirrorServerChunksPlugin] mirroring chunk files:', chunkFiles)
+        }
+
+        await Promise.all(
+          chunkFiles.map(async (file) => {
+            const sourceFile = path.join(chunksDir, file)
+            const destinationFile = path.join(outputPath, file)
+
+            try {
+              await fs.copyFile(sourceFile, destinationFile)
+            } catch (error) {
+              console.warn('[MirrorServerChunksPlugin] Failed to mirror chunk', file, error)
+            }
+          })
+        )
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          console.warn('[MirrorServerChunksPlugin] Unable to read chunks directory:', error)
+        }
       }
-
-      const chunkAssets = assetNames.filter((assetName) => assetName.startsWith('chunks/') && assetName.endsWith('.js'))
-
-      if (chunkAssets.length === 0) {
-        return
-      }
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[MirrorServerChunksPlugin] mirroring chunks:', chunkAssets)
-      }
-
-      await Promise.all(
-        chunkAssets.map(async (assetName) => {
-          const sourceFile = path.join(outputPath, assetName)
-          const destinationFile = path.join(outputPath, path.basename(assetName))
-
-          try {
-            await fs.copyFile(sourceFile, destinationFile)
-          } catch (error) {
-            console.warn('[MirrorServerChunksPlugin] Failed to mirror chunk', assetName, error)
-          }
-        })
-      )
     })
   }
 }
