@@ -1,11 +1,11 @@
 'use client'
 
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react'
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { DAILY_MESSAGES_PT } from '@/lib/dailyMessagesPt'
 
 const STORAGE_KEY = 'materna_daily_message_v2'
