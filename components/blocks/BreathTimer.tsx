@@ -72,7 +72,7 @@ export function BreathTimer() {
                   height={320}
                   sizes="(max-width: 640px) 240px, 320px"
                   priority={false}
-                  aria-hidden
+                  aria-hidden="true"
                   className="h-auto w-[240px] sm:w-[260px] md:w-[320px] opacity-50"
                 />
               </div>
