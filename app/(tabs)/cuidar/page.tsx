@@ -38,7 +38,7 @@ export default function CuidarPage() {
   ]
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+    <div className="relative mx-auto max-w-5xl px-4 pb-28 md:pb-32 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-10 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
@@ -55,7 +55,7 @@ export default function CuidarPage() {
           </div>
         </Reveal>
 
-        <Reveal delay={80} className="mt-4 sm:mt-6">
+        <Reveal delay={80} className="mt-4 sm:mt-6 mb-10 md:mb-12">
           <BreathTimer />
         </Reveal>
 
