@@ -3,7 +3,7 @@ const path = require('path')
 
 class MirrorServerChunksPlugin {
   apply(compiler) {
-    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', async (compilation) => {
+    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', async () => {
       const target = compiler.options.target
       const isNodeTarget =
         !target ||
@@ -16,6 +16,7 @@ class MirrorServerChunksPlugin {
 
       const outputPath = compiler.outputPath
       const chunksDirectory = path.join(outputPath, 'chunks')
+      console.log('[MirrorServerChunksPlugin] outputPath:', outputPath)
 
       let entries = []
       try {
@@ -29,8 +30,11 @@ class MirrorServerChunksPlugin {
 
       const jsFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
       if (jsFiles.length === 0) {
+        console.log('[MirrorServerChunksPlugin] no chunk files to mirror')
         return
       }
+
+      console.log('[MirrorServerChunksPlugin] mirroring:', jsFiles.map((entry) => entry.name))
 
       await Promise.all(
         jsFiles.map(async (entry) => {
