@@ -168,9 +168,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
               audio.muted = false
               try {
                 audio.volume = 1
-              } catch (error) {
-                console.warn('Não foi possível ajustar o volume do áudio:', error)
-              }
+              } catch {}
               console.log('AUDIO PLAY:', audio.currentSrc, 'muted=', audio.muted, 'volume=', audio.volume)
             }}
             onError={(event) => {
