@@ -24,28 +24,36 @@ class MirrorServerChunksPlugin {
         },
         async () => {
           const outputPath = compiler.outputPath
-          const chunkFiles = new Set(
-            Array.from(compilation.chunks).flatMap((chunk) =>
-              Array.from(chunk.files).filter((file) => file.startsWith('chunks/') && file.endsWith('.js'))
-            )
-          )
+          const chunksDirectory = path.join(outputPath, 'chunks')
 
-          if (chunkFiles.size === 0) {
+          let entries = []
+          try {
+            entries = await fsPromises.readdir(chunksDirectory, { withFileTypes: true })
+          } catch (error) {
+            if (error?.code !== 'ENOENT') {
+              console.warn('[MirrorServerChunksPlugin] Unable to read chunks directory', error)
+            }
+            return
+          }
+
+          const jsFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
+
+          if (jsFiles.length === 0) {
             console.log('[MirrorServerChunksPlugin] no chunk files to mirror this cycle')
             return
           }
 
-          console.log('[MirrorServerChunksPlugin] mirroring chunks:', Array.from(chunkFiles))
+          console.log('[MirrorServerChunksPlugin] mirroring chunks:', jsFiles.map((entry) => entry.name))
 
           await Promise.all(
-            Array.from(chunkFiles).map(async (relativePath) => {
-              const sourceFile = path.join(outputPath, relativePath)
-              const destinationFile = path.join(outputPath, path.basename(relativePath))
+            jsFiles.map(async (entry) => {
+              const sourceFile = path.join(chunksDirectory, entry.name)
+              const destinationFile = path.join(outputPath, entry.name)
 
               try {
                 await fsPromises.copyFile(sourceFile, destinationFile)
               } catch (error) {
-                console.warn('[MirrorServerChunksPlugin] Failed to mirror chunk', relativePath, error)
+                console.warn('[MirrorServerChunksPlugin] Failed to mirror chunk', entry.name, error)
               }
             })
           )
