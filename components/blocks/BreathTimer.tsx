@@ -45,7 +45,7 @@ export function BreathTimer() {
 
   return (
     <Card className="p-8 text-center">
-      <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
+      <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💨 Respiração Guiada</h2>
       <img
         src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
         alt="Flor de cerejeira Materna360"
@@ -53,7 +53,7 @@ export function BreathTimer() {
         height={140}
         className="mx-auto mt-6"
       />
-      <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
+      <p className="mt-3 text-base leading-relaxed text-support-2 md:text-lg">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
 
       <div className="mt-8 flex min-h-[280px] flex-col items-center justify-center">
         {isRunning ? (
@@ -66,11 +66,11 @@ export function BreathTimer() {
                 <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
               </div>
             </div>
-            <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
+            <p className="mt-8 text-sm text-support-2/80">Relaxe, inspire e permita que o corpo desacelere.</p>
           </>
         ) : (
           <>
-            <p className="mt-4 max-w-sm text-sm text-support-2">
+            <p className="mt-6 max-w-sm text-sm text-support-2/80">
               Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
             </p>
           </>
