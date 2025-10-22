@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import React, { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 
