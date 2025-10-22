@@ -7,7 +7,7 @@ const tabs = [
   { href: '/meu-dia', label: 'Meu Dia', emoji: '🏡' },
   { href: '/cuidar', label: 'Cuidar', emoji: '🌿' },
   { href: '/descobrir', label: 'Descobrir', emoji: '🧸' },
-  { href: '/eu360', label: 'Eu360', emoji: '💛' },
+  { href: '/eu360', label: 'Eu360', emoji: '��' },
 ]
 
 export function TabBar() {
@@ -16,7 +16,7 @@ export function TabBar() {
   const isActive = (target: string) => pathname === target || pathname.startsWith(`${target}/`)
 
   return (
-    <nav className="fixed bottom-4 left-1/2 z-[60] w-[calc(100%-2.5rem)] max-w-xl -translate-x-1/2">
+    <nav className="bottom-nav fixed bottom-4 left-1/2 z-[60] w-[calc(100%-2.5rem)] max-w-xl -translate-x-1/2">
       <div className="glass-panel flex items-center justify-between gap-1 rounded-full px-2 py-2 shadow-soft backdrop-blur-2xl">
         {tabs.map((tab) => {
           const active = isActive(tab.href)
