@@ -14,9 +14,9 @@ class MirrorServerChunksPlugin {
         return
       }
 
-      const outputPath = compiler.outputPath
-      const chunksDirectory = path.join(outputPath, 'chunks')
-      console.log('[MirrorServerChunksPlugin] outputPath:', outputPath)
+      const chunksDirectory = compiler.outputPath
+      const serverRoot = path.dirname(chunksDirectory)
+      console.log('[MirrorServerChunksPlugin] chunksDirectory:', chunksDirectory)
 
       let entries = []
       try {
@@ -39,7 +39,7 @@ class MirrorServerChunksPlugin {
       await Promise.all(
         jsFiles.map(async (entry) => {
           const sourceFile = path.join(chunksDirectory, entry.name)
-          const destinationFile = path.join(outputPath, entry.name)
+          const destinationFile = path.join(serverRoot, entry.name)
 
           try {
             await fsPromises.copyFile(sourceFile, destinationFile)
