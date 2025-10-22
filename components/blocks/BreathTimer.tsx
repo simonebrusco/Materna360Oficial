@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/Card'
