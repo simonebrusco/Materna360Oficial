@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
@@ -45,29 +46,51 @@ export function BreathTimer() {
 
   return (
     <Card className="p-8 text-center">
+      <div className="mx-auto mb-6 flex justify-center">
+        <Image
+          src="/images/play-main.png"
+          alt="Ilustração do exercício Respiração Guiada"
+          width={320}
+          height={320}
+          sizes="(max-width: 640px) 240px, 320px"
+          priority={false}
+          className="h-auto w-[220px] sm:w-[240px] md:w-[300px] lg:w-[320px]"
+        />
+      </div>
       <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
       <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
 
       <div className="mt-8 flex min-h-[280px] flex-col items-center justify-center">
         {isRunning ? (
           <>
-            <div
-              className={`${circleSize[phase]} rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
-            >
-              <div className="text-center">
-                <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
-                <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
+            <div className="relative flex items-center justify-center">
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <Image
+                  src="/images/play-main.png"
+                  alt=""
+                  width={320}
+                  height={320}
+                  sizes="(max-width: 640px) 240px, 320px"
+                  priority={false}
+                  aria-hidden
+                  className="h-auto w-[240px] sm:w-[260px] md:w-[320px] opacity-50"
+                />
+              </div>
+              <div
+                className={`${circleSize[phase]} relative z-10 rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
+              >
+                <div className="text-center">
+                  <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
+                  <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
+                </div>
               </div>
             </div>
             <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
           </>
         ) : (
-          <>
-            <p className="text-4xl">🌬️</p>
-            <p className="mt-4 max-w-sm text-sm text-support-2">
-              Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
-            </p>
-          </>
+          <p className="mt-4 max-w-sm text-sm text-support-2">
+            Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
+          </p>
         )}
       </div>
 
