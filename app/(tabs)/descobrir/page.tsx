@@ -2,13 +2,13 @@
 
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+
+export const dynamic = 'force-dynamic'
 
 export default function DescobrirPage() {
   const [ageFilter, setAgeFilter] = useState<string | null>(null)
