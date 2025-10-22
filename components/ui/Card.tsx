@@ -14,7 +14,7 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={`group/card glass-panel blurred-border p-5 sm:p-6 transition-all duration-500 ease-gentle hover:-translate-y-1 hover:shadow-elevated ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`group/card glass-panel blurred-border p-4 sm:p-5 transition-all duration-500 ease-gentle hover:-translate-y-1 hover:shadow-elevated ${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
       {...props}
     >
