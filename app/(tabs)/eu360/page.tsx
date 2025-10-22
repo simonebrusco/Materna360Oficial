@@ -8,8 +8,8 @@ import { useMemo, useState } from 'react'
 
 import { CheckIn } from '@/components/blocks/CheckIn'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
 
