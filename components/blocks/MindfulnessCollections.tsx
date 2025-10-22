@@ -13,6 +13,12 @@ interface MindfulnessTrack {
   title: string
 }
 
+interface MindfulnessTrackItemProps {
+  track: MindfulnessTrack
+  isHeard: boolean
+  onToggle: () => void
+}
+
 interface MindfulnessGroup {
   key: string
   icon: string
