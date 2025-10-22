@@ -122,13 +122,11 @@ export function MindfulnessCollections() {
       return undefined
     }
 
-    const { body, documentElement } = document
+    const { body } = document
     const previousOverflow = body.style.overflow
     body.style.overflow = 'hidden'
-    documentElement.classList.add('isMindfulnessOpen')
 
     return () => {
-      documentElement.classList.remove('isMindfulnessOpen')
       body.style.overflow = previousOverflow
     }
   }, [activeGroupKey])
