@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -130,6 +131,7 @@ const initialProgress = journeys.reduce<JourneyProgress>((acc, journey) => {
 export function CareJourneys() {
   const [progressMap, setProgressMap] = useState<JourneyProgress>(initialProgress)
   const [activeJourneyId, setActiveJourneyId] = useState<JourneyId | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
 
   const activeJourneyState: ActiveJourneyState | null = useMemo(() => {
     if (!activeJourneyId) return null
@@ -140,6 +142,23 @@ export function CareJourneys() {
       progress: progressMap[journey.id],
     }
   }, [activeJourneyId, progressMap])
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isMounted || !activeJourneyId) {
+      return undefined
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [activeJourneyId, isMounted])
 
   const handleToggleChallenge = (journeyId: JourneyId, index: number) => {
     setProgressMap((prev) => {
@@ -189,60 +208,70 @@ export function CareJourneys() {
         })}
       </div>
 
-      {activeJourneyState && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-sm">
-          <Card className="relative z-[10000] w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
-            <button
-              type="button"
-              aria-label="Fechar jornada"
-              className="absolute right-5 top-5 text-sm font-semibold uppercase tracking-[0.28em] text-primary/70 transition-opacity hover:opacity-70"
+      {isMounted &&
+        activeJourneyState &&
+        createPortal(
+          <div className="journey-layer">
+            <div
+              className="journey-overlay fixed inset-0 z-[2147483647] bg-black/25 backdrop-blur-sm"
               onClick={() => setActiveJourneyId(null)}
-            >
-              Fechar
-            </button>
+              aria-hidden="true"
+            />
+            <div className="journey-modal fixed inset-0 z-[2147483647] flex items-center justify-center px-4 py-10">
+              <Card className="pointer-events-auto w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
+                <button
+                  type="button"
+                  aria-label="Fechar jornada"
+                  className="absolute right-5 top-5 text-sm font-semibold uppercase tracking-[0.28em] text-primary/70 transition-opacity hover:opacity-70"
+                  onClick={() => setActiveJourneyId(null)}
+                >
+                  Fechar
+                </button>
 
-            <div className="space-y-2 pr-14">
-              <span className="text-3xl">{activeJourneyState.journey.emoji}</span>
-              <h3 className="text-2xl font-semibold text-support-1">{activeJourneyState.journey.title}</h3>
-              <p className="text-sm text-support-2">{activeJourneyState.journey.description}</p>
+                <div className="space-y-2 pr-14">
+                  <span className="text-3xl">{activeJourneyState.journey.emoji}</span>
+                  <h3 className="text-2xl font-semibold text-support-1">{activeJourneyState.journey.title}</h3>
+                  <p className="text-sm text-support-2">{activeJourneyState.journey.description}</p>
+                </div>
+
+                {activeJourneyState.progress.every(Boolean) ? (
+                  <div className="rounded-3xl border border-primary/20 bg-primary/10 px-6 py-12 text-center shadow-soft">
+                    <p className="text-lg font-semibold leading-relaxed text-primary">
+                      {activeJourneyState.journey.finalMessage}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activeJourneyState.journey.challenges.map((challenge, index) => {
+                      const isDone = activeJourneyState.progress[index]
+                      return (
+                        <div
+                          key={challenge}
+                          className={`flex items-center justify-between rounded-2xl border p-4 transition-all duration-200 ${
+                            isDone
+                              ? 'border-primary/40 bg-primary/10 text-primary'
+                              : 'border-white/60 bg-white/90 text-support-2'
+                          }`}
+                        >
+                          <p className={`text-sm ${isDone ? 'text-primary/90 line-through' : 'text-support-1'}`}>{challenge}</p>
+                          <Button
+                            variant={isDone ? 'secondary' : 'primary'}
+                            size="sm"
+                            onClick={() => handleToggleChallenge(activeJourneyState.journey.id, index)}
+                            className="ml-4 whitespace-nowrap"
+                          >
+                            {isDone ? 'Concluído' : 'Marcar'}
+                          </Button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </Card>
             </div>
-
-            {activeJourneyState.progress.every(Boolean) ? (
-              <div className="rounded-3xl border border-primary/20 bg-primary/10 px-6 py-12 text-center shadow-soft">
-                <p className="text-lg font-semibold leading-relaxed text-primary">
-                  {activeJourneyState.journey.finalMessage}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {activeJourneyState.journey.challenges.map((challenge, index) => {
-                  const isDone = activeJourneyState.progress[index]
-                  return (
-                    <div
-                      key={challenge}
-                      className={`flex items-center justify-between rounded-2xl border p-4 transition-all duration-200 ${
-                        isDone
-                          ? 'border-primary/40 bg-primary/10 text-primary'
-                          : 'border-white/60 bg-white/90 text-support-2'
-                      }`}
-                    >
-                      <p className={`text-sm ${isDone ? 'text-primary/90 line-through' : 'text-support-1'}`}>{challenge}</p>
-                      <Button
-                        variant={isDone ? 'secondary' : 'primary'}
-                        size="sm"
-                        onClick={() => handleToggleChallenge(activeJourneyState.journey.id, index)}
-                        className="ml-4 whitespace-nowrap"
-                      >
-                        {isDone ? 'Concluído' : 'Marcar'}
-                      </Button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </Card>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   )
 }
