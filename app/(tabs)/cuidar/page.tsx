@@ -2,8 +2,8 @@
 
 export const dynamic = 'force-dynamic'
 
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
