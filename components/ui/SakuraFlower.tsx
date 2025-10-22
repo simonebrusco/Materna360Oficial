@@ -10,7 +10,7 @@ export function SakuraFlower({ className, style, decorative = true }: SakuraFlow
   return (
     <svg
       viewBox="0 0 120 120"
-      role={decorative ? 'img' : 'presentation'}
+      role={decorative ? undefined : 'img'}
       aria-hidden={decorative}
       focusable="false"
       className={className}
