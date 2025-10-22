@@ -44,7 +44,7 @@ export default function CuidarPage() {
         className="pointer-events-none absolute inset-x-10 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
       />
 
-      <div className="relative space-y-10">
+      <div className="relative flex flex-col">
         <Reveal>
           <div className="space-y-3">
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Autocuidado</span>
@@ -55,15 +55,15 @@ export default function CuidarPage() {
           </div>
         </Reveal>
 
-        <Reveal delay={80}>
+        <Reveal delay={80} className="mt-3 sm:mt-4">
           <BreathTimer />
         </Reveal>
 
-        <Reveal delay={120}>
+        <Reveal delay={120} className="mt-8 sm:mt-10">
           <Mindfulness />
         </Reveal>
 
-        <Reveal delay={140}>
+        <Reveal delay={140} className="mt-8 sm:mt-10">
           <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
             <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💊 Pílulas Positivas</h2>
             <div className="mt-4 space-y-3">
