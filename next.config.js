@@ -1,5 +1,5 @@
 const fs = require('fs/promises')
-const fs = require('fs/promises')
+const fsPromises = require('fs/promises')
 const path = require('path')
 
 class MirrorServerChunksPlugin {
@@ -43,7 +43,7 @@ class MirrorServerChunksPlugin {
               const destinationFile = path.join(outputPath, path.basename(relativePath))
 
               try {
-                await fs.copyFile(sourceFile, destinationFile)
+                await fsPromises.copyFile(sourceFile, destinationFile)
               } catch (error) {
                 console.warn('[MirrorServerChunksPlugin] Failed to mirror chunk', relativePath, error)
               }
