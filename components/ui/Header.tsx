@@ -117,7 +117,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           prefetch={false}
         >
           <Image
-            src="/images/logo-principal.png"
+            src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
             width={160}
             height={40}
