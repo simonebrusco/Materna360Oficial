@@ -181,7 +181,8 @@ export function MindfulnessCollections() {
       const stored = window.localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored) as Record<string, boolean>
-        setHeardTracks(parsed)
+        const normalized = normalizeHeardTracks(parsed)
+        setHeardTracks(normalized)
       }
     } catch (error) {
       console.error('Não foi possível carregar o progresso das meditações:', error)
