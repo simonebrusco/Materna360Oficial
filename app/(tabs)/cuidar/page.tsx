@@ -55,7 +55,7 @@ export default function CuidarPage() {
           </div>
         </Reveal>
 
-        <Reveal delay={80} className="mt-3 sm:mt-4">
+        <Reveal delay={80} className="mt-4 sm:mt-6">
           <BreathTimer />
         </Reveal>
 
