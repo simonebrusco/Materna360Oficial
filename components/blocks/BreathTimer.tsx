@@ -45,13 +45,11 @@ export function BreathTimer() {
   }
 
   return (
-    <Card className="p-8">
-      <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-        <h3 className="mb-4 text-2xl font-semibold tracking-tight text-support-1 sm:text-3xl">Respiração Guiada</h3>
-        <div className="mb-6 sm:mb-8">
-          <PlayArt />
-        </div>
-        <p className="mb-3 text-sm leading-relaxed text-support-2 sm:mb-4 sm:text-base">
+    <Card className="px-6 pb-12 pt-12 sm:px-8 sm:pb-14 sm:pt-14">
+      <div className="mx-auto flex max-w-2xl flex-col items-center text-center gap-3 sm:gap-4">
+        <h3 className="text-2xl font-semibold tracking-tight text-support-1 sm:text-3xl">Respiração Guiada</h3>
+        <PlayArt className="mx-auto h-28 w-28 sm:h-[120px] sm:w-[120px]" />
+        <p className="text-sm leading-relaxed text-support-2 sm:text-base">
           Sincronize sua respiração com um ritmo suave e acolhedor.
         </p>
         <p className="text-sm leading-relaxed text-support-2/90 sm:text-base">
@@ -75,17 +73,19 @@ export function BreathTimer() {
         ) : null}
       </div>
 
-      <Button
-        variant={isRunning ? 'outline' : 'primary'}
-        size="sm"
-        onClick={() => {
-          setIsRunning(!isRunning)
-          if (!isRunning) setPhase('breathe-in')
-        }}
-        className="w-full"
-      >
-        {isRunning ? 'Parar' : 'Começar'}
-      </Button>
+      <div className="mt-8 sm:mt-10">
+        <Button
+          variant={isRunning ? 'outline' : 'primary'}
+          size="sm"
+          onClick={() => {
+            setIsRunning(!isRunning)
+            if (!isRunning) setPhase('breathe-in')
+          }}
+          className="w-full"
+        >
+          {isRunning ? 'Parar' : 'Começar'}
+        </Button>
+      </div>
     </Card>
   )
 }
