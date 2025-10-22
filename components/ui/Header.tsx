@@ -1,10 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-
-stellar-den
 import { useEffect, useMemo, useState } from 'react'
-
 import {
   DEFAULT_STICKER_ID,
   STICKERS,
@@ -12,15 +9,11 @@ import {
   isProfileStickerId,
 } from '@/app/lib/stickers'
 
-import { useEffect, useState } from 'react'
-main
-
 interface HeaderProps {
   title: string
   showNotification?: boolean
 }
 
-stellar-den
 const PROFILE_UPDATED_EVENT = 'materna:profile-updated'
 
 export function Header({ title, showNotification = false }: HeaderProps) {
@@ -30,10 +23,6 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   const [imageSrc, setImageSrc] = useState<string>(STICKERS[DEFAULT_STICKER_ID].asset)
   const [hasTriedPngFallback, setHasTriedPngFallback] = useState(false)
 
-export function Header({ title, showNotification = false }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false)
-main
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
     handleScroll()
@@ -41,11 +30,8 @@ main
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-stellar-den
   useEffect(() => {
-    if (!showNotification) {
-      return
-    }
+    if (!showNotification) return
 
     let isMounted = true
 
@@ -56,42 +42,31 @@ stellar-den
           credentials: 'include',
           cache: 'no-store',
         })
-
-        if (!response.ok) {
-          throw new Error('Falha ao carregar perfil')
-        }
+        if (!response.ok) throw new Error('Falha ao carregar perfil')
 
         const data = await response.json()
-        if (!isMounted) {
-          return
-        }
+        if (!isMounted) return
 
-        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
+        const nextStickerId = isProfileStickerId(data?.figurinha)
+          ? data.figurinha
+          : DEFAULT_STICKER_ID
         setStickerId(nextStickerId)
       } catch (error) {
         console.error('Não foi possível obter o perfil para a figurinha:', error)
-        if (isMounted) {
-          setStickerId(DEFAULT_STICKER_ID)
-        }
+        if (isMounted) setStickerId(DEFAULT_STICKER_ID)
       } finally {
-        if (isMounted) {
-          setIsLoadingSticker(false)
-        }
+        if (isMounted) setIsLoadingSticker(false)
       }
     }
 
     const handleProfileUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ figurinha?: string }>
-      if (!isMounted) {
-        return
-      }
-
+      if (!isMounted) return
       const figurinhaId = customEvent.detail?.figurinha
       setStickerId(isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID)
     }
 
     void loadProfile()
-
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated)
 
     return () => {
@@ -113,14 +88,11 @@ stellar-den
       setImageSrc(sticker.asset.replace('.svg', '.png'))
       return
     }
-
     if (imageSrc !== STICKERS[DEFAULT_STICKER_ID].asset) {
       setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
     }
   }
 
-
-main
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-500 ease-gentle backdrop-blur-xl ${
@@ -136,15 +108,16 @@ main
             <span className="text-xs font-semibold uppercase tracking-[0.36em] text-primary/70 animate-fade-down">
               Materna360
             </span>
-            <span className="text-lg font-semibold text-support-1 animate-fade-down" style={{ animationDelay: '0.05s' }}>
+            <span
+              className="text-lg font-semibold text-support-1 animate-fade-down"
+              style={{ animationDelay: '0.05s' }}
+            >
               {title}
             </span>
           </span>
         </Link>
 
         {showNotification && (
-
- stellar-den
           <div className="flex items-center gap-3">
             <Link
               href="/eu360"
@@ -174,16 +147,6 @@ main
               {sticker.label}
             </span>
           </div>
-
-          <button
-            className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-xl text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
-            aria-label="Notificações"
-          >
-            <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
-            <span className="relative">🔔</span>
-          </button>
-main
         )}
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />

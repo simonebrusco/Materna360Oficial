@@ -1,50 +1,65 @@
 {
   "themes": [
     {
-      "id": "respiracao-pausa",
-      "title": "Respiração & Pausa",
+      "id": "reconecte-se",
+      "title": "Reconecte-se",
+      "description": "Pausa, presença e autocuidado para voltar a si.",
       "tracks": [
         { "id": "acalme-sua-mente", "title": "Acalme sua mente", "file": "/audio/mindfulness/acalme-sua-mente.mp3" },
         { "id": "respire-e-conecte-se", "title": "Respire e conecte-se", "file": "/audio/mindfulness/respire-e-conecte-se.mp3" },
+
         { "id": "saindo-do-piloto-automatico", "title": "Saindo do piloto automático", "file": "/audio/mindfulness/saindo-do-piloto-automatico.mp3" },
-add-mindfulness-audios
+
         { "id": "desconecte-se-para-o-essencial", "title": "Desconecte-se para o essencial", "file": "/audio/mindfulness/desconecte-se-para-o-essencial.mp3" }
+
+
 
         { "id": "tres-minutos-de-pausa", "title": "Três minutos de pausa", "file": "/audio/mindfulness/tres-minutos-de-pausa.mp3" },
         { "id": "encontre-a-paz-dentro-de-voce", "title": "Encontre a paz dentro de você", "file": "/audio/mindfulness/encontre-a-paz-dentro-de-voce.mp3" },
-        { "id": "volte-para-o-agora", "title": "Volte para o agora", "file": "/audio/mindfulness/volte-para-o-agora.mp3" }
-      ]
-    },
-    {
-      "id": "autocompaixao-forca",
-      "title": "Autocompaixão & Força",
-      "tracks": [
-        { "id": "voce-esta-fazendo-o-melhor", "title": "Você está fazendo o melhor", "file": "/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3" },
-        { "id": "voce-nao-precisa-dar-conta", "title": "Você não precisa dar conta", "file": "/audio/mindfulness/voce-nao-precisa-dar-conta.mp3" },
-        { "id": "confie-em-voce", "title": "Confie em você", "file": "/audio/mindfulness/confie-em-voce.mp3" },
-        { "id": "libertando-se-da-culpa", "title": "Libertando-se da culpa", "file": "/audio/mindfulness/libertando-se-da-culpa.mp3" },
-        { "id": "o-poder-do-toque-e-do-afeto", "title": "O poder do toque e do afeto", "file": "/audio/mindfulness/o-poder-do-toque-e-do-afeto.mp3" },
+        { "id": "volte-para-o-agora", "title": "Volte para o agora", "file": "/audio/mindfulness/volte-para-o-agora.mp3" },
         { "id": "voce-nao-esta-sozinha", "title": "Você não está sozinha", "file": "/audio/mindfulness/voce-nao-esta-sozinha.mp3" },
-        { "id": "celebrando-pequenos-momentos", "title": "Celebrando pequenos momentos", "file": "/audio/mindfulness/celebrando-pequenos-momentos.mp3" },
-        { "id": "o-amor-esta-nos-detalhes", "title": "O amor está nos detalhes", "file": "/audio/mindfulness/o-amor-esta-nos-detalhes.mp3" },
-        { "id": "suas-palavras-tem-poder", "title": "Suas palavras têm poder", "file": "/audio/mindfulness/suas-palavras-tem-poder.mp3" },
-        { "id": "aprendendo-a-viver-o-agora-com-seus-filhos", "title": "Aprendendo a viver o agora com seus filhos", "file": "/audio/mindfulness/aprendendo-a-viver-o-agora-com-seus-filhos.mp3" }
+        { "id": "voce-nao-precisa-dar-conta", "title": "Você não precisa dar conta", "file": "/audio/mindfulness/voce-nao-precisa-dar-conta.mp3" },
+        { "id": "desconecte-se-para-o-essencial", "title": "Desconecte-se para o essencial", "file": "/audio/mindfulness/desconecte-se-para-o-essencial.mp3" },
+        { "id": "confie-em-voce", "title": "Confie em você", "file": "/audio/mindfulness/confie-em-voce.mp3" }
       ]
     },
     {
-      "id": "sono-relaxamento",
-      "title": "Sono & Relaxamento",
+      "id": "renove-sua-energia",
+      "title": "Renove sua Energia",
+      "description": "Leveza, esperança e vitalidade para o seu dia.",
+      "tracks": [
+        { "id": "um-novo-comeco", "title": "Um novo começo", "file": "/audio/mindfulness/um-novo-comeco.mp3" },
+        { "id": "celebrando-pequenos-momentos", "title": "Celebrando pequenos momentos", "file": "/audio/mindfulness/celebrando-pequenos-momentos.mp3" },
+        { "id": "suas-palavras-tem-poder", "title": "Suas palavras têm poder", "file": "/audio/mindfulness/suas-palavras-tem-poder.mp3" },
+        { "id": "voce-esta-fazendo-o-melhor", "title": "Você está fazendo o melhor", "file": "/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3" },
+        { "id": "aprendendo-a-viver-o-agora-com-seus-filhos", "title": "Aprendendo a viver o agora com seus filhos", "file": "/audio/mindfulness/aprendendo-a-viver-o-agora-com-seus-filhos.mp3" },
+        { "id": "o-amor-esta-nos-detalhes", "title": "O amor está nos detalhes", "file": "/audio/mindfulness/o-amor-esta-nos-detalhes.mp3" },
+        { "id": "natureza-e-equilibrio", "title": "Natureza e equilíbrio", "file": "/audio/mindfulness/natureza-e-equilibrio.mp3" },
+        { "id": "transforme-o-caos-em-serenidade", "title": "Transforme o caos em serenidade", "file": "/audio/mindfulness/transforme-o-caos-em-serenidade.mp3" }
+      ]
+    },
+    {
+      "id": "encontre-calma",
+      "title": "Encontre Calma",
+      "description": "Relaxamento, acolhimento e descanso profundo.",
       "tracks": [
         { "id": "antes-de-dormir", "title": "Antes de dormir", "file": "/audio/mindfulness/antes-de-dormir.mp3" },
+
         { "id": "um-novo-comeco", "title": "Um novo começo", "file": "/audio/mindfulness/um-novo-comeco.mp3" },
         { "id": "natureza-e-equilibrio", "title": "Natureza e equilíbrio", "file": "/audio/mindfulness/natureza-e-equilibrio.mp3" },
-add-mindfulness-audios
+
         { "id": "transforme-o-caos-em-serenidade", "title": "Transforme o caos em serenidade", "file": "/audio/mindfulness/transforme-o-caos-em-serenidade.mp3" }
 
         { "id": "transforme-o-caos-em-serenidade", "title": "Transforme o caos em serenidade", "file": "/audio/mindfulness/transforme-o-caos-em-serenidade.mp3" },
         { "id": "desconecte-se-para-o-essencial", "title": "Desconecte-se para o essencial", "file": "/audio/mindfulness/desconecte-se-para-o-essencial.mp3" }
 
+
+        { "id": "libertando-se-da-culpa", "title": "Libertando-se da culpa", "file": "/audio/mindfulness/libertando-se-da-culpa.mp3" },
+        { "id": "saindo-do-piloto-automatico", "title": "Saindo do piloto automático", "file": "/audio/mindfulness/saindo-do-piloto-automatico.mp3" },
+        { "id": "o-poder-do-toque-e-do-afeto", "title": "O poder do toque e do afeto", "file": "/audio/mindfulness/o-poder-do-toque-e-do-afeto.mp3" }
+
       ]
     }
-  ]
+  ],
+  "version": 1
 }
