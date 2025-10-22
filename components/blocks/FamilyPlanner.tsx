@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
