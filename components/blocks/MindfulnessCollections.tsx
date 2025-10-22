@@ -11,7 +11,6 @@ import { Reveal } from '@/components/ui/Reveal'
 interface MindfulnessTrack {
   file: string
   title: string
-  src: string
 }
 
 interface MindfulnessGroup {
@@ -32,12 +31,12 @@ const GROUPS: MindfulnessGroup[] = [
     description:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
     tracks: [
-      { file: 'acalme-sua-mente.mp3', title: 'Acalme sua mente', src: '/audio/mindfulness/acalme-sua-mente.mp3' },
-      { file: 'respire-e-conecte-se.mp3', title: 'Respire e conecte-se', src: '/audio/mindfulness/respire-e-conecte-se.mp3' },
-      { file: 'voce-nao-esta-sozinha.mp3', title: 'Você não está sozinha', src: '/audio/mindfulness/voce-nao-esta-sozinha.mp3' },
-      { file: 'voce-nao-precisa-ser-perfeita.mp3', title: 'Você não precisa ser perfeita', src: '/audio/mindfulness/voce-nao-precisa-ser-perfeita.mp3' },
-      { file: 'desconecte-se-para-o-essencial.mp3', title: 'Desconecte-se para o essencial', src: '/audio/mindfulness/desconecte-se-para-o-essencial.mp3' },
-      { file: 'confie-em-voce.mp3', title: 'Confie em você', src: '/audio/mindfulness/confie-em-voce.mp3' },
+      { file: 'acalme-sua-mente.mp3', title: 'Acalme sua mente' },
+      { file: 'respire-e-conecte-se.mp3', title: 'Respire e conecte-se' },
+      { file: 'voce-nao-esta-sozinha.mp3', title: 'Você não está sozinha' },
+      { file: 'voce-nao-precisa-ser-perfeita.mp3', title: 'Você não precisa ser perfeita' },
+      { file: 'desconecte-se-para-o-essencial.mp3', title: 'Desconecte-se para o essencial' },
+      { file: 'confie-em-voce.mp3', title: 'Confie em você' },
     ],
   },
   {
@@ -47,23 +46,11 @@ const GROUPS: MindfulnessGroup[] = [
     description:
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
     tracks: [
-      { file: 'um-novo-comeco.mp3', title: 'Um novo começo', src: '/audio/mindfulness/um-novo-comeco.mp3' },
-      {
-        file: 'celebre-os-pequenos-momentos.mp3',
-        title: 'Celebre os pequenos momentos',
-        src: '/audio/mindfulness/celebre-os-pequenos-momentos.mp3',
-      },
-      {
-        file: 'transforme-o-caos-em-equilibrio.mp3',
-        title: 'Transforme o caos em equilíbrio',
-        src: '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3',
-      },
-      { file: 'suas-palavras-tem-poder.mp3', title: 'Suas palavras têm poder', src: '/audio/mindfulness/suas-palavras-tem-poder.mp3' },
-      {
-        file: 'voce-esta-fazendo-o-seu-melhor.mp3',
-        title: 'Você está fazendo o seu melhor',
-        src: '/audio/mindfulness/voce-esta-fazendo-o-seu-melhor.mp3',
-      },
+      { file: 'um-novo-comeco.mp3', title: 'Um novo começo' },
+      { file: 'celebre-os-pequenos-momentos.mp3', title: 'Celebre os pequenos momentos' },
+      { file: 'transforme-o-caos-em-equilibrio.mp3', title: 'Transforme o caos em equilíbrio' },
+      { file: 'suas-palavras-tem-poder.mp3', title: 'Suas palavras têm poder' },
+      { file: 'voce-esta-fazendo-o-seu-melhor.mp3', title: 'Você está fazendo o seu melhor' },
     ],
   },
   {
@@ -73,19 +60,11 @@ const GROUPS: MindfulnessGroup[] = [
     description:
       'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
     tracks: [
-      { file: 'antes-de-dormir.mp3', title: 'Antes de dormir', src: '/audio/mindfulness/antes-de-dormir.mp3' },
-      {
-        file: 'encontre-a-paz-dentro-de-voce.mp3',
-        title: 'Encontre a paz dentro de você',
-        src: '/audio/mindfulness/encontre-a-paz-dentro-de-voce.mp3',
-      },
-      { file: 'libertando-se-da-culpa.mp3', title: 'Libertando-se da culpa', src: '/audio/mindfulness/libertando-se-da-culpa.mp3' },
-      {
-        file: 'saindo-do-piloto-automatico.mp3',
-        title: 'Saindo do piloto automático',
-        src: '/audio/mindfulness/saindo-do-piloto-automatico.mp3',
-      },
-      { file: 'o-poder-do-toque.mp3', title: 'O poder do toque', src: '/audio/mindfulness/o-poder-do-toque.mp3' },
+      { file: 'antes-de-dormir.mp3', title: 'Antes de dormir' },
+      { file: 'encontre-a-paz-dentro-de-voce.mp3', title: 'Encontre a paz dentro de você' },
+      { file: 'libertando-se-da-culpa.mp3', title: 'Libertando-se da culpa' },
+      { file: 'saindo-do-piloto-automatico.mp3', title: 'Saindo do piloto automático' },
+      { file: 'o-poder-do-toque.mp3', title: 'O poder do toque' },
     ],
   },
 ]
@@ -263,7 +242,7 @@ export function MindfulnessCollections() {
                             className="w-full rounded-2xl bg-white/70 md:w-64"
                             preload="none"
                           >
-                            <source src={track.src} type="audio/mpeg" />
+                            <source src={`/audio/mindfulness/${encodeURIComponent(track.file)}`} type="audio/mpeg" />
                             Seu navegador não suporta a reprodução de áudio.
                           </audio>
                         </div>
