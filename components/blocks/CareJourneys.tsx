@@ -218,7 +218,7 @@ export function CareJourneys() {
               aria-hidden="true"
             />
             <div className="journey-modal fixed inset-0 z-[2147483647] flex items-center justify-center px-4 py-10">
-              <Card className="pointer-events-auto w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
+              <Card className="pointer-events-auto relative w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
                 <button
                   type="button"
                   aria-label="Fechar jornada"
