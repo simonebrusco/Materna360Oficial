@@ -26,7 +26,7 @@ type ActiveJourneyState = {
 const journeys: Journey[] = [
   {
     id: 'amor-proprio',
-    title: '💗 Amor-Próprio',
+    title: 'Amor-Próprio',
     emoji: '💗',
     description: '7 dias para olhar para si com carinho.',
     challenges: [
@@ -38,11 +38,11 @@ const journeys: Journey[] = [
       'Trate-se com a mesma paciência e amor que trata seu filho.',
       'Escreva uma nota curta e gentil para você mesma.',
     ],
-    finalMessage: '“Você é sua melhor companhia. Cuide de si com o mesmo amor que oferece aos outros.”',
+    finalMessage: 'Você é sua melhor companhia. Cuide de si com o mesmo amor que oferece aos outros.',
   },
   {
     id: 'calma',
-    title: '🌿 Calma',
+    title: 'Calma',
     emoji: '🌿',
     description: '7 dias para desacelerar.',
     challenges: [
@@ -54,11 +54,11 @@ const journeys: Journey[] = [
       'Diga “não” para algo que te sobrecarrega.',
       'Ouça uma música suave e apenas respire.',
     ],
-    finalMessage: '“A paz que você procura vive no mesmo lugar onde você respira.”',
+    finalMessage: 'A paz que você procura vive no mesmo lugar onde você respira.',
   },
   {
     id: 'energia-positiva',
-    title: '☀️ Energia Positiva',
+    title: 'Energia Positiva',
     emoji: '☀️',
     description: '7 dias de leveza e alegria.',
     challenges: [
@@ -70,11 +70,11 @@ const journeys: Journey[] = [
       'Tire uma foto sorrindo de você mesma.',
       'Assista a algo que te faça rir.',
     ],
-    finalMessage: '“A leveza chegou — e decidiu ficar dentro de você.”',
+    finalMessage: 'A leveza chegou — e decidiu ficar dentro de você.',
   },
   {
     id: 'gratidao',
-    title: '🌸 Gratidão',
+    title: 'Gratidão',
     emoji: '🌸',
     description: '7 dias para ver o que floresce.',
     challenges: [
@@ -86,11 +86,11 @@ const journeys: Journey[] = [
       'Faça uma pausa para apreciar o silêncio.',
       'Releia suas anotações da semana.',
     ],
-    finalMessage: '“Você floresce quando escolhe a gratidão, mesmo nas pequenas coisas.”',
+    finalMessage: 'Você floresce quando escolhe a gratidão, mesmo nas pequenas coisas.',
   },
   {
     id: 'descanso',
-    title: '🌙 Descanso',
+    title: 'Descanso',
     emoji: '🌙',
     description: '7 dias para cuidar do corpo e da mente.',
     challenges: [
@@ -102,7 +102,7 @@ const journeys: Journey[] = [
       'Tire um cochilo sem culpa.',
       'Lembre-se do que te faz sentir em paz.',
     ],
-    finalMessage: '“Descansar é um ato de amor. Você merece silêncio e pausa.”',
+    finalMessage: 'Descansar é um ato de amor. Você merece silêncio e pausa.',
   },
 ]
 
@@ -168,7 +168,7 @@ export function CareJourneys() {
             >
               <div className="space-y-3">
                 <span className="text-3xl">{journey.emoji}</span>
-                <h3 className="text-lg font-semibold text-support-1">{journey.title.replace(journey.emoji, '').trim()}</h3>
+                <h3 className="text-lg font-semibold text-support-1">{journey.title}</h3>
                 <p className="text-sm text-support-2">{journey.description}</p>
               </div>
               <div className="mt-6 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
@@ -233,7 +233,7 @@ export function CareJourneys() {
                         onClick={() => handleToggleChallenge(activeJourneyState.journey.id, index)}
                         className="ml-4 whitespace-nowrap"
                       >
-                        {isDone ? 'Conclu��do' : 'Marcar' }
+                        {isDone ? 'Concluído' : 'Marcar'}
                       </Button>
                     </div>
                   )
