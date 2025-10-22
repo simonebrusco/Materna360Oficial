@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 export function BreathTimer() {
   const [isRunning, setIsRunning] = useState(false)
