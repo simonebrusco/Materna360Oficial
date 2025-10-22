@@ -46,13 +46,16 @@ export function BreathTimer() {
 
   return (
     <Card className="p-8">
-      <div className="flex flex-col items-center text-center">
-        <h3 className="mb-4 text-xl font-semibold text-support-1 sm:text-2xl">Respiração Guiada</h3>
-        <div className="mb-4 flex w-full items-center justify-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
+        <h3 className="mb-4 text-2xl font-semibold tracking-tight text-support-1 sm:text-3xl">Respiração Guiada</h3>
+        <div className="mb-6 sm:mb-8">
           <PlayArt />
         </div>
-        <p className="max-w-xl text-sm text-support-2 sm:text-base">
+        <p className="mb-3 text-sm leading-relaxed text-support-2 sm:mb-4 sm:text-base">
           Sincronize sua respiração com um ritmo suave e acolhedor.
+        </p>
+        <p className="text-sm leading-relaxed text-support-2/90 sm:text-base">
+          Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
         </p>
       </div>
 
@@ -69,11 +72,7 @@ export function BreathTimer() {
             </div>
             <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
           </>
-        ) : (
-          <p className="mt-4 max-w-sm text-sm text-support-2">
-            Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
-          </p>
-        )}
+        ) : null}
       </div>
 
       <Button
