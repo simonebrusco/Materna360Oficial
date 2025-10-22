@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
-type JourneyId = 'amor-proprio' | 'calma' | 'energia-positiva' | 'gratidao' | 'descanso'
+type JourneyId = 'amor-proprio' | 'calma' | 'energia-positiva' | 'gratidao' | 'descanso' | 'confianca'
 
 type Journey = {
   id: JourneyId
@@ -104,6 +104,22 @@ const journeys: Journey[] = [
     ],
     finalMessage: 'Descansar é um ato de amor. Você merece silêncio e pausa.',
   },
+  {
+    id: 'confianca',
+    title: 'Confiança',
+    emoji: '🌺',
+    description: '7 dias para acreditar em si novamente.',
+    challenges: [
+      'Lembre-se de um desafio que você já superou — e celebre.',
+      'Faça hoje algo que esteja um pouco fora da sua zona de conforto.',
+      'Repita para si mesma: "Sou capaz, mesmo quando duvido."',
+      'Anote uma meta pequena e dê o primeiro passo em direção a ela.',
+      'Reflita sobre algo valioso que aprendeu com um erro.',
+      'Peça ajuda quando precisar — isso é força, não fraqueza.',
+      'Agradeça a si mesma pela mulher que está se tornando.',
+    ],
+    finalMessage: 'A confiança cresce quando você escolhe seguir em frente, mesmo sem certezas.',
+  },
 ]
 
 const initialProgress = journeys.reduce<JourneyProgress>((acc, journey) => {
@@ -199,19 +215,10 @@ export function CareJourneys() {
             </div>
 
             {activeJourneyState.progress.every(Boolean) ? (
-              <div className="rounded-3xl border border-primary/20 bg-primary/10 px-6 py-10 text-center shadow-soft">
-                <p className="text-lg font-semibold text-primary">{activeJourneyState.journey.finalMessage}</p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="mt-6"
-                  onClick={() => {
-                    handleResetJourney(activeJourneyState.journey.id)
-                    setActiveJourneyId(null)
-                  }}
-                >
-                  Recomeçar jornada
-                </Button>
+              <div className="rounded-3xl border border-primary/20 bg-primary/10 px-6 py-12 text-center shadow-soft">
+                <p className="text-lg font-semibold leading-relaxed text-primary">
+                  {activeJourneyState.journey.finalMessage}
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
