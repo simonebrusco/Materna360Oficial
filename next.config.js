@@ -16,7 +16,7 @@ class FixServerRuntimeChunkPathsPlugin {
       compilation.hooks.processAssets.tap(
         {
           name: 'FixServerRuntimeChunkPathsPlugin',
-          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE,
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
         () => {
           const asset = compilation.getAsset('webpack-runtime.js')
