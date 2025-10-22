@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
@@ -47,10 +46,10 @@ export function BreathTimer() {
   return (
     <Card className="p-8 text-center">
       <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
-      <Image
-        src="/images/sakura.svg"
+      <img
+        src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
         alt="Flor de cerejeira Materna360"
-        width={140}
+        width={235}
         height={140}
         className="mx-auto mt-6"
       />
