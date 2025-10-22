@@ -1,11 +1,11 @@
 'use client';
 
-'use client'
+'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 
 const STORAGE_KEY = 'daily_checklist_v1'
 const FALLBACK_NAME = 'Mãe'
