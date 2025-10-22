@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Flower } from 'lucide-react'
 
@@ -70,14 +69,6 @@ export function BreathTimer() {
           </>
         ) : (
           <>
-            <Image
-              src="/images/play-main.png"
-              alt="Iniciar respiração guiada"
-              width={112}
-              height={112}
-              className="mx-auto"
-              priority={false}
-            />
             <p className="mt-4 max-w-sm text-sm text-support-2">
               Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
             </p>
