@@ -41,7 +41,7 @@ class FixServerRuntimeChunkPathsPlugin {
           const patchedSource = originalSource.replace(searchValue, replacementValue)
 
           compilation.updateAsset(
-            'webpack-runtime.js',
+            runtimeAssetName,
             new compiler.webpack.sources.RawSource(patchedSource)
           )
 
