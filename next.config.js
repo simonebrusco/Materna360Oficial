@@ -21,11 +21,13 @@ class FixServerRuntimeChunkPathsPlugin {
         () => {
           const assetNames = Object.keys(compilation.assets || {})
           console.log('[FixServerRuntimeChunkPathsPlugin] available assets:', assetNames.slice(0, 10))
-          const asset = compilation.getAsset('webpack-runtime.js')
-          if (!asset) {
+          const runtimeAssetName = assetNames.find((name) => name.endsWith('webpack-runtime.js'))
+          if (!runtimeAssetName) {
             console.warn('[FixServerRuntimeChunkPathsPlugin] webpack-runtime.js asset not found')
             return
           }
+
+          const asset = compilation.getAsset(runtimeAssetName)
 
           const originalSource = asset.source.source().toString()
           const searchValue = 'require("./" + __webpack_require__.u(chunkId))'
