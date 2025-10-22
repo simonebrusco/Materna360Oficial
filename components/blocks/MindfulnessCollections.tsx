@@ -55,7 +55,7 @@ const normalizeHeardTracks = (entries: Record<string, boolean>) => {
 const GROUPS: MindfulnessGroup[] = [
   {
     key: 'reconnect',
-    icon: '🌸',
+    icon: '��',
     title: 'Reconecte-se',
     description:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
@@ -159,11 +159,12 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             playsInline
             controlsList="nodownload"
             style={{ width: '100%' }}
-            onError={(event) => console.error('AUDIO ERROR', event.currentTarget.currentSrc)}
+            onError={(event) => console.error('AUDIO ERROR:', event.currentTarget.currentSrc)}
           >
             <source src={src} type="audio/mpeg" />
             Seu navegador não suporta a reprodução de áudio.
           </audio>
+          <p style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>src: {src}</p>
           <a href={src} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-primary hover:text-primary/80">
             Abrir arquivo
           </a>
