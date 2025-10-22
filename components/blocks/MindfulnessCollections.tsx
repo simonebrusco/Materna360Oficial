@@ -39,10 +39,10 @@ const GROUPS: MindfulnessGroup[] = [
     tracks: [
       { file: 'acalme-sua-mente.mp3', title: 'Acalme sua mente' },
       { file: 'respire-e-conecte-se.mp3', title: 'Respire e conecte-se' },
-      { file: 'você-não-está-sozinha.mp3', title: 'Você não está sozinha' },
-      { file: 'você-não-precisa-ser-perfeita.mp3', title: 'Você não precisa ser perfeita' },
+      { file: 'voce-nao-esta-sozinha.mp3', title: 'Você não está sozinha' },
+      { file: 'voce-nao-precisa-ser-perfeita.mp3', title: 'Você não precisa ser perfeita' },
       { file: 'desconecte-se-para-o-essencial.mp3', title: 'Desconecte-se para o essencial' },
-      { file: 'confie-em-você.mp3', title: 'Confie em você' },
+      { file: 'confie-em-voce.mp3', title: 'Confie em você' },
     ],
   },
   {
@@ -52,11 +52,11 @@ const GROUPS: MindfulnessGroup[] = [
     description:
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
     tracks: [
-      { file: 'um-novo-começo.mp3', title: 'Um novo começo' },
+      { file: 'um-novo-comeco.mp3', title: 'Um novo começo' },
       { file: 'celebre-os-pequenos-momentos.mp3', title: 'Celebre os pequenos momentos' },
-      { file: 'transforme-o-caos-em-equilíbrio.mp3', title: 'Transforme o caos em equilíbrio' },
-      { file: 'suas-palavras-têm-poder.mp3', title: 'Suas palavras têm poder' },
-      { file: 'você-está-fazendo-o-seu-melhor.mp3', title: 'Você está fazendo o seu melhor' },
+      { file: 'transforme-o-caos-em-equilibrio.mp3', title: 'Transforme o caos em equilíbrio' },
+      { file: 'suas-palavras-tem-poder.mp3', title: 'Suas palavras têm poder' },
+      { file: 'voce-esta-fazendo-o-seu-melhor.mp3', title: 'Você está fazendo o seu melhor' },
     ],
   },
   {
@@ -67,9 +67,9 @@ const GROUPS: MindfulnessGroup[] = [
       'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
     tracks: [
       { file: 'antes-de-dormir.mp3', title: 'Antes de dormir' },
-      { file: 'encontre-a-paz-dentro-de-você.mp3', title: 'Encontre a paz dentro de você' },
+      { file: 'encontre-a-paz-dentro-de-voce.mp3', title: 'Encontre a paz dentro de você' },
       { file: 'libertando-se-da-culpa.mp3', title: 'Libertando-se da culpa' },
-      { file: 'saindo-do-piloto-automático.mp3', title: 'Saindo do piloto automático' },
+      { file: 'saindo-do-piloto-automatico.mp3', title: 'Saindo do piloto automático' },
       { file: 'o-poder-do-toque.mp3', title: 'O poder do toque' },
     ],
   },
