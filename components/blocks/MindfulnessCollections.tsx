@@ -170,6 +170,7 @@ export function MindfulnessCollections() {
           <>
             <div
               className="mindfulness-overlay"
+              style={{ position: 'fixed', inset: 0, zIndex: 2147483606, background: 'rgba(0,0,0,0.25)' }}
               onClick={() => setActiveGroupKey(null)}
             />
             <div
@@ -177,6 +178,16 @@ export function MindfulnessCollections() {
               role="dialog"
               aria-modal="true"
               aria-labelledby={`mindfulness-modal-${activeGroup.key}`}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                margin: 'auto',
+                maxWidth: '720px',
+                width: 'calc(100% - 32px)',
+                zIndex: 2147483607,
+                maxHeight: 'calc(100% - 48px)',
+                overflowY: 'auto',
+              }}
             >
               <Card className="relative w-full rounded-3xl p-7" onClick={(event) => event.stopPropagation()}>
                 <button
