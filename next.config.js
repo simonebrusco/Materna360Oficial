@@ -1,10 +1,9 @@
-const fs = require('fs/promises')
 const path = require('path')
 
-class MirrorServerChunksPlugin {
+class FixServerRuntimeChunkPathsPlugin {
   apply(compiler) {
     const target = compiler.options.target
-    console.log('[MirrorServerChunksPlugin] target:', target)
+    console.log('[FixServerRuntimeChunkPathsPlugin] target:', target)
 
     const isNodeTarget =
       !target ||
@@ -15,44 +14,39 @@ class MirrorServerChunksPlugin {
       return
     }
 
-    const mirrorChunks = async () => {
-      const outputPath = compiler.outputPath
-      const chunksDir = path.join(outputPath, 'chunks')
+    compiler.hooks.thisCompilation.tap('FixServerRuntimeChunkPathsPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'FixServerRuntimeChunkPathsPlugin',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE,
+        },
+        () => {
+          const asset = compilation.getAsset('webpack-runtime.js')
+          if (!asset) {
+            console.warn('[FixServerRuntimeChunkPathsPlugin] webpack-runtime.js asset not found')
+            return
+          }
 
-      try {
-        const entries = await fs.readdir(chunksDir)
-        const chunkFiles = entries.filter((file) => file.endsWith('.js'))
+          const originalSource = asset.source.source().toString()
+          const searchValue = 'require("./" + __webpack_require__.u(chunkId))'
+          const replacementValue = 'require("./chunks/" + __webpack_require__.u(chunkId))'
 
-        if (chunkFiles.length === 0) {
-          console.log('[MirrorServerChunksPlugin] no chunk files found to mirror')
-          return
+          if (!originalSource.includes(searchValue)) {
+            console.warn('[FixServerRuntimeChunkPathsPlugin] Unexpected runtime format, skipping patch')
+            return
+          }
+
+          const patchedSource = originalSource.replace(searchValue, replacementValue)
+
+          compilation.updateAsset(
+            'webpack-runtime.js',
+            new compiler.webpack.sources.RawSource(patchedSource)
+          )
+
+          console.log('[FixServerRuntimeChunkPathsPlugin] Patched webpack-runtime.js to load chunks from subdirectory')
         }
-
-        console.log('[MirrorServerChunksPlugin] mirroring chunk files:', chunkFiles)
-
-        await Promise.all(
-          chunkFiles.map(async (file) => {
-            const sourceFile = path.join(chunksDir, file)
-            const destinationFile = path.join(outputPath, file)
-
-            try {
-              await fs.copyFile(sourceFile, destinationFile)
-            } catch (error) {
-              console.warn('[MirrorServerChunksPlugin] Failed to mirror chunk', file, error)
-            }
-          })
-        )
-      } catch (error) {
-        if (error.code === 'ENOENT') {
-          console.log('[MirrorServerChunksPlugin] chunks dir not found, skipping')
-        } else {
-          console.warn('[MirrorServerChunksPlugin] Unable to read chunks directory:', error)
-        }
-      }
-    }
-
-    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', mirrorChunks)
-    compiler.hooks.done.tapPromise('MirrorServerChunksPlugin', mirrorChunks)
+      )
+    })
   }
 }
 
@@ -61,7 +55,7 @@ const nextConfig = {
   swcMinify: true,
   webpack(config, { isServer }) {
     if (isServer) {
-      config.plugins.push(new MirrorServerChunksPlugin())
+      config.plugins.push(new FixServerRuntimeChunkPathsPlugin())
     }
     return config
   },
