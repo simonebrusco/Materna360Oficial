@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Flower } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { SakuraFlower } from '@/components/ui/SakuraFlower'
 
 export function BreathTimer() {
   const [isRunning, setIsRunning] = useState(false)
@@ -47,11 +47,7 @@ export function BreathTimer() {
   return (
     <Card className="p-8 text-center">
       <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
-      <Flower
-        aria-hidden="true"
-        className="mx-auto mt-6 h-[72px] w-[72px] text-[#ff005e]"
-        style={{ opacity: 0.85 }}
-      />
+      <SakuraFlower className="mx-auto mt-6 h-[120px] w-[120px]" style={{ opacity: 0.9 }} />
       <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
 
       <div className="mt-8 flex min-h-[280px] flex-col items-center justify-center">
