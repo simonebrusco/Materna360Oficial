@@ -239,7 +239,7 @@ export function MindfulnessCollections() {
           <>
             <div
               className="mindfulness-overlay"
-              style={{ position: 'fixed', inset: 0, zIndex: 2147483606, background: 'rgba(0,0,0,0.25)' }}
+              style={{ position: 'fixed', inset: 0, zIndex: 2147483606, background: 'rgba(0,0,0,0.25)', pointerEvents: 'auto' }}
               onClick={() => setActiveGroupKey(null)}
             />
             <div
@@ -256,6 +256,7 @@ export function MindfulnessCollections() {
                 zIndex: 2147483607,
                 maxHeight: 'calc(100% - 48px)',
                 overflowY: 'auto',
+                pointerEvents: 'auto',
               }}
               onClick={(event) => event.stopPropagation()}
             >
