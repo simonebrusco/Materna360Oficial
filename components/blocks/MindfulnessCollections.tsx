@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Play, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
@@ -71,6 +72,11 @@ const GROUPS: MindfulnessGroup[] = [
 export function MindfulnessCollections() {
   const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null)
   const [heardTracks, setHeardTracks] = useState<Record<string, boolean>>({})
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -104,6 +110,22 @@ export function MindfulnessCollections() {
     () => GROUPS.find((group) => group.key === activeGroupKey) ?? null,
     [activeGroupKey]
   )
+
+  useEffect(() => {
+    if (!activeGroupKey || typeof window === 'undefined') {
+      return undefined
+    }
+
+    const { body, documentElement } = document
+    const previousOverflow = body.style.overflow
+    body.style.overflow = 'hidden'
+    documentElement.classList.add('isMindfulnessOpen')
+
+    return () => {
+      documentElement.classList.remove('isMindfulnessOpen')
+      body.style.overflow = previousOverflow
+    }
+  }, [activeGroupKey])
 
   const handleToggleHeard = (file: string) => {
     setHeardTracks((previous) => ({
@@ -143,85 +165,90 @@ export function MindfulnessCollections() {
         ))}
       </div>
 
-      {activeGroup && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`mindfulness-modal-${activeGroup.key}`}
-          onClick={() => setActiveGroupKey(null)}
-        >
-          <div className="w-full max-w-2xl px-4 pb-12 pt-6 sm:px-6" onClick={(event) => event.stopPropagation()}>
-            <Card className="relative w-full rounded-3xl p-7">
-              <button
-                type="button"
-                onClick={() => setActiveGroupKey(null)}
-                className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
-                aria-label="Fechar modal"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      {activeGroup && isMounted &&
+        createPortal(
+          <>
+            <div
+              className="mindfulness-overlay"
+              onClick={() => setActiveGroupKey(null)}
+            />
+            <div
+              className="mindfulness-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`mindfulness-modal-${activeGroup.key}`}
+            >
+              <Card className="relative w-full rounded-3xl p-7" onClick={(event) => event.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => setActiveGroupKey(null)}
+                  className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
+                  aria-label="Fechar modal"
+                >
+                  <X className="h-5 w-5" />
+                </button>
 
-              <div className="pr-10">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl" aria-hidden>
-                    {activeGroup.icon}
-                  </span>
-                  <h3
-                    id={`mindfulness-modal-${activeGroup.key}`}
-                    className="text-xl font-semibold text-support-1 md:text-2xl"
-                  >
-                    {activeGroup.title}
-                  </h3>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-support-2">{activeGroup.description}</p>
-              </div>
-
-              <ul className="mt-6 space-y-4">
-                {activeGroup.tracks.map((track) => {
-                  const isHeard = Boolean(heardTracks[track.file])
-
-                  return (
-                    <li
-                      key={track.file}
-                      className="rounded-2xl bg-white/90 p-4 shadow-soft transition-shadow duration-300 hover:shadow-elevated"
+                <div className="pr-10">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl" aria-hidden>
+                      {activeGroup.icon}
+                    </span>
+                    <h3
+                      id={`mindfulness-modal-${activeGroup.key}`}
+                      className="text-xl font-semibold text-support-1 md:text-2xl"
                     >
-                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
-                          <label className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-support-2">
-                            <input
-                              type="checkbox"
-                              checked={isHeard}
-                              onChange={() => handleToggleHeard(track.file)}
-                              className="h-4 w-4 rounded border-primary/40 text-primary focus:ring-primary/40"
-                            />
-                            Já ouvi
-                          </label>
-                        </div>
-                        <audio
-                          controls
-                          className="w-full rounded-2xl bg-white/70 md:w-64"
-                          preload="none"
-                        >
-                          <source src={`/audio/mindfulness/${track.file}`} type="audio/mpeg" />
-                          Seu navegador não suporta a reprodução de áudio.
-                        </audio>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+                      {activeGroup.title}
+                    </h3>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-support-2">{activeGroup.description}</p>
+                </div>
 
-              <div className="mt-6 flex justify-end">
-                <Button variant="outline" size="sm" onClick={() => setActiveGroupKey(null)}>
-                  Fechar
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
+                <ul className="mt-6 space-y-4">
+                  {activeGroup.tracks.map((track) => {
+                    const isHeard = Boolean(heardTracks[track.file])
+
+                    return (
+                      <li
+                        key={track.file}
+                        className="rounded-2xl bg-white/90 p-4 shadow-soft transition-shadow duration-300 hover:shadow-elevated"
+                      >
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
+                            <label className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-support-2">
+                              <input
+                                type="checkbox"
+                                checked={isHeard}
+                                onChange={() => handleToggleHeard(track.file)}
+                                className="h-4 w-4 rounded border-primary/40 text-primary focus:ring-primary/40"
+                              />
+                              Já ouvi
+                            </label>
+                          </div>
+                          <audio
+                            controls
+                            className="w-full rounded-2xl bg-white/70 md:w-64"
+                            preload="none"
+                          >
+                            <source src={`/audio/mindfulness/${track.file}`} type="audio/mpeg" />
+                            Seu navegador não suporta a reprodução de áudio.
+                          </audio>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+
+                <div className="mt-6 flex justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setActiveGroupKey(null)}>
+                    Fechar
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </>,
+          document.body
+        )}
     </>
   )
 }
