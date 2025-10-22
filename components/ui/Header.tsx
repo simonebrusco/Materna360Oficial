@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -108,19 +110,28 @@ export function Header({ title, showNotification = false }: HeaderProps) {
       }`}
     >
       <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-[#ff2f78] to-[#ff7faa] text-lg font-semibold text-white shadow-glow animate-float">
-            M
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="text-xs font-semibold uppercase tracking-[0.36em] text-primary/70 animate-fade-down">
-              Materna360
-            </span>
-            <span className="text-lg font-semibold text-support-1 animate-fade-down" style={{ animationDelay: '0.05s' }}>
-              {title}
-            </span>
-          </span>
+        <Link
+          href="/"
+          aria-label="Ir para a página inicial"
+          className="flex shrink-0 items-center"
+          prefetch={false}
+        >
+          <Image
+            src="/images/logo-principal.png"
+            alt="Materna360"
+            width={160}
+            height={40}
+            priority
+            sizes="(max-width: 360px) 120px, (max-width: 768px) 160px, 160px"
+            className="h-8 w-auto max-w-[120px] sm:h-10 sm:max-w-[160px]"
+          />
         </Link>
+
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="text-lg font-semibold text-support-1 animate-fade-down" style={{ animationDelay: '0.05s' }}>
+            {title}
+          </span>
+        </div>
 
         {showNotification && (
           <div className="flex items-center gap-3">
