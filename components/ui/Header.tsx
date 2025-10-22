@@ -119,11 +119,12 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           <Image
             src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
-            width={160}
-            height={40}
+            width={200}
+            height={48}
             priority
-            sizes="(max-width: 360px) 120px, (max-width: 768px) 160px, 160px"
-            className="h-8 w-auto max-w-[120px] sm:h-10 sm:max-w-[160px]"
+            sizes="(max-width: 360px) 120px, (max-width: 768px) 160px, 180px"
+            style={{ width: 'clamp(120px, 18vw, 180px)', height: 'auto' }}
+            className="w-full max-w-none"
           />
         </Link>
 
