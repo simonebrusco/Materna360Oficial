@@ -51,7 +51,7 @@ export default function CuidarPage() {
         <Reveal>
           <div className="space-y-3">
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Autocuidado</span>
-            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">🌿 Cuidar de Si Mesma</h1>
+            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">🌿 Cuide-se</h1>
             <p className="max-w-2xl text-sm text-support-2 md:text-base">
               Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.
             </p>
