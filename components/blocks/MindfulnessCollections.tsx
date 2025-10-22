@@ -289,33 +289,12 @@ export function MindfulnessCollections() {
                     const isHeard = Boolean(heardTracks[track.file])
 
                     return (
-                      <li
+                      <MindfulnessTrackItem
                         key={track.file}
-                        className="rounded-2xl bg-white/90 p-4 shadow-soft transition-shadow duration-300 hover:shadow-elevated"
-                      >
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
-                            <label className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-support-2">
-                              <input
-                                type="checkbox"
-                                checked={isHeard}
-                                onChange={() => handleToggleHeard(track.file)}
-                                className="h-4 w-4 rounded border-primary/40 text-primary focus:ring-primary/40"
-                              />
-                              Já ouvi
-                            </label>
-                          </div>
-                          <audio
-                            controls
-                            className="w-full rounded-2xl bg-white/70 md:w-64"
-                            preload="none"
-                          >
-                            <source src={`/audio/mindfulness/${encodeURIComponent(track.file)}`} type="audio/mpeg" />
-                            Seu navegador não suporta a reprodução de áudio.
-                          </audio>
-                        </div>
-                      </li>
+                        track={track}
+                        isHeard={isHeard}
+                        onToggle={() => handleToggleHeard(track.file)}
+                      />
                     )
                   })}
                 </ul>
