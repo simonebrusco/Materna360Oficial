@@ -42,7 +42,7 @@ export default function Home() {
             </span>
             <div className="flex flex-col items-center gap-3">
               <Image
-                src="/images/sakura.svg"
+                src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
                 alt="Flor de cerejeira Materna360"
                 width={72}
                 height={72}
