@@ -127,12 +127,6 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           />
         </Link>
 
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-semibold text-support-1 animate-fade-down" style={{ animationDelay: '0.05s' }}>
-            {title}
-          </span>
-        </div>
-
         {showNotification && (
           <div className="flex items-center gap-3">
             <Link
