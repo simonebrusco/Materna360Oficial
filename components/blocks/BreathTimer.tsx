@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
+import { PlayArt } from '@/components/blocks/PlayArt'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
@@ -46,14 +46,7 @@ export function BreathTimer() {
 
   const Artwork = () => (
     <div className="flex w-full items-center justify-center py-6">
-      <Image
-        src="/images/play-main.png"
-        alt="Iniciar respiração guiada"
-        width={160}
-        height={160}
-        className="h-auto w-[140px] sm:w-[160px]"
-        priority={false}
-      />
+      <PlayArt />
     </div>
   )
 
