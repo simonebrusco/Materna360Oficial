@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { AudioCard } from '@/components/blocks/AudioCard'
+import { CareJourneys } from '@/components/blocks/CareJourneys'
 
 export default function CuidarPage() {
   const meditations = [
@@ -97,25 +98,7 @@ export default function CuidarPage() {
         </div>
 
         <Reveal delay={140}>
-          <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💊 Pílulas Positivas</h2>
-            <div className="mt-4 space-y-3">
-              {[
-                'Você merece descanso tanto quanto seus filhos.',
-                'Sua paciência é um superpoder.',
-                'Pequenos momentos de alegria contam muito.',
-                'Você está fazendo um ótimo trabalho.',
-                'Cuidar de você não é egoísmo.',
-              ].map((pill, idx) => (
-                <div
-                  key={pill}
-                  className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-soft transition-all duration-300 hover:shadow-elevated"
-                >
-                  <p className="text-sm italic text-support-1">{pill}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <CareJourneys />
         </Reveal>
 
         <div className="space-y-5">
