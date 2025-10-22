@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 const tabs = [
   { href: '/meu-dia', label: 'Meu Dia', emoji: '🏡' },
-  { href: '/cuidar', label: 'Cuidar', emoji: '🌿' },
+  { href: '/cuidar', label: 'Cuide-se', emoji: '🌿' },
   { href: '/descobrir', label: 'Descobrir', emoji: '🧸' },
   { href: '/eu360', label: 'Eu360', emoji: '💛' },
 ]
