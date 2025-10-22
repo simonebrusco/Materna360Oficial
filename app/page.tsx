@@ -1,6 +1,4 @@
 import Link from 'next/link'
-
-import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Reveal } from '@/components/ui/Reveal'
