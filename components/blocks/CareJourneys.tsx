@@ -199,9 +199,20 @@ export function CareJourneys() {
                 <h3 className="text-lg font-semibold text-support-1">{journey.title}</h3>
                 <p className="text-sm text-support-2">{journey.description}</p>
               </div>
-              <div className="mt-6 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
-                <span>{completedCount}/7 CONCLUÍDOS</span>
-                {isCompleted ? <span>✨ CONCLUÍDO</span> : <span>VER JORNADA</span>}
+              <div className="mt-6 flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">{completedCount}/7</span>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  aria-label={`Ver Jornada – ${journey.title}`}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setActiveJourneyId(journey.id)
+                  }}
+                  className="shrink-0"
+                >
+                  Ver Jornada
+                </Button>
               </div>
             </Card>
           )
