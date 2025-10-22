@@ -7,7 +7,7 @@ const tabs = [
   { href: '/meu-dia', label: 'Meu Dia', emoji: '🏡' },
   { href: '/cuidar', label: 'Cuidar', emoji: '🌿' },
   { href: '/descobrir', label: 'Descobrir', emoji: '🧸' },
-  { href: '/eu360', label: 'Eu360', emoji: '��' },
+  { href: '/eu360', label: 'Eu360', emoji: '💛' },
 ]
 
 export function TabBar() {
