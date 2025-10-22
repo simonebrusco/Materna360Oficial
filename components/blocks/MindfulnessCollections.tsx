@@ -188,8 +188,9 @@ export function MindfulnessCollections() {
                 maxHeight: 'calc(100% - 48px)',
                 overflowY: 'auto',
               }}
+              onClick={(event) => event.stopPropagation()}
             >
-              <Card className="relative w-full rounded-3xl p-7" onClick={(event) => event.stopPropagation()}>
+              <Card className="relative w-full rounded-3xl p-7">
                 <button
                   type="button"
                   onClick={() => setActiveGroupKey(null)}
