@@ -159,15 +159,33 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             playsInline
             controlsList="nodownload"
             style={{ width: '100%' }}
-            onError={(event) => console.error('AUDIO ERROR:', event.currentTarget.currentSrc)}
+            onLoadedMetadata={(event) => {
+              const audio = event.currentTarget
+              console.log('AUDIO METADATA:', audio.currentSrc, 'duration=', audio.duration)
+            }}
+            onPlay={(event) => {
+              const audio = event.currentTarget
+              audio.muted = false
+              try {
+                audio.volume = 1
+              } catch (error) {
+                console.warn('Não foi possível ajustar o volume do áudio:', error)
+              }
+              console.log('AUDIO PLAY:', audio.currentSrc, 'muted=', audio.muted, 'volume=', audio.volume)
+            }}
+            onError={(event) => {
+              console.error('AUDIO ERROR:', event.currentTarget.currentSrc)
+            }}
           >
             <source src={src} type="audio/mpeg" />
             Seu navegador não suporta a reprodução de áudio.
           </audio>
-          <p style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>src: {src}</p>
-          <a href={src} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-primary hover:text-primary/80">
-            Abrir arquivo
-          </a>
+          <p style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>
+            src: {src} ·{' '}
+            <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+              Abrir arquivo
+            </a>
+          </p>
         </div>
       </div>
     </li>
