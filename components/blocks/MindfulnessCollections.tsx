@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Play, X } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
 interface MindfulnessTrack {
