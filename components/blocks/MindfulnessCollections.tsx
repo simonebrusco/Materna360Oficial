@@ -105,13 +105,16 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
   useEffect(() => {
     let isMounted = true
 
-    fetch(src, { method: 'HEAD' })
+    fetch(src, { method: 'HEAD', cache: 'no-store' })
       .then((response) => {
         if (!isMounted) return
+        console.log('Mindfulness audio check:', src, response.status)
         setIsAvailable(response.ok)
       })
-      .catch(() => {
+      .catch((error) => {
         if (!isMounted) return
+        console.log('Mindfulness audio check:', src, 'error')
+        console.error('Mindfulness audio availability error:', src, error)
         setIsAvailable(false)
       })
 
