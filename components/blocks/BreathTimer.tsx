@@ -1,11 +1,10 @@
 'use client'
 
-'use client'
-
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
-import { Card } from '@/components/ui/Card'
+import { useEffect, useState } from 'react'
+
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 
 export function BreathTimer() {
   const [isRunning, setIsRunning] = useState(false)
@@ -19,7 +18,6 @@ export function BreathTimer() {
       setSeconds((s) => {
         if (s < 4) return s + 1
 
-        // Cycle through phases: 4s in, 4s hold, 4s out
         if (phase === 'breathe-in') {
           setPhase('hold')
         } else if (phase === 'hold') {
