@@ -1,7 +1,7 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { PlayArt } from '@/components/blocks/PlayArt'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
@@ -14,9 +14,9 @@ export function BreathTimer() {
     if (!isRunning) return
 
     const interval = setInterval(() => {
-      setSeconds(s => {
+      setSeconds((s) => {
         if (s < 4) return s + 1
-        
+
         // Cycle through phases: 4s in, 4s hold, 4s out
         if (phase === 'breathe-in') {
           setPhase('hold')
@@ -34,67 +34,62 @@ export function BreathTimer() {
 
   const phaseText = {
     'breathe-in': 'Inspire...',
-    'hold': 'Segure...',
+    hold: 'Segure...',
     'breathe-out': 'Expire...',
   }
 
   const circleSize = {
     'breathe-in': 'w-32 h-32 md:w-40 md:h-40',
-    'hold': 'w-32 h-32 md:w-40 md:h-40',
+    hold: 'w-32 h-32 md:w-40 md:h-40',
     'breathe-out': 'w-24 h-24 md:w-32 md:h-32',
   }
 
   return (
-    <Card className="p-0">
-      <section
-        role="region"
-        aria-labelledby="breath-title"
-        className="px-6 pb-10 pt-8 sm:px-8"
+    <Card className="p-8 text-center">
+      <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
+      <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
+
+      <div className="mt-8 flex min-h-[280px] flex-col items-center justify-center">
+        {isRunning ? (
+          <>
+            <div
+              className={`${circleSize[phase]} rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
+            >
+              <div className="text-center">
+                <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
+                <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
+              </div>
+            </div>
+            <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
+          </>
+        ) : (
+          <>
+            <Image
+              src="/images/play-main.png"
+              alt="Iniciar respiração guiada"
+              width={112}
+              height={112}
+              className="mx-auto"
+              priority={false}
+            />
+            <p className="mt-4 max-w-sm text-sm text-support-2">
+              Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
+            </p>
+          </>
+        )}
+      </div>
+
+      <Button
+        variant={isRunning ? 'outline' : 'primary'}
+        size="sm"
+        onClick={() => {
+          setIsRunning(!isRunning)
+          if (!isRunning) setPhase('breathe-in')
+        }}
+        className="w-full"
       >
-        <div className="mx-auto flex max-w-2xl flex-col items-center text-center gap-4 sm:gap-5">
-          <h2
-            id="breath-title"
-            className="text-center text-2xl font-semibold text-support-1 md:text-3xl"
-          >
-            Respiração Guiada
-          </h2>
-          <PlayArt className="mx-auto my-4 h-24 w-24 md:h-28 md:w-28" />
-          <div className="mx-auto max-w-xl space-y-3 text-center text-support-2 leading-relaxed">
-            <p>Sincronize sua respiração com um ritmo suave e acolhedor.</p>
-            <p className="text-support-2/90">Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.</p>
-          </div>
-        </div>
-
-        <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
-          <div className="flex min-h-[280px] flex-col items-center justify-center">
-            {isRunning ? (
-              <>
-                <div
-                  className={`${circleSize[phase]} mx-auto flex items-center justify-center rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
-                >
-                  <div className="text-center">
-                    <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
-                    <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
-                  </div>
-                </div>
-                <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
-              </>
-            ) : null}
-          </div>
-
-          <Button
-            variant={isRunning ? 'outline' : 'primary'}
-            size="sm"
-            onClick={() => {
-              setIsRunning(!isRunning)
-              if (!isRunning) setPhase('breathe-in')
-            }}
-            className="w-full"
-          >
-            {isRunning ? 'Parar' : 'Começar'}
-          </Button>
-        </div>
-      </section>
+        {isRunning ? 'Parar' : 'Começar'}
+      </Button>
     </Card>
   )
 }
