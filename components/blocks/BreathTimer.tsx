@@ -49,9 +49,9 @@ export function BreathTimer() {
       <section
         role="region"
         aria-labelledby="breath-title"
-        className="px-6 pb-12 pt-10 sm:px-8 sm:pb-14 sm:pt-12"
+        className="px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-10"
       >
-        <div className="mx-auto flex max-w-xl flex-col items-center text-center gap-3 sm:max-w-2xl sm:gap-4">
+        <div className="mx-auto flex max-w-lg flex-col items-center text-center gap-5 sm:max-w-xl sm:gap-6">
           <h3
             id="breath-title"
             className="text-2xl font-semibold tracking-tight text-support-1 sm:text-3xl"
@@ -67,34 +67,36 @@ export function BreathTimer() {
           </p>
         </div>
 
-        <div className="mt-10 flex min-h-[280px] flex-col items-center justify-center sm:mt-12">
-          {isRunning ? (
-            <>
-              <div
-                className={`${circleSize[phase]} mx-auto flex items-center justify-center rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
-              >
-                <div className="text-center">
-                  <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
-                  <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
+        <div className="mt-8 sm:mt-10">
+          <div className="flex min-h-[280px] flex-col items-center justify-center">
+            {isRunning ? (
+              <>
+                <div
+                  className={`${circleSize[phase]} mx-auto flex items-center justify-center rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
+                >
+                  <div className="text-center">
+                    <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
+                    <p className="text-sm text-support-1/90">{phaseText[phase]}</p>
+                  </div>
                 </div>
-              </div>
-              <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
-            </>
-          ) : null}
-        </div>
+                <p className="mt-8 text-sm text-support-2">Relaxe, inspire e permita que o corpo desacelere.</p>
+              </>
+            ) : null}
+          </div>
 
-        <div className="mt-10 sm:mt-12">
-          <Button
-            variant={isRunning ? 'outline' : 'primary'}
-            size="sm"
-            onClick={() => {
-              setIsRunning(!isRunning)
-              if (!isRunning) setPhase('breathe-in')
-            }}
-            className="w-full"
-          >
-            {isRunning ? 'Parar' : 'Começar'}
-          </Button>
+          <div className="mt-8 sm:mt-10">
+            <Button
+              variant={isRunning ? 'outline' : 'primary'}
+              size="sm"
+              onClick={() => {
+                setIsRunning(!isRunning)
+                if (!isRunning) setPhase('breathe-in')
+              }}
+              className="w-full"
+            >
+              {isRunning ? 'Parar' : 'Começar'}
+            </Button>
+          </div>
         </div>
       </section>
     </Card>
