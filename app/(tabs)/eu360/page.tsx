@@ -2,8 +2,6 @@
 
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useMemo, useState } from 'react'
 
 import { CheckIn } from '@/components/blocks/CheckIn'
@@ -12,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
+
+export const dynamic = 'force-dynamic'
 
 type MoodHistory = {
   day: string
