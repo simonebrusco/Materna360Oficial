@@ -1,12 +1,12 @@
 'use client'
 
-'use client'
+'use client';
 
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Toast } from '@/components/ui/Toast'
 import {
   DEFAULT_AGE_BAND,
