@@ -29,6 +29,29 @@ interface MindfulnessGroup {
 
 const STORAGE_KEY = 'materna360-mindfulness-heard'
 
+const LEGACY_FILE_MAP: Record<string, string> = {
+  'você-não-está-sozinha.mp3': 'voce-nao-esta-sozinha.mp3',
+  'você-não-precisa-ser-perfeita.mp3': 'voce-nao-precisa-ser-perfeita.mp3',
+  'confie-em-você.mp3': 'confie-em-voce.mp3',
+  'um-novo-começo.mp3': 'um-novo-comeco.mp3',
+  'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-equilibrio.mp3',
+  'suas-palavras-têm-poder.mp3': 'suas-palavras-tem-poder.mp3',
+  'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
+  'encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
+  'saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
+}
+
+const normalizeHeardTracks = (entries: Record<string, boolean>) => {
+  const normalized: Record<string, boolean> = {}
+
+  Object.entries(entries).forEach(([file, status]) => {
+    const key = LEGACY_FILE_MAP[file] ?? file
+    normalized[key] = status
+  })
+
+  return normalized
+}
+
 const GROUPS: MindfulnessGroup[] = [
   {
     key: 'reconnect',
