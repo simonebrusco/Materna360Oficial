@@ -68,7 +68,7 @@ export function BreathTimer() {
           <>
             <Artwork />
             <div
-              className={`${circleSize[phase]} rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
+              className={`${circleSize[phase]} mx-auto flex items-center justify-center rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
             >
               <div className="text-center">
                 <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>
