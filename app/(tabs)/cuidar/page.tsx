@@ -6,18 +6,10 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
-import { AudioCard } from '@/components/blocks/AudioCard'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
+import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
 
 export default function CuidarPage() {
-  const meditations: Array<{
-    title: string
-    duration: string
-    instructor: string
-    image: string
-    description: string
-  }> = []
-
   const recipes = [
     { emoji: '🥗', title: 'Salada Detox', prep: '10 min' },
     { emoji: '🥤', title: 'Suco Verde Energético', prep: '5 min' },
@@ -72,13 +64,7 @@ export default function CuidarPage() {
           <Reveal>
             <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🎧 Mindfulness para Mães</h2>
           </Reveal>
-          <div className="space-y-4">
-            {meditations.map((med, idx) => (
-              <Reveal key={med.title} delay={idx * 90}>
-                <AudioCard {...med} />
-              </Reveal>
-            ))}
-          </div>
+          <MindfulnessCollections />
         </div>
 
         <Reveal delay={140}>
