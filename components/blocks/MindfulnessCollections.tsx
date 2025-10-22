@@ -98,8 +98,15 @@ const GROUPS: MindfulnessGroup[] = [
   },
 ]
 
+function buildSrc(track: { file: string }) {
+  if (track.file?.startsWith('/')) return track.file
+
+  const encoded = encodeURIComponent(track.file)
+  return `/audio/mindfulness/${encoded}`
+}
+
 function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItemProps) {
-  const src = useMemo(() => `/audio/mindfulness/${encodeURIComponent(track.file)}`, [track.file])
+  const src = useMemo(() => buildSrc(track), [track.file])
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
 
   useEffect(() => {
