@@ -10,29 +10,13 @@ import { AudioCard } from '@/components/blocks/AudioCard'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
 
 export default function CuidarPage() {
-  const meditations = [
-    {
-      title: 'Meditação para Dormir',
-      duration: '10 min',
-      instructor: 'Instrutora Ana',
-      image: '🧘',
-      description: 'Relaxe antes de dormir com esta meditação guiada',
-    },
-    {
-      title: 'Meditação da Manhã',
-      duration: '5 min',
-      instructor: 'Instrutora Marina',
-      image: '🌅',
-      description: 'Comece o dia com energia e positividade',
-    },
-    {
-      title: 'Mindfulness no Caos',
-      duration: '8 min',
-      instructor: 'Instrutora Sofia',
-      image: '🧠',
-      description: 'Encontre paz mesmo em dias agitados',
-    },
-  ]
+  const meditations: Array<{
+    title: string
+    duration: string
+    instructor: string
+    image: string
+    description: string
+  }> = []
 
   const recipes = [
     { emoji: '🥗', title: 'Salada Detox', prep: '10 min' },
@@ -86,7 +70,7 @@ export default function CuidarPage() {
 
         <div className="space-y-5">
           <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🎧 Meditações</h2>
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🎧 Mindfulness para Mães</h2>
           </Reveal>
           <div className="space-y-4">
             {meditations.map((med, idx) => (
