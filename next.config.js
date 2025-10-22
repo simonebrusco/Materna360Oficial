@@ -4,9 +4,7 @@ const path = require('path')
 class MirrorServerChunksPlugin {
   apply(compiler) {
     const target = compiler.options.target
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[MirrorServerChunksPlugin] target:', target)
-    }
+    console.log('[MirrorServerChunksPlugin] target:', target)
 
     const isNodeTarget =
       !target ||
@@ -26,12 +24,11 @@ class MirrorServerChunksPlugin {
         const chunkFiles = entries.filter((file) => file.endsWith('.js'))
 
         if (chunkFiles.length === 0) {
+          console.log('[MirrorServerChunksPlugin] no chunk files found to mirror')
           return
         }
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[MirrorServerChunksPlugin] mirroring chunk files:', chunkFiles)
-        }
+        console.log('[MirrorServerChunksPlugin] mirroring chunk files:', chunkFiles)
 
         await Promise.all(
           chunkFiles.map(async (file) => {
@@ -48,6 +45,8 @@ class MirrorServerChunksPlugin {
       } catch (error) {
         if (error.code !== 'ENOENT') {
           console.warn('[MirrorServerChunksPlugin] Unable to read chunks directory:', error)
+        } else {
+          console.log('[MirrorServerChunksPlugin] chunks dir not found, skipping')
         }
       }
     })
