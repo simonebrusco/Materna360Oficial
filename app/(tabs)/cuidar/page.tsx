@@ -6,9 +6,33 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
-import { Mindfulness } from '@/components/blocks/Mindfulness'
+import { AudioCard } from '@/components/blocks/AudioCard'
 
 export default function CuidarPage() {
+  const meditations = [
+    {
+      title: 'Meditação para Dormir',
+      duration: '10 min',
+      instructor: 'Instrutora Ana',
+      image: '🧘',
+      description: 'Relaxe antes de dormir com esta meditação guiada',
+    },
+    {
+      title: 'Meditação da Manhã',
+      duration: '5 min',
+      instructor: 'Instrutora Marina',
+      image: '🌅',
+      description: 'Comece o dia com energia e positividade',
+    },
+    {
+      title: 'Mindfulness no Caos',
+      duration: '8 min',
+      instructor: 'Instrutora Sofia',
+      image: '🧠',
+      description: 'Encontre paz mesmo em dias agitados',
+    },
+  ]
+
   const recipes = [
     { emoji: '🥗', title: 'Salada Detox', prep: '10 min' },
     { emoji: '🥤', title: 'Suco Verde Energético', prep: '5 min' },
@@ -38,13 +62,13 @@ export default function CuidarPage() {
   ]
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 md:pb-32 pt-10 sm:px-6 md:px-8">
+    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-10 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
       />
 
-      <div className="relative flex flex-col">
+      <div className="relative space-y-10">
         <Reveal>
           <div className="space-y-3">
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Autocuidado</span>
@@ -55,15 +79,24 @@ export default function CuidarPage() {
           </div>
         </Reveal>
 
-        <Reveal delay={80} className="mt-4 sm:mt-6 mb-10 md:mb-12">
+        <Reveal delay={80}>
           <BreathTimer />
         </Reveal>
 
-        <Reveal delay={120} className="mt-8 sm:mt-10">
-          <Mindfulness />
-        </Reveal>
+        <div className="space-y-5">
+          <Reveal>
+            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🎧 Meditações</h2>
+          </Reveal>
+          <div className="space-y-4">
+            {meditations.map((med, idx) => (
+              <Reveal key={med.title} delay={idx * 90}>
+                <AudioCard {...med} />
+              </Reveal>
+            ))}
+          </div>
+        </div>
 
-        <Reveal delay={140} className="mt-8 sm:mt-10">
+        <Reveal delay={140}>
           <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
             <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💊 Pílulas Positivas</h2>
             <div className="mt-4 space-y-3">
