@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -41,12 +40,13 @@ export default function Home() {
               Bem-vinda
             </span>
             <div className="flex flex-col items-center gap-3">
-              <Image
+              <img
                 src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
                 alt="Flor de cerejeira Materna360"
-                width={72}
-                height={72}
-                priority
+                width="72"
+                height="72"
+                style={{ display: 'block' }}
+                loading="eager"
               />
               <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">Materna360</h1>
             </div>
