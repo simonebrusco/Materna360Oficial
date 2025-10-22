@@ -42,6 +42,24 @@ const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
 const LAST_TRACK_STORAGE_KEY = 'm360:lastMindfulnessTrack'
 const LEGACY_LAST_TRACK_KEY = 'mindfulness_last_v1'
 
+export async function loadMindfulnessManifest(): Promise<ManifestResponse | null> {
+  try {
+    const response = await fetch(MANIFEST_URL, { cache: 'no-store' })
+    if (!response.ok) {
+      return null
+    }
+
+    const text = await response.text()
+    try {
+      return JSON.parse(text) as ManifestResponse
+    } catch {
+      return null
+    }
+  } catch {
+    return null
+  }
+}
+
 const FALLBACK_THEMES: MindfulnessTheme[] = [
   {
     id: 'respiracao-pausa',
@@ -177,36 +195,22 @@ export function Mindfulness() {
     let active = true
 
     const loadManifest = async () => {
-      try {
-        const response = await fetch(MANIFEST_URL, { cache: 'no-store' })
-        if (!response.ok) {
-          throw new Error('Manifesto indisponível')
-        }
-        const data: ManifestResponse = await response.json()
-        if (!active) return
+      const data = await loadMindfulnessManifest()
+      if (!active) return
 
-        const receivedThemes = Array.isArray(data?.themes) ? data.themes : []
-        if (receivedThemes.length > 0) {
-          setThemes(receivedThemes)
-          setHasManifestError(false)
-        } else {
-          setThemes(FALLBACK_THEMES)
-          setHasManifestError(true)
-        }
-      } catch (error) {
-        console.error('Não foi possível carregar a lista de mindfulness.', error)
-        if (active) {
-          setThemes(FALLBACK_THEMES)
-          setHasManifestError(true)
-        }
-      } finally {
-        if (active) {
-          setIsLoading(false)
-        }
+      const receivedThemes = Array.isArray(data?.themes) ? data.themes : []
+      if (receivedThemes.length > 0) {
+        setThemes(receivedThemes)
+        setHasManifestError(false)
+      } else {
+        setThemes(FALLBACK_THEMES)
+        setHasManifestError(true)
       }
+
+      setIsLoading(false)
     }
 
-    loadManifest()
+    void loadManifest()
 
     return () => {
       active = false
