@@ -12,7 +12,7 @@ const featureCards = [
   },
   {
     href: '/cuidar',
-    title: 'Cuidar',
+    title: 'Cuide-se',
     description: 'Guias de autocuidado, respiração e meditação para você.',
     emoji: '🌿',
   },
