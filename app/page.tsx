@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Reveal } from '@/components/ui/Reveal'
+import { SakuraFlower } from '@/components/ui/SakuraFlower'
 
 const featureCards = [
   {
@@ -39,9 +40,10 @@ export default function Home() {
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.34em] text-primary/80">
               Bem-vinda
             </span>
-            <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">
-              🌸 Materna360
-            </h1>
+            <div className="flex flex-col items-center gap-3">
+              <SakuraFlower className="h-16 w-16" style={{ opacity: 0.9 }} />
+              <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">Materna360</h1>
+            </div>
             <p className="mt-4 max-w-2xl text-base text-support-2 sm:text-lg md:text-xl">
               Uma experiência digital pensada para cuidar de você, da sua família e dos seus sonhos com tecnologia, carinho e serenidade.
             </p>
