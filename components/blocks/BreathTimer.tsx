@@ -49,25 +49,27 @@ export function BreathTimer() {
       <section
         role="region"
         aria-labelledby="breath-title"
-        className="px-4 pb-8 pt-6 sm:px-6 sm:pb-9 sm:pt-7"
+        className="px-4 pb-6 pt-4 sm:px-6"
       >
-        <div className="mx-auto flex max-w-md flex-col items-center text-center gap-4 sm:max-w-lg sm:gap-5">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center gap-3 sm:max-w-lg sm:gap-4">
           <h3
             id="breath-title"
-            className="text-xl font-semibold tracking-tight text-support-1 sm:text-2xl"
+            className="text-lg font-semibold tracking-tight text-support-1 sm:text-xl"
           >
             Respiração Guiada
           </h3>
-          <PlayArt className="mx-auto h-20 w-20 sm:h-24 sm:w-24" />
-          <p className="text-sm leading-relaxed text-support-2">
-            Sincronize sua respiração com um ritmo suave e acolhedor.
-          </p>
-          <p className="text-sm leading-relaxed text-support-2/90">
-            Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
-          </p>
+          <PlayArt className="mx-auto h-16 w-16 sm:h-20 sm:w-20" />
+          <div className="max-w-prose mx-auto flex flex-col gap-2">
+            <p className="text-sm leading-snug text-support-2">
+              Sincronize sua respiração com um ritmo suave e acolhedor.
+            </p>
+            <p className="text-xs leading-snug text-support-2/90 sm:text-sm">
+              Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
+            </p>
+          </div>
         </div>
 
-        <div className="mt-6 sm:mt-8">
+        <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
           <div className="flex min-h-[280px] flex-col items-center justify-center">
             {isRunning ? (
               <>
@@ -84,19 +86,17 @@ export function BreathTimer() {
             ) : null}
           </div>
 
-          <div className="mt-6 sm:mt-8">
-            <Button
-              variant={isRunning ? 'outline' : 'primary'}
-              size="sm"
-              onClick={() => {
-                setIsRunning(!isRunning)
-                if (!isRunning) setPhase('breathe-in')
-              }}
-              className="w-full"
-            >
-              {isRunning ? 'Parar' : 'Começar'}
-            </Button>
-          </div>
+          <Button
+            variant={isRunning ? 'outline' : 'primary'}
+            size="sm"
+            onClick={() => {
+              setIsRunning(!isRunning)
+              if (!isRunning) setPhase('breathe-in')
+            }}
+            className="w-full"
+          >
+            {isRunning ? 'Parar' : 'Começar'}
+          </Button>
         </div>
       </section>
     </Card>
