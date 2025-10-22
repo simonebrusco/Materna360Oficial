@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react'
+'use client'
 
-interface ToastProps {
+import { useEffect, useState } from 'react'
+
+type ToastProps = {
   message: string
   type?: 'success' | 'error' | 'info'
   duration?: number
   onClose?: () => void
 }
 
-export const Toast: React.FC<ToastProps> = ({
-  message,
-  type = 'info',
-  duration = 3000,
-  onClose,
-}) => {
+export function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -33,7 +30,7 @@ export const Toast: React.FC<ToastProps> = ({
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg border ${typeStyles[type]} shadow-lg`}>
+    <div className={`fixed bottom-4 right-4 rounded-lg border px-6 py-3 shadow-lg ${typeStyles[type]}`}>
       {message}
     </div>
   )
