@@ -1,13 +1,15 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
+'use client'
 
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
 import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
+
+export const dynamic = 'force-dynamic'
 
 export default function CuidarPage() {
   const recipes = [
