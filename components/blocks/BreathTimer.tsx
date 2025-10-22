@@ -45,7 +45,7 @@ export function BreathTimer() {
 
   return (
     <Card className="p-8 text-center">
-      <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💨 Respiração Guiada</h2>
+      <h2 className="text-xl font-semibold text-support-1 md:text-2xl">Respiração Guiada</h2>
       <div className="m360-heart mx-auto mt-6 flex items-center justify-center">
         <img
           src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
