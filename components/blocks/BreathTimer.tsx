@@ -51,25 +51,21 @@ export function BreathTimer() {
         aria-labelledby="breath-title"
         className="px-6 pb-10 pt-8 sm:px-8"
       >
-        <div className="mx-auto flex max-w-md flex-col items-center text-center gap-4 sm:max-w-lg sm:gap-5">
-          <h3
+        <div className="mx-auto flex max-w-2xl flex-col items-center text-center gap-4 sm:gap-5">
+          <h2
             id="breath-title"
-            className="text-xl font-semibold tracking-tight text-support-1 sm:text-2xl"
+            className="text-center text-2xl font-semibold text-support-1 md:text-3xl"
           >
             Respiração Guiada
-          </h3>
-          <PlayArt className="mx-auto h-24 w-24 sm:h-28 sm:w-28" />
-          <div className="mx-auto flex max-w-[60ch] flex-col items-center text-center gap-3">
-            <p className="text-base leading-relaxed text-support-2 sm:text-[17px]">
-              Sincronize sua respiração com um ritmo suave e acolhedor.
-            </p>
-            <p className="text-sm leading-relaxed text-support-2/90 sm:text-base">
-              Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
-            </p>
+          </h2>
+          <PlayArt className="mx-auto my-4 h-24 w-24 md:h-28 md:w-28" />
+          <div className="mx-auto max-w-xl space-y-3 text-center text-support-2 leading-relaxed">
+            <p>Sincronize sua respiração com um ritmo suave e acolhedor.</p>
+            <p className="text-support-2/90">Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.</p>
           </div>
         </div>
 
-        <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-5">
+        <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
           <div className="flex min-h-[280px] flex-col items-center justify-center">
             {isRunning ? (
               <>
