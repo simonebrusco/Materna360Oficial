@@ -124,7 +124,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
             priority
             sizes="(max-width: 360px) 120px, (max-width: 768px) 160px, 180px"
             style={{ width: 'clamp(120px, 18vw, 180px)', height: 'auto' }}
-            className="w-full max-w-none"
+            className="flex-shrink-0"
           />
         </Link>
 
