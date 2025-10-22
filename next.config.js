@@ -19,6 +19,8 @@ class FixServerRuntimeChunkPathsPlugin {
           stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
         () => {
+          const assetNames = Array.from(compilation.assetsInfo.keys?.() ?? [])
+          console.log('[FixServerRuntimeChunkPathsPlugin] available assets:', assetNames.slice ? assetNames.slice(0, 10) : assetNames)
           const asset = compilation.getAsset('webpack-runtime.js')
           if (!asset) {
             console.warn('[FixServerRuntimeChunkPathsPlugin] webpack-runtime.js asset not found')
