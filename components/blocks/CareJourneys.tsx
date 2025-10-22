@@ -190,8 +190,8 @@ export function CareJourneys() {
       </div>
 
       {activeJourneyState && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4 py-10 backdrop-blur-sm">
-          <Card className="relative w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-sm">
+          <Card className="relative z-[10000] w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
             <button
               type="button"
               aria-label="Fechar jornada"
