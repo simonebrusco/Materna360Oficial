@@ -44,22 +44,21 @@ export function BreathTimer() {
     'breathe-out': 'w-24 h-24 md:w-32 md:h-32',
   }
 
-  const Artwork = () => (
-    <div className="flex w-full items-center justify-center py-6">
-      <PlayArt />
-    </div>
-  )
-
   return (
-    <Card className="p-8 text-center">
-      <Artwork />
-      <h2 className="text-lg font-semibold text-support-1 md:text-xl">💨 Respiração Guiada</h2>
-      <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
+    <Card className="p-8">
+      <div className="flex flex-col items-center text-center">
+        <h3 className="mb-4 text-xl font-semibold text-support-1 sm:text-2xl">Respiração Guiada</h3>
+        <div className="mb-4 flex w-full items-center justify-center">
+          <PlayArt />
+        </div>
+        <p className="max-w-xl text-sm text-support-2 sm:text-base">
+          Sincronize sua respiração com um ritmo suave e acolhedor.
+        </p>
+      </div>
 
       <div className="mt-8 flex min-h-[280px] flex-col items-center justify-center">
         {isRunning ? (
           <>
-            <Artwork />
             <div
               className={`${circleSize[phase]} mx-auto flex items-center justify-center rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
             >
