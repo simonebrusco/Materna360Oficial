@@ -50,9 +50,9 @@ export function BreathTimer() {
       <Image
         src="/images/sakura.svg"
         alt="Flor de cerejeira Materna360"
-        width={128}
-        height={128}
-        className="mx-auto mt-6 h-[128px] w-[128px]"
+        width={140}
+        height={140}
+        className="mx-auto mt-6"
       />
       <p className="mt-2 text-sm text-support-2">Sincronize sua respiração com um ritmo suave e acolhedor.</p>
 
