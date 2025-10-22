@@ -1,5 +1,3 @@
-'use client';
-
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
