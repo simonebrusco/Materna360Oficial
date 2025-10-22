@@ -15,7 +15,7 @@ class MirrorServerChunksPlugin {
       return
     }
 
-    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', async () => {
+    const mirrorChunks = async () => {
       const outputPath = compiler.outputPath
       const chunksDir = path.join(outputPath, 'chunks')
 
@@ -43,13 +43,16 @@ class MirrorServerChunksPlugin {
           })
         )
       } catch (error) {
-        if (error.code !== 'ENOENT') {
-          console.warn('[MirrorServerChunksPlugin] Unable to read chunks directory:', error)
-        } else {
+        if (error.code === 'ENOENT') {
           console.log('[MirrorServerChunksPlugin] chunks dir not found, skipping')
+        } else {
+          console.warn('[MirrorServerChunksPlugin] Unable to read chunks directory:', error)
         }
       }
-    })
+    }
+
+    compiler.hooks.afterEmit.tapPromise('MirrorServerChunksPlugin', mirrorChunks)
+    compiler.hooks.done.tapPromise('MirrorServerChunksPlugin', mirrorChunks)
   }
 }
 
