@@ -49,25 +49,25 @@ export function BreathTimer() {
       <section
         role="region"
         aria-labelledby="breath-title"
-        className="px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-10"
+        className="px-4 pb-8 pt-6 sm:px-6 sm:pb-9 sm:pt-7"
       >
-        <div className="mx-auto flex max-w-lg flex-col items-center text-center gap-5 sm:max-w-xl sm:gap-6">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center gap-4 sm:max-w-lg sm:gap-5">
           <h3
             id="breath-title"
-            className="text-2xl font-semibold tracking-tight text-support-1 sm:text-3xl"
+            className="text-xl font-semibold tracking-tight text-support-1 sm:text-2xl"
           >
             Respiração Guiada
           </h3>
-          <PlayArt className="mx-auto h-24 w-24 sm:h-28 sm:w-28" />
-          <p className="text-sm leading-relaxed text-support-2 sm:text-base">
+          <PlayArt className="mx-auto h-20 w-20 sm:h-24 sm:w-24" />
+          <p className="text-sm leading-relaxed text-support-2">
             Sincronize sua respiração com um ritmo suave e acolhedor.
           </p>
-          <p className="text-sm leading-relaxed text-support-2/90 sm:text-base">
+          <p className="text-sm leading-relaxed text-support-2/90">
             Use a respiração para acalmar sua mente e seu corpo. Quando estiver pronta, pressione começar.
           </p>
         </div>
 
-        <div className="mt-8 sm:mt-10">
+        <div className="mt-6 sm:mt-8">
           <div className="flex min-h-[280px] flex-col items-center justify-center">
             {isRunning ? (
               <>
@@ -84,7 +84,7 @@ export function BreathTimer() {
             ) : null}
           </div>
 
-          <div className="mt-8 sm:mt-10">
+          <div className="mt-6 sm:mt-8">
             <Button
               variant={isRunning ? 'outline' : 'primary'}
               size="sm"
