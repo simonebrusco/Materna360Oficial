@@ -14,12 +14,13 @@ const tabs = [
 
 export function TabBar() {
   const pathname = usePathname()
+  const activePath = pathname ?? ''
 
   return (
     <nav className="fixed bottom-4 left-1/2 z-[60] w-[calc(100%-2.5rem)] max-w-xl -translate-x-1/2">
       <div className="glass-panel flex items-center justify-between gap-1 rounded-full px-2 py-2 shadow-soft backdrop-blur-2xl">
         {tabs.map((tab) => {
-          const isActive = pathname.startsWith(tab.href)
+          const isActive = activePath.startsWith(tab.href)
 
           return (
             <Link
