@@ -1,8 +1,8 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Reveal } from '@/components/ui/Reveal'
-import { SakuraFlower } from '@/components/ui/SakuraFlower'
 
 const featureCards = [
   {
@@ -41,7 +41,13 @@ export default function Home() {
               Bem-vinda
             </span>
             <div className="flex flex-col items-center gap-3">
-              <SakuraFlower className="h-16 w-16" style={{ opacity: 0.9 }} />
+              <Image
+                src="/images/sakura.svg"
+                alt="Flor de cerejeira Materna360"
+                width={72}
+                height={72}
+                priority
+              />
               <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">Materna360</h1>
             </div>
             <p className="mt-4 max-w-2xl text-base text-support-2 sm:text-lg md:text-xl">
