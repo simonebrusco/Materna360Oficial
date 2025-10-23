@@ -31,6 +31,7 @@ type ChildProfile = {
   genero: 'menino' | 'menina'
   idadeMeses: number
   nome: string
+  alergias: string[]
 }
 
 type ProfileFormState = {
