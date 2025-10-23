@@ -7,6 +7,7 @@ import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
 import { HealthyRecipesSection } from '@/components/blocks/HealthyRecipes'
 import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
+import { OrganizationTips } from '@/components/features/OrganizationTips'
 
 interface CuidarClientProps {
   firstName?: string
@@ -92,20 +93,7 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
         <HealthyRecipesSection />
 
         <Reveal delay={200}>
-          <Card className="p-7">
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💡 Dicas de Organização</h2>
-            <div className="mt-4 space-y-3">
-              {[{ title: 'Organize a Noite Anterior', desc: 'Prepare roupas e mochilas antes de dormir.' }, { title: 'Use Listas de Verificação', desc: 'Simplifique tarefas recorrentes.' }, { title: '15 Minutos de Cuidado', desc: 'Mantenha espaços organizados com pequenas sessões.' }].map((tip) => (
-                <div
-                  key={tip.title}
-                  className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-soft transition-all duration-300 hover:shadow-elevated"
-                >
-                  <h4 className="text-sm font-semibold text-support-1">{tip.title}</h4>
-                  <p className="mt-1 text-xs text-support-2">{tip.desc}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <OrganizationTips />
         </Reveal>
 
         <div className="space-y-5">
