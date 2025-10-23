@@ -49,6 +49,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Oferece exercícios lúdicos para estimular fala e sucção.',
     ],
     approaches: ['Consultoria em amamentação', 'Estímulos lúdicos'],
+    availableIn48h: false,
     priceInfo: 'Sessões online a partir de R$ 150',
   },
   {
