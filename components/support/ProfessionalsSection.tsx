@@ -30,7 +30,7 @@ function ProfessionalsSection({ professionals, initialProfessionalId }: Professi
     }
 
     try {
-      const fromGlobal = normalizeProfessionals((globalThis as Record<string, unknown> | undefined)?.__pros)
+      const fromGlobal = normalizeProfessionals((globalThis as { __pros?: unknown }).__pros)
       if (fromGlobal.length > 0) {
         return fromGlobal
       }
