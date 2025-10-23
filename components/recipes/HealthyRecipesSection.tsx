@@ -1,13 +1,20 @@
 'use client'
 
-'use client'
-
 import React, { useEffect, useState } from 'react'
 
 import { HealthyRecipesSection as HealthyRecipesSectionInner } from '@/components/blocks/HealthyRecipes'
 
 const LoadingCard = () => (
   <div className="h-40 animate-pulse rounded-2xl border border-white/60 bg-white/60" aria-hidden />
+)
+
+const EmptyState = () => (
+  <div className="rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft">
+    <h3 className="text-base font-semibold text-support-1">Receitas para seu momento</h3>
+    <p className="mt-2 text-sm text-support-2/80">
+      Ainda não há receitas disponíveis. Atualize suas preferências ou tente novamente mais tarde.
+    </p>
+  </div>
 )
 
 export default function HealthyRecipesSection() {
@@ -18,10 +25,12 @@ export default function HealthyRecipesSection() {
     let allowed = true
 
     try {
-      const globalNamespace = (globalThis as { materna360?: { recipesAllowed?: boolean } }).materna360
+      const globalNamespace = (globalThis as { materna360?: { recipesAllowed?: boolean; recipes?: unknown } }).materna360
       if (globalNamespace && typeof globalNamespace === 'object') {
-        const flag = globalNamespace.recipesAllowed
-        if (flag === false) {
+        if (globalNamespace.recipesAllowed === false) {
+          allowed = false
+        }
+        if (Array.isArray((globalNamespace as { recipes?: unknown }).recipes) && (globalNamespace as { recipes?: unknown }).recipes?.length === 0) {
           allowed = false
         }
       }
@@ -39,19 +48,17 @@ export default function HealthyRecipesSection() {
   }, [])
 
   if (blocked) {
-    return (
-      <div className="rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft">
-        <h3 className="text-base font-semibold text-support-1">Receitas para seu momento</h3>
-        <p className="mt-2 text-sm text-support-2/80">
-          Parece que as receitas personalizadas estão indisponíveis agora. Atualize o perfil no Eu360 ou tente novamente mais tarde.
-        </p>
-      </div>
-    )
+    return <EmptyState />
   }
 
   if (!shouldRenderInner) {
     return <LoadingCard />
   }
 
-  return <HealthyRecipesSectionInner />
+  try {
+    return <HealthyRecipesSectionInner />
+  } catch (error) {
+    console.error('[HealthyRecipesSection] Falha ao renderizar bloco principal:', error)
+    return <EmptyState />
+  }
 }
