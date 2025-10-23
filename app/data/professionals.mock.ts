@@ -73,6 +73,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Ensina técnicas de respiração, alívio de dor e organização da rede de apoio.',
     ],
     approaches: ['Preparação corporal suave', 'Plano de parto humanizado'],
+    availableIn48h: true,
     whatsapp: '+5521999990001',
     priceInfo: 'Acompanhamento completo a partir de R$ 1.800',
   },
