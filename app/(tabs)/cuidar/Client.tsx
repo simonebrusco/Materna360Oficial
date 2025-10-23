@@ -55,20 +55,23 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
         <Reveal>
           <div className="space-y-3">
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Autocuidado</span>
-            <h1 className="flex items-center text-3xl font-semibold text-support-1 md:text-4xl" aria-label={title}>
-              <span aria-hidden="true">🌿</span>
-              <span className="ml-2">
-                Cuide-se
-                {hasName && (
-                  <>
-                    ,{' '}
-                    <span className="inline-block max-w-[12ch] truncate align-baseline" title={trimmedName}>
-                      {trimmedName}
-                    </span>
-                  </>
-                )}
-              </span>
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span aria-hidden="true" className="text-3xl">🌿</span>
+                <h1 className="text-3xl font-semibold text-support-1 md:text-4xl" aria-label="Cuide-se">
+                  Cuide-se
+                </h1>
+              </div>
+              {hasName && (
+                <span
+                  className="inline-flex max-w-[12ch] items-center truncate rounded-full bg-support-1/10 px-3 py-1 text-sm font-semibold text-support-1"
+                  aria-label={`Mãe: ${trimmedName}`}
+                  title={trimmedName}
+                >
+                  {trimmedName}
+                </span>
+              )}
+            </div>
             <p className="max-w-2xl text-sm text-support-2 md:text-base">
               Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.
             </p>
@@ -100,7 +103,7 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
                 <Card className="h-full p-6">
                   <div className="text-3xl">{recipe.emoji}</div>
                   <h3 className="mt-3 text-lg font-semibold text-support-1">{recipe.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">⏱️ {recipe.prep}</p>
+                  <p className="mt-2 text-xs text-support-2">���️ {recipe.prep}</p>
                   <Button variant="secondary" size="sm" className="mt-6 w-full">
                     Ver Receita
                   </Button>
