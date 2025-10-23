@@ -161,6 +161,8 @@ export function ProfessionalsSectionClient({
   initialFilters,
   enableUrlSync = true,
 }: ProfessionalsSectionClientProps) {
+  const safeProfessionals = Array.isArray(professionals) ? professionals : []
+
   const [filters, setFilters] = useState<ProfessionalsFilters>(() => sanitizeFilters(initialFilters ?? DEFAULT_PROFESSIONAL_FILTERS))
   const [searchDraft, setSearchDraft] = useState(filters.q ?? '')
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(initialOpenId ?? null)
