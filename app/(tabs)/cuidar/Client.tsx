@@ -89,25 +89,7 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
           <CareJourneys />
         </Reveal>
 
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🥗 Receitas da Semana</h2>
-          </Reveal>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {recipes.map((recipe, idx) => (
-              <Reveal key={recipe.title} delay={idx * 70}>
-                <Card className="h-full p-6">
-                  <div className="text-3xl">{recipe.emoji}</div>
-                  <h3 className="mt-3 text-lg font-semibold text-support-1">{recipe.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">⏱️ {recipe.prep}</p>
-                  <Button variant="secondary" size="sm" className="mt-6 w-full">
-                    Ver Receita
-                  </Button>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
+        <HealthyRecipesSection />
 
         <Reveal delay={200}>
           <Card className="p-7">
