@@ -1,5 +1,7 @@
 import type { Professional, ProfessionalsFilters } from '@/app/types/professionals'
 
+import type { Professional, ProfessionalsFilters } from '@/app/types/professionals'
+
 const normalizeText = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 
 const includesNormalized = (haystack: string, needle: string) => {
