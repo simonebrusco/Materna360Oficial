@@ -382,7 +382,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         return (
           <Card
             key={tip.id}
-            className="overflow-hidden bg-gradient-to-br from-white via-white to-secondary/30 p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
+            className="section-card overflow-hidden bg-gradient-to-br from-white via-white to-secondary/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
           >
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
