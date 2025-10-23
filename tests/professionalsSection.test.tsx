@@ -9,7 +9,9 @@ import { ProfessionalsSectionClient } from '@/components/support/ProfessionalsSe
 const SAMPLE_PROS = PROFESSIONALS_MOCK.slice(0, 4)
 
 test('renders card for each professional in the mock', () => {
-  const html = renderToString(<ProfessionalsSectionClient professionals={SAMPLE_PROS} />)
+  const html = renderToString(
+    <ProfessionalsSectionClient professionals={SAMPLE_PROS} renderPlainImages />
+  )
 
   assert.ok(html.includes('Ver perfil'), 'should render CTA')
   const cardOccurrences = html.split('Ver perfil').length - 1
