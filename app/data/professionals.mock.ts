@@ -148,6 +148,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Apoio na transição da amamentação para o prato da família.',
     ],
     approaches: ['Alimentação responsiva', 'Educação alimentar gentil'],
+    availableIn48h: true,
     calendlyUrl: 'https://calendly.com/helena-campos/consulta',
   },
   {
