@@ -287,39 +287,39 @@ export function ProfessionalsSectionClient({
   const pageProfessionals = filteredProfessionals.slice(pageStart, pageStart + PAGE_SIZE)
 
   const professionOptions = useMemo(() => {
-    const unique = new Set(professionals.map((professional) => professional.profession))
+    const unique = new Set(safeProfessionals.map((professional) => professional.profession))
     return ['todas', ...Array.from(unique).sort((a, b) => PROFESSION_LABEL[a].localeCompare(PROFESSION_LABEL[b], 'pt-BR'))]
-  }, [professionals])
+  }, [safeProfessionals])
 
   const specialtyOptions = useMemo(() => {
-    const unique = new Set(professionals.flatMap((professional) => professional.specialties))
+    const unique = new Set(safeProfessionals.flatMap((professional) => professional.specialties))
     return Array.from(unique).sort((a, b) => titleCase(a).localeCompare(titleCase(b), 'pt-BR'))
-  }, [professionals])
+  }, [safeProfessionals])
 
   const languageOptions = useMemo(() => {
-    const unique = new Set(professionals.flatMap((professional) => professional.languages))
+    const unique = new Set(safeProfessionals.flatMap((professional) => professional.languages))
     return Array.from(unique).sort((a, b) => a.localeCompare(b, 'pt-BR'))
-  }, [professionals])
+  }, [safeProfessionals])
 
   const regionOptions = useMemo(() => {
     const unique = new Set(
-      professionals
+      safeProfessionals
         .flatMap((professional) => professional.formats.inPerson ? professional.formats.regions ?? [] : [])
         .filter(Boolean)
     )
     return Array.from(unique).sort((a, b) => a.localeCompare(b, 'pt-BR'))
-  }, [professionals])
+  }, [safeProfessionals])
 
   const selectedProfessional = useMemo(
-    () => professionals.find((item) => item.id === selectedProfessionalId) ?? null,
-    [professionals, selectedProfessionalId]
+    () => safeProfessionals.find((item) => item.id === selectedProfessionalId) ?? null,
+    [safeProfessionals, selectedProfessionalId]
   )
 
   useEffect(() => {
-    if (selectedProfessionalId && !professionals.some((professional) => professional.id === selectedProfessionalId)) {
+    if (selectedProfessionalId && !safeProfessionals.some((professional) => professional.id === selectedProfessionalId)) {
       setSelectedProfessionalId(null)
     }
-  }, [professionals, selectedProfessionalId])
+  }, [safeProfessionals, selectedProfessionalId])
 
   const formattedResultsLabel = totalResults === 1 ? '1 profissional encontrado' : `${totalResults} profissionais encontrados`
 
