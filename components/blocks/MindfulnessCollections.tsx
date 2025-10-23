@@ -33,17 +33,24 @@ const STORAGE_KEY = 'materna360-mindfulness-heard'
 
 const LEGACY_FILE_MAP: Record<string, string> = {
   'você-não-está-sozinha.mp3': 'voce-nao-esta-sozinha.mp3',
-  'você-não-precisa-ser-perfeita.mp3': 'voce-nao-precisa-ser-perfeita.mp3',
   'confie-em-você.mp3': 'confie-em-voce.mp3',
   'um-novo-começo.mp3': 'um-novo-comeco.mp3',
-  'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-equilibrio.mp3',
+  'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
+  'transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   'suas-palavras-têm-poder.mp3': 'suas-palavras-tem-poder.mp3',
-  'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
+  'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-melhor.mp3',
+  'voce-esta-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-melhor.mp3',
+  'você-não-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
+  'voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
+  'celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
   'encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
   'saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
   '/audio/mindfulness/um-novo-comeco.mp3': 'um-novo-comeco.mp3',
-  '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-equilibrio.mp3',
-  '/audio/mindfulness/celebre-os-pequenos-momentos.mp3': 'celebre-os-pequenos-momentos.mp3',
+  '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
+  '/audio/mindfulness/celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
+  '/audio/mindfulness/voce-esta-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-melhor.mp3',
+  '/audio/mindfulness/o-poder-do-toque.mp3': 'o-poder-do-toque-e-do-afeto.mp3',
+  '/audio/mindfulness/voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
 }
 
 const normalizeHeardTracks = (entries: Record<string, boolean>) => {
@@ -60,9 +67,18 @@ const normalizeHeardTracks = (entries: Record<string, boolean>) => {
 const AUDIO_FILE_SRC_MAP: Record<string, string> = {
   'um-novo-comeco.mp3': '/audio/mindfulness/um-novo-comeco.mp3',
   'um-novo-começo.mp3': '/audio/mindfulness/um-novo-comeco.mp3',
-  'transforme-o-caos-em-equilibrio.mp3': '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3',
-  'transforme-o-caos-em-equilíbrio.mp3': '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3',
-  'celebre-os-pequenos-momentos.mp3': '/audio/mindfulness/celebre-os-pequenos-momentos.mp3',
+  'transforme-o-caos-em-serenidade.mp3': '/audio/mindfulness/transforme-o-caos-em-serenidade.mp3',
+  'transforme-o-caos-em-equilibrio.mp3': '/audio/mindfulness/transforme-o-caos-em-serenidade.mp3',
+  'transforme-o-caos-em-equilíbrio.mp3': '/audio/mindfulness/transforme-o-caos-em-serenidade.mp3',
+  'celebrando-pequenos-momentos.mp3': '/audio/mindfulness/celebrando-pequenos-momentos.mp3',
+  'celebre-os-pequenos-momentos.mp3': '/audio/mindfulness/celebrando-pequenos-momentos.mp3',
+  'voce-esta-fazendo-o-melhor.mp3': '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3',
+  'voce-esta-fazendo-o-seu-melhor.mp3': '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3',
+  'o-poder-do-toque-e-do-afeto.mp3': '/audio/mindfulness/o-poder-do-toque-e-do-afeto.mp3',
+  'o-poder-do-toque.mp3': '/audio/mindfulness/o-poder-do-toque-e-do-afeto.mp3',
+  'voce-nao-precisa-dar-conta.mp3': '/audio/mindfulness/voce-nao-precisa-dar-conta.mp3',
+  'voce-nao-precisa-ser-perfeita.mp3': '/audio/mindfulness/voce-nao-precisa-dar-conta.mp3',
+  'suas-palavras-tem-poder.mp3': '/audio/mindfulness/suas-palavras-tem-poder.mp3',
 }
 
 const GROUPS: MindfulnessGroup[] = [
@@ -76,7 +92,7 @@ const GROUPS: MindfulnessGroup[] = [
       { file: 'acalme-sua-mente.mp3', title: 'Acalme sua mente' },
       { file: 'respire-e-conecte-se.mp3', title: 'Respire e conecte-se' },
       { file: 'voce-nao-esta-sozinha.mp3', title: 'Você não está sozinha' },
-      { file: 'voce-nao-precisa-ser-perfeita.mp3', title: 'Você não precisa ser perfeita' },
+      { file: 'voce-nao-precisa-dar-conta.mp3', title: 'Você não precisa ser perfeita' },
       { file: 'desconecte-se-para-o-essencial.mp3', title: 'Desconecte-se para o essencial' },
       { file: 'confie-em-voce.mp3', title: 'Confie em você' },
     ],
@@ -89,10 +105,10 @@ const GROUPS: MindfulnessGroup[] = [
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
     tracks: [
       { file: 'um-novo-comeco.mp3', title: 'Um novo começo' },
-      { file: 'celebre-os-pequenos-momentos.mp3', title: 'Celebre os pequenos momentos' },
-      { file: 'transforme-o-caos-em-equilibrio.mp3', title: 'Transforme o caos em equilíbrio' },
+      { file: 'celebrando-pequenos-momentos.mp3', title: 'Celebre os pequenos momentos' },
+      { file: 'transforme-o-caos-em-serenidade.mp3', title: 'Transforme o caos em equilíbrio' },
       { file: 'suas-palavras-tem-poder.mp3', title: 'Suas palavras têm poder' },
-      { file: 'voce-esta-fazendo-o-seu-melhor.mp3', title: 'Você está fazendo o seu melhor' },
+      { file: 'voce-esta-fazendo-o-melhor.mp3', title: 'Você está fazendo o seu melhor' },
     ],
   },
   {
@@ -106,7 +122,7 @@ const GROUPS: MindfulnessGroup[] = [
       { file: 'encontre-a-paz-dentro-de-voce.mp3', title: 'Encontre a paz dentro de você' },
       { file: 'libertando-se-da-culpa.mp3', title: 'Libertando-se da culpa' },
       { file: 'saindo-do-piloto-automatico.mp3', title: 'Saindo do piloto automático' },
-      { file: 'o-poder-do-toque.mp3', title: 'O poder do toque' },
+      { file: 'o-poder-do-toque-e-do-afeto.mp3', title: 'O poder do toque' },
     ],
   },
 ]
