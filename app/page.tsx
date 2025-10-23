@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import Image from 'next/image'
+
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -40,13 +42,13 @@ export default function Home() {
               Bem-vinda
             </span>
             <div className="flex flex-col items-center gap-3">
-              <img
+              <Image
                 src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
                 alt="Flor de cerejeira Materna360"
-                width="72"
-                height="72"
-                style={{ display: 'block' }}
-                loading="eager"
+                width={72}
+                height={72}
+                priority
+                className="block h-18 w-18"
               />
               <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">Materna360</h1>
             </div>
