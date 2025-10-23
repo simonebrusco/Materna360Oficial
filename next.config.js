@@ -31,15 +31,5 @@ const nextConfig = {
       },
     ]
   },
-  webpack(config, { isServer }) {
-    if (isServer && config?.output) {
-      console.log('[webpack] server chunkFilename before override:', config.output.chunkFilename)
-      config.output.chunkFilename = 'chunks/[name].js'
-      config.output.hotUpdateChunkFilename = 'chunks/[name].hot-update.js'
-      console.log('[webpack] server chunkFilename after override:', config.output.chunkFilename)
-    }
-
-    return config
-  },
 }
 module.exports = nextConfig
