@@ -256,8 +256,8 @@ export function ProfessionalsSectionClient({
     }
     baseFilterKeyRef.current = baseFilterKey
     setIsSkeletonVisible(true)
-    const timeout = window.setTimeout(() => setIsSkeletonVisible(false), SKELETON_DURATION_MS)
-    return () => window.clearTimeout(timeout)
+    const timeoutId = setTimeout(() => setIsSkeletonVisible(false), SKELETON_DURATION_MS)
+    return () => clearTimeout(timeoutId)
   }, [baseFilterKey])
 
   const sanitizedFilters = useMemo(() => sanitizeFilters(filters), [filters])
