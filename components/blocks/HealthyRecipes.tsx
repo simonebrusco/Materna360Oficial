@@ -421,17 +421,17 @@ export function HealthyRecipesSection() {
   if (underSix) {
     return (
       <Reveal>
-        <Card className="p-7">
+        <Card className="section-card space-y-4">
           <div className="flex items-start gap-4">
-            <div className="text-3xl">🤱</div>
+            <div className="text-3xl" aria-hidden="true">🤱</div>
             <div className="space-y-3">
               <div>
-                <h2 className="text-xl font-semibold text-support-1 md:text-2xl">Receitas Saudáveis</h2>
-                <p className="mt-1 text-sm text-support-2">
+                <h2 className="section-title">Receitas Saudáveis</h2>
+                <p className="section-subtitle max-w-2xl text-support-2">
                   Ideias práticas e equilibradas a partir dos ingredientes que você tem em casa.
                 </p>
               </div>
-              <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm text-primary">
+              <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm text-primary shadow-soft">
                 {BREASTFEEDING_MESSAGE}
               </div>
               <p className="text-xs text-support-2">
