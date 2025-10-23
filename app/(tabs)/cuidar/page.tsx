@@ -4,12 +4,12 @@ import dynamic from 'next/dynamic'
 import { BreathTimer as BreathBlock } from '@/components/blocks/BreathTimer'
 
 const ProfessionalsSection = dynamic(
-  () => import('@/components/support/ProfessionalsSection').then((module) => module.ProfessionalsSection ?? module.default ?? module),
+  () => import('@/components/support/ProfessionalsSection').then((module) => ({ default: module.ProfessionalsSection })),
   { ssr: false, loading: () => <div className="animate-pulse rounded-2xl h-40 bg-white/60 border" /> }
 )
 
 const HealthyRecipesSection = dynamic(
-  () => import('@/components/blocks/HealthyRecipes').then((module) => module.HealthyRecipesSection ?? module.default ?? module),
+  () => import('@/components/blocks/HealthyRecipes').then((module) => ({ default: module.HealthyRecipesSection })),
   { ssr: false, loading: () => <div className="animate-pulse rounded-2xl h-40 bg-white/60 border" /> }
 )
 
