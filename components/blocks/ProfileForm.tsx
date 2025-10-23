@@ -52,6 +52,7 @@ const createEmptyChild = (): ChildProfile => ({
   genero: 'menino',
   idadeMeses: 0,
   nome: '',
+  alergias: [],
 })
 
 const defaultState = (): ProfileFormState => ({
