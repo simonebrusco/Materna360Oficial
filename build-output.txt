@@ -14,7 +14,7 @@
 43:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
 ./components/blocks/BreathTimer.tsx
-50:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+52:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
 ./components/blocks/Mindfulness.tsx
 399:18  Warning: The ref value 'audioRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'audioRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
@@ -28,7 +28,6 @@
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
    Collecting page data ...
    Generating static pages (0/10) ...
-   Generating static pages (2/10) 
 Error: <Html> should not be imported outside of pages/_document.
 Read more: https://nextjs.org/docs/messages/no-document-import-in-page
     at Z (/app/code/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5430)
@@ -56,6 +55,7 @@ Read more: https://nextjs.org/docs/messages/no-document-import-in-page
     at finishClassComponent (/app/code/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
     at renderClassComponent (/app/code/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
     at renderElement (/app/code/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+   Generating static pages (2/10) 
 Error: <Html> should not be imported outside of pages/_document.
 Read more: https://nextjs.org/docs/messages/no-document-import-in-page
     at Z (/app/code/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5430)
@@ -224,6 +224,44 @@ TypeError: Cannot read properties of null (reading 'useContext')
     at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
     at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
 
+Error occurred prerendering page "/descobrir". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at d (/app/code/.next/server/chunks/779.js:1:21892)
+    at h (/app/code/.next/server/chunks/779.js:1:13881)
+    at au (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at d (/app/code/.next/server/chunks/779.js:1:21892)
+    at h (/app/code/.next/server/chunks/779.js:1:13881)
+    at au (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '1183687514'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at d (/app/code/.next/server/chunks/779.js:1:21892)
+    at h (/app/code/.next/server/chunks/779.js:1:13881)
+    at au (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
 Error occurred prerendering page "/eu360". Read more: https://nextjs.org/docs/messages/prerender-error
 
 TypeError: Cannot read properties of null (reading 'useContext')
@@ -263,44 +301,6 @@ TypeError: Cannot read properties of null (reading 'useContext')
     at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
 
 Error occurred prerendering page "/meu-dia". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useContext')
-    at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
-    at d (/app/code/.next/server/chunks/779.js:1:21892)
-    at h (/app/code/.next/server/chunks/779.js:1:13881)
-    at au (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
-    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
-    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
-    at a_ (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
-    at ab (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
-    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
-    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
-TypeError: Cannot read properties of null (reading 'useContext')
-    at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
-    at d (/app/code/.next/server/chunks/779.js:1:21892)
-    at h (/app/code/.next/server/chunks/779.js:1:13881)
-    at au (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
-    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
-    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
-    at a_ (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
-    at ab (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
-    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
-    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
-  digest: '1183687514'
-}
-TypeError: Cannot read properties of null (reading 'useContext')
-    at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
-    at d (/app/code/.next/server/chunks/779.js:1:21892)
-    at h (/app/code/.next/server/chunks/779.js:1:13881)
-    at au (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
-    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
-    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
-    at a_ (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
-    at ab (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
-    at /app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
-    at aw (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
-
-Error occurred prerendering page "/descobrir". Read more: https://nextjs.org/docs/messages/prerender-error
 
 TypeError: Cannot read properties of null (reading 'useContext')
     at t.useContext (/app/code/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
