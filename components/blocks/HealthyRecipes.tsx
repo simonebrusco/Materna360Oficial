@@ -13,6 +13,7 @@ import {
   mapMonthsToRecipeBand,
   sanitizeIngredients,
 } from '@/app/lib/healthyRecipes'
+import { VALID_PLANNER_CATEGORIES } from '@/app/lib/plannerServer'
 import type { PlannerItem } from '@/lib/plannerData'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
