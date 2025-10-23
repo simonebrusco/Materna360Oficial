@@ -208,10 +208,10 @@ export function ProfessionalsSectionClient({
     const currentUrl = `${url.pathname}${url.search}`
 
     if (nextUrl !== currentUrl) {
-      const timeout = window.setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         window.history.replaceState(null, '', nextUrl)
       }, URL_DEBOUNCE_MS)
-      return () => window.clearTimeout(timeout)
+      return () => clearTimeout(timeoutId)
     }
 
     return undefined
