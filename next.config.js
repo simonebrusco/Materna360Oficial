@@ -15,6 +15,9 @@ const RAW = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE || DEFAULT_AUDIO_BASE
 const AUDIO_BASE = sanitizeBase(RAW)
 
 const nextConfig = {
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
+  },
   async rewrites() {
     return isValidSupabaseUrl(AUDIO_BASE)
       ? [{ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` }]
