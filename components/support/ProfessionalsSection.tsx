@@ -12,19 +12,17 @@ type ProfessionalsSectionProps = {
 export function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK, initialProfessionalId }: ProfessionalsSectionProps) {
   return (
     <section className="space-y-8" aria-labelledby="professionals-support-title">
-      <div className="space-y-3">
-        <Reveal>
-          <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Rede Materna</span>
-            <h2 id="professionals-support-title" className="text-2xl font-semibold text-support-1 md:text-3xl">
-              Profissionais de Apoio
-            </h2>
-            <p className="max-w-2xl text-sm text-support-2 md:text-base">
-              Encontre especialistas confiáveis para cuidar de você e da sua família.
-            </p>
-          </div>
-        </Reveal>
-      </div>
+      <Reveal>
+        <div className="space-y-2">
+          <span className="section-eyebrow">Rede Materna</span>
+          <h2 id="professionals-support-title" className="section-title">
+            Profissionais de Apoio
+          </h2>
+          <p className="section-subtitle max-w-2xl text-support-2">
+            Encontre especialistas confiáveis para cuidar de você e da sua família.
+          </p>
+        </div>
+      </Reveal>
 
       <ProfessionalsSectionClient professionals={professionals} initialOpenId={initialProfessionalId} />
     </section>
