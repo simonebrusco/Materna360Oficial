@@ -7,17 +7,20 @@ export function OrganizationTips() {
   const tips = getDailyOrganizationTips()
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6">
       <Reveal>
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💡 Dicas de Organização</h2>
-          <p className="max-w-2xl text-sm text-support-2 md:text-base">
+          <h2 className="section-title flex items-center gap-2">
+            <span aria-hidden="true">💡</span>
+            <span>Dicas de Organização</span>
+          </h2>
+          <p className="section-subtitle max-w-2xl text-support-2">
             Pequenas ações diárias que trazem leveza para a rotina. Escolha o que cabe hoje, respire e celebre cada passo.
           </p>
         </div>
       </Reveal>
 
       <OrganizationTipsClient tips={tips} />
-    </div>
+    </section>
   )
 }
