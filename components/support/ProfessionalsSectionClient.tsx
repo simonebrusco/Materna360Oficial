@@ -39,7 +39,7 @@ const formatBadge = (professional: Professional) => {
   return badges.join(' ・ ')
 }
 
-export function ProfessionalsSectionClient({ professionals, initialOpenId }: ProfessionalsSectionClientProps) {
+export function ProfessionalsSectionClient({ professionals, initialOpenId, renderPlainImages = false }: ProfessionalsSectionClientProps) {
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(initialOpenId ?? null)
 
   const selectedProfessional = useMemo(
