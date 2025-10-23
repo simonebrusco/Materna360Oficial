@@ -291,6 +291,60 @@ export function ProfessionalsSectionClient({
   const pageStart = (currentPage - 1) * PAGE_SIZE
   const pageProfessionals = filteredProfessionals.slice(pageStart, pageStart + PAGE_SIZE)
 
+  const filtersPayload = sanitizedFilters
+
+  const handleWhatsappClick = useCallback(
+    (professional: Professional) => {
+      const rawPhone = professional.whatsapp ?? ''
+      const normalized = normalizeE164(rawPhone, DEFAULT_COUNTRY_CODE)
+      if (!normalized) {
+        return
+      }
+      const professionLabel = PROFESSION_LABEL[professional.profession]
+      const url = buildWaLink({
+        phone: rawPhone,
+        name: professional.name,
+        profession: professionLabel,
+        selectedTopic,
+      })
+      if (!url) {
+        return
+      }
+      trackProsClick({
+        professionalId: professional.id,
+        action: 'whatsapp',
+        profession: professional.profession,
+        specialties: professional.specialties,
+        page: currentPage,
+        filters: filtersPayload,
+      })
+      if (typeof window !== 'undefined') {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    },
+    [currentPage, filtersPayload, selectedTopic]
+  )
+
+  const handleScheduleClick = useCallback(
+    (professional: Professional) => {
+      if (!professional.calendlyUrl) {
+        return
+      }
+      trackProsClick({
+        professionalId: professional.id,
+        action: 'agendar',
+        profession: professional.profession,
+        specialties: professional.specialties,
+        page: currentPage,
+        filters: filtersPayload,
+      })
+      if (typeof window !== 'undefined') {
+        window.open(professional.calendlyUrl, '_blank', 'noopener,noreferrer')
+      }
+    },
+    [currentPage, filtersPayload]
+  )
+
   const professionOptions = useMemo(() => {
     const unique = new Set(safeProfessionals.map((professional) => professional.profession))
     return ['todas', ...Array.from(unique).sort((a, b) => PROFESSION_LABEL[a].localeCompare(PROFESSION_LABEL[b], 'pt-BR'))]
