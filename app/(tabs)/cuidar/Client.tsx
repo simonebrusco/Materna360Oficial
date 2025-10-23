@@ -5,18 +5,12 @@ import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
+import { HealthyRecipesSection } from '@/components/blocks/HealthyRecipes'
 import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
 
 interface CuidarClientProps {
   firstName?: string
 }
-
-const recipes = [
-  { emoji: '🥗', title: 'Salada Detox', prep: '10 min' },
-  { emoji: '🥤', title: 'Suco Verde Energético', prep: '5 min' },
-  { emoji: '🍵', title: 'Chá de Camomila', prep: '3 min' },
-  { emoji: '🥑', title: 'Toast de Abacate', prep: '8 min' },
-]
 
 const professionals = [
   {
