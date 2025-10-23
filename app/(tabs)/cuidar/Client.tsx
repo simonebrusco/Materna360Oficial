@@ -2,6 +2,8 @@
 
 'use client'
 
+import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
+
 import { Reveal } from '@/components/ui/Reveal'
 import { BreathTimer } from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
@@ -13,6 +15,42 @@ import { ProfessionalsSection } from '@/components/support/ProfessionalsSection'
 interface CuidarClientProps {
   firstName?: string
   initialProfessionalId?: string
+}
+
+function SectionSkeleton({ className = '' }: { className?: string }) {
+  return <div className={`section-card h-44 animate-pulse bg-white/70 ${className}`} aria-hidden />
+}
+
+class SectionErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Falha ao renderizar seção em Cuide-se:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="section-card border border-primary/30 bg-primary/10 text-sm text-primary">
+          Algo não carregou corretamente. Tente recarregar a página.
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+function GuardedSection({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<SectionSkeleton />}>
+      <SectionErrorBoundary>{children}</SectionErrorBoundary>
+    </Suspense>
+  )
 }
 
 export default function CuidarClient({ firstName = '', initialProfessionalId }: CuidarClientProps) {
@@ -56,36 +94,48 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
           </div>
         </Reveal>
 
-        <Reveal delay={80}>
-          <BreathTimer />
-        </Reveal>
-
-        <section className="space-y-4">
-          <Reveal>
-            <div className="space-y-2">
-              <h2 className="section-title flex items-center gap-2">
-                <span aria-hidden="true">🎧</span>
-                <span>Mindfulness para Mães</span>
-              </h2>
-              <p className="section-subtitle max-w-2xl">
-                Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
-              </p>
-            </div>
+        <GuardedSection>
+          <Reveal delay={80}>
+            <BreathTimer />
           </Reveal>
-          <MindfulnessCollections />
-        </section>
+        </GuardedSection>
 
-        <Reveal delay={140}>
-          <CareJourneys />
-        </Reveal>
+        <GuardedSection>
+          <section className="space-y-4">
+            <Reveal>
+              <div className="space-y-2">
+                <h2 className="section-title flex items-center gap-2">
+                  <span aria-hidden="true">🎧</span>
+                  <span>Mindfulness para Mães</span>
+                </h2>
+                <p className="section-subtitle max-w-2xl">
+                  Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
+                </p>
+              </div>
+            </Reveal>
+            <MindfulnessCollections />
+          </section>
+        </GuardedSection>
 
-        <HealthyRecipesSection />
+        <GuardedSection>
+          <Reveal delay={140}>
+            <CareJourneys />
+          </Reveal>
+        </GuardedSection>
 
-        <Reveal delay={200}>
-          <OrganizationTips />
-        </Reveal>
+        <GuardedSection>
+          <HealthyRecipesSection />
+        </GuardedSection>
 
-        <ProfessionalsSection initialProfessionalId={initialProfessionalId} />
+        <GuardedSection>
+          <Reveal delay={200}>
+            <OrganizationTips />
+          </Reveal>
+        </GuardedSection>
+
+        <GuardedSection>
+          <ProfessionalsSection initialProfessionalId={initialProfessionalId} />
+        </GuardedSection>
       </div>
     </div>
   )
