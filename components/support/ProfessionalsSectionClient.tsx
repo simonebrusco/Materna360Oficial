@@ -267,9 +267,9 @@ export function ProfessionalsSectionClient({
   const sanitizedFilters = useMemo(() => sanitizeFilters(filters), [filters])
 
   const filteredProfessionals = useMemo(() => {
-    const matched = professionals.filter((professional) => matchesFilters(professional, sanitizedFilters))
+    const matched = safeProfessionals.filter((professional) => matchesFilters(professional, sanitizedFilters))
     return sortProfessionals(matched, sanitizedFilters.sort)
-  }, [professionals, sanitizedFilters])
+  }, [safeProfessionals, sanitizedFilters])
 
   const totalResults = filteredProfessionals.length
   const totalPages = Math.max(1, Math.ceil(totalResults / PAGE_SIZE))
