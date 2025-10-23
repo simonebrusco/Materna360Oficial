@@ -13,6 +13,9 @@ type ProfessionalModalProps = {
   open: boolean
   onClose: () => void
   onContact?: (professional: Professional) => void
+  onSchedule?: (professional: Professional) => void
+  canContact?: boolean
+  contactTooltip?: string
   renderPlainImages?: boolean
 }
 
@@ -41,7 +44,16 @@ const AGE_BAND_LABEL: Record<Professional['ageBands'][number], string> = {
   '4-6a': '4 a 6 anos',
 }
 
-export function ProfessionalModal({ professional, open, onClose, onContact, renderPlainImages = false }: ProfessionalModalProps) {
+export function ProfessionalModal({
+  professional,
+  open,
+  onClose,
+  onContact,
+  onSchedule,
+  canContact,
+  contactTooltip,
+  renderPlainImages = false,
+}: ProfessionalModalProps) {
   useEffect(() => {
     if (!open) return
 
@@ -60,9 +72,16 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
   }
 
   const handleContact = () => {
-    console.log('open-whatsapp', professional.id)
     onContact?.(professional)
   }
+
+  const handleSchedule = () => {
+    onSchedule?.(professional)
+  }
+
+  const contactEnabled = canContact ?? Boolean(professional.whatsapp)
+  const tooltipMessage = contactEnabled ? undefined : contactTooltip ?? 'Contato indisponível'
+  const canSchedule = Boolean(professional.calendlyUrl)
 
   const professionLabel = PROFESSION_LABEL[professional.profession]
   const councilLabel = professional.council
@@ -219,13 +238,29 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
-                <Button size="sm" variant="primary" onClick={handleContact} disabled>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={contactEnabled ? handleContact : undefined}
+                  disabled={!contactEnabled}
+                  title={tooltipMessage}
+                  aria-label="Conversar no WhatsApp"
+                >
                   Vamos conversar?
                 </Button>
+                {canSchedule ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleSchedule}
+                    aria-label="Abrir agenda"
+                  >
+                    Agendar
+                  </Button>
+                ) : null}
                 <Button variant="outline" size="sm" onClick={onClose}>
                   Fechar
                 </Button>
-                <span className="text-xs font-medium text-support-2">Função disponível em breve.</span>
               </div>
 
               {professional.priceInfo ? (
