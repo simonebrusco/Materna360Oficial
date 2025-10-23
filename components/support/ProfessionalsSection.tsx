@@ -6,9 +6,10 @@ import { ProfessionalsSectionClient } from './ProfessionalsSectionClient'
 
 type ProfessionalsSectionProps = {
   professionals?: Professional[]
+  initialProfessionalId?: string
 }
 
-export function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK }: ProfessionalsSectionProps) {
+export function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK, initialProfessionalId }: ProfessionalsSectionProps) {
   return (
     <section className="space-y-8" aria-labelledby="professionals-support-title">
       <div className="space-y-3">
