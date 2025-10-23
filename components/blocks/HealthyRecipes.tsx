@@ -192,9 +192,9 @@ export function HealthyRecipesSection() {
   }, [profile, selectedChildId])
 
   const childAllergies = selectedChild?.alergias ?? []
-  const childMonths = selectedChild?.idadeMeses ?? 0
-  const childAgeBand = mapMonthsToRecipeBand(childMonths)
-  const underSix = isUnderSixMonths(childMonths)
+  const childMonths = selectedChild ? selectedChild.idadeMeses : null
+  const childAgeBand = childMonths === null ? '1-2y' : mapMonthsToRecipeBand(childMonths)
+  const underSix = childMonths !== null && isUnderSixMonths(childMonths)
 
   useEffect(() => {
     if (!plannerModal.open) {
