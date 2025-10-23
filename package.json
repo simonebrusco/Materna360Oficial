@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:recipes": "tsx --test tests"
+    "test:recipes": "tsx --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",
