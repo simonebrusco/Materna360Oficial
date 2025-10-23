@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 
-import { CuidarClient } from './Client'
+import CuidarClient from './Client'
 
 export const dynamic = 'force-dynamic'
 
