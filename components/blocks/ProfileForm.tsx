@@ -123,7 +123,7 @@ export function ProfileForm() {
     }
   }, [])
 
-  const updateChild = (id: string, key: keyof ChildProfile, value: string | number) => {
+  const updateChild = (id: string, key: keyof ChildProfile, value: string | number | string[]) => {
     setForm((previous) => ({
       ...previous,
       filhos: previous.filhos.map((child) => {
