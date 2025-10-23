@@ -31,5 +31,7 @@
     "tsx": "4.15.2",
     "typescript": "5.4.5"
   },
-  "engines": { "node": "20.x" }
+  "engines": {
+    "node": "20.x"
+  }
 }
