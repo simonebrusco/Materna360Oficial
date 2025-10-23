@@ -614,7 +614,7 @@ export function HealthyRecipesSection() {
 
       {educationalMessage && (
         <Reveal>
-          <Card className="border border-primary/20 bg-primary/5 p-6 text-sm text-primary">
+          <Card className="section-card border border-primary/20 bg-primary/5 text-sm text-primary">
             {educationalMessage}
           </Card>
         </Reveal>
@@ -622,7 +622,7 @@ export function HealthyRecipesSection() {
 
       {noResultMessage && (
         <Reveal>
-          <Card className="border border-secondary/50 bg-secondary/80 p-6 text-sm text-support-1">
+          <Card className="section-card border border-secondary/50 bg-secondary/80 text-sm text-support-1">
             {noResultMessage}
           </Card>
         </Reveal>
