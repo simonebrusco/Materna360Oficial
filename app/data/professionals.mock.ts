@@ -167,9 +167,10 @@ export const PROFESSIONALS_MOCK: Professional[] = [
     howHelps: [
       'Cocria combinações e acordos familiares visuais.',
       'Acompanha adaptação escolar e mudanças de rotina.',
-      'Oferece planos de a��ão para birras e conflitos entre irmãos.',
+      'Oferece planos de ação para birras e conflitos entre irmãos.',
     ],
     approaches: ['Parentalidade com afeto', 'Comunicação não violenta'],
+    availableIn48h: true,
   },
   {
     id: 'pros-ines-consultora',
