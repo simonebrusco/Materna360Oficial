@@ -84,7 +84,7 @@ const AUDIO_FILE_SRC_MAP: Record<string, string> = {
 const GROUPS: MindfulnessGroup[] = [
   {
     key: 'reconnect',
-    icon: '��',
+    icon: '🪷',
     title: 'Reconecte-se',
     description:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
@@ -296,7 +296,7 @@ export function MindfulnessCollections() {
           <Reveal key={group.key} delay={index * 90} className="h-full">
             <Card className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#ffd8e6] via-white to-white p-7 text-left">
               <div className="flex h-full flex-col gap-4">
-                <span className="text-3xl" aria-hidden>
+                <span className="text-3xl" aria-hidden="true">
                   {group.icon}
                 </span>
                 <div className="space-y-2">
@@ -358,7 +358,7 @@ export function MindfulnessCollections() {
 
                 <div className="pr-10">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl" aria-hidden>
+                    <span className="text-2xl" aria-hidden="true">
                       {activeGroup.icon}
                     </span>
                     <h3
