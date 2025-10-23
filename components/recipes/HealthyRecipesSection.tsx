@@ -18,15 +18,15 @@ export default function HealthyRecipesSection() {
     let allowed = true
 
     try {
-      const globalNamespace = (globalThis as Record<string, unknown> | undefined)?.materna360
+      const globalNamespace = (globalThis as { materna360?: { recipesAllowed?: boolean } }).materna360
       if (globalNamespace && typeof globalNamespace === 'object') {
-        const flag = (globalNamespace as { recipesAllowed?: boolean }).recipesAllowed
+        const flag = globalNamespace.recipesAllowed
         if (flag === false) {
           allowed = false
         }
       }
 
-      const directFlag = (globalThis as Record<string, unknown> | undefined)?.__recipesAllowed
+      const directFlag = (globalThis as { __recipesAllowed?: unknown }).__recipesAllowed
       if (directFlag === false) {
         allowed = false
       }
