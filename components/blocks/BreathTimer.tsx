@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
-export function BreathTimer() {
+function BreathTimer() {
   const [isRunning, setIsRunning] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [phase, setPhase] = useState<'breathe-in' | 'hold' | 'breathe-out'>('breathe-in')
