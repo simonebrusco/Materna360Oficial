@@ -96,3 +96,6 @@ function BreathTimer() {
     </Card>
   )
 }
+
+export default BreathTimer
+export { BreathTimer }
