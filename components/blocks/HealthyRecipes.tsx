@@ -447,11 +447,11 @@ export function HealthyRecipesSection() {
   return (
     <section id="receitas-saudaveis" className="space-y-6">
       <Reveal>
-        <Card className="p-7">
+        <Card className="section-card space-y-6">
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-support-1 md:text-2xl">Receitas Saudáveis</h2>
-              <p className="mt-1 text-sm text-support-2">
+              <h2 className="section-title">Receitas Saudáveis</h2>
+              <p className="section-subtitle max-w-2xl text-support-2">
                 Ideias práticas e equilibradas a partir dos ingredientes que você tem em casa.
               </p>
             </div>
