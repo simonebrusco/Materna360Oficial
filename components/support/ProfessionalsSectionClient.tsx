@@ -57,13 +57,18 @@ export function ProfessionalsSectionClient({ professionals, initialOpenId, rende
             <Card className="relative flex h-full flex-col gap-5 rounded-3xl bg-white/85 p-6">
               <div className="flex items-start gap-4">
                 <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-secondary/60 shadow-soft">
-                  <Image
-                    src={professional.avatarUrl}
-                    alt={`Foto de ${professional.name}`}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                  />
+                  {renderPlainImages ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={professional.avatarUrl} alt={`Foto de ${professional.name}`} className="h-full w-full object-cover" />
+                  ) : (
+                    <Image
+                      src={professional.avatarUrl}
+                      alt={`Foto de ${professional.name}`}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex-1 space-y-1">
                   <h3 className="text-lg font-semibold text-support-1">{professional.name}</h3>
