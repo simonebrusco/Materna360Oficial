@@ -10,9 +10,10 @@ import { ProfessionalsSection } from '@/components/support/ProfessionalsSection'
 
 interface CuidarClientProps {
   firstName?: string
+  initialProfessionalId?: string
 }
 
-export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
+export default function CuidarClient({ firstName = '', initialProfessionalId }: CuidarClientProps) {
   const trimmedName = firstName.trim()
   const hasName = trimmedName.length > 0
   const subheadingTail =
@@ -74,7 +75,7 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
           <OrganizationTips />
         </Reveal>
 
-        <ProfessionalsSection />
+        <ProfessionalsSection initialProfessionalId={initialProfessionalId} />
       </div>
     </div>
   )
