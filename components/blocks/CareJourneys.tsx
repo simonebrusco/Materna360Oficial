@@ -36,7 +36,7 @@ const journeys: Journey[] = [
       'Olhe no espelho e diga algo gentil sobre você.',
       'Faça algo que te deixe feliz, sem culpa.',
       'Reserve 5 minutos para respirar em silêncio.',
-      'Anote três coisas que você fez bem hoje.',
+      'Anote tr��s coisas que você fez bem hoje.',
       'Lembre-se de um momento que te deixou orgulhosa.',
       'Trate-se com a mesma paciência e amor que oferece ao seu filho.',
       'Escreva um bilhete curto e carinhoso para você mesma.',
@@ -175,16 +175,17 @@ export function CareJourneys() {
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🌼 Jornadas do Cuidar</h2>
-          <p className="mt-1 text-sm text-support-2">
-            Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
-          </p>
-        </div>
+      <div>
+        <h2 className="section-title flex items-center gap-2">
+          <span aria-hidden="true">🌼</span>
+          <span>Jornadas do Cuidar</span>
+        </h2>
+        <p className="section-subtitle max-w-2xl">
+          Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {journeys.map((journey) => {
           const journeyProgress = progressMap[journey.id]
           const completedCount = journeyProgress.filter(Boolean).length
