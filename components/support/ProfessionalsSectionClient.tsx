@@ -141,7 +141,12 @@ export function ProfessionalsSectionClient({ professionals, initialOpenId, rende
         ))}
       </div>
 
-      <ProfessionalModal professional={selectedProfessional} open={Boolean(selectedProfessional)} onClose={handleClose} />
+      <ProfessionalModal
+        professional={selectedProfessional}
+        open={Boolean(selectedProfessional)}
+        onClose={handleClose}
+        renderPlainImages={renderPlainImages}
+      />
     </div>
   )
 }
