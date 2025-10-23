@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import {
