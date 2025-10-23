@@ -195,6 +195,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Acompanha famílias no puerpério com suporte emocional contínuo.',
     ],
     approaches: ['Apoio em rede', 'Técnicas de alívio'],
+    availableIn48h: false,
     whatsapp: '+555199998888',
   },
 ]
