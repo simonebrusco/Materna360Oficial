@@ -36,7 +36,7 @@ const journeys: Journey[] = [
       'Olhe no espelho e diga algo gentil sobre você.',
       'Faça algo que te deixe feliz, sem culpa.',
       'Reserve 5 minutos para respirar em silêncio.',
-      'Anote tr��s coisas que você fez bem hoje.',
+      'Anote três coisas que você fez bem hoje.',
       'Lembre-se de um momento que te deixou orgulhosa.',
       'Trate-se com a mesma paciência e amor que oferece ao seu filho.',
       'Escreva um bilhete curto e carinhoso para você mesma.',
@@ -194,7 +194,7 @@ export function CareJourneys() {
           return (
             <Card
               key={journey.id}
-              className="flex h-full cursor-pointer flex-col justify-between rounded-3xl border border-white/60 bg-white/80 p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
+              className="section-card flex h-full cursor-pointer flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
               onClick={() => setActiveJourneyId(journey.id)}
             >
               <div className="space-y-3">
