@@ -14,7 +14,7 @@ Ele auxilia mães a organizarem sua rotina, cuidarem de si mesmas e acompanharem
 ## 🧩 Estrutura do Produto
 
 ### 🏡 **Meu Dia** (`/meu-dia`)
-- Saudação dinâmica e mensagem do dia  
+- Saudação dinâmica e mensagem de hoje  
 - Planner da família (abas Casa | Filhos | Eu)  
 - Rotina, checklist e notas rápidas  
 - Registro de momentos com os filhos  
