@@ -176,7 +176,7 @@ export function MessageOfDay() {
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
       <div className="mb-5 flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem do Dia</h2>
+        <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem de Hoje</h2>
         <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">
           “{isLoading && !message ? '...' : message}”
         </p>
