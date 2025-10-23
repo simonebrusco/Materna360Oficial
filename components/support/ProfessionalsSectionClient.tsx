@@ -345,98 +345,114 @@ export function ProfessionalsSectionClient({
     [updateFilters]
   )
 
-  const renderCard = (professional: Professional, index: number) => (
-    <Reveal key={professional.id} delay={index * 60}>
-      <Card className="relative flex h-full flex-col gap-5 rounded-3xl bg-white/85 p-6">
-        <div className="flex items-start gap-4">
-          <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-secondary/60 shadow-soft">
-            {renderPlainImages ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={professional.avatarUrl} alt={`Foto de ${professional.name}`} className="h-full w-full object-cover" />
-            ) : (
-              <Image
-                src={professional.avatarUrl}
-                alt={`Foto de ${professional.name}`}
-                fill
-                sizes="64px"
-                className="object-cover"
-              />
-            )}
+  const renderCard = (professional: Professional, index: number) => {
+    const formatBadges = buildFormatBadges(professional)
+
+    return (
+      <Reveal key={professional.id} delay={index * 60}>
+        <Card className="section-card flex h-full flex-col gap-5 p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated">
+          <div className="flex items-start gap-4">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full border border-white/70 bg-secondary/60 shadow-soft">
+              {renderPlainImages ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={professional.avatarUrl} alt={`Foto de ${professional.name}`} className="h-full w-full object-cover" />
+              ) : (
+                <Image
+                  src={professional.avatarUrl}
+                  alt={`Foto de ${professional.name}`}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              <h3 className="text-lg font-semibold text-support-1">{professional.name}</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
+                  {PROFESSION_LABEL[professional.profession]}
+                </p>
+                {professional.approvedByMaterna360 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+                    Aprovado pelo Materna360
+                  </span>
+                ) : null}
+              </div>
+              {professional.council ? (
+                <p className="text-xs text-support-2/80">
+                  {professional.council.type} {professional.council.number}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <div className="flex-1 space-y-1">
-            <h3 className="text-lg font-semibold text-support-1">{professional.name}</h3>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
-              {PROFESSION_LABEL[professional.profession]}
-            </p>
-            {professional.council ? (
-              <p className="text-xs text-support-2/80">
-                {professional.council.type} {professional.council.number}
-              </p>
+
+          <p className="text-sm text-support-2">{professional.bioShort}</p>
+
+          <div className="flex flex-wrap gap-2">
+            {formatBadges.map((badge) => (
+              <span
+                key={`${professional.id}-format-${badge}`}
+                className="inline-flex items-center rounded-full bg-support-1/10 px-3 py-0.5 text-xs font-semibold text-support-1"
+              >
+                {badge}
+              </span>
+            ))}
+            {professional.firstAssessmentFree ? (
+              <span className="inline-flex items-center rounded-full bg-secondary/70 px-3 py-0.5 text-xs font-semibold text-support-1 shadow-soft">
+                Primeira avaliação gratuita
+              </span>
+            ) : null}
+            {professional.availableIn48h ? (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+                Disponível em até 48h
+              </span>
             ) : null}
           </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
-          {professional.approvedByMaterna360 ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-              Aprovado pelo Materna360
-            </span>
-          ) : null}
-          {professional.firstAssessmentFree ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold text-support-1 shadow-soft">
-              Primeira avaliação gratuita
-            </span>
-          ) : null}
-          {professional.availableIn48h ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
-              Disponível em até 48h
-            </span>
-          ) : null}
-        </div>
+          <div className="flex flex-wrap gap-2">
+            {professional.specialties.slice(0, 3).map((specialty) => (
+              <span
+                key={`${professional.id}-spec-${specialty}`}
+                className="rounded-full bg-white/85 px-3 py-0.5 text-xs font-semibold text-support-1 shadow-soft"
+              >
+                #{titleCase(specialty)}
+              </span>
+            ))}
+          </div>
 
-        <p className="text-sm text-support-2">{professional.bioShort}</p>
-
-        <div className="flex flex-wrap gap-2">
-          {professional.specialties.slice(0, 3).map((specialty) => (
-            <span
-              key={`${professional.id}-spec-${specialty}`}
-              className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-support-1 shadow-soft"
-            >
-              #{titleCase(specialty)}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-support-2">
-          <span className="rounded-full bg-support-1/10 px-3 py-1 text-support-1">{formatBadge(professional)}</span>
           {professional.formats.regions && professional.formats.regions.length > 0 ? (
-            <span className="rounded-full bg-support-1/5 px-3 py-1">
-              {professional.formats.regions.join(', ')}
-            </span>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold text-support-2">
+              {professional.formats.regions.map((region) => (
+                <span key={`${professional.id}-region-${region}`} className="rounded-full bg-support-1/10 px-3 py-0.5">
+                  {region}
+                </span>
+              ))}
+            </div>
           ) : null}
-        </div>
 
-        <div className="mt-auto flex flex-wrap gap-3">
-          <Button
-            size="sm"
-            onClick={() => setSelectedProfessionalId(professional.id)}
-            aria-label={`Ver perfil de ${professional.name}`}
-          >
-            Ver perfil
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled
-            title="Disponível em breve"
-            aria-label={`Vamos conversar com ${professional.name} em breve`}
-          >
-            Vamos conversar?
-          </Button>
-        </div>
-      </Card>
-    </Reveal>
-  )
+          <div className="mt-auto flex flex-wrap gap-3 pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setSelectedProfessionalId(professional.id)}
+              aria-label={`Ver perfil de ${professional.name}`}
+            >
+              Ver perfil
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              disabled
+              title="Disponível em breve"
+              aria-label={`Vamos conversar com ${professional.name} em breve`}
+            >
+              Vamos conversar?
+            </Button>
+          </div>
+        </Card>
+      </Reveal>
+    )
+  }
 
   const skeletonCards = Array.from({ length: PAGE_SIZE }, (_, index) => (
     <Reveal key={`skeleton-${index}`} delay={index * 45}>
