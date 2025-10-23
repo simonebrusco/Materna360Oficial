@@ -388,7 +388,7 @@ export function ProfessionalsSectionClient({
             </span>
           ) : null}
           {professional.availableIn48h ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
               Disponível em até 48h
             </span>
           ) : null}
