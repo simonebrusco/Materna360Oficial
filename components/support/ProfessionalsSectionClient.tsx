@@ -481,8 +481,8 @@ export function ProfessionalsSectionClient({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4 rounded-3xl bg-white/90 p-6 shadow-soft">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="section-card space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <label className="flex flex-col gap-2 text-sm font-semibold text-support-1">
             Profissão
             <select
@@ -660,11 +660,11 @@ export function ProfessionalsSectionClient({
       </div>
 
       {isSkeletonVisible ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-6 md:gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {skeletonCards}
         </div>
       ) : showEmptyState ? (
-        <Card className="flex flex-col items-start gap-4 rounded-3xl bg-white/85 p-8 text-support-2">
+        <Card className="section-card flex flex-col items-start gap-4 text-support-2">
           <h3 className="text-lg font-semibold text-support-1">Não encontramos profissionais com esses filtros.</h3>
           <p className="text-sm">
             Tente remover algum tema ou alterar a região para ampliar as opções.
@@ -674,7 +674,7 @@ export function ProfessionalsSectionClient({
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-6 md:gap-7 sm:grid-cols-2 lg:grid-cols-3">
           {pageProfessionals.map((professional, index) => renderCard(professional, index))}
         </div>
       )}
