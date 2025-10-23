@@ -39,6 +39,9 @@ const LEGACY_FILE_MAP: Record<string, string> = {
   'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
   'encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
   'saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
+  '/audio/mindfulness/um-novo-comeco.mp3': 'um-novo-comeco.mp3',
+  '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-equilibrio.mp3',
+  '/audio/mindfulness/celebre-os-pequenos-momentos.mp3': 'celebre-os-pequenos-momentos.mp3',
 }
 
 const normalizeHeardTracks = (entries: Record<string, boolean>) => {
@@ -50,6 +53,14 @@ const normalizeHeardTracks = (entries: Record<string, boolean>) => {
   })
 
   return normalized
+}
+
+const AUDIO_FILE_SRC_MAP: Record<string, string> = {
+  'um-novo-comeco.mp3': '/audio/mindfulness/um-novo-comeco.mp3',
+  'um-novo-começo.mp3': '/audio/mindfulness/um-novo-comeco.mp3',
+  'transforme-o-caos-em-equilibrio.mp3': '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3',
+  'transforme-o-caos-em-equilíbrio.mp3': '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3',
+  'celebre-os-pequenos-momentos.mp3': '/audio/mindfulness/celebre-os-pequenos-momentos.mp3',
 }
 
 const GROUPS: MindfulnessGroup[] = [
@@ -98,10 +109,16 @@ const GROUPS: MindfulnessGroup[] = [
   },
 ]
 
-function buildSrc(track: { file: string }) {
-  if (track.file?.startsWith('/')) return track.file
+const resolveTrackFile = (file: string) => {
+  const normalized = LEGACY_FILE_MAP[file] ?? file
+  return AUDIO_FILE_SRC_MAP[normalized] ?? normalized
+}
 
-  const encoded = encodeURIComponent(track.file)
+function buildSrc(track: { file: string }) {
+  const resolved = resolveTrackFile(track.file)
+  if (resolved.startsWith('/')) return resolved
+
+  const encoded = encodeURIComponent(resolved)
   return `/audio/mindfulness/${encoded}`
 }
 
