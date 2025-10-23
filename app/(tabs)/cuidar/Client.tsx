@@ -55,7 +55,7 @@ export function CuidarClient({ firstName = '' }: CuidarClientProps) {
           <div className="space-y-3">
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Autocuidado</span>
             <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
-              <span aria-hidden>🌿</span>
+              <span>🌿</span>
               <span className="ml-2">
                 Cuide-se
                 {hasName && (
