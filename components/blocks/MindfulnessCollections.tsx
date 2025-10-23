@@ -81,6 +81,10 @@ const AUDIO_FILE_SRC_MAP: Record<string, string> = {
   'suas-palavras-tem-poder.mp3': '/audio/mindfulness/suas-palavras-tem-poder.mp3',
 }
 
+const showDebug =
+  process.env.NEXT_PUBLIC_SHOW_AUDIO_DEBUG === '1' &&
+  process.env.NODE_ENV !== 'production'
+
 const GROUPS: MindfulnessGroup[] = [
   {
     key: 'reconnect',
@@ -213,12 +217,15 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             <source src={src} type="audio/mpeg" />
             Seu navegador não suporta a reprodução de áudio.
           </audio>
-          <p style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>
-            src: {src} ·{' '}
-            <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
-              Abrir arquivo
-            </a>
-          </p>
+          {showDebug && (
+            <p className="mt-2 break-all text-xs text-support-3">
+              <span className="opacity-70">src:</span>{' '}
+              <code>{src}</code> ·{' '}
+              <a href={src} target="_blank" rel="noreferrer">
+                Abrir arquivo
+              </a>
+            </p>
+          )}
         </div>
       </div>
     </li>
