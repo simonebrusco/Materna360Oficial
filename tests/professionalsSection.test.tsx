@@ -13,6 +13,35 @@ import { DEFAULT_PROFESSIONAL_FILTERS } from '@/app/types/professionals'
 
 const SAMPLE_PROS = PROFESSIONALS_MOCK.slice(0, 4)
 
+test('exibe badge somente quando primeira avaliação é gratuita', () => {
+  const professionals = [
+    { ...SAMPLE_PROS[0], id: 'free-pro', firstAssessmentFree: true },
+    { ...SAMPLE_PROS[1], id: 'paid-pro', firstAssessmentFree: false },
+  ]
+
+  const htmlWithFree = renderToString(
+    <ProfessionalsSectionClient
+      professionals={professionals}
+      renderPlainImages
+      enableUrlSync={false}
+      initialFilters={DEFAULT_PROFESSIONAL_FILTERS}
+    />
+  )
+
+  assert.ok(htmlWithFree.includes('Primeira avaliação gratuita'))
+
+  const htmlWithoutFree = renderToString(
+    <ProfessionalsSectionClient
+      professionals={professionals.map((professional) => ({ ...professional, firstAssessmentFree: false }))}
+      renderPlainImages
+      enableUrlSync={false}
+      initialFilters={DEFAULT_PROFESSIONAL_FILTERS}
+    />
+  )
+
+  assert.equal(htmlWithoutFree.includes('Primeira avaliação gratuita'), false)
+})
+
 test('renders card for each professional em modo básico (sem URL sync)', () => {
   const html = renderToString(
     <ProfessionalsSectionClient
