@@ -23,6 +23,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Ajuda na construção de redes de apoio familiares.',
     ],
     approaches: ['Terapia Cognitivo-Comportamental', 'Mindfulness para mães'],
+    availableIn48h: true,
     calendlyUrl: 'https://calendly.com/dra-carolina-nunes/materna360',
     priceInfo: 'Pacotes a partir de R$ 180 / sessão',
   },
