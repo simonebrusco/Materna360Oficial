@@ -68,6 +68,12 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
   const councilLabel = professional.council
     ? `${professional.council.type} ${professional.council.number}`
     : undefined
+  const formats = professional.formats ?? { online: false, inPerson: false, regions: [] as string[] }
+  const formatRegions = Array.isArray(formats.regions) ? formats.regions : []
+  const languages = Array.isArray(professional.languages) ? professional.languages : []
+  const howHelps = Array.isArray(professional.howHelps) ? professional.howHelps : []
+  const approaches = Array.isArray(professional.approaches) ? professional.approaches : []
+  const ageBands = Array.isArray(professional.ageBands) ? professional.ageBands : []
 
   return (
     <>
@@ -132,17 +138,19 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/80">Como pode ajudar</h4>
                 <ul className="list-disc space-y-2 pl-5 text-sm text-support-2">
-                  {professional.howHelps.map((item, index) => (
-                    <li key={`${professional.id}-help-${index}`}>{item}</li>
-                  ))}
+                  {howHelps.length > 0 ? (
+                    howHelps.map((item, index) => <li key={`${professional.id}-help-${index}`}>{item}</li>)
+                  ) : (
+                    <li>Nossos especialistas estão prontos para orientar você.</li>
+                  )}
                 </ul>
               </div>
 
-              {professional.approaches && professional.approaches.length > 0 ? (
+              {approaches.length > 0 ? (
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/80">Abordagens</h4>
                   <div className="flex flex-wrap gap-2">
-                    {professional.approaches.map((approach) => (
+                    {approaches.map((approach) => (
                       <span
                         key={`${professional.id}-approach-${approach}`}
                         className="rounded-full bg-secondary/60 px-3 py-0.5 text-xs font-semibold text-support-1"
@@ -158,15 +166,15 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/80">Formatos</h4>
                   <div className="flex flex-wrap gap-2 text-xs font-semibold text-support-2">
-                    {professional.formats.online ? (
+                    {formats.online ? (
                       <span className="rounded-full bg-support-1/10 px-3 py-0.5 text-support-1">Online</span>
                     ) : null}
-                    {professional.formats.inPerson ? (
+                    {formats.inPerson ? (
                       <span className="rounded-full bg-support-1/10 px-3 py-0.5 text-support-1">Presencial</span>
                     ) : null}
-                    {professional.formats.regions && professional.formats.regions.length > 0 ? (
+                    {formatRegions.length > 0 ? (
                       <span className="rounded-full bg-support-1/10 px-3 py-0.5 text-support-1">
-                        Atende em: {professional.formats.regions.join(', ')}
+                        Atende em: {formatRegions.join(', ')}
                       </span>
                     ) : null}
                   </div>
@@ -174,14 +182,18 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/80">Idiomas</h4>
                   <div className="flex flex-wrap gap-2 text-xs font-semibold text-support-2">
-                    {professional.languages.map((language) => (
-                      <span
-                        key={`${professional.id}-language-${language}`}
-                        className="rounded-full bg-primary/10 px-3 py-0.5 text-primary"
-                      >
-                        {LANGUAGE_LABEL[language] ?? language}
-                      </span>
-                    ))}
+                    {languages.length > 0 ? (
+                      languages.map((language) => (
+                        <span
+                          key={`${professional.id}-language-${language}`}
+                          className="rounded-full bg-primary/10 px-3 py-0.5 text-primary"
+                        >
+                          {LANGUAGE_LABEL[language] ?? language}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded-full bg-support-1/10 px-3 py-0.5 text-support-1">Português (Brasil)</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -189,14 +201,20 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/80">Faixas de cuidado</h4>
                 <div className="flex flex-wrap gap-2">
-                  {professional.ageBands.map((band) => (
-                    <span
-                      key={`${professional.id}-age-${band}`}
-                      className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary"
-                    >
-                      {AGE_BAND_LABEL[band]}
+                  {ageBands.length > 0 ? (
+                    ageBands.map((band) => (
+                      <span
+                        key={`${professional.id}-age-${band}`}
+                        className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary"
+                      >
+                        {AGE_BAND_LABEL[band]}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+                      Todas as fases
                     </span>
-                  ))}
+                  )}
                 </div>
               </div>
 
