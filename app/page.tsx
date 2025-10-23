@@ -48,7 +48,8 @@ export default function Home() {
                 width={72}
                 height={72}
                 priority
-                className="block h-18 w-18"
+                className="object-contain"
+                style={{ width: 72, height: 72 }}
               />
               <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">Materna360</h1>
             </div>
