@@ -11,6 +11,7 @@ type ProfessionalModalProps = {
   open: boolean
   onClose: () => void
   onContact?: (professional: Professional) => void
+  renderPlainImages?: boolean
 }
 
 const PROFESSION_LABEL: Record<Professional['profession'], string> = {
