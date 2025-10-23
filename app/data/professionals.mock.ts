@@ -99,6 +99,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Trabalha respiração e consciência corporal para aliviar dores.',
     ],
     approaches: ['Fisioterapia Pélvica Integrativa'],
+    availableIn48h: false,
     priceInfo: 'Planos presenciais a partir de R$ 220 / sessão',
   },
   {
