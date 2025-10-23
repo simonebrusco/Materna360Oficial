@@ -14,6 +14,7 @@ import { ProfessionalModal } from './ProfessionalModal'
 type ProfessionalsSectionClientProps = {
   professionals: Professional[]
   initialOpenId?: string
+  renderPlainImages?: boolean
 }
 
 const PROFESSION_LABEL: Record<Professional['profession'], string> = {
