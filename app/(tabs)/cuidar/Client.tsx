@@ -42,7 +42,6 @@ const professionals = [
 export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
   const trimmedName = firstName.trim()
   const hasName = trimmedName.length > 0
-  const title = hasName ? `Cuide-se, ${trimmedName}` : 'Cuide-se'
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
@@ -103,7 +102,7 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
                 <Card className="h-full p-6">
                   <div className="text-3xl">{recipe.emoji}</div>
                   <h3 className="mt-3 text-lg font-semibold text-support-1">{recipe.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">���️ {recipe.prep}</p>
+                  <p className="mt-2 text-xs text-support-2">⏱️ {recipe.prep}</p>
                   <Button variant="secondary" size="sm" className="mt-6 w-full">
                     Ver Receita
                   </Button>
