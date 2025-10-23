@@ -26,7 +26,7 @@ export function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK, initi
         </Reveal>
       </div>
 
-      <ProfessionalsSectionClient professionals={professionals} />
+      <ProfessionalsSectionClient professionals={professionals} initialOpenId={initialProfessionalId} />
     </section>
   )
 }
