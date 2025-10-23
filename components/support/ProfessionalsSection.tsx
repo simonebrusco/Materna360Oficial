@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import React, { useMemo } from 'react'
 
 import { PROFESSIONALS_MOCK } from '@/app/data/professionals.mock'
@@ -21,6 +19,15 @@ const normalizeProfessionals = (input: unknown): Professional[] => {
   }
   return input.filter((item): item is Professional => typeof item === 'object' && item !== null && 'id' in item && 'name' in item)
 }
+
+const EmptyState = () => (
+  <div className="rounded-2xl border border-white/60 bg-white/80 p-6 text-center shadow-soft">
+    <h3 className="text-base font-semibold text-support-1">Profissionais de apoio</h3>
+    <p className="mt-2 text-sm text-support-2/80">
+      Em breve adicionaremos especialistas verificados para acompanhar você.
+    </p>
+  </div>
+)
 
 function ProfessionalsSection({ professionals, initialProfessionalId }: ProfessionalsSectionProps) {
   const safeProfessionals = useMemo(() => {
@@ -42,14 +49,7 @@ function ProfessionalsSection({ professionals, initialProfessionalId }: Professi
   }, [professionals])
 
   if (safeProfessionals.length === 0) {
-    return (
-      <div className="rounded-2xl border border-white/60 bg-white/80 p-6 text-center shadow-soft">
-        <h3 className="text-base font-semibold text-support-1">Profissionais de apoio</h3>
-        <p className="mt-2 text-sm text-support-2/80">
-          Em breve adicionaremos especialistas verificados para acompanhar você.
-        </p>
-      </div>
-    )
+    return <EmptyState />
   }
 
   return (
