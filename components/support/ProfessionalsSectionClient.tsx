@@ -63,7 +63,7 @@ const PAGE_SIZE = 8
 const URL_DEBOUNCE_MS = 250
 const SKELETON_DURATION_MS = 480
 
-const formatBadge = (professional: Professional) => {
+const buildFormatBadges = (professional: Professional) => {
   const badges: string[] = []
   if (professional.formats.online) {
     badges.push('Online')
@@ -71,7 +71,7 @@ const formatBadge = (professional: Professional) => {
   if (professional.formats.inPerson) {
     badges.push('Presencial')
   }
-  return badges.join(' ・ ')
+  return badges
 }
 
 const titleCase = (value: string) =>
