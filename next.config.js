@@ -31,5 +31,15 @@ const nextConfig = {
       },
     ]
   },
+  webpack(config, { isServer }) {
+    if (isServer && config?.output && typeof config.output.chunkFilename === 'string') {
+      const needsPrefix = !config.output.chunkFilename.startsWith('chunks/')
+      if (needsPrefix) {
+        config.output.chunkFilename = `chunks/${config.output.chunkFilename}`
+      }
+    }
+
+    return config
+  },
 }
 module.exports = nextConfig
