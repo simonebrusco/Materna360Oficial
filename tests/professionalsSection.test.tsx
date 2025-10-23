@@ -26,6 +26,7 @@ test('modal render includes council when professional has registry', () => {
     <ProfessionalsSectionClient
       professionals={[professionalWithCouncil!]}
       initialOpenId={professionalWithCouncil!.id}
+      renderPlainImages
     />
   )
 
