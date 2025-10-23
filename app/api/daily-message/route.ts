@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
 
+export const dynamic = 'force-dynamic'
+
 const MESSAGE_POOL = [
   'Você está fazendo um ótimo trabalho!',
   'Cada dia é uma nova oportunidade para recomeçar.',
