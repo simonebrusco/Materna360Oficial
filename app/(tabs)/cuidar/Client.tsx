@@ -5,12 +5,12 @@
 import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
 
 import { Reveal } from '@/components/ui/Reveal'
-import { BreathTimer } from '@/components/blocks/BreathTimer'
+import BreathTimer from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
-import { HealthyRecipesSection } from '@/components/blocks/HealthyRecipes'
+import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
 import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
 import { OrganizationTips } from '@/components/features/OrganizationTips'
-import { ProfessionalsSection } from '@/components/support/ProfessionalsSection'
+import ProfessionalsSection from '@/components/support/ProfessionalsSection'
 
 interface CuidarClientProps {
   firstName?: string
