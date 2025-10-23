@@ -1,20 +1,24 @@
 /** @type {import('next').NextConfig} */
-const AUDIO_BASE = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE
+const DEFAULT_AUDIO_BASE = 'https://swvuifjderyqsshguaxk.supabase.co/storage/v1/object/public' // public, not secret
+function sanitizeBase(input) {
+  return (input || '').toString().trim().replace(/\/+$/, '')
+}
+function isValidSupabaseUrl(url) {
+  try {
+    const u = new URL(url)
+    return /\.supabase\.co$/.test(u.hostname)
+  } catch {
+    return false
+  }
+}
+const RAW = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE || DEFAULT_AUDIO_BASE
+const AUDIO_BASE = sanitizeBase(RAW)
 
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'cdn.builder.io',
-        pathname: '/api/v1/image/assets/**',
-      },
-    ],
-  },
   async rewrites() {
-    return AUDIO_BASE ? [{ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` }] : []
+    return isValidSupabaseUrl(AUDIO_BASE)
+      ? [{ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` }]
+      : []
   },
   async headers() {
     return [
@@ -25,5 +29,4 @@ const nextConfig = {
     ]
   },
 }
-
 module.exports = nextConfig
