@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -111,7 +110,7 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
       throw new Error(`AI provider returned status ${response.status}`)
     }
 
-    const data: any = await response.json()
+    const data = (await response.json()) as any
     const aiMessage: string | undefined = data?.choices?.[0]?.message?.content?.trim()
 
     if (!aiMessage) {
@@ -135,7 +134,7 @@ export async function GET(request: Request) {
     const candidate = await generateMessageWithAI(dateKey, providedName)
     const message = candidate ?? deterministicMessageFor(dateKey)
 
-    return NextResponse.json(
+    return NextResponse.json<DailyMessageResponse>(
       {
         message,
         generatedAt: now.toISOString(),
@@ -149,7 +148,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Failed to generate daily message:', error)
 
-    return NextResponse.json(
+    return NextResponse.json<DailyMessageResponse>(
       {
         message: deterministicMessageFor(dateKey),
         generatedAt: now.toISOString(),
