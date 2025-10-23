@@ -234,7 +234,7 @@ export function HealthyRecipesSection() {
     []
   )
 
-  const handleIngredientKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleIngredientKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault()
       handleAddIngredient(ingredientsInput)
