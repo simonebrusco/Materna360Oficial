@@ -206,14 +206,14 @@ export function CareJourneys() {
                 <Button
                   variant="primary"
                   size="sm"
-                  aria-label={`Ver Jornada – ${journey.title}`}
+                  aria-label={`Ver mais – ${journey.title}`}
                   onClick={(event) => {
                     event.stopPropagation()
                     setActiveJourneyId(journey.id)
                   }}
                   className="shrink-0"
-                >
-                  Ver Jornada
+>
+                  Ver mais
                 </Button>
               </div>
             </Card>
@@ -273,7 +273,7 @@ export function CareJourneys() {
                             onClick={() => handleToggleChallenge(activeJourneyState.journey.id, index)}
                             className="ml-4 whitespace-nowrap"
                           >
-                            {isDone ? 'Concluído' : 'Marcar'}
+                            {isDone ? 'Concluído' : 'Marcar como concluído'}
                           </Button>
                         </div>
                       )
