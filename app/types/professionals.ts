@@ -24,7 +24,33 @@ export type Professional = {
   bioShort: string
   howHelps: string[]
   approaches?: string[]
+  availableIn48h?: boolean
   whatsapp?: string
   calendlyUrl?: string
   priceInfo?: string
+}
+
+export type ProfessionalsFilters = {
+  profession?: Professional['profession'] | 'todas'
+  specialties?: string[]
+  formats?: ('online' | 'presencial')[]
+  region?: string
+  ageBand?: 'gestante' | '0-6m' | '7-12m' | '1-3a' | '4-6a' | 'todas'
+  language?: string
+  availableIn48h?: boolean
+  q?: string
+  sort?: 'relevancia' | 'nome'
+  page?: number
+}
+
+export const DEFAULT_PROFESSIONAL_FILTERS: ProfessionalsFilters = {
+  profession: 'todas',
+  specialties: [],
+  formats: [],
+  ageBand: 'todas',
+  language: 'pt-BR',
+  availableIn48h: false,
+  q: '',
+  sort: 'relevancia',
+  page: 1,
 }
