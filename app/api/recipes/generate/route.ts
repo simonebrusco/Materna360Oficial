@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 import {
   BREASTFEEDING_MESSAGE,
   MAX_RECIPE_RESULTS,
@@ -18,6 +16,8 @@ import {
   validateRecipeResponseShape,
 } from '@/app/lib/healthyRecipes'
 import { trackTelemetry } from '@/app/lib/telemetry'
+
+export const dynamic = 'force-dynamic'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const MODEL = process.env.OPENAI_RECIPES_MODEL ?? process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
