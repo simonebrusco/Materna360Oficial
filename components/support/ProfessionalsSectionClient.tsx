@@ -301,11 +301,12 @@ export function ProfessionalsSectionClient({
         return
       }
       const professionLabel = PROFESSION_LABEL[professional.profession]
+      const topicMessage = selectedTopic ? titleCase(selectedTopic) : undefined
       const url = buildWaLink({
         phone: rawPhone,
         name: professional.name,
         profession: professionLabel,
-        selectedTopic,
+        selectedTopic: topicMessage,
       })
       if (!url) {
         return
