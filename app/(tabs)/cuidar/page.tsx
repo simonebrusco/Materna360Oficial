@@ -1,4 +1,5 @@
 import { getServerProfile } from '@/app/lib/profile'
+import { getServerProfile } from '@/app/lib/profile'
 import { getFirstName } from '@/app/lib/strings'
 
 import CuidarClient from './Client'
