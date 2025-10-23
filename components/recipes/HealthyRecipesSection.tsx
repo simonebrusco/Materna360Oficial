@@ -25,14 +25,9 @@ export default function HealthyRecipesSection() {
     let allowed = true
 
     try {
-      const globalNamespace = (globalThis as { materna360?: { recipesAllowed?: boolean; recipes?: unknown } }).materna360
-      if (globalNamespace && typeof globalNamespace === 'object') {
-        if (globalNamespace.recipesAllowed === false) {
-          allowed = false
-        }
-        if (Array.isArray((globalNamespace as { recipes?: unknown }).recipes) && (globalNamespace as { recipes?: unknown }).recipes?.length === 0) {
-          allowed = false
-        }
+      const globalNamespace = (globalThis as { materna360?: { recipesAllowed?: boolean } }).materna360
+      if (globalNamespace?.recipesAllowed === false) {
+        allowed = false
       }
 
       const directFlag = (globalThis as { __recipesAllowed?: unknown }).__recipesAllowed
@@ -55,10 +50,5 @@ export default function HealthyRecipesSection() {
     return <LoadingCard />
   }
 
-  try {
-    return <HealthyRecipesSectionInner />
-  } catch (error) {
-    console.error('[HealthyRecipesSection] Falha ao renderizar bloco principal:', error)
-    return <EmptyState />
-  }
+  return <HealthyRecipesSectionInner />
 }
