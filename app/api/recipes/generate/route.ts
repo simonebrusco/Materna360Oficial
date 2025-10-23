@@ -6,6 +6,8 @@ import {
   RecipeGenerationRequest,
   RecipeGenerationResponse,
   RecipeTimeOption,
+  RecipeCourseOption,
+  RecipeDietaryOption,
   ensureRecipeCompliance,
   isUnderSixMonths,
   mapMonthsToRecipeBand,
@@ -115,6 +117,23 @@ const RESPONSE_SCHEMA = {
   },
 }
 
+const COURSE_OPTIONS: RecipeCourseOption[] = [
+  'prato_quente',
+  'sopas_caldo',
+  'saladas',
+  'lanches_rapidos',
+  'sobremesas',
+  'sucos_smoothies',
+]
+
+const DIETARY_OPTIONS: RecipeDietaryOption[] = [
+  'vegetariano',
+  'vegano',
+  'sem_lactose',
+  'sem_gluten',
+  'sem_acucar_adicionado',
+]
+
 const clampServings = (value: number) => {
   if (!Number.isFinite(value)) {
     return 2
@@ -143,11 +162,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
+    const courses = Array.isArray(body?.filters?.courses) ? sanitizeIngredients(body.filters.courses) : []
+    const dietary = Array.isArray(body?.filters?.dietary) ? sanitizeIngredients(body.filters.dietary) : []
+
     payload = {
       ingredients: sanitizeIngredients(body?.ingredients),
       filters: {
-        courses: Array.isArray(body?.filters?.courses) ? sanitizeIngredients(body.filters.courses) : [],
-        dietary: Array.isArray(body?.filters?.dietary) ? sanitizeIngredients(body.filters.dietary) : [],
+        courses: courses.filter((course): course is RecipeCourseOption => COURSE_OPTIONS.includes(course as RecipeCourseOption)),
+        dietary: dietary.filter((option): option is RecipeDietaryOption =>
+          DIETARY_OPTIONS.includes(option as RecipeDietaryOption)
+        ),
         time: normalizeTimeFilter(body?.filters?.time),
       },
       servings: clampServings(Number(body?.servings ?? 2)),
