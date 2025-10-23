@@ -161,7 +161,7 @@ export function ProfessionalsSectionClient({
   initialFilters,
   enableUrlSync = true,
 }: ProfessionalsSectionClientProps) {
-  const safeProfessionals = Array.isArray(professionals) ? professionals : []
+  const safeProfessionals = useMemo(() => (Array.isArray(professionals) ? professionals : []), [professionals])
 
   const [filters, setFilters] = useState<ProfessionalsFilters>(() => sanitizeFilters(initialFilters ?? DEFAULT_PROFESSIONAL_FILTERS))
   const [searchDraft, setSearchDraft] = useState(filters.q ?? '')
