@@ -86,13 +86,18 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
         <div className="grid gap-8 p-8 sm:grid-cols-[200px,1fr]">
           <div className="flex flex-col items-center gap-4">
             <div className="relative h-40 w-40 overflow-hidden rounded-3xl bg-secondary/50 shadow-soft">
-              <Image
-                src={professional.avatarUrl}
-                alt={`Foto de ${professional.name}`}
-                fill
-                sizes="160px"
-                className="object-cover"
-              />
+              {renderPlainImages ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={professional.avatarUrl} alt={`Foto de ${professional.name}`} className="h-full w-full object-cover" />
+              ) : (
+                <Image
+                  src={professional.avatarUrl}
+                  alt={`Foto de ${professional.name}`}
+                  fill
+                  sizes="160px"
+                  className="object-cover"
+                />
+              )}
             </div>
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
               Primeira avaliação gratuita
