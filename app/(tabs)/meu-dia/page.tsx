@@ -1,4 +1,5 @@
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
+import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 import { getDailyIndex } from '@/app/lib/dailyMessage'
 
 import { MeuDiaClient } from './Client'
