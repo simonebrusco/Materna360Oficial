@@ -730,8 +730,8 @@ export function HealthyRecipesSection() {
 
       {recipes.length === 0 && !hasGenerated && (
         <Reveal>
-          <Card className="p-6">
-            <h3 className="text-base font-semibold text-support-1">Sugestões rápidas de hoje</h3>
+        <Card className="section-card">
+          <h3 className="text-base font-semibold text-support-1">Sugestões rápidas de hoje</h3>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {QUICK_SUGGESTIONS.map((item) => (
                 <div key={item.title} className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-soft">
