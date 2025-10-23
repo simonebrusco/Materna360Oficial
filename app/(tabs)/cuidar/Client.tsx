@@ -48,7 +48,7 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
                 </span>
               )}
             </div>
-            <p className="section-subtitle max-w-3xl text-balance" aria-label={subheading}>
+            <p className="section-subtitle max-w-3xl" aria-label={subheading}>
               {subheading}
             </p>
           </div>
