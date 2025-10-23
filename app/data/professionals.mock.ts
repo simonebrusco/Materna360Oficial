@@ -124,6 +124,7 @@ export const PROFESSIONALS_MOCK: Professional[] = [
       'Orienta responsáveis sobre sinais de alerta e encaminhamentos.',
     ],
     approaches: ['Parentalidade positiva', 'Neuroeducação'],
+    availableIn48h: false,
   },
   {
     id: 'pros-helena-nutricao',
