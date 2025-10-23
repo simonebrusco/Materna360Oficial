@@ -42,6 +42,9 @@ const professionals = [
 export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
   const trimmedName = firstName.trim()
   const hasName = trimmedName.length > 0
+  const subheadingTail =
+    'seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.'
+  const subheading = hasName ? `${trimmedName}, ${subheadingTail}` : `Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.`
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
@@ -71,8 +74,8 @@ export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
                 </span>
               )}
             </div>
-            <p className="max-w-2xl text-sm text-support-2 md:text-base">
-              Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.
+            <p className="max-w-2xl text-sm text-support-2 md:text-base" aria-label={subheading}>
+              {subheading}
             </p>
           </div>
         </Reveal>
