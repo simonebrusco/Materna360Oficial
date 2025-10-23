@@ -98,6 +98,11 @@ export function ProfileForm() {
             genero: child?.genero === 'menina' ? 'menina' : 'menino',
             idadeMeses: Number.isFinite(Number(child?.idadeMeses)) && Number(child?.idadeMeses) >= 0 ? Number(child.idadeMeses) : 0,
             nome: typeof child?.nome === 'string' ? child.nome : '',
+            alergias: Array.isArray(child?.alergias)
+              ? child.alergias
+                  .map((item: unknown) => (typeof item === 'string' ? item.trim() : ''))
+                  .filter((item: string) => item.length > 0)
+              : [],
           })),
           figurinha: isProfileStickerId(data?.figurinha) ? data.figurinha : '',
         })
