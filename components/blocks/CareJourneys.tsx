@@ -227,12 +227,12 @@ export function CareJourneys() {
         createPortal(
           <div className="journey-layer">
             <div
-              className="journey-overlay fixed inset-0 z-[2147483647] bg-black/25 backdrop-blur-sm"
+              className="modal-overlay"
               onClick={() => setActiveJourneyId(null)}
               aria-hidden="true"
             />
-            <div className="journey-modal fixed inset-0 z-[2147483647] flex items-center justify-center px-4 py-10">
-              <Card className="pointer-events-auto relative w-full max-w-xl space-y-6 rounded-3xl bg-white/95 p-7 shadow-elevated">
+            <div className="modal-container items-center justify-center px-4 py-10">
+              <Card className="section-card pointer-events-auto relative mx-auto w-full max-w-xl space-y-6 bg-white/95 shadow-elevated">
                 <button
                   type="button"
                   aria-label="Fechar jornada"
