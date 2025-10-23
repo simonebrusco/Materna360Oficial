@@ -140,6 +140,21 @@ export function ProfileForm() {
           return { ...child, genero: value === 'menina' ? 'menina' : 'menino' }
         }
 
+        if (key === 'alergias') {
+          const base = Array.isArray(value)
+            ? value
+            : typeof value === 'string'
+            ? value.split(',')
+            : []
+          const normalized = base
+            .map((item) => (typeof item === 'string' ? item.trim() : ''))
+            .filter((item) => item.length > 0)
+          const unique = Array.from(new Set(normalized.map((item) => item.toLocaleLowerCase('pt-BR'))))
+            .map((keyName) => normalized.find((item) => item.toLocaleLowerCase('pt-BR') === keyName) ?? '')
+            .filter((item) => item.length > 0)
+          return { ...child, alergias: unique }
+        }
+
         return { ...child, [key]: typeof value === 'string' ? value : child[key] }
       }),
     }))
