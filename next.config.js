@@ -32,11 +32,9 @@ const nextConfig = {
     ]
   },
   webpack(config, { isServer }) {
-    if (isServer && config?.output && typeof config.output.chunkFilename === 'string') {
-      const needsPrefix = !config.output.chunkFilename.startsWith('chunks/')
-      if (needsPrefix) {
-        config.output.chunkFilename = `chunks/${config.output.chunkFilename}`
-      }
+    if (isServer && config?.output) {
+      config.output.chunkFilename = 'chunks/[name].js'
+      config.output.hotUpdateChunkFilename = 'chunks/[name].hot-update.js'
     }
 
     return config
