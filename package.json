@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:recipes": "tsx tests/healthyRecipes.test.ts tests/plannerServer.test.ts"
+    "test:recipes": "tsx --test tests"
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",
