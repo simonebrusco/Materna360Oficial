@@ -9,15 +9,17 @@ export function trackProsClick(payload: {
   try {
     const body = JSON.stringify(payload)
     const blob = new Blob([body], { type: 'application/json' })
-    if (navigator.sendBeacon?.('/api/telemetry/pros-click', blob)) {
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon?.('/api/telemetry/pros-click', blob)) {
       return
     }
-    void window.fetch('/api/telemetry/pros-click', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-      keepalive: true,
-    })
+    if (typeof window !== 'undefined') {
+      void window.fetch('/api/telemetry/pros-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      })
+    }
   } catch {
     // ignore telemetry errors
   }
