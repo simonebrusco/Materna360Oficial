@@ -125,7 +125,7 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
   }
 }
 
-export async function GET(request: Request): Promise<NextResponse<DailyMessageResponse>> {
+export async function GET(request: Request) {
   const now = new Date()
   const dateKey = getDateKey(now)
   const url = new URL(request.url)
