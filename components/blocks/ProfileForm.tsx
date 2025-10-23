@@ -409,6 +409,19 @@ export function ProfileForm() {
                             className={inputClasses}
                           />
                         </div>
+                        <div className="space-y-2 sm:col-span-3">
+                          <label htmlFor={`child-allergies-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                            Alergias (separe por vírgula)
+                          </label>
+                          <input
+                            id={`child-allergies-${child.id}`}
+                            type="text"
+                            value={child.alergias.join(', ')}
+                            onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
+                            className={inputClasses}
+                            placeholder="Ex.: leite, ovo, amendoim"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
