@@ -1,7 +1,5 @@
 import type { Professional } from '@/app/types/professionals'
 
-import type { Professional } from '@/app/types/professionals'
-
 export const PROFESSIONALS_MOCK: Professional[] = [
   {
     id: 'pros-carolina-psico',
