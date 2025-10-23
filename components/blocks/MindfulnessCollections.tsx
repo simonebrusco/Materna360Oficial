@@ -132,8 +132,8 @@ const resolveTrackFile = (file: string) => {
   return AUDIO_FILE_SRC_MAP[normalized] ?? normalized
 }
 
-function buildSrc(track: { file: string }) {
-  const resolved = resolveTrackFile(track.file)
+function buildSrc(file: string) {
+  const resolved = resolveTrackFile(file)
   if (resolved.startsWith('/')) return resolved
 
   const encoded = encodeURIComponent(resolved)
@@ -141,7 +141,7 @@ function buildSrc(track: { file: string }) {
 }
 
 function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItemProps) {
-  const src = useMemo(() => buildSrc(track), [track.file])
+  const src = useMemo(() => buildSrc(track.file), [track.file])
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
 
   useEffect(() => {
