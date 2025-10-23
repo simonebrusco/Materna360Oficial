@@ -302,6 +302,32 @@ export function FamilyPlanner() {
     }
   }, [selectedDayKey])
 
+  useEffect(() => {
+    const handlePlannerExternalAdd = (event: Event) => {
+      const custom = event as CustomEvent<{ dateKey?: string; item?: PlannerItem }>
+      const dateKey = custom.detail?.dateKey
+      const item = custom.detail?.item
+
+      if (!dateKey || !item) {
+        return
+      }
+
+      updatePlannerForDay(dateKey, (items) => {
+        const existingIds = new Set(items.map((entry) => entry.id))
+        if (existingIds.has(item.id)) {
+          return items
+        }
+        return [sanitizePlannerItem(item), ...items]
+      })
+    }
+
+    window.addEventListener('planner:item-added', handlePlannerExternalAdd)
+
+    return () => {
+      window.removeEventListener('planner:item-added', handlePlannerExternalAdd)
+    }
+  }, [])
+
   const updatePlannerForDay = (dateKey: string, updater: (items: PlannerItem[]) => PlannerItem[]) => {
     setPlannerData((previous) => {
       const currentItems = previous[dateKey] ?? []
