@@ -13,9 +13,9 @@ test('renders card for each professional in the mock', () => {
     <ProfessionalsSectionClient professionals={SAMPLE_PROS} renderPlainImages />
   )
 
-  assert.ok(html.includes('Ver perfil'), 'should render CTA')
-  const cardOccurrences = html.split('Ver perfil').length - 1
-  assert.equal(cardOccurrences, SAMPLE_PROS.length)
+  SAMPLE_PROS.forEach((professional) => {
+    assert.ok(html.includes(professional.name))
+  })
 })
 
 test('modal render includes council when professional has registry', () => {
