@@ -15,9 +15,6 @@ const RAW = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE || DEFAULT_AUDIO_BASE
 const AUDIO_BASE = sanitizeBase(RAW)
 
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
   },
