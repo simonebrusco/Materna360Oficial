@@ -29,7 +29,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { ProfessionalModal } from './ProfessionalModal'
 
 type ProfessionalsSectionClientProps = {
-  professionals: Professional[]
+  professionals?: Professional[]
   initialOpenId?: string
   renderPlainImages?: boolean
   initialFilters?: ProfessionalsFilters
