@@ -81,10 +81,6 @@ const AUDIO_FILE_SRC_MAP: Record<string, string> = {
   'suas-palavras-tem-poder.mp3': '/audio/mindfulness/suas-palavras-tem-poder.mp3',
 }
 
-const showDebug =
-  process.env.NEXT_PUBLIC_SHOW_AUDIO_DEBUG === '1' &&
-  process.env.NODE_ENV !== 'production'
-
 const GROUPS: MindfulnessGroup[] = [
   {
     key: 'reconnect',
@@ -170,7 +166,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
   }, [src])
 
   return (
-    <li className="rounded-2xl bg-white/90 p-4 shadow-soft transition-shadow duration-300 hover:shadow-elevated">
+    <li className="section-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -197,7 +193,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             preload="none"
             playsInline
             controlsList="nodownload"
-            style={{ width: '100%' }}
+            className="w-full"
             onLoadedMetadata={(event) => {
               const audio = event.currentTarget
               console.log('AUDIO METADATA:', audio.currentSrc, 'duration=', audio.duration)
@@ -217,15 +213,6 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             <source src={src} type="audio/mpeg" />
             Seu navegador não suporta a reprodução de áudio.
           </audio>
-          {showDebug && (
-            <p className="mt-2 break-all text-xs text-support-3">
-              <span className="opacity-70">src:</span>{' '}
-              <code>{src}</code> ·{' '}
-              <a href={src} target="_blank" rel="noreferrer">
-                Abrir arquivo
-              </a>
-            </p>
-          )}
         </div>
       </div>
     </li>
@@ -298,11 +285,11 @@ export function MindfulnessCollections() {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-7">
         {GROUPS.map((group, index) => (
           <Reveal key={group.key} delay={index * 90} className="h-full">
-            <Card className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#ffd8e6] via-white to-white p-7 text-left">
-              <div className="flex h-full flex-col gap-4">
+            <Card className="section-card relative h-full overflow-hidden bg-gradient-to-br from-[#ffd8e6] via-white to-white text-left">
+              <div className="flex h-full flex-col gap-5">
                 <span className="text-3xl" aria-hidden="true">
                   {group.icon}
                 </span>
@@ -314,7 +301,7 @@ export function MindfulnessCollections() {
                   <button
                     type="button"
                     onClick={() => setActiveGroupKey(group.key)}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform duration-300 hover:-translate-y-1 hover:shadow-elevated"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform duration-300 hover:-translate-y-1 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                     aria-label={`Abrir áudios da categoria ${group.title}`}
                   >
                     <span>Ouvir</span>
@@ -330,30 +317,15 @@ export function MindfulnessCollections() {
       {activeGroup && isMounted &&
         createPortal(
           <>
+            <div className="modal-overlay" onClick={() => setActiveGroupKey(null)} />
             <div
-              className="mindfulness-overlay"
-              style={{ position: 'fixed', inset: 0, zIndex: 2147483606, background: 'rgba(0,0,0,0.25)', pointerEvents: 'auto' }}
-              onClick={() => setActiveGroupKey(null)}
-            />
-            <div
-              className="mindfulness-modal"
+              className="modal-container"
               role="dialog"
               aria-modal="true"
               aria-labelledby={`mindfulness-modal-${activeGroup.key}`}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                margin: 'auto',
-                maxWidth: '720px',
-                width: 'calc(100% - 32px)',
-                zIndex: 2147483607,
-                maxHeight: 'calc(100% - 48px)',
-                overflowY: 'auto',
-                pointerEvents: 'auto',
-              }}
               onClick={(event) => event.stopPropagation()}
             >
-              <Card className="relative w-full rounded-3xl p-7">
+              <Card className="section-card relative w-full max-w-2xl bg-white/95">
                 <button
                   type="button"
                   onClick={() => setActiveGroupKey(null)}
@@ -363,7 +335,7 @@ export function MindfulnessCollections() {
                   <X className="h-5 w-5" />
                 </button>
 
-                <div className="pr-10">
+                <div className="pr-6 sm:pr-10">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl" aria-hidden="true">
                       {activeGroup.icon}
