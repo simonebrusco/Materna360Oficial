@@ -1,6 +1,8 @@
 import React, { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 
+import { BreathTimer as BreathBlock } from '@/components/blocks/BreathTimer'
+
 const ProfessionalsSection = dynamic(
   () => import('@/components/support/ProfessionalsSection').then((module) => module.ProfessionalsSection ?? module.default ?? module),
   { ssr: false, loading: () => <div className="animate-pulse rounded-2xl h-40 bg-white/60 border" /> }
@@ -10,8 +12,6 @@ const HealthyRecipesSection = dynamic(
   () => import('@/components/blocks/HealthyRecipes').then((module) => module.HealthyRecipesSection ?? module.default ?? module),
   { ssr: false, loading: () => <div className="animate-pulse rounded-2xl h-40 bg-white/60 border" /> }
 )
-
-import { BreathTimer as BreathBlock } from '@/components/blocks/BreathTimer'
 
 export default async function Page() {
   return (
