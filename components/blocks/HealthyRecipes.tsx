@@ -445,7 +445,7 @@ export function HealthyRecipesSection() {
   }
 
   return (
-    <div id="receitas-saudaveis" className="space-y-5">
+    <section id="receitas-saudaveis" className="space-y-6">
       <Reveal>
         <Card className="p-7">
           <div className="space-y-6">
@@ -844,6 +844,6 @@ export function HealthyRecipesSection() {
           duration={3500}
         />
       )}
-    </div>
+    </section>
   )
 }
