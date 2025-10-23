@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { PROFESSIONALS_MOCK } from '@/app/data/professionals.mock'
