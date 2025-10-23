@@ -629,10 +629,10 @@ export function HealthyRecipesSection() {
       )}
 
       {recipes.length > 0 && (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {recipes.map((recipe) => (
             <Reveal key={recipe.title}>
-              <Card className="flex h-full flex-col justify-between p-6">
+              <Card className="section-card flex h-full flex-col justify-between">
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-lg font-semibold text-support-1">{recipe.title}</h3>
