@@ -210,6 +210,14 @@ export function ProfileForm() {
       filhos: form.filhos.map((child) => ({
         ...child,
         nome: child.nome.trim(),
+        alergias: Array.from(
+          new Set(
+            child.alergias
+              .map((item) => item.trim())
+              .filter((item) => item.length > 0)
+              .map((item) => item.toLocaleLowerCase('pt-BR'))
+          )
+        ).map((key) => child.alergias.find((item) => item.toLocaleLowerCase('pt-BR') === key) ?? ''),
       })),
       figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : '',
     }
