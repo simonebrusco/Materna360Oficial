@@ -123,10 +123,18 @@ export const buildFilterComparisonKey = (filters: ProfessionalsFilters) => {
 }
 
 export const sanitizeFilters = (filters: ProfessionalsFilters): ProfessionalsFilters => {
+  const sanitizedSpecialties = Array.from(new Set(normalizeArray(filters.specialties)))
+  const rawFormats = Array.isArray(filters.formats) ? filters.formats : []
+  const sanitizedFormats = Array.from(
+    new Set(
+      rawFormats.filter((format): format is 'online' | 'presencial' => format === 'online' || format === 'presencial')
+    )
+  )
+
   return {
     profession: filters.profession ?? 'todas',
-    specialties: normalizeArray(filters.specialties),
-    formats: normalizeArray(filters.formats as string[] as ('online' | 'presencial')[]),
+    specialties: sanitizedSpecialties,
+    formats: sanitizedFormats,
     region: filters.region?.trim() ?? '',
     ageBand: filters.ageBand ?? 'todas',
     language: filters.language ?? 'pt-BR',
