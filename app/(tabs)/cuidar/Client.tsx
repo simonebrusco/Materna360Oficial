@@ -39,7 +39,7 @@ const professionals = [
   },
 ]
 
-export function CuidarClient({ firstName = '' }: CuidarClientProps) {
+export default function CuidarClient({ firstName = '' }: CuidarClientProps) {
   const trimmedName = firstName.trim()
   const hasName = trimmedName.length > 0
 
