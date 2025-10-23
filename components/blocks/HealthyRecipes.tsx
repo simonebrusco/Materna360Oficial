@@ -78,7 +78,7 @@ const QUICK_SUGGESTIONS = [
   },
 ]
 
-const CATEGORY_OPTIONS = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
+const CATEGORY_OPTIONS = VALID_PLANNER_CATEGORIES
 
 type PlannerCategory = (typeof CATEGORY_OPTIONS)[number]
 
