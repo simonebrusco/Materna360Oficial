@@ -217,7 +217,9 @@ export function ProfileForm() {
               .filter((item) => item.length > 0)
               .map((item) => item.toLocaleLowerCase('pt-BR'))
           )
-        ).map((key) => child.alergias.find((item) => item.toLocaleLowerCase('pt-BR') === key) ?? ''),
+        )
+          .map((key) => child.alergias.find((item) => item.toLocaleLowerCase('pt-BR') === key) ?? '')
+          .filter((item) => item.length > 0),
       })),
       figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : '',
     }
