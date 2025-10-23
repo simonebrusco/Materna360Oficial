@@ -1,7 +1,5 @@
 import { cookies } from 'next/headers'
 
-import { cookies } from 'next/headers'
-
 const PROFILE_COOKIE = 'materna360-profile'
 
 type ProfileCookie = {
