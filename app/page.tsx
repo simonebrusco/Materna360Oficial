@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
-export const dynamic = 'force-dynamic'
-
 const featureCards = [
   {
     href: '/meu-dia',
