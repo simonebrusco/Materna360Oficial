@@ -10,6 +10,7 @@ import {
 } from '@/app/lib/plannerServer'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
   let body: any
