@@ -227,7 +227,7 @@ export function ProfessionalsSectionClient({
 
   // Debounced search updates filters
   useEffect(() => {
-    const handler = window.setTimeout(() => {
+    const handler = setTimeout(() => {
       updateFilters((previous) => {
         if (previous.q === searchDraft) {
           return previous
@@ -236,7 +236,7 @@ export function ProfessionalsSectionClient({
       })
     }, URL_DEBOUNCE_MS)
 
-    return () => window.clearTimeout(handler)
+    return () => clearTimeout(handler)
   }, [searchDraft, updateFilters])
 
   // Skeleton handling for non-page changes
