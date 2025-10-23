@@ -456,7 +456,7 @@ export function ProfessionalsSectionClient({
 
   const skeletonCards = Array.from({ length: PAGE_SIZE }, (_, index) => (
     <Reveal key={`skeleton-${index}`} delay={index * 45}>
-      <Card className="relative flex h-full flex-col gap-5 rounded-3xl bg-white/70 p-6 shadow-soft">
+      <Card className="section-card flex h-full flex-col gap-5 p-5 md:p-6">
         <div className="flex items-start gap-4">
           <div className="h-16 w-16 rounded-2xl bg-secondary/40 animate-pulse" />
           <div className="flex-1 space-y-3">
