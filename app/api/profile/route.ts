@@ -18,6 +18,7 @@ type ChildProfile = {
   genero: 'menino' | 'menina'
   idadeMeses: number
   nome: string
+  alergias: string[]
 }
 
 type ProfilePayload = {
@@ -42,16 +43,39 @@ const defaultProfile = (): ProfilePayload => ({
       genero: 'menino',
       idadeMeses: 0,
       nome: '',
+      alergias: [],
     },
   ],
   figurinha: '',
 })
+
+const sanitizeStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const seen = new Set<string>()
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter((item) => {
+      if (!item) {
+        return false
+      }
+      const key = item.toLocaleLowerCase('pt-BR')
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+}
 
 const sanitizeChild = (child: any): ChildProfile => ({
   id: typeof child?.id === 'string' && child.id.trim() ? child.id : createId(),
   genero: child?.genero === 'menina' ? 'menina' : 'menino',
   idadeMeses: Number.isFinite(Number(child?.idadeMeses)) && Number(child?.idadeMeses) >= 0 ? Number(child.idadeMeses) : 0,
   nome: typeof child?.nome === 'string' ? child.nome.trim() : '',
+  alergias: sanitizeStringArray(child?.alergias),
 })
 
 const sanitizeProfile = (value: any): ProfilePayload => {
