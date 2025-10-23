@@ -22,6 +22,8 @@ import {
   sanitizeFilters,
   sortProfessionals,
 } from '@/app/lib/professionals/match'
+import { buildWaLink, normalizeE164 } from '@/lib/pros/whatsapp'
+import { trackProsClick } from '@/lib/telemetry/pros'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -64,6 +66,7 @@ const SORT_LABEL: Record<NonNullable<ProfessionalsFilters['sort']>, string> = {
 const PAGE_SIZE = 8
 const URL_DEBOUNCE_MS = 250
 const SKELETON_DURATION_MS = 480
+const DEFAULT_COUNTRY_CODE = process.env.NEXT_PUBLIC_DEFAULT_COUNTRY || '55'
 
 const buildFormatBadges = (professional: Professional) => {
   const badges: string[] = []
@@ -271,6 +274,8 @@ export function ProfessionalsSectionClient({
     return sortProfessionals(matched, sanitizedFilters.sort)
   }, [safeProfessionals, sanitizedFilters])
 
+  const selectedTopic = sanitizedFilters.specialties && sanitizedFilters.specialties.length > 0 ? sanitizedFilters.specialties[0] : undefined
+
   const totalResults = filteredProfessionals.length
   const totalPages = Math.max(1, Math.ceil(totalResults / PAGE_SIZE))
   const currentPage = Math.min(sanitizedFilters.page ?? 1, totalPages)
@@ -351,6 +356,8 @@ export function ProfessionalsSectionClient({
 
   const renderCard = (professional: Professional, index: number) => {
     const formatBadges = buildFormatBadges(professional)
+    const normalizedWhatsapp = normalizeE164(professional.whatsapp ?? '', DEFAULT_COUNTRY_CODE)
+    const canContact = normalizedWhatsapp.length > 1
 
     return (
       <Reveal key={professional.id} delay={index * 60}>
@@ -446,12 +453,23 @@ export function ProfessionalsSectionClient({
             <Button
               size="sm"
               variant="primary"
-              disabled
-              title="Disponível em breve"
-              aria-label={`Vamos conversar com ${professional.name} em breve`}
+              disabled={!canContact}
+              title={canContact ? undefined : 'Contato indisponível'}
+              onClick={() => canContact && handleWhatsappClick(professional)}
+              aria-label="Conversar no WhatsApp"
             >
               Vamos conversar?
             </Button>
+            {professional.calendlyUrl ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleScheduleClick(professional)}
+                aria-label="Abrir agenda"
+              >
+                Agendar
+              </Button>
+            ) : null}
           </div>
         </Card>
       </Reveal>
@@ -730,6 +748,10 @@ export function ProfessionalsSectionClient({
         professional={selectedProfessional}
         open={Boolean(selectedProfessional)}
         onClose={() => setSelectedProfessionalId(null)}
+        onContact={handleWhatsappClick}
+        onSchedule={handleScheduleClick}
+        canContact={selectedProfessional ? normalizeE164(selectedProfessional.whatsapp ?? '', DEFAULT_COUNTRY_CODE).length > 1 : false}
+        contactTooltip="Contato indisponível"
         renderPlainImages={renderPlainImages}
       />
     </div>
