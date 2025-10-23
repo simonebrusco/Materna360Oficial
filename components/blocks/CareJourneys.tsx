@@ -212,7 +212,7 @@ export function CareJourneys() {
                     setActiveJourneyId(journey.id)
                   }}
                   className="shrink-0"
->
+                >
                   Ver mais
                 </Button>
               </div>
