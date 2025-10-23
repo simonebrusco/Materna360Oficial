@@ -174,7 +174,7 @@ export function CareJourneys() {
   }
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🌼 Jornadas do Cuidar</h2>
@@ -285,6 +285,6 @@ export function CareJourneys() {
           </div>,
           document.body
         )}
-    </div>
+    </section>
   )
 }
