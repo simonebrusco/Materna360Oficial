@@ -1,9 +1,10 @@
 export function normalizeE164(raw: string, defaultCountry = '55') {
   if (!raw) return ''
-  const digits = raw.replace(/\D+/g, '')
+  const trimmed = raw.trim()
+  const digits = trimmed.replace(/\D+/g, '')
   if (!digits) return ''
   if (digits.startsWith('00')) return `+${digits.slice(2)}`
-  if (digits.startsWith('+' )) return `+${digits.slice(1)}`
+  if (trimmed.startsWith('+')) return `+${digits}`
   if (digits.startsWith(defaultCountry)) return `+${digits}`
   return `+${defaultCountry}${digits}`
 }
