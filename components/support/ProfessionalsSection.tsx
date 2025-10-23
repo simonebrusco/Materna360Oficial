@@ -1,3 +1,7 @@
+'use client'
+
+import React from 'react'
+
 import { PROFESSIONALS_MOCK } from '@/app/data/professionals.mock'
 import type { Professional } from '@/app/types/professionals'
 import { Reveal } from '@/components/ui/Reveal'
@@ -9,7 +13,7 @@ type ProfessionalsSectionProps = {
   initialProfessionalId?: string
 }
 
-export function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK, initialProfessionalId }: ProfessionalsSectionProps) {
+function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK, initialProfessionalId }: ProfessionalsSectionProps) {
   return (
     <section className="space-y-8" aria-labelledby="professionals-support-title">
       <Reveal>
@@ -28,3 +32,6 @@ export function ProfessionalsSection({ professionals = PROFESSIONALS_MOCK, initi
     </section>
   )
 }
+
+export default ProfessionalsSection
+export { ProfessionalsSection }
