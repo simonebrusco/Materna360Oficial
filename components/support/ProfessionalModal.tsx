@@ -39,7 +39,7 @@ const AGE_BAND_LABEL: Record<Professional['ageBands'][number], string> = {
   '4-6a': '4 a 6 anos',
 }
 
-export function ProfessionalModal({ professional, open, onClose, onContact }: ProfessionalModalProps) {
+export function ProfessionalModal({ professional, open, onClose, onContact, renderPlainImages = false }: ProfessionalModalProps) {
   useEffect(() => {
     if (!open) return
 
