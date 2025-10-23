@@ -1,5 +1,4 @@
 import { PROFESSIONALS_MOCK } from '@/app/data/professionals.mock'
-import { PROFESSIONALS_MOCK } from '@/app/data/professionals.mock'
 import type { Professional } from '@/app/types/professionals'
 import { Reveal } from '@/components/ui/Reveal'
 
