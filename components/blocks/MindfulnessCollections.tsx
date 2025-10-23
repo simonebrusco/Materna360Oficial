@@ -166,7 +166,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
   }, [src])
 
   return (
-    <li className="section-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated">
+    <li className="section-card p-5 transition-shadow duration-300 hover:shadow-elevated">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
