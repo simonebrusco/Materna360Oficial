@@ -108,16 +108,6 @@ export function ProfessionalModal({ professional, open, onClose, onContact, rend
                   Primeira avaliação gratuita
                 </span>
               ) : null}
-              <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold text-support-2">
-                {professional.languages.map((language) => (
-                  <span
-                    key={`${professional.id}-lang-${language}`}
-                    className="rounded-full bg-white/85 px-3 py-0.5 text-support-1 shadow-soft"
-                  >
-                    {LANGUAGE_LABEL[language] ?? language}
-                  </span>
-                ))}
-              </div>
             </div>
 
             <div className="space-y-5">
