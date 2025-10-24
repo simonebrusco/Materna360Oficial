@@ -9,7 +9,6 @@ import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import {
   MINDFULNESS_TRACKS,
-  MINDFULNESS_TRACKS_BY_ID,
   MindfulnessTrack,
   getMindfulnessUrl,
 } from '@/data/mindfulnessManifest'
@@ -52,10 +51,14 @@ const FILE_TO_TRACK_ID: Record<string, string> = MINDFULNESS_TRACKS.reduce<Recor
 
 Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
   const normalized = canonical.replace(/^\/audio\/mindfulness\//, '')
-  const track = MINDFULNESS_TRACKS_BY_ID[FILE_TO_TRACK_ID[normalized] ?? normalized]
-  if (track) {
-    FILE_TO_TRACK_ID[legacy] = track.id
-    FILE_TO_TRACK_ID[canonical] = track.id
+  const canonicalId =
+    FILE_TO_TRACK_ID[normalized] ??
+    FILE_TO_TRACK_ID[canonical] ??
+    MINDFULNESS_TRACKS.find((track) => track.file === normalized)?.id
+
+  if (canonicalId) {
+    FILE_TO_TRACK_ID[legacy] = canonicalId
+    FILE_TO_TRACK_ID[canonical] = canonicalId
   }
 })
 
@@ -318,7 +321,7 @@ export function MindfulnessCollections() {
                 <button
                   type="button"
                   onClick={() => setActiveGroupKey(null)}
-                  className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duração-200 hover:-translate-y-0.5 hover:shadow-elevated"
+                  className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
                   aria-label="Fechar modal"
                 >
                   <X className="h-5 w-5" />
