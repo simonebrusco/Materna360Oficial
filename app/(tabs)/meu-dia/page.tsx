@@ -1,6 +1,4 @@
 import { cookies } from 'next/headers'
-
-import { cookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
 import { getDayIndex } from '@/app/lib/dailyMessage'
