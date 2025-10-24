@@ -40,7 +40,6 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
 
   const handleReset = () => {
     setFilters(DEFAULT_FILTERS)
-    onSearch(DEFAULT_FILTERS)
   }
 
   return (
