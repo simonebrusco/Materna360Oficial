@@ -5,7 +5,7 @@
 import * as React from 'react'
 
 type RevealProps = {
-  children: ReactNode
+  children: React.ReactNode
   className?: string
   delay?: number
 }
