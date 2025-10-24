@@ -111,6 +111,7 @@ export function ProfileForm() {
         console.error(error)
         if (isMounted) {
           setForm(defaultState())
+          setBabyBirthdate('')
         }
       }
 
