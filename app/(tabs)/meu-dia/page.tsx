@@ -1,12 +1,13 @@
 import { cookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
+import { MeuDiaClient } from './Client'
+
 import { getDayIndex } from '@/app/lib/dailyMessage'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
-
-import { MeuDiaClient } from './Client'
+import { Reveal } from '@/components/ui/Reveal'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -16,20 +17,21 @@ const PROFILE_COOKIE = 'm360_profile'
 
 const firstNameOf = (name?: string) => {
   if (!name) {
-    return undefined
+    return 'Mãe'
   }
 
   const trimmed = name.trim()
   if (!trimmed) {
-    return undefined
+    return 'Mãe'
   }
 
   const [first] = trimmed.split(/\s+/)
   if (!first) {
-    return undefined
+    return 'Mãe'
   }
 
-  return first.charAt(0).toUpperCase() + first.slice(1)
+  const normalized = first.charAt(0).toUpperCase() + first.slice(1)
+  return normalized || 'Mãe'
 }
 
 const resolveGreetingPrefix = (date: Date) => {
@@ -63,46 +65,62 @@ const formatDisplayDate = (date: Date) =>
     timeZone: TIME_ZONE,
   }).format(date)
 
-export default async function MeuDiaPage() {
+export default async function Page() {
   noStore()
 
-  const cookieStore = cookies()
-  const rawProfile = cookieStore.get(PROFILE_COOKIE)?.value
+  const jar = cookies()
+  const rawProfile = jar.get(PROFILE_COOKIE)?.value
 
-  let profile: { motherName?: string; nomeMae?: string } = {}
+  let motherName: string | undefined
   if (rawProfile) {
     try {
-      const parsed = JSON.parse(rawProfile)
-      if (parsed && typeof parsed === 'object') {
-        profile = parsed as { motherName?: string; nomeMae?: string }
-      }
+      const parsed = JSON.parse(rawProfile) as { motherName?: string; nomeMae?: string }
+      const candidate = parsed?.motherName ?? parsed?.nomeMae
+      motherName = typeof candidate === 'string' ? candidate : undefined
     } catch (error) {
       console.error('[MeuDia] Failed to parse profile cookie:', error)
     }
   }
 
-  const savedName = firstNameOf(profile.motherName ?? profile.nomeMae)
   const now = new Date()
+  const displayName = firstNameOf(motherName)
+  const greetingPrefix = resolveGreetingPrefix(now)
+  const greeting = `${greetingPrefix}, ${displayName}!`
+  const formattedDate = formatDisplayDate(now)
+
   const currentDateKey = getTodayDateKey(now)
   const weekStartKey = getWeekStartKey(currentDateKey)
   const { labels: weekLabels } = buildWeekLabels(weekStartKey)
   const totalMessages = DAILY_MESSAGES.length
   const selectedIndex = getDayIndex(currentDateKey, totalMessages)
   const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
-  const dailyGreeting = baseMessage && savedName ? `${savedName}, ${baseMessage}` : baseMessage
-  const greetingPrefix = resolveGreetingPrefix(now)
-  const displayName = savedName ?? 'Mãe'
-  const greetingText = `${greetingPrefix}, ${displayName}!`
-  const formattedDate = formatDisplayDate(now)
+  const dailyGreeting = baseMessage && displayName ? `${displayName}, ${baseMessage}` : baseMessage
 
   return (
-    <MeuDiaClient
-      dailyGreeting={dailyGreeting}
-      greetingText={greetingText}
-      formattedDate={formattedDate}
-      currentDateKey={currentDateKey}
-      weekStartKey={weekStartKey}
-      weekLabels={weekLabels}
-    />
+    <main className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(65%_65%_at_50%_0%,rgba(255,216,230,0.55),transparent)]"
+      />
+      <div className="relative space-y-8">
+        <Reveal>
+          <div className="space-y-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Hoje</span>
+            <h1 data-testid="greeting-text" className="text-3xl font-semibold text-support-1 md:text-4xl">
+              {greeting}
+            </h1>
+            <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
+            <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
+          </div>
+        </Reveal>
+
+        <MeuDiaClient
+          dailyGreeting={dailyGreeting}
+          currentDateKey={currentDateKey}
+          weekStartKey={weekStartKey}
+          weekLabels={weekLabels}
+        />
+      </div>
+    </main>
   )
 }
