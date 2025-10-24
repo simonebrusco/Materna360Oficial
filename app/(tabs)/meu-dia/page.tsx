@@ -1,5 +1,4 @@
 import { getDailyIndex } from '@/app/lib/dailyMessage'
-import { getDailyIndex } from '@/app/lib/dailyMessage'
 import { getServerProfile } from '@/app/lib/profile'
 import { getFirstName } from '@/app/lib/strings'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
