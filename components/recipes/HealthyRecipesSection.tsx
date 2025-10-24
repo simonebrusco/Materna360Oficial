@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { getBabyProfile } from '@/app/lib/profile'
+import { getBabyProfile } from '@/app/lib/baby'
 import {
   BABY_STAGE_RECIPES,
   FAMILY_RECIPES_SUGGESTIONS,
