@@ -1,5 +1,3 @@
-import React from 'react'
-
 import * as React from 'react'
 
 interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
