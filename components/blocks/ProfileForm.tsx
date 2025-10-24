@@ -256,10 +256,10 @@ export function ProfileForm() {
         credentials: 'include',
         cache: 'no-store',
         body: JSON.stringify({
+          ...trimmedState,
           motherName: trimmedState.nomeMae,
           nomeMae: trimmedState.nomeMae,
           figurinha: figurinhaToPersist,
-          ...trimmedState,
         }),
       })
 
