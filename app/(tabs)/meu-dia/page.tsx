@@ -5,8 +5,6 @@ import { getFirstName } from '@/app/lib/strings'
 
 import { MeuDiaClient } from './Client'
 
-export const dynamic = 'force-dynamic'
-
 export default async function MeuDiaPage() {
   const { name } = await getServerProfile()
   const firstName = getFirstName(name)
