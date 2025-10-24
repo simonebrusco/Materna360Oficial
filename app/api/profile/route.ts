@@ -1,24 +1,25 @@
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
-const PROFILE_COOKIE = 'm360_profile'
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+const COOKIE = 'm360_profile'
+const ONE_YEAR = 60 * 60 * 24 * 365
 
-type ProfileCookie = Record<string, unknown> & {
+type Profile = {
   motherName?: string
   nomeMae?: string
+  filhos?: unknown
+  figurinha?: string
 }
 
-const readProfileCookie = (): ProfileCookie => {
-  const rawValue = cookies().get(PROFILE_COOKIE)?.value
-  if (!rawValue) {
+const parseCookie = (value: string | undefined): Record<string, unknown> => {
+  if (!value) {
     return {}
   }
 
   try {
-    const parsed = JSON.parse(rawValue)
+    const parsed = JSON.parse(value)
     if (parsed && typeof parsed === 'object') {
-      return parsed as ProfileCookie
+      return parsed as Record<string, unknown>
     }
   } catch (error) {
     console.error('[ProfileAPI] Failed to parse profile cookie:', error)
@@ -27,64 +28,71 @@ const readProfileCookie = (): ProfileCookie => {
   return {}
 }
 
-const sanitizeName = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') {
-    return undefined
-  }
-
-  const trimmed = value.trim()
-  if (!trimmed) {
-    return undefined
-  }
-
-  return trimmed
-}
-
 export async function GET() {
-  const stored = readProfileCookie()
-  const motherName = sanitizeName(stored.motherName ?? stored.nomeMae)
+  const raw = cookies().get(COOKIE)?.value
+  const data = raw ? parseCookie(raw) : {}
 
-  if (motherName) {
-    return NextResponse.json({ motherName, nomeMae: motherName })
-  }
-
-  return NextResponse.json({})
+  return NextResponse.json(data, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  })
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-    const current = readProfileCookie()
-    const next: ProfileCookie = { ...current }
+    const body = (await req.json()) as Profile
+    const effectiveName = (body.nomeMae ?? body.motherName ?? '').trim()
 
-    const incomingName = sanitizeName(body?.motherName ?? body?.nomeMae)
-    if (incomingName) {
-      next.motherName = incomingName
-      next.nomeMae = incomingName
-    } else if (Object.prototype.hasOwnProperty.call(body ?? {}, 'motherName') || Object.prototype.hasOwnProperty.call(body ?? {}, 'nomeMae')) {
-      delete next.motherName
-      delete next.nomeMae
+    const jar = cookies()
+    const prev = parseCookie(jar.get(COOKIE)?.value)
+    const next: Record<string, unknown> = { ...prev }
+
+    if (effectiveName) {
+      next.motherName = effectiveName
+      next.nomeMae = effectiveName
     }
 
-    Object.entries(body ?? {}).forEach(([key, value]) => {
-      if (key === 'motherName' || key === 'nomeMae') {
-        return
+    if (Object.prototype.hasOwnProperty.call(body, 'figurinha')) {
+      const figurinha = typeof body.figurinha === 'string' ? body.figurinha.trim() : ''
+      if (figurinha) {
+        next.figurinha = figurinha
+      } else {
+        delete next.figurinha
       }
-      next[key] = value
-    })
+    }
 
-    cookies().set({
-      name: PROFILE_COOKIE,
+    if (Object.prototype.hasOwnProperty.call(body, 'filhos')) {
+      next.filhos = body.filhos
+    }
+
+    jar.set({
+      name: COOKIE,
       value: JSON.stringify(next),
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
-      maxAge: COOKIE_MAX_AGE,
+      maxAge: ONE_YEAR,
     })
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json(
+      { ok: true, ...next },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    )
   } catch (error) {
     console.error('[ProfileAPI] Failed to persist profile cookie:', error)
-    return NextResponse.json({ ok: false }, { status: 400 })
+    return NextResponse.json(
+      { ok: false },
+      {
+        status: 400,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    )
   }
 }
