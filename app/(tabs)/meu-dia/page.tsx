@@ -1,4 +1,4 @@
-import { getDailyIndex } from '@/app/lib/dailyMessage'
+import { getDayIndex } from '@/app/lib/dailyMessage'
 import { getServerProfile } from '@/app/lib/profile'
 import { getFirstName } from '@/app/lib/strings'
 import { getTodayDateKey } from '@/lib/dailyActivity'
@@ -43,18 +43,19 @@ export default async function MeuDiaPage() {
   const { name } = await getServerProfile()
   const firstName = getFirstName(name)
   const now = new Date()
-  const index = getDailyIndex(now, DAILY_MESSAGES.length)
-  const message = DAILY_MESSAGES[index]
+  const currentDateKey = getTodayDateKey(now)
+  const totalMessages = DAILY_MESSAGES.length
+  const selectedIndex = getDayIndex(currentDateKey, totalMessages)
+  const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
+  const message = baseMessage && firstName ? `${firstName}, ${baseMessage}` : baseMessage
   const greetingPrefix = resolveGreetingPrefix(now)
   const displayName = firstName ? firstName : 'Mãe'
   const greetingText = `${greetingPrefix}, ${displayName}!`
   const formattedDate = formatDisplayDate(now)
-  const currentDateKey = getTodayDateKey(now)
 
   return (
     <MeuDiaClient
       message={message}
-      firstName={firstName}
       greetingText={greetingText}
       formattedDate={formattedDate}
       currentDateKey={currentDateKey}
