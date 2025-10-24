@@ -17,7 +17,7 @@ const PROFESSION_LABEL: Record<string, string> = {
   fisio_pelvica: 'Fisioterapia pélvica',
 }
 
-const PROFESSION_LOOKUP: Record<string, Professional['profession']> = {
+const PROFESSION_LOOKUP: Record<string, Professional['profession'] | 'todas'> = {
   Todas: 'todas',
   Psicologia: 'psicologia',
   Fonoaudiologia: 'fonoaudiologia',
