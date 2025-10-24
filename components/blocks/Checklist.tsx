@@ -353,7 +353,7 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
     }
 
     setItemsForDate((previous) => [...previous, ...toAppend])
-  }, [items, setItemsForDate])
+  }, [items, setItemsForDate, dateKey, currentDateKey])
 
   const handleDuplicateToTomorrow = useCallback(() => {
     if (typeof window === 'undefined') {
