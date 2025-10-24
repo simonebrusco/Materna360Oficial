@@ -1,14 +1,14 @@
 import { unstable_cache } from 'next/cache'
 
 import { monthsFromBirthdate } from './age'
-import { supabaseServer } from './supabase'
+import { createServerSupabase } from './supabase'
 
 type BabyProfile = {
   babyAgeMonths: number | null
 }
 
 export async function getBabyProfile(): Promise<BabyProfile> {
-  const supabase = supabaseServer()
+  const supabase = createServerSupabase()
   const {
     data: { user },
     error: authError,
