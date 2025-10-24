@@ -7,7 +7,6 @@ import { getDayIndex } from '@/app/lib/dailyMessage'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
-import { Reveal } from '@/components/ui/Reveal'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -71,16 +70,19 @@ export default async function Page() {
   const jar = cookies()
   const rawProfile = jar.get(PROFILE_COOKIE)?.value
 
-  let motherName: string | undefined
+  let profile: { motherName?: string; nomeMae?: string } = {}
   if (rawProfile) {
     try {
-      const parsed = JSON.parse(rawProfile) as { motherName?: string; nomeMae?: string }
-      const candidate = parsed?.motherName ?? parsed?.nomeMae
-      motherName = typeof candidate === 'string' ? candidate : undefined
+      const parsed = JSON.parse(rawProfile)
+      if (parsed && typeof parsed === 'object') {
+        profile = parsed as { motherName?: string; nomeMae?: string }
+      }
     } catch (error) {
       console.error('[MeuDia] Failed to parse profile cookie:', error)
     }
   }
+
+  const motherName = profile.motherName ?? profile.nomeMae
 
   const now = new Date()
   const displayName = firstNameOf(motherName)
@@ -98,21 +100,20 @@ export default async function Page() {
 
   return (
     <main className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+      {/* m360-debug: {JSON.stringify(profile)} */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(65%_65%_at_50%_0%,rgba(255,216,230,0.55),transparent)]"
       />
       <div className="relative space-y-8">
-        <Reveal>
-          <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Hoje</span>
-            <h1 data-testid="greeting-text" className="text-3xl font-semibold text-support-1 md:text-4xl">
-              {greeting}
-            </h1>
-            <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
-            <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
-          </div>
-        </Reveal>
+        <div className="space-y-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Hoje</span>
+          <h1 data-testid="greeting-text" className="text-3xl font-semibold text-support-1 md:text-4xl">
+            {greeting}
+          </h1>
+          <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
+          <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
+        </div>
 
         <MeuDiaClient
           dailyGreeting={dailyGreeting}
