@@ -261,7 +261,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
     return () => {
       active = false
     }
-  }, [weekStartKey])
+  }, [weekStartKeyState])
 
   useEffect(() => {
     if (!isInitialized) {
