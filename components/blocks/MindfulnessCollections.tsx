@@ -1,8 +1,6 @@
 'use client'
 
-'use client'
-
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Play, X } from 'lucide-react'
 
@@ -11,9 +9,15 @@ import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import {
   MINDFULNESS_TRACKS,
+  MINDFULNESS_TRACKS_BY_ID,
   MindfulnessTrack,
   getMindfulnessUrl,
 } from '@/data/mindfulnessManifest'
+import {
+  MINDFULNESS_COLLECTION_ORDER,
+  MindfulnessCollectionKey,
+  tracksFor,
+} from '@/data/mindfulnessCollections'
 
 const STORAGE_KEY = 'materna360-mindfulness-heard'
 
@@ -37,55 +41,25 @@ const FILE_ALIASES: Record<string, string> = {
   '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
 }
 
-const byId: Record<string, MindfulnessTrack> = Object.fromEntries(
-  MINDFULNESS_TRACKS.map((track) => [track.id, track])
+const FILE_TO_TRACK_ID: Record<string, string> = MINDFULNESS_TRACKS.reduce<Record<string, string>>(
+  (accumulator, track) => {
+    accumulator[track.file] = track.id
+    accumulator[`/audio/mindfulness/${track.file}`] = track.id
+    return accumulator
+  },
+  {}
 )
 
-const fileToIdMap = MINDFULNESS_TRACKS.reduce<Record<string, string>>((accumulator, track) => {
-  accumulator[track.file] = track.id
-  accumulator[`/audio/mindfulness/${track.file}`] = track.id
-  return accumulator
-}, {})
-
 Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
-  const canonicalFile = canonical.replace(/^\/audio\/mindfulness\//, '')
-  const trackId = fileToIdMap[canonicalFile]
-  if (trackId) {
-    fileToIdMap[legacy] = trackId
+  const normalized = canonical.replace(/^\/audio\/mindfulness\//, '')
+  const track = MINDFULNESS_TRACKS_BY_ID[FILE_TO_TRACK_ID[normalized] ?? normalized]
+  if (track) {
+    FILE_TO_TRACK_ID[legacy] = track.id
+    FILE_TO_TRACK_ID[canonical] = track.id
   }
 })
 
-export const COLLECTIONS = {
-  reconecteSe: [
-    'acalme-sua-mente',
-    'respire-e-conecte-se',
-    'voce-nao-esta-sozinha',
-    'voce-nao-precisa-ser-perfeita',
-  ],
-  renoveSuaEnergia: [
-    'celebre-os-pequenos-momentos',
-    'transforme-o-caos-em-equilibrio',
-    'voce-esta-fazendo-o-seu-melhor',
-  ],
-  confieEmVoce: [
-    'encontre-a-paz-dentro-de-voce',
-    'libertando-se-da-culpa',
-    'saindo-do-piloto-automatico',
-    'o-poder-do-toque',
-  ],
-} as const
-
-type CollectionKey = keyof typeof COLLECTIONS
-
-type CollectionGroup = {
-  key: CollectionKey
-  icon: string
-  title: string
-  description: string
-  tracks: MindfulnessTrack[]
-}
-
-const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; description: string }> = {
+const COLLECTION_DETAILS: Record<MindfulnessCollectionKey, { icon: string; title: string; description: string }> = {
   reconecteSe: {
     icon: '🪷',
     title: 'Reconecte-se',
@@ -106,27 +80,7 @@ const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; d
   },
 }
 
-const COLLECTION_ORDER: CollectionKey[] = ['reconecteSe', 'renoveSuaEnergia', 'confieEmVoce']
-
-export function tracksFor(key: CollectionKey): MindfulnessTrack[] {
-  return COLLECTIONS[key]
-    .map((id) => {
-      const track = byId[id]
-      if (!track) {
-        console.warn(`[Mindfulness] Track not found in manifest: ${id}`)
-        return null
-      }
-
-      if (track.enabled === false) {
-        return null
-      }
-
-      return track
-    })
-    .filter((track): track is MindfulnessTrack => Boolean(track))
-}
-
-const GROUPS: CollectionGroup[] = COLLECTION_ORDER.map((key) => ({
+const GROUPS = MINDFULNESS_COLLECTION_ORDER.map((key) => ({
   key,
   icon: COLLECTION_DETAILS[key].icon,
   title: COLLECTION_DETAILS[key].title,
@@ -137,7 +91,7 @@ const GROUPS: CollectionGroup[] = COLLECTION_ORDER.map((key) => ({
 function normalizeStorageKey(key: string): string | null {
   if (!key) return null
 
-  if (byId[key]) {
+  if (MINDFULNESS_TRACKS_BY_ID[key]) {
     return key
   }
 
@@ -147,8 +101,8 @@ function normalizeStorageKey(key: string): string | null {
     .replace(/\?.*$/, '')
 
   const aliasCandidate = FILE_ALIASES[sanitized] ?? FILE_ALIASES[key] ?? sanitized
-  const canonicalFile = aliasCandidate.replace(/^\/audio\/mindfulness\//, '')
-  const trackId = fileToIdMap[canonicalFile] ?? fileToIdMap[aliasCandidate]
+  const normalized = aliasCandidate.replace(/^\/audio\/mindfulness\//, '')
+  const trackId = FILE_TO_TRACK_ID[normalized] ?? FILE_TO_TRACK_ID[aliasCandidate]
 
   return trackId ?? null
 }
@@ -187,6 +141,8 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
   const src = useMemo(() => getMindfulnessUrl(track.file), [track.file])
   const [isMetadataLoading, setIsMetadataLoading] = useState(true)
   const [duration, setDuration] = useState<number | null>(null)
+  const [hasError, setHasError] = useState(false)
+  const loggedRef = useRef(false)
 
   return (
     <li className="section-card p-5 transition-shadow duration-300 hover:shadow-elevated">
@@ -202,6 +158,9 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             />
             Já ouvi
           </label>
+          {hasError && (
+            <p className="text-xs text-support-2/90">Não foi possível carregar o áudio. Tente novamente em instantes.</p>
+          )}
         </div>
         <div className="flex w-full flex-col gap-2 md:w-64">
           <audio
@@ -215,14 +174,22 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
               const audioDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null
               setDuration(audioDuration)
               setIsMetadataLoading(false)
+              setHasError(false)
             }}
             onPlay={(event) => {
               const audio = event.currentTarget
               audio.muted = false
             }}
             onError={(event) => {
+              if (!loggedRef.current) {
+                loggedRef.current = true
+                console.warn('[Mindfulness] Falha ao carregar áudio:', {
+                  id: track.id,
+                  url: event.currentTarget.currentSrc,
+                })
+              }
               setIsMetadataLoading(false)
-              console.warn('[Mindfulness] Falha ao carregar áudio:', event.currentTarget.currentSrc)
+              setHasError(true)
             }}
           >
             <source src={src} type="audio/mpeg" />
@@ -242,7 +209,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
 }
 
 export function MindfulnessCollections() {
-  const [activeGroupKey, setActiveGroupKey] = useState<CollectionKey | null>(null)
+  const [activeGroupKey, setActiveGroupKey] = useState<MindfulnessCollectionKey | null>(null)
   const [heardTracks, setHeardTracks] = useState<Record<string, boolean>>({})
   const [isMounted, setIsMounted] = useState(false)
 
@@ -351,7 +318,7 @@ export function MindfulnessCollections() {
                 <button
                   type="button"
                   onClick={() => setActiveGroupKey(null)}
-                  className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
+                  className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duração-200 hover:-translate-y-0.5 hover:shadow-elevated"
                   aria-label="Fechar modal"
                 >
                   <X className="h-5 w-5" />
