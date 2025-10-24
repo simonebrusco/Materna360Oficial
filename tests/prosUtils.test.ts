@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { POST } from '@/app/api/telemetry/pros-click/route'
+import { POST } from '@/src/app/api/telemetry/pros-click/route'
 import { buildWaLink, normalizeE164 } from '@/lib/pros/whatsapp'
 import { trackProsClick } from '@/lib/telemetry/pros'
 
