@@ -496,8 +496,7 @@ export function FamilyPlanner() {
           ‹
         </button>
         <div className="flex flex-1 gap-2 overflow-x-auto">
-          {weekDays.map((day) => {
-            const dayKey = formatDateKey(day)
+          {weekDayKeys.map((dayKey) => {
             const isSelected = selectedDayKey === dayKey
             const isToday = todayKey === dayKey
 
@@ -512,7 +511,7 @@ export function FamilyPlanner() {
                     : 'border-white/60 bg-white/80 text-support-1 shadow-soft hover:-translate-y-0.5 hover:shadow-elevated'
                 } ${isToday && !isSelected ? 'border-primary/60 text-primary' : ''}`}
               >
-                <span>{formatDayLabel(day)}</span>
+                <span>{formatDayLabel(dayKey)}</span>
               </button>
             )
           })}
