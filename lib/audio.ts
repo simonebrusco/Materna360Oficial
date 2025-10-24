@@ -1,9 +1,13 @@
 export function getMindfulnessUrl(filename: string): string {
   const base = (process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE ?? '').replace(/\/$/, '')
-  if (!base) {
+  if (!base || !filename) {
     return ''
   }
-  return `${base}/mindfulness/${filename}`
+
+  const clean = filename.trim()
+  const encoded = encodeURIComponent(clean)
+
+  return `${base}/mindfulness/${encoded}`
 }
 
 export function getMindfulnessAudioUrl(filename: string): string {
