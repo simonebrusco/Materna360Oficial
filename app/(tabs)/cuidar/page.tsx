@@ -55,6 +55,11 @@ export default async function Page() {
       <section className="rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft">
         <BreathCard />
       </section>
+      <section className="mt-6 space-y-6">
+        <CareJourneys />
+        <MindfulnessForMoms />
+        <OrganizationTips />
+      </section>
       <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
         <HealthyRecipesSection />
       </Suspense>
