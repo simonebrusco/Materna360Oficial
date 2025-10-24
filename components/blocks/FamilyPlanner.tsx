@@ -115,26 +115,6 @@ const addDaysToKey = (key: string, amount: number): string => {
   return formatDateKeyFromUTC(result)
 }
 
-const getWeekStartKey = (key: string): string => {
-  const parsed = parseDateKeyToUTC(key)
-  if (!parsed) {
-    return key
-  }
-
-  const day = parsed.getUTCDay()
-  const diff = (day + 6) % 7
-  if (diff === 0) {
-    return formatDateKeyFromUTC(parsed)
-  }
-
-  const start = new Date(parsed)
-  start.setUTCDate(start.getUTCDate() - diff)
-  return formatDateKeyFromUTC(start)
-}
-
-const buildWeekKeys = (weekStartKey: string): string[] =>
-  Array.from({ length: 7 }, (_, index) => addDaysToKey(weekStartKey, index))
-
 const buildRecommendationKey = (title: string, refId?: string | null) => {
   const safeRef = refId?.trim()
   if (safeRef) {
