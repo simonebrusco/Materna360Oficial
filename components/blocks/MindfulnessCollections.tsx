@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Play, X } from 'lucide-react'
@@ -9,20 +7,16 @@ import { Play, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+import {
+  MINDFULNESS_TRACKS,
+  MindfulnessTrack,
+  getMindfulnessUrl,
+} from '@/data/mindfulnessManifest'
 
-interface MindfulnessTrack {
-  file: string
-  title: string
-}
+type CollectionKey = keyof typeof COLLECTIONS
 
-interface MindfulnessTrackItemProps {
-  track: MindfulnessTrack
-  isHeard: boolean
-  onToggle: () => void
-}
-
-interface MindfulnessGroup {
-  key: string
+type CollectionGroup = {
+  key: CollectionKey
   icon: string
   title: string
   description: string
@@ -31,152 +25,169 @@ interface MindfulnessGroup {
 
 const STORAGE_KEY = 'materna360-mindfulness-heard'
 
-const LEGACY_FILE_MAP: Record<string, string> = {
+const FILE_ALIASES: Record<string, string> = {
   'você-não-está-sozinha.mp3': 'voce-nao-esta-sozinha.mp3',
-  'confie-em-você.mp3': 'confie-em-voce.mp3',
-  'um-novo-começo.mp3': 'um-novo-comeco.mp3',
+  'confie-em-você.mp3': 'suas-palavras-tem-poder.mp3',
+  'um-novo-começo.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
   'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   'transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   'suas-palavras-têm-poder.mp3': 'suas-palavras-tem-poder.mp3',
-  'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-melhor.mp3',
-  'voce-esta-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-melhor.mp3',
+  'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
+  'voce-esta-fazendo-o-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
   'você-não-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
   'voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
   'celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
   'encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
   'saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
-  '/audio/mindfulness/um-novo-comeco.mp3': 'um-novo-comeco.mp3',
-  '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
-  '/audio/mindfulness/celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
-  '/audio/mindfulness/voce-esta-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-melhor.mp3',
-  '/audio/mindfulness/o-poder-do-toque.mp3': 'o-poder-do-toque-e-do-afeto.mp3',
   '/audio/mindfulness/voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
+  '/audio/mindfulness/voce-esta-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
+  '/audio/mindfulness/celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
+  '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
+  '/audio/mindfulness/o-poder-do-toque.mp3': 'o-poder-do-toque-e-do-afeto.mp3',
 }
 
-const normalizeHeardTracks = (entries: Record<string, boolean>) => {
+const byId: Record<string, MindfulnessTrack> = Object.fromEntries(
+  MINDFULNESS_TRACKS.map((track) => [track.id, track])
+)
+
+const fileToIdMap = MINDFULNESS_TRACKS.reduce<Record<string, string>>((accumulator, track) => {
+  accumulator[track.file] = track.id
+  return accumulator
+}, {})
+
+Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
+  const normalizedCanonical = canonical.replace(/^\/audio\/mindfulness\//, '')
+  const trackId = fileToIdMap[normalizedCanonical]
+  if (trackId) {
+    fileToIdMap[legacy] = trackId
+    fileToIdMap[`/audio/mindfulness/${normalizedCanonical}`] = trackId
+  }
+})
+
+const COLLECTIONS = {
+  reconecteSe: [
+    'acalme-sua-mente',
+    'respire-e-conecte-se',
+    'voce-nao-esta-sozinha',
+    'voce-nao-precisa-ser-perfeita',
+  ],
+  renoveSuaEnergia: [
+    'celebre-os-pequenos-momentos',
+    'transforme-o-caos-em-equilibrio',
+    'voce-esta-fazendo-o-seu-melhor',
+  ],
+  confieEmVoce: [
+    'encontre-a-paz-dentro-de-voce',
+    'libertando-se-da-culpa',
+    'saindo-do-piloto-automatico',
+    'o-poder-do-toque',
+  ],
+} as const
+
+const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; description: string }> = {
+  reconecteSe: {
+    icon: '🪷',
+    title: 'Reconecte-se',
+    description:
+      'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
+  },
+  renoveSuaEnergia: {
+    icon: '☀️',
+    title: 'Renove sua energia',
+    description:
+      'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
+  },
+  confieEmVoce: {
+    icon: '🌙',
+    title: 'Confie em você',
+    description:
+      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
+  },
+}
+
+const COLLECTION_ORDER: CollectionKey[] = ['reconecteSe', 'renoveSuaEnergia', 'confieEmVoce']
+
+const GROUPS: CollectionGroup[] = COLLECTION_ORDER.map((key) => ({
+  key,
+  icon: COLLECTION_DETAILS[key].icon,
+  title: COLLECTION_DETAILS[key].title,
+  description: COLLECTION_DETAILS[key].description,
+  tracks: tracksFor(key),
+}))
+
+function tracksFor(key: CollectionKey): MindfulnessTrack[] {
+  return COLLECTIONS[key]
+    .map((id) => {
+      const track = byId[id]
+      if (!track) {
+        console.warn(`[Mindfulness] Track not found in manifest: ${id}`)
+        return null
+      }
+
+      if (track.enabled === false) {
+        return null
+      }
+
+      return track
+    })
+    .filter((track): track is MindfulnessTrack => Boolean(track))
+}
+
+function normalizeStorageKey(key: string): string | null {
+  if (!key) return null
+
+  if (byId[key]) {
+    return key
+  }
+
+  const trimmed = key.replace(/^https?:\/\/[^/]+\//, '/').replace(/^\/audio\/mindfulness\//, '')
+  const aliasTarget = FILE_ALIASES[trimmed] ?? FILE_ALIASES[key] ?? trimmed
+  const canonical = aliasTarget.replace(/^\/audio\/mindfulness\//, '')
+  const trackId = fileToIdMap[canonical] ?? fileToIdMap[aliasTarget]
+
+  return trackId ?? null
+}
+
+function normalizeHeardTracks(entries: Record<string, boolean>) {
   const normalized: Record<string, boolean> = {}
 
-  Object.entries(entries).forEach(([file, status]) => {
-    const key = LEGACY_FILE_MAP[file] ?? file
-    normalized[key] = status
+  Object.entries(entries).forEach(([key, value]) => {
+    const trackId = normalizeStorageKey(key)
+    if (!trackId) return
+    normalized[trackId] = Boolean(value)
   })
 
   return normalized
 }
 
-const AUDIO_FILE_SRC_MAP: Record<string, string> = {
-  'um-novo-comeco.mp3': '/audio/mindfulness/um-novo-comeco.mp3',
-  'um-novo-começo.mp3': '/audio/mindfulness/um-novo-comeco.mp3',
-  'transforme-o-caos-em-serenidade.mp3': '/audio/mindfulness/transforme-o-caos-em-serenidade.mp3',
-  'transforme-o-caos-em-equilibrio.mp3': '/audio/mindfulness/transforme-o-caos-em-serenidade.mp3',
-  'transforme-o-caos-em-equilíbrio.mp3': '/audio/mindfulness/transforme-o-caos-em-serenidade.mp3',
-  'celebrando-pequenos-momentos.mp3': '/audio/mindfulness/celebrando-pequenos-momentos.mp3',
-  'celebre-os-pequenos-momentos.mp3': '/audio/mindfulness/celebrando-pequenos-momentos.mp3',
-  'voce-esta-fazendo-o-melhor.mp3': '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3',
-  'voce-esta-fazendo-o-seu-melhor.mp3': '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3',
-  'o-poder-do-toque-e-do-afeto.mp3': '/audio/mindfulness/o-poder-do-toque-e-do-afeto.mp3',
-  'o-poder-do-toque.mp3': '/audio/mindfulness/o-poder-do-toque-e-do-afeto.mp3',
-  'voce-nao-precisa-dar-conta.mp3': '/audio/mindfulness/voce-nao-precisa-dar-conta.mp3',
-  'voce-nao-precisa-ser-perfeita.mp3': '/audio/mindfulness/voce-nao-precisa-dar-conta.mp3',
-  'suas-palavras-tem-poder.mp3': '/audio/mindfulness/suas-palavras-tem-poder.mp3',
+function formatDuration(value: number | null) {
+  if (!value || !Number.isFinite(value) || value <= 0) {
+    return '00:00'
+  }
+
+  const totalSeconds = Math.round(value)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-const GROUPS: MindfulnessGroup[] = [
-  {
-    key: 'reconnect',
-    icon: '🪷',
-    title: 'Reconecte-se',
-    description:
-      'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
-    tracks: [
-      { file: 'acalme-sua-mente.mp3', title: 'Acalme sua mente' },
-      { file: 'respire-e-conecte-se.mp3', title: 'Respire e conecte-se' },
-      { file: 'voce-nao-esta-sozinha.mp3', title: 'Você não está sozinha' },
-      { file: 'voce-nao-precisa-dar-conta.mp3', title: 'Você não precisa ser perfeita' },
-      { file: 'desconecte-se-para-o-essencial.mp3', title: 'Desconecte-se para o essencial' },
-      { file: 'confie-em-voce.mp3', title: 'Confie em você' },
-    ],
-  },
-  {
-    key: 'renew',
-    icon: '☀️',
-    title: 'Renove sua Energia',
-    description:
-      'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
-    tracks: [
-      { file: 'um-novo-comeco.mp3', title: 'Um novo começo' },
-      { file: 'celebrando-pequenos-momentos.mp3', title: 'Celebre os pequenos momentos' },
-      { file: 'transforme-o-caos-em-serenidade.mp3', title: 'Transforme o caos em equilíbrio' },
-      { file: 'suas-palavras-tem-poder.mp3', title: 'Suas palavras têm poder' },
-      { file: 'voce-esta-fazendo-o-melhor.mp3', title: 'Você está fazendo o seu melhor' },
-    ],
-  },
-  {
-    key: 'calm',
-    icon: '🌙',
-    title: 'Encontre Calma',
-    description:
-      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
-    tracks: [
-      { file: 'antes-de-dormir.mp3', title: 'Antes de dormir' },
-      { file: 'encontre-a-paz-dentro-de-voce.mp3', title: 'Encontre a paz dentro de você' },
-      { file: 'libertando-se-da-culpa.mp3', title: 'Libertando-se da culpa' },
-      { file: 'saindo-do-piloto-automatico.mp3', title: 'Saindo do piloto automático' },
-      { file: 'o-poder-do-toque-e-do-afeto.mp3', title: 'O poder do toque' },
-    ],
-  },
-]
-
-const resolveTrackFile = (file: string) => {
-  const normalized = LEGACY_FILE_MAP[file] ?? file
-  return AUDIO_FILE_SRC_MAP[normalized] ?? normalized
-}
-
-function buildSrc(file: string) {
-  const resolved = resolveTrackFile(file)
-  if (resolved.startsWith('/')) return resolved
-
-  const encoded = encodeURIComponent(resolved)
-  return `/audio/mindfulness/${encoded}`
+interface MindfulnessTrackItemProps {
+  track: MindfulnessTrack
+  isHeard: boolean
+  onToggle: () => void
 }
 
 function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItemProps) {
-  const src = useMemo(() => buildSrc(track.file), [track.file])
-  const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    let isMounted = true
-
-    fetch(src, { method: 'HEAD', cache: 'no-store' })
-      .then((response) => {
-        if (!isMounted) return
-        console.log('Mindfulness audio check:', src, response.status)
-        setIsAvailable(response.ok)
-      })
-      .catch((error) => {
-        if (!isMounted) return
-        console.log('Mindfulness audio check:', src, 'error')
-        console.error('Mindfulness audio availability error:', src, error)
-        setIsAvailable(false)
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [src])
+  const src = useMemo(() => getMindfulnessUrl(track.file), [track.file])
+  const [isMetadataLoading, setIsMetadataLoading] = useState(true)
+  const [duration, setDuration] = useState<number | null>(null)
 
   return (
     <li className="section-card p-5 transition-shadow duration-300 hover:shadow-elevated">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
-            {isAvailable === false && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                arquivo não encontrado
-              </span>
-            )}
-          </div>
+          <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
           <label className="inline-flex items-center gap-2 text-xs font-medium text-support-2">
             <input
               type="checkbox"
@@ -196,23 +207,29 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             className="w-full"
             onLoadedMetadata={(event) => {
               const audio = event.currentTarget
-              console.log('AUDIO METADATA:', audio.currentSrc, 'duration=', audio.duration)
+              const audioDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null
+              setDuration(audioDuration)
+              setIsMetadataLoading(false)
             }}
             onPlay={(event) => {
               const audio = event.currentTarget
               audio.muted = false
-              try {
-                audio.volume = 1
-              } catch {}
-              console.log('AUDIO PLAY:', audio.currentSrc, 'muted=', audio.muted, 'volume=', audio.volume)
             }}
             onError={(event) => {
-              console.error('AUDIO ERROR:', event.currentTarget.currentSrc)
+              setIsMetadataLoading(false)
+              console.warn('[Mindfulness] Falha ao carregar áudio:', event.currentTarget.currentSrc)
             }}
           >
             <source src={src} type="audio/mpeg" />
             Seu navegador não suporta a reprodução de áudio.
           </audio>
+          <div className="flex justify-end">
+            {isMetadataLoading ? (
+              <span className="h-3 w-12 animate-pulse rounded-full bg-primary/15" aria-hidden />
+            ) : (
+              <span className="text-xs font-medium text-support-2">{formatDuration(duration)}</span>
+            )}
+          </div>
         </div>
       </div>
     </li>
@@ -220,7 +237,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
 }
 
 export function MindfulnessCollections() {
-  const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null)
+  const [activeGroupKey, setActiveGroupKey] = useState<CollectionKey | null>(null)
   const [heardTracks, setHeardTracks] = useState<Record<string, boolean>>({})
   const [isMounted, setIsMounted] = useState(false)
 
@@ -276,10 +293,10 @@ export function MindfulnessCollections() {
     }
   }, [activeGroupKey])
 
-  const handleToggleHeard = (file: string) => {
+  const handleToggleHeard = (trackId: string) => {
     setHeardTracks((previous) => ({
       ...previous,
-      [file]: !previous[file],
+      [trackId]: !previous[trackId],
     }))
   }
 
@@ -352,14 +369,14 @@ export function MindfulnessCollections() {
 
                 <ul className="mt-6 space-y-4">
                   {activeGroup.tracks.map((track) => {
-                    const isHeard = Boolean(heardTracks[track.file])
+                    const isHeard = Boolean(heardTracks[track.id])
 
                     return (
                       <MindfulnessTrackItem
-                        key={track.file}
+                        key={track.id}
                         track={track}
                         isHeard={isHeard}
-                        onToggle={() => handleToggleHeard(track.file)}
+                        onToggle={() => handleToggleHeard(track.id)}
                       />
                     )
                   })}
