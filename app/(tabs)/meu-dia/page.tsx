@@ -9,6 +9,24 @@ import { MeuDiaClient } from './Client'
 const TIME_ZONE = 'America/Sao_Paulo'
 const PROFILE_COOKIE = 'm360_profile'
 
+const firstNameOf = (name?: string) => {
+  if (!name) {
+    return undefined
+  }
+
+  const trimmed = name.trim()
+  if (!trimmed) {
+    return undefined
+  }
+
+  const [first] = trimmed.split(/\s+/)
+  if (!first) {
+    return undefined
+  }
+
+  return first.charAt(0).toUpperCase() + first.slice(1)
+}
+
 const resolveGreetingPrefix = (date: Date) => {
   const hourFormatter = new Intl.DateTimeFormat('pt-BR', {
     hour: 'numeric',
