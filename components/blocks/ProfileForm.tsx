@@ -63,7 +63,9 @@ const defaultState = (): ProfileFormState => ({
 })
 
 export function ProfileForm() {
+  const router = useRouter()
   const [form, setForm] = useState<ProfileFormState>(() => defaultState())
+  const [babyBirthdate, setBabyBirthdate] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
