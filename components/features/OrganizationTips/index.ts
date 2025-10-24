@@ -1,1 +1,0 @@
-export { OrganizationTips } from './OrganizationTips'
