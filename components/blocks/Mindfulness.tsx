@@ -394,9 +394,11 @@ export function Mindfulness() {
   }, [currentPlayback])
 
   useEffect(() => {
+    const audio = audioRef.current
+
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
+      if (audio) {
+        audio.pause()
       }
     }
   }, [])
