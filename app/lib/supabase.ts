@@ -30,9 +30,9 @@ export function supabaseServer(): Client {
           // setting cookies can fail in some render contexts (e.g. server components). swallow silently.
         }
       },
-      remove(name: string, options: CookieOptions) {
+      remove(name: string) {
         try {
-          cookieStore.delete({ name, ...options })
+          cookieStore.delete(name)
         } catch {
           // ignore removal failures in read-only contexts
         }
