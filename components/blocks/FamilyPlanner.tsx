@@ -200,8 +200,8 @@ const normalizeAgeBand = (ageBand?: string | null) => {
   return ''
 }
 
-export function FamilyPlanner() {
-  const todayKey = useMemo(() => getTodayDateKey(), [])
+export function FamilyPlanner({ currentDateKey }: FamilyPlannerProps) {
+  const todayKey = useMemo(() => currentDateKey, [currentDateKey])
 
   const initialWeekStartKey = useMemo(() => {
     const stored = plannerStorage.getStoredWeekStart?.()
