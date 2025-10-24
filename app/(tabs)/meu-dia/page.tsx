@@ -1,11 +1,17 @@
 import { cookies } from 'next/headers'
 
+import { cookies } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+
 import { getDayIndex } from '@/app/lib/dailyMessage'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 
 import { MeuDiaClient } from './Client'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 const TIME_ZONE = 'America/Sao_Paulo'
 const PROFILE_COOKIE = 'm360_profile'
@@ -60,6 +66,8 @@ const formatDisplayDate = (date: Date) =>
   }).format(date)
 
 export default async function MeuDiaPage() {
+  noStore()
+
   const cookieStore = cookies()
   const rawProfile = cookieStore.get(PROFILE_COOKIE)?.value
 
