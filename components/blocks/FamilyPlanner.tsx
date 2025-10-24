@@ -244,7 +244,6 @@ export function FamilyPlanner() {
     const loadPlannerData = async () => {
       setIsLoading(true)
       try {
-        const weekStartKey = formatDateKey(weekStart)
         const data = await plannerApi.getPlannerData(weekStartKey)
         if (!active) {
           return
