@@ -17,20 +17,19 @@ type StageRecipesClientProps = {
 }
 
 export function StageRecipesClient({ stages, initialStage }: StageRecipesClientProps) {
-  if (stages.length === 0) {
-    return null
-  }
-
   const stageKeys = useMemo<RecipeStageKey[]>(() => stages.map((stage) => stage.key), [stages])
 
-  const defaultStage = useMemo<RecipeStageKey>(() => {
+  const defaultStage = useMemo<RecipeStageKey | null>(() => {
+    if (stageKeys.length === 0) {
+      return null
+    }
     if (stageKeys.includes(initialStage)) {
       return initialStage
     }
     return stageKeys[0]
   }, [initialStage, stageKeys])
 
-  const [activeStage, setActiveStage] = useState<RecipeStageKey>(defaultStage ?? stageKeys[0])
+  const [activeStage, setActiveStage] = useState<RecipeStageKey>(defaultStage ?? '6-8m')
 
   useEffect(() => {
     if (defaultStage && defaultStage !== activeStage) {
@@ -38,7 +37,26 @@ export function StageRecipesClient({ stages, initialStage }: StageRecipesClientP
     }
   }, [defaultStage, activeStage])
 
-  const currentStage = stages.find((stage) => stage.key === activeStage) ?? stages[0]
+  const stageLabelMap = useMemo(() => {
+    const map = new Map<RecipeStageKey, string>()
+    for (const stage of stages) {
+      map.set(stage.key, stage.label)
+    }
+    return map
+  }, [stages])
+
+  if (!defaultStage) {
+    return null
+  }
+
+  const currentStage =
+    stages.find((stage) => stage.key === activeStage) ??
+    stages.find((stage) => stage.key === defaultStage) ??
+    stages[0]
+
+  if (!currentStage) {
+    return null
+  }
 
   return (
     <div className="mt-4">
@@ -80,7 +98,7 @@ export function StageRecipesClient({ stages, initialStage }: StageRecipesClientP
                   {recipe.prepTime}
                 </span>
                 <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                  {stages.find((stage) => stage.key === recipe.stage)?.label ?? currentStage.label}
+                  {stageLabelMap.get(recipe.stage) ?? currentStage.label}
                 </span>
               </div>
             </header>
