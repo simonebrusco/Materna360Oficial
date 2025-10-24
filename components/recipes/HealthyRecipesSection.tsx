@@ -28,7 +28,7 @@ const secondaryLinkClasses =
   'inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors duration-200 ease-gentle hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60'
 
 const softCardClasses = 'rounded-3xl border border-white/70 bg-white/80 p-6 shadow-soft backdrop-blur'
-const softHighlightClasses = 'rounded-3xl border border-secondary/70 bg-secondary/70/80 p-6 shadow-soft backdrop-blur'
+const softHighlightClasses = 'rounded-3xl border border-secondary/70 bg-secondary/80 p-6 shadow-soft backdrop-blur'
 
 const sanitizeAge = (value: number | null | undefined): number | null => {
   if (!Number.isFinite(Number(value))) {
