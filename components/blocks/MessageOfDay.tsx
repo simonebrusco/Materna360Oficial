@@ -10,7 +10,7 @@ type DailyMessageCardProps = {
   message: string
 }
 
-export function DailyMessageCard({ message }: DailyMessageCardProps) {
+export default function DailyMessageCard({ message }: DailyMessageCardProps) {
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
