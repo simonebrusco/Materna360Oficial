@@ -20,8 +20,6 @@ const REFERENCE_TEXTS = [
   'Brincadeira curta com meu filho (10–15 min)',
 ]
 
-const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
-
 const parseDateKeyToUTC = (key: string): Date | null => {
   const [year, month, day] = key.split('-').map(Number)
   if (!year || !month || !day) {
