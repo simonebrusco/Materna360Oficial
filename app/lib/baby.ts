@@ -1,4 +1,4 @@
-'use server'
+import { unstable_cache } from 'next/cache'
 
 import { monthsFromBirthdate } from './age'
 import { supabaseServer } from './supabase'
@@ -7,11 +7,16 @@ type BabyProfile = {
   babyAgeMonths: number | null
 }
 
-export async function getBabyProfile(): Promise<BabyProfile> {
+async function readBabyProfile(): Promise<BabyProfile> {
   const supabase = supabaseServer()
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
+
+  if (authError) {
+    console.error('[BabyProfile] Failed to verify user:', authError.message)
+  }
 
   if (!user) {
     return { babyAgeMonths: null }
@@ -33,6 +38,15 @@ export async function getBabyProfile(): Promise<BabyProfile> {
     return { babyAgeMonths: computedMonths }
   }
 
-  const storedMonths = typeof data?.age_months === 'number' ? data.age_months : null
+  const storedMonths =
+    typeof data?.age_months === 'number' && Number.isFinite(data.age_months) && data.age_months >= 0
+      ? Math.floor(data.age_months)
+      : null
+
   return { babyAgeMonths: storedMonths }
 }
+
+export const getBabyProfile = unstable_cache(readBabyProfile, ['baby:read'], {
+  tags: ['baby'],
+  revalidate: 0,
+})
