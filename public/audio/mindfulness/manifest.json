@@ -1,0 +1,31 @@
+{
+  "themes": [
+    {
+      "id": "respiracao-pausa",
+      "title": "Respiração & Pausa",
+      "tracks": [
+        { "id": "acalme-sua-mente", "title": "Acalme sua mente", "file": "/audio/mindfulness/acalme-sua-mente.mp3" },
+        { "id": "respire-e-conecte-se", "title": "Respire e conecte-se", "file": "/audio/mindfulness/respire-e-conecte-se.mp3" },
+        { "id": "saindo-do-piloto-automatico", "title": "Saindo do piloto automático", "file": "/audio/mindfulness/saindo-do-piloto-automatico.mp3" }
+      ]
+    },
+    {
+      "id": "autocompaixao-forca",
+      "title": "Autocompaixão & Força",
+      "tracks": [
+        { "id": "voce-esta-fazendo-o-melhor", "title": "Você está fazendo o melhor", "file": "/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3" },
+        { "id": "voce-nao-precisa-dar-conta", "title": "Você não precisa dar conta", "file": "/audio/mindfulness/voce-nao-precisa-dar-conta.mp3" },
+        { "id": "confie-em-voce", "title": "Confie em você", "file": "/audio/mindfulness/confie-em-voce.mp3" }
+      ]
+    },
+    {
+      "id": "sono-relaxamento",
+      "title": "Sono & Relaxamento",
+      "tracks": [
+        { "id": "antes-de-dormir", "title": "Antes de dormir", "file": "/audio/mindfulness/antes-de-dormir.mp3" },
+        { "id": "um-novo-comeco", "title": "Um novo começo", "file": "/audio/mindfulness/um-novo-comeco.mp3" },
+        { "id": "natureza-e-equilibrio", "title": "Natureza e equilíbrio", "file": "/audio/mindfulness/natureza-e-equilibrio.mp3" }
+      ]
+    }
+  ]
+}
