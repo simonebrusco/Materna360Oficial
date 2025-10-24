@@ -268,7 +268,7 @@ export function FamilyPlanner() {
     return () => {
       active = false
     }
-  }, [weekStart])
+  }, [weekStartKey])
 
   useEffect(() => {
     if (!isInitialized) {
@@ -284,7 +284,7 @@ export function FamilyPlanner() {
     } else {
       hasSyncedWeekStart.current = true
     }
-  }, [weekStart])
+  }, [weekStartKey])
 
   useEffect(() => {
     const list = recommendationStorage.getForDate(selectedDayKey)
