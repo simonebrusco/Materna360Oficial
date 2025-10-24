@@ -13,6 +13,8 @@ import { Reveal } from '@/components/ui/Reveal'
 type MeuDiaClientProps = {
   message: string
   firstName: string
+  greetingText: string
+  formattedDate: string
 }
 
 const quickActions = [
@@ -22,7 +24,7 @@ const quickActions = [
   { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
-export function MeuDiaClient({ message, firstName }: MeuDiaClientProps) {
+export function MeuDiaClient({ message, firstName, greetingText, formattedDate }: MeuDiaClientProps) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
@@ -34,28 +36,6 @@ export function MeuDiaClient({ message, firstName }: MeuDiaClientProps) {
       setShowNoteModal(false)
     }
   }
-
-  const resolveGreetingPrefix = () => {
-    const hour = new Date().getHours()
-
-    if (hour >= 5 && hour < 12) {
-      return 'Bom dia'
-    }
-
-    if (hour >= 12 && hour < 18) {
-      return 'Boa tarde'
-    }
-
-    return 'Boa noite'
-  }
-
-  const displayName = firstName ? firstName : 'Mãe'
-  const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
-  const formattedDate = new Date().toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  })
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
