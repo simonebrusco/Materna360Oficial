@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 const TIPS = [
   {
     id: 'rotina-manha',
