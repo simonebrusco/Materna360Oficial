@@ -26,7 +26,7 @@ const COLLECTIONS = [
     id: 'acolhimento',
     icon: '🤍',
     titulo: 'Acolher emoções',
-    descricao: 'Meditações guiadas para reconhecer sentimentos e transform��-los em cuidado consigo mesma.',
+    descricao: 'Meditações guiadas para reconhecer sentimentos e transformá-los em cuidado consigo mesma.',
     duracao: '5-7 min',
   },
   {
@@ -70,13 +70,13 @@ export default function MindfulnessForMoms() {
 
             <div className="flex flex-wrap items-center gap-3">
               <a
-                href="# Mindfulness"
+                href="#mindfulness"
                 className="inline-flex flex-1 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
               >
                 Praticar agora
               </a>
               <a
-                href="# Mindfulness"
+                href="#mindfulness"
                 className="inline-flex flex-1 items-center justify-center rounded-xl border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-support-1 transition hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
               >
                 Salvar para depois
