@@ -131,37 +131,37 @@ export async function POST(request: Request) {
   const ageMonthsRaw = normalizeAgeMonths(body.age_months)
   const ageMonths = birthdate ? null : ageMonthsRaw
 
-  const operations: Promise<unknown>[] = [
-    supabase.from('profiles').upsert({ user_id: user.id, name }).select('name').maybeSingle(),
-  ]
+  const {
+    data: profileData,
+    error: profileError,
+  } = await supabase
+    .from('profiles')
+    .upsert({ user_id: user.id, name })
+    .select('name')
+    .maybeSingle()
 
-  if (birthdate || ageMonths !== null) {
-    operations.push(
-      supabase
-        .from('babies')
-        .upsert({
-          user_id: user.id,
-          birthdate,
-          age_months: ageMonths,
-        })
-        .select('birthdate, age_months')
-        .maybeSingle()
-    )
+  if (profileError) {
+    console.error('[Eu360] Failed to persist Eu360 profile:', profileError)
+    return invalidResponse('Não foi possível salvar agora. Tente novamente em instantes.', 500)
   }
 
-  const results = await Promise.allSettled(operations)
+  if (birthdate || ageMonths !== null) {
+    const {
+      data: babyData,
+      error: babyError,
+    } = await supabase
+      .from('babies')
+      .upsert({
+        user_id: user.id,
+        birthdate,
+        age_months: ageMonths,
+      })
+      .select('birthdate, age_months')
+      .maybeSingle()
 
-  for (const result of results) {
-    if (result.status === 'rejected') {
-      console.error('[Eu360] Failed to persist Eu360 profile:', result.reason)
+    if (babyError) {
+      console.error('[Eu360] Failed to persist baby profile:', babyError)
       return invalidResponse('Não foi possível salvar agora. Tente novamente em instantes.', 500)
-    }
-    if (result.status === 'fulfilled') {
-      const { value } = result
-      if (value && typeof value === 'object' && 'error' in value && value.error) {
-        console.error('[Eu360] Supabase error:', value.error)
-        return invalidResponse('Não foi possível salvar agora. Tente novamente em instantes.', 500)
-      }
     }
   }
 
