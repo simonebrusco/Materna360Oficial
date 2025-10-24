@@ -56,7 +56,9 @@ export function MeuDiaClient({
         <Reveal>
           <div className="space-y-2">
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Hoje</span>
-            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">{greetingText}</h1>
+            <h1 data-testid="greeting-text" className="text-3xl font-semibold text-support-1 md:text-4xl">
+              {greetingText}
+            </h1>
             <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
             <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
           </div>
