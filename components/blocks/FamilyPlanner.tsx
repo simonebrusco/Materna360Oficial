@@ -6,7 +6,7 @@ import React, { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'r
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { getTodayDateKey, mapMonthsToAgeBand } from '@/lib/dailyActivity'
+import { mapMonthsToAgeBand } from '@/lib/dailyActivity'
 import {
   plannerApi,
   plannerStorage,
