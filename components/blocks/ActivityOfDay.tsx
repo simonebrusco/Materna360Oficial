@@ -36,7 +36,7 @@ const createId = () => {
   return Math.random().toString(36).slice(2, 11)
 }
 
-export function ActivityOfDay() {
+export default function ActivityOfDay() {
   const [activityState, setActivityState] = useState<ActivityState>(() => ({
     dateKey: getTodayDateKey(),
     activity: FALLBACK_ACTIVITY,
