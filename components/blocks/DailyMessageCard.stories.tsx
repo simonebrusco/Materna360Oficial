@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 
-import { DailyMessageCard } from './MessageOfDay'
+import type { Meta, StoryObj } from '@storybook/react'
+
+import DailyMessageCard from './DailyMessageCard'
 
 const meta: Meta<typeof DailyMessageCard> = {
   title: 'Blocks/DailyMessageCard',
