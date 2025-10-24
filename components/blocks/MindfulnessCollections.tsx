@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Play, X } from 'lucide-react'
@@ -53,7 +55,7 @@ Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
   }
 })
 
-const COLLECTIONS = {
+export const COLLECTIONS = {
   reconecteSe: [
     'acalme-sua-mente',
     'respire-e-conecte-se',
@@ -106,7 +108,7 @@ const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; d
 
 const COLLECTION_ORDER: CollectionKey[] = ['reconecteSe', 'renoveSuaEnergia', 'confieEmVoce']
 
-function tracksFor(key: CollectionKey): MindfulnessTrack[] {
+export function tracksFor(key: CollectionKey): MindfulnessTrack[] {
   return COLLECTIONS[key]
     .map((id) => {
       const track = byId[id]
