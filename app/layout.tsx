@@ -1,18 +1,15 @@
-import './globals.css'
 import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Cuidado e bem-estar para mães',
+  description: 'Cuidado e acolhimento para a maternidade.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <head />
-      <body className="min-h-screen bg-gradient-to-b from-pink-50/60 to-white antialiased">
-        {children}
-      </body>
+    <html lang="pt-BR">
+      <body>{children}</body>
     </html>
   )
 }
