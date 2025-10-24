@@ -360,11 +360,11 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
       return
     }
 
-    const todayKey = getLocalDateKey()
-    const tomorrowKey = getTomorrowDateKey()
+    const baseKey = dateKey || currentDateKey
+    const tomorrowKey = shiftDateKey(baseKey, 1)
 
     const map = readChecklistMap()
-    const current = Array.isArray(map[todayKey]) ? map[todayKey] : []
+    const current = Array.isArray(map[baseKey]) ? map[baseKey] : []
     const meaningfulCurrent = current.filter((item) => item.text?.trim())
 
     if (meaningfulCurrent.length === 0) {
