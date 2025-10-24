@@ -314,7 +314,8 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
       return
     }
 
-    const yesterdayKey = getYesterdayDateKey()
+    const baseKey = dateKey || currentDateKey
+    const yesterdayKey = shiftDateKey(baseKey, -1)
     const map = readChecklistMap()
     const from = Array.isArray(map[yesterdayKey]) ? map[yesterdayKey] : []
 
