@@ -82,36 +82,26 @@ export function ProfileForm() {
           cache: 'no-store',
         })
 
-        if (!response.ok) {
-          throw new Error('Failed to load profile')
-        }
+        if (response.ok) {
+          const data = await response.json()
+          const savedName =
+            typeof data?.motherName === 'string'
+              ? data.motherName
+              : typeof data?.nomeMae === 'string'
+                ? data.nomeMae
+                : ''
 
-        const data = await response.json()
-
-        if (isMounted) {
-          const normalizedChildren = Array.isArray(data?.filhos) && data.filhos.length > 0 ? data.filhos : [createEmptyChild()]
-
-          setForm({
-            nomeMae: typeof data?.nomeMae === 'string' ? data.nomeMae : '',
-            filhos: normalizedChildren.map((child: any) => ({
-              id: typeof child?.id === 'string' && child.id.trim() ? child.id : createEmptyChild().id,
-              genero: child?.genero === 'menina' ? 'menina' : 'menino',
-              idadeMeses: Number.isFinite(Number(child?.idadeMeses)) && Number(child?.idadeMeses) >= 0 ? Number(child.idadeMeses) : 0,
-              nome: typeof child?.nome === 'string' ? child.nome : '',
-              alergias: Array.isArray(child?.alergias)
-                ? child.alergias
-                    .map((item: unknown) => (typeof item === 'string' ? item.trim() : ''))
-                    .filter((item: string) => item.length > 0)
-                : [],
-            })),
-            figurinha: isProfileStickerId(data?.figurinha) ? data.figurinha : '',
-          })
+          if (isMounted) {
+            setForm((previous) => ({
+              ...previous,
+              nomeMae: savedName,
+            }))
+          }
         }
       } catch (error) {
-        console.error(error)
+        console.error('Falha ao carregar nome do perfil:', error)
         if (isMounted) {
-          setForm(defaultState())
-          setBabyBirthdate('')
+          setForm((previous) => ({ ...previous, nomeMae: '' }))
         }
       }
 
