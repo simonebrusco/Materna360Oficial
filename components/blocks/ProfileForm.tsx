@@ -330,7 +330,8 @@ export function ProfileForm() {
       router.refresh()
     } catch (error) {
       console.error(error)
-      setStatusMessage('Não foi possível salvar agora. Tente novamente em instantes.')
+      const message = error instanceof Error && error.message ? error.message : 'Não foi possível salvar agora. Tente novamente em instantes.'
+      setStatusMessage(message)
     } finally {
       setSaving(false)
     }
