@@ -6,10 +6,9 @@ import { Card } from '@/components/ui/card'
 
 type DailyMessageCardProps = {
   message: string
-  firstName?: string
 }
 
-export function DailyMessageCard({ message, firstName }: DailyMessageCardProps) {
+export function DailyMessageCard({ message }: DailyMessageCardProps) {
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
@@ -19,13 +18,11 @@ export function DailyMessageCard({ message, firstName }: DailyMessageCardProps) 
     return () => window.clearTimeout(timeoutId)
   }, [])
 
-  const formattedMessage = firstName ? `${firstName}, ${message}` : message
-
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
       <div className="flex flex-col gap-3 md:gap-4">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem de Hoje</h2>
-        <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">“{formattedMessage}”</p>
+        <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">“{message}”</p>
         <span className="text-xs text-support-2/70 md:text-sm">Atualizada automaticamente a cada novo dia.</span>
       </div>
       <span className="pointer-events-none absolute -right-6 bottom-4 h-24 w-24 rounded-full bg-primary/15 blur-3xl" aria-hidden />
