@@ -223,6 +223,46 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
   const [savedRecommendations, setSavedRecommendations] = useState<PlannerRecommendation[]>([])
   const [suggestedRecommendations, setSuggestedRecommendations] = useState<RecommendationSuggestion[]>([])
   const hasSyncedWeekStart = useRef(false)
+  const hasLoadedStoredWeek = useRef(false)
+
+  useEffect(() => {
+    setWeekStartKeyState(weekStartKey)
+    setWeekDays(weekLabels)
+  }, [weekStartKey, weekLabels])
+
+  useEffect(() => {
+    if (weekDays.length === 0) {
+      return
+    }
+
+    setSelectedDayKey((previous) => {
+      if (weekDays.some((day) => day.key === previous)) {
+        return previous
+      }
+
+      const todayEntry = weekDays.find((day) => day.key === todayKey)
+      if (todayEntry) {
+        return todayEntry.key
+      }
+
+      return weekDays[0].key
+    })
+  }, [weekDays, todayKey])
+
+  useEffect(() => {
+    if (hasLoadedStoredWeek.current) {
+      return
+    }
+
+    const stored = plannerStorage.getStoredWeekStart?.()
+    if (stored && stored !== weekStartKeyState) {
+      hasLoadedStoredWeek.current = true
+      void loadWeek(stored, { preserveSelection: true })
+      return
+    }
+
+    hasLoadedStoredWeek.current = true
+  }, [loadWeek, weekStartKeyState])
 
   const selectedDayItems = useMemo(() => plannerData[selectedDayKey] ?? [], [plannerData, selectedDayKey])
 
