@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { type FormEvent, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -250,19 +248,23 @@ export function ProfileForm() {
     setSaving(true)
 
     try {
-      const cookieResponse = await fetch('/api/profile', {
+      const profileResponse = await fetch('/api/profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        cache: 'no-store',
         body: JSON.stringify({
           motherName: trimmedState.nomeMae,
+          nomeMae: trimmedState.nomeMae,
+          figurinha: figurinhaToPersist,
+          ...trimmedState,
         }),
       })
 
-      if (!cookieResponse.ok) {
-        throw new Error('Não foi possível salvar agora. Tente novamente em instantes.')
+      if (!profileResponse.ok) {
+        throw new Error('Failed to save profile')
       }
 
       setForm({
@@ -332,7 +334,12 @@ export function ProfileForm() {
       return
     } catch (error) {
       console.error(error)
-      const message = error instanceof Error && error.message ? error.message : 'Não foi possível salvar agora. Tente novamente em instantes.'
+      const message =
+        error instanceof Error && error.message === 'Failed to save profile'
+          ? 'Não foi possível salvar agora. Tente novamente em instantes.'
+          : error instanceof Error && error.message
+            ? error.message
+            : 'Não foi possível salvar agora. Tente novamente em instantes.'
       setStatusMessage(message)
     } finally {
       setSaving(false)
