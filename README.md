@@ -117,6 +117,8 @@ globals.css
 
 Instale as dependências:
 
+> Dica: execute `nvm use` (ou `volta pin node@20.19.0`) para garantir Node 20.19.0 antes de instalar.
+
 npm install
 
 
