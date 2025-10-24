@@ -277,7 +277,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
     } else {
       hasSyncedWeekStart.current = true
     }
-  }, [weekStartKey])
+  }, [weekStartKeyState])
 
   useEffect(() => {
     const list = recommendationStorage.getForDate(selectedDayKey)
