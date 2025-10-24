@@ -191,19 +191,18 @@ const fetchMotherName = async (): Promise<string> => {
   }
 }
 
-export function Checklist() {
+export function Checklist({ currentDateKey }: ChecklistProps) {
   const [items, setItems] = useState<ChecklistItem[]>([])
   const [profileName, setProfileName] = useState(FALLBACK_NAME)
-  const [dateKey, setDateKey] = useState(() => getLocalDateKey())
+  const [dateKey, setDateKey] = useState(() => currentDateKey)
 
   const title = useMemo(() => `Checklist da ${profileName}`, [profileName])
 
   useEffect(() => {
-    const todayKey = getLocalDateKey()
-    setDateKey(todayKey)
+    setDateKey(currentDateKey)
 
     const map = readChecklistMap()
-    const storedList = Array.isArray(map[todayKey]) ? map[todayKey] : null
+    const storedList = Array.isArray(map[currentDateKey]) ? map[currentDateKey] : null
 
     if (storedList && storedList.length > 0) {
       const sanitized = storedList
@@ -214,9 +213,9 @@ export function Checklist() {
     } else {
       const seeded = seedChecklist()
       setItems(seeded)
-      persistChecklistMap({ ...map, [todayKey]: seeded })
+      persistChecklistMap({ ...map, [currentDateKey]: seeded })
     }
-  }, [])
+  }, [currentDateKey])
 
   useEffect(() => {
     void fetchMotherName().then((name) => {
