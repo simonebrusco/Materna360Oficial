@@ -1,10 +1,10 @@
 import { Suspense } from 'react'
 
 import { unstable_noStore as noStore } from 'next/cache'
-import dynamic from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
 
-const BreathCard = dynamic(
+const BreathCard = nextDynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
   {
     ssr: false,
@@ -12,7 +12,7 @@ const BreathCard = dynamic(
   }
 )
 
-const CareJourneys = dynamic(
+const CareJourneys = nextDynamic(
   () => import('@/components/blocks/CareJourneys').then((m) => ({ default: m.CareJourneys })),
   {
     ssr: false,
@@ -20,7 +20,7 @@ const CareJourneys = dynamic(
   }
 )
 
-const MindfulnessForMoms = dynamic(
+const MindfulnessForMoms = nextDynamic(
   () => import('@/components/blocks/MindfulnessForMoms'),
   {
     ssr: false,
@@ -28,7 +28,7 @@ const MindfulnessForMoms = dynamic(
   }
 )
 
-const OrganizationTips = dynamic(
+const OrganizationTips = nextDynamic(
   () => import('@/components/blocks/OrganizationTips'),
   {
     ssr: false,
@@ -36,7 +36,7 @@ const OrganizationTips = dynamic(
   }
 )
 
-const ProfessionalsSection = dynamic(
+const ProfessionalsSection = nextDynamic(
   () => import('@/components/support/ProfessionalsSection').then((m) => m.default ?? m),
   {
     ssr: false,
