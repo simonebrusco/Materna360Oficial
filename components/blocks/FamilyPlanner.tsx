@@ -197,26 +197,20 @@ const normalizeAgeBand = (ageBand?: string | null) => {
 }
 
 export function FamilyPlanner() {
-  const today = useMemo(() => {
-    const current = new Date()
-    current.setHours(0, 0, 0, 0)
-    return current
-  }, [])
+  const todayKey = useMemo(() => getTodayDateKey(), [])
+  const todayDate = useMemo(() => parseDateKeyToUTC(todayKey) ?? new Date(), [todayKey])
 
-  const initialWeekStart = useMemo(() => {
+  const initialWeekStartKey = useMemo(() => {
     const stored = plannerStorage.getStoredWeekStart?.()
-    if (stored) {
-      const parsed = parseDateKey(stored)
-      if (parsed) {
-        return getWeekStart(parsed)
-      }
+    if (stored && parseDateKeyToUTC(stored)) {
+      return stored
     }
 
-    return getWeekStart(new Date())
-  }, [])
+    return getWeekStartKey(todayKey)
+  }, [todayKey])
 
-  const [weekStart, setWeekStart] = useState<Date>(initialWeekStart)
-  const [selectedDayKey, setSelectedDayKey] = useState(() => formatDateKey(today))
+  const [weekStartKey, setWeekStartKey] = useState<string>(initialWeekStartKey)
+  const [selectedDayKey, setSelectedDayKey] = useState(() => todayKey)
   const [plannerData, setPlannerData] = useState<PlannerData>({})
   const [isInitialized, setIsInitialized] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
