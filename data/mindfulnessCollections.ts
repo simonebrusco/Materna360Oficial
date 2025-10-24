@@ -1,5 +1,5 @@
 import {
-  MINDFULNESS_COLLECTIONS as COLLECTIONS_FROM_MANIFEST,
+  MINDFULNESS_COLLECTIONS as COLLECTION_LIST,
   MINDFULNESS_COLLECTION_ORDER,
   MINDFULNESS_TRACKS,
   MINDFULNESS_TRACKS_BY_ID,
@@ -20,7 +20,13 @@ export { MINDFULNESS_COLLECTION_ORDER, getMindfulnessTrack, tracksFor }
 export const MINDFULNESS_COLLECTIONS: Record<
   MindfulnessCollectionKey,
   MindfulnessCollection
-> = COLLECTIONS_FROM_MANIFEST
+> = COLLECTION_LIST.reduce(
+  (accumulator, collection) => {
+    accumulator[collection.id] = collection
+    return accumulator
+  },
+  {} as Record<MindfulnessCollectionKey, MindfulnessCollection>
+)
 
 const DISABLED_TRACK_IDS = new Set(
   MINDFULNESS_TRACKS.filter((track) => track.enabled === false).map((track) => track.id)
