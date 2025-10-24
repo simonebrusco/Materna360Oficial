@@ -1,7 +1,7 @@
-export const runtime = 'nodejs'
-
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+
+export const runtime = 'nodejs'
 
 const COOKIE = 'm360_profile'
 const ONE_YEAR = 60 * 60 * 24 * 365
