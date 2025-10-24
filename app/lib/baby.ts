@@ -7,7 +7,7 @@ type BabyProfile = {
   babyAgeMonths: number | null
 }
 
-async function readBabyProfile(): Promise<BabyProfile> {
+export async function getBabyProfile(): Promise<BabyProfile> {
   const supabase = supabaseServer()
   const {
     data: { user },
@@ -22,31 +22,37 @@ async function readBabyProfile(): Promise<BabyProfile> {
     return { babyAgeMonths: null }
   }
 
-  const { data, error } = await supabase
-    .from('babies')
-    .select('birthdate, age_months')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const readBabyProfile = unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from('babies')
+        .select('birthdate, age_months')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-  if (error) {
-    console.error('[BabyProfile] Failed to load baby profile:', error.message)
-    return { babyAgeMonths: null }
-  }
+      if (error) {
+        console.error('[BabyProfile] Failed to load baby profile:', error.message)
+        return { babyAgeMonths: null }
+      }
 
-  const computedMonths = monthsFromBirthdate(data?.birthdate ?? null)
-  if (computedMonths !== null) {
-    return { babyAgeMonths: computedMonths }
-  }
+      const computedMonths = monthsFromBirthdate(data?.birthdate ?? null)
+      if (computedMonths !== null) {
+        return { babyAgeMonths: computedMonths }
+      }
 
-  const storedMonths =
-    typeof data?.age_months === 'number' && Number.isFinite(data.age_months) && data.age_months >= 0
-      ? Math.floor(data.age_months)
-      : null
+      const storedMonths =
+        typeof data?.age_months === 'number' && Number.isFinite(data.age_months) && data.age_months >= 0
+          ? Math.floor(data.age_months)
+          : null
 
-  return { babyAgeMonths: storedMonths }
+      return { babyAgeMonths: storedMonths }
+    },
+    ['baby:read', user.id],
+    {
+      tags: ['baby'],
+      revalidate: false,
+    }
+  )
+
+  return readBabyProfile()
 }
-
-export const getBabyProfile = unstable_cache(readBabyProfile, ['baby:read'], {
-  tags: ['baby'],
-  revalidate: false,
-})
