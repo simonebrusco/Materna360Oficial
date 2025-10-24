@@ -1,6 +1,6 @@
-import { Reveal } from '@/components/ui/Reveal'
-
 'use client'
+
+import { Reveal } from '@/components/ui/Reveal'
 
 import ProfessionalsSectionClient from './ProfessionalsSectionClient'
 
