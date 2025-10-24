@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react'
-import React, { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 
 const BreathCard = dynamic(
