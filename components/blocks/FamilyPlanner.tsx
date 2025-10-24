@@ -545,7 +545,8 @@ export function FamilyPlanner() {
                 weekday: 'long',
                 day: '2-digit',
                 month: 'long',
-              }).format(selectedDay)}
+                timeZone: BRAZIL_TIMEZONE,
+              }).format(selectedDayDate)}
             </p>
           </div>
 
