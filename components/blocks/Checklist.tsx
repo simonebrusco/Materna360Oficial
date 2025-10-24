@@ -402,7 +402,7 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
 
     map[tomorrowKey] = [...existingTomorrow, ...toAppend]
     persistChecklistMap(map)
-  }, [])
+  }, [currentDateKey, dateKey])
 
   return (
     <Card className="p-7">
