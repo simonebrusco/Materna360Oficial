@@ -368,17 +368,14 @@ export function MindfulnessCollections() {
                   <p className="mt-3 text-sm leading-relaxed text-support-2">{activeCollection.description}</p>
                 </div>
 
-                <ul className="mt-6 space-y-4">
+                <ul className="mt-6 max-h-[60vh] space-y-4 overflow-y-auto pr-1 sm:pr-2">
                   {activeCollection.tracks.map((track) => {
                     const isHeard = Boolean(heardTracks[track.id])
 
                     return (
-                      <MindfulnessTrackItem
-                        key={track.id}
-                        track={track}
-                        isHeard={isHeard}
-                        onToggle={() => handleToggleHeard(track.id)}
-                      />
+                      <li key={track.id}>
+                        <AudioRow track={track} isHeard={isHeard} onToggle={() => handleToggleHeard(track.id)} />
+                      </li>
                     )
                   })}
                 </ul>
