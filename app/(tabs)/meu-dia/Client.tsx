@@ -15,6 +15,8 @@ type MeuDiaClientProps = {
   greetingText: string
   formattedDate: string
   currentDateKey: string
+  weekStartKey: string
+  weekLabels: { key: string; shortLabel: string; longLabel: string }[]
 }
 
 const quickActions = [
@@ -24,7 +26,14 @@ const quickActions = [
   { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
-export function MeuDiaClient({ dailyGreeting, greetingText, formattedDate, currentDateKey }: MeuDiaClientProps) {
+export function MeuDiaClient({
+  dailyGreeting,
+  greetingText,
+  formattedDate,
+  currentDateKey,
+  weekStartKey,
+  weekLabels,
+}: MeuDiaClientProps) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
@@ -76,7 +85,7 @@ export function MeuDiaClient({ dailyGreeting, greetingText, formattedDate, curre
         </div>
 
         <Reveal delay={220}>
-          <FamilyPlanner currentDateKey={currentDateKey} />
+          <FamilyPlanner currentDateKey={currentDateKey} weekStartKey={weekStartKey} weekLabels={weekLabels} />
         </Reveal>
 
         <Reveal delay={260}>
