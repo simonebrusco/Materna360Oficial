@@ -1,5 +1,8 @@
 import React, { Suspense } from 'react'
+import { Suspense } from 'react'
+
 import dynamic from 'next/dynamic'
+import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
 
 const BreathCard = dynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
@@ -30,14 +33,6 @@ const OrganizationTips = dynamic(
   {
     ssr: false,
     loading: () => <div className="animate-pulse h-52 rounded-2xl border bg-white/60" />,
-  }
-)
-
-const HealthyRecipesSection = dynamic(
-  () => import('@/components/recipes/HealthyRecipesSection').then((m) => m.default ?? m),
-  {
-    ssr: false,
-    loading: () => <div className="animate-pulse h-40 rounded-2xl border bg-white/60" />,
   }
 )
 
