@@ -132,93 +132,90 @@ function formatDuration(value: number | null) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-interface MindfulnessTrackItemProps {
+interface AudioRowProps {
   track: MindfulnessTrack
   isHeard: boolean
   onToggle: () => void
 }
 
-function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItemProps) {
-  const audioSrc = useMemo(() => (AUDIO_BASE ? `${AUDIO_BASE}/mindfulness/${track.filename}` : ''), [track.filename])
-  const [isMetadataLoading, setIsMetadataLoading] = useState(Boolean(audioSrc))
+function AudioRow({ track, isHeard, onToggle }: AudioRowProps) {
+  const src = useMemo(() => (AUDIO_BASE ? `${AUDIO_BASE}/mindfulness/${track.filename}` : ''), [track.filename])
+  const [isMetadataLoading, setIsMetadataLoading] = useState(Boolean(src))
   const [duration, setDuration] = useState<number | null>(null)
   const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
     setDuration(null)
     setHasError(false)
-    setIsMetadataLoading(Boolean(audioSrc))
-  }, [audioSrc])
+    setIsMetadataLoading(Boolean(src))
+  }, [src])
 
-  const missingConfiguration = audioSrc === ''
-  const badgeLabel = hasError ? 'Arquivo indisponível' : missingConfiguration ? 'Fonte não configurada' : null
+  const missingConfiguration = src === ''
+  const badgeLabel = hasError ? 'Arquivo indisponível' : missingConfiguration ? 'Fonte não configurada' : undefined
   const durationLabel = hasError || missingConfiguration ? '--:--' : formatDuration(duration)
+  const durationContent = isMetadataLoading && !missingConfiguration ? (
+    <span className="h-3 w-12 animate-pulse rounded-full bg-primary/15" aria-hidden />
+  ) : (
+    <span className="text-xs font-medium text-support-2">{durationLabel}</span>
+  )
 
   return (
-    <li className="section-card p-5 transition-shadow duration-300 hover:shadow-elevated">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
-            {badgeLabel ? (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                {badgeLabel}
-              </span>
-            ) : null}
-          </div>
-          <p className="text-xs font-medium text-support-2/80">{track.filename}</p>
-          <label className="inline-flex items-center gap-2 text-xs font-medium text-support-2">
-            <input
-              type="checkbox"
-              checked={isHeard}
-              onChange={onToggle}
-              className="h-4 w-4 rounded border-primary/40 text-primary focus:ring-primary/40"
-            />
-            Já ouvi
-          </label>
-          {hasError && audioSrc ? (
-            <p className="text-xs text-support-2/90">Não foi possível carregar o áudio. Tente novamente em instantes.</p>
-          ) : null}
-          {missingConfiguration ? (
-            <p className="text-xs text-support-2/90">Configure a fonte dos áudios para reproduzir os conteúdos.</p>
+    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
+          {badgeLabel ? (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              {badgeLabel}
+            </span>
           ) : null}
         </div>
-        <div className="flex w-full flex-col gap-2 md:w-64">
-          <audio
-            controls
-            src={audioSrc}
-            preload="none"
-            playsInline
-            controlsList="nodownload"
-            crossOrigin="anonymous"
-            style={{ width: '100%' }}
-            onLoadedMetadata={(event) => {
-              const metadataDuration = event.currentTarget.duration
-              setDuration(Number.isFinite(metadataDuration) && metadataDuration > 0 ? metadataDuration : null)
-              setIsMetadataLoading(false)
-              setHasError(false)
-            }}
-            onError={() => {
-              if (!audioSrc) {
-                return
-              }
-
-              setIsMetadataLoading(false)
-              setHasError(true)
-            }}
-          >
-            Seu navegador não suporta a reprodução de áudio.
-          </audio>
-          <div className="flex justify-end">
-            {isMetadataLoading && !missingConfiguration ? (
-              <span className="h-3 w-12 animate-pulse rounded-full bg-primary/15" aria-hidden />
-            ) : (
-              <span className="text-xs font-medium text-support-2">{durationLabel}</span>
-            )}
-          </div>
-        </div>
+        {durationContent}
       </div>
-    </li>
+      <p className="mt-1 text-xs text-support-3">{track.filename}</p>
+      <div className="mt-3 space-y-2">
+        <audio
+          controls
+          src={src}
+          preload="none"
+          playsInline
+          controlsList="nodownload"
+          crossOrigin="anonymous"
+          style={{ width: '100%' }}
+          onLoadedMetadata={(event) => {
+            const metadataDuration = event.currentTarget.duration
+            setDuration(Number.isFinite(metadataDuration) && metadataDuration > 0 ? metadataDuration : null)
+            setIsMetadataLoading(false)
+            setHasError(false)
+          }}
+          onError={() => {
+            if (!src) {
+              return
+            }
+
+            setIsMetadataLoading(false)
+            setHasError(true)
+          }}
+        >
+          Seu navegador não suporta a reprodução de áudio.
+        </audio>
+        <label className="inline-flex items-center gap-2 text-xs font-medium text-support-2">
+          <input
+            type="checkbox"
+            checked={isHeard}
+            onChange={onToggle}
+            className="h-4 w-4 rounded border-primary/40 text-primary focus:ring-primary/40"
+          />
+          Já ouvi
+        </label>
+        {hasError && src ? (
+          <p className="text-xs text-support-2/90">Não foi possível carregar o áudio. Tente novamente em instantes.</p>
+        ) : null}
+        {missingConfiguration ? (
+          <p className="text-xs text-support-2/90">Configure a fonte dos áudios para reproduzir os conteúdos.</p>
+        ) : null}
+      </div>
+    </div>
   )
 }
 
