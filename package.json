@@ -7,8 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "test": "vitest run",
+    "lint": "eslint .",
+    "test": "node scripts/run-tests-if-node20.mjs",
+    "test:run": "vitest run",
     "test:watch": "vitest",
     "test:recipes": "tsx tests/healthyRecipes.test.ts && tsx tests/plannerServer.test.ts && tsx tests/professionalsMatch.test.ts && tsx tests/professionalsSection.test.tsx",
     "validate": "npm run lint && npm run test"
