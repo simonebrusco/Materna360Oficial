@@ -12,6 +12,16 @@ export default defineConfig({
     baseURL,
     trace: 'retain-on-failure',
   },
+  webServer: process.env.PLAYWRIGHT_WEB_SERVER === '0'
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        stdout: 'pipe',
+        stderr: 'pipe',
+        timeout: 120_000,
+      },
   projects: [
     {
       name: 'chromium',
