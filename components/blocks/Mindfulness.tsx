@@ -371,7 +371,7 @@ export function Mindfulness() {
         setIsPlaying(false)
       }
     },
-    [currentPlayback, lastPlayback, persistLastPlayback, progressMap, setStatus]
+    [currentPlayback, isPlaying, lastPlayback, persistLastPlayback, progressMap, setStatus]
   )
 
   const handleSeek = useCallback(
