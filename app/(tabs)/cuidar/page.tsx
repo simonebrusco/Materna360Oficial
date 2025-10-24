@@ -1,5 +1,8 @@
 import { Suspense } from 'react'
 
+import { Suspense } from 'react'
+
+import { unstable_noStore as noStore } from 'next/cache'
 import dynamic from 'next/dynamic'
 import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
 
@@ -43,7 +46,12 @@ const ProfessionalsSection = dynamic(
   }
 )
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function Page() {
+  noStore()
+
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8 my-6">
       <section className="rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft">
