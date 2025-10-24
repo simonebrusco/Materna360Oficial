@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
+import { getTodayDateKey } from '@/lib/dailyActivity'
 
 const STORAGE_KEY = 'daily_checklist_v1'
 const FALLBACK_NAME = 'Mãe'
