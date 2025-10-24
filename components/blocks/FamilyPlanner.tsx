@@ -224,11 +224,6 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
   const [suggestedRecommendations, setSuggestedRecommendations] = useState<RecommendationSuggestion[]>([])
   const hasSyncedWeekStart = useRef(false)
 
-  const weekDayKeys = useMemo(() => buildWeekKeys(weekStartKey), [weekStartKey])
-  const selectedDayDate = useMemo(
-    () => parseDateKeyToUTC(selectedDayKey) ?? parseDateKeyToUTC(todayKey) ?? new Date(),
-    [selectedDayKey, todayKey]
-  )
   const selectedDayItems = useMemo(() => plannerData[selectedDayKey] ?? [], [plannerData, selectedDayKey])
 
   useEffect(() => {
