@@ -38,8 +38,16 @@ type RecommendationSuggestion = {
   createdAt?: string
 }
 
+type WeekLabel = {
+  key: string
+  shortLabel: string
+  longLabel: string
+}
+
 type FamilyPlannerProps = {
   currentDateKey: string
+  weekStartKey: string
+  weekLabels: WeekLabel[]
 }
 
 const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], RecommendationSuggestion[]> = {
