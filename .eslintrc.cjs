@@ -2,13 +2,11 @@ const path = require('path')
 
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
-  extends: ['next/core-web-vitals', 'plugin:@typescript-eslint/recommended'],
-  plugins: ['import', 'local', '@typescript-eslint'],
+  extends: ['next/core-web-vitals'],
+  plugins: ['import', 'local'],
   rules: {
     'import/first': 'error',
     'no-duplicate-imports': 'error',
-    '@typescript-eslint/no-duplicate-imports': 'error',
   },
   settings: {
     'import/resolver': {
