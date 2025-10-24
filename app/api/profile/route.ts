@@ -40,7 +40,8 @@ export async function POST(req: Request) {
     name: COOKIE,
     value: JSON.stringify(next),
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none',
+    secure: true,
     path: '/',
     maxAge: ONE_YEAR,
   })
