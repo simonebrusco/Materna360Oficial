@@ -1,309 +1,83 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Play, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Play } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+import MindfulnessQuickModal from '@/components/mindfulness/MindfulnessQuickModal'
 import {
-  MINDFULNESS_COLLECTIONS,
-  MINDFULNESS_TRACKS,
-  MindfulnessCollection,
+  MINDFULNESS_COLLECTION_ORDER,
+  MindfulnessCollectionId,
   MindfulnessTrack,
   getCollectionById,
 } from '@/data/mindfulnessManifest'
 
-const AUDIO_BASE = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE?.replace(/\/$/, '') ?? ''
-const STORAGE_KEY = 'materna360-mindfulness-heard'
-
-const FILE_ALIASES: Record<string, string> = {
-  'você-não-está-sozinha.mp3': 'voce-nao-esta-sozinha.mp3',
-  'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-equilibrio.mp3',
-  'o-poder-do-toque.mp3': 'o-poder-do-toque-e-do-afeto.mp3',
-  'encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
-  'saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
-  '/audio/mindfulness/o-poder-do-toque.mp3': 'o-poder-do-toque-e-do-afeto.mp3',
-  '/audio/mindfulness/você-não-está-sozinha.mp3': 'voce-nao-esta-sozinha.mp3',
-  '/audio/mindfulness/transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-equilibrio.mp3',
-  '/audio/mindfulness/encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
-  '/audio/mindfulness/saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
+type CollectionCard = {
+  id: MindfulnessCollectionId
+  title: string
+  description: string
+  durationLabel: string
+  icon: string
 }
 
-const TRACK_IDS = new Set(MINDFULNESS_TRACKS.map((track) => track.id))
-
-const FILE_TO_TRACK_ID: Record<string, string> = MINDFULNESS_TRACKS.reduce<Record<string, string>>(
-  (accumulator, track) => {
-    accumulator[track.filename] = track.id
-    accumulator[`mindfulness/${track.filename}`] = track.id
-    accumulator[`/audio/mindfulness/${track.filename}`] = track.id
-    return accumulator
-  },
-  {}
-)
-
-Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
-  const normalizedCanonical = canonical.replace(/^\/audio\/mindfulness\//, '').replace(/^mindfulness\//, '')
-  const trackId = FILE_TO_TRACK_ID[normalizedCanonical] ?? FILE_TO_TRACK_ID[canonical]
-
-  if (trackId) {
-    FILE_TO_TRACK_ID[legacy] = trackId
-    FILE_TO_TRACK_ID[`mindfulness/${legacy}`] = trackId
-    FILE_TO_TRACK_ID[`/audio/mindfulness/${legacy}`] = trackId
-    FILE_TO_TRACK_ID[canonical] = trackId
-    FILE_TO_TRACK_ID[`mindfulness/${canonical}`] = trackId
-    FILE_TO_TRACK_ID[`/audio/mindfulness/${canonical}`] = trackId
-  }
-})
-
-type MindfulnessCollectionId = MindfulnessCollection['id']
-
-const COLLECTION_DETAILS: Record<MindfulnessCollectionId, { icon: string; description: string; duration: string }> = {
+const COLLECTION_DETAILS: Record<MindfulnessCollectionId, Omit<CollectionCard, 'id'>> = {
   'reconecte-se': {
-    icon: '🪷',
+    title: 'Reconecte-se',
     description: 'Práticas curtas para acalmar a mente, sentir o corpo e acolher o momento presente.',
-    duration: '5-8 min',
+    durationLabel: '5-8 min',
+    icon: '🪷',
   },
   'renove-sua-energia': {
-    icon: '☀️',
+    title: 'Renove sua Energia',
     description: 'Respirações guiadas e visualizações que despertam leveza para seguir o dia com disposição.',
-    duration: '6-10 min',
+    durationLabel: '6-10 min',
+    icon: '☀️',
   },
   'encontre-calma': {
-    icon: '🌙',
+    title: 'Encontre Calma',
     description: 'Momentos suaves para acolher emoções, respirar fundo e encontrar serenidade no fim do dia.',
-    duration: '7-9 min',
+    durationLabel: '7-9 min',
+    icon: '🌙',
   },
-}
-
-const COLLECTION_CARDS = MINDFULNESS_COLLECTIONS.map((collection) => {
-  const detail = COLLECTION_DETAILS[collection.id]
-  return {
-    id: collection.id,
-    title: collection.title,
-    icon: detail.icon,
-    description: detail.description,
-    duration: detail.duration,
-  }
-})
-
-function normalizeStorageKey(key: string): string | null {
-  if (!key) return null
-
-  if (TRACK_IDS.has(key)) {
-    return key
-  }
-
-  const sanitized = key
-    .replace(/^https?:\/\/[^/]+\//, '/')
-    .replace(/^\/audio\/mindfulness\//, '')
-    .replace(/^mindfulness\//, '')
-    .replace(/\?.*$/, '')
-
-  const aliasCandidate = FILE_ALIASES[sanitized] ?? FILE_ALIASES[key] ?? sanitized
-  const normalized = aliasCandidate.replace(/^\/audio\/mindfulness\//, '').replace(/^mindfulness\//, '')
-  const trackId = FILE_TO_TRACK_ID[normalized] ?? FILE_TO_TRACK_ID[aliasCandidate]
-
-  return trackId ?? null
-}
-
-function normalizeHeardTracks(entries: Record<string, boolean>) {
-  const normalized: Record<string, boolean> = {}
-
-  Object.entries(entries).forEach(([key, value]) => {
-    const trackId = normalizeStorageKey(key)
-    if (!trackId) return
-    normalized[trackId] = Boolean(value)
-  })
-
-  return normalized
-}
-
-function formatDuration(value: number | null) {
-  if (!value || !Number.isFinite(value) || value <= 0) {
-    return '00:00'
-  }
-
-  const totalSeconds = Math.round(value)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
-interface AudioRowProps {
-  track: MindfulnessTrack
-  isHeard: boolean
-  onToggle: () => void
-}
-
-function AudioRow({ track, isHeard, onToggle }: AudioRowProps) {
-  const src = useMemo(() => (AUDIO_BASE ? `${AUDIO_BASE}/mindfulness/${track.filename}` : ''), [track.filename])
-  const [isMetadataLoading, setIsMetadataLoading] = useState(Boolean(src))
-  const [duration, setDuration] = useState<number | null>(null)
-  const [hasError, setHasError] = useState(false)
-
-  useEffect(() => {
-    setDuration(null)
-    setHasError(false)
-    setIsMetadataLoading(Boolean(src))
-  }, [src])
-
-  const missingConfiguration = src === ''
-  const badgeLabel = hasError ? 'Arquivo indisponível' : missingConfiguration ? 'Fonte não configurada' : undefined
-  const durationLabel = hasError || missingConfiguration ? '--:--' : formatDuration(duration)
-  const durationContent = isMetadataLoading && !missingConfiguration ? (
-    <span className="h-3 w-12 animate-pulse rounded-full bg-primary/15" aria-hidden />
-  ) : (
-    <span className="text-xs font-medium text-support-2">{durationLabel}</span>
-  )
-
-  return (
-    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
-          {badgeLabel ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              {badgeLabel}
-            </span>
-          ) : null}
-        </div>
-        {durationContent}
-      </div>
-      <p className="mt-1 text-xs text-support-3">{track.filename}</p>
-      <div className="mt-3 space-y-2">
-        <audio
-          controls
-          src={src}
-          preload="none"
-          playsInline
-          controlsList="nodownload"
-          crossOrigin="anonymous"
-          style={{ width: '100%' }}
-          onLoadedMetadata={(event) => {
-            const metadataDuration = event.currentTarget.duration
-            setDuration(Number.isFinite(metadataDuration) && metadataDuration > 0 ? metadataDuration : null)
-            setIsMetadataLoading(false)
-            setHasError(false)
-          }}
-          onError={() => {
-            if (!src) {
-              return
-            }
-
-            setIsMetadataLoading(false)
-            setHasError(true)
-          }}
-        >
-          Seu navegador não suporta a reprodução de áudio.
-        </audio>
-        <label className="inline-flex items-center gap-2 text-xs font-medium text-support-2">
-          <input
-            type="checkbox"
-            checked={isHeard}
-            onChange={onToggle}
-            className="h-4 w-4 rounded border-primary/40 text-primary focus:ring-primary/40"
-          />
-          Já ouvi
-        </label>
-        {hasError && src ? (
-          <p className="text-xs text-support-2/90">Não foi possível carregar o áudio. Tente novamente em instantes.</p>
-        ) : null}
-        {missingConfiguration ? (
-          <p className="text-xs text-support-2/90">Configure a fonte dos áudios para reproduzir os conteúdos.</p>
-        ) : null}
-      </div>
-    </div>
-  )
 }
 
 export function MindfulnessCollections() {
-  const [activeCollectionId, setActiveCollectionId] = useState<MindfulnessCollectionId | null>(null)
-  const [heardTracks, setHeardTracks] = useState<Record<string, boolean>>({})
-  const [isMounted, setIsMounted] = useState(false)
+  const cards = useMemo<CollectionCard[]>(
+    () =>
+      MINDFULNESS_COLLECTION_ORDER.map((id) => ({
+        id,
+        ...COLLECTION_DETAILS[id],
+      })),
+    []
+  )
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalTitle, setModalTitle] = useState<string>('Mindfulness')
+  const [modalTracks, setModalTracks] = useState<MindfulnessTrack[]>([])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
+  const openCollection = (id: MindfulnessCollectionId) => {
+    const collection = getCollectionById(id)
+    if (collection) {
+      setModalTitle(collection.title)
+      setModalTracks(collection.tracks)
+    } else {
+      setModalTitle('Mindfulness')
+      setModalTracks([])
     }
+    setModalOpen(true)
+  }
 
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored) as Record<string, boolean>
-        const normalized = normalizeHeardTracks(parsed)
-        setHeardTracks(normalized)
-      }
-    } catch (error) {
-      console.error('Não foi possível carregar o progresso das meditações:', error)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(heardTracks))
-    } catch (error) {
-      console.error('Não foi possível salvar o progresso das meditações:', error)
-    }
-  }, [heardTracks])
-
-  const activeCollection = useMemo(() => {
-    if (!activeCollectionId) {
-      return null
-    }
-
-    const collection = getCollectionById(activeCollectionId)
-    if (!collection) {
-      return null
-    }
-
-    const detail = COLLECTION_DETAILS[activeCollectionId]
-
-    return {
-      id: collection.id,
-      title: collection.title,
-      icon: detail.icon,
-      description: detail.description,
-      tracks: collection.tracks,
-    }
-  }, [activeCollectionId])
-
-  useEffect(() => {
-    if (!activeCollectionId || typeof window === 'undefined') {
-      return undefined
-    }
-
-    const { body } = document
-    const previousOverflow = body.style.overflow
-    body.style.overflow = 'hidden'
-
-    return () => {
-      body.style.overflow = previousOverflow
-    }
-  }, [activeCollectionId])
-
-  const handleToggleHeard = (trackId: string) => {
-    setHeardTracks((previous) => ({
-      ...previous,
-      [trackId]: !previous[trackId],
-    }))
+  const handleCloseModal = () => {
+    setModalOpen(false)
+    setModalTracks([])
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-7">
-        {COLLECTION_CARDS.map((card, index) => (
-          <Reveal key={card.id} delay={index * 90} className="h-full">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {cards.map((card, index) => (
+          <Reveal key={card.id} delay={index * 80} className="h-full">
             <Card className="section-card relative h-full overflow-hidden bg-gradient-to-br from-[#ffd8e6] via-white to-white text-left">
               <div className="flex h-full flex-col gap-5">
                 <span className="text-3xl" aria-hidden="true">
@@ -315,15 +89,15 @@ export function MindfulnessCollections() {
                     <p className="text-sm leading-relaxed text-support-2">{card.description}</p>
                   </div>
                   <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-                    {card.duration}
+                    {card.durationLabel}
                   </span>
                 </div>
                 <div className="mt-auto flex justify-end">
                   <button
                     type="button"
-                    onClick={() => setActiveCollectionId(card.id)}
+                    onClick={() => openCollection(card.id)}
                     className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform duration-300 hover:-translate-y-1 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                    aria-label={`Abrir áudios da categoria ${card.title}`}
+                    aria-label={`Abrir áudios da coleção ${card.title}`}
                   >
                     <span>Praticar agora</span>
                     <Play className="h-4 w-4" />
@@ -335,61 +109,12 @@ export function MindfulnessCollections() {
         ))}
       </div>
 
-      {activeCollection && isMounted &&
-        createPortal(
-          <>
-            <div className="modal-overlay" onClick={() => setActiveCollectionId(null)} />
-            <div
-              className="modal-container"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={`mindfulness-modal-${activeCollection.id}`}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <Card className="section-card relative mx-auto w-full max-w-2xl bg-white/95">
-                <button
-                  type="button"
-                  onClick={() => setActiveCollectionId(null)}
-                  className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-support-1 shadow-soft transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
-                  aria-label="Fechar modal"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-
-                <div className="pr-6 sm:pr-10">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl" aria-hidden="true">
-                      {activeCollection.icon}
-                    </span>
-                    <h3 id={`mindfulness-modal-${activeCollection.id}`} className="text-xl font-semibold text-support-1 md:text-2xl">
-                      {activeCollection.title}
-                    </h3>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-support-2">{activeCollection.description}</p>
-                </div>
-
-                <ul className="mt-6 max-h-[60vh] space-y-4 overflow-y-auto pr-1 sm:pr-2">
-                  {activeCollection.tracks.map((track) => {
-                    const isHeard = Boolean(heardTracks[track.id])
-
-                    return (
-                      <li key={track.id}>
-                        <AudioRow track={track} isHeard={isHeard} onToggle={() => handleToggleHeard(track.id)} />
-                      </li>
-                    )
-                  })}
-                </ul>
-
-                <div className="mt-6 flex justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setActiveCollectionId(null)}>
-                    Fechar
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </>,
-          document.body
-        )}
+      <MindfulnessQuickModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        collectionTitle={modalTitle}
+        tracks={modalTracks}
+      />
     </>
   )
 }
