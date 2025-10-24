@@ -250,39 +250,34 @@ export function ProfileForm() {
     setSaving(true)
 
     try {
-      const response = await fetch('/api/profile', {
+      const cookieResponse = await fetch('/api/profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          ...trimmedState,
-          figurinha: figurinhaToPersist,
+          motherName: trimmedState.nomeMae,
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to save profile')
+      if (!cookieResponse.ok) {
+        throw new Error('Não foi possível salvar agora. Tente novamente em instantes.')
       }
 
-      const data = await response.json()
-
-      const figurinhaFromResponse = isProfileStickerId(data.figurinha) ? data.figurinha : ''
-
       setForm({
-        nomeMae: data.nomeMae,
-        filhos: data.filhos,
-        figurinha: figurinhaFromResponse,
+        nomeMae: trimmedState.nomeMae,
+        filhos: trimmedState.filhos,
+        figurinha: figurinhaToPersist,
       })
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('materna:profile-updated', {
             detail: {
-              figurinha: figurinhaFromResponse || figurinhaToPersist,
-              nomeMae: data.nomeMae,
-              filhos: data.filhos,
+              figurinha: figurinhaToPersist,
+              nomeMae: trimmedState.nomeMae,
+              filhos: trimmedState.filhos,
             },
           })
         )
@@ -326,7 +321,7 @@ export function ProfileForm() {
       setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
       setForm((previous) => ({
         ...previous,
-        nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
+        nomeMae: eu360Data?.name ? eu360Data.name : trimmedState.nomeMae,
       }))
 
       setErrors({})
