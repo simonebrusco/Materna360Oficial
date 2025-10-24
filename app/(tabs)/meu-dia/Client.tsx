@@ -1,8 +1,6 @@
 'use client'
 
-'use client'
-
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -14,6 +12,7 @@ import { Reveal } from '@/components/ui/Reveal'
 
 type MeuDiaClientProps = {
   message: string
+  firstName: string
 }
 
 const quickActions = [
@@ -21,54 +20,12 @@ const quickActions = [
   { emoji: '📸', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
   { emoji: '🎯', title: 'Atividade do Dia', description: 'Faça com as crianças' },
   { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
-]
+] as const
 
-export function MeuDiaClient({ message }: MeuDiaClientProps) {
+export function MeuDiaClient({ message, firstName }: MeuDiaClientProps) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
-  const [motherName, setMotherName] = useState('')
-  const [isLoaded, setIsLoaded] = useState(false)
-
-  useEffect(() => {
-    let active = true
-
-    const loadProfile = async () => {
-      try {
-        const response = await fetch('/api/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to load profile')
-        }
-
-        const data = await response.json()
-
-        if (!active) {
-          return
-        }
-
-        setMotherName(typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : '')
-      } catch (error) {
-        console.error(error)
-        if (active) {
-          setMotherName('')
-        }
-      } finally {
-        if (active) {
-          setIsLoaded(true)
-        }
-      }
-    }
-
-    void loadProfile()
-
-    return () => {
-      active = false
-    }
-  }, [])
 
   const handleAddNote = () => {
     if (noteText.trim()) {
@@ -76,10 +33,6 @@ export function MeuDiaClient({ message }: MeuDiaClientProps) {
       setNoteText('')
       setShowNoteModal(false)
     }
-  }
-
-  if (!isLoaded) {
-    return null
   }
 
   const resolveGreetingPrefix = () => {
@@ -96,7 +49,7 @@ export function MeuDiaClient({ message }: MeuDiaClientProps) {
     return 'Boa noite'
   }
 
-  const displayName = motherName || 'Mãe'
+  const displayName = firstName ? firstName : 'Mãe'
   const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
   const formattedDate = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -120,7 +73,7 @@ export function MeuDiaClient({ message }: MeuDiaClientProps) {
           </div>
         </Reveal>
         <Reveal delay={100}>
-          <DailyMessageCard message={message} />
+          <DailyMessageCard message={message} firstName={firstName} />
         </Reveal>
 
         <Reveal delay={160}>
