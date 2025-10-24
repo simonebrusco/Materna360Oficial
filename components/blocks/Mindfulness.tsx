@@ -10,12 +10,13 @@ import {
   MindfulnessCollectionKey,
   tracksFor,
 } from '@/data/mindfulnessCollections'
-import { MindfulnessTrack, getMindfulnessUrl } from '@/data/mindfulnessManifest'
+import { MindfulnessCollectionTrack } from '@/data/mindfulnessManifest'
+import { getMindfulnessAudioUrl, headOk } from '@/lib/audio'
 
 type MindfulnessTheme = {
   id: MindfulnessCollectionKey
   title: string
-  tracks: MindfulnessTrack[]
+  tracks: MindfulnessCollectionTrack[]
 }
 
 type TrackProgress = {
@@ -32,14 +33,16 @@ type LastPlayback = {
 
 type TrackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error'
 
+type AvailabilityStatus = 'checking' | 'available' | 'missing'
+
 const STORAGE_PROGRESS_KEY = 'mindfulness_progress_v1'
 const LAST_TRACK_STORAGE_KEY = 'm360:lastMindfulnessTrack'
 const LEGACY_LAST_TRACK_KEY = 'mindfulness_last_v1'
 
 const THEME_TITLES: Record<MindfulnessCollectionKey, string> = {
-  reconecteSe: 'Reconecte-se',
-  renoveSuaEnergia: 'Renove sua energia',
-  confieEmVoce: 'Confie em você',
+  'reconecte-se': 'Reconecte-se',
+  'renove-sua-energia': 'Renove sua Energia',
+  'encontre-calma': 'Encontre Calma',
 }
 
 const THEMES: MindfulnessTheme[] = MINDFULNESS_COLLECTION_ORDER.map((key) => ({
@@ -52,6 +55,16 @@ const THEME_BY_ID = THEMES.reduce<Record<MindfulnessCollectionKey, MindfulnessTh
   accumulator[theme.id] = theme
   return accumulator
 }, {} as Record<MindfulnessCollectionKey, MindfulnessTheme>)
+
+const INITIAL_AVAILABILITY: Record<string, AvailabilityStatus> = THEMES.reduce(
+  (accumulator, theme) => {
+    theme.tracks.forEach((track) => {
+      accumulator[track.id] = track.enabled === false ? 'missing' : 'checking'
+    })
+    return accumulator
+  },
+  {} as Record<string, AvailabilityStatus>
+)
 
 const formatTime = (value: number) => {
   if (!Number.isFinite(value) || value <= 0) {
@@ -69,14 +82,33 @@ export function Mindfulness() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const currentSourceRef = useRef<string | null>(null)
   const loggedFailuresRef = useRef<Set<string>>(new Set())
+  const currentPlaybackRef = useRef<{ theme: MindfulnessTheme; track: MindfulnessCollectionTrack } | null>(null)
+
+  const audioUrls = useMemo(() => {
+    const map: Record<string, string> = {}
+    THEMES.forEach((theme) => {
+      theme.tracks.forEach((track) => {
+        map[track.id] = getMindfulnessAudioUrl(track.filename)
+      })
+    })
+    return map
+  }, [])
 
   const [progressMap, setProgressMap] = useState<ProgressMap>({})
-  const [currentPlayback, setCurrentPlayback] = useState<{ theme: MindfulnessTheme; track: MindfulnessTrack } | null>(
-    null
-  )
+  const [currentPlayback, setCurrentPlayback] = useState<{
+    theme: MindfulnessTheme
+    track: MindfulnessCollectionTrack
+  } | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [lastPlayback, setLastPlayback] = useState<LastPlayback | null>(null)
   const [trackStatus, setTrackStatus] = useState<Record<string, TrackStatus>>({})
+  const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({
+    ...INITIAL_AVAILABILITY,
+  })
+
+  useEffect(() => {
+    currentPlaybackRef.current = currentPlayback
+  }, [currentPlayback])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -158,6 +190,46 @@ export function Mindfulness() {
   )
 
   useEffect(() => {
+    let cancelled = false
+
+    const evaluateTrack = async (track: MindfulnessCollectionTrack) => {
+      const url = audioUrls[track.id]
+      const ok = await headOk(url)
+      if (cancelled) return
+
+      setAvailability((previous) => {
+        const nextStatus: AvailabilityStatus = ok ? 'available' : 'missing'
+        if (previous[track.id] === nextStatus) {
+          return previous
+        }
+        return {
+          ...previous,
+          [track.id]: nextStatus,
+        }
+      })
+
+      if (!ok) {
+        setStatus(track.id, 'error')
+        const active = currentPlaybackRef.current
+        if (active?.track.id === track.id && audioRef.current) {
+          audioRef.current.pause()
+          setIsPlaying(false)
+        }
+      }
+    }
+
+    THEMES.forEach((theme) => {
+      theme.tracks.forEach((track) => {
+        void evaluateTrack(track)
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [audioUrls, setStatus])
+
+  useEffect(() => {
     if (!audioRef.current) return
 
     const audio = audioRef.current
@@ -236,15 +308,25 @@ export function Mindfulness() {
       if (!currentPlayback) return
 
       const trackId = currentPlayback.track.id
-      const attemptedUrl = currentSourceRef.current ?? getMindfulnessUrl(currentPlayback.track.file)
+      const attemptedUrl = currentSourceRef.current ?? audioUrls[trackId]
 
       if (!loggedFailuresRef.current.has(trackId)) {
         loggedFailuresRef.current.add(trackId)
-        console.warn('[Mindfulness] Falha ao carregar áudio:', {
+        console.warn('[mindfulness] Falha ao carregar áudio:', {
           id: trackId,
           url: attemptedUrl,
         })
       }
+
+      setAvailability((previous) => {
+        if (previous[trackId] === 'missing') {
+          return previous
+        }
+        return {
+          ...previous,
+          [trackId]: 'missing',
+        }
+      })
 
       setIsPlaying(false)
       setStatus(trackId, 'error')
@@ -265,7 +347,7 @@ export function Mindfulness() {
       audio.removeEventListener('pause', handlePause)
       audio.removeEventListener('error', handleError)
     }
-  }, [currentPlayback, setStatus])
+  }, [audioUrls, currentPlayback, setStatus])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -282,20 +364,27 @@ export function Mindfulness() {
 
     const theme = THEME_BY_ID[lastPlayback.themeId]
     const track = theme?.tracks.find((item) => item.id === lastPlayback.trackId)
+    const status = track ? availability[track.id] ?? 'checking' : 'missing'
 
-    if (!theme || !track) {
+    if (!theme || !track || status !== 'available') {
       return null
     }
 
     return { theme, track }
-  }, [lastPlayback])
+  }, [availability, lastPlayback])
 
   const handleToggleTrack = useCallback(
-    async (theme: MindfulnessTheme, track: MindfulnessTrack) => {
+    async (theme: MindfulnessTheme, track: MindfulnessCollectionTrack) => {
+      const availabilityStatus = availability[track.id] ?? 'checking'
+      if (availabilityStatus === 'missing') {
+        setStatus(track.id, 'error')
+        return
+      }
+
       const audio = audioRef.current
       if (!audio) return
 
-      const src = getMindfulnessUrl(track.file)
+      const src = audioUrls[track.id]
       currentSourceRef.current = src
 
       const previousPlayback = currentPlayback
@@ -358,12 +447,16 @@ export function Mindfulness() {
       } catch (error) {
         if (!loggedFailuresRef.current.has(track.id)) {
           loggedFailuresRef.current.add(track.id)
-          console.warn('[Mindfulness] Falha ao iniciar áudio:', {
+          console.warn('[mindfulness] Falha ao iniciar áudio:', {
             id: track.id,
             url: src,
           })
         }
 
+        setAvailability((previous) => ({
+          ...previous,
+          [track.id]: 'missing',
+        }))
         setStatus(track.id, 'error')
         setCurrentPlayback(previousPlayback ?? null)
         setLastPlayback(previousLastPlayback ?? null)
@@ -371,7 +464,7 @@ export function Mindfulness() {
         setIsPlaying(false)
       }
     },
-    [currentPlayback, isPlaying, lastPlayback, persistLastPlayback, progressMap, setStatus]
+    [availability, audioUrls, currentPlayback, isPlaying, lastPlayback, persistLastPlayback, progressMap, setStatus]
   )
 
   const handleSeek = useCallback(
@@ -413,7 +506,7 @@ export function Mindfulness() {
 
   return (
     <Card className="bg-gradient-to-br from-primary/10 via-white to-white p-7 shadow-soft">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify_between gap-3">
         <div>
           <span className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Autocuidado guiado</span>
           <h2 className="mt-2 text-xl font-semibold text-support-1 md:text-2xl">Mindfulness</h2>
@@ -433,12 +526,16 @@ export function Mindfulness() {
               {theme.tracks.map((track) => {
                 const progress = progressMap[track.id]
                 const isCurrent = currentPlayback?.track.id === track.id
-                const status = trackStatus[track.id] ?? (isCurrent && isPlaying ? 'playing' : 'idle')
+                const status = trackStatus[track.id] ?? 'idle'
+                const availabilityStatus = availability[track.id] ?? 'checking'
                 const isTrackPlaying = status === 'playing'
                 const isLastPlayed = lastPlayback?.trackId === track.id
                 const currentProgress = progress ?? { current: 0, duration: 0 }
                 const hasDuration = Number.isFinite(currentProgress.duration) && currentProgress.duration > 0
                 const showSkeleton = isCurrent && status === 'loading'
+                const isMissing = availabilityStatus === 'missing'
+                const isChecking = availabilityStatus === 'checking'
+                const isPlayable = availabilityStatus === 'available'
 
                 return (
                   <li
@@ -451,19 +548,25 @@ export function Mindfulness() {
                       type="button"
                       onClick={() => handleToggleTrack(theme, track)}
                       aria-label={isTrackPlaying ? 'Pausar' : 'Tocar'}
-                      disabled={status === 'loading'}
-                      className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:opacity-60"
+                      disabled={!isPlayable && !isTrackPlaying}
+                      className="shrink-0 rounded-full border border-primary/30 bg-white p-2 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:opacity-60 disabled:pointer-events-none"
                     >
                       {isTrackPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </button>
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-medium text-support-1">{track.title}</span>
-                      {status === 'error' && (
+                      {isMissing && (
+                        <span className="text-xs text-support-2/90">Arquivo não encontrado</span>
+                      )}
+                      {isChecking && !isMissing && (
+                        <span className="text-xs text-support-2">Verificando…</span>
+                      )}
+                      {status === 'error' && !isMissing && (
                         <span className="text-xs text-support-2/90">Não foi possível carregar o áudio. Tente novamente em instantes.</span>
                       )}
                     </div>
                     <div className="flex items-center justify-end">
-                      {showSkeleton ? (
+                      {showSkeleton || (isCurrent && status === 'loading') ? (
                         <span className="h-3 w-12 animate-pulse rounded-full bg-primary/15" aria-hidden />
                       ) : hasDuration ? (
                         <span className="text-xs font-medium text-support-2" aria-live={isCurrent ? 'polite' : 'off'}>
@@ -538,7 +641,7 @@ export function Mindfulness() {
         </div>
       )}
 
-      <audio ref={audioRef} preload="none" hidden />
+      <audio ref={audioRef} preload="none" hidden crossOrigin="anonymous" />
     </Card>
   )
 }
