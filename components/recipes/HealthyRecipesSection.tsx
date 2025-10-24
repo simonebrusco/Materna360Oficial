@@ -12,8 +12,6 @@ import {
 import { FamilyRecipesToggle } from '@/components/recipes/FamilyRecipesToggle'
 import { StageRecipesClient } from '@/components/recipes/StageRecipesClient'
 
-export const dynamic = 'force-dynamic'
-
 type RecipesState = 'unknown' | 'lt6' | 'gte6'
 
 type StageMeta = {
