@@ -13,29 +13,17 @@ import {
   getMindfulnessUrl,
 } from '@/data/mindfulnessManifest'
 
-type CollectionKey = keyof typeof COLLECTIONS
-
-type CollectionGroup = {
-  key: CollectionKey
-  icon: string
-  title: string
-  description: string
-  tracks: MindfulnessTrack[]
-}
-
 const STORAGE_KEY = 'materna360-mindfulness-heard'
 
 const FILE_ALIASES: Record<string, string> = {
   'você-não-está-sozinha.mp3': 'voce-nao-esta-sozinha.mp3',
-  'confie-em-você.mp3': 'suas-palavras-tem-poder.mp3',
-  'um-novo-começo.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
+  'você-não-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
+  'voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
   'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   'transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   'suas-palavras-têm-poder.mp3': 'suas-palavras-tem-poder.mp3',
   'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
   'voce-esta-fazendo-o-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
-  'você-não-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
-  'voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
   'celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
   'encontre-a-paz-dentro-de-você.mp3': 'encontre-a-paz-dentro-de-voce.mp3',
   'saindo-do-piloto-automático.mp3': 'saindo-do-piloto-automatico.mp3',
@@ -44,6 +32,7 @@ const FILE_ALIASES: Record<string, string> = {
   '/audio/mindfulness/celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
   '/audio/mindfulness/transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   '/audio/mindfulness/o-poder-do-toque.mp3': 'o-poder-do-toque-e-do-afeto.mp3',
+  '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
 }
 
 const byId: Record<string, MindfulnessTrack> = Object.fromEntries(
@@ -52,15 +41,15 @@ const byId: Record<string, MindfulnessTrack> = Object.fromEntries(
 
 const fileToIdMap = MINDFULNESS_TRACKS.reduce<Record<string, string>>((accumulator, track) => {
   accumulator[track.file] = track.id
+  accumulator[`/audio/mindfulness/${track.file}`] = track.id
   return accumulator
 }, {})
 
 Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
-  const normalizedCanonical = canonical.replace(/^\/audio\/mindfulness\//, '')
-  const trackId = fileToIdMap[normalizedCanonical]
+  const canonicalFile = canonical.replace(/^\/audio\/mindfulness\//, '')
+  const trackId = fileToIdMap[canonicalFile]
   if (trackId) {
     fileToIdMap[legacy] = trackId
-    fileToIdMap[`/audio/mindfulness/${normalizedCanonical}`] = trackId
   }
 })
 
@@ -83,6 +72,16 @@ const COLLECTIONS = {
     'o-poder-do-toque',
   ],
 } as const
+
+type CollectionKey = keyof typeof COLLECTIONS
+
+type CollectionGroup = {
+  key: CollectionKey
+  icon: string
+  title: string
+  description: string
+  tracks: MindfulnessTrack[]
+}
 
 const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; description: string }> = {
   reconecteSe: {
@@ -107,14 +106,6 @@ const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; d
 
 const COLLECTION_ORDER: CollectionKey[] = ['reconecteSe', 'renoveSuaEnergia', 'confieEmVoce']
 
-const GROUPS: CollectionGroup[] = COLLECTION_ORDER.map((key) => ({
-  key,
-  icon: COLLECTION_DETAILS[key].icon,
-  title: COLLECTION_DETAILS[key].title,
-  description: COLLECTION_DETAILS[key].description,
-  tracks: tracksFor(key),
-}))
-
 function tracksFor(key: CollectionKey): MindfulnessTrack[] {
   return COLLECTIONS[key]
     .map((id) => {
@@ -133,6 +124,14 @@ function tracksFor(key: CollectionKey): MindfulnessTrack[] {
     .filter((track): track is MindfulnessTrack => Boolean(track))
 }
 
+const GROUPS: CollectionGroup[] = COLLECTION_ORDER.map((key) => ({
+  key,
+  icon: COLLECTION_DETAILS[key].icon,
+  title: COLLECTION_DETAILS[key].title,
+  description: COLLECTION_DETAILS[key].description,
+  tracks: tracksFor(key),
+}))
+
 function normalizeStorageKey(key: string): string | null {
   if (!key) return null
 
@@ -140,10 +139,14 @@ function normalizeStorageKey(key: string): string | null {
     return key
   }
 
-  const trimmed = key.replace(/^https?:\/\/[^/]+\//, '/').replace(/^\/audio\/mindfulness\//, '')
-  const aliasTarget = FILE_ALIASES[trimmed] ?? FILE_ALIASES[key] ?? trimmed
-  const canonical = aliasTarget.replace(/^\/audio\/mindfulness\//, '')
-  const trackId = fileToIdMap[canonical] ?? fileToIdMap[aliasTarget]
+  const sanitized = key
+    .replace(/^https?:\/\/[^/]+\//, '/')
+    .replace(/^\/audio\/mindfulness\//, '')
+    .replace(/\?.*$/, '')
+
+  const aliasCandidate = FILE_ALIASES[sanitized] ?? FILE_ALIASES[key] ?? sanitized
+  const canonicalFile = aliasCandidate.replace(/^\/audio\/mindfulness\//, '')
+  const trackId = fileToIdMap[canonicalFile] ?? fileToIdMap[aliasCandidate]
 
   return trackId ?? null
 }
