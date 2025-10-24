@@ -3,6 +3,7 @@
 'use client'
 
 import { type FormEvent, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 import { DEFAULT_STICKER_ID, ProfileStickerId, STICKER_OPTIONS, isProfileStickerId } from '@/app/lib/stickers'
