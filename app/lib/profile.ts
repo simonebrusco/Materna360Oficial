@@ -1,12 +1,21 @@
-'use server'
+import { unstable_cache } from 'next/cache'
 
 import { supabaseServer } from './supabase'
 
-export async function getServerProfile(): Promise<{ name: string }> {
+type ServerProfile = {
+  name: string
+}
+
+async function readProfile(): Promise<ServerProfile> {
   const supabase = supabaseServer()
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
+
+  if (authError) {
+    console.error('[Profile] Failed to verify user:', authError.message)
+  }
 
   if (!user) {
     return { name: '' }
@@ -23,5 +32,11 @@ export async function getServerProfile(): Promise<{ name: string }> {
     return { name: '' }
   }
 
-  return { name: typeof data?.name === 'string' ? data.name : '' }
+  const name = typeof data?.name === 'string' ? data.name.trim() : ''
+  return { name }
 }
+
+export const getServerProfile = unstable_cache(readProfile, ['profile:read'], {
+  tags: ['profile'],
+  revalidate: 0,
+})
