@@ -6,6 +6,8 @@ module.exports = {
   plugins: ['import', 'local'],
   rules: {
     'import/first': 'error',
+    'no-duplicate-imports': 'error',
+    '@typescript-eslint/no-duplicate-imports': 'error',
   },
   settings: {
     'import/resolver': {
