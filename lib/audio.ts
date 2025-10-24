@@ -1,13 +1,20 @@
-export function getMindfulnessAudioUrl(filename: string): string {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE
-
+export function getMindfulnessUrl(filename: string): string {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE ?? '').replace(/\/$/, '')
   if (!base) {
+    return ''
+  }
+  return `${base}/mindfulness/${filename}`
+}
+
+export function getMindfulnessAudioUrl(filename: string): string {
+  const url = getMindfulnessUrl(filename)
+
+  if (!url) {
     console.warn('[mindfulness] NEXT_PUBLIC_SUPABASE_AUDIO_BASE is not configured.')
     return filename
   }
 
-  const normalizedBase = base.replace(/\/$/, '')
-  return `${normalizedBase}/mindfulness/${filename}`
+  return url
 }
 
 export async function headOk(url: string): Promise<boolean> {
