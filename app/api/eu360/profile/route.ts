@@ -166,8 +166,8 @@ export async function POST(request: Request) {
     }
   }
 
-  revalidatePath('/meu-dia')
-  revalidatePath('/cuidar')
+  revalidateTag('profile')
+  revalidateTag('baby')
 
   const responsePayload: Eu360ProfileResponse = {
     name,
