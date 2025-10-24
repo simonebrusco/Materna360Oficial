@@ -2,39 +2,25 @@
 
 const COLLECTIONS = [
   {
-    id: 'reconectar',
+    id: 'reconecte-se',
     icon: '🪷',
-    titulo: 'Reconectar com você',
+    titulo: 'Reconecte-se',
     descricao: 'Práticas curtas para acalmar a mente, sentir o corpo e acolher o momento presente.',
     duracao: '5-8 min',
   },
   {
-    id: 'energia',
+    id: 'renove-sua-energia',
     icon: '☀️',
-    titulo: 'Renovar energias',
+    titulo: 'Renove sua Energia',
     descricao: 'Respirações guiadas e visualizações que despertam leveza para seguir o dia com disposição.',
     duracao: '6-10 min',
   },
   {
-    id: 'descanso',
+    id: 'encontre-calma',
     icon: '🌙',
-    titulo: 'Desacelerar à noite',
-    descricao: 'Momentos suaves para preparar o corpo e a mente para um sono mais tranquilo.',
+    titulo: 'Encontre Calma',
+    descricao: 'Momentos suaves para acolher emoções, respirar fundo e encontrar serenidade no fim do dia.',
     duracao: '7-9 min',
-  },
-  {
-    id: 'acolhimento',
-    icon: '🤍',
-    titulo: 'Acolher emoções',
-    descricao: 'Meditações guiadas para reconhecer sentimentos e transformá-los em cuidado consigo mesma.',
-    duracao: '5-7 min',
-  },
-  {
-    id: 'clareza',
-    icon: '✨',
-    titulo: 'Clareza e foco',
-    descricao: 'Respirações focadas que ajudam a organizar pensamentos e priorizar com leveza.',
-    duracao: '4-6 min',
   },
 ]
 
