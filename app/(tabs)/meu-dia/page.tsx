@@ -59,16 +59,30 @@ const formatDisplayDate = (date: Date) =>
   }).format(date)
 
 export default async function MeuDiaPage() {
-  const { name } = await getServerProfile()
-  const firstName = getFirstName(name)
+  const cookieStore = cookies()
+  const rawProfile = cookieStore.get(PROFILE_COOKIE)?.value
+
+  let profile: { motherName?: string; nomeMae?: string } = {}
+  if (rawProfile) {
+    try {
+      const parsed = JSON.parse(rawProfile)
+      if (parsed && typeof parsed === 'object') {
+        profile = parsed as { motherName?: string; nomeMae?: string }
+      }
+    } catch (error) {
+      console.error('[MeuDia] Failed to parse profile cookie:', error)
+    }
+  }
+
+  const savedName = firstNameOf(profile.motherName ?? profile.nomeMae)
   const now = new Date()
   const currentDateKey = getTodayDateKey(now)
   const totalMessages = DAILY_MESSAGES.length
   const selectedIndex = getDayIndex(currentDateKey, totalMessages)
   const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
-  const message = baseMessage && firstName ? `${firstName}, ${baseMessage}` : baseMessage
+  const message = baseMessage && savedName ? `${savedName}, ${baseMessage}` : baseMessage
   const greetingPrefix = resolveGreetingPrefix(now)
-  const displayName = firstName ? firstName : 'Mãe'
+  const displayName = savedName ?? 'Mãe'
   const greetingText = `${greetingPrefix}, ${displayName}!`
   const formattedDate = formatDisplayDate(now)
 
