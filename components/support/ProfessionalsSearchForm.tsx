@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import React, { useState, type ChangeEvent, type FormEvent } from 'react'
 
 export type ProfessionalsSearchFilters = {
   profissao?: string
