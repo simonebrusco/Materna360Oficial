@@ -38,5 +38,5 @@ async function readProfile(): Promise<ServerProfile> {
 
 export const getServerProfile = unstable_cache(readProfile, ['profile:read'], {
   tags: ['profile'],
-  revalidate: 0,
+  revalidate: false,
 })
