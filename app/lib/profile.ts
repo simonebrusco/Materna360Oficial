@@ -6,7 +6,7 @@ type ServerProfile = {
   name: string
 }
 
-async function readProfile(): Promise<ServerProfile> {
+export async function getServerProfile(): Promise<ServerProfile> {
   const supabase = supabaseServer()
   const {
     data: { user },
@@ -21,22 +21,28 @@ async function readProfile(): Promise<ServerProfile> {
     return { name: '' }
   }
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('name')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const readProfile = unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-  if (error) {
-    console.error('[Profile] Failed to load profile:', error.message)
-    return { name: '' }
-  }
+      if (error) {
+        console.error('[Profile] Failed to load profile:', error.message)
+        return { name: '' }
+      }
 
-  const name = typeof data?.name === 'string' ? data.name.trim() : ''
-  return { name }
+      const name = typeof data?.name === 'string' ? data.name.trim() : ''
+      return { name }
+    },
+    ['profile:read', user.id],
+    {
+      tags: ['profile'],
+      revalidate: false,
+    }
+  )
+
+  return readProfile()
 }
-
-export const getServerProfile = unstable_cache(readProfile, ['profile:read'], {
-  tags: ['profile'],
-  revalidate: false,
-})
