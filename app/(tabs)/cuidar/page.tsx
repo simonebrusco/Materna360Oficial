@@ -9,6 +9,30 @@ const BreathCard = dynamic(
   }
 )
 
+const CareJourneys = dynamic(
+  () => import('@/components/blocks/CareJourneys').then((m) => ({ default: m.CareJourneys })),
+  {
+    ssr: false,
+    loading: () => <div className="animate-pulse h-52 rounded-2xl border bg-white/60" />,
+  }
+)
+
+const MindfulnessForMoms = dynamic(
+  () => import('@/components/blocks/MindfulnessForMoms'),
+  {
+    ssr: false,
+    loading: () => <div className="animate-pulse h-52 rounded-2xl border bg-white/60" />,
+  }
+)
+
+const OrganizationTips = dynamic(
+  () => import('@/components/blocks/OrganizationTips'),
+  {
+    ssr: false,
+    loading: () => <div className="animate-pulse h-52 rounded-2xl border bg-white/60" />,
+  }
+)
+
 const HealthyRecipesSection = dynamic(
   () => import('@/components/recipes/HealthyRecipesSection').then((m) => m.default ?? m),
   {
