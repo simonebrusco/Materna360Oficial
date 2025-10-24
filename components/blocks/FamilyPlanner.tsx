@@ -280,7 +280,7 @@ export function FamilyPlanner() {
 
   useEffect(() => {
     if (hasSyncedWeekStart.current) {
-      plannerStorage.saveWeekStart?.(formatDateKey(weekStart))
+      plannerStorage.saveWeekStart?.(weekStartKey)
     } else {
       hasSyncedWeekStart.current = true
     }
