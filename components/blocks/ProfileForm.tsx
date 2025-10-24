@@ -268,7 +268,7 @@ export function ProfileForm() {
       setForm({
         nomeMae: trimmedState.nomeMae,
         filhos: trimmedState.filhos,
-        figurinha: figurinhaToPersist,
+        figurinha: isProfileStickerId(figurinhaToPersist) ? figurinhaToPersist : '',
       })
 
       if (typeof window !== 'undefined') {
