@@ -9,9 +9,9 @@ import MindfulnessQuickModal from '@/components/mindfulness/MindfulnessQuickModa
 import {
   MINDFULNESS_COLLECTION_ORDER,
   MindfulnessCollectionId,
-  MindfulnessTrack,
   getCollectionById,
 } from '@/data/mindfulnessManifest'
+import type { MindfulnessTrack } from '@/data/mindfulnessManifest'
 
 type CollectionCard = {
   id: MindfulnessCollectionId
