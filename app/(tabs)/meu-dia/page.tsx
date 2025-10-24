@@ -1,6 +1,9 @@
 import { cookies } from 'next/headers'
 
+import { cookies } from 'next/headers'
+
 import { getDayIndex } from '@/app/lib/dailyMessage'
+import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 
@@ -77,6 +80,8 @@ export default async function MeuDiaPage() {
   const savedName = firstNameOf(profile.motherName ?? profile.nomeMae)
   const now = new Date()
   const currentDateKey = getTodayDateKey(now)
+  const weekStartKey = getWeekStartKey(currentDateKey)
+  const { labels: weekLabels } = buildWeekLabels(weekStartKey)
   const totalMessages = DAILY_MESSAGES.length
   const selectedIndex = getDayIndex(currentDateKey, totalMessages)
   const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
@@ -92,6 +97,8 @@ export default async function MeuDiaPage() {
       greetingText={greetingText}
       formattedDate={formattedDate}
       currentDateKey={currentDateKey}
+      weekStartKey={weekStartKey}
+      weekLabels={weekLabels}
     />
   )
 }
