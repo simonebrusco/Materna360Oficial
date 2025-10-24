@@ -8,15 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import {
-  MINDFULNESS_TRACKS,
-  MindfulnessTrack,
-  getMindfulnessUrl,
-} from '@/data/mindfulnessManifest'
-import {
   MINDFULNESS_COLLECTION_ORDER,
   MindfulnessCollectionKey,
   tracksFor,
 } from '@/data/mindfulnessCollections'
+import { MINDFULNESS_TRACKS, MindfulnessCollectionTrack } from '@/data/mindfulnessManifest'
+import { getMindfulnessAudioUrl, headOk } from '@/lib/audio'
 
 const STORAGE_KEY = 'materna360-mindfulness-heard'
 
@@ -26,7 +23,6 @@ const FILE_ALIASES: Record<string, string> = {
   'voce-nao-precisa-ser-perfeita.mp3': 'voce-nao-precisa-dar-conta.mp3',
   'transforme-o-caos-em-equilíbrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
   'transforme-o-caos-em-equilibrio.mp3': 'transforme-o-caos-em-serenidade.mp3',
-  'suas-palavras-têm-poder.mp3': 'suas-palavras-tem-poder.mp3',
   'você-está-fazendo-o-seu-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
   'voce-esta-fazendo-o-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
   'celebre-os-pequenos-momentos.mp3': 'celebrando-pequenos-momentos.mp3',
@@ -40,10 +36,13 @@ const FILE_ALIASES: Record<string, string> = {
   '/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3': 'voce-esta-fazendo-o-seu-melhor.mp3',
 }
 
+const TRACK_IDS = new Set(MINDFULNESS_TRACKS.map((track) => track.id))
+
 const FILE_TO_TRACK_ID: Record<string, string> = MINDFULNESS_TRACKS.reduce<Record<string, string>>(
   (accumulator, track) => {
-    accumulator[track.file] = track.id
-    accumulator[`/audio/mindfulness/${track.file}`] = track.id
+    accumulator[track.filename] = track.id
+    accumulator[`mindfulness/${track.filename}`] = track.id
+    accumulator[`/audio/mindfulness/${track.filename}`] = track.id
     return accumulator
   },
   {}
@@ -51,35 +50,32 @@ const FILE_TO_TRACK_ID: Record<string, string> = MINDFULNESS_TRACKS.reduce<Recor
 
 Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
   const normalized = canonical.replace(/^\/audio\/mindfulness\//, '')
-  const canonicalId =
-    FILE_TO_TRACK_ID[normalized] ??
-    FILE_TO_TRACK_ID[canonical] ??
-    MINDFULNESS_TRACKS.find((track) => track.file === normalized)?.id
+  const trackId = FILE_TO_TRACK_ID[normalized] ?? FILE_TO_TRACK_ID[canonical]
 
-  if (canonicalId) {
-    FILE_TO_TRACK_ID[legacy] = canonicalId
-    FILE_TO_TRACK_ID[canonical] = canonicalId
+  if (trackId) {
+    FILE_TO_TRACK_ID[legacy] = trackId
+    FILE_TO_TRACK_ID[canonical] = trackId
   }
 })
 
 const COLLECTION_DETAILS: Record<MindfulnessCollectionKey, { icon: string; title: string; description: string }> = {
-  reconecteSe: {
+  'reconecte-se': {
     icon: '🪷',
     title: 'Reconecte-se',
     description:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
   },
-  renoveSuaEnergia: {
+  'renove-sua-energia': {
     icon: '☀️',
-    title: 'Renove sua energia',
+    title: 'Renove sua Energia',
     description:
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
   },
-  confieEmVoce: {
+  'encontre-calma': {
     icon: '🌙',
-    title: 'Confie em você',
+    title: 'Encontre Calma',
     description:
-      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
+      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para encerrar o dia com serenidade e presença.',
   },
 }
 
@@ -94,17 +90,18 @@ const GROUPS = MINDFULNESS_COLLECTION_ORDER.map((key) => ({
 function normalizeStorageKey(key: string): string | null {
   if (!key) return null
 
-  if (MINDFULNESS_TRACKS_BY_ID[key]) {
+  if (TRACK_IDS.has(key)) {
     return key
   }
 
   const sanitized = key
     .replace(/^https?:\/\/[^/]+\//, '/')
     .replace(/^\/audio\/mindfulness\//, '')
+    .replace(/^mindfulness\//, '')
     .replace(/\?.*$/, '')
 
   const aliasCandidate = FILE_ALIASES[sanitized] ?? FILE_ALIASES[key] ?? sanitized
-  const normalized = aliasCandidate.replace(/^\/audio\/mindfulness\//, '')
+  const normalized = aliasCandidate.replace(/^\/audio\/mindfulness\//, '').replace(/^mindfulness\//, '')
   const trackId = FILE_TO_TRACK_ID[normalized] ?? FILE_TO_TRACK_ID[aliasCandidate]
 
   return trackId ?? null
@@ -135,23 +132,71 @@ function formatDuration(value: number | null) {
 }
 
 interface MindfulnessTrackItemProps {
-  track: MindfulnessTrack
+  track: MindfulnessCollectionTrack
   isHeard: boolean
   onToggle: () => void
 }
 
 function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItemProps) {
-  const src = useMemo(() => getMindfulnessUrl(track.file), [track.file])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [isMetadataLoading, setIsMetadataLoading] = useState(true)
   const [duration, setDuration] = useState<number | null>(null)
   const [hasError, setHasError] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+  const [isNotFound, setIsNotFound] = useState(false)
   const loggedRef = useRef(false)
+
+  useEffect(() => {
+    let isMounted = true
+    const url = getMindfulnessAudioUrl(track.filename)
+
+    setAudioUrl(url)
+    setIsMetadataLoading(true)
+    setDuration(null)
+    setHasError(false)
+    setIsNotFound(false)
+    setIsChecking(true)
+
+    headOk(url)
+      .then((ok) => {
+        if (!isMounted) return
+
+        if (!ok) {
+          setIsNotFound(true)
+          setIsMetadataLoading(false)
+          if (audioRef.current) {
+            audioRef.current.pause()
+            audioRef.current.removeAttribute('src')
+            audioRef.current.load()
+          }
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsChecking(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [track.filename])
+
+  const showUnavailableMessage = isNotFound || hasError
 
   return (
     <li className="section-card p-5 transition-shadow duration-300 hover:shadow-elevated">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
+            {isNotFound && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                Arquivo não encontrado
+              </span>
+            )}
+          </div>
           <label className="inline-flex items-center gap-2 text-xs font-medium text-support-2">
             <input
               type="checkbox"
@@ -161,17 +206,19 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             />
             Já ouvi
           </label>
-          {hasError && (
+          {hasError && !isNotFound && (
             <p className="text-xs text-support-2/90">Não foi possível carregar o áudio. Tente novamente em instantes.</p>
           )}
         </div>
         <div className="flex w-full flex-col gap-2 md:w-64">
           <audio
+            ref={audioRef}
             controls
             preload="none"
             playsInline
             controlsList="nodownload"
-            className="w-full"
+            crossOrigin="anonymous"
+            className={`w-full ${showUnavailableMessage ? 'pointer-events-none opacity-60' : ''}`}
             onLoadedMetadata={(event) => {
               const audio = event.currentTarget
               const audioDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null
@@ -180,13 +227,17 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
               setHasError(false)
             }}
             onPlay={(event) => {
+              if (showUnavailableMessage) {
+                event.currentTarget.pause()
+                return
+              }
               const audio = event.currentTarget
               audio.muted = false
             }}
             onError={(event) => {
               if (!loggedRef.current) {
                 loggedRef.current = true
-                console.warn('[Mindfulness] Falha ao carregar áudio:', {
+                console.warn('[mindfulness] Falha ao carregar áudio:', {
                   id: track.id,
                   url: event.currentTarget.currentSrc,
                 })
@@ -195,14 +246,16 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
               setHasError(true)
             }}
           >
-            <source src={src} type="audio/mpeg" />
+            {!isNotFound && audioUrl ? <source src={audioUrl} type="audio/mpeg" /> : null}
             Seu navegador não suporta a reprodução de áudio.
           </audio>
           <div className="flex justify-end">
-            {isMetadataLoading ? (
+            {isMetadataLoading && !isNotFound ? (
               <span className="h-3 w-12 animate-pulse rounded-full bg-primary/15" aria-hidden />
             ) : (
-              <span className="text-xs font-medium text-support-2">{formatDuration(duration)}</span>
+              <span className="text-xs font-medium text-support-2">
+                {showUnavailableMessage ? '--:--' : formatDuration(duration)}
+              </span>
             )}
           </div>
         </div>
