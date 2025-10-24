@@ -48,5 +48,5 @@ async function readBabyProfile(): Promise<BabyProfile> {
 
 export const getBabyProfile = unstable_cache(readBabyProfile, ['baby:read'], {
   tags: ['baby'],
-  revalidate: 0,
+  revalidate: false,
 })
