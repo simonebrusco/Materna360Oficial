@@ -142,7 +142,7 @@ export default async function HealthyRecipesSection() {
   }
 
   const stages = buildStageMeta()
-  const initialStage = ((age ?? 6) >= 6 ? mapAgeToStage(age ?? 6) : '6-8m')
+  const initialStage = mapAgeToStage(age ?? 6)
 
   return <GteSixState stages={stages} initialStage={initialStage} />
 }
