@@ -143,7 +143,6 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
   const [isMetadataLoading, setIsMetadataLoading] = useState(true)
   const [duration, setDuration] = useState<number | null>(null)
   const [hasError, setHasError] = useState(false)
-  const [isChecking, setIsChecking] = useState(true)
   const [isNotFound, setIsNotFound] = useState(false)
   const loggedRef = useRef(false)
 
@@ -156,7 +155,6 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
     setDuration(null)
     setHasError(false)
     setIsNotFound(false)
-    setIsChecking(true)
 
     headOk(url)
       .then((ok) => {
@@ -170,11 +168,6 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
             audioRef.current.removeAttribute('src')
             audioRef.current.load()
           }
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsChecking(false)
         }
       })
 
