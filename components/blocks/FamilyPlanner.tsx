@@ -2,7 +2,7 @@
 
 'use client'
 
-import React, { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import React, { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
