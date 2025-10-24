@@ -297,8 +297,36 @@ export function ProfileForm() {
         )
       }
 
+      const eu360Response = await fetch('/api/eu360/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: trimmedState.nomeMae,
+          birthdate: babyBirthdate ? babyBirthdate : null,
+          age_months: Number.isFinite(trimmedState.filhos[0]?.idadeMeses)
+            ? trimmedState.filhos[0]?.idadeMeses ?? null
+            : null,
+        }),
+      })
+
+      if (!eu360Response.ok) {
+        const payload = await eu360Response.json().catch(() => ({}))
+        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to save Eu360 profile')
+      }
+
+      const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
+      setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
+      setForm((previous) => ({
+        ...previous,
+        nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
+      }))
+
       setErrors({})
       setStatusMessage('Salvo com carinho!')
+      router.refresh()
     } catch (error) {
       console.error(error)
       setStatusMessage('Não foi possível salvar agora. Tente novamente em instantes.')
