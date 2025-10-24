@@ -137,18 +137,25 @@ export function Mindfulness() {
     }
   }, [])
 
-  const setStatus = useCallback((trackId: string, status: TrackStatus) => {
-    setTrackStatus((previous) => {
-      if (previous[trackId] === status) {
-        return previous
-      }
+  const setStatus = useCallback(
+    (trackId: string, nextStatus: TrackStatus | ((previous?: TrackStatus) => TrackStatus)) => {
+      setTrackStatus((previous) => {
+        const previousStatus = previous[trackId]
+        const computedStatus =
+          typeof nextStatus === 'function' ? nextStatus(previousStatus) : nextStatus
 
-      return {
-        ...previous,
-        [trackId]: status,
-      }
-    })
-  }, [])
+        if (previousStatus === computedStatus) {
+          return previous
+        }
+
+        return {
+          ...previous,
+          [trackId]: computedStatus,
+        }
+      })
+    },
+    []
+  )
 
   useEffect(() => {
     if (!audioRef.current) return
