@@ -9,7 +9,7 @@ const TIPS = [
   },
   {
     id: 'tempo-familia',
-    emoji: '👨9Family',
+    emoji: '👨‍👩‍👧‍👦',
     titulo: 'Mini reunião afetiva',
     descricao: 'Reserve 5 minutos depois do jantar para cada pessoa compartilhar um destaque e um desafio do dia.',
   },
