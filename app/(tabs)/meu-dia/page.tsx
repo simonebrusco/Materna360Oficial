@@ -1,6 +1,7 @@
 import { getDailyIndex } from '@/app/lib/dailyMessage'
 import { getServerProfile } from '@/app/lib/profile'
 import { getFirstName } from '@/app/lib/strings'
+import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 
 import { MeuDiaClient } from './Client'
@@ -48,6 +49,7 @@ export default async function MeuDiaPage() {
   const displayName = firstName ? firstName : 'Mãe'
   const greetingText = `${greetingPrefix}, ${displayName}!`
   const formattedDate = formatDisplayDate(now)
+  const currentDateKey = getTodayDateKey(now)
 
   return (
     <MeuDiaClient
@@ -55,6 +57,7 @@ export default async function MeuDiaPage() {
       firstName={firstName}
       greetingText={greetingText}
       formattedDate={formattedDate}
+      currentDateKey={currentDateKey}
     />
   )
 }
