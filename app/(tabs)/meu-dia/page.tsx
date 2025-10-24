@@ -1,7 +1,5 @@
 import { cookies } from 'next/headers'
 
-import { cookies } from 'next/headers'
-
 import { getDayIndex } from '@/app/lib/dailyMessage'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 import { getTodayDateKey } from '@/lib/dailyActivity'
