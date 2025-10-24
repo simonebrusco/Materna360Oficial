@@ -1,7 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
 
-import type { Meta, StoryObj } from '@storybook/react'
-
 import DailyMessageCard from './DailyMessageCard'
 
 const meta: Meta<typeof DailyMessageCard> = {
