@@ -80,7 +80,7 @@ export default async function MeuDiaPage() {
   const totalMessages = DAILY_MESSAGES.length
   const selectedIndex = getDayIndex(currentDateKey, totalMessages)
   const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
-  const message = baseMessage && savedName ? `${savedName}, ${baseMessage}` : baseMessage
+  const dailyGreeting = baseMessage && savedName ? `${savedName}, ${baseMessage}` : baseMessage
   const greetingPrefix = resolveGreetingPrefix(now)
   const displayName = savedName ?? 'Mãe'
   const greetingText = `${greetingPrefix}, ${displayName}!`
@@ -88,7 +88,7 @@ export default async function MeuDiaPage() {
 
   return (
     <MeuDiaClient
-      message={message}
+      dailyGreeting={dailyGreeting}
       greetingText={greetingText}
       formattedDate={formattedDate}
       currentDateKey={currentDateKey}
