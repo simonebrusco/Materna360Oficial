@@ -607,12 +607,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
           <div>
             <h3 className="text-base font-semibold text-support-1">Agenda do dia</h3>
             <p className="text-xs text-support-2/90">
-              {new Intl.DateTimeFormat('pt-BR', {
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                timeZone: BRAZIL_TIMEZONE,
-              }).format(selectedDayDate)}
+              {weekDays.find((day) => day.key === selectedDayKey)?.longLabel ?? ''}
             </p>
           </div>
 
