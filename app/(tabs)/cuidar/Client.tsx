@@ -134,7 +134,7 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
         </GuardedSection>
 
         <GuardedSection>
-          <ProfessionalsSection initialProfessionalId={initialProfessionalId} />
+          <ProfessionalsSection />
         </GuardedSection>
       </div>
     </div>
