@@ -354,14 +354,8 @@ export function FamilyPlanner() {
   }
 
   const handleChangeWeek = (direction: 'prev' | 'next') => {
-    setWeekStart((current) => addDays(current, direction === 'prev' ? -7 : 7))
-    if (direction === 'next') {
-      const nextDay = addDays(parseDateKey(selectedDayKey) ?? new Date(), 7)
-      setSelectedDayKey(formatDateKey(nextDay))
-    } else {
-      const prevDay = addDays(parseDateKey(selectedDayKey) ?? new Date(), -7)
-      setSelectedDayKey(formatDateKey(prevDay))
-    }
+    setWeekStartKey((current) => addDaysToKey(current, direction === 'prev' ? -7 : 7))
+    setSelectedDayKey((current) => addDaysToKey(current, direction === 'next' ? 7 : -7))
   }
 
   const resetDraft = (type: (typeof TYPE_OPTIONS)[number] = 'Brincadeira') => {
