@@ -65,11 +65,7 @@ const COLLECTIONS_BY_ID = MINDFULNESS_COLLECTIONS.reduce<Record<MindfulnessColle
     accumulator[collection.id] = collection
     return accumulator
   },
-  {
-    'reconecte-se': MINDFULNESS_COLLECTIONS[0],
-    'renove-sua-energia': MINDFULNESS_COLLECTIONS[1],
-    'encontre-calma': MINDFULNESS_COLLECTIONS[2],
-  }
+  {} as Record<MindfulnessCollectionId, MindfulnessCollection>
 )
 
 const TRACKS_BY_COLLECTION = {
