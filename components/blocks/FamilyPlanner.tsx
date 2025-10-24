@@ -562,22 +562,22 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
           ‹
         </button>
         <div className="flex flex-1 gap-2 overflow-x-auto">
-          {weekDayKeys.map((dayKey) => {
-            const isSelected = selectedDayKey === dayKey
-            const isToday = todayKey === dayKey
+          {weekDays.map((day) => {
+            const isSelected = selectedDayKey === day.key
+            const isToday = todayKey === day.key
 
             return (
               <button
-                key={dayKey}
+                key={day.key}
                 type="button"
-                onClick={() => handleSelectDay(dayKey)}
+                onClick={() => handleSelectDay(day.key)}
                 className={`flex min-w-[72px] flex-1 flex-col items-center justify-center rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
                   isSelected
                     ? 'border-transparent bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
                     : 'border-white/60 bg-white/80 text-support-1 shadow-soft hover:-translate-y-0.5 hover:shadow-elevated'
                 } ${isToday && !isSelected ? 'border-primary/60 text-primary' : ''}`}
               >
-                <span>{formatDayLabel(dayKey)}</span>
+                <span>{day.shortLabel}</span>
               </button>
             )
           })}
