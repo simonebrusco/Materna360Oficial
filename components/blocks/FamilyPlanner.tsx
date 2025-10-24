@@ -384,8 +384,9 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
   }
 
   const handleChangeWeek = (direction: 'prev' | 'next') => {
-    setWeekStartKey((current) => addDaysToKey(current, direction === 'prev' ? -7 : 7))
-    setSelectedDayKey((current) => addDaysToKey(current, direction === 'next' ? 7 : -7))
+    const offset = direction === 'prev' ? -7 : 7
+    const targetStart = addDaysToKey(weekStartKeyState, offset)
+    void loadWeek(targetStart, { preserveSelection: direction === 'next' })
   }
 
   const resetDraft = (type: (typeof TYPE_OPTIONS)[number] = 'Brincadeira') => {
