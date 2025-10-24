@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Play } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
