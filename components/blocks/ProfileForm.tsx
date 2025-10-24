@@ -298,6 +298,7 @@ export function ProfileForm() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        cache: 'no-store',
         body: JSON.stringify({
           name: trimmedState.nomeMae,
           birthdate: normalizedBirthdate,
@@ -326,7 +327,9 @@ export function ProfileForm() {
 
       setErrors({})
       setStatusMessage('Salvo com carinho!')
+      router.push('/meu-dia')
       router.refresh()
+      return
     } catch (error) {
       console.error(error)
       const message = error instanceof Error && error.message ? error.message : 'Não foi possível salvar agora. Tente novamente em instantes.'
