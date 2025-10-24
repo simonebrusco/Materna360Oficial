@@ -12,7 +12,6 @@ import { Reveal } from '@/components/ui/Reveal'
 
 type MeuDiaClientProps = {
   message: string
-  firstName: string
   greetingText: string
   formattedDate: string
   currentDateKey: string
@@ -25,7 +24,7 @@ const quickActions = [
   { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
-export function MeuDiaClient({ message, firstName, greetingText, formattedDate, currentDateKey }: MeuDiaClientProps) {
+export function MeuDiaClient({ message, greetingText, formattedDate, currentDateKey }: MeuDiaClientProps) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
@@ -54,7 +53,7 @@ export function MeuDiaClient({ message, firstName, greetingText, formattedDate, 
           </div>
         </Reveal>
         <Reveal delay={100}>
-          <DailyMessageCard message={message} firstName={firstName} />
+          <DailyMessageCard message={message} />
         </Reveal>
 
         <Reveal delay={160}>
