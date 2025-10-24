@@ -181,7 +181,7 @@ const normalizeAgeBand = (ageBand?: string | null) => {
   return ''
 }
 
-export function FamilyPlanner() {
+export default function FamilyPlanner() {
   const today = useMemo(() => {
     const current = new Date()
     current.setHours(0, 0, 0, 0)
