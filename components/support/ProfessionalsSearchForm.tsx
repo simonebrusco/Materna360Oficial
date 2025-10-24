@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 export type ProfessionalsSearchFilters = {
   profissao?: string
@@ -29,11 +29,11 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
     termos: initial?.termos ?? DEFAULT_FILTERS.termos,
   })
 
-  const handleChange = (key: keyof ProfessionalsSearchFilters) => (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  const handleChange = (key: keyof ProfessionalsSearchFilters) => (event: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     setFilters((previous) => ({ ...previous, [key]: event.target.value }))
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     onSearch(filters)
   }
