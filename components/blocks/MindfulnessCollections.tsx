@@ -6,12 +6,8 @@ import { Play } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import MindfulnessQuickModal from '@/components/mindfulness/MindfulnessQuickModal'
-import {
-  MINDFULNESS_COLLECTION_ORDER,
-  MindfulnessCollectionId,
-  getCollectionById,
-} from '@/data/mindfulnessManifest'
-import type { MindfulnessTrack } from '@/data/mindfulnessManifest'
+import { MINDFULNESS_COLLECTION_ORDER, getCollectionById } from '@/data/mindfulnessManifest'
+import type { MindfulnessCollectionId, MindfulnessTrack } from '@/data/mindfulnessManifest'
 
 type CollectionCard = {
   id: MindfulnessCollectionId
