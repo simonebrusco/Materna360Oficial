@@ -38,6 +38,10 @@ type RecommendationSuggestion = {
   createdAt?: string
 }
 
+type FamilyPlannerProps = {
+  currentDateKey: string
+}
+
 const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], RecommendationSuggestion[]> = {
   '0-6m': [
     { type: 'Recomendação', title: 'Momento de colo e canções de ninar' },
