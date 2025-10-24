@@ -298,6 +298,15 @@ export function ProfileForm() {
         )
       }
 
+      const normalizedBirthdate = babyBirthdate ? babyBirthdate : null
+      const firstChildAge = trimmedState.filhos[0]?.idadeMeses
+      const normalizedAgeMonths =
+        normalizedBirthdate !== null
+          ? null
+          : typeof firstChildAge === 'number' && Number.isFinite(firstChildAge) && firstChildAge >= 0
+            ? Math.floor(firstChildAge)
+            : null
+
       const eu360Response = await fetch('/api/eu360/profile', {
         method: 'POST',
         headers: {
@@ -306,10 +315,8 @@ export function ProfileForm() {
         credentials: 'include',
         body: JSON.stringify({
           name: trimmedState.nomeMae,
-          birthdate: babyBirthdate ? babyBirthdate : null,
-          age_months: Number.isFinite(trimmedState.filhos[0]?.idadeMeses)
-            ? trimmedState.filhos[0]?.idadeMeses ?? null
-            : null,
+          birthdate: normalizedBirthdate,
+          age_months: normalizedAgeMonths,
         }),
       })
 
