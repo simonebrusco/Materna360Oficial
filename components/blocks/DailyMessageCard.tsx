@@ -4,11 +4,11 @@ import { useEffect } from 'react'
 
 import { Card } from '@/components/ui/card'
 
-type DailyMessageCardProps = {
+type GreetingProps = {
   greeting: string
 }
 
-export function DailyMessageCard({ greeting }: DailyMessageCardProps) {
+export default function DailyMessageCard({ greeting }: GreetingProps) {
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
