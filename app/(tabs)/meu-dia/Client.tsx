@@ -4,10 +4,10 @@
 
 import { useEffect, useState } from 'react'
 
-import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
-import { Checklist } from '@/components/blocks/Checklist'
-import { DailyMessageCard } from '@/components/blocks/MessageOfDay'
-import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
+import ActivityOfDay from '@/components/blocks/ActivityOfDay'
+import Checklist from '@/components/blocks/Checklist'
+import DailyMessageCard from '@/components/blocks/MessageOfDay'
+import FamilyPlanner from '@/components/blocks/FamilyPlanner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
