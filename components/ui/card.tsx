@@ -1,6 +1,6 @@
 import React from 'react'
 
-import type { HTMLAttributes, ReactNode } from 'react'
+import * as React from 'react'
 
 interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   children: ReactNode
