@@ -163,25 +163,6 @@ const seedChecklist = (): ChecklistItem[] => {
   return ensureEmptyRowLimit([...referenceItems, createEmptyItem(), createEmptyItem()])
 }
 
-const getLocalDateKey = (date = new Date()): string => {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const getYesterdayDateKey = (): string => {
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  return getLocalDateKey(yesterday)
-}
-
-const getTomorrowDateKey = (): string => {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  return getLocalDateKey(tomorrow)
-}
-
 const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistItem => ({
   id: createId(),
   text,
