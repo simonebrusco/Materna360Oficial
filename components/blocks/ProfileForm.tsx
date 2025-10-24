@@ -88,34 +88,54 @@ export function ProfileForm() {
 
         const data = await response.json()
 
-        if (!isMounted) {
-          return
+        if (isMounted) {
+          const normalizedChildren = Array.isArray(data?.filhos) && data.filhos.length > 0 ? data.filhos : [createEmptyChild()]
+
+          setForm({
+            nomeMae: typeof data?.nomeMae === 'string' ? data.nomeMae : '',
+            filhos: normalizedChildren.map((child: any) => ({
+              id: typeof child?.id === 'string' && child.id.trim() ? child.id : createEmptyChild().id,
+              genero: child?.genero === 'menina' ? 'menina' : 'menino',
+              idadeMeses: Number.isFinite(Number(child?.idadeMeses)) && Number(child?.idadeMeses) >= 0 ? Number(child.idadeMeses) : 0,
+              nome: typeof child?.nome === 'string' ? child.nome : '',
+              alergias: Array.isArray(child?.alergias)
+                ? child.alergias
+                    .map((item: unknown) => (typeof item === 'string' ? item.trim() : ''))
+                    .filter((item: string) => item.length > 0)
+                : [],
+            })),
+            figurinha: isProfileStickerId(data?.figurinha) ? data.figurinha : '',
+          })
         }
-
-        const normalizedChildren = Array.isArray(data?.filhos) && data.filhos.length > 0 ? data.filhos : [createEmptyChild()]
-
-        setForm({
-          nomeMae: typeof data?.nomeMae === 'string' ? data.nomeMae : '',
-          filhos: normalizedChildren.map((child: any) => ({
-            id: typeof child?.id === 'string' && child.id.trim() ? child.id : createEmptyChild().id,
-            genero: child?.genero === 'menina' ? 'menina' : 'menino',
-            idadeMeses: Number.isFinite(Number(child?.idadeMeses)) && Number(child?.idadeMeses) >= 0 ? Number(child.idadeMeses) : 0,
-            nome: typeof child?.nome === 'string' ? child.nome : '',
-            alergias: Array.isArray(child?.alergias)
-              ? child.alergias
-                  .map((item: unknown) => (typeof item === 'string' ? item.trim() : ''))
-                  .filter((item: string) => item.length > 0)
-              : [],
-          })),
-          figurinha: isProfileStickerId(data?.figurinha) ? data.figurinha : '',
-        })
       } catch (error) {
         console.error(error)
-        setForm(defaultState())
-      } finally {
         if (isMounted) {
-          setLoading(false)
+          setForm(defaultState())
         }
+      }
+
+      try {
+        const eu360Response = await fetch('/api/eu360/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (eu360Response.ok) {
+          const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
+          if (isMounted) {
+            setForm((previous) => ({
+              ...previous,
+              nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
+            }))
+            setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
+          }
+        }
+      } catch (error) {
+        console.error(error)
+      }
+
+      if (isMounted) {
+        setLoading(false)
       }
     }
 
