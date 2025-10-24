@@ -20,6 +20,30 @@ const REFERENCE_TEXTS = [
   'Brincadeira curta com meu filho (10–15 min)',
 ]
 
+const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
+
+const parseDateKeyToUTC = (key: string): Date | null => {
+  const [year, month, day] = key.split('-').map(Number)
+  if (!year || !month || !day) {
+    return null
+  }
+
+  return new Date(Date.UTC(year, month - 1, day, 12))
+}
+
+const formatDateKey = (date: Date): string => getTodayDateKey(date)
+
+const shiftDateKey = (key: string, delta: number): string => {
+  const parsed = parseDateKeyToUTC(key)
+  if (!parsed) {
+    return key
+  }
+
+  const next = new Date(parsed)
+  next.setUTCDate(next.getUTCDate() + delta)
+  return formatDateKey(next)
+}
+
 type ChecklistOrigin = 'yesterday' | 'today'
 
 type ChecklistItem = {
