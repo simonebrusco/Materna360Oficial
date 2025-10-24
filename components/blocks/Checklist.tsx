@@ -181,7 +181,7 @@ const fetchMotherName = async (): Promise<string> => {
   }
 }
 
-export function Checklist() {
+export default function Checklist() {
   const [items, setItems] = useState<ChecklistItem[]>([])
   const [profileName, setProfileName] = useState(FALLBACK_NAME)
   const [dateKey, setDateKey] = useState(() => getLocalDateKey())
