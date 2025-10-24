@@ -76,45 +76,60 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
   ],
 }
 
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
 
-const parseDateKey = (key: string): Date | null => {
+const parseDateKeyToUTC = (key: string): Date | null => {
   const [year, month, day] = key.split('-').map(Number)
   if (!year || !month || !day) {
     return null
   }
 
-  const date = new Date()
-  date.setHours(0, 0, 0, 0)
-  date.setFullYear(year, month - 1, day)
-  return date
+  return new Date(Date.UTC(year, month - 1, day, 12))
 }
 
-const getWeekStart = (date: Date) => {
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-  const day = start.getDay()
+const formatDateKeyFromUTC = (date: Date): string => getTodayDateKey(date)
+
+const addDaysToKey = (key: string, amount: number): string => {
+  const parsed = parseDateKeyToUTC(key)
+  if (!parsed) {
+    return key
+  }
+
+  const result = new Date(parsed)
+  result.setUTCDate(result.getUTCDate() + amount)
+  return formatDateKeyFromUTC(result)
+}
+
+const getWeekStartKey = (key: string): string => {
+  const parsed = parseDateKeyToUTC(key)
+  if (!parsed) {
+    return key
+  }
+
+  const day = parsed.getUTCDay()
   const diff = (day + 6) % 7
-  start.setDate(start.getDate() - diff)
-  return start
+  if (diff === 0) {
+    return formatDateKeyFromUTC(parsed)
+  }
+
+  const start = new Date(parsed)
+  start.setUTCDate(start.getUTCDate() - diff)
+  return formatDateKeyFromUTC(start)
 }
 
-const addDays = (date: Date, amount: number) => {
-  const next = new Date(date)
-  next.setDate(next.getDate() + amount)
-  return next
-}
+const buildWeekKeys = (weekStartKey: string): string[] =>
+  Array.from({ length: 7 }, (_, index) => addDaysToKey(weekStartKey, index))
 
-const formatDayLabel = (date: Date) => {
-  const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
-  const dayFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit' })
+const formatDayLabel = (dateKey: string) => {
+  const date = parseDateKeyToUTC(dateKey)
+  if (!date) {
+    return ''
+  }
+
+  const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: BRAZIL_TIMEZONE })
+  const dayFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', timeZone: BRAZIL_TIMEZONE })
   const rawWeekday = weekdayFormatter.format(date).replace('.', '')
-  const capitalized = rawWeekday.charAt(0).toUpperCase() + rawWeekday.slice(1, 3)
+  const capitalized = rawWeekday.charAt(0).toUpperCase() + rawWeekday.slice(1)
   return `${capitalized} ${dayFormatter.format(date)}`
 }
 
