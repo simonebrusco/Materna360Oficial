@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { Checklist } from '@/components/blocks/Checklist'
-import { DailyMessageCard } from '@/components/blocks/MessageOfDay'
+import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
