@@ -303,6 +303,11 @@ export function Mindfulness() {
       const isSameTrack = currentPlayback?.track.id === track.id
       const playFromStart = progressMap[track.id]?.current ?? 0
 
+      if (isSameTrack && isPlaying) {
+        audio.pause()
+        return
+      }
+
       setTrackStatus((previous) => {
         const next = { ...previous }
         if (previousPlayback && previousPlayback.track.id !== track.id) {
