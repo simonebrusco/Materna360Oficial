@@ -1,6 +1,6 @@
 import React from 'react'
 
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import * as React from 'react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost'
 
