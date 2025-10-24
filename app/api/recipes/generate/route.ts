@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-import { NextResponse } from 'next/server'
-
 import {
   BREASTFEEDING_MESSAGE,
   MAX_RECIPE_RESULTS,
