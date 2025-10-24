@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import React, { useEffect, useState } from 'react'
 
 import { HealthyRecipesSection as HealthyRecipesSectionInner } from '@/components/blocks/HealthyRecipes'
