@@ -2,7 +2,7 @@ import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 
 import { monthsFromBirthdate } from '@/app/lib/age'
-import { supabaseServer } from '@/app/lib/supabase'
+import { createServerSupabase } from '@/app/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,7 +65,7 @@ function normalizeAgeMonths(raw: unknown): number | null {
 }
 
 export async function GET() {
-  const supabase = supabaseServer()
+  const supabase = createServerSupabase()
   const {
     data: { user },
     error: authError,
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     return invalidResponse('Corpo da requisição inválido.')
   }
 
-  const supabase = supabaseServer()
+  const supabase = createServerSupabase()
   const {
     data: { user },
   } = await supabase.auth.getUser()
