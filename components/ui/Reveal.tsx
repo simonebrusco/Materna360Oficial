@@ -2,8 +2,7 @@
 
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import * as React from 'react'
 
 type RevealProps = {
   children: ReactNode
