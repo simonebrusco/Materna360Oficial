@@ -54,6 +54,10 @@ type ChecklistItem = {
   origin?: ChecklistOrigin
 }
 
+type ChecklistProps = {
+  currentDateKey: string
+}
+
 type ChecklistMap = Record<string, ChecklistItem[]>
 
 const createId = () => {
