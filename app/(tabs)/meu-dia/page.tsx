@@ -1,12 +1,13 @@
+import { cookies } from 'next/headers'
+
 import { getDayIndex } from '@/app/lib/dailyMessage'
-import { getServerProfile } from '@/app/lib/profile'
-import { getFirstName } from '@/app/lib/strings'
 import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 
 import { MeuDiaClient } from './Client'
 
 const TIME_ZONE = 'America/Sao_Paulo'
+const PROFILE_COOKIE = 'm360_profile'
 
 const resolveGreetingPrefix = (date: Date) => {
   const hourFormatter = new Intl.DateTimeFormat('pt-BR', {
