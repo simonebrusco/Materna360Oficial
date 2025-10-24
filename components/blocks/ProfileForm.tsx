@@ -320,12 +320,19 @@ export function ProfileForm() {
         }),
       })
 
-      if (!eu360Response.ok) {
-        const payload = await eu360Response.json().catch(() => ({}))
-        throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to save Eu360 profile')
+      const eu360Payload = await eu360Response.json().catch(() => null)
+
+      if (!eu360Response.ok || !eu360Payload) {
+        const fallbackMessage =
+          eu360Payload && typeof eu360Payload === 'object' && 'error' in eu360Payload && typeof eu360Payload.error === 'string'
+            ? eu360Payload.error
+            : 'Não foi possível salvar agora. Tente novamente em instantes.'
+
+        setStatusMessage(fallbackMessage)
+        return
       }
 
-      const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
+      const eu360Data = eu360Payload as { name?: string; birthdate?: string | null }
       setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
       setForm((previous) => ({
         ...previous,
