@@ -24,11 +24,8 @@ type StageMeta = {
 const primaryButtonClasses =
   'group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-6 py-2.5 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 hover:-translate-y-0.5 active:translate-y-0.5'
 
-const secondaryLinkClasses =
-  'inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors duration-200 ease-gentle hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60'
-
 const softCardClasses = 'rounded-3xl border border-white/70 bg-white/80 p-6 shadow-soft backdrop-blur'
-const softHighlightClasses = 'rounded-3xl border border-secondary/70 bg-secondary/80 p-6 shadow-soft backdrop-blur'
+const ltSixCardClasses = 'rounded-2xl bg-[#FFF3F6] p-6 shadow-soft text-support-1'
 
 const sanitizeAge = (value: number | null | undefined): number | null => {
   if (!Number.isFinite(Number(value))) {
@@ -87,27 +84,69 @@ const UnknownState = () => (
 )
 
 const LtSixState = () => (
-  <section id="receitas-saudaveis" className={softHighlightClasses} aria-labelledby="healthy-recipes-title-lt6">
+  <section id="receitas-saudaveis" className={ltSixCardClasses} aria-labelledby="healthy-recipes-title-lt6">
     <div className="flex flex-col gap-4">
-      <header className="flex items-start gap-3">
-        <span role="img" aria-label="Bebê" className="text-3xl">
+      <header className="flex items-start gap-4">
+        <span role="img" aria-label="Bebê" className="text-3xl leading-none">
           👶
         </span>
-        <div>
-          <h2 id="healthy-recipes-title-lt6" className="text-xl font-semibold text-support-1">
-            Por enquanto, foco na amamentação
+        <div className="space-y-3">
+          <h2 id="healthy-recipes-title-lt6" className="text-lg font-semibold text-support-1">
+            Por enquanto, o melhor alimento é o seu carinho (e o leite materno!)
           </h2>
-          <p className="mt-2 text-sm text-support-2/80">
-            Até os 6 meses, o Ministério da Saúde recomenda amamentação exclusiva. Quando chegar a hora, liberaremos receitas seguras para essa nova fase.
+          <p className="text-sm leading-relaxed text-support-1/90">
+            Seu bebê ainda está na fase da amamentação exclusiva.
+          </p>
+          <p className="text-sm leading-relaxed text-support-1/90">
+            Quando chegar o momento certo, o Materna360 vai liberar receitas seguras e nutritivas para essa nova fase. 💕
           </p>
         </div>
       </header>
-      <p className="text-xs font-medium uppercase tracking-tight text-support-2/70">
-        Se precisar, converse com o pediatra.
+      <p className="text-sm leading-relaxed text-support-1/90">
+        Enquanto isso, aproveite para cuidar de você — veja ideias de autocuidado no{' '}
+        <Link
+          href="/cuidar#autocuidado"
+          className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+          aria-label="Ver ideias de autocuidado no Cuide-se"
+        >
+          Cuide-se
+        </Link>
+        .
       </p>
-      <Link href="/cuidar#autocuidado" className={secondaryLinkClasses} aria-label="Ver ideias de autocuidado no Cuide-se">
-        Ver ideias de autocuidado no Cuide-se
-      </Link>
+      <div className="mt-2 rounded-2xl bg-white/90 p-4 shadow-soft">
+        <h3 className="text-sm font-semibold text-support-1">
+          ✨ Enquanto isso, experimente algo feito pra você
+        </h3>
+        <ul className="mt-3 space-y-2 text-sm text-support-1/80">
+          <li>
+            <Link
+              href="/cuidar#respiracao-guiada"
+              className="inline-flex items-center gap-2 font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              aria-label="Respiração guiada Bem-estar em 3 minutos"
+            >
+              🧘 Respiração guiada “Bem-estar em 3 minutos”
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/cuidar#mindfulness"
+              className="inline-flex items-center gap-2 font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              aria-label="Meditação Mãe presente"
+            >
+              🎧 Meditação “Mãe presente”
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/cuidar#organizacao"
+              className="inline-flex items-center gap-2 font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              aria-label="Dica de hoje Organize a noite anterior e durma tranquila"
+            >
+              💡 Dica de hoje: “Organize a noite anterior e durma tranquila”
+            </Link>
+          </li>
+        </ul>
+      </div>
     </div>
   </section>
 )
