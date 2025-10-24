@@ -357,43 +357,6 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
     })
   }
 
-  const loadWeek = useCallback(
-    async (targetWeekStart: string, options: { preserveSelection?: boolean } = {}) => {
-      try {
-        const response = await fetch(
-          `/api/planner/week-labels?weekStart=${encodeURIComponent(targetWeekStart)}`,
-          {
-            cache: 'no-store',
-          }
-        )
-
-        if (!response.ok) {
-          throw new Error(`Failed to load week labels (${response.status})`)
-        }
-
-        const data = (await response.json()) as { weekStartKey: string; weekLabels: WeekLabel[] }
-
-        setWeekDays(data.weekLabels)
-        setWeekStartKeyState(data.weekStartKey)
-        setSelectedDayKey((previous) => {
-          if (options.preserveSelection && data.weekLabels.some((day) => day.key === previous)) {
-            return previous
-          }
-
-          const todayEntry = data.weekLabels.find((day) => day.key === todayKey)
-          if (todayEntry) {
-            return todayEntry.key
-          }
-
-          return data.weekLabels[0]?.key ?? previous
-        })
-      } catch (error) {
-        console.error('Falha ao carregar rótulos da semana:', error)
-      }
-    },
-    [todayKey]
-  )
-
   const handleSelectDay = (dateKey: string) => {
     setSelectedDayKey(dateKey)
   }
