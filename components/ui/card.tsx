@@ -2,8 +2,8 @@ import React from 'react'
 
 import * as React from 'react'
 
-interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  children: ReactNode
+interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
+  children: React.ReactNode
 }
 
 export function Card({
