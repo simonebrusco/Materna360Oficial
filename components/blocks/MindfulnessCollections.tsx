@@ -59,21 +59,21 @@ Object.entries(FILE_ALIASES).forEach(([legacy, canonical]) => {
 
 type MindfulnessCollectionId = MindfulnessCollection['id']
 
-const COLLECTION_DETAILS: Record<MindfulnessCollectionId, { icon: string; description: string }> = {
+const COLLECTION_DETAILS: Record<MindfulnessCollectionId, { icon: string; description: string; duration: string }> = {
   'reconecte-se': {
     icon: '🪷',
-    description:
-      'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
+    description: 'Práticas curtas para acalmar a mente, sentir o corpo e acolher o momento presente.',
+    duration: '5-8 min',
   },
   'renove-sua-energia': {
     icon: '☀️',
-    description:
-      'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
+    description: 'Respirações guiadas e visualizações que despertam leveza para seguir o dia com disposição.',
+    duration: '6-10 min',
   },
   'encontre-calma': {
     icon: '🌙',
-    description:
-      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para encerrar o dia com serenidade e presença.',
+    description: 'Momentos suaves para acolher emoções, respirar fundo e encontrar serenidade no fim do dia.',
+    duration: '7-9 min',
   },
 }
 
@@ -84,6 +84,7 @@ const COLLECTION_CARDS = MINDFULNESS_COLLECTIONS.map((collection) => {
     title: collection.title,
     icon: detail.icon,
     description: detail.description,
+    duration: detail.duration,
   }
 })
 
