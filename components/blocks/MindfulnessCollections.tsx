@@ -39,14 +39,10 @@ const COLLECTION_DETAILS: Record<MindfulnessCollectionId, Omit<CollectionCard, '
 }
 
 export function MindfulnessCollections() {
-  const cards = useMemo<CollectionCard[]>(
-    () =>
-      MINDFULNESS_COLLECTION_ORDER.map((id) => ({
-        id,
-        ...COLLECTION_DETAILS[id],
-      })),
-    []
-  )
+  const cards: CollectionCard[] = MINDFULNESS_COLLECTION_ORDER.map((id) => ({
+    id,
+    ...COLLECTION_DETAILS[id],
+  }))
 
   const [modalOpen, setModalOpen] = useState(false)
   const [modalTitle, setModalTitle] = useState<string>('Mindfulness')
