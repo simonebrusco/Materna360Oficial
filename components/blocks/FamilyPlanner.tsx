@@ -231,9 +231,11 @@ export function FamilyPlanner() {
   const [suggestedRecommendations, setSuggestedRecommendations] = useState<RecommendationSuggestion[]>([])
   const hasSyncedWeekStart = useRef(false)
 
-  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart])
-  const todayKey = formatDateKey(today)
-  const selectedDay = parseDateKey(selectedDayKey) ?? today
+  const weekDayKeys = useMemo(() => buildWeekKeys(weekStartKey), [weekStartKey])
+  const selectedDayDate = useMemo(
+    () => parseDateKeyToUTC(selectedDayKey) ?? parseDateKeyToUTC(todayKey) ?? new Date(),
+    [selectedDayKey, todayKey]
+  )
   const selectedDayItems = useMemo(() => plannerData[selectedDayKey] ?? [], [plannerData, selectedDayKey])
 
   useEffect(() => {
