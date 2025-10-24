@@ -449,6 +449,22 @@ export function ProfileForm() {
                             </p>
                           )}
                         </div>
+                        {index === 0 && (
+                          <div className="space-y-2 sm:col-span-3">
+                            <label htmlFor="baby-birthdate" className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                              Data de nascimento do bebê
+                            </label>
+                            <input
+                              id="baby-birthdate"
+                              type="date"
+                              value={babyBirthdate}
+                              onChange={(event) => setBabyBirthdate(event.target.value)}
+                              max={todayISO}
+                              className={inputClasses}
+                            />
+                            <p className="text-xs text-support-2/80">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
+                          </div>
+                        )}
                         <div className="space-y-2">
                           <label htmlFor={`child-name-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Nome (opcional)
