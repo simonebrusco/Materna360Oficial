@@ -1,110 +1,52 @@
-import React from 'react'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { renderToString } from 'react-dom/server'
 
-import { PROFESSIONALS_MOCK } from '@/app/data/professionals.mock'
-import {
-  ProfessionalsSectionClient,
-  filtersToSearchString,
-  parseFiltersFromSearch,
-} from '@/components/support/ProfessionalsSectionClient'
-import { DEFAULT_PROFESSIONAL_FILTERS } from '@/app/types/professionals'
+import { ProfessionalsResults } from '@/components/support'
+import ProfessionalsSearchForm from '@/components/support/ProfessionalsSearchForm'
+import ProfessionalCard from '@/components/support/ProfessionalCard'
 
-const SAMPLE_PROS = PROFESSIONALS_MOCK.slice(0, 4)
+const SAMPLE_PRO = {
+  id: 'pro-1',
+  nome: 'Ana Luiza Prado',
+  especialidade: 'Fonoaudiologia',
+  bioCurta: 'Fonoaudióloga especializada em amamentação e introdução alimentar.',
+  avatarUrl: 'https://cdn.example.com/avatar.png',
+  whatsUrl: 'https://wa.me/5511999999999?text=Ola',
+  verificado: true,
+  primeiraAvaliacaoGratuita: true,
+  temas: ['amamentação', 'fala', 'introdução alimentar'],
+}
 
-test('exibe badge somente quando primeira avaliação é gratuita', () => {
-  const professionals = [
-    { ...SAMPLE_PROS[0], id: 'free-pro', firstAssessmentFree: true },
-    { ...SAMPLE_PROS[1], id: 'paid-pro', firstAssessmentFree: false },
-  ]
+test('ProfessionalCard renderiza badges corretas', () => {
+  const html = renderToString(<ProfessionalCard pro={SAMPLE_PRO} />)
 
-  const htmlWithFree = renderToString(
-    <ProfessionalsSectionClient
-      professionals={professionals}
-      renderPlainImages
-      enableUrlSync={false}
-      initialFilters={DEFAULT_PROFESSIONAL_FILTERS}
-    />
-  )
-
-  assert.ok(htmlWithFree.includes('Primeira avaliação gratuita'))
-
-  const htmlWithoutFree = renderToString(
-    <ProfessionalsSectionClient
-      professionals={professionals.map((professional) => ({ ...professional, firstAssessmentFree: false }))}
-      renderPlainImages
-      enableUrlSync={false}
-      initialFilters={DEFAULT_PROFESSIONAL_FILTERS}
-    />
-  )
-
-  assert.equal(htmlWithoutFree.includes('Primeira avaliação gratuita'), false)
+  assert.ok(html.includes('Verificado Materna360'))
+  assert.ok(html.includes('Primeira avaliação gratuita'))
+  assert.ok(html.includes('Vamos conversar?'))
 })
 
-test('renders card for each professional em modo básico (sem URL sync)', () => {
+test('ProfessionalCard não exibe pill gratuita quando não aplicável', () => {
   const html = renderToString(
-    <ProfessionalsSectionClient
-      professionals={SAMPLE_PROS}
-      renderPlainImages
-      enableUrlSync={false}
-      initialFilters={DEFAULT_PROFESSIONAL_FILTERS}
+    <ProfessionalCard
+      pro={{
+        ...SAMPLE_PRO,
+        primeiraAvaliacaoGratuita: false,
+      }}
     />
   )
 
-  SAMPLE_PROS.forEach((professional) => {
-    assert.ok(html.includes(professional.name))
-  })
+  assert.equal(html.includes('Primeira avaliação gratuita'), false)
 })
 
-test('aplicar filtro de profissão reduz a lista renderizada', () => {
-  const html = renderToString(
-    <ProfessionalsSectionClient
-      professionals={PROFESSIONALS_MOCK}
-      renderPlainImages
-      enableUrlSync={false}
-      initialFilters={{ ...DEFAULT_PROFESSIONAL_FILTERS, profession: 'fonoaudiologia' }}
-    />
-  )
+test('ProfessionalsResults exibe estado vazio antes da busca', () => {
+  const html = renderToString(<ProfessionalsResults />)
 
-  assert.ok(html.includes('Ana Luiza Prado'))
-  assert.equal(html.includes('Dra. Carolina Nunes'), false)
+  assert.ok(html.includes('Use os filtros acima e clique em'))
 })
 
-test('modal render inclui conselho quando presente', () => {
-  const professionalWithCouncil = PROFESSIONALS_MOCK.find((item) => item.council)
-  assert.ok(professionalWithCouncil, 'expected at least one professional with council data')
+test('ProfessionalsSearchForm exibe botão Buscar profissionais', () => {
+  const html = renderToString(<ProfessionalsSearchForm onSearch={() => undefined} />)
 
-  const html = renderToString(
-    <ProfessionalsSectionClient
-      professionals={[professionalWithCouncil!]}
-      initialOpenId={professionalWithCouncil!.id}
-      renderPlainImages
-      enableUrlSync={false}
-      initialFilters={DEFAULT_PROFESSIONAL_FILTERS}
-    />
-  )
-
-  if (professionalWithCouncil?.council) {
-    const registry = `${professionalWithCouncil.council.type} ${professionalWithCouncil.council.number}`
-    assert.ok(html.includes(registry))
-  }
-})
-
-test('serialização e parsing dos filtros preserva estado', () => {
-  const search = filtersToSearchString({
-    ...DEFAULT_PROFESSIONAL_FILTERS,
-    profession: 'doula',
-    specialties: ['puerperio'],
-    formats: ['presencial'],
-    region: 'Rio',
-    page: 2,
-  })
-  const parsed = parseFiltersFromSearch(search)
-
-  assert.equal(parsed.profession, 'doula')
-  assert.deepEqual(parsed.specialties, ['puerperio'])
-  assert.deepEqual(parsed.formats, ['presencial'])
-  assert.equal(parsed.region, 'Rio')
-  assert.equal(parsed.page, 2)
+  assert.ok(html.includes('Buscar profissionais'))
 })
