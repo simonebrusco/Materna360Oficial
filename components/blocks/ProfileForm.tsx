@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 import { DEFAULT_STICKER_ID, STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
