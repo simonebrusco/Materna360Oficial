@@ -377,6 +377,24 @@ export function FamilyPlanner({
   }, [initialPreferredBand, preferredAgeBand])
 
   useEffect(() => {
+    setSelectedChildId((previous) => {
+      if (recommendationChildren.length === 0) {
+        return ''
+      }
+
+      if (recommendationChildren.length === 1) {
+        return recommendationChildren[0].id
+      }
+
+      if (!previous || !recommendationChildren.some((child) => child.id === previous)) {
+        return RECOMMENDATION_ALL_CHILDREN_ID
+      }
+
+      return previous
+    })
+  }, [recommendationChildren])
+
+  useEffect(() => {
     if (weekDays.length === 0) {
       return
     }
