@@ -3,10 +3,12 @@ import { unstable_noStore as noStore } from 'next/cache'
 
 import { MeuDiaClient } from './Client'
 
-import { getDayIndex } from '@/app/lib/dailyMessage'
-import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
+import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/app/data/childContent'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
-import { getTodayDateKey } from '@/lib/dailyActivity'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getDayIndex } from '@/app/lib/dailyMessage'
+import { resolveAgeRange, isValidAgeRange, type Child, type Profile } from '@/app/lib/ageRange'
+import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
