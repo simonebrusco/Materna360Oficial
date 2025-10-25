@@ -121,6 +121,7 @@ type FamilyPlannerProps = {
   profile: Profile
   dateKey: string
   recommendations: ChildRecommendation[]
+  initialBuckets: AgeRange[]
 }
 
 const parseDateKeyToUTC = (key: string): Date | null => {
