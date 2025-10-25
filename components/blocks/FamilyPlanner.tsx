@@ -69,7 +69,7 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
     { type: 'Receita', title: 'Lanche de frutas com formatos divertidos' },
     { type: 'Livro', title: 'Livro ilustrado sobre animais' },
     { type: 'Brinquedo', title: 'Blocos de montar coloridos' },
-    { type: 'Recomendação', title: 'Pequena dan��a em família' },
+    { type: 'Recomendação', title: 'Pequena dança em família' },
   ],
   '3-4a': [
     { type: 'Brincadeira', title: 'Teatro de fantoches improvisado' },
@@ -894,54 +894,60 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
           )}
 
           {recommendations.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
-                <select
-                  value={preferredAgeBand}
-                  onChange={handlePreferredAgeBandChange}
-                  className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                >
-                  {AGE_BAND_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      Faixa {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {recommendations.map((suggestion, index) => {
-                  const key = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
-                  const savedKey = `${key}-${index}`
-                  const isSaved = 'createdAt' in suggestion && typeof suggestion.createdAt === 'string'
+            <>
+              <div className="h-px w-full bg-support-3/20" />
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
+                  <select
+                    value={preferredAgeBand}
+                    onChange={handlePreferredAgeBandChange}
+                    className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  >
+                    {AGE_BAND_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        Faixa {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+                  {recommendations.map((suggestion, index) => {
+                    const key = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
+                    const savedKey = `${key}-${index}`
+                    const isSaved = 'createdAt' in suggestion && typeof suggestion.createdAt === 'string'
 
-                  return (
-                    <div key={savedKey} className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
-                      <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-                          {suggestion.type}
-                        </span>
-                        {isSaved && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                            Salva hoje
-                          </span>
-                        )}
-                      </div>
-                      <p className="mb-3 text-sm font-semibold text-support-1">{suggestion.title}</p>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
+                    return (
+                      <div
+                        key={savedKey}
+                        className="rounded-2xl border border-white/60 bg-white/85 p-5 shadow-soft transition hover:shadow-md"
                       >
-                        Salvar no Planner
-                      </Button>
-                    </div>
-                  )
-                })}
+                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                            {suggestion.type}
+                          </span>
+                          {isSaved && (
+                            <span className="inline-flex items-center rounded-full bg-secondary/60 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                              Salva hoje
+                            </span>
+                          )}
+                        </div>
+                        <p className="mb-4 text-sm font-semibold text-support-1">{suggestion.title}</p>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="w-full rounded-full"
+                          onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
+                        >
+                          Salvar no Planner
+                        </Button>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
+            </>
           ) : null}
         </div>
       )}
