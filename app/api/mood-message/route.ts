@@ -1,9 +1,9 @@
-export const runtime = 'nodejs'
-
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
 import { buildMoodQuote, Mood, SUPPORTED_MOODS, todayBR } from './lib'
+
+export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
