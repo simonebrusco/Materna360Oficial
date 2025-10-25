@@ -89,24 +89,74 @@ const createId = () => {
   return Math.random().toString(36).slice(2, 10)
 }
 
-const pickRecommendationsForDay = (
-  ageBand: (typeof AGE_BAND_OPTIONS)[number],
-  dayIndex: number
-): RecommendationSuggestion[] => {
-  const pool = RECOMMENDATION_POOL[ageBand] ?? RECOMMENDATION_POOL[DEFAULT_AGE_BAND]
-  if (!pool || pool.length === 0) {
+const computeDeterministicIndex = (seed: string, length: number) => {
+  if (length <= 0) {
+    return 0
+  }
+
+  let hash = 0
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) | 0
+  }
+
+  return Math.abs(hash) % length
+}
+
+const formatAgeRangeLabel = (range?: AgeRange | null) => {
+  if (!range) {
+    return 'Todas as idades'
+  }
+
+  if (range === '8+') {
+    return '8 anos ou mais'
+  }
+
+  return `${range} anos`
+}
+
+const sanitizeRecommendationChildren = (profile: Profile | undefined): Child[] => {
+  if (!profile?.children || profile.children.length === 0) {
     return []
   }
 
-  const firstIndex = Math.abs(dayIndex) % pool.length
-  const secondIndex = (firstIndex + 1) % pool.length
-  const thirdIndex = (firstIndex + 2) % pool.length
+  const seen = new Set<string>()
+  const children: Child[] = []
 
-  return [pool[firstIndex], pool[secondIndex], pool[thirdIndex]].map((item) => ({
-    ...item,
-    source: 'suggested' as PlannerRecommendationSource,
-  }))
+  for (const rawChild of profile.children) {
+    if (!rawChild || typeof rawChild.id !== 'string') {
+      continue
+    }
+
+    const id = rawChild.id.trim()
+    if (!id || seen.has(id)) {
+      continue
+    }
+
+    seen.add(id)
+
+    const name = rawChild.name?.trim()
+    const gender = rawChild.gender === 'm' || rawChild.gender === 'f' ? rawChild.gender : undefined
+    const birthdateISO = rawChild.birthdateISO ? rawChild.birthdateISO.trim() : undefined
+    const computedRange = resolveAgeRange({
+      id,
+      name,
+      gender,
+      ageRange: rawChild.ageRange ?? null,
+      birthdateISO: birthdateISO ?? null,
+    })
+
+    children.push({
+      id,
+      name: name && name.length > 0 ? name : undefined,
+      gender,
+      ageRange: computedRange,
+      birthdateISO,
+    })
+  }
+
+  return children
 }
+
 
 const sanitizePlannerItem = (item: PlannerItem): PlannerItem => ({
   ...item,
