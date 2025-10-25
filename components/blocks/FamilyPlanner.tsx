@@ -715,7 +715,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
                               id={`planner-edit-notes-${item.id}`}
                               value={editNotes}
                               onChange={(event) => setEditNotes(event.target.value)}
-                              className={`${inputClasses} min-h-[90px]`}
+                              className={`${inputClasses} min-h-[90px] resize-vertical`}
                             />
                             <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
                           </div>
