@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react'
 
 import type { Child, Profile, AgeRange } from '@/app/lib/ageRange'
 import { resolveAgeRange } from '@/app/lib/ageRange'
