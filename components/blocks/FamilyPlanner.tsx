@@ -25,6 +25,9 @@ import {
 
 const TYPE_OPTIONS = ['Brincadeira', 'Receita', 'Livro', 'Brinquedo', 'Recomendação'] as const
 const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
+const AGE_RANGE_OPTIONS: readonly AgeRange[] = ['0-1', '2-3', '4-5', '6-7', '8+']
+const RECOMMENDATION_TYPES: RecommendationType[] = ['Brincadeira', 'Receita', 'Livro']
+const RECOMMENDATION_ALL_CHILDREN_ID = '__all__'
 
 const typeSupportsDuration = (type: (typeof TYPE_OPTIONS)[number]) => type === 'Brincadeira' || type === 'Receita'
 
