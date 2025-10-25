@@ -737,7 +737,7 @@ export function FamilyPlanner({
       return [] as RecommendationSuggestion[]
     }
 
-    const seedId = selectedChild?.id ?? 'geral'
+    const seedId = selectedChild?.id ?? 'general'
     return suggestionsForBand(preferredAgeBand, seedId)
   }, [isMultiChild, selectedChildId, selectedChild, preferredAgeBand, suggestionsForBand])
 
