@@ -42,44 +42,6 @@ type FamilyPlannerProps = {
   plannerTitle?: string
 }
 
-const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], RecommendationSuggestion[]> = {
-  '0-6m': [
-    { type: 'Recomendação', title: 'Momento de colo e canções de ninar' },
-    { type: 'Brincadeira', title: 'Tempo de contato pele a pele' },
-    { type: 'Livro', title: 'Ler um livrinho de contrastes' },
-    { type: 'Brinquedo', title: 'Explorar um móbile colorido' },
-    { type: 'Receita', title: 'Chá relaxante para a mamãe' },
-  ],
-  '7-12m': [
-    { type: 'Brincadeira', title: 'Brincar de esconde-esconde com objetos' },
-    { type: 'Brinquedo', title: 'Caixa sensorial com texturas' },
-    { type: 'Recomendação', title: 'Cantar músicas com gestos' },
-    { type: 'Receita', title: 'Papinha nutritiva colorida' },
-    { type: 'Livro', title: 'História curta com rimas' },
-  ],
-  '1-2a': [
-    { type: 'Brincadeira', title: 'Caça ao tesouro com objetos simples' },
-    { type: 'Receita', title: 'Lanche de frutas com formatos divertidos' },
-    { type: 'Livro', title: 'Livro ilustrado sobre animais' },
-    { type: 'Brinquedo', title: 'Blocos de montar coloridos' },
-    { type: 'Recomendação', title: 'Pequena dança em família' },
-  ],
-  '3-4a': [
-    { type: 'Brincadeira', title: 'Teatro de fantoches improvisado' },
-    { type: 'Receita', title: 'Mini sanduíches montados juntos' },
-    { type: 'Livro', title: 'História sobre amizade e emoções' },
-    { type: 'Brinquedo', title: 'Quebra-cabeça simples em família' },
-    { type: 'Recomendação', title: 'Pausa para alongamento divertido' },
-  ],
-  '5-6a': [
-    { type: 'Brincadeira', title: 'Jogo de memória feito à m��o' },
-    { type: 'Receita', title: 'Smoothie energético com frutas' },
-    { type: 'Livro', title: 'Leitura guiada de conto curtinho' },
-    { type: 'Brinquedo', title: 'Construção criativa com LEGO' },
-    { type: 'Recomendação', title: 'Momentinho de respiração guiada' },
-  ],
-}
-
 const parseDateKeyToUTC = (key: string): Date | null => {
   const [year, month, day] = key.split('-').map(Number)
   if (!year || !month || !day) {
