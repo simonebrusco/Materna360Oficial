@@ -69,7 +69,7 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
     { type: 'Receita', title: 'Lanche de frutas com formatos divertidos' },
     { type: 'Livro', title: 'Livro ilustrado sobre animais' },
     { type: 'Brinquedo', title: 'Blocos de montar coloridos' },
-    { type: 'Recomendação', title: 'Pequena dança em família' },
+    { type: 'Recomendação', title: 'Pequena dan��a em família' },
   ],
   '3-4a': [
     { type: 'Brincadeira', title: 'Teatro de fantoches improvisado' },
@@ -884,9 +884,13 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
               </div>
             </div>
           ) : (
-            <Button type="button" variant="outline" size="sm" onClick={() => handleStartAdd()}>
+            <button
+              type="button"
+              onClick={() => handleStartAdd()}
+              className="rounded-full bg-primary px-5 py-2.5 font-semibold text-white shadow-[0_6px_18px_rgba(233,46,129,0.25)] transition hover:shadow-[0_8px_22px_rgba(233,46,129,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            >
               Adicionar item
-            </Button>
+            </button>
           )}
 
           {recommendations.length > 0 ? (
