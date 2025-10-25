@@ -6,7 +6,7 @@ import React, { useEffect } from 'react'
 import Image from 'next/image'
 
 import type { Professional } from '@/app/types/professionals'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 
 type ProfessionalModalProps = {
   professional: Professional | null
