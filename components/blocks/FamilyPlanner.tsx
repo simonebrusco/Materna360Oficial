@@ -560,12 +560,16 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
           <button
             type="button"
             onClick={() => handleChangeWeek('prev')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/70 text-lg text-support-1 shadow-soft transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
             aria-label="Semana anterior"
           >
             ‹
           </button>
-          <div className="flex flex-1 gap-2 overflow-x-auto">
+          <div
+            className="flex flex-1 items-stretch gap-3 overflow-x-auto pb-1"
+            aria-label="Seletor de dias do planner"
+            data-testid="planner-day-strip"
+          >
             {weekDays.map((day) => {
               const isSelected = selectedDayKey === day.key
               const isToday = todayKey === day.key
@@ -575,14 +579,14 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
                   key={day.key}
                   type="button"
                   onClick={() => handleSelectDay(day.key)}
-                  className={`flex min-w-[72px] flex-1 flex-col items-center justify-center rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
+                  className={`flex h-20 min-w-[88px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-24 ${
                     isSelected
-                      ? 'border-transparent bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                      : 'border-white/60 bg-white/80 text-support-1 shadow-soft hover:-translate-y-0.5 hover:shadow-elevated'
-                  } ${isToday && !isSelected ? 'border-primary/60 text-primary' : ''}`}
+                      ? 'border-transparent bg-gradient-to-b from-primary to-primary/80 text-white shadow-soft ring-2 ring-primary/30 scale-[1.02]'
+                      : 'border-white/60 bg-white/70 text-support-1 shadow-soft hover:bg-white/90 hover:shadow-elevated'
+                  } ${isToday && !isSelected ? 'border-primary/40 text-primary' : ''}`}
                   aria-current={isSelected ? 'date' : undefined}
                 >
-                  <span>{day.shortLabel}</span>
+                  <span className="text-sm font-semibold leading-tight">{day.shortLabel}</span>
                   <span className="text-[11px] text-support-2/80">
                     {day.longLabel.split(',')[0]}
                   </span>
@@ -593,7 +597,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
           <button
             type="button"
             onClick={() => handleChangeWeek('next')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/70 text-lg text-support-1 shadow-soft transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
             aria-label="Próxima semana"
           >
             ›
