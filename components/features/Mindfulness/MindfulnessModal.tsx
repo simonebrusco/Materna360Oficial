@@ -1,0 +1,113 @@
+'use client'
+
+import { useEffect, useRef, type ReactNode } from 'react'
+
+import { Button } from '@/components/ui/button'
+
+type Track = { id: string; title: string }
+
+type MindfulnessModalProps = {
+  open: boolean
+  onClose: () => void
+  icon: ReactNode
+  title: string
+  subtitle: string
+  tracks: Track[]
+  testId?: string
+}
+
+export default function MindfulnessModal({
+  open,
+  onClose,
+  icon,
+  title,
+  subtitle,
+  tracks,
+  testId,
+}: MindfulnessModalProps) {
+  const titleRef = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    if (open) {
+      document.addEventListener('keydown', onKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open, onClose])
+
+  useEffect(() => {
+    if (open) {
+      titleRef.current?.focus()
+    }
+  }, [open])
+
+  if (!open) {
+    return null
+  }
+
+  return (
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="absolute inset-0 flex items-start justify-center overflow-y-auto p-4 md:p-8">
+        <div
+          data-testid={testId}
+          className="relative mt-8 w-full max-w-[720px] rounded-3xl bg-white/95 p-6 shadow-soft backdrop-blur md:p-8"
+        >
+          <button
+            aria-label="Close"
+            onClick={onClose}
+            className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-support-1 transition hover:bg-white"
+          >
+            ✕
+          </button>
+
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" aria-hidden="true">
+              {icon}
+            </span>
+            <h2
+              ref={titleRef}
+              tabIndex={-1}
+              className="text-2xl font-semibold text-support-1 outline-none md:text-3xl"
+            >
+              {title}
+            </h2>
+          </div>
+
+          <p className="mt-3 leading-relaxed text-support-2 md:text-lg">{subtitle}</p>
+
+          <div className="mt-6 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+            {tracks.map((track) => (
+              <div
+                key={track.id}
+                className="flex items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/90 p-4 shadow-soft md:p-5"
+              >
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 rounded-md border-primary/30 text-primary focus:ring-primary/40"
+                    aria-label={`Heard ${track.title}`}
+                  />
+                  <span className="font-semibold text-support-1">{track.title}</span>
+                </label>
+
+                <Button variant="primary" size="sm" className="rounded-2xl px-5">
+                  Ouvir
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
