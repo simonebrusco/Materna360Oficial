@@ -46,6 +46,7 @@ type FamilyPlannerProps = {
   currentDateKey: string
   weekStartKey: string
   weekLabels: WeekLabel[]
+  plannerTitle?: string
 }
 
 const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], RecommendationSuggestion[]> = {
@@ -176,7 +177,7 @@ const normalizeAgeBand = (ageBand?: string | null) => {
   return ''
 }
 
-export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: FamilyPlannerProps) {
+export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, plannerTitle }: FamilyPlannerProps) {
   const todayKey = currentDateKey
 
   const [weekStartKeyState, setWeekStartKeyState] = useState<string>(weekStartKey)
