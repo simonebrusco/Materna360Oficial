@@ -72,6 +72,7 @@ export function CheckInCard() {
       alert(`Check-in registrado com sucesso! ${label} 💛`)
       setSelectedMood(null)
       setQuote('')
+      setIsLoading(false)
     }
   }
 
