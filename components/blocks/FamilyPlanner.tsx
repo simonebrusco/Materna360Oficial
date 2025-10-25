@@ -799,12 +799,14 @@ export function FamilyPlanner({
     }
 
     const subtitleRange = formatAgeRangeLabel(mapAgeBandToAgeRangeValue(preferredAgeBand))
+    const title = selectedChild?.name ? `Sugestões para ${selectedChild.name}` : undefined
+    const subtitle = title ? subtitleRange : undefined
 
     return [
       {
         id: 'single',
-        title: selectedChild?.name ? `Sugestões para ${selectedChild.name}` : undefined,
-        subtitle: subtitleRange,
+        title,
+        subtitle,
         items: combined,
       },
     ]
