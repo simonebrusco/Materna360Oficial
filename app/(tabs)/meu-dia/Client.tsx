@@ -16,6 +16,7 @@ type MeuDiaClientProps = {
   currentDateKey: string
   weekStartKey: string
   weekLabels: { key: string; shortLabel: string; longLabel: string }[]
+  plannerTitle: string
 }
 
 const quickActions = [
@@ -30,6 +31,7 @@ export function MeuDiaClient({
   currentDateKey,
   weekStartKey,
   weekLabels,
+  plannerTitle,
 }: MeuDiaClientProps) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
@@ -73,7 +75,12 @@ export function MeuDiaClient({
       </div>
 
       <Reveal delay={280}>
-        <FamilyPlanner currentDateKey={currentDateKey} weekStartKey={weekStartKey} weekLabels={weekLabels} />
+        <FamilyPlanner
+          currentDateKey={currentDateKey}
+          weekStartKey={weekStartKey}
+          weekLabels={weekLabels}
+          plannerTitle={plannerTitle}
+        />
       </Reveal>
 
       <Reveal delay={320}>
