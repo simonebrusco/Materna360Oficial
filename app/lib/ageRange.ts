@@ -1,5 +1,7 @@
 import { monthsFromBirthdate } from './age'
 
+import { monthsFromBirthdate } from './age'
+
 export type AgeRange = '0-1' | '2-3' | '4-5' | '6-7' | '8+'
 
 export type Child = {
@@ -90,4 +92,29 @@ export function resolveAgeRange(child: Child | null | undefined): AgeRange | nul
   }
 
   return mapMonthsToAgeRange(months)
+}
+
+export function profilePreferredBuckets(profile: Profile | null | undefined): AgeRange[] {
+  if (!profile?.children || profile.children.length === 0) {
+    return []
+  }
+
+  const seen = new Set<AgeRange>()
+  const buckets: AgeRange[] = []
+
+  for (const rawChild of profile.children) {
+    if (!rawChild) {
+      continue
+    }
+
+    const range = resolveAgeRange(rawChild)
+    if (!range || seen.has(range)) {
+      continue
+    }
+
+    seen.add(range)
+    buckets.push(range)
+  }
+
+  return buckets
 }
