@@ -1,7 +1,5 @@
 import { Suspense } from 'react'
 
-import { Suspense } from 'react'
-
 import { unstable_noStore as noStore } from 'next/cache'
 import nextDynamic from 'next/dynamic'
 import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
