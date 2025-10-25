@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pause, Play } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Toast } from '@/components/ui/Toast'
 
 type MindfulnessTrack = {
