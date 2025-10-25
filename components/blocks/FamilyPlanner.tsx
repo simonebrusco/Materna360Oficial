@@ -32,6 +32,15 @@ type RecommendationSuggestion = ChildRecommendation & {
   source: 'suggested'
 }
 
+type RecommendationCardEntry = PlannerRecommendation | RecommendationSuggestion
+
+type RecommendationGroup = {
+  id: string
+  title?: string
+  subtitle?: string
+  items: RecommendationCardEntry[]
+}
+
 const AGE_BAND_TO_RANGE_MAP: Record<(typeof AGE_BAND_OPTIONS)[number], AgeRange> = {
   '0-6m': '0-1',
   '7-12m': '0-1',
@@ -996,7 +1005,7 @@ export function FamilyPlanner({
               <div className="h-px w-full bg-support-3/20" />
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
+                  <h3 className="text-base font-semibold text-support-1">Recomenda��ões para hoje</h3>
                   <select
                     value={preferredAgeBand}
                     onChange={handlePreferredAgeBandChange}
