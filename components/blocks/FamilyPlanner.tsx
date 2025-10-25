@@ -291,9 +291,15 @@ export function FamilyPlanner({
   profile,
   dateKey,
   recommendations: recommendationCatalog,
+  initialBuckets,
 }: FamilyPlannerProps) {
+  const recommendationChildren = useMemo(() => sanitizeRecommendationChildren(profile), [profile])
+  const isMultiChild = recommendationChildren.length > 1
+  const initialPreferredBand = useMemo(
+    () => deriveInitialAgeBand(initialBuckets, recommendationChildren),
+    [initialBuckets, recommendationChildren]
+  )
   const todayKey = currentDateKey
-  const derivedInitialAgeBand = useMemo(() => deriveInitialAgeBand(profile), [profile])
 
   const [weekStartKeyState, setWeekStartKeyState] = useState<string>(weekStartKey)
   const [weekDays, setWeekDays] = useState<WeekLabel[]>(weekLabels)
@@ -313,11 +319,14 @@ export function FamilyPlanner({
   const [editDuration, setEditDuration] = useState('')
   const [editAgeBand, setEditAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number] | ''>('')
   const [editNotes, setEditNotes] = useState('')
-  const [preferredAgeBand, setPreferredAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number]>(derivedInitialAgeBand)
+  const [preferredAgeBand, setPreferredAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number]>(initialPreferredBand)
+  const [selectedChildId, setSelectedChildId] = useState<string>(() =>
+    isMultiChild ? RECOMMENDATION_ALL_CHILDREN_ID : recommendationChildren[0]?.id ?? ''
+  )
   const [savedRecommendations, setSavedRecommendations] = useState<PlannerRecommendation[]>([])
-  const [suggestedRecommendations, setSuggestedRecommendations] = useState<RecommendationSuggestion[]>([])
   const hasSyncedWeekStart = useRef(false)
   const hasLoadedStoredWeek = useRef(false)
+  const hasUserAdjustedPreferred = useRef(false)
 
   const loadWeek = useCallback(
     async (targetWeekStart: string, options: { preserveSelection?: boolean } = {}) => {
@@ -1005,7 +1014,7 @@ export function FamilyPlanner({
               <div className="h-px w-full bg-support-3/20" />
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-base font-semibold text-support-1">Recomenda��ões para hoje</h3>
+                  <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
                   <select
                     value={preferredAgeBand}
                     onChange={handlePreferredAgeBandChange}
