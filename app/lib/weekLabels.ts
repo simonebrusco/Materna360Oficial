@@ -1,5 +1,7 @@
 const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
 
+const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
+
 const chipLabelFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'short',
   day: '2-digit',
@@ -23,6 +25,15 @@ const formatChipLabel = (date: Date) => {
 }
 
 const formatShortLabel = (date: Date) => formatChipLabel(date)
+
+const parseDateKeyToUTC = (key: string): Date | null => {
+  const [year, month, day] = key.split('-').map(Number)
+  if (!year || !month || !day) {
+    return null
+  }
+
+  return new Date(Date.UTC(year, month - 1, day, 12))
+}
 
 const formatLongLabel = (date: Date) =>
   new Intl.DateTimeFormat('pt-BR', {
