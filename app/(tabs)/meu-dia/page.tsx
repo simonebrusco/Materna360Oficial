@@ -208,36 +208,29 @@ export default async function Page() {
   noStore()
 
   const jar = getCookies()
-  const rawProfile = jar.get(PROFILE_COOKIE)?.value
-
-  let profile: { motherName?: string; nomeMae?: string } = {}
-  if (rawProfile) {
-    try {
-      const parsed = JSON.parse(rawProfile)
-      if (parsed && typeof parsed === 'object') {
-        profile = parsed as { motherName?: string; nomeMae?: string }
-      }
-    } catch (error) {
-      console.error('[MeuDia] Failed to parse profile cookie:', error)
-    }
-  }
-
-  const motherName = profile.motherName ?? profile.nomeMae
+  const rawProfile = jar.get(PROFILE_COOKIE)?.value ?? null
+  const profileRecord = safeParseProfileCookie(rawProfile)
+  const normalizedProfile = normalizeProfileRecord(profileRecord)
 
   const now = new Date()
-  const displayName = firstNameOf(motherName)
+  const displayName = firstNameOf(normalizedProfile.motherName)
   const plannerTitle = `Planner da ${displayName}`
   const greetingPrefix = resolveGreetingPrefix(now)
   const greeting = `${greetingPrefix}, ${displayName}!`
   const formattedDate = formatDisplayDate(now)
 
-  const currentDateKey = getTodayDateKey(now)
+  const currentDateKey = getBrazilDateKey(now)
   const weekStartKey = getWeekStartKey(currentDateKey)
   const { labels: weekLabels } = buildWeekLabels(weekStartKey)
   const totalMessages = DAILY_MESSAGES.length
   const selectedIndex = getDayIndex(currentDateKey, totalMessages)
   const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
   const dailyGreeting = baseMessage && displayName ? `${displayName}, ${baseMessage}` : baseMessage
+
+  const profileForClient: Profile = {
+    motherName: normalizedProfile.motherName,
+    children: normalizedProfile.children,
+  }
 
   return (
     <main className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
