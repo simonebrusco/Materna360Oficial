@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useState } from 'react'
 
 import RenoveSuaEnergiaModal from '@/components/features/Mindfulness/RenoveSuaEnergiaModal'
