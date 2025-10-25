@@ -785,9 +785,9 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
               })}
             </div>
           ) : (
-            <Card className="border border-dashed border-primary/30 bg-white/70 p-5 text-center shadow-none">
+            <div className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-4 py-6 text-center">
               <p className="text-sm text-support-2">Nada por aqui ainda. Que tal planejar algo rápido?</p>
-            </Card>
+            </div>
           )}
 
           {isAdding ? (
