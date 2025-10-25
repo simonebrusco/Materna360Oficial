@@ -1,27 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
 const moods = [
-  { emoji: '😔', label: 'Triste', value: 'sad' },
-  { emoji: '😐', label: 'Neutro', value: 'neutral' },
-  { emoji: '🙂', label: 'OK', value: 'ok' },
-  { emoji: '😊', label: 'Feliz', value: 'happy' },
-  { emoji: '😄', label: 'Muito Feliz', value: 'very-happy' },
+  { emoji: '😔', label: 'Triste', value: 'triste' },
+  { emoji: '😐', label: 'Neutra', value: 'neutra' },
+  { emoji: '🙂', label: 'Leve', value: 'leve' },
+  { emoji: '😊', label: 'Feliz', value: 'feliz' },
+  { emoji: '😵‍💫', label: 'Sobrecarregada', value: 'sobrecarregada' },
 ] as const
 
 type MoodValue = (typeof moods)[number]['value']
 
 export function CheckInCard() {
   const [selectedMood, setSelectedMood] = useState<MoodValue | null>(null)
+  const [quote, setQuote] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const moodLabelMap = useMemo(() => {
+    return moods.reduce<Record<MoodValue, string>>((accumulator, mood) => {
+      accumulator[mood.value] = mood.label
+      return accumulator
+    }, {} as Record<MoodValue, string>)
+  }, [])
+
+  const handleMoodSelect = async (moodValue: MoodValue) => {
+    const isSame = selectedMood === moodValue
+    const nextMood = isSame ? null : moodValue
+
+    setSelectedMood(nextMood)
+    setQuote('')
+
+    if (!nextMood) {
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const response = await fetch(`/api/mood-message?mood=${encodeURIComponent(nextMood)}&date=${today}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`)
+      }
+
+      const data = await response.json()
+      if (typeof data?.quote === 'string' && data.quote.trim().length > 0) {
+        setQuote(data.quote)
+      } else {
+        setQuote('')
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar a mensagem motivacional:', error)
+      setQuote('')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleSubmit = () => {
     if (selectedMood) {
-      alert(`Check-in registrado com sucesso! ${selectedMood} 💛`)
+      const label = moodLabelMap[selectedMood]
+      alert(`Check-in registrado com sucesso! ${label} 💛`)
       setSelectedMood(null)
+      setQuote('')
     }
   }
 
@@ -43,7 +93,7 @@ export function CheckInCard() {
               <button
                 key={mood.value}
                 type="button"
-                onClick={() => setSelectedMood(isActive ? null : mood.value)}
+                onClick={() => void handleMoodSelect(mood.value)}
                 className={`flex flex-col items-center gap-1 rounded-2xl border border-white/50 px-4 py-3 text-support-1 shadow-soft transition-all duration-300 hover:shadow-elevated ${
                   isActive ? 'bg-gradient-to-br from-primary/20 via-white/80 to-white text-primary scale-105' : 'bg-white/80'
                 }`}
@@ -55,6 +105,17 @@ export function CheckInCard() {
               </button>
             )
           })}
+        </div>
+
+        <div aria-live="polite">
+          {isLoading ? (
+            <p className="mt-4 text-sm text-support-2">Gerando uma mensagem para você…</p>
+          ) : null}
+          {!isLoading && quote ? (
+            <p data-testid="mood-quote" className="mt-4 text-sm text-support-2">
+              {quote}
+            </p>
+          ) : null}
         </div>
 
         <Button variant="primary" size="sm" onClick={handleSubmit} disabled={!selectedMood} className="mt-6 w-full">
