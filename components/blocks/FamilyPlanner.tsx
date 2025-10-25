@@ -660,6 +660,7 @@ export function FamilyPlanner({
   const handlePreferredAgeBandChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value as (typeof AGE_BAND_OPTIONS)[number]
     if (AGE_BAND_OPTIONS.includes(value)) {
+      hasUserAdjustedPreferred.current = true
       setPreferredAgeBand(value)
     }
   }
