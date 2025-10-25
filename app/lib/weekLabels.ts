@@ -1,7 +1,5 @@
 const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
 
-const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
-
 const chipLabelFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'short',
   day: '2-digit',
