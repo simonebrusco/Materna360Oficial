@@ -1174,58 +1174,87 @@ export function FamilyPlanner({
             </button>
           )}
 
-          {recommendationItems.length > 0 ? (
+          {hasRecommendations ? (
             <>
               <div className="h-px w-full bg-support-3/20" />
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
-                  <select
-                    value={preferredAgeBand}
-                    onChange={handlePreferredAgeBandChange}
-                    className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                  >
-                    {AGE_BAND_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        Faixa {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-                  {recommendationItems.map((suggestion, index) => {
-                    const key = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
-                    const savedKey = `${key}-${index}`
-                    const isSaved = 'createdAt' in suggestion && typeof suggestion.createdAt === 'string'
-
-                    return (
-                      <div
-                        key={savedKey}
-                        className="rounded-2xl border border-white/60 bg-white/85 p-5 shadow-soft transition hover:shadow-md"
+                  <div className="flex flex-wrap items-center gap-2">
+                    {isMultiChild && (
+                      <select
+                        value={selectedChildId}
+                        onChange={handleSelectRecommendationChild}
+                        className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        aria-label="Selecionar criança"
                       >
-                        <div className="mb-4 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-                            {suggestion.type}
-                          </span>
-                          {isSaved && (
-                            <span className="inline-flex items-center rounded-full bg-secondary/60 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                              Salva hoje
-                            </span>
-                          )}
+                        <option value={RECOMMENDATION_ALL_CHILDREN_ID}>Todos</option>
+                        {childOptions.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <select
+                      value={preferredAgeBand}
+                      onChange={handlePreferredAgeBandChange}
+                      className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                    >
+                      {AGE_BAND_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          Faixa {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {recommendationGroups.map((group) => (
+                    <div key={group.id} className="space-y-2">
+                      {group.title ? (
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-support-1">{group.title}</p>
+                          {group.subtitle ? <span className="text-xs text-support-2">{group.subtitle}</span> : null}
                         </div>
-                        <p className="mb-4 text-sm font-semibold text-support-1">{suggestion.title}</p>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="w-full rounded-full"
-                          onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
-                        >
-                          Salvar no Planner
-                        </Button>
+                      ) : null}
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+                        {group.items.map((suggestion, index) => {
+                          const keyBase = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
+                          const savedKey = `${group.id}:${keyBase}:${index}`
+                          const isSaved = 'createdAt' in suggestion && typeof suggestion.createdAt === 'string'
+
+                          return (
+                            <div
+                              key={savedKey}
+                              className="rounded-2xl border border-white/60 bg-white/85 p-5 shadow-soft transition hover:shadow-md"
+                            >
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                                  {suggestion.type}
+                                </span>
+                                {isSaved && (
+                                  <span className="inline-flex items-center rounded-full bg-secondary/60 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                    Salva hoje
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mb-4 text-sm font-semibold text-support-1">{suggestion.title}</p>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="w-full rounded-full"
+                                onClick={() => handleQuickAdd(suggestion.type, suggestion.title)}
+                              >
+                                Salvar no Planner
+                              </Button>
+                            </div>
+                          )
+                        })}
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
