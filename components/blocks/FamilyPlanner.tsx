@@ -981,7 +981,7 @@ export function FamilyPlanner({
             </button>
           )}
 
-          {recommendations.length > 0 ? (
+          {recommendationItems.length > 0 ? (
             <>
               <div className="h-px w-full bg-support-3/20" />
               <div className="space-y-3">
@@ -1000,7 +1000,7 @@ export function FamilyPlanner({
                   </select>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-                  {recommendations.map((suggestion, index) => {
+                  {recommendationItems.map((suggestion, index) => {
                     const key = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
                     const savedKey = `${key}-${index}`
                     const isSaved = 'createdAt' in suggestion && typeof suggestion.createdAt === 'string'
