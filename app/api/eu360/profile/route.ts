@@ -2,7 +2,7 @@ import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 
 import { monthsFromBirthdate } from '@/app/lib/age'
-import { createServerSupabase } from '@/app/lib/supabase'
+import { tryCreateServerSupabase } from '@/app/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,7 +65,11 @@ function normalizeAgeMonths(raw: unknown): number | null {
 }
 
 export async function GET() {
-  const supabase = createServerSupabase()
+  const supabase = tryCreateServerSupabase()
+  if (!supabase) {
+    console.error('[Eu360] Supabase client unavailable. Returning empty profile.')
+    return successResponse({ name: '', birthdate: null, age_months: null })
+  }
   const {
     data: { user },
     error: authError,
@@ -113,7 +117,10 @@ export async function POST(request: Request) {
     return invalidResponse('Corpo da requisição inválido.')
   }
 
-  const supabase = createServerSupabase()
+  const supabase = tryCreateServerSupabase()
+  if (!supabase) {
+    return invalidResponse('Serviço temporariamente indisponível. Tente novamente em instantes.', 503)
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser()

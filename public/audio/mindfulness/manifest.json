@@ -1,30 +1,36 @@
 {
+  "version": 2,
   "themes": [
     {
-      "id": "respiracao-pausa",
-      "title": "Respiração & Pausa",
+      "id": "reconecte-se",
+      "title": "Reconecte-se",
+      "description": "Pausa, presença e autocuidado para voltar a si.",
       "tracks": [
-        { "id": "acalme-sua-mente", "title": "Acalme sua mente", "file": "/audio/mindfulness/acalme-sua-mente.mp3" },
-        { "id": "respire-e-conecte-se", "title": "Respire e conecte-se", "file": "/audio/mindfulness/respire-e-conecte-se.mp3" },
-        { "id": "saindo-do-piloto-automatico", "title": "Saindo do piloto automático", "file": "/audio/mindfulness/saindo-do-piloto-automatico.mp3" }
+        { "id": "acalme-sua-mente", "title": "Acalme sua mente", "file": "acalme-sua-mente.mp3" },
+        { "id": "respire-e-conecte-se", "title": "Respire e conecte-se", "file": "respire-e-conecte-se.mp3" },
+        { "id": "voce-nao-esta-sozinha", "title": "Você não está sozinha", "file": "voce-nao-esta-sozinha.mp3" },
+        { "id": "voce-nao-precisa-dar-conta", "title": "Você não precisa dar conta", "file": "voce-nao-precisa-dar-conta.mp3" }
       ]
     },
     {
-      "id": "autocompaixao-forca",
-      "title": "Autocompaixão & Força",
+      "id": "renove-sua-energia",
+      "title": "Renove sua Energia",
+      "description": "Leveza, esperança e vitalidade para o seu dia.",
       "tracks": [
-        { "id": "voce-esta-fazendo-o-melhor", "title": "Você está fazendo o melhor", "file": "/audio/mindfulness/voce-esta-fazendo-o-melhor.mp3" },
-        { "id": "voce-nao-precisa-dar-conta", "title": "Você não precisa dar conta", "file": "/audio/mindfulness/voce-nao-precisa-dar-conta.mp3" },
-        { "id": "confie-em-voce", "title": "Confie em você", "file": "/audio/mindfulness/confie-em-voce.mp3" }
+        { "id": "celebrando-pequenos-momentos", "title": "Celebrando pequenos momentos", "file": "celebrando-pequenos-momentos.mp3" },
+        { "id": "voce-esta-fazendo-o-melhor", "title": "Você está fazendo o melhor", "file": "voce-esta-fazendo-o-melhor.mp3" },
+        { "id": "transforme-o-caos-em-serenidade", "title": "Transforme o caos em serenidade", "file": "transforme-o-caos-em-serenidade.mp3" }
       ]
     },
     {
-      "id": "sono-relaxamento",
-      "title": "Sono & Relaxamento",
+      "id": "encontre-calma",
+      "title": "Encontre Calma",
+      "description": "Relaxamento, acolhimento e descanso profundo.",
       "tracks": [
-        { "id": "antes-de-dormir", "title": "Antes de dormir", "file": "/audio/mindfulness/antes-de-dormir.mp3" },
-        { "id": "um-novo-comeco", "title": "Um novo começo", "file": "/audio/mindfulness/um-novo-comeco.mp3" },
-        { "id": "natureza-e-equilibrio", "title": "Natureza e equilíbrio", "file": "/audio/mindfulness/natureza-e-equilibrio.mp3" }
+        { "id": "encontre-a-paz-dentro-de-voce", "title": "Encontre a paz dentro de você", "file": "encontre-a-paz-dentro-de-voce.mp3" },
+        { "id": "libertando-se-da-culpa", "title": "Libertando-se da culpa", "file": "libertando-se-da-culpa.mp3" },
+        { "id": "saindo-do-piloto-automatico", "title": "Saindo do piloto automático", "file": "saindo-do-piloto-automatico.mp3" },
+        { "id": "o-poder-do-toque-e-do-afeto", "title": "O poder do toque e do afeto", "file": "o-poder-do-toque-e-do-afeto.mp3" }
       ]
     }
   ]

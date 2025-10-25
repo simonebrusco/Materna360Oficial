@@ -1,12 +1,12 @@
-import { cookies } from 'next/headers'
+import { cookies as getCookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
 import { MeuDiaClient } from './Client'
 
 import { getDayIndex } from '@/app/lib/dailyMessage'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
-import { getTodayDateKey } from '@/lib/dailyActivity'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
+import { getTodayDateKey } from '@/lib/dailyActivity'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -67,7 +67,7 @@ const formatDisplayDate = (date: Date) =>
 export default async function Page() {
   noStore()
 
-  const jar = cookies()
+  const jar = getCookies()
   const rawProfile = jar.get(PROFILE_COOKIE)?.value
 
   let profile: { motherName?: string; nomeMae?: string } = {}

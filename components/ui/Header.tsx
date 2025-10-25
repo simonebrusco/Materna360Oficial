@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -23,7 +21,7 @@ const PROFILE_UPDATED_EVENT = 'materna:profile-updated'
 export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
-  const [isLoadingSticker, setIsLoadingSticker] = useState<boolean>(false)
+  const [isLoadingSticker, setIsLoadingSticker] = useState(false)
   const [imageSrc, setImageSrc] = useState<string>(STICKERS[DEFAULT_STICKER_ID].asset)
 
   useEffect(() => {
@@ -35,7 +33,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
   useEffect(() => {
     if (!showNotification) {
-      return
+      return undefined
     }
 
     let isMounted = true
@@ -72,17 +70,12 @@ export function Header({ title, showNotification = false }: HeaderProps) {
     }
 
     const handleProfileUpdated = (event: Event) => {
-      if (!isMounted) {
-        return
-      }
-
       const customEvent = event as CustomEvent<{ figurinha?: string }>
       const figurinhaId = customEvent.detail?.figurinha
       setStickerId(isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID)
     }
 
     void loadProfile()
-
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated)
 
     return () => {
@@ -98,9 +91,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   }, [sticker.asset])
 
   const handleImageError = () => {
-    if (imageSrc !== STICKERS[DEFAULT_STICKER_ID].asset) {
-      setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
-    }
+    setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
   }
 
   return (
@@ -128,6 +119,10 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           />
         </Link>
 
+        <h1 className="absolute left-1/2 hidden -translate-x-1/2 text-sm font-semibold text-support-2/80 sm:block">
+          {title}
+        </h1>
+
         {showNotification && (
           <div className="flex items-center gap-3">
             <Link
@@ -148,7 +143,6 @@ export function Header({ title, showNotification = false }: HeaderProps) {
                   width={44}
                   height={44}
                   className="h-7 w-7 shrink-0 rounded-full object-cover"
-                  priority
                   onError={handleImageError}
                 />
               )}

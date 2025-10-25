@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers'
 import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Client = SupabaseClient
@@ -63,3 +63,17 @@ export function supabaseBrowser(): Client {
 }
 
 export const supabaseServer = createServerSupabase
+
+export function tryCreateServerSupabase(serviceKey?: string): Client | null {
+  try {
+    return createServerSupabase(serviceKey)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[Supabase] Server client unavailable:', message)
+    } else {
+      console.warn('[Supabase] Server client unavailable:', message)
+    }
+    return null
+  }
+}

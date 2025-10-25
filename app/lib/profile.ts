@@ -1,13 +1,16 @@
 import { unstable_cache } from 'next/cache'
 
-import { createServerSupabase } from './supabase'
+import { tryCreateServerSupabase } from './supabase'
 
 type ServerProfile = {
   name: string
 }
 
 export async function getServerProfile(): Promise<ServerProfile> {
-  const supabase = createServerSupabase()
+  const supabase = tryCreateServerSupabase()
+  if (!supabase) {
+    return { name: '' }
+  }
   const {
     data: { user },
     error: authError,

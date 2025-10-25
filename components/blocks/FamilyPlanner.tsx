@@ -1,6 +1,9 @@
 'use client'
 
-import React, { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+'use client'
+
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -13,7 +16,6 @@ import {
   type PlannerItem,
   type PlannerRecommendation,
   type PlannerRecommendationSource,
-  RECOMMENDATION_STORAGE_KEY,
   RECOMMENDATIONS_UPDATED_EVENT,
   USE_API_PLANNER,
 } from '@/lib/plannerData'
@@ -78,7 +80,7 @@ const RECOMMENDATION_POOL: Record<(typeof AGE_BAND_OPTIONS)[number], Recommendat
     { type: 'Recomendação', title: 'Pausa para alongamento divertido' },
   ],
   '5-6a': [
-    { type: 'Brincadeira', title: 'Jogo de memória feito à mão' },
+    { type: 'Brincadeira', title: 'Jogo de memória feito à m��o' },
     { type: 'Receita', title: 'Smoothie energético com frutas' },
     { type: 'Livro', title: 'Leitura guiada de conto curtinho' },
     { type: 'Brinquedo', title: 'Construção criativa com LEGO' },
@@ -521,54 +523,82 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
   const inputClasses =
     'w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft transition-all duration-300 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30'
 
+  const selectedDayLabel = useMemo(() => {
+    const label = weekDays.find((day) => day.key === selectedDayKey)?.longLabel
+    return label ?? ''
+  }, [weekDays, selectedDayKey])
+
+  const recommendations = useMemo(
+    () => [...savedRecommendations, ...suggestedRecommendations],
+    [savedRecommendations, suggestedRecommendations]
+  )
+
   return (
-    <Card className="p-7">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-support-1 md:text-xl">🗓️ Planner</h2>
+    <Card className="space-y-6 p-7">
+      <div className="space-y-3">
         <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
           Equilíbrio
         </span>
-      </div>
-
-      <div className="mb-6 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => handleChangeWeek('prev')}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-          aria-label="Semana anterior"
-        >
-          ‹
-        </button>
-        <div className="flex flex-1 gap-2 overflow-x-auto">
-          {weekDays.map((day) => {
-            const isSelected = selectedDayKey === day.key
-            const isToday = todayKey === day.key
-
-            return (
-              <button
-                key={day.key}
-                type="button"
-                onClick={() => handleSelectDay(day.key)}
-                className={`flex min-w-[72px] flex-1 flex-col items-center justify-center rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                  isSelected
-                    ? 'border-transparent bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                    : 'border-white/60 bg-white/80 text-support-1 shadow-soft hover:-translate-y-0.5 hover:shadow-elevated'
-                } ${isToday && !isSelected ? 'border-primary/60 text-primary' : ''}`}
-              >
-                <span>{day.shortLabel}</span>
-              </button>
-            )
-          })}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📋 Planejador da Família</h2>
+            <p className="text-sm text-support-2 md:text-base">
+              Planeje momentos especiais e acompanhe o que importa para a família.
+            </p>
+          </div>
+          <p className="text-xs text-support-2/80 md:text-sm">{selectedDayLabel}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => handleChangeWeek('next')}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-          aria-label="Próxima semana"
-        >
-          ›
-        </button>
       </div>
+
+      {weekDays.length > 0 ? (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleChangeWeek('prev')}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            aria-label="Semana anterior"
+          >
+            ‹
+          </button>
+          <div className="flex flex-1 gap-2 overflow-x-auto">
+            {weekDays.map((day) => {
+              const isSelected = selectedDayKey === day.key
+              const isToday = todayKey === day.key
+
+              return (
+                <button
+                  key={day.key}
+                  type="button"
+                  onClick={() => handleSelectDay(day.key)}
+                  className={`flex min-w-[72px] flex-1 flex-col items-center justify-center rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
+                    isSelected
+                      ? 'border-transparent bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                      : 'border-white/60 bg-white/80 text-support-1 shadow-soft hover:-translate-y-0.5 hover:shadow-elevated'
+                  } ${isToday && !isSelected ? 'border-primary/60 text-primary' : ''}`}
+                  aria-current={isSelected ? 'date' : undefined}
+                >
+                  <span>{day.shortLabel}</span>
+                  <span className="text-[11px] text-support-2/80">
+                    {day.longLabel.split(',')[0]}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleChangeWeek('next')}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/80 text-lg text-support-1 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            aria-label="Próxima semana"
+          >
+            ›
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/60 bg-white/40 p-5 text-sm text-support-2">
+          Carregando semana...
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
@@ -845,7 +875,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
             </Button>
           )}
 
-          {savedRecommendations.length > 0 || suggestedRecommendations.length > 0 ? (
+          {recommendations.length > 0 ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-base font-semibold text-support-1">Recomendações para hoje</h3>
@@ -862,10 +892,10 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels }: Fami
                 </select>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                {[...savedRecommendations, ...suggestedRecommendations].map((suggestion, index) => {
+                {recommendations.map((suggestion, index) => {
                   const key = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
                   const savedKey = `${key}-${index}`
-                  const isSaved = suggestion.hasOwnProperty('createdAt')
+                  const isSaved = 'createdAt' in suggestion && typeof suggestion.createdAt === 'string'
 
                   return (
                     <div key={savedKey} className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft">
