@@ -1,7 +1,12 @@
 'use client'
 
+'use client'
+
+import { useState } from 'react'
+
+import RenoveSuaEnergiaModal from '@/components/features/Mindfulness/RenoveSuaEnergiaModal'
+
 import ReconecteSeModalTrigger from './ReconecteSeModalTrigger'
-import RenoveSuaEnergiaModalTrigger from './RenoveSuaEnergiaModalTrigger'
 
 const SHOW_FEATURED_PRACTICES = false
 
@@ -44,6 +49,8 @@ const COLLECTIONS = [
 ]
 
 export default function MindfulnessForMoms() {
+  const [openRenove, setOpenRenove] = useState(false)
+
   const visibleCollections = SHOW_FEATURED_PRACTICES
     ? COLLECTIONS
     : COLLECTIONS.filter((collection) => !FEATURED_COLLECTION_IDS.has(collection.id))
@@ -83,7 +90,16 @@ export default function MindfulnessForMoms() {
               {collection.id === 'reconectar' ? (
                 <ReconecteSeModalTrigger ariaLabel={`Ouvir ${collection.titulo}`} />
               ) : collection.id === 'energia' ? (
-                <RenoveSuaEnergiaModalTrigger ariaLabel={`Ouvir ${collection.titulo}`} />
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setOpenRenove(true)}
+                    className="rounded-2xl bg-primary px-5 py-2 font-semibold text-white shadow-soft transition hover:brightness-110"
+                  >
+                    Ouvir
+                  </button>
+                  <RenoveSuaEnergiaModal open={openRenove} onClose={() => setOpenRenove(false)} />
+                </>
               ) : (
                 <a
                   href="#mindfulness"
