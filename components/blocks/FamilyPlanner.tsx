@@ -7,7 +7,7 @@ import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } f
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildRecommendation, RecommendationType } from '@/app/data/childContent'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { DEFAULT_AGE_BAND, mapMonthsToAgeBand } from '@/lib/dailyActivity'
 import {
