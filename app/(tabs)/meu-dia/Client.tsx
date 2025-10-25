@@ -4,6 +4,8 @@
 
 import { useState } from 'react'
 
+import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
+import type { Profile } from '@/app/lib/ageRange'
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
