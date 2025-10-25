@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
-
 test.describe('Meu Dia family planner', () => {
   test('shows personalized planner title from cookie and keeps planner interactive', async ({ context, page }) => {
     await context.clearCookies()
