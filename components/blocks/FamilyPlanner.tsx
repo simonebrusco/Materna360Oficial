@@ -667,10 +667,132 @@ export function FamilyPlanner({
   const inputClasses =
     'w-full rounded-2xl bg-white/90 text-sm text-support-1 placeholder-support-3 border border-white/70 shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 py-3 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none'
 
-  const recommendationItems = useMemo<Array<PlannerRecommendation | RecommendationSuggestion>>(
-    () => [...savedRecommendations, ...suggestedRecommendations],
-    [savedRecommendations, suggestedRecommendations]
+  const childOptions = useMemo(
+    () =>
+      recommendationChildren.map((child, index) => ({
+        id: child.id,
+        label: child.name ?? `Filho ${index + 1}`,
+        ageRange: child.ageRange ?? resolveAgeRange(child),
+      })),
+    [recommendationChildren]
   )
+
+  const selectedChild = useMemo<Child | null>(() => {
+    if (!isMultiChild) {
+      return recommendationChildren[0] ?? null
+    }
+
+    if (selectedChildId === RECOMMENDATION_ALL_CHILDREN_ID) {
+      return null
+    }
+
+    return recommendationChildren.find((child) => child.id === selectedChildId) ?? null
+  }, [isMultiChild, recommendationChildren, selectedChildId])
+
+  const savedKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const item of savedRecommendations) {
+      keys.add(buildRecommendationKey(item.title, item.refId ?? null))
+    }
+    return keys
+  }, [savedRecommendations])
+
+  const suggestionsForBand = useCallback(
+    (band: (typeof AGE_BAND_OPTIONS)[number], seedId: string): RecommendationSuggestion[] => {
+      const seed = `${dateKey}:${selectedDayKey}:${band}:${seedId}`
+      const picks = pickRecommendationsForDay(band, seed, recommendationCatalog)
+      return picks.filter((item) => !savedKeys.has(buildRecommendationKey(item.title, item.refId ?? null)))
+    },
+    [dateKey, selectedDayKey, recommendationCatalog, savedKeys]
+  )
+
+  const singleModeSuggestions = useMemo(() => {
+    if (isMultiChild && selectedChildId === RECOMMENDATION_ALL_CHILDREN_ID) {
+      return [] as RecommendationSuggestion[]
+    }
+
+    const seedId = selectedChild?.id ?? 'geral'
+    return suggestionsForBand(preferredAgeBand, seedId)
+  }, [isMultiChild, selectedChildId, selectedChild, preferredAgeBand, suggestionsForBand])
+
+  const multiChildGroups = useMemo(
+    () =>
+      !isMultiChild || selectedChildId !== RECOMMENDATION_ALL_CHILDREN_ID
+        ? []
+        : recommendationChildren.map((child, index) => {
+            const childBand = mapAgeRangeToAgeBandValue(child.ageRange ?? null) ?? initialPreferredBand
+            const rangeForLabel = mapAgeBandToAgeRangeValue(childBand)
+            const items = suggestionsForBand(childBand, child.id)
+            return {
+              id: child.id,
+              title: child.name ?? `Filho ${index + 1}`,
+              subtitle: formatAgeRangeLabel(rangeForLabel),
+              items,
+            }
+          }),
+    [
+      isMultiChild,
+      selectedChildId,
+      recommendationChildren,
+      initialPreferredBand,
+      suggestionsForBand,
+    ]
+  )
+
+  const recommendationGroups = useMemo<RecommendationGroup[]>(() => {
+    if (isMultiChild && selectedChildId === RECOMMENDATION_ALL_CHILDREN_ID) {
+      const groups: RecommendationGroup[] = []
+
+      if (savedRecommendations.length > 0) {
+        groups.push({
+          id: 'saved',
+          title: 'Salvos hoje',
+          items: savedRecommendations,
+        })
+      }
+
+      for (const group of multiChildGroups) {
+        if (!group.items.length) {
+          continue
+        }
+
+        groups.push({
+          id: `child:${group.id}`,
+          title: group.title,
+          subtitle: group.subtitle,
+          items: group.items,
+        })
+      }
+
+      return groups
+    }
+
+    const combined: RecommendationCardEntry[] = [...savedRecommendations, ...singleModeSuggestions]
+    if (combined.length === 0) {
+      return []
+    }
+
+    const subtitleRange = formatAgeRangeLabel(mapAgeBandToAgeRangeValue(preferredAgeBand))
+
+    return [
+      {
+        id: 'single',
+        title: selectedChild?.name ? `Sugestões para ${selectedChild.name}` : undefined,
+        subtitle: subtitleRange,
+        items: combined,
+      },
+    ]
+  }, [
+    isMultiChild,
+    selectedChildId,
+    savedRecommendations,
+    singleModeSuggestions,
+    preferredAgeBand,
+    selectedChild,
+    multiChildGroups,
+  ])
+
+  const hasRecommendations = recommendationGroups.some((group) => group.items.length > 0)
 
   const resolvedPlannerTitle = plannerTitle ?? 'Planejador da Família'
 
