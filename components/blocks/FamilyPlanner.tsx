@@ -10,7 +10,7 @@ import { resolveAgeRange } from '@/app/lib/ageRange'
 import type { ChildRecommendation, RecommendationType } from '@/app/data/childContent'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { mapMonthsToAgeBand } from '@/lib/dailyActivity'
+import { DEFAULT_AGE_BAND, mapMonthsToAgeBand } from '@/lib/dailyActivity'
 import {
   plannerApi,
   plannerStorage,
