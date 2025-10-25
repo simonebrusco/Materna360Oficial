@@ -37,8 +37,6 @@ export async function GET(request: Request) {
       mood: moodParam,
       date,
       quote,
-      hash: hash(`${date}|${moodParam}|${anonSeed}`),
-      index: selectQuote(moodParam, date, anonSeed),
     },
     { headers: { 'Cache-Control': 'no-store' } }
   )
