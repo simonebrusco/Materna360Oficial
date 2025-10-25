@@ -665,6 +665,31 @@ export function FamilyPlanner({
     }
   }
 
+  const handleSelectRecommendationChild = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      const value = event.target.value
+
+      if (value === RECOMMENDATION_ALL_CHILDREN_ID) {
+        setSelectedChildId(RECOMMENDATION_ALL_CHILDREN_ID)
+        return
+      }
+
+      const child = recommendationChildren.find((entry) => entry.id === value)
+      if (!child) {
+        setSelectedChildId(RECOMMENDATION_ALL_CHILDREN_ID)
+        return
+      }
+
+      setSelectedChildId(child.id)
+      const mapped = mapAgeRangeToAgeBandValue(child.ageRange ?? null)
+      if (mapped) {
+        hasUserAdjustedPreferred.current = true
+        setPreferredAgeBand(mapped)
+      }
+    },
+    [recommendationChildren]
+  )
+
   const inputClasses =
     'w-full rounded-2xl bg-white/90 text-sm text-support-1 placeholder-support-3 border border-white/70 shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 py-3 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none'
 
