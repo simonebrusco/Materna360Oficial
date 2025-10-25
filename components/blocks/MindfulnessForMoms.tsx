@@ -8,6 +8,7 @@ import {
   TRACKS_RECONCETE_SE,
   TRACKS_RENOVE_SUA_ENERGIA,
 } from '@/components/features/Mindfulness/tracks'
+import { Button } from '@/components/ui/Button'
 
 const SHOW_FEATURED_PRACTICES = false
 
@@ -48,9 +49,6 @@ const COLLECTIONS = [
     descricao: 'Respirações focadas que ajudam a organizar pensamentos e priorizar com leveza.',
   },
 ]
-
-const MODAL_TRIGGER_BUTTON_CLASS =
-  'inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF3E79] to-[#FF6B9A] px-6 py-3 text-[18px] font-extrabold text-white shadow-[0_10px_24px_rgba(255,62,121,0.35)] transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-primary/30 md:px-7 md:py-3.5 md:text-[19px]'
 
 export default function MindfulnessForMoms() {
   const [openReconecte, setOpenReconecte] = useState(false)
@@ -94,52 +92,56 @@ export default function MindfulnessForMoms() {
 
             <div className="mt-auto pt-8">
               {collection.id === 'reconectar' ? (
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => setOpenReconecte(true)}
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                  className="rounded-2xl px-5"
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
+                  <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
                   </span>
                   <span>Ouvir</span>
-                </button>
+                </Button>
               ) : collection.id === 'energia' ? (
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => setOpenRenove(true)}
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                  className="rounded-2xl px-5"
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
+                  <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
                   </span>
                   <span>Ouvir</span>
-                </button>
+                </Button>
               ) : collection.id === 'descanso' ? (
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => setOpenCalma(true)}
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                  className="rounded-2xl px-5"
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
+                  <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
                   </span>
                   <span>Ouvir</span>
-                </button>
+                </Button>
               ) : (
-                <a
-                  href="#mindfulness"
+                <Button
+                  variant="primary"
+                  size="sm"
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                  className="rounded-2xl px-5"
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
+                  <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
                   </span>
                   <span>Ouvir</span>
-                </a>
+                </Button>
               )}
             </div>
           </article>
