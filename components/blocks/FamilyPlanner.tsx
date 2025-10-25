@@ -264,8 +264,17 @@ const normalizeAgeBand = (ageBand?: string | null) => {
   return ''
 }
 
-export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, plannerTitle }: FamilyPlannerProps) {
+export function FamilyPlanner({
+  currentDateKey,
+  weekStartKey,
+  weekLabels,
+  plannerTitle,
+  profile,
+  dateKey,
+  recommendations: recommendationCatalog,
+}: FamilyPlannerProps) {
   const todayKey = currentDateKey
+  const derivedInitialAgeBand = useMemo(() => deriveInitialAgeBand(profile), [profile])
 
   const [weekStartKeyState, setWeekStartKeyState] = useState<string>(weekStartKey)
   const [weekDays, setWeekDays] = useState<WeekLabel[]>(weekLabels)
@@ -285,7 +294,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
   const [editDuration, setEditDuration] = useState('')
   const [editAgeBand, setEditAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number] | ''>('')
   const [editNotes, setEditNotes] = useState('')
-  const [preferredAgeBand, setPreferredAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number]>(DEFAULT_AGE_BAND)
+  const [preferredAgeBand, setPreferredAgeBand] = useState<(typeof AGE_BAND_OPTIONS)[number]>(derivedInitialAgeBand)
   const [savedRecommendations, setSavedRecommendations] = useState<PlannerRecommendation[]>([])
   const [suggestedRecommendations, setSuggestedRecommendations] = useState<RecommendationSuggestion[]>([])
   const hasSyncedWeekStart = useRef(false)
