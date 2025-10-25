@@ -28,8 +28,6 @@ const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
 
 const typeSupportsDuration = (type: (typeof TYPE_OPTIONS)[number]) => type === 'Brincadeira' || type === 'Receita'
 
-const DEFAULT_AGE_BAND: (typeof AGE_BAND_OPTIONS)[number] = '1-2a'
-
 type RecommendationSuggestion = {
   type: (typeof TYPE_OPTIONS)[number]
   title: string
