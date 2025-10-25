@@ -255,6 +255,10 @@ export default async function Page() {
           weekStartKey={weekStartKey}
           weekLabels={weekLabels}
           plannerTitle={plannerTitle}
+          profile={profileForClient}
+          dateKey={currentDateKey}
+          allActivities={CHILD_ACTIVITIES}
+          recommendations={CHILD_RECOMMENDATIONS}
         />
       </div>
     </main>
