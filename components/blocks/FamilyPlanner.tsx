@@ -119,6 +119,9 @@ type FamilyPlannerProps = {
   weekStartKey: string
   weekLabels: WeekLabel[]
   plannerTitle?: string
+  profile: Profile
+  dateKey: string
+  recommendations: ChildRecommendation[]
 }
 
 const parseDateKeyToUTC = (key: string): Date | null => {
