@@ -1,31 +1,45 @@
 'use client'
 
-'use client'
-
-import React, { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import type { Child, Profile, AgeRange } from '@/app/lib/ageRange'
+import { resolveAgeRange } from '@/app/lib/ageRange'
+import type { ChildActivity } from '@/app/data/childContent'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Toast } from '@/components/ui/Toast'
-import {
-  DEFAULT_AGE_BAND,
-  FALLBACK_ACTIVITY,
-  getInitialDailyActivity,
-  getTodayDateKey,
-  resolveDailyActivity,
-} from '@/lib/dailyActivity'
 import {
   recommendationStorage,
   RECOMMENDATIONS_UPDATED_EVENT,
   type PlannerRecommendation,
 } from '@/lib/plannerData'
 
-type ActivityState = ReturnType<typeof getInitialDailyActivity>
+const ALL_CHILDREN_ID = '__all__'
+
+const FALLBACK_ACTIVITY: ChildActivity = {
+  id: 'contato-afetuoso',
+  title: 'Momento de contato afetuoso',
+  emoji: '🤗',
+  durationMin: 10,
+  ageRange: '0-1',
+  materials: ['Cobertor macio', 'Música calma'],
+  steps: [
+    'Reserve um espaço tranquilo e silencioso.',
+    'Segure a criança no colo e cante suavemente.',
+    'Respirem juntos por alguns instantes em silêncio.',
+  ],
+}
 
 type ToastState = {
   message: string
   type: 'success' | 'error'
+}
+
+type ActivityOfDayProps = {
+  dateKey: string
+  profile: Profile
+  activities: ChildActivity[]
 }
 
 const createId = () => {
@@ -36,103 +50,268 @@ const createId = () => {
   return Math.random().toString(36).slice(2, 11)
 }
 
-export function ActivityOfDay() {
-  const [activityState, setActivityState] = useState<ActivityState>(() => ({
-    dateKey: getTodayDateKey(),
-    activity: FALLBACK_ACTIVITY,
-    ageBand: DEFAULT_AGE_BAND,
-  }))
+const formatAgeRangeLabel = (range?: AgeRange | null) => {
+  if (!range) {
+    return 'Todas as idades'
+  }
+
+  if (range === '8+') {
+    return '8 anos ou mais'
+  }
+
+  return `${range} anos`
+}
+
+const computeDeterministicIndex = (seed: string, length: number) => {
+  if (length <= 0) {
+    return 0
+  }
+
+  let hash = 0
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) | 0
+  }
+
+  return Math.abs(hash) % length
+}
+
+const sanitizeChildList = (profile: Profile | undefined): Child[] => {
+  if (!profile?.children || profile.children.length === 0) {
+    return []
+  }
+
+  const seen = new Set<string>()
+  const result: Child[] = []
+
+  for (const rawChild of profile.children) {
+    if (!rawChild || typeof rawChild.id !== 'string') {
+      continue
+    }
+
+    const trimmedId = rawChild.id.trim()
+    if (!trimmedId || seen.has(trimmedId)) {
+      continue
+    }
+
+    seen.add(trimmedId)
+
+    const trimmedName = rawChild.name?.trim()
+    const gender = rawChild.gender === 'm' || rawChild.gender === 'f' ? rawChild.gender : undefined
+    const birthdate = rawChild.birthdateISO ? rawChild.birthdateISO.trim() : undefined
+
+    const computedRange = resolveAgeRange({
+      id: trimmedId,
+      name: trimmedName,
+      gender,
+      ageRange: rawChild.ageRange ?? null,
+      birthdateISO: birthdate ?? null,
+    })
+
+    result.push({
+      id: trimmedId,
+      name: trimmedName && trimmedName.length > 0 ? trimmedName : undefined,
+      gender,
+      ageRange: computedRange,
+      birthdateISO: birthdate,
+    })
+  }
+
+  return result
+}
+
+export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayProps) {
+  const children = useMemo(() => sanitizeChildList(profile), [profile])
+  const isMultiChild = children.length > 1
+
+  const [selectedChildId, setSelectedChildId] = useState<string>(() =>
+    isMultiChild ? ALL_CHILDREN_ID : children[0]?.id ?? ''
+  )
   const [isExpanded, setIsExpanded] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+  const [savingKey, setSavingKey] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const { activity } = activityState
-  const cardTitle = activity.emoji ? `${activity.emoji} ${activity.title}` : activity.title
-  const hasDuration = activity.durationMin !== undefined && activity.durationMin !== null
-  const hasAgeBand = Boolean(activity.ageBand)
-  const ageChipLabel = hasAgeBand ? activity.ageBand : 'Todas as idades'
+  useEffect(() => {
+    if (children.length === 0) {
+      setSelectedChildId('')
+      return
+    }
+
+    if (children.length === 1) {
+      setSelectedChildId(children[0].id)
+      return
+    }
+
+    setSelectedChildId((previous) => {
+      if (!previous) {
+        return ALL_CHILDREN_ID
+      }
+
+      if (previous === ALL_CHILDREN_ID || children.some((child) => child.id === previous)) {
+        return previous
+      }
+
+      return ALL_CHILDREN_ID
+    })
+  }, [children])
 
   useEffect(() => {
-    let active = true
+    setIsExpanded(false)
+  }, [selectedChildId, dateKey])
 
-    const loadCached = () => {
-      try {
-        const cached = getInitialDailyActivity()
-        if (active) {
-          setActivityState(cached)
-        }
-      } catch (error) {
-        console.error('Falha ao carregar atividade do cache:', error)
+  const activityBuckets = useMemo(() => {
+    const map = new Map<AgeRange, ChildActivity[]>()
+
+    for (const activity of activities) {
+      const list = map.get(activity.ageRange) ?? []
+      list.push(activity)
+      map.set(activity.ageRange, list)
+    }
+
+    return map
+  }, [activities])
+
+  const selectActivity = useCallback(
+    (range: AgeRange | null, seed: string): ChildActivity => {
+      const rangePool = range ? activityBuckets.get(range) ?? [] : []
+      const pool = rangePool.length > 0 ? rangePool : activities
+
+      if (pool.length === 0) {
+        return FALLBACK_ACTIVITY
       }
+
+      const index = computeDeterministicIndex(seed, pool.length)
+      return pool[index]
+    },
+    [activities, activityBuckets]
+  )
+
+  const isAllMode = isMultiChild && selectedChildId === ALL_CHILDREN_ID
+
+  const activeChild = useMemo(() => {
+    if (children.length === 0) {
+      return null
     }
 
-    const loadActivity = async () => {
-      try {
-        const result = await resolveDailyActivity()
-
-        if (!active) {
-          return
-        }
-
-        setActivityState(result)
-      } catch (error) {
-        console.error('Falha ao carregar atividade do dia:', error)
-      }
+    if (!isMultiChild) {
+      return children[0]
     }
 
-    loadCached()
-    void loadActivity()
-
-    return () => {
-      active = false
+    if (isAllMode) {
+      return null
     }
-  }, [])
+
+    return children.find((child) => child.id === selectedChildId) ?? children[0]
+  }, [children, isAllMode, isMultiChild, selectedChildId])
+
+  const singleActivity = useMemo(() => {
+    if (!activeChild) {
+      return selectActivity(null, dateKey)
+    }
+
+    const range = activeChild.ageRange ?? resolveAgeRange(activeChild)
+    return selectActivity(range, `${dateKey}:${activeChild.id}`)
+  }, [activeChild, dateKey, selectActivity])
+
+  const groupedActivities = useMemo(() => {
+    if (!isAllMode) {
+      return []
+    }
+
+    return children.map((child) => {
+      const range = child.ageRange ?? resolveAgeRange(child)
+      const activity = selectActivity(range, `${dateKey}:${child.id}`)
+      return { child, activity }
+    })
+  }, [children, dateKey, isAllMode, selectActivity])
+
+  const badgeLabel = useMemo(() => {
+    if (isAllMode) {
+      return 'Atividade do Dia'
+    }
+
+    if (!activeChild?.name) {
+      return 'Atividade do Dia'
+    }
+
+    if (activeChild.gender === 'm') {
+      return `Atividade do Dia com o ${activeChild.name}`
+    }
+
+    if (activeChild.gender === 'f') {
+      return `Atividade do Dia com a ${activeChild.name}`
+    }
+
+    return `Atividade do Dia com ${activeChild.name}`
+  }, [activeChild, isAllMode])
+
+  const headlineActivity = isAllMode ? FALLBACK_ACTIVITY : singleActivity ?? FALLBACK_ACTIVITY
+  const headlineTitle = useMemo(() => {
+    if (isAllMode) {
+      return 'Atividades personalizadas para hoje'
+    }
+
+    return headlineActivity.emoji ? `${headlineActivity.emoji} ${headlineActivity.title}` : headlineActivity.title
+  }, [headlineActivity, isAllMode])
+
+  const ageLabel = useMemo(() => {
+    if (isAllMode) {
+      return 'Personalizado por criança'
+    }
+
+    return formatAgeRangeLabel(headlineActivity.ageRange)
+  }, [headlineActivity.ageRange, isAllMode])
+
+  const hasDuration = !isAllMode && headlineActivity.durationMin !== undefined && headlineActivity.durationMin !== null
 
   const handleToggleDetails = useCallback(() => {
     setIsExpanded((previous) => !previous)
   }, [])
 
-  const handleSaveToPlanner = useCallback(async () => {
-    if (isSaving) {
-      return
-    }
+  const handleSelectChild = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedChildId(event.target.value)
+  }, [])
 
-    setIsSaving(true)
-
-    const dateKey = activityState.dateKey || getTodayDateKey()
-    const nowIso = new Date().toISOString()
-
-    const recommendation: PlannerRecommendation = {
-      id: createId(),
-      type: 'Recomendação',
-      title: activity.title,
-      durationMin: activity.durationMin ?? null,
-      ageBand: activity.ageBand ?? null,
-      refId: activity.refId ?? null,
-      link: null,
-      source: 'daily-activity',
-      createdAt: nowIso,
-    }
-
-    try {
-      recommendationStorage.upsert(dateKey, recommendation)
-
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent(RECOMMENDATIONS_UPDATED_EVENT, {
-            detail: { dateKey },
-          })
-        )
+  const handleSaveActivity = useCallback(
+    async (activity: ChildActivity, key: string) => {
+      if (savingKey) {
+        return
       }
 
-      setToast({ message: 'Atividade adicionada às Recomendações de hoje.', type: 'success' })
-    } catch (error) {
-      console.error('Falha ao salvar atividade no Planner:', error)
-      setToast({ message: 'Não foi possível salvar agora. Tente novamente.', type: 'error' })
-    } finally {
-      setIsSaving(false)
-    }
-  }, [activity, activityState.dateKey, isSaving])
+      setSavingKey(key)
+
+      const recommendation: PlannerRecommendation = {
+        id: createId(),
+        type: 'Recomendação',
+        title: activity.title,
+        durationMin: activity.durationMin ?? null,
+        ageBand: null,
+        refId: activity.refId ?? null,
+        link: activity.link ?? null,
+        source: 'daily-activity',
+        createdAt: new Date().toISOString(),
+      }
+
+      try {
+        recommendationStorage.upsert(dateKey, recommendation)
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent(RECOMMENDATIONS_UPDATED_EVENT, {
+              detail: { dateKey },
+            })
+          )
+        }
+
+        setToast({ message: 'Atividade adicionada às Recomendações de hoje.', type: 'success' })
+      } catch (error) {
+        console.error('Falha ao salvar atividade no Planner:', error)
+        setToast({ message: 'Não foi possível salvar agora. Tente novamente.', type: 'error' })
+      } finally {
+        setSavingKey((current) => (current === key ? null : current))
+      }
+    },
+    [dateKey, savingKey]
+  )
 
   const detailButtonLabel = isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'
 
@@ -142,92 +321,153 @@ export function ActivityOfDay() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-              Atividade do Dia
+              {badgeLabel}
             </span>
-            <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">{cardTitle}</p>
+            <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">{headlineTitle}</p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
-              <span className="inline-flex items-center gap-1">👧 {ageChipLabel}</span>
-              {hasDuration && (
-                <span className="inline-flex items-center gap-1">⏱️ {activity.durationMin} min</span>
+              <span className="inline-flex items-center gap-1">👧 {ageLabel}</span>
+              {!isAllMode && hasDuration && (
+                <span className="inline-flex items-center gap-1">⏱️ {headlineActivity.durationMin} min</span>
               )}
             </div>
           </div>
+
+          {children.length > 1 && (
+            <div className="w-full sm:w-auto">
+              <label htmlFor="activity-child-selector" className="sr-only">
+                Selecionar criança
+              </label>
+              <select
+                id="activity-child-selector"
+                value={selectedChildId}
+                onChange={handleSelectChild}
+                className="w-full rounded-full border border-white/60 bg-white/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-support-1 shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              >
+                <option value={ALL_CHILDREN_ID}>Todos</option>
+                {children.map((child, index) => (
+                  <option key={child.id} value={child.id}>
+                    {child.name ?? `Filho ${index + 1}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex-1"
-            type="button"
-            onClick={handleToggleDetails}
-            aria-expanded={isExpanded}
-          >
-            {detailButtonLabel}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            type="button"
-            onClick={handleSaveToPlanner}
-            disabled={isSaving}
-          >
-            Salvar no Planner
-          </Button>
-        </div>
+        {isAllMode ? (
+          <div className="mt-6 space-y-3">
+            {groupedActivities.map(({ child, activity }, index) => {
+              const childLabel = child.name ?? `Filho ${index + 1}`
+              const saveKey = `${child.id}-${activity.id}`
+              const childAgeLabel = formatAgeRangeLabel(child.ageRange ?? resolveAgeRange(child))
+              const activityTitle = activity.emoji ? `${activity.emoji} ${activity.title}` : activity.title
 
-        {isExpanded && (
-          <div className="mt-5 rounded-2xl border border-white/60 bg-white/80 p-5 text-sm text-support-1 shadow-soft">
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Título</h4>
-                <p className="mt-1 font-semibold text-support-1">{cardTitle}</p>
+              return (
+                <div key={child.id} className="rounded-2xl border border-white/60 bg-white/75 p-4 shadow-soft">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-support-1">{activityTitle}</p>
+                      <p className="text-xs text-support-2">
+                        {childLabel} · {childAgeLabel}
+                      </p>
+                      {activity.durationMin ? (
+                        <p className="mt-1 text-xs text-support-2">⏱️ {activity.durationMin} min</p>
+                      ) : null}
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full rounded-full sm:w-auto"
+                      onClick={() => void handleSaveActivity(activity, saveKey)}
+                      disabled={Boolean(savingKey)}
+                    >
+                      Salvar no Planner
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1"
+                type="button"
+                onClick={handleToggleDetails}
+                aria-expanded={isExpanded}
+              >
+                {detailButtonLabel}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                type="button"
+                onClick={() => void handleSaveActivity(headlineActivity, headlineActivity.id)}
+                disabled={Boolean(savingKey)}
+              >
+                Salvar no Planner
+              </Button>
+            </div>
+
+            {isExpanded && (
+              <div className="mt-5 rounded-2xl border border-white/60 bg-white/80 p-5 text-sm text-support-1 shadow-soft">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-xs 国产成人 font-semibold uppercase tracking-[0.18em] text-support-2/80">Título</h4>
+                    <p className="mt-1 font-semibold text-support-1">{headlineActivity.title}</p>
+                  </div>
+                  {headlineActivity.durationMin !== undefined && headlineActivity.durationMin !== null && (
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Duração</h4>
+                      <p className="mt-1 text-support-2">{headlineActivity.durationMin} minutos</p>
+                    </div>
+                  )}
+                  {headlineActivity.materials && headlineActivity.materials.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Materiais</h4>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-support-2">
+                        {headlineActivity.materials.map((material) => (
+                          <li key={material}>{material}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {headlineActivity.steps && headlineActivity.steps.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Passo a passo</h4>
+                      <ol className="mt-1 list-decimal space-y-1 pl-5 text-support-2">
+                        {headlineActivity.steps.map((step, index) => (
+                          <li key={`${headlineActivity.id}-step-${index}`}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                  {headlineActivity.ageRange && (
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Faixa etária</h4>
+                      <p className="mt-1 text-support-2">{formatAgeRangeLabel(headlineActivity.ageRange)}</p>
+                    </div>
+                  )}
+                  {headlineActivity.refId && (
+                    <div>
+                      <Link
+                        href={`/descobrir/${headlineActivity.refId}`}
+                        className="text-sm font-semibold text-primary transition hover:underline"
+                      >
+                        Ver página completa
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
-              {hasDuration && (
-                <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Duração</h4>
-                  <p className="mt-1 text-support-2">{activity.durationMin} minutos</p>
-                </div>
-              )}
-              {activity.materials && activity.materials.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Materiais</h4>
-                  <ul className="mt-1 list-disc space-y-1 pl-5 text-support-2">
-                    {activity.materials.map((material) => (
-                      <li key={material}>{material}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {activity.steps && activity.steps.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Passo a passo</h4>
-                  <ol className="mt-1 list-decimal space-y-1 pl-5 text-support-2">
-                    {activity.steps.map((step, index) => (
-                      <li key={`${activity.id}-step-${index}`}>{step}</li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-              {hasAgeBand && (
-                <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Faixa etária</h4>
-                  <p className="mt-1 text-support-2">{activity.ageBand}</p>
-                </div>
-              )}
-              {activity.refId && (
-                <div>
-                  <Link
-                    href={`/descobrir/${activity.refId}`}
-                    className="text-sm font-semibold text-primary transition hover:underline"
-                  >
-                    Ver página completa
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
+            )}
+          </>
         )}
       </Card>
 
