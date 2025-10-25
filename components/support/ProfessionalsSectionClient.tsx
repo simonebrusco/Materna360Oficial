@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useCallback } from 'react'
 
 import ProfessionalsResults from './ProfessionalsResults'
