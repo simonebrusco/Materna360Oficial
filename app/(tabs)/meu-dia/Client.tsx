@@ -40,6 +40,10 @@ export function MeuDiaClient({
   weekStartKey,
   weekLabels,
   plannerTitle,
+  profile,
+  dateKey,
+  allActivities,
+  recommendations,
 }: MeuDiaClientProps) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
