@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -10,7 +12,7 @@ const moods = [
   { emoji: '😐', label: 'Neutra', value: 'neutra' },
   { emoji: '🙂', label: 'Leve', value: 'leve' },
   { emoji: '😊', label: 'Feliz', value: 'feliz' },
-  { emoji: '😵‍💫', label: 'Sobrecarregada', value: 'sobrecarregada' },
+  { emoji: '����‍💫', label: 'Sobrecarregada', value: 'sobrecarregada' },
 ] as const
 
 type MoodValue = (typeof moods)[number]['value']
