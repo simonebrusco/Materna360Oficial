@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -11,7 +10,7 @@ const featureCards = [
     href: '/meu-dia',
     title: 'Meu Dia',
     description: 'Organize sua rotina familiar com leveza e carinho.',
-    emoji: '🏡',
+    emoji: '���',
   },
   {
     href: '/cuidar',
