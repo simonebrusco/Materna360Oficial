@@ -8,19 +8,19 @@ export type ProfileStickerId =
 export type StickerInfo = { label: string; asset: string }
 
 export const STICKERS = {
-  'mae-carinhosa': { label: 'Mãe Carinhosa', asset: '/stickers/mae-carinhosa.svg' },
-  'mae-leve': { label: 'Mãe Leve', asset: '/stickers/mae-leve.svg' },
-  'mae-determinada': { label: 'Mãe Determinada', asset: '/stickers/mae-determinada.svg' },
-  'mae-criativa': { label: 'Mãe Criativa', asset: '/stickers/mae-criativa.svg' },
-  'mae-tranquila': { label: 'Mãe Tranquila', asset: '/stickers/mae-tranquila.svg' },
-  default: { label: 'Minha Figurinha', asset: '/stickers/default.svg' },
+  'mae-carinhosa': { label: 'Mãe Carinhosa', asset: '/stickers/mae-carinhosa.png' },
+  'mae-leve': { label: 'Mãe Leve', asset: '/stickers/mae-leve.png' },
+  'mae-determinada': { label: 'Mãe Determinada', asset: '/stickers/mae-determinada.png' },
+  'mae-criativa': { label: 'Mãe Criativa', asset: '/stickers/mae-criativa.png' },
+  'mae-tranquila': { label: 'Mãe Tranquila', asset: '/stickers/mae-tranquila.png' },
+  default: { label: 'Minha Figurinha', asset: '/stickers/mae-carinhosa.png' },
 } as const
 
 export const DEFAULT_STICKER_ID = 'default' as const
 
 type StickerKey = keyof typeof STICKERS
 
-function isStickerId(id: unknown): id is ProfileStickerId {
+export function isStickerId(id: unknown): id is ProfileStickerId {
   return typeof id === 'string' && id in STICKERS && id !== DEFAULT_STICKER_ID
 }
 

@@ -1,9 +1,10 @@
 'use client'
 
-stellar-den
+'use client'
+
 import { useEffect, useState } from 'react'
 
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { DAILY_MESSAGES_PT } from '@/lib/dailyMessagesPt'
 
 const STORAGE_KEY = 'materna_daily_message_v2'
@@ -105,8 +106,8 @@ const fetchMotherName = async (): Promise<string> => {
     }
 
     const data = await response.json()
-    const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
-    return rawName || FALLBACK_NAME
+    const rawName = typeof data?.motherName === 'string' ? data.motherName : data?.nomeMae
+    return typeof rawName === 'string' && rawName.trim().length > 0 ? rawName.trim() : FALLBACK_NAME
   } catch (error) {
     console.error('Não foi possível carregar o nome da mãe:', error)
     return FALLBACK_NAME
@@ -131,14 +132,6 @@ export function MessageOfDay() {
     }
 
     const load = async () => {
-      /**
-       * We do NOT cache the user's name:
-       * - Name can change in the eu360 form; we want it to update immediately.
-       * - Daily cache stores only the base message; the NAME is resolved at runtime.
-       * - Single source of truth: /api/profile (avoids stale data).
-       * - Prevents cross-device inconsistencies and simplifies cache invalidation.
-       * - Minimal cost to read name; UX stays always fresh.
-       */
       const name = await fetchMotherName()
       if (!active) {
         return
@@ -166,43 +159,15 @@ export function MessageOfDay() {
     }
   }, [])
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-
-export function MessageOfDay() {
-  const messages = [
-    'Você está fazendo um ótimo trabalho. Lembre-se de respirar e apreciar os pequenos momentos.',
-    'Sua paciência é sua força. Você merece descanso e cuidado.',
-    'Cada dia é uma nova oportunidade para ser gentil com você mesma.',
-    'Seus filhos têm sorte de ter uma mãe tão dedicada como você.',
-    'Lembre-se: você não precisa ser perfeita, apenas presente.',
-  ]
-
-  const today = new Date().getDate()
-  const message = messages[today % messages.length]
-
-  const handleNewMessage = () => {
-    alert('Nova mensagem carregada! ✨')
-  }
-main
-
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
       <div className="mb-5 flex flex-col gap-2">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem do Dia</h2>
-stellar-den
         <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">
           “{isLoading && !message ? '...' : message}”
         </p>
       </div>
       <div className="mt-2" aria-hidden />
-
-        <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">“{message}”</p>
-      </div>
-      <Button variant="primary" size="sm" onClick={handleNewMessage} className="w-full">
-        Nova Mensagem
-      </Button>
-main
       <span className="pointer-events-none absolute -right-6 bottom-4 h-24 w-24 rounded-full bg-primary/15 blur-3xl" aria-hidden />
       <span className="pointer-events-none absolute -left-8 top-2 h-16 w-16 rounded-3xl bg-white/60 blur-2xl" aria-hidden />
     </Card>

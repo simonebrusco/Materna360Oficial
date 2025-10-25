@@ -1,15 +1,13 @@
-import React from 'react'
+import * as React from 'react'
 
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
-
-type ButtonVariant = 'primary' | 'secondary' | 'outline'
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost'
 
 type ButtonSize = 'sm' | 'md' | 'lg'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
-  children: ReactNode
+  children: React.ReactNode
 }
 
 export function Button({
@@ -26,6 +24,7 @@ export function Button({
       'bg-secondary/80 text-support-1 shadow-soft hover:bg-secondary hover:shadow-elevated',
     outline:
       'border border-primary/60 text-primary bg-white/70 shadow-soft hover:bg-primary/10 hover:shadow-elevated',
+    ghost: 'bg-transparent text-support-1 shadow-none hover:bg-white/60 hover:shadow-soft',
   }
 
   const sizeStyles: Record<ButtonSize, string> = {
