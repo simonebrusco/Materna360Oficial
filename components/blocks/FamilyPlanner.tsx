@@ -612,7 +612,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
       {isLoading ? (
         <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6 md:space-y-8">
           <div className="flex flex-wrap gap-2">
             {TYPE_OPTIONS.map((option) => (
               <Button key={option} type="button" variant="outline" size="sm" onClick={() => handleQuickAdd(option)}>
