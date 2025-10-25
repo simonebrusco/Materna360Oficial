@@ -357,7 +357,7 @@ export default function RenoveSuaEnergiaModalTrigger({ ariaLabel }: RenoveSuaEne
                 <div>
                   <p className="text-lg font-semibold text-support-1 md:text-xl">{track.title}</p>
                   {isDisabled && (
-                    <p className="text-sm text-support-3">Arquivo não encontrado</p>
+                    <p className="text-sm text-support-3">Áudio indisponível</p>
                   )}
                 </div>
 
