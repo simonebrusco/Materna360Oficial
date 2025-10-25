@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -19,6 +19,7 @@ export function CheckInCard() {
   const [selectedMood, setSelectedMood] = useState<MoodValue | null>(null)
   const [quote, setQuote] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const requestIdRef = useRef(0)
 
   const moodLabelMap = useMemo(() => {
     return moods.reduce<Record<MoodValue, string>>((accumulator, mood) => {
@@ -35,10 +36,13 @@ export function CheckInCard() {
     setQuote('')
 
     if (!nextMood) {
+      requestIdRef.current += 1
       setIsLoading(false)
       return
     }
 
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
     setIsLoading(true)
 
     try {
@@ -53,6 +57,10 @@ export function CheckInCard() {
       }
 
       const data = await response.json()
+      if (requestIdRef.current !== requestId) {
+        return
+      }
+
       if (typeof data?.quote === 'string' && data.quote.trim().length > 0) {
         setQuote(data.quote)
       } else {
@@ -60,9 +68,13 @@ export function CheckInCard() {
       }
     } catch (error) {
       console.error('Não foi possível carregar a mensagem motivacional:', error)
-      setQuote('')
+      if (requestIdRef.current === requestId) {
+        setQuote('')
+      }
     } finally {
-      setIsLoading(false)
+      if (requestIdRef.current === requestId) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -73,6 +85,7 @@ export function CheckInCard() {
       setSelectedMood(null)
       setQuote('')
       setIsLoading(false)
+      requestIdRef.current += 1
     }
   }
 
