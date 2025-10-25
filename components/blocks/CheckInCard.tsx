@@ -12,7 +12,7 @@ const moods = [
   { emoji: '😐', label: 'Neutra', value: 'neutra' },
   { emoji: '🙂', label: 'Leve', value: 'leve' },
   { emoji: '😊', label: 'Feliz', value: 'feliz' },
-  { emoji: '����‍💫', label: 'Sobrecarregada', value: 'sobrecarregada' },
+  { emoji: '😵‍💫', label: 'Sobrecarregada', value: 'sobrecarregada' },
 ] as const
 
 type MoodValue = (typeof moods)[number]['value']
@@ -115,6 +115,7 @@ export function CheckInCard() {
                 }`}
                 aria-label={mood.label}
                 title={mood.label}
+                data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
               >
                 <span className="text-2xl md:text-3xl">{mood.emoji}</span>
                 <span className="hidden text-xs md:block">{mood.label}</span>
