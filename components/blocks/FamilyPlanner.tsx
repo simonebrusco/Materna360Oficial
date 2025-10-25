@@ -343,6 +343,10 @@ export function FamilyPlanner({
   }, [weekStartKey, weekLabels])
 
   useEffect(() => {
+    setPreferredAgeBand((previous) => (previous === derivedInitialAgeBand ? previous : derivedInitialAgeBand))
+  }, [derivedInitialAgeBand])
+
+  useEffect(() => {
     if (weekDays.length === 0) {
       return
     }
