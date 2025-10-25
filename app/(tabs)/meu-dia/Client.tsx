@@ -21,6 +21,10 @@ type MeuDiaClientProps = {
   weekStartKey: string
   weekLabels: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
   plannerTitle: string
+  profile: Profile
+  dateKey: string
+  allActivities: ChildActivity[]
+  recommendations: ChildRecommendation[]
 }
 
 const quickActions = [
