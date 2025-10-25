@@ -1,4 +1,4 @@
-import { cookies as getCookies } from 'next/headers'
+import { cookies as getCookies, headers as getHeaders } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
 import { MeuDiaClient } from './Client'
@@ -67,6 +67,9 @@ const formatDisplayDate = (date: Date) =>
 export default async function Page() {
   noStore()
 
+  const responseHeaders = getHeaders()
+  responseHeaders.set('Cache-Control', 'no-store')
+
   const jar = getCookies()
   const rawProfile = jar.get(PROFILE_COOKIE)?.value
 
@@ -86,6 +89,7 @@ export default async function Page() {
 
   const now = new Date()
   const displayName = firstNameOf(motherName)
+  const plannerTitle = `Planner da ${displayName}`
   const greetingPrefix = resolveGreetingPrefix(now)
   const greeting = `${greetingPrefix}, ${displayName}!`
   const formattedDate = formatDisplayDate(now)
@@ -120,6 +124,7 @@ export default async function Page() {
           currentDateKey={currentDateKey}
           weekStartKey={weekStartKey}
           weekLabels={weekLabels}
+          plannerTitle={plannerTitle}
         />
       </div>
     </main>
