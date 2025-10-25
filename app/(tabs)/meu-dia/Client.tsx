@@ -11,7 +11,7 @@ import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
 import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
