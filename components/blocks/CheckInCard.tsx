@@ -110,17 +110,19 @@ export function CheckInCard() {
                 key={mood.value}
                 type="button"
                 onClick={() => void handleMoodSelect(mood.value)}
-                className={`group inline-flex h-[112px] w-[112px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 md:h-[124px] md:w-[124px] ${
+                className={`group inline-flex h-[130px] w-[148px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 md:h-[140px] md:w-[156px] ${
                   isActive ? 'scale-[1.02] ring-2 ring-primary/40 shadow-[0_18px_40px_rgba(233,46,129,0.18)]' : ''
                 }`}
                 aria-label={mood.label}
                 title={mood.label}
                 data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
               >
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] md:h-16 md:w-16">
-                  <span className="text-[28px] leading-none md:text-[32px]">{mood.emoji}</span>
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] md:h-16 md:w-16">
+                  <span className="text-[32px] leading-none">{mood.emoji}</span>
                 </span>
-                <span className="mt-2 text-base font-semibold text-support-1">{mood.label}</span>
+                <span className="mt-2 max-w-[11ch] text-center text-[15px] font-semibold leading-snug text-support-1 md:text-base line-clamp-2">
+                  {mood.label}
+                </span>
               </button>
             )
           })}
