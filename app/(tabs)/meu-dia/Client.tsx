@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
+import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
 import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
@@ -49,6 +50,10 @@ export function MeuDiaClient({
       </Reveal>
 
       <Reveal delay={160}>
+        <CheckInCard />
+      </Reveal>
+
+      <Reveal delay={220}>
         <ActivityOfDay />
       </Reveal>
 
@@ -67,15 +72,15 @@ export function MeuDiaClient({
         ))}
       </div>
 
-      <Reveal delay={220}>
+      <Reveal delay={280}>
         <FamilyPlanner currentDateKey={currentDateKey} weekStartKey={weekStartKey} weekLabels={weekLabels} />
       </Reveal>
 
-      <Reveal delay={260}>
+      <Reveal delay={320}>
         <Checklist currentDateKey={currentDateKey} />
       </Reveal>
 
-      <Reveal delay={320}>
+      <Reveal delay={360}>
         <Card>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
