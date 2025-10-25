@@ -4,7 +4,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 
 const moods = [
