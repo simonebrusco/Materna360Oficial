@@ -5,8 +5,7 @@
 
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { Child, Profile, AgeRange } from '@/app/lib/ageRange'
-import { resolveAgeRange } from '@/app/lib/ageRange'
+import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildRecommendation, RecommendationType } from '@/app/data/childContent'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
