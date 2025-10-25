@@ -92,6 +92,9 @@ export function MeuDiaClient({
           weekStartKey={weekStartKey}
           weekLabels={weekLabels}
           plannerTitle={plannerTitle}
+          profile={profile}
+          dateKey={dateKey}
+          recommendations={recommendations}
         />
       </Reveal>
 
