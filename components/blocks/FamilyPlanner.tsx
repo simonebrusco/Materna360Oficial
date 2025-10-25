@@ -434,9 +434,9 @@ export function FamilyPlanner({
     const list = recommendationStorage.getForDate(selectedDayKey)
     setSavedRecommendations(list)
 
-    const dayIndex = weekDays.findIndex((day) => day.key === selectedDayKey)
-    setSuggestedRecommendations(pickRecommendationsForDay(preferredAgeBand, dayIndex === -1 ? 0 : dayIndex))
-  }, [selectedDayKey, preferredAgeBand, weekDays])
+    const seed = `${selectedDayKey}:${preferredAgeBand}:${dateKey}`
+    setSuggestedRecommendations(pickRecommendationsForDay(preferredAgeBand, seed, recommendationCatalog))
+  }, [selectedDayKey, preferredAgeBand, recommendationCatalog, dateKey])
 
   useEffect(() => {
     const handleRecommendationsUpdate = (event: Event) => {
