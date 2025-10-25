@@ -1,5 +1,9 @@
 'use client'
 
+const SHOW_FEATURED_PRACTICES = false
+
+const FEATURED_COLLECTION_IDS = new Set(['acolhimento', 'clareza'])
+
 const COLLECTIONS = [
   {
     id: 'reconectar',
@@ -39,6 +43,10 @@ const COLLECTIONS = [
 ]
 
 export default function MindfulnessForMoms() {
+  const visibleCollections = SHOW_FEATURED_PRACTICES
+    ? COLLECTIONS
+    : COLLECTIONS.filter((collection) => !FEATURED_COLLECTION_IDS.has(collection.id))
+
   return (
     <section className="space-y-6">
       <div>
@@ -52,7 +60,7 @@ export default function MindfulnessForMoms() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {COLLECTIONS.map((collection) => (
+        {visibleCollections.map((collection) => (
           <article
             key={collection.id}
             className="flex h-full flex-col justify-between gap-4 rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
