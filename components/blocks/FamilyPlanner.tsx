@@ -29,6 +29,82 @@ const AGE_RANGE_OPTIONS: readonly AgeRange[] = ['0-1', '2-3', '4-5', '6-7', '8+'
 const RECOMMENDATION_TYPES: RecommendationType[] = ['Brincadeira', 'Receita', 'Livro']
 const RECOMMENDATION_ALL_CHILDREN_ID = '__all__'
 
+type RecommendationSuggestion = ChildRecommendation & {
+  source: 'suggested'
+}
+
+const AGE_BAND_TO_RANGE_MAP: Record<(typeof AGE_BAND_OPTIONS)[number], AgeRange> = {
+  '0-6m': '0-1',
+  '7-12m': '0-1',
+  '1-2a': '2-3',
+  '3-4a': '4-5',
+  '5-6a': '6-7',
+}
+
+const AGE_RANGE_TO_BAND_MAP: Record<AgeRange, (typeof AGE_BAND_OPTIONS)[number]> = {
+  '0-1': '0-6m',
+  '2-3': '1-2a',
+  '4-5': '3-4a',
+  '6-7': '5-6a',
+  '8+': '5-6a',
+}
+
+const mapAgeBandToAgeRangeValue = (ageBand: (typeof AGE_BAND_OPTIONS)[number]): AgeRange => {
+  return AGE_BAND_TO_RANGE_MAP[ageBand] ?? '0-1'
+}
+
+const mapAgeRangeToAgeBandValue = (range?: AgeRange | null): (typeof AGE_BAND_OPTIONS)[number] | undefined => {
+  if (!range) {
+    return undefined
+  }
+
+  return AGE_RANGE_TO_BAND_MAP[range]
+}
+
+const deriveInitialAgeBand = (profile?: Profile): (typeof AGE_BAND_OPTIONS)[number] => {
+  const children = sanitizeRecommendationChildren(profile)
+  const [firstChild] = children
+  const mapped = mapAgeRangeToAgeBandValue(firstChild?.ageRange ?? null)
+  return mapped ?? DEFAULT_AGE_BAND
+}
+
+const pickRecommendationsForDay = (
+  ageBand: (typeof AGE_BAND_OPTIONS)[number],
+  seed: string,
+  catalog: ChildRecommendation[],
+  count = 3
+): RecommendationSuggestion[] => {
+  if (catalog.length === 0) {
+    return []
+  }
+
+  const ageRange = mapAgeBandToAgeRangeValue(ageBand)
+  const ageMatched = catalog.filter((item) => item.ageRange === ageRange)
+  const pool = ageMatched.length > 0 ? ageMatched : catalog
+  const total = Math.min(count, pool.length)
+
+  if (total === 0) {
+    return []
+  }
+
+  const startIndex = computeDeterministicIndex(seed, pool.length)
+  const suggestions: RecommendationSuggestion[] = []
+
+  for (let offset = 0; suggestions.length < total && offset < pool.length; offset += 1) {
+    const candidate = pool[(startIndex + offset) % pool.length]
+    if (suggestions.some((entry) => entry.id === candidate.id)) {
+      continue
+    }
+
+    suggestions.push({
+      ...candidate,
+      source: 'suggested',
+    })
+  }
+
+  return suggestions
+}
+
 const typeSupportsDuration = (type: (typeof TYPE_OPTIONS)[number]) => type === 'Brincadeira' || type === 'Receita'
 
 type WeekLabel = {
