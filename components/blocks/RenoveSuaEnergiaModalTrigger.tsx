@@ -117,85 +117,140 @@ export default function RenoveSuaEnergiaModalTrigger({ ariaLabel }: RenoveSuaEne
 
     setIsLoading(true)
 
+    const resolvedPrefixes = new Set<string>()
+
     try {
       const supabase = createClient(supabaseUrl, supabaseKey)
+      const storage = supabase.storage.from('public')
 
-      let selectedPrefix: string | null = null
-      for (const prefix of PREFERRED_PREFIXES) {
+      let usedPrefix = ''
+      let audioFiles: StoredTrack[] = []
+
+      for (const prefix of PREFIX_CANDIDATES) {
         try {
-          const { data: files, error } = await supabase.storage.from('mindfulness').list(prefix, {
-            limit: 1,
+          const { data, error } = await storage.list(prefix, {
+            limit: 100,
+            sortBy: { column: 'name', order: 'asc' },
           })
-          if (!error && files && files.length > 0) {
-            selectedPrefix = prefix
-            break
+
+          if (!error && data && data.length) {
+            const filtered = data.filter((file) => AUDIO_EXTENSIONS.test(file.name))
+            if (filtered.length) {
+              audioFiles = filtered
+              usedPrefix = prefix
+              break
+            }
           }
         } catch (error) {
-          console.error('Error validating prefix existence', error)
+          console.error('Failed to inspect Supabase prefix', prefix, error)
         }
       }
 
-      if (!selectedPrefix) {
-        setTracks([])
-        hasLoadedTracks.current = true
-        setIsLoading(false)
-        return
-      }
-
-      const { data: files, error: listError } = await supabase.storage.from('mindfulness').list(selectedPrefix, {
-        limit: 100,
-        search: '.mp3',
-      })
-
-      if (listError) {
-        console.error('Failed to list mindfulness tracks', listError)
-        setTracks([])
-        hasLoadedTracks.current = true
-        setIsLoading(false)
-        return
-      }
-
-      const mp3Files = (files || []).filter((file: StoredTrack) => file.name.toLowerCase().endsWith('.mp3'))
-      mp3Files.sort((a, b) => a.name.localeCompare(b.name))
-
-      const resolvedTracks: TrackItem[] = []
-
-      for (const file of mp3Files) {
-        const slug = file.name.replace(/\.mp3$/i, '')
-        const title = formatTitleFromFilename(file.name)
-        const path = `${selectedPrefix}${file.name}`
+      const validateUrl = async (url: string | null) => {
+        if (!url) {
+          return { available: false, url: null }
+        }
 
         try {
-          const { data } = supabase.storage.from('mindfulness').getPublicUrl(path)
+          const response = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+          if (!response.ok) {
+            return { available: false, url: null }
+          }
+
+          return { available: true, url }
+        } catch (error) {
+          console.error('Failed to validate mindfulness audio availability', error)
+          return { available: false, url: null }
+        }
+      }
+
+      const buildTrackFromSupabase = async (fileName: string, prefix: string): Promise<TrackItem> => {
+        const slug = fileName.replace(AUDIO_EXTENSIONS, '')
+        const title = formatTitleFromFilename(fileName)
+        const path = `${prefix}${fileName}`
+
+        try {
+          const { data } = storage.getPublicUrl(path)
           const publicUrl = data?.publicUrl ?? null
+          const { available, url } = await validateUrl(publicUrl)
 
-          if (!publicUrl) {
-            resolvedTracks.push({ title, slug, url: null, missing: true })
-            continue
+          if (available && url) {
+            resolvedPrefixes.add(prefix)
+            return { title, slug, url, missing: false }
           }
-
-          try {
-            const response = await fetch(publicUrl, { method: 'HEAD', cache: 'no-store' })
-            if (!response.ok) {
-              resolvedTracks.push({ title, slug, url: null, missing: true })
-              continue
-            }
-          } catch (error) {
-            console.error('Failed to validate mindfulness audio availability', error)
-            resolvedTracks.push({ title, slug, url: null, missing: true })
-            continue
-          }
-
-          resolvedTracks.push({ title, slug, url: publicUrl, missing: false })
         } catch (error) {
           console.error('Failed to generate mindfulness audio URL', error)
-          resolvedTracks.push({ title, slug, url: null, missing: true })
+        }
+
+        return { title, slug, url: null, missing: true }
+      }
+
+      const loadFromManifest = async (): Promise<TrackItem[]> => {
+        try {
+          const manifestModule = await import('../../data/mindfulness/renove.json')
+          const manifest = (manifestModule.default || []) as ManifestEntry[]
+
+          if (!manifest.length) {
+            return []
+          }
+
+          const tracksFromManifest = await Promise.all(
+            manifest.map(async ({ title, file }) => {
+              const slug = file.replace(AUDIO_EXTENSIONS, '')
+              const displayTitle = title ?? formatTitleFromFilename(file)
+
+              for (const prefix of PREFIX_CANDIDATES) {
+                try {
+                  const { data } = storage.getPublicUrl(`${prefix}${file}`)
+                  const publicUrl = data?.publicUrl ?? null
+                  const { available, url } = await validateUrl(publicUrl)
+
+                  if (available && url) {
+                    resolvedPrefixes.add(prefix)
+                    return { title: displayTitle, slug, url, missing: false }
+                  }
+                } catch (error) {
+                  console.error('Failed to build URL from manifest prefix', prefix, error)
+                }
+              }
+
+              const fallbackUrl = `${FALLBACK_PUBLIC_PATH}${file}`
+              const { available } = await validateUrl(fallbackUrl)
+
+              if (available) {
+                resolvedPrefixes.add(FALLBACK_PUBLIC_PATH)
+                return { title: displayTitle, slug, url: fallbackUrl, missing: false }
+              }
+
+              return { title: displayTitle, slug, url: null, missing: true }
+            })
+          )
+
+          return tracksFromManifest
+        } catch (error) {
+          console.error('Failed to load Renove manifest', error)
+          return []
         }
       }
 
+      let resolvedTracks: TrackItem[] = []
+
+      if (audioFiles.length && usedPrefix) {
+        resolvedTracks = await Promise.all(audioFiles.map((file) => buildTrackFromSupabase(file.name, usedPrefix)))
+      } else {
+        resolvedTracks = await loadFromManifest()
+      }
+
+      console.warn(
+        '[RenoveSuaEnergiaModal] prefix:',
+        usedPrefix || (resolvedPrefixes.size ? Array.from(resolvedPrefixes).join(', ') : '(fallback)'),
+        'files:',
+        resolvedTracks.length
+      )
+
       setTracks(resolvedTracks)
-      hasLoadedTracks.current = true
     } finally {
+      hasLoadedTracks.current = true
       setIsLoading(false)
     }
   }, [])
