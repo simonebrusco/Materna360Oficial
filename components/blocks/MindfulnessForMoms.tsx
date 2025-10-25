@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 
-import RenoveSuaEnergiaModal from '@/components/features/Mindfulness/RenoveSuaEnergiaModal'
-
-import ReconecteSeModalTrigger from './ReconecteSeModalTrigger'
+import MindfulnessModal from '@/components/features/Mindfulness/MindfulnessModal'
+import {
+  TRACKS_ENCONTRE_CALMA,
+  TRACKS_RECONCETE_SE,
+  TRACKS_RENOVE_SUA_ENERGIA,
+} from '@/components/features/Mindfulness/tracks'
 
 const SHOW_FEATURED_PRACTICES = false
 
@@ -46,8 +49,13 @@ const COLLECTIONS = [
   },
 ]
 
+const MODAL_TRIGGER_BUTTON_CLASS =
+  'inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF3E79] to-[#FF6B9A] px-6 py-3 text-[18px] font-extrabold text-white shadow-[0_10px_24px_rgba(255,62,121,0.35)] transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-primary/30 md:px-7 md:py-3.5 md:text-[19px]'
+
 export default function MindfulnessForMoms() {
+  const [openReconecte, setOpenReconecte] = useState(false)
   const [openRenove, setOpenRenove] = useState(false)
+  const [openCalma, setOpenCalma] = useState(false)
 
   const visibleCollections = SHOW_FEATURED_PRACTICES
     ? COLLECTIONS
@@ -86,23 +94,46 @@ export default function MindfulnessForMoms() {
 
             <div className="mt-auto pt-8">
               {collection.id === 'reconectar' ? (
-                <ReconecteSeModalTrigger ariaLabel={`Ouvir ${collection.titulo}`} />
+                <button
+                  type="button"
+                  onClick={() => setOpenReconecte(true)}
+                  aria-label={`Ouvir ${collection.titulo}`}
+                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                >
+                  <span aria-hidden="true" className="text-lg leading-none">
+                    ▶︎
+                  </span>
+                  <span>Ouvir</span>
+                </button>
               ) : collection.id === 'energia' ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setOpenRenove(true)}
-                    className="rounded-2xl bg-primary px-5 py-2 font-semibold text-white shadow-soft transition hover:brightness-110"
-                  >
-                    Ouvir
-                  </button>
-                  <RenoveSuaEnergiaModal open={openRenove} onClose={() => setOpenRenove(false)} />
-                </>
+                <button
+                  type="button"
+                  onClick={() => setOpenRenove(true)}
+                  aria-label={`Ouvir ${collection.titulo}`}
+                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                >
+                  <span aria-hidden="true" className="text-lg leading-none">
+                    ▶︎
+                  </span>
+                  <span>Ouvir</span>
+                </button>
+              ) : collection.id === 'descanso' ? (
+                <button
+                  type="button"
+                  onClick={() => setOpenCalma(true)}
+                  aria-label={`Ouvir ${collection.titulo}`}
+                  className={MODAL_TRIGGER_BUTTON_CLASS}
+                >
+                  <span aria-hidden="true" className="text-lg leading-none">
+                    ▶︎
+                  </span>
+                  <span>Ouvir</span>
+                </button>
               ) : (
                 <a
                   href="#mindfulness"
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF3E79] to-[#FF6B9A] px-6 py-3 text-[18px] font-extrabold text-white shadow-[0_10px_24px_rgba(255,62,121,0.35)] transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-primary/30 md:px-7 md:py-3.5 md:text-[19px]"
+                  className={MODAL_TRIGGER_BUTTON_CLASS}
                 >
                   <span aria-hidden="true" className="text-lg leading-none">
                     ▶︎
@@ -114,6 +145,36 @@ export default function MindfulnessForMoms() {
           </article>
         ))}
       </div>
+
+      <MindfulnessModal
+        open={openReconecte}
+        onClose={() => setOpenReconecte(false)}
+        icon="🌸"
+        title="Reconecte-se"
+        subtitle="Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença."
+        tracks={TRACKS_RECONCETE_SE}
+        testId="modal-reconecte"
+      />
+
+      <MindfulnessModal
+        open={openRenove}
+        onClose={() => setOpenRenove(false)}
+        icon="🌞"
+        title="Renove sua Energia"
+        subtitle="Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma."
+        tracks={TRACKS_RENOVE_SUA_ENERGIA}
+        testId="modal-renove"
+      />
+
+      <MindfulnessModal
+        open={openCalma}
+        onClose={() => setOpenCalma(false)}
+        icon="🌙"
+        title="Encontre Calma"
+        subtitle="Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento."
+        tracks={TRACKS_ENCONTRE_CALMA}
+        testId="modal-calma"
+      />
     </section>
   )
 }
