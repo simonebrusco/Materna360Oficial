@@ -33,4 +33,15 @@ test.describe('Meu Dia check-in card', () => {
 
     expect(checkinBeforeActivity).toBeTruthy()
   })
+
+  test('shows motivational quote after selecting a mood', async ({ page }) => {
+    await page.goto('/meu-dia')
+
+    const moodButton = page.getByRole('button', { name: /feliz/i })
+    await moodButton.click()
+
+    const quote = page.getByTestId('mood-quote')
+    await expect(quote).toBeVisible()
+    await expect(quote).not.toHaveText('')
+  })
 })
