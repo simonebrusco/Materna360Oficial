@@ -15,7 +15,7 @@ type MeuDiaClientProps = {
   dailyGreeting: string
   currentDateKey: string
   weekStartKey: string
-  weekLabels: { key: string; shortLabel: string; longLabel: string }[]
+  weekLabels: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
   plannerTitle: string
 }
 
