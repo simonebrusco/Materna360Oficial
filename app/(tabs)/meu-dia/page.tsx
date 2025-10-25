@@ -1,4 +1,4 @@
-import { cookies as getCookies, headers as getHeaders } from 'next/headers'
+import { cookies as getCookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
 import { MeuDiaClient } from './Client'
@@ -66,9 +66,6 @@ const formatDisplayDate = (date: Date) =>
 
 export default async function Page() {
   noStore()
-
-  const responseHeaders = getHeaders()
-  responseHeaders.set('Cache-Control', 'no-store')
 
   const jar = getCookies()
   const rawProfile = jar.get(PROFILE_COOKIE)?.value
