@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Toast } from '@/components/ui/Toast'
 import {
