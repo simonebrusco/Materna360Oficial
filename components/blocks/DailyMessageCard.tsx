@@ -19,7 +19,7 @@ export default function DailyMessageCard({ greeting }: GreetingProps) {
   }, [])
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
+    <Card data-testid="message-of-day" className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
       <div className="flex flex-col gap-3 md:gap-4">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem de Hoje</h2>
         <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">“{greeting}”</p>
