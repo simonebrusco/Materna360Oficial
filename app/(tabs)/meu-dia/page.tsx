@@ -238,6 +238,8 @@ export default async function Page() {
     children: normalizedProfile.children,
   }
 
+  const initialBuckets = profilePreferredBuckets(profileForClient)
+
   return (
     <main className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
       {/* m360-debug: {JSON.stringify(profile)} */}
@@ -265,6 +267,7 @@ export default async function Page() {
           dateKey={currentDateKey}
           allActivities={CHILD_ACTIVITIES}
           recommendations={CHILD_RECOMMENDATIONS}
+          initialBuckets={initialBuckets}
         />
       </div>
     </main>
