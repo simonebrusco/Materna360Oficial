@@ -136,7 +136,7 @@ export function ActivityOfDay() {
 
   return (
     <>
-      <Card className="bg-gradient-to-br from-primary/12 via-white/95 to-white p-7">
+      <Card data-testid="activity-of-day" className="bg-gradient-to-br from-primary/12 via-white/95 to-white p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
