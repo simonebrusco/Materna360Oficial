@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-import { buildMoodQuote, hash, Mood, selectQuote, SUPPORTED_MOODS, todayBR } from './lib'
+import { buildMoodQuote, Mood, SUPPORTED_MOODS, todayBR } from './lib'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
