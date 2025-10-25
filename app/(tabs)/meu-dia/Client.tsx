@@ -68,7 +68,7 @@ export function MeuDiaClient({
       </Reveal>
 
       <Reveal delay={220}>
-        <ActivityOfDay />
+        <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
       </Reveal>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
