@@ -60,10 +60,20 @@ const mapAgeRangeToAgeBandValue = (range?: AgeRange | null): (typeof AGE_BAND_OP
   return AGE_RANGE_TO_BAND_MAP[range]
 }
 
-const deriveInitialAgeBand = (profile?: Profile): (typeof AGE_BAND_OPTIONS)[number] => {
-  const children = sanitizeRecommendationChildren(profile)
+const deriveInitialAgeBand = (
+  buckets: AgeRange[],
+  children: Child[]
+): (typeof AGE_BAND_OPTIONS)[number] => {
+  for (const bucket of buckets) {
+    const mapped = mapAgeRangeToAgeBandValue(bucket)
+    if (mapped) {
+      return mapped
+    }
+  }
+
   const [firstChild] = children
-  const mapped = mapAgeRangeToAgeBandValue(firstChild?.ageRange ?? null)
+  const fallbackRange = firstChild?.ageRange ?? resolveAgeRange(firstChild)
+  const mapped = mapAgeRangeToAgeBandValue(fallbackRange ?? null)
   return mapped ?? DEFAULT_AGE_BAND
 }
 
