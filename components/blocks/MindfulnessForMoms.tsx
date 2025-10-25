@@ -1,6 +1,7 @@
 'use client'
 
 import ReconecteSeModalTrigger from './ReconecteSeModalTrigger'
+import RenoveSuaEnergiaModalTrigger from './RenoveSuaEnergiaModalTrigger'
 
 const SHOW_FEATURED_PRACTICES = false
 
@@ -81,6 +82,8 @@ export default function MindfulnessForMoms() {
             <div className="mt-auto pt-8">
               {collection.id === 'reconectar' ? (
                 <ReconecteSeModalTrigger ariaLabel={`Ouvir ${collection.titulo}`} />
+              ) : collection.id === 'energia' ? (
+                <RenoveSuaEnergiaModalTrigger ariaLabel={`Ouvir ${collection.titulo}`} />
               ) : (
                 <a
                   href="#mindfulness"
