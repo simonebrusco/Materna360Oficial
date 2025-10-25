@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'rea
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildActivity } from '@/app/data/childContent'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Toast } from '@/components/ui/Toast'
 import {
