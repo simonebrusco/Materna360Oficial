@@ -628,9 +628,6 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
 
           <div className="space-y-1.5">
             <h3 className="text-base font-semibold text-support-1">Agenda do dia</h3>
-            <p className="text-xs text-support-2/90">
-              {weekDays.find((day) => day.key === selectedDayKey)?.longLabel ?? ''}
-            </p>
           </div>
 
           {selectedDayItems.length > 0 ? (
