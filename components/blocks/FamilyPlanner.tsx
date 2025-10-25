@@ -28,17 +28,6 @@ const AGE_BAND_OPTIONS = ['0-6m', '7-12m', '1-2a', '3-4a', '5-6a'] as const
 
 const typeSupportsDuration = (type: (typeof TYPE_OPTIONS)[number]) => type === 'Brincadeira' || type === 'Receita'
 
-type RecommendationSuggestion = {
-  type: (typeof TYPE_OPTIONS)[number]
-  title: string
-  refId?: string | null
-  durationMin?: number | null
-  ageBand?: (typeof AGE_BAND_OPTIONS)[number] | null
-  link?: string | null
-  source?: PlannerRecommendationSource
-  createdAt?: string
-}
-
 type WeekLabel = {
   key: string
   shortLabel: string
