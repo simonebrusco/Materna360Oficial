@@ -622,7 +622,7 @@ export function FamilyPlanner({
   const inputClasses =
     'w-full rounded-2xl bg-white/90 text-sm text-support-1 placeholder-support-3 border border-white/70 shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 py-3 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none'
 
-  const recommendations = useMemo(
+  const recommendationItems = useMemo<Array<PlannerRecommendation | RecommendationSuggestion>>(
     () => [...savedRecommendations, ...suggestedRecommendations],
     [savedRecommendations, suggestedRecommendations]
   )
