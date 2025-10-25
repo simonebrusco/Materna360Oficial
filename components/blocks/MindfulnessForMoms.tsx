@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/Button'
 
 const SHOW_FEATURED_PRACTICES = false
 
+const SECONDARY_TRIGGER_CLASS =
+  'inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF3E79] to-[#FF6B9A] px-6 py-3 text-[18px] font-extrabold text-white shadow-[0_10px_24px_rgba(255,62,121,0.35)] transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-primary/30 md:px-7 md:py-3.5 md:text-[19px]'
+
 const FEATURED_COLLECTION_IDS = new Set(['acolhimento', 'clareza'])
 
 const COLLECTIONS = [
@@ -131,17 +134,16 @@ export default function MindfulnessForMoms() {
                   <span>Ouvir</span>
                 </Button>
               ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
+                <a
+                  href="#mindfulness"
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className="rounded-2xl px-5"
+                  className={SECONDARY_TRIGGER_CLASS}
                 >
-                  <span aria-hidden="true" className="text-base leading-none">
+                  <span aria-hidden="true" className="text-lg leading-none">
                     ▶︎
                   </span>
                   <span>Ouvir</span>
-                </Button>
+                </a>
               )}
             </div>
           </article>
