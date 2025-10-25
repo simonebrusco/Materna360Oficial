@@ -16,11 +16,15 @@ const FOCUSABLE_ELEMENT_SELECTOR = [
 
 const STORAGE_KEY = 'm360_mindfulness_listened_renove_sua_energia'
 
-const PREFERRED_PREFIXES = [
-  'mindfulness/renove-sua-energia/',
-  'mindfulness/renove-energia/',
-  'mindfulness/energia/',
+const PREFIX_CANDIDATES = [
+  'audio/mindfulness/renove-sua-energia/',
+  'audio/mindfulness/renove/',
+  'public/audio/mindfulness/renove-sua-energia/',
 ]
+
+const FALLBACK_PUBLIC_PATH = '/audio/mindfulness/renove-sua-energia/'
+
+const AUDIO_EXTENSIONS = /\.(mp3|m4a)$/i
 
 interface TrackItem {
   title: string
@@ -37,19 +41,15 @@ interface RenoveSuaEnergiaModalTriggerProps {
   ariaLabel: string
 }
 
-function slugify(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .toLowerCase()
+type ManifestEntry = {
+  title?: string
+  file: string
 }
 
 function formatTitleFromFilename(filename: string) {
   return filename
-    .replace(/\.mp3$/i, '')
+    .replace(AUDIO_EXTENSIONS, '')
+    .replace(/_/g, '-')
     .split('-')
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ')
