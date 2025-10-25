@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 
 type Track = { id: string; title: string }
 
 type MindfulnessModalProps = {
   open: boolean
   onClose: () => void
-  icon: ReactNode
+  icon: React.ReactNode
   title: string
   subtitle: string
   tracks: Track[]
@@ -26,6 +26,7 @@ export default function MindfulnessModal({
   testId,
 }: MindfulnessModalProps) {
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const prevOverflow = useRef<string | null>(null)
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -49,23 +50,35 @@ export default function MindfulnessModal({
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    prevOverflow.current = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = prevOverflow.current || ''
+    }
+  }, [open])
+
   if (!open) {
     return null
   }
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1000]">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-
       <div className="absolute inset-0 flex items-start justify-center overflow-y-auto p-4 md:p-8">
         <div
           data-testid={testId}
-          className="relative mt-8 w-full max-w-[720px] rounded-3xl bg-white/95 p-6 shadow-soft backdrop-blur md:p-8"
+          className="relative mt-8 w-full max-w-[760px] rounded-3xl bg-white/95 p-6 shadow-xl backdrop-blur md:p-8"
         >
           <button
             aria-label="Close"
             onClick={onClose}
-            className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-support-1 transition hover:bg-white"
+            className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-support-1 shadow transition hover:bg-white"
           >
             ✕
           </button>
@@ -89,7 +102,7 @@ export default function MindfulnessModal({
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/90 p-4 shadow-soft md:p-5"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-white/70 bg-white/95 p-4 shadow md:p-5"
               >
                 <label className="flex items-center gap-3">
                   <input
