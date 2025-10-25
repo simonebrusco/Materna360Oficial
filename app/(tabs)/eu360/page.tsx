@@ -4,7 +4,6 @@
 
 import { useMemo, useState } from 'react'
 
-import { CheckIn } from '@/components/blocks/CheckIn'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -121,10 +120,6 @@ export default function Eu360Page() {
               Toque em um emoji para registrar como você se sente neste momento.
             </p>
           </Card>
-        </Reveal>
-
-        <Reveal delay={180}>
-          <CheckIn />
         </Reveal>
 
         <div className="space-y-5">
