@@ -101,7 +101,7 @@ export function CheckInCard() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 md:gap-8">
+        <div className="mt-6 -mx-2 flex flex-nowrap items-center justify-start gap-6 overflow-x-auto px-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:justify-center md:gap-8 md:overflow-x-visible md:px-0">
           {moods.map((mood) => {
             const isActive = selectedMood === mood.value
 
@@ -110,7 +110,7 @@ export function CheckInCard() {
                 key={mood.value}
                 type="button"
                 onClick={() => void handleMoodSelect(mood.value)}
-                className={`group inline-flex h-[130px] w-[148px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 md:h-[140px] md:w-[156px] ${
+                className={`group inline-flex h-[130px] w-[150px] min-w-[150px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 md:h-[140px] md:w-[156px] md:min-w-[156px] snap-start ${
                   isActive ? 'scale-[1.02] ring-2 ring-primary/40 shadow-[0_18px_40px_rgba(233,46,129,0.18)]' : ''
                 }`}
                 aria-label={mood.label}
