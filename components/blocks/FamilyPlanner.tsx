@@ -535,21 +535,25 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
   const resolvedPlannerTitle = plannerTitle ?? 'Planejador da Família'
 
   return (
-    <Card className="space-y-6 p-7">
-      <div className="space-y-3">
-        <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
-          Equilíbrio
-        </span>
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📋 Planejador da Família</h2>
-            <p className="text-sm text-support-2 md:text-base">
-              Planeje momentos especiais e acompanhe o que importa para a família.
-            </p>
+    <Card className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/85 p-7 shadow-[0_8px_30px_rgba(0,0,0,0.05)] backdrop-blur-[2px] md:p-8">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-primary to-primary/60" />
+      <div className="space-y-6 md:space-y-8">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-xl space-y-2">
+            <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+              Equilíbrio
+            </span>
+            <div className="space-y-1.5">
+              <h2 data-testid="planner-title" className="text-xl font-semibold tracking-tight text-support-1 md:text-2xl">
+                {resolvedPlannerTitle}
+              </h2>
+              <p className="text-sm text-support-2 md:text-base">
+                Planeje momentos especiais e acompanhe o que importa para a família.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-support-2/80 md:text-sm">{selectedDayLabel}</p>
+          <p className="text-sm text-support-2 md:text-right">{selectedDayLabel}</p>
         </div>
-      </div>
 
       {weekDays.length > 0 ? (
         <div className="flex items-center gap-3">
@@ -928,6 +932,7 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
           ) : null}
         </div>
       )}
+      </div>
     </Card>
   )
 }
