@@ -613,11 +613,16 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
         <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
       ) : (
         <div className="space-y-6 md:space-y-8">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {TYPE_OPTIONS.map((option) => (
-              <Button key={option} type="button" variant="outline" size="sm" onClick={() => handleQuickAdd(option)}>
+              <button
+                key={option}
+                type="button"
+                onClick={() => handleQuickAdd(option)}
+                className="rounded-full border border-primary/30 px-4 py-2 text-sm font-semibold text-primary/90 transition hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              >
                 + {option}
-              </Button>
+              </button>
             ))}
           </div>
 
