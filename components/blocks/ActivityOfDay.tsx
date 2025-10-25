@@ -3,8 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react'
 
-import type { Child, Profile, AgeRange } from '@/app/lib/ageRange'
-import { resolveAgeRange } from '@/app/lib/ageRange'
+import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildActivity } from '@/app/data/childContent'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
