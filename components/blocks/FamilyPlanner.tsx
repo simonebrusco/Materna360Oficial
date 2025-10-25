@@ -532,6 +532,8 @@ export function FamilyPlanner({ currentDateKey, weekStartKey, weekLabels, planne
     [savedRecommendations, suggestedRecommendations]
   )
 
+  const resolvedPlannerTitle = plannerTitle ?? 'Planejador da Família'
+
   return (
     <Card className="space-y-6 p-7">
       <div className="space-y-3">
