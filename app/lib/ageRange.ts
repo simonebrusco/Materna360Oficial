@@ -15,7 +15,7 @@ export type Profile = {
   children?: Child[]
 }
 
-const AGE_RANGE_VALUES: readonly AgeRange[] = ['0-1', '2-3', '4-5', '6-7', '8+']
+export const AGE_RANGE_VALUES: readonly AgeRange[] = ['0-1', '2-3', '4-5', '6-7', '8+']
 const AGE_RANGE_SET = new Set<string>(AGE_RANGE_VALUES)
 
 const mapMonthsToAgeRange = (months: number): AgeRange | null => {
