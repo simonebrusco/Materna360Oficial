@@ -419,7 +419,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
               <div className="mt-5 rounded-2xl border border-white/60 bg-white/80 p-5 text-sm text-support-1 shadow-soft">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-xs 国产成人 font-semibold uppercase tracking-[0.18em] text-support-2/80">Título</h4>
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/80">Título</h4>
                     <p className="mt-1 font-semibold text-support-1">{headlineActivity.title}</p>
                   </div>
                   {headlineActivity.durationMin !== undefined && headlineActivity.durationMin !== null && (
