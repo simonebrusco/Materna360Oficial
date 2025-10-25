@@ -267,7 +267,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
     setIsExpanded((previous) => !previous)
   }, [])
 
-  const handleSelectChild = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectChild = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedChildId(event.target.value)
   }, [])
 
