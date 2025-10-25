@@ -101,7 +101,7 @@ export function CheckInCard() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 md:gap-8">
           {moods.map((mood) => {
             const isActive = selectedMood === mood.value
 
@@ -110,15 +110,17 @@ export function CheckInCard() {
                 key={mood.value}
                 type="button"
                 onClick={() => void handleMoodSelect(mood.value)}
-                className={`flex flex-col items-center gap-1 rounded-2xl border border-white/50 px-4 py-3 text-support-1 shadow-soft transition-all duration-300 hover:shadow-elevated ${
-                  isActive ? 'bg-gradient-to-br from-primary/20 via-white/80 to-white text-primary scale-105' : 'bg-white/80'
+                className={`group inline-flex h-[112px] w-[112px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 md:h-[124px] md:w-[124px] ${
+                  isActive ? 'scale-[1.02] ring-2 ring-primary/40 shadow-[0_18px_40px_rgba(233,46,129,0.18)]' : ''
                 }`}
                 aria-label={mood.label}
                 title={mood.label}
                 data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
               >
-                <span className="text-2xl md:text-3xl">{mood.emoji}</span>
-                <span className="hidden text-xs md:block">{mood.label}</span>
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] md:h-16 md:w-16">
+                  <span className="text-[28px] leading-none md:text-[32px]">{mood.emoji}</span>
+                </span>
+                <span className="mt-2 text-base font-semibold text-support-1">{mood.label}</span>
               </button>
             )
           })}
