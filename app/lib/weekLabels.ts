@@ -1,28 +1,28 @@
 const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
 
-const parseDateKeyToUTC = (key: string): Date | null => {
-  const [year, month, day] = key.split('-').map(Number)
-  if (!year || !month || !day) {
-    return null
-  }
+const chipLabelFormatter = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'short',
+  day: '2-digit',
+  timeZone: BRAZIL_TIMEZONE,
+})
 
-  return new Date(Date.UTC(year, month - 1, day, 12))
+const formatChipLabel = (date: Date) => {
+  const raw = chipLabelFormatter.format(date)
+  return raw
+    .replace(',', '')
+    .replace(/\.$/, '')
+    .replace(/^\s+|\s+$/g, '')
+    .replace(/^(\w)/, (match) => match.toUpperCase())
+    .replace(/^Seg/, 'Seg')
+    .replace(/^Ter/, 'Ter')
+    .replace(/^Qua/, 'Qua')
+    .replace(/^Qui/, 'Qui')
+    .replace(/^Sex/, 'Sex')
+    .replace(/^Sáb/, 'Sáb')
+    .replace(/^Dom/, 'Dom')
 }
 
-const formatShortLabel = (date: Date) => {
-  const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'short',
-    timeZone: BRAZIL_TIMEZONE,
-  })
-  const dayFormatter = new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    timeZone: BRAZIL_TIMEZONE,
-  })
-
-  const rawWeekday = weekdayFormatter.format(date).replace('.', '')
-  const capitalized = rawWeekday.charAt(0).toUpperCase() + rawWeekday.slice(1)
-  return `${capitalized} ${dayFormatter.format(date)}`
-}
+const formatShortLabel = (date: Date) => formatChipLabel(date)
 
 const formatLongLabel = (date: Date) =>
   new Intl.DateTimeFormat('pt-BR', {
@@ -75,6 +75,7 @@ export type WeekLabel = {
   key: string
   shortLabel: string
   longLabel: string
+  chipLabel: string
 }
 
 export const buildWeekLabels = (weekStartKey: string): { weekStartKey: string; labels: WeekLabel[] } => {
@@ -90,6 +91,7 @@ export const buildWeekLabels = (weekStartKey: string): { weekStartKey: string; l
       key,
       shortLabel: formatShortLabel(date),
       longLabel: formatLongLabel(date),
+      chipLabel: formatChipLabel(date),
     }
   })
 
