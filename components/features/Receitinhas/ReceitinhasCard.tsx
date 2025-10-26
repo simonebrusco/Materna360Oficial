@@ -744,7 +744,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       <div className="mt-6 space-y-4">
         {isLoading && (
           <div className="space-y-4" aria-live="polite">
-            <p className="text-sm font-semibold text-support-2/80">Almost ready 🍲</p>
+            <p className="text-sm font-semibold text-support-2/80">Já já sai do forno 🍲</p>
             <div className="flex gap-4 overflow-x-auto pb-2">
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
