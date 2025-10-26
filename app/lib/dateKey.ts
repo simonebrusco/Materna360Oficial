@@ -1,6 +1,7 @@
-const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
+export const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
+export const BRAZIL_DATE_FORMAT_LOCALE = 'pt-BR'
 
-export const BRAZIL_DATE_FORMAT_LOCALE = 'en-CA'
+type DateParts = Record<string, string>
 
 export function getBrazilDateKey(date: Date = new Date()): string {
   const formatter = new Intl.DateTimeFormat(BRAZIL_DATE_FORMAT_LOCALE, {
@@ -10,5 +11,20 @@ export function getBrazilDateKey(date: Date = new Date()): string {
     day: '2-digit',
   })
 
-  return formatter.format(date)
+  const parts = formatter.formatToParts(date).reduce<DateParts>((acc, part) => {
+    if (part.type === 'year' || part.type === 'month' || part.type === 'day') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, {})
+
+  const year = parts.year
+  const month = parts.month
+  const day = parts.day
+
+  if (!year || !month || !day) {
+    throw new Error('Unable to compute Brazil date key')
+  }
+
+  return `${year}-${month}-${day}`
 }
