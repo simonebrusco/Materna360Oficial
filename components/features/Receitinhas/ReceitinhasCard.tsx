@@ -680,7 +680,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/90 px-4 py-2 shadow-inner">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Porções</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">PORÇÕES</span>
             <div className="inline-flex items-center gap-2">
               <button
                 type="button"
