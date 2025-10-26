@@ -63,17 +63,17 @@ export default function MindfulnessForMoms() {
     : COLLECTIONS.filter((collection) => !FEATURED_COLLECTION_IDS.has(collection.id))
 
   return (
-    <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-8 md:py-10">
-      <header className="space-y-2.5">
-        <span className="text-sm font-semibold text-support-2/80">Bem-estar emocional</span>
-        <h2 className="flex items-center gap-3 text-[22px] font-semibold text-support-1">
+    <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-10 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-12">
+      <header className="space-y-2">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Bem-estar emocional</span>
+        <h2 className="flex items-center gap-3 text-[22px] font-semibold leading-[1.28] text-support-1">
           <span aria-hidden="true" className="text-2xl md:text-3xl">
             🎧
           </span>
           Mindfulness para Mães
         </h2>
-        <p className="max-w-3xl text-sm text-support-2/80 md:text-base">
-          Pausas guiadas, curtas e acolhedoras, para respirar com intenção e cuidar do coração enquanto a rotina acontece.
+        <p className="max-w-3xl text-[15px] leading-[1.45] text-support-2/85">
+          Pausas guiadas, curtas e acolhedoras, para respirar com intenção e cuidar do cora��ão enquanto a rotina acontece.
         </p>
       </header>
 
@@ -81,7 +81,7 @@ export default function MindfulnessForMoms() {
         {visibleCollections.map((collection) => (
           <article
             key={collection.id}
-            className="relative flex h-full min-h-[172px] flex-col rounded-[28px] border border-white/70 bg-gradient-to-b from-white/95 to-white/80 p-6 shadow-[0_22px_48px_-24px_rgba(47,58,86,0.28)] ring-1 ring-white/60 backdrop-blur-sm transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_30px_64px_-26px_rgba(255,0,94,0.28)] md:p-7"
+            className="relative flex h-full min-h-[172px] flex-col rounded-[28px] border border-white/70 bg-gradient-to-b from-white/95 to-white/80 p-4 shadow-[0_18px_40px_-24px_rgba(47,58,86,0.28)] ring-1 ring-white/60 backdrop-blur-sm transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_26px_56px_-24px_rgba(255,0,94,0.26)] md:p-5 lg:p-6"
           >
             <div className="space-y-2.5">
               <span
@@ -91,12 +91,12 @@ export default function MindfulnessForMoms() {
                 {collection.icon}
               </span>
               <h3 className="text-lg font-semibold leading-tight text-support-1 md:text-xl">{collection.titulo}</h3>
-              <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
+              <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
                 {collection.descricao}
               </p>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-5">
               {collection.id === 'reconectar' ? (
                 <Button
                   variant="primary"
