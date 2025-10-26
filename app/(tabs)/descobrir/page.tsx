@@ -162,6 +162,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
     : []
 
+  const recProducts = recShelfEnabled ? REC_PRODUCTS.filter((product) => product.active) : []
+
   const profilePayload = {
     mode: requestedMode,
     activeChildId: activeChild?.id ?? fallbackChildren[0]?.id,
