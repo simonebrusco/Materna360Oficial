@@ -151,7 +151,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const targetBuckets: QuickIdeasAgeBucket[] =
     requestedMode === 'all'
       ? fallbackChildren.map((child) => child.age_bucket)
-      : [activeChild?.age_bucket ?? '2-3']
+      : [(activeChild?.age_bucket ?? '2-3') as QuickIdeasAgeBucket]
 
   const recShelfGroups = recShelfEnabled
     ? buildRecShelves({
