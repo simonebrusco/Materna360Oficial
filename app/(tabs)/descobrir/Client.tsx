@@ -566,7 +566,11 @@ export default function DescobrirClient({
 
   const handleSaveProduct = async (product: RecShelfItem) => {
     setSavingProductId(product.id)
-    trackTelemetry('discover_rec_save_planner', { id: product.id, kind: product.kind })
+    trackTelemetry(
+      'discover_rec_save_planner',
+      { id: product.id, kind: product.kind },
+      telemetryCtx
+    )
 
     try {
       const affiliateUrlCandidate = (product.trackedAffiliateUrl || product.affiliateUrl || '').trim()
@@ -613,9 +617,18 @@ export default function DescobrirClient({
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
 
+      trackTelemetry('planner_save_ok', { type: 'product', id: product.id }, telemetryCtx)
       setToast({ message: 'Produto salvo no Planner!', type: 'success' })
     } catch (error) {
       console.error('[RecShelf] Planner save failed:', error)
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'recshelf',
+          reason: error instanceof Error ? error.message : 'unknown',
+        },
+        telemetryCtx
+      )
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
         type: 'error',
