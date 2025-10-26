@@ -135,6 +135,7 @@ export default function DescobrirClient({
   const [showActivities, setShowActivities] = useState(false)
   const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
+  const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const filteredActivities = useMemo(() => {
