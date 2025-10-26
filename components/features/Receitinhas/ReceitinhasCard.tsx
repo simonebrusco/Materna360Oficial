@@ -520,7 +520,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   )
 
   return (
-    <section id="receitinhas-ia" className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-soft backdrop-blur">
+    <section id="receitinhas" className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-soft backdrop-blur">
       <form className="space-y-5" onSubmit={handleSubmit}>
         <header className="space-y-3">
           <div className="flex items-center gap-3">
