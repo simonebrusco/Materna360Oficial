@@ -332,17 +332,17 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
   const handleShare = async (suggestion: RecipeSuggestion) => {
     const shareText = `${suggestion.title} • ${suggestion.summary}`
-    const shareData = {
+    const shareData: ShareData = {
       title: suggestion.title,
       text: shareText,
       url: `https://materna360.app/receitas/${encodeURIComponent(suggestion.id)}`,
     }
     try {
-      if (navigator.share) {
-        await navigator.share(shareData)
+      if (typeof navigator !== 'undefined' && 'share' in navigator) {
+        await (navigator as Navigator & { share(data: ShareData): Promise<void> }).share(shareData)
         return
       }
-      if (navigator.clipboard) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(`${shareText}\n${shareData.url}`)
         setToast({ message: 'Link copiado para compartilhar 💌', type: 'success' })
       }
@@ -412,7 +412,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         }
         const data = (await response.json()) as RecipesApiResponse
         if (data.access.denied) {
-          setAccessModal(data.access.message || 'Disponível apenas em planos pagos.')
+          setAccessModal(data.access.message || 'Dispon��vel apenas em planos pagos.')
           setSuggestions([])
           setAggregatedShoppingList([])
           return
