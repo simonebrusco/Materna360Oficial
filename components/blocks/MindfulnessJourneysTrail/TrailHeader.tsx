@@ -47,9 +47,8 @@ export default function TrailHeader() {
     setJornadasCompleted((previous) => (previous === nextCompleted ? previous : nextCompleted))
   }, [completed, total])
 
-  const totalSafe = Math.max(Number(jornadasTotal || 0), 1)
-  const completedSafe = Math.max(0, Math.min(Number(jornadasCompleted || 0), totalSafe))
-  const progressWidth = `${(completedSafe / totalSafe) * 100}%`
+  const totalSafe = Math.max(Number(jornadasTotal ?? 7), 1)
+  const completedSafe = Math.max(0, Math.min(Number(jornadasCompleted ?? 0), totalSafe))
   const safeWeekLabel = typeof weekLabel === 'string' && weekLabel.trim().length > 0 ? weekLabel : 'Semana'
 
   useEffect(() => {
@@ -79,8 +78,17 @@ export default function TrailHeader() {
           className="relative mb-3 h-2 w-full overflow-hidden rounded-full bg-white/80 shadow-[inset_0_1px_4px_rgba(47,58,86,0.12)]"
         >
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/75 transition-[width] duration-[600ms] ease-out"
-            style={{ width: progressWidth, transformOrigin: 'left center' }}
+            className="absolute inset-y-0 left-0 h-full rounded-full bg-gradient-to-r from-primary to-primary/75 transition-[width] duration-[600ms] ease-out"
+            style={{
+              width: (function () {
+                const c = Math.max(0, Number(jornadasCompleted ?? 0))
+                const t = Math.max(1, Number(jornadasTotal ?? 7))
+                const clamped = Math.max(0, Math.min(c, t))
+                return `${(clamped / t) * 100}%`
+              })(),
+              transformOrigin: 'left center',
+              willChange: 'width',
+            }}
           />
         </div>
 
