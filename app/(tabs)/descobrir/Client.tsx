@@ -537,12 +537,12 @@ export default function DescobrirClient({
   }
 
   const handleSaveFlashRoutine = async () => {
-    if (!flashRoutine.enabled || !flashRoutine.routine) {
+    if (!flashRoutineEnabled || !routine) {
       return
     }
     setSavingRoutine(true)
     trackTelemetry('discover_flash_save_planner', {
-      id: flashRoutine.routine.id,
+      id: routine.id,
       source: flashRoutine.analyticsSource,
     })
 
@@ -551,21 +551,21 @@ export default function DescobrirClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `Flash Routine: ${flashRoutine.routine.title}`,
+          title: `Flash Routine: ${routine.title}`,
           dateISO: dateKey,
           timeISO: '09:30',
           category: 'Descobrir',
           link: '/descobrir',
           payload: {
             type: 'routine',
-            id: flashRoutine.routine.id,
-            title: flashRoutine.routine.title,
-            totalMin: flashRoutine.routine.totalMin,
-            steps: flashRoutine.routine.steps,
-            materials: flashRoutine.routine.materials,
-            safetyNotes: flashRoutine.routine.safetyNotes ?? [],
+            id: routine.id,
+            title: routine.title,
+            totalMin: routine.totalMin,
+            steps: routine.steps,
+            materials: routine.materials,
+            safetyNotes: routine.safetyNotes ?? [],
           },
-          tags: ['rotina', flashRoutine.routine.locale],
+          tags: ['rotina', routine.locale],
         }),
       })
 
