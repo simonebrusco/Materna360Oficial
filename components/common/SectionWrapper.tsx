@@ -2,8 +2,10 @@ import type { HTMLAttributes, ReactNode } from 'react'
 
 type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>
 
+type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside'
+
 interface SectionWrapperProps extends BaseAttributes {
-  as?: keyof JSX.IntrinsicElements
+  as?: SectionElementTag
   eyebrow?: ReactNode
   title?: ReactNode
   description?: ReactNode
