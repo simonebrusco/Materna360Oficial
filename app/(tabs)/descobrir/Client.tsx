@@ -109,9 +109,10 @@ export default function DescobrirClient({
   suggestions,
   filters,
   dateKey,
-  profileMode,
+  profile,
   initialAgeFilter = null,
   initialPlaceFilter = null,
+  recShelf,
 }: DescobrirClientProps) {
   const [ageFilter, setAgeFilter] = useState<string | null>(initialAgeFilter)
   const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
