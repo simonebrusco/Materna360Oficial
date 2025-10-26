@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { NextResponse } from 'next/server'
+
 import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import type {
@@ -32,20 +34,18 @@ const BADGE_VALUES = [
   'sensorial',
 ] as const
 
-const SYSTEM_PROMPT = `Você é Materna360 – Quick Ideas AI.
-Sua missão é apoiar mães sobrecarregadas com ideias lúdicas, seguras e rápidas em português do Brasil.
-Estilo: voz acolhedora, frases curtas, práticas e sem jargões. Nunca ofereça conselhos médicos.
-Regras de segurança:
-- Sem mel para menores de 12 meses.
-- Evite castanhas inteiras ou pipoca antes da idade segura; use versões trituradas/moídas.
-- Minimize sal e açúcar, especialmente menores de 2 anos.
-- Alergênicos comuns devem ser avisados quando aparecerem.
-- Oriente sobre risco de engasgo quando a forma/textura exigir.
-Entrega:
-- Gere atividades adequadas à faixa etária, local escolhido, janela de tempo e energia disponível.
-- Materiais simples, de casa, priorizando baixa preparação quando energia for "exausta".
-- Inclua adaptações por faixa etária e notas de segurança claras.
-- Sempre retorne JSON válido conforme o schema definido pelo desenvolvedor, sem texto extra.`
+const SYSTEM_PROMPT = `You are Materna360 – Quick Ideas AI.
+Your mission is to give overwhelmed mothers immediate, safe, age-appropriate play ideas in Portuguese (pt-BR) with very low friction (few materials, few steps, clear safety).
+Voice & Tone: warm, positive, practical; short sentences; no jargon; never medical advice.
+Always adapt to the child’s age bucket and to the selected location and time window. Respect mom’s energy to reduce steps/utensils.
+Always output valid JSON only following the output schema provided. Do not include any text outside the JSON.
+
+Safety rules (educational notes, not medical):
+- No honey < 12 months.
+- Avoid whole nuts/popcorn until safe age; use ground forms.
+- Minimize salt/sugar, especially < 2 years.
+- Call out common allergens when relevant.
+- Add choking precautions when shapes/textures could be risky.`
 
 const RESPONSE_SCHEMA = {
   name: 'quick_ideas_payload',
@@ -383,10 +383,12 @@ export async function POST(request: Request) {
           },
           {
             role: 'user',
-            content: `Dados do pedido (JSON):\n${JSON.stringify(
+            content: `Instruções do desenvolvedor:\n- Gere ${ideaCount} ideias (1 se plano Essencial).\n- Personalize por faixa etária (${targetChildren
+              .map((child) => child.age_bucket ?? '2-3')
+              .join(', ')}) considerando local (${context.location}), tempo máximo (${context.time_window_min} min) e energia (${context.energy}).\n- Materiais simples e poucos passos, especialmente se energia = "exausta".\n- Escolha exatamente 2 selos por ideia dentre ${JSON.stringify(BADGE_VALUES)}.\n- Multi-criança: o plano deve caber para a criança mais nova (${youngest}) e trazer adaptações rápidas para irmãos mais velhos quando existirem.\n- Se filtros ficarem muito restritos, ofereça alternativa próxima segura e explique no campo rationale.\n- Use unidades brasileiras e mantenha pt-BR.\n\nDados do pedido:\n${JSON.stringify(
               {
                 plan,
-                ideia_limite: ideaCount,
+                limite_ideias: ideaCount,
                 locale: payload.locale ?? 'pt-BR',
                 filtros: {
                   local: context.location,
@@ -406,7 +408,7 @@ export async function POST(request: Request) {
               },
               null,
               2
-            )}\nRegras adicionais:\n- Gere ${ideaCount} ideias variadas (ou 1 se Essencial).\n- Adapte textos para mães brasileiras com pouco tempo.\n- Reforce segurança e adaptação por faixa etária.`,
+            )}`,
           },
         ],
       }),
