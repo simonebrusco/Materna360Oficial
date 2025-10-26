@@ -235,6 +235,7 @@ export default function DescobrirClient({
   profile,
   initialAgeFilter = null,
   initialPlaceFilter = null,
+  recProducts: _recProducts,
   recShelf,
 }: DescobrirClientProps) {
   const [ageFilter, setAgeFilter] = useState<string | null>(initialAgeFilter)
