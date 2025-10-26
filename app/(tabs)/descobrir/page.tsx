@@ -177,8 +177,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const selfCareEnabled = isFeatureEnabled('discover.selfCare')
   const selfCareAIEnabled = isFeatureEnabled('discover.selfCareAI')
 
-  const activeChild = fallbackChildren.find((child) => child.id === rawActiveId) ?? fallbackChildren[0]
-
   const targetBuckets: QuickIdeasAgeBucket[] =
     requestedMode === 'all'
       ? fallbackChildren.map((child) => child.age_bucket)
