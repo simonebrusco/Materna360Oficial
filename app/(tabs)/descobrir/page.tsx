@@ -225,9 +225,9 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const flashRoutineResult = flashRoutineEnabled
     ? selectFlashRoutine({
-        ideas: FLASH_IDEAS_CATALOG,
-        routines: FLASH_ROUTINES_CMS,
-        profile: { mode: requestedMode, children: fallbackChildren },
+        ideas: ideasCatalog,
+        routines: routinesCatalog,
+        profile: { mode: profileSummary.mode, children: profileSummary.children },
         filters: flashFilters,
         dateKey,
       })
