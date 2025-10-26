@@ -826,7 +826,7 @@ export function FamilyPlanner({
 
   return (
     <Card className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/85 p-7 shadow-[0_8px_30px_rgba(0,0,0,0.05)] backdrop-blur-[2px] md:p-8">
-      <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
+      <div className="absolute inset-x-0 top-0 h-1 bg-primary hidden" />
       <div className="space-y-4 md:space-y-5">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="max-w-xl space-y-2 md:space-y-3">
