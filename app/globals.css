@@ -23,6 +23,10 @@
   --safearea-bottom-d: 80px;
   --safearea-bottom-t: 72px;
   --safearea-bottom-m: 64px;
+  --shadow-card-base: 0 6px 22px rgba(16, 24, 40, 0.06), 0 1px 0 rgba(16, 24, 40, 0.03);
+  --shadow-card-hover-neutral: 0 12px 28px rgba(16, 24, 40, 0.12), 0 2px 0 rgba(16, 24, 40, 0.04);
+  --shadow-card-active: 0 8px 20px rgba(16, 24, 40, 0.1), 0 1px 0 rgba(16, 24, 40, 0.04);
+  --glow-pink: 0 24px 48px rgba(255, 0, 94, 0.18);
 }
 
 @layer base {
@@ -267,7 +271,7 @@
 .OrgTipsScope.CardElevate,
 .ProfessionalsScope .CardElevate,
 .ProfessionalsScope.CardElevate {
-  box-shadow: 0 6px 22px rgba(16, 24, 40, 0.06) !important;
+  box-shadow: var(--shadow-card-base) !important;
   transform: translateY(0) !important;
   transition: transform 160ms ease, box-shadow 200ms ease, filter 200ms ease !important;
 }
@@ -279,36 +283,63 @@
   overflow: visible !important;
   background: #ffffff !important;
   border-radius: inherit !important;
-  box-shadow: 0 6px 22px rgba(16, 24, 40, 0.06) !important;
+  box-shadow: var(--shadow-card-base) !important;
   transform: translateY(0) !important;
   transition: transform 160ms ease, box-shadow 200ms ease, filter 200ms ease !important;
   will-change: transform, box-shadow;
 }
 
-.CardElevate--hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.1) !important;
+.CardElevate::after {
+  content: '';
+  position: absolute;
+  inset: -8px -8px -12px -8px;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: var(--glow-pink);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  z-index: -1;
 }
 
+.CardElevate--hover,
 .CardElevate.is-forced-hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.1) !important;
+  box-shadow: var(--shadow-card-hover-neutral) !important;
+}
+
+.CardElevate--hover::after,
+.CardElevate.is-forced-hover::after {
+  opacity: 1;
 }
 
 .CardElevate:focus-visible {
   outline: 2px solid #ff005e !important;
   outline-offset: 2px !important;
+  transform: translateY(0) !important;
+  box-shadow: var(--shadow-card-base) !important;
 }
 
-.CardElevate:active {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.12) !important;
+.CardElevate:focus-visible::after,
+.CardElevate:focus-visible:hover::after {
+  opacity: 1;
 }
 
-.CardElevate.CardElevate--hover:active,
+.CardElevate:focus-visible:hover {
+  transform: translateY(0) !important;
+  box-shadow: var(--shadow-card-base) !important;
+}
+
+.CardElevate:active,
+.CardElevate--hover:active,
 .CardElevate.is-forced-hover:active {
   transform: translateY(-1px) !important;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.12) !important;
+  box-shadow: var(--shadow-card-active) !important;
+}
+
+.CardElevate:active::after,
+.CardElevate--hover:active::after,
+.CardElevate.is-forced-hover:active::after {
+  opacity: 0.85;
 }
 
 .CardElevate[aria-disabled='true'],
@@ -319,16 +350,19 @@
   box-shadow: none !important;
 }
 
+.CardElevate[aria-disabled='true']::after,
+.CardElevate:disabled::after {
+  opacity: 0;
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .CardElevate:hover,
-  .CardElevate.CardElevate--hover {
+  .CardElevate:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 10px 28px rgba(16, 24, 40, 0.1) !important;
+    box-shadow: var(--shadow-card-hover-neutral) !important;
   }
 
-  .CardElevate:focus-visible:hover {
-    transform: translateY(0) !important;
-    box-shadow: 0 6px 22px rgba(16, 24, 40, 0.06) !important;
+  .CardElevate:hover::after {
+    opacity: 1;
   }
 }
 
@@ -338,12 +372,19 @@
   .CardElevate.is-forced-hover {
     transition: none !important;
     transform: none !important;
-    box-shadow: 0 6px 22px rgba(16, 24, 40, 0.06) !important;
   }
 
   .CardElevate:hover,
-  .CardElevate:active {
+  .CardElevate:active,
+  .CardElevate--hover:active,
+  .CardElevate.is-forced-hover:active {
     transform: none !important;
+  }
+
+  .CardElevate::after,
+  .CardElevate--hover::after,
+  .CardElevate.is-forced-hover::after {
+    transition: none !important;
   }
 }
 
