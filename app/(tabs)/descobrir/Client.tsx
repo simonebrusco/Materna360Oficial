@@ -517,6 +517,31 @@ export default function DescobrirClient({
     trackTelemetry('discover_rec_save_planner', { id: product.id, kind: product.kind })
 
     try {
+      const affiliateUrlCandidate = (product.trackedAffiliateUrl || product.affiliateUrl || '').trim()
+      let affiliateUrl: string
+      try {
+        affiliateUrl = new URL(affiliateUrlCandidate).toString()
+      } catch {
+        throw new Error('Link do produto inválido para salvar no Planner.')
+      }
+
+      let imageUrl: string
+      try {
+        imageUrl = new URL(product.imageUrl).toString()
+      } catch {
+        throw new Error('Imagem do produto inválida para salvar no Planner.')
+      }
+
+      const productPayload = {
+        type: 'product' as const,
+        id: product.id,
+        title: product.title,
+        kind: product.kind,
+        imageUrl,
+        retailer: product.retailer.trim(),
+        affiliateUrl,
+      }
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -526,15 +551,7 @@ export default function DescobrirClient({
           timeISO: '09:00',
           category: 'Descobrir',
           link: '/descobrir',
-          payload: {
-            type: 'product',
-            id: product.id,
-            title: product.title,
-            kind: product.kind,
-            imageUrl: product.imageUrl,
-            retailer: product.retailer,
-            affiliateUrl: product.trackedAffiliateUrl,
-          },
+          payload: productPayload,
           tags: ['produto', product.kind],
         }),
       })
