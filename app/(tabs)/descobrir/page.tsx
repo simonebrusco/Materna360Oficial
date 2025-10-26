@@ -15,7 +15,7 @@ import { buildRecShelves } from '@/app/lib/recShelf'
 import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
-import { isFeatureEnabled } from '@/lib/flags'
+import { getServerFlags } from '@/app/lib/flags'
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
