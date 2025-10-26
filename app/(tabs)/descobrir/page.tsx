@@ -144,6 +144,24 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const dateKey = getBrazilDateKey()
 
+  const recShelfEnabled = isFeatureEnabled('discover.recShelf')
+
+  const activeChild = fallbackChildren.find((child) => child.id === rawActiveId) ?? fallbackChildren[0]
+
+  const targetBuckets: QuickIdeasAgeBucket[] =
+    requestedMode === 'all'
+      ? fallbackChildren.map((child) => child.age_bucket)
+      : [activeChild?.age_bucket ?? '2-3']
+
+  const recShelfGroups = recShelfEnabled
+    ? buildRecShelves({
+        products: REC_PRODUCTS,
+        targetBuckets,
+        location: filters.location,
+        dateKey,
+      })
+    : []
+
   const suggestions = buildDailySuggestions(
     {
       mode: requestedMode,
