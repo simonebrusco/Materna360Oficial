@@ -655,10 +655,11 @@ export default function DescobrirClient({
       return
     }
     setSavingRoutine(true)
-    trackTelemetry('discover_flash_save_planner', {
-      id: routine.id,
-      source: flashRoutine.analyticsSource,
-    })
+    trackTelemetry(
+      'discover_flash_save_planner',
+      { routineId: routine.id },
+      { ...telemetryCtx, source: analyticsSource }
+    )
 
     try {
       const totalMin = coerceIntWithin(routine.totalMin, routine.totalMin, 5, 60)
