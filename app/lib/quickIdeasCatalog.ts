@@ -131,15 +131,6 @@ const ensureChildren = (children: DiscoverChild[]): DiscoverChild[] => {
   return sanitized.length > 0 ? sanitized : [{ id: 'fallback-child', name: 'Criança', age_bucket: '2-3' }]
 }
 
-const fnv1a = (value: string): number => {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i)
-    hash = (hash * 0x01000193) >>> 0
-  }
-  return hash >>> 0
-}
-
 const filterCatalogForChild = (
   catalog: QuickIdeaCatalogEntry[],
   ageBucket: QuickIdeasAgeBucket,
