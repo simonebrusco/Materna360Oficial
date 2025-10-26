@@ -533,7 +533,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
     >
       <form className="space-y-5 md:space-y-6" onSubmit={handleSubmit}>
         <header className="space-y-3 md:space-y-4">
-          <span className="text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">Alimentação inteligente</span>
+          <span className="eyebrow-capsule">Alimentação inteligente</span>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-secondary/60 text-xl">
