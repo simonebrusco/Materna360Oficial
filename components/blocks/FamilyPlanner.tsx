@@ -830,7 +830,7 @@ export function FamilyPlanner({
       <div className="space-y-4 md:space-y-5">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="max-w-xl space-y-2 md:space-y-3">
-            <span className="inline-block text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">
+            <span className="eyebrow-capsule">
               Equilíbrio
             </span>
             <div className="space-y-1.5">
