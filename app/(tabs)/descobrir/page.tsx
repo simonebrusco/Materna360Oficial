@@ -1,9 +1,9 @@
 'use client'
 
-'use client'
-
 import { useState } from 'react'
 
+import GridRhythm from '@/components/common/GridRhythm'
+import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -34,7 +34,7 @@ export default function DescobrirPage() {
 
   const books = [
     { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
-    { emoji: '📖', title: 'Charlotte\'s Web', author: 'E.B. White' },
+    { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
     { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
     { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
   ]
@@ -47,31 +47,39 @@ export default function DescobrirPage() {
   ]
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(62%_62%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
       />
 
-      <div className="relative space-y-10">
-        <Reveal>
-          <div className="space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Inspirações</span>
-            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">🎨 Descobrir</h1>
-            <p className="max-w-2xl text-sm text-support-2 md:text-base">
-              Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
-            </p>
-          </div>
-        </Reveal>
+      <Reveal>
+        <SectionWrapper
+          className="relative"
+          header={
+            <header className="SectionWrapper-header">
+              <span className="SectionWrapper-eyebrow">Inspirações</span>
+              <h1 className="SectionWrapper-title inline-flex items-center gap-2">
+                <span aria-hidden>🎨</span>
+                <span>Descobrir</span>
+              </h1>
+              <p className="SectionWrapper-description max-w-2xl">
+                Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
+              </p>
+            </header>
+          }
+        >
+          {null}
+        </SectionWrapper>
+      </Reveal>
 
-        <Reveal delay={80}>
+      <Reveal delay={80}>
+        <SectionWrapper
+          title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
+          description="Combine idade e local para criar experiências personalizadas em segundos."
+        >
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🔍 Filtros Inteligentes</h2>
-            <p className="mt-2 text-sm text-support-2">
-              Combine idade e local para criar experiências personalizadas em segundos.
-            </p>
-
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Idade</label>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -136,112 +144,112 @@ export default function DescobrirPage() {
               )}
             </div>
           </Card>
+        </SectionWrapper>
+      </Reveal>
+
+      {showActivities && (
+        <Reveal delay={140}>
+          <SectionWrapper
+            title={`Atividades ${filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}`}
+          >
+            {filteredActivities.length > 0 ? (
+              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+                {filteredActivities.map((activity, idx) => (
+                  <Reveal key={activity.id} delay={idx * 70} className="h-full">
+                    <Card className="h-full">
+                      <div className="text-4xl">{activity.emoji}</div>
+                      <h3 className="mt-3 text-lg font-semibold text-support-1">{activity.title}</h3>
+                      <div className="mt-3 flex gap-3 text-xs text-support-2">
+                        <span>👧 {activity.age} anos</span>
+                        <span>📍 {activity.place}</span>
+                      </div>
+                      <Button variant="primary" size="sm" className="mt-6 w-full">
+                        Salvar no Planejador
+                      </Button>
+                    </Card>
+                  </Reveal>
+                ))}
+              </GridRhythm>
+            ) : (
+              <Card className="py-12 text-center">
+                <p className="text-sm text-support-2">
+                  Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.
+                </p>
+              </Card>
+            )}
+          </SectionWrapper>
         </Reveal>
+      )}
 
-        {showActivities && (
-          <Reveal delay={140}>
-            <div className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-xl font-semibold text-support-1 md:text-2xl">
-                  Atividades {filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}
-                </h2>
-              </div>
-
-              {filteredActivities.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {filteredActivities.map((activity, idx) => (
-                    <Reveal key={activity.id} delay={idx * 70}>
-                      <Card className="h-full p-6">
-                        <div className="text-4xl">{activity.emoji}</div>
-                        <h3 className="mt-3 text-lg font-semibold text-support-1">{activity.title}</h3>
-                        <div className="mt-3 flex gap-3 text-xs text-support-2">
-                          <span>👧 {activity.age} anos</span>
-                          <span>📍 {activity.place}</span>
-                        </div>
-                        <Button variant="secondary" size="sm" className="mt-6 w-full">
-                          Salvar no Planejador
-                        </Button>
-                      </Card>
-                    </Reveal>
-                  ))}
-                </div>
-              ) : (
-                <Card className="py-12 text-center">
-                  <p className="text-sm text-support-2">Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.</p>
-                </Card>
-              )}
-            </div>
-          </Reveal>
-        )}
-
-        <Reveal delay={200}>
+      <Reveal delay={200}>
+        <SectionWrapper
+          title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}
+          description="Construir uma cabana com lençóis e almofadas cria um refúgio aconchegante para contar histórias e estimular a imaginação."
+        >
           <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
             <div className="text-5xl">🌟</div>
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-support-1 md:text-xl">Sugestão do Dia</h2>
-              <p className="mt-2 text-sm text-support-2">
-                Construir uma cabana com lençóis e almofadas cria um refúgio aconchegante para contar histórias e estimular a imaginação.
-              </p>
-              <Button variant="primary" size="sm" className="mt-4">
+              <Button variant="primary" size="sm" className="mt-2 w-full sm:w-auto">
                 Experimentar
               </Button>
             </div>
           </Card>
-        </Reveal>
+        </SectionWrapper>
+      </Reveal>
 
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">📚 Livros Recomendados</h2>
-          </Reveal>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {books.map((book, idx) => (
-              <Reveal key={book.title} delay={idx * 70}>
-                <Card className="h-full p-6">
-                  <div className="text-3xl">{book.emoji}</div>
-                  <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">por {book.author}</p>
-                  <Button variant="secondary" size="sm" className="mt-6 w-full">
-                    Ver Detalhes
-                  </Button>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🧸 Brinquedos Sugeridos</h2>
-          </Reveal>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {toys.map((toy, idx) => (
-              <Reveal key={toy.title} delay={idx * 70}>
-                <Card className="h-full p-6">
-                  <div className="text-3xl">{toy.emoji}</div>
-                  <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
-                  <Button variant="secondary" size="sm" className="mt-6 w-full">
-                    Ver Mais
-                  </Button>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
-        <Reveal delay={260}>
-          <Card className="p-7">
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💚 Para Você</h2>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
-                <Button key={item} variant="outline" size="sm" className="w-full">
-                  {item}
+      <SectionWrapper
+        title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}
+      >
+        <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+          {books.map((book, idx) => (
+            <Reveal key={book.title} delay={idx * 70} className="h-full">
+              <Card className="h-full">
+                <div className="text-3xl">{book.emoji}</div>
+                <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
+                <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
+                <Button variant="primary" size="sm" className="mt-6 w-full">
+                  Ver Detalhes
                 </Button>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
+
+      <SectionWrapper
+        title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}
+      >
+        <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+          {toys.map((toy, idx) => (
+            <Reveal key={toy.title} delay={idx * 70} className="h-full">
+              <Card className="h-full">
+                <div className="text-3xl">{toy.emoji}</div>
+                <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
+                <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
+                <Button variant="primary" size="sm" className="mt-6 w-full">
+                  Ver Mais
+                </Button>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
+
+      <Reveal delay={260}>
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
+          <Card className="p-7">
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+              {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
+                <div key={item}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    {item}
+                  </Button>
+                </div>
               ))}
-            </div>
+            </GridRhythm>
           </Card>
-        </Reveal>
-      </div>
-    </div>
+        </SectionWrapper>
+      </Reveal>
+    </main>
   )
 }
