@@ -360,6 +360,63 @@ export default function DescobrirClient({
     }
   }
 
+  const handleBuyProduct = (product: RecShelfItem) => {
+    trackTelemetry('discover_rec_click_buy', {
+      id: product.id,
+      kind: product.kind,
+      retailer: product.retailer,
+    })
+
+    if (typeof window !== 'undefined') {
+      const targetUrl = product.trackedAffiliateUrl || product.affiliateUrl
+      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  const handleSaveProduct = async (product: RecShelfItem) => {
+    setSavingProductId(product.id)
+    trackTelemetry('discover_rec_save_planner', { id: product.id, kind: product.kind })
+
+    try {
+      const response = await fetch('/api/planner/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Produto: ${product.title}`,
+          dateISO: dateKey,
+          timeISO: '09:00',
+          category: 'Descobrir',
+          link: '/descobrir',
+          payload: {
+            type: 'product',
+            id: product.id,
+            title: product.title,
+            kind: product.kind,
+            imageUrl: product.imageUrl,
+            retailer: product.retailer,
+            affiliateUrl: product.trackedAffiliateUrl,
+          },
+          tags: ['produto', product.kind],
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
+      }
+
+      setToast({ message: 'Produto salvo no Planner!', type: 'success' })
+    } catch (error) {
+      console.error('[RecShelf] Planner save failed:', error)
+      setToast({
+        message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
+        type: 'error',
+      })
+    } finally {
+      setSavingProductId(null)
+    }
+  }
+
   return (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
