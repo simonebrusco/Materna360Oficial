@@ -16,6 +16,15 @@ import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
+import {
+  FlashRoutine as FlashRoutineSchema,
+  FlashRoutineFilters as FlashRoutineFiltersSchema,
+  IdeaLite as IdeaLiteSchema,
+  ProfileSummary as ProfileSummarySchema,
+  QuickIdeasFilters as QuickIdeasFiltersSchema,
+  RecProduct as RecProductSchema,
+  SelfCare as SelfCareSchema,
+} from '@/app/lib/discoverSchemas'
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -23,7 +32,8 @@ import type {
   QuickIdeasLocation,
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
-import type { ProfileChildSummary, ProfileMode, ProfileSummary } from '@/app/lib/profileTypes'
+import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+import type { ProfileSummaryT } from '@/app/lib/discoverSchemas'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
