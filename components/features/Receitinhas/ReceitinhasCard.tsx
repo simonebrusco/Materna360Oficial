@@ -520,16 +520,20 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   )
 
   return (
-    <section id="receitinhas" className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-soft backdrop-blur">
+    <section
+      id="receitinhas"
+      className="rounded-3xl border border-white/60 bg-white/90 px-6 py-8 shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-8 md:py-10"
+    >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <header className="space-y-3">
+          <span className="text-sm font-semibold text-support-2/80">Alimentação inteligente</span>
           <div className="flex items-center gap-3">
             <span aria-hidden="true" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/60 text-xl">
               🧡
             </span>
-            <div>
-              <h2 className="text-xl font-semibold text-support-1">Receitinhas</h2>
-              <p className="text-sm text-support-2/80">Diga 1 ingrediente e eu preparo o resto.</p>
+            <div className="space-y-1">
+              <h2 className="text-[22px] font-semibold text-support-1">Receitinhas</h2>
+              <p className="text-sm text-support-2/80 md:text-base">Diga 1 ingrediente e eu preparo o resto.</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
