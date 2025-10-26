@@ -250,8 +250,8 @@ export default async function Page() {
           className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(65%_65%_at_50%_0%,rgba(255,216,230,0.55),transparent)]"
         />
         <div>
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Hoje</span>
-          <h1 data-testid="greeting-text" className="text-3xl font-semibold text-support-1 md:text-4xl">
+          <span className="eyebrow-capsule">Hoje</span>
+          <h1 data-testid="greeting-text" className="mt-2 text-3xl font-semibold text-support-1 md:text-4xl">
             {greeting}
           </h1>
           <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
