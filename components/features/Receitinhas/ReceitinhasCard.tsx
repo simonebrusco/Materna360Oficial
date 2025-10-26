@@ -740,7 +740,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               'Gerar receita'
             )}
           </Button>
-          <span className="text-xs text-support-2/70">Plano atual: {plan === 'premium' ? 'Premium' : plan === 'essencial' ? 'Essencial' : 'Free'}</span>
+          <span className="text-xs text-support-2/70">Plano atual: {plan === 'premium' ? 'Premium' : plan === 'essencial' ? 'Essencial' : 'Gratuito'}</span>
         </div>
       </form>
 
