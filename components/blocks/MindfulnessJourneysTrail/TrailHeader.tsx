@@ -33,14 +33,24 @@ function readProfileNameSafely(): string | undefined {
 
 export default function TrailHeader() {
   const { completed, total, weekLabel } = useMindfulnessProgress()
+  const [jornadasCompleted, setJornadasCompleted] = useState<number>(0)
+  const [jornadasTotal, setJornadasTotal] = useState<number>(7)
   const [name, setName] = useState<string | undefined>(undefined)
 
-  const safeTotal = Math.max(typeof total === 'number' && Number.isFinite(total) ? Math.floor(total) : 1, 1)
-  const safeCompleted = Math.min(
-    Math.max(typeof completed === 'number' && Number.isFinite(completed) ? Math.floor(completed) : 0, 0),
-    safeTotal
-  )
-  const progressWidth = `${(safeCompleted / safeTotal) * 100}%`
+  useEffect(() => {
+    const rawTotal = Number.isFinite(total) ? Math.floor(Number(total)) : 7
+    const nextTotal = Math.max(rawTotal, 1)
+    const rawCompleted = Number.isFinite(completed) ? Math.floor(Number(completed)) : 0
+    const nextCompleted = Math.max(0, Math.min(rawCompleted, nextTotal))
+
+    setJornadasTotal((previous) => (previous === nextTotal ? previous : nextTotal))
+    setJornadasCompleted((previous) => (previous === nextCompleted ? previous : nextCompleted))
+  }, [completed, total])
+
+  const totalSafe = Math.max(Number(jornadasTotal || 0), 1)
+  const completedSafe = Math.max(0, Math.min(Number(jornadasCompleted || 0), totalSafe))
+  const progressWidth = `${(completedSafe / totalSafe) * 100}%`
+  const safeWeekLabel = typeof weekLabel === 'string' && weekLabel.trim().length > 0 ? weekLabel : 'Semana'
 
   useEffect(() => {
     setName(readProfileNameSafely())
@@ -54,29 +64,29 @@ export default function TrailHeader() {
     <div data-testid="journeys-trail" className="rounded-3xl border border-white/70 bg-white/88 px-4 py-5 shadow-[0_16px_36px_-20px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-6 md:py-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
         <p className="text-sm text-support-2/80 md:text-[15px] md:leading-[1.45]">{subtitle}</p>
-        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary/70">
-          {safeCompleted}/{safeTotal}
+        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
+          {completedSafe}/{totalSafe}
         </span>
       </div>
 
       <div className="mt-4 rounded-2xl border border-white/60 bg-white/75 p-4 shadow-inner backdrop-blur">
         <div
           role="progressbar"
-          aria-valuenow={safeCompleted}
+          aria-valuenow={completedSafe}
           aria-valuemin={0}
-          aria-valuemax={safeTotal}
+          aria-valuemax={totalSafe}
           aria-label="Progresso das Jornadas do Cuidar"
-          className="relative mb-3 h-2 w-full overflow-hidden rounded-full bg-white/80"
+          className="relative mb-3 h-2 w-full overflow-hidden rounded-full bg-white/80 shadow-[inset_0_1px_4px_rgba(47,58,86,0.12)]"
         >
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-pink-300 to-pink-500 transition-[width] duration-[600ms] ease-out"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/75 transition-[width] duration-[600ms] ease-out"
             style={{ width: progressWidth, transformOrigin: 'left center' }}
           />
         </div>
 
         <div className="grid grid-cols-7 gap-2 sm:gap-3">
-          {Array.from({ length: safeTotal }).map((_, index) => {
-            const done = index < safeCompleted
+          {Array.from({ length: totalSafe }).map((_, index) => {
+            const done = index < completedSafe
             return (
               <span
                 key={index}
@@ -93,7 +103,7 @@ export default function TrailHeader() {
 
         <div className="mt-3 flex items-center justify-between text-xs text-support-2/80">
           <span>
-            {safeCompleted}/{safeTotal} concluídos nesta {weekLabel.toLowerCase()}.
+            {completedSafe}/{totalSafe} concluídos nesta {safeWeekLabel.toLowerCase()}.
           </span>
           <span className="hidden sm:inline">Siga no seu ritmo 💗</span>
         </div>
