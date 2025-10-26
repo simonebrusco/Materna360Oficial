@@ -78,6 +78,14 @@ type RecShelfState = {
   groups: RecShelfGroup[]
 }
 
+type FlashRoutineState = {
+  enabled: boolean
+  aiEnabled: boolean
+  routine: FlashRoutine | null
+  strategy: 'cms' | 'composed' | 'fallback' | null
+  analyticsSource: 'local' | 'ai'
+}
+
 type RecShelfCardProps = {
   item: RecShelfItem
   profileMode: 'single' | 'all'
