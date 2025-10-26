@@ -229,6 +229,15 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const targetBuckets: AgeBucket[] =
     computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
+  const recShelfGroups = recShelfEnabled
+    ? buildRecShelves({
+        products: recProductsCatalog,
+        targetBuckets,
+        location: filters.location,
+        dateKey,
+      })
+    : []
+
   const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
 
   const flashRoutineResult = flashRoutineEnabled
