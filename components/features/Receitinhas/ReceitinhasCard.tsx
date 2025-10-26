@@ -793,23 +793,25 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 return (
                   <article
                     key={suggestion.id}
-                    className="min-w-[260px] flex-1 rounded-3xl border border-white/60 bg-white/95 p-5 shadow-soft transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
+                    className="min-h-[176px] min-w-[260px] flex-1 rounded-3xl border border-white/60 bg-white/95 p-5 shadow-[0_20px_48px_-26px_rgba(47,58,86,0.32)] transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_28px_60px_-26px_rgba(255,0,94,0.28)]"
                   >
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
                       <Sparkles className="h-4 w-4" aria-hidden="true" />
                       {formatBadgeLabel(headlineBadge)}
                     </div>
-                  <h4 className="mt-3 text-lg font-semibold text-support-1">{suggestion.title}</h4>
-                  <p className="mt-2 text-sm text-support-2/80">{suggestion.summary}</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-support-2/70">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary/50 px-3 py-1">
-                      <Timer className="h-3.5 w-3.5" aria-hidden="true" /> {suggestion.time_total_min} min
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary/40 px-3 py-1">
-                      <PiggyBank className="h-3.5 w-3.5" aria-hidden="true" /> {formatBudgetLabel(suggestion.cost_tier)}
-                    </span>
-                  </div>
-                  <div className="mt-5 flex gap-2">
+                    <h4 className="mt-3 text-lg font-semibold text-support-1">{suggestion.title}</h4>
+                    <p className="mt-2 text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
+                      {suggestion.summary}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-support-2/70">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-secondary/40 px-3 py-1 text-support-1">
+                        <Timer className="h-3.5 w-3.5" aria-hidden="true" /> {suggestion.time_total_min} min
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-secondary/30 px-3 py-1 text-support-1">
+                        <PiggyBank className="h-3.5 w-3.5" aria-hidden="true" /> {formatBudgetLabel(suggestion.cost_tier)}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex gap-2">
                     <Button
                       variant="primary"
                       size="sm"
