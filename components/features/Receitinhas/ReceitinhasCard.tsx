@@ -416,7 +416,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       dismissPlannerModal()
     } catch (error) {
       console.error('[Receitinhas] Failed to save planner item', error)
-      setToast({ message: 'Não deu pra salvar agora. Tente mais tarde.', type: 'error' })
+      setToast({ message: 'N��o deu pra salvar agora. Tente mais tarde.', type: 'error' })
     } finally {
       setPlannerSaving(false)
     }
@@ -457,7 +457,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         setSuggestions(received)
         setAggregatedShoppingList(data.aggregates?.consolidated_shopping_list ?? [])
         if (!received.length) {
-          setError('Nenhuma sugestão desta vez. Que tal ajustar os filtros?')
+          setError('Nenhuma sugest��o desta vez. Que tal ajustar os filtros?')
         }
       } catch (error) {
         if ((error as Error).name === 'AbortError') {
@@ -833,7 +833,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               <Bookmark className="h-4 w-4 text-primary" aria-hidden="true" />
               <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Histórico</h3>
             </div>
-            <div className="grid gap-y-3 gap-x-3 md:grid-cols-3 md:gap-y-4 md:gap-x-4 lg:gap-x-6 lg:gap-y-5">
+            <div className="grid gap-y-4 gap-x-3 md:grid-cols-3 md:gap-y-5 md:gap-x-5 lg:gap-y-6 lg:gap-x-6">
               {filteredHistory.map((entry) => (
                 <button
                   key={entry.id}
