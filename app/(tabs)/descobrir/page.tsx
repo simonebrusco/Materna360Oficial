@@ -209,9 +209,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       suggestions={suggestionViews}
       filters={filters}
       dateKey={dateKey}
-      profileMode={requestedMode}
+      profile={profilePayload}
       initialAgeFilter={initialAgeFilter}
       initialPlaceFilter={initialPlaceFilter}
+      recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
     />
   )
 }
