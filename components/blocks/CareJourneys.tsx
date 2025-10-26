@@ -164,6 +164,18 @@ export function CareJourneys() {
     }
   }, [activeJourneyId, isMounted])
 
+  const journeySummary = useMemo<JourneySummary>(() => {
+    return journeys.reduce<JourneySummary>((acc, journey) => {
+      const journeyProgress = progressMap[journey.id] ?? []
+      const completedCount = journeyProgress.filter(Boolean).length
+      acc[journey.id] = {
+        completed: completedCount,
+        total: journeyProgress.length,
+      }
+      return acc
+    }, {} as JourneySummary)
+  }, [progressMap])
+
   const handleToggleChallenge = (journeyId: JourneyId, index: number) => {
     setProgressMap((prev) => {
       const journeyProgress = prev[journeyId]
