@@ -654,7 +654,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </fieldset>
 
           <fieldset className="space-y-3">
-            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Energia</legend>
+            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">ENERGIA</legend>
             <div className="flex flex-wrap gap-2">
               {ENERGY_OPTIONS.map((option) => {
                 const isActive = option.value === energy
