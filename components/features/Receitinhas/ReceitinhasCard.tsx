@@ -416,7 +416,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       dismissPlannerModal()
     } catch (error) {
       console.error('[Receitinhas] Failed to save planner item', error)
-      setToast({ message: 'N��o deu pra salvar agora. Tente mais tarde.', type: 'error' })
+      setToast({ message: 'Não deu pra salvar agora. Tente mais tarde.', type: 'error' })
     } finally {
       setPlannerSaving(false)
     }
@@ -457,7 +457,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         setSuggestions(received)
         setAggregatedShoppingList(data.aggregates?.consolidated_shopping_list ?? [])
         if (!received.length) {
-          setError('Nenhuma sugest��o desta vez. Que tal ajustar os filtros?')
+          setError('Nenhuma sugestão desta vez. Que tal ajustar os filtros?')
         }
       } catch (error) {
         if ((error as Error).name === 'AbortError') {
@@ -782,7 +782,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 return (
                   <article
                     key={suggestion.id}
-                    className="min-h-[176px] min-w-[260px] flex-1 rounded-3xl border border-white/60 bg-white/95 p-5 shadow-[0_20px_48px_-26px_rgba(47,58,86,0.32)] transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_28px_60px_-26px_rgba(255,0,94,0.28)]"
+                    className="min-h-[176px] min-w-[260px] flex-1 rounded-3xl border border-support-2/20 bg-white/97 p-5 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.28)] transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_26px_56px_-24px_rgba(255,0,94,0.28)]"
                   >
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
                       <Sparkles className="h-4 w-4" aria-hidden="true" />
