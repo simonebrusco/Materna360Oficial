@@ -579,7 +579,7 @@ export default function DescobrirClient({
       console.error('[FlashRoutine] Planner save failed:', error)
       trackTelemetry('discover_flash_error', {
         action: 'save_planner',
-        id: flashRoutine.routine.id,
+        id: routine.id,
       })
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar a rotina.',
