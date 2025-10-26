@@ -1128,6 +1128,20 @@ function RecipeDetailModal({
             </section>
           )}
 
+          {suggestion.tips && suggestion.tips.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Dicas</h4>
+              <ul className="space-y-1.5 text-sm text-support-1/80">
+                {suggestion.tips.map((tip) => (
+                  <li key={tip} className="flex items-start gap-2">
+                    <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-primary/70" aria-hidden="true" />
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {suggestion.microcopy && (
             <p className="text-sm font-semibold text-primary/80">{suggestion.microcopy}</p>
           )}
