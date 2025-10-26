@@ -2,6 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
+import { inter } from './fonts'
+
 export const metadata: Metadata = {
   title: 'Materna360',
   description: 'Cuidado e bem-estar para mães',
@@ -9,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className="bg-[#FFF9FB] text-support-1 antialiased">{children}</body>
+    <html lang="pt-BR" className={inter.variable}>
+      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>{children}</body>
     </html>
   )
 }
