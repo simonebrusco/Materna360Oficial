@@ -9,13 +9,7 @@ import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/app/data/childContent
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getDayIndex } from '@/app/lib/dailyMessage'
-import {
-  resolveAgeRange,
-  isValidAgeRange,
-  profilePreferredBuckets,
-  type Child,
-  type Profile,
-} from '@/app/lib/ageRange'
+import { profilePreferredBuckets, type Profile } from '@/app/lib/ageRange'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 
 export const dynamic = 'force-dynamic'
