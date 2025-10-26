@@ -57,6 +57,32 @@ type ToastState = {
   type?: 'success' | 'error' | 'info'
 }
 
+type Option = { label: string; value: string }
+
+type CollapseState = {
+  tempo: boolean
+  tema: boolean
+  formato: boolean
+  comQuem: boolean
+}
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+  tempo: false,
+  tema: false,
+  formato: false,
+  comQuem: false,
+}
+
+const collapseStyles = (open: boolean): React.CSSProperties => ({
+  maxHeight: open ? '240px' : '0px',
+  opacity: open ? 1 : 0,
+  overflow: 'hidden',
+  transition: 'max-height 260ms ease, opacity 160ms ease',
+})
+
+const labelFromOptions = (value: string | null, options: readonly Option[]) =>
+  value ? options.find((option) => option.value === value)?.label ?? null : null
+
 export function OrgTipsGrid() {
   const [selectedTip, setSelectedTip] = useState<OrgTip | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -67,6 +93,7 @@ export function OrgTipsGrid() {
   const [fTema, setFTema] = useState<string | null>(null)
   const [fFormato, setFFormato] = useState<string | null>(null)
   const [fComQuem, setFComQuem] = useState<string | null>(null)
+  const [collapse, setCollapse] = useState<CollapseState>(DEFAULT_COLLAPSE_STATE)
 
   useEffect(() => {
     ORG_TIPS.forEach((tip) => {
@@ -91,6 +118,11 @@ export function OrgTipsGrid() {
   const matchingLoteB = useMemo(() => loteB.filter((tip) => matchesFilters(tip)), [loteB, matchesFilters])
   const hasAnyMatch = matchingLoteA.length > 0 || matchingLoteB.length > 0
 
+  const summaryTempo = labelFromOptions(fTempo, TEMPO_OPTIONS)
+  const summaryTema = labelFromOptions(fTema, TEMA_OPTIONS)
+  const summaryFormato = labelFromOptions(fFormato, FORMATO_OPTIONS)
+  const summaryComQuem = labelFromOptions(fComQuem, COM_QUEM_OPTIONS)
+
   const handleViewMore = (tip: OrgTip) => {
     setSelectedTip(tip)
     setIsModalOpen(true)
@@ -110,6 +142,13 @@ export function OrgTipsGrid() {
   const handleAddToPlanner = (tip: OrgTip) => {
     console.debug('planner:add:not-implemented', { id: tip.id })
     setToast({ message: 'Em breve você poderá salvar no planner ❤️', type: 'info' })
+  }
+
+  const toggleCollapse = (key: keyof CollapseState) => {
+    setCollapse((previous) => ({
+      ...previous,
+      [key]: !previous[key],
+    }))
   }
 
   const handleToggleTempo = (value: string) => {
@@ -235,7 +274,15 @@ export function OrgTipsGrid() {
     `inline-flex h-6 items-center break-words rounded-full border px-[10px] text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 sm:h-[26px] sm:text-[12px] md:h-7 md:px-3 md:text-[13px] ${
       active
         ? 'border-primary bg-primary text-white shadow-[0_0_0_1px_rgba(255,0,94,0.35)]'
-        : 'border-white/50 bg-white text-support-2/90 hover:border-primary/40 hover:text-primary'
+        : 'border-support-2/20 bg-white/70 text-support-2/90 hover:border-primary/40 hover:text-primary'
+    }`
+
+  const summaryPillClass =
+    'ml-auto inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary/90'
+
+  const chevronClass = (open: boolean) =>
+    `ml-2 inline-flex h-5 w-5 items-center justify-center text-support-2 transition-transform duration-200 ${
+      open ? 'rotate-90' : 'rotate-0'
     }`
 
   const textActionClass =
@@ -251,91 +298,147 @@ export function OrgTipsGrid() {
               <p className="text-[14px] leading-[1.45] text-support-2/80">Sugestões rápidas para organizar a rotina com leveza.</p>
             </header>
 
-            <div className="mt-3 grid gap-y-2 md:grid-cols-2 md:gap-x-4">
-              <section className="space-y-1.5">
-                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Tempo livre</h4>
-                <div className="flex flex-wrap gap-[6px]">
-                  {TEMPO_OPTIONS.map((option) => {
-                    const active = fTempo === option.value
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => handleToggleTempo(option.value)}
-                        className={chipClasses(active)}
-                      >
-                        {option.label}
-                      </button>
-                    )
-                  })}
+            <div className="mt-3 grid gap-y-3 md:grid-cols-2 md:gap-x-4">
+              <section className="space-y-1">
+                <button
+                  type="button"
+                  role="button"
+                  aria-expanded={collapse.tempo}
+                  onClick={() => toggleCollapse('tempo')}
+                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                >
+                  <span>Tempo livre</span>
+                  {!collapse.tempo && summaryTempo ? <span className={summaryPillClass}>{summaryTempo}</span> : null}
+                  <span className={chevronClass(collapse.tempo)} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+                <div style={collapseStyles(collapse.tempo)} aria-hidden={!collapse.tempo} className="pt-1">
+                  <div className="flex flex-wrap gap-[6px]">
+                    {TEMPO_OPTIONS.map((option) => {
+                      const active = fTempo === option.value
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => handleToggleTempo(option.value)}
+                          className={chipClasses(active)}
+                        >
+                          {option.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </section>
 
-              <section className="space-y-1.5">
-                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Tema</h4>
-                <div className="flex flex-wrap gap-[6px]">
-                  {TEMA_OPTIONS.map((option) => {
-                    const active = fTema === option.value
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => handleToggleTema(option.value)}
-                        className={chipClasses(active)}
-                      >
-                        {option.label}
-                      </button>
-                    )
-                  })}
+              <section className="space-y-1">
+                <button
+                  type="button"
+                  role="button"
+                  aria-expanded={collapse.tema}
+                  onClick={() => toggleCollapse('tema')}
+                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                >
+                  <span>Tema</span>
+                  {!collapse.tema && summaryTema ? <span className={summaryPillClass}>{summaryTema}</span> : null}
+                  <span className={chevronClass(collapse.tema)} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+                <div style={collapseStyles(collapse.tema)} aria-hidden={!collapse.tema} className="pt-1">
+                  <div className="flex flex-wrap gap-[6px]">
+                    {TEMA_OPTIONS.map((option) => {
+                      const active = fTema === option.value
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => handleToggleTema(option.value)}
+                          className={chipClasses(active)}
+                        >
+                          {option.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </section>
 
-              <section className="space-y-1.5">
-                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Formato</h4>
-                <div className="flex flex-wrap gap-[6px]">
-                  {FORMATO_OPTIONS.map((option) => {
-                    const active = fFormato === option.value
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => handleToggleFormato(option.value)}
-                        className={chipClasses(active)}
-                      >
-                        {option.label}
-                      </button>
-                    )
-                  })}
+              <section className="space-y-1">
+                <button
+                  type="button"
+                  role="button"
+                  aria-expanded={collapse.formato}
+                  onClick={() => toggleCollapse('formato')}
+                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                >
+                  <span>Formato</span>
+                  {!collapse.formato && summaryFormato ? <span className={summaryPillClass}>{summaryFormato}</span> : null}
+                  <span className={chevronClass(collapse.formato)} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+                <div style={collapseStyles(collapse.formato)} aria-hidden={!collapse.formato} className="pt-1">
+                  <div className="flex flex-wrap gap-[6px]">
+                    {FORMATO_OPTIONS.map((option) => {
+                      const active = fFormato === option.value
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => handleToggleFormato(option.value)}
+                          className={chipClasses(active)}
+                        >
+                          {option.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </section>
 
-              <section className="space-y-1.5">
-                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Com quem</h4>
-                <div className="flex flex-wrap gap-[6px]">
-                  {COM_QUEM_OPTIONS.map((option) => {
-                    const active = fComQuem === option.value
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => handleToggleComQuem(option.value)}
-                        className={chipClasses(active)}
-                      >
-                        {option.label}
-                      </button>
-                    )
-                  })}
+              <section className="space-y-1">
+                <button
+                  type="button"
+                  role="button"
+                  aria-expanded={collapse.comQuem}
+                  onClick={() => toggleCollapse('comQuem')}
+                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                >
+                  <span>Com quem</span>
+                  {!collapse.comQuem && summaryComQuem ? <span className={summaryPillClass}>{summaryComQuem}</span> : null}
+                  <span className={chevronClass(collapse.comQuem)} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+                <div style={collapseStyles(collapse.comQuem)} aria-hidden={!collapse.comQuem} className="pt-1">
+                  <div className="flex flex-wrap gap-[6px]">
+                    {COM_QUEM_OPTIONS.map((option) => {
+                      const active = fComQuem === option.value
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => handleToggleComQuem(option.value)}
+                          className={chipClasses(active)}
+                        >
+                          {option.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </section>
             </div>
 
             <div className="space-y-1.5">
               <p className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/70">Presets rápidos</p>
-              <div className="flex flex-wrap gap-[6px]">
+              <div className="flex flex-nowrap gap-[6px] overflow-x-auto pb-1">
                 <Button
                   type="button"
                   variant="ghost"
