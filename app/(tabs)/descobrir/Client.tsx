@@ -773,7 +773,11 @@ export default function DescobrirClient({
 
   const handleSelfCareSave = async (item: SelfCareT) => {
     setSavingSelfCareId(item.id)
-    trackTelemetry('discover_selfcare_save_planner', { id: item.id, minutes: item.minutes })
+    trackTelemetry(
+      'discover_selfcare_save_planner',
+      { id: item.id, minutes: item.minutes },
+      telemetryCtx
+    )
 
     try {
       const steps = sanitizeStringList(item.steps).slice(0, 6)
@@ -808,10 +812,18 @@ export default function DescobrirClient({
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
 
+      trackTelemetry('planner_save_ok', { type: 'selfcare', id: item.id }, telemetryCtx)
       setToast({ message: 'Salvo no Planner!', type: 'success' })
     } catch (error) {
       console.error('[SelfCare] Save failed:', error)
-      trackTelemetry('discover_selfcare_error', { action: 'save_planner', id: item.id })
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'selfcare',
+          reason: error instanceof Error ? error.message : 'unknown',
+        },
+        telemetryCtx
+      )
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
         type: 'error',
