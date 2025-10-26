@@ -338,9 +338,12 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       url: `https://materna360.app/receitas/${encodeURIComponent(suggestion.id)}`,
     }
     try {
-      const nav = typeof window !== 'undefined' ? window.navigator : undefined
-      if (nav && 'share' in nav) {
-        await (nav as Navigator & { share(data: ShareData): Promise<void> }).share(shareData)
+      const nav =
+        typeof window !== 'undefined'
+          ? (window.navigator as Navigator & { clipboard?: Clipboard; share?: (data: ShareData) => Promise<void> })
+          : undefined
+      if (nav?.share) {
+        await nav.share(shareData)
         return
       }
       if (nav?.clipboard) {
