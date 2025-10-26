@@ -28,8 +28,7 @@ import type { RecProduct, RecProductKind } from '@/app/types/recProducts'
 import type { FlashRoutine } from '@/app/types/flashRoutine'
 import type { SelfCare, SelfCareEnergy } from '@/app/types/selfCare'
 import type { ProfileChildSummary, ProfileSummary } from '@/app/lib/profileTypes'
-import { getClientFlags } from '@/app/lib/flags'
-import type { DiscoverFlags } from '@/app/lib/flags'
+import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
@@ -569,7 +568,7 @@ export default function DescobrirClient({
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}))
-        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
+        throw new Error(payload?.error ?? 'N��o foi possível salvar no Planner.')
       }
 
       setToast({ message: 'Rotina salva no Planner!', type: 'success' })
