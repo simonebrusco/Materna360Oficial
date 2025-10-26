@@ -562,7 +562,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
         <fieldset className="space-y-3">
           <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">CATEGORIA</legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
             {CATEGORY_OPTIONS.map((option) => {
               const isActive = category === option.value
               return (
@@ -571,10 +571,10 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                   type="button"
                   onClick={() => setCategory(option.value)}
                   aria-pressed={isActive}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
                     isActive
                       ? 'border-primary bg-primary text-white shadow-glow'
-                      : 'border-white/70 bg-white/90 text-support-1 hover:bg-secondary/50'
+                      : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
                   }`}
                 >
                   <span className="mr-1" aria-hidden="true">
