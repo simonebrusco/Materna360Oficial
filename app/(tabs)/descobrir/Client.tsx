@@ -596,6 +596,35 @@ export default function DescobrirClient({
     })
 
     try {
+      const totalMin = coerceIntWithin(routine.totalMin, routine.totalMin, 5, 60)
+      const routineSteps = routine.steps.slice(0, 3).map((step, index) => {
+        const title = typeof step.title === 'string' ? step.title.trim() : ''
+        if (!title) {
+          throw new Error(`Passo ${index + 1} da rotina sem título.`)
+        }
+        const minutes = coerceIntWithin(step.minutes, Math.max(5, Math.floor(totalMin / 3)), 1, 30)
+        const ideaId = typeof step.ideaId === 'string' && step.ideaId.trim() ? step.ideaId.trim() : undefined
+        return {
+          title,
+          minutes,
+          ideaId,
+        }
+      })
+
+      if (routineSteps.length !== 3) {
+        throw new Error('Rotina incompleta para salvar no Planner.')
+      }
+
+      const routinePayload = {
+        type: 'routine' as const,
+        id: routine.id,
+        title: routine.title,
+        totalMin,
+        steps: routineSteps,
+        materials: sanitizeStringList(routine.materials),
+        safetyNotes: sanitizeStringList(routine.safetyNotes ?? []),
+      }
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -605,15 +634,7 @@ export default function DescobrirClient({
           timeISO: '09:30',
           category: 'Descobrir',
           link: '/descobrir',
-          payload: {
-            type: 'routine',
-            id: routine.id,
-            title: routine.title,
-            totalMin: routine.totalMin,
-            steps: routine.steps,
-            materials: routine.materials,
-            safetyNotes: routine.safetyNotes ?? [],
-          },
+          payload: routinePayload,
           tags: ['rotina', routine.locale],
         }),
       })
@@ -991,7 +1012,7 @@ export default function DescobrirClient({
                     {routine?.title ?? 'Rotina sugerida'}
                   </h3>
                   <p className="text-sm text-support-2/90">
-                    {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
+                    {routine ? `${routine.totalMin} minutos �� ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
