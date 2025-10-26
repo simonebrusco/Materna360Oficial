@@ -844,16 +844,18 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               <Bookmark className="h-4 w-4 text-primary" aria-hidden="true" />
               <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Histórico</h3>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-y-3 gap-x-3 md:grid-cols-3 md:gap-y-4 md:gap-x-4 lg:gap-x-6 lg:gap-y-5">
               {filteredHistory.map((entry) => (
                 <button
                   key={entry.id}
                   type="button"
                   onClick={() => openDetail(entry.suggestion)}
-                  className="rounded-2xl border border-white/60 bg-white/85 p-4 text-left text-sm shadow-soft transition hover:-translate-y-0.5 hover:shadow-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="rounded-2xl border border-white/60 bg-white/85 p-4 text-left text-sm shadow-[0_18px_36px_-24px_rgba(47,58,86,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_48px_-24px_rgba(255,0,94,0.28)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
                   <p className="font-semibold text-support-1">{entry.title}</p>
-                  <p className="mt-1 text-xs text-support-2/80">{entry.summary}</p>
+                  <p className="mt-1 text-xs text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
+                    {entry.summary}
+                  </p>
                 </button>
               ))}
             </div>
