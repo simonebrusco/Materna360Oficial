@@ -37,6 +37,22 @@ const quickActions = [
   { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
+const NOTES_LABEL = 'Notas R\u00E1pidas'
+const NOTES_DESCRIPTION = 'Capture ideias e lembretes em instantes.'
+const NOTES_EMPTY_TEXT = 'Nenhuma nota registrada ainda.'
+
+const safeUtf = (value?: string | null): string => {
+  if (!value) {
+    return ''
+  }
+
+  try {
+    return decodeURIComponent(escape(value))
+  } catch {
+    return value ?? ''
+  }
+}
+
 export function MeuDiaClient({
   dailyGreeting,
   currentDateKey,
