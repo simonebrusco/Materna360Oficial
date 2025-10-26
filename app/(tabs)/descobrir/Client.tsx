@@ -35,7 +35,7 @@ const activities = [
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 7, emoji: '��', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
   { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
@@ -898,7 +898,7 @@ export default function DescobrirClient({
                 <span>Flash Routine</span>
               </span>
             }
-            description="Sequência rápida de 15 a 20 minutos para fortalecer a conex��o."
+            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
           >
             <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -979,6 +979,74 @@ export default function DescobrirClient({
                 </Button>
               </div>
             </Card>
+          </SectionWrapper>
+        </Reveal>
+      )}
+
+      {showSelfCare && (
+        <Reveal delay={240}>
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden>💛</span>
+                <span>Cuide-se rápido</span>
+              </span>
+            }
+            description={`Sugestões de ${selfCare.minutes} minutos para energia ${selfCare.energy}.`}
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              {selfCare.items.map((item) => (
+                <Card key={item.id} className="flex flex-col gap-4 bg-white/92 p-6 shadow-soft">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-support-1">{item.title}</h3>
+                      <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {item.minutes} minutos
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void handleSelfCareDone(item)}
+                      disabled={completingSelfCareId === item.id}
+                    >
+                      {completingSelfCareId === item.id ? 'Registrando…' : 'Fiz agora'}
+                    </Button>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
+                    <ul className="space-y-2 text-sm text-support-1">
+                      {item.steps.slice(0, 2).map((step, idx) => (
+                        <li key={`${item.id}-step-${idx}`} className="flex gap-2">
+                          <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
+                            {idx + 1}
+                          </span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                      {item.steps.length > 2 && (
+                        <li className="text-xs text-support-2/80">+ {item.steps.length - 2} passo(s) extras no Planner</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {item.tip && (
+                    <p className="text-xs font-semibold text-primary/80">{item.tip}</p>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleSelfCareSave(item)}
+                      disabled={savingSelfCareId === item.id}
+                    >
+                      {savingSelfCareId === item.id ? 'Salvando…' : 'Salvar no Planner'}
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </SectionWrapper>
         </Reveal>
       )}
