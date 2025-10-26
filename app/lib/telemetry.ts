@@ -2,6 +2,8 @@ export type TelemetryEvent =
   | 'recipes.generate'
   | 'recipes.generate.error'
   | 'planner.save'
+  | 'planner_save_ok'
+  | 'planner_payload_invalid'
   | 'quick-ideas.generate'
   | 'quick-ideas.generate.error'
   | 'quick_ideas_success'
@@ -33,6 +35,8 @@ const getStore = () => {
       'recipes.generate': 0,
       'recipes.generate.error': 0,
       'planner.save': 0,
+      'planner_save_ok': 0,
+      'planner_payload_invalid': 0,
       'quick-ideas.generate': 0,
       'quick-ideas.generate.error': 0,
       'quick_ideas_success': 0,
