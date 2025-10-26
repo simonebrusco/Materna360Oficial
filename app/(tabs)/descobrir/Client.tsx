@@ -173,7 +173,7 @@ export default function DescobrirClient({
       })
     })
     impressionsKeyRef.current = key
-  }, [recShelf, impressionsKeyRef])
+  }, [recShelf.enabled, recShelf.groups])
 
   const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
 
