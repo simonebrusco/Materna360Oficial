@@ -9,7 +9,6 @@ import { buildDailySuggestions } from '@/app/lib/quickIdeasCatalog'
 import { readProfileCookie } from '@/app/lib/profileCookie'
 import type {
   QuickIdea,
-  QuickIdeaCatalogEntry,
   QuickIdeasAgeBucket,
   QuickIdeasEnergy,
   QuickIdeasLocation,
