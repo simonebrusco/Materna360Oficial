@@ -674,8 +674,8 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </fieldset>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 md:gap-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/90 px-4 py-2 shadow-inner">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white/80 px-4 py-2 shadow-[inset_0_1px_6px_-4px_rgba(47,58,86,0.18)]">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">PORÇÕES</span>
             <div className="inline-flex items-center gap-2">
               <button
