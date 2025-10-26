@@ -105,10 +105,9 @@ type DescobrirClientProps = {
   suggestions: SuggestionCard[]
   filters: QuickIdeaFiltersSummary
   dateKey: string
-  profile: ProfileSummary
+  profile: ProfileSummaryT
   initialAgeFilter?: string | null
   initialPlaceFilter?: string | null
-  recProducts: RecProduct[]
   recShelf: RecShelfState
   flashRoutine: FlashRoutineState
   selfCare: SelfCareState
@@ -248,7 +247,6 @@ export default function DescobrirClient({
   profile,
   initialAgeFilter = null,
   initialPlaceFilter = null,
-  recProducts: _recProducts,
   recShelf,
   flashRoutine,
   selfCare,
@@ -930,7 +928,7 @@ export default function DescobrirClient({
                 <span>Flash Routine</span>
               </span>
             }
-            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
+            description="Sequência r��pida de 15 a 20 minutos para fortalecer a conexão."
           >
             <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1130,7 +1128,7 @@ export default function DescobrirClient({
         })
       ) : (
         <>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
+          <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Livros Recomendados</span></span>}>
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
                 <Reveal key={book.title} delay={idx * 70} className="h-full">
