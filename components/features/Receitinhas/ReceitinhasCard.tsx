@@ -227,6 +227,7 @@ const suggestionMatchesSearch = (suggestion: RecipeSuggestion, query: string) =>
 export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCardProps) {
   const [ingredient, setIngredient] = useState('')
   const [category, setCategory] = useState<RecipeCategory>('refeicao')
+  const [isCardHovering, setIsCardHovering] = useState(false)
   const [timeMax, setTimeMax] = useState<number | null>(null)
   const [equipment, setEquipment] = useState<string[]>([])
   const [diet, setDiet] = useState<string[]>([])
@@ -529,7 +530,9 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   return (
     <section
       id="receitinhas"
-      className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9"
+      className={`CardElevate ${isCardHovering ? 'CardElevate--hover ' : ''}rounded-3xl border border-white/70 bg-white px-6 py-7 backdrop-blur-sm md:px-8 md:py-9`}
+      onMouseEnter={() => setIsCardHovering(true)}
+      onMouseLeave={() => setIsCardHovering(false)}
     >
       <form className="space-y-5 md:space-y-6" onSubmit={handleSubmit}>
         <header className="space-y-3 md:space-y-4">
