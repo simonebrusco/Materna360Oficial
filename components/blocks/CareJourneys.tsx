@@ -80,7 +80,7 @@ const journeys: Journey[] = [
   {
     id: 'gratidao',
     title: 'Gratidão',
-    emoji: '🌸',
+    emoji: '��',
     description: '7 dias para perceber o que floresce.',
     challenges: [
       'Agradeça por algo simples do seu dia.',
@@ -194,7 +194,6 @@ export function CareJourneys() {
           {journeys.map((journey) => {
             const journeyProgress = progressMap[journey.id]
             const completedCount = journeyProgress.filter(Boolean).length
-            const isCompleted = completedCount === journey.challenges.length
 
             return (
               <Card
