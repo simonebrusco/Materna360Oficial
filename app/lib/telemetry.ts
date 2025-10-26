@@ -47,6 +47,10 @@ const getStore = () => {
       'discover_flash_save_planner': 0,
       'discover_flash_start': 0,
       'discover_flash_error': 0,
+      'discover_selfcare_impression': 0,
+      'discover_selfcare_done': 0,
+      'discover_selfcare_save_planner': 0,
+      'discover_selfcare_error': 0,
     }
   }
 
