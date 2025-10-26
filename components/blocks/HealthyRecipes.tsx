@@ -49,7 +49,7 @@ const TIME_OPTIONS: { value: RecipeTimeOption; label: string }[] = [
 const AGE_BAND_LABEL: Record<string, string> = {
   '6-8m': '6–8 meses',
   '9-12m': '9–12 meses',
-  '1-2y': '1–2 anos',
+  '1-2y': '1��2 anos',
   '2-6y': '2–6 anos',
 }
 
@@ -396,7 +396,7 @@ export function HealthyRecipesSection() {
         title: plannerModal.recipe.title,
         readyInMinutes,
         servings,
-        shoppingList: sanitizeStringList([]),
+        shoppingList: [],
         note: note || undefined,
       }
 
