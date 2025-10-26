@@ -785,7 +785,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2">
               {suggestions.map((suggestion) => {
-                const headlineBadge = suggestion.badges?.[0] ?? 'Receita IA'
+                const headlineBadge = suggestion.badges?.[0] ?? 'Receitinhas'
                 return (
                   <article
                     key={suggestion.id}
