@@ -733,11 +733,11 @@ export default function DescobrirClient({
 
   const handleSelfCareDone = async (item: SelfCareT) => {
     setCompletingSelfCareId(item.id)
-    trackTelemetry('discover_selfcare_done', {
-      id: item.id,
-      minutes: item.minutes,
-      energy: selfCare.energy,
-    })
+    trackTelemetry(
+      'discover_selfcare_done',
+      { id: item.id, minutes: item.minutes },
+      telemetryCtx
+    )
 
     try {
       const response = await fetch('/api/cuidese/complete', {
@@ -754,7 +754,14 @@ export default function DescobrirClient({
       setToast({ message: 'Autocuidado concluído! 💛', type: 'success' })
     } catch (error) {
       console.error('[SelfCare] Done failed:', error)
-      trackTelemetry('discover_selfcare_error', { action: 'done', id: item.id })
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'selfcare',
+          reason: error instanceof Error ? error.message : 'unknown',
+        },
+        telemetryCtx
+      )
       setToast({
         message: error instanceof Error ? error.message : 'Tente novamente mais tarde.',
         type: 'error',
