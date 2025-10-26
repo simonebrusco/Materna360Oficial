@@ -315,7 +315,7 @@ export default function DescobrirClient({
       })
     })
     impressionsKeyRef.current = recShelfImpressionKey
-  }, [recShelf.enabled, recShelf.groups, recShelfImpressionKey])
+  }, [recShelfEnabled, recShelf.groups, recShelfImpressionKey])
 
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
   const showSelfCare = selfCareEnabled && selfCare.items.length > 0
