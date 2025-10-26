@@ -347,7 +347,7 @@ export function MindfulnessCollections() {
               aria-labelledby={`mindfulness-modal-${activeGroup.key}`}
               onClick={(event) => event.stopPropagation()}
             >
-              <Card className="section-card relative mx-auto w-full max-w-2xl bg-white/95">
+              <Card className="CardElevate section-card relative mx-auto w-full max-w-2xl bg-white/95">
                 <button
                   type="button"
                   onClick={() => setActiveGroupKey(null)}
