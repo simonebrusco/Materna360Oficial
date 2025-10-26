@@ -1093,7 +1093,7 @@ function RecipeDetailModal({
           </section>
 
           <section className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Modo de preparo</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Modo de fazer</h4>
             <ol className="space-y-2 text-sm text-support-1/90">
               {suggestion.steps.map((step, index) => (
                 <li key={step} className="flex gap-3">
@@ -1115,7 +1115,7 @@ function RecipeDetailModal({
 
           {suggestion.safety_notes && suggestion.safety_notes.length > 0 && (
             <section className="space-y-2">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Notas de seguran��a</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Notas de segurança</h4>
               <ul className="space-y-1.5 text-sm text-support-1/80">
                 {suggestion.safety_notes.map((note) => (
                   <li key={note} className="flex items-start gap-2">
