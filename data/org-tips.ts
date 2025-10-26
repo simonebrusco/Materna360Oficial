@@ -9,7 +9,7 @@ export type OrgTip = {
   testId: string
 }
 
-export const ORG_TIPS: OrgTip[] = [
+export const ORG_TIPS = [
   {
     id: 'ritual-de-manha-leve',
     icon: '🫖',
@@ -181,4 +181,4 @@ export const ORG_TIPS: OrgTip[] = [
     ],
     testId: 'org-tip-kits-lanches',
   },
-]
+] satisfies OrgTip[]
