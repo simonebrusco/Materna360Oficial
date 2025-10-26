@@ -297,6 +297,38 @@ export default function DescobrirClient({
 
   const discoverFlags = useMemo(() => getClientFlags(flags), [flags])
 
+  const targetBuckets = useMemo(() => {
+    const children = Array.isArray(profile.children) ? profile.children : []
+    if (profile.mode === 'all') {
+      const buckets = Array.from(new Set(children.map((child) => child.age_bucket))) as QuickIdeasAgeBucket[]
+      return buckets.length > 0 ? buckets : (['2-3'] as QuickIdeasAgeBucket[])
+    }
+    const activeChild =
+      children.find((child) => child.id === profile.activeChildId) ?? children[0]
+    return activeChild ? [activeChild.age_bucket] : (['2-3'] as QuickIdeasAgeBucket[])
+  }, [profile])
+
+  const telemetryFlags = useMemo(() => {
+    return {
+      recShelf: !!discoverFlags.recShelf,
+      recShelfAI: !!discoverFlags.recShelfAI,
+      flashRoutine: !!discoverFlags.flashRoutine,
+      flashRoutineAI: !!discoverFlags.flashRoutineAI,
+      selfCare: !!discoverFlags.selfCare,
+      selfCareAI: !!discoverFlags.selfCareAI,
+    } satisfies Record<string, boolean>
+  }, [discoverFlags])
+
+  const telemetryCtx = useMemo(() => {
+    return {
+      appVersion: process.env.NEXT_PUBLIC_APP_VERSION,
+      route: '/descobrir',
+      tz: 'America/Sao_Paulo',
+      dateKey,
+      flags: telemetryFlags,
+    }
+  }, [dateKey, telemetryFlags])
+
   const profileMode = profile.mode
   const impressionsKeyRef = useRef<string | null>(null)
   const flashRoutineImpressionRef = useRef<string | null>(null)
