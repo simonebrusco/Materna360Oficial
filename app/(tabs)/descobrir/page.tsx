@@ -161,11 +161,27 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const activeChildId: string | null =
     searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  const filters = QuickIdeasFiltersSchema.parse({
-    location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
-    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
-    energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
+  const parsedFilters = QuickIdeasFiltersSchema.parse({
+    location: sanitizeLocation(
+      typeof searchParams?.location === 'string' ? searchParams.location : undefined
+    ),
+    time_window_min: sanitizeTime(
+      typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined
+    ),
+    energy: sanitizeEnergy(
+      typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
+    ),
   })
+
+  const filters = {
+    location: parsedFilters.location,
+    energy: parsedFilters.energy,
+    time_window_min: nearestQuickIdeasWindow(parsedFilters.time_window_min),
+  } satisfies {
+    location: QuickIdeasLocation
+    energy: QuickIdeasEnergy
+    time_window_min: QuickIdeasTimeWindow
+  }
 
   const serverFlags = getServerFlags({
     cookies: (name) => jar.get(name)?.value,
@@ -263,19 +279,9 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
     : { items: [], rotationKey: '', source: 'fallback' as const }
 
-  const quickIdeasFilters = {
-    location: filters.location,
-    energy: filters.energy,
-    time_window_min: nearestQuickIdeasWindow(Number(filters.time_window_min)),
-  } satisfies {
-    location: QuickIdeasLocation
-    energy: QuickIdeasEnergy
-    time_window_min: QuickIdeasTimeWindow
-  }
-
   const suggestions = buildDailySuggestions(
     profileSummary,
-    quickIdeasFilters,
+    filters,
     dateKey,
     QUICK_IDEAS_CATALOG
   )
