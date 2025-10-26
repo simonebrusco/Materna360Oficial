@@ -524,7 +524,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       id="receitinhas"
       className="rounded-3xl border border-white/60 bg-white/90 px-6 py-8 shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-8 md:py-10"
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-4 md:space-y-5" onSubmit={handleSubmit}>
         <header className="space-y-3">
           <span className="text-sm font-semibold text-support-2/80">Alimentação inteligente</span>
           <div className="flex items-center gap-3">
