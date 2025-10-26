@@ -587,7 +587,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </div>
         </fieldset>
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-y-4 gap-x-3 lg:grid-cols-2 lg:gap-y-5 lg:gap-x-4">
           <fieldset className="space-y-3">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">TEMPO MÁXIMO</legend>
             <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
