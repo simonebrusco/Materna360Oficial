@@ -197,6 +197,15 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       }
     : null
 
+  const selfCareSelection = selfCareEnabled
+    ? selectSelfCareItems({
+        items: SELF_CARE_CMS,
+        energy: filters.energy,
+        minutes: filters.time_window_min as 2 | 5 | 10,
+        dateKey,
+      })
+    : { items: [], rotationKey: '', source: 'fallback' as const }
+
   const suggestions = buildDailySuggestions(
     {
       mode: requestedMode,
