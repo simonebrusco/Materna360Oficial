@@ -119,6 +119,7 @@ type DescobrirClientProps = {
   recProducts: RecProduct[]
   recShelf: RecShelfState
   flashRoutine: FlashRoutineState
+  selfCare: SelfCareState
 }
 
 const badgeLabels: Record<QuickIdeasBadge, string> = {
