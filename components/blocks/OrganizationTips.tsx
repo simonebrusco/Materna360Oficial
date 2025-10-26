@@ -4,18 +4,21 @@ import { OrgTipsGrid } from '@/components/features/OrgTips/OrgTipsGrid'
 
 export default function OrganizationTips() {
   return (
-    <section className="space-y-6">
-      <div>
-        <h2 className="section-title flex items-center gap-2">
+    <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_24px_50px_-28px_rgba(47,58,86,0.3)] backdrop-blur md:px-8 md:py-10">
+      <header className="space-y-2.5">
+        <span className="text-sm font-semibold text-support-2/80">Rotina leve</span>
+        <h2 className="flex items-center gap-2 text-[22px] font-semibold text-support-1">
           <span aria-hidden="true">💡</span>
           <span>Dicas de Organização</span>
         </h2>
-        <p className="section-subtitle max-w-2xl text-support-2">
+        <p className="max-w-2xl text-sm text-support-2/80 md:text-base">
           Sugestões rápidas para organizar a rotina com gentileza e criar espaços de respiro no dia a dia.
         </p>
-      </div>
+      </header>
 
-      <OrgTipsGrid />
+      <div className="mt-4 md:mt-5">
+        <OrgTipsGrid />
+      </div>
     </section>
   )
 }
