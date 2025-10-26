@@ -1,19 +1,23 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import React from 'react'
+import clsx from 'clsx'
 
-export const GRID_RHYTHM_DESCRIPTION_CLAMP_CLASS = 'GridRhythm-descriptionClamp'
-
-interface GridRhythmProps extends HTMLAttributes<HTMLElement> {
-  as?: keyof JSX.IntrinsicElements
-  children: ReactNode
+type Props = React.HTMLAttributes<HTMLDivElement> & {
+  /** Grid/layout wrapper for standardized gaps and card paddings.
+   *  IMPORTANT: intentionally NOT polymorphic to avoid SVGProps inference.
+   */
 }
 
-export function GridRhythm({ as = 'div', className = '', children, ...rest }: GridRhythmProps) {
-  const ElementTag = as
-  const mergedClassName = ['GridRhythm', className].filter(Boolean).join(' ')
+export default function GridRhythm({ className, children, ...rest }: Props) {
+  const mergedClassName = clsx(
+    // Keep/merge any classes passed by callers.
+    // (Project’s gap tokens/utilities are applied by callers or via className.)
+    'grid',
+    className
+  )
 
   return (
-    <ElementTag className={mergedClassName} {...rest}>
+    <div className={mergedClassName} {...rest}>
       {children}
-    </ElementTag>
+    </div>
   )
 }
