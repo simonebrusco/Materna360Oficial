@@ -620,12 +620,12 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 const isActive = equipment.includes(option.value)
                 return (
                   <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => toggleEquipment(option.value)}
-                    aria-pressed={isActive}
-                    className={chipClasses(isActive)}
-                  >
+                  key={option.value}
+                  type="button"
+                  onClick={() => toggleEquipment(option.value)}
+                  aria-pressed={isActive}
+                  className={`${chipClasses(isActive)} capitalize`}
+                >
                     {option.label}
                   </button>
                 )
