@@ -232,7 +232,7 @@ export function OrgTipsGrid() {
   )
 
   const chipClasses = (active: boolean) =>
-    `inline-flex h-6 items-center rounded-full border px-[10px] text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 sm:h-[26px] sm:text-[12px] md:h-7 md:px-3 md:text-[13px] ${
+    `inline-flex h-6 items-center break-words rounded-full border px-[10px] text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 sm:h-[26px] sm:text-[12px] md:h-7 md:px-3 md:text-[13px] ${
       active
         ? 'border-primary bg-primary text-white shadow-[0_0_0_1px_rgba(255,0,94,0.35)]'
         : 'border-white/50 bg-white text-support-2/90 hover:border-primary/40 hover:text-primary'
