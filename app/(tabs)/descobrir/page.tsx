@@ -23,6 +23,7 @@ import type {
   QuickIdeasLocation,
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
+import type { ProfileChildSummary, ProfileMode, ProfileSummary } from '@/app/lib/profileTypes'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
