@@ -2,22 +2,27 @@ import { NextResponse } from 'next/server'
 
 import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog'
 import { trackTelemetry } from '@/app/lib/telemetry'
+import type {
+  QuickIdea,
+  QuickIdeasAgeBucket,
+  QuickIdeasBadge,
+  QuickIdeasLocation,
+  QuickIdeasEnergy,
+} from '@/app/types/quickIdeas'
 
 export const runtime = 'edge'
-
-type AgeBucket = '0-1' | '2-3' | '4-5' | '6-7' | '8+'
 
 type QuickIdeasRequest = {
   plan: 'free' | 'essencial' | 'premium'
   profile: {
     active_child_id: string | null
     mode: 'single' | 'all'
-    children: Array<{ id: string; name?: string; age_bucket: AgeBucket }>
+    children: Array<{ id: string; name?: string; age_bucket: QuickIdeasAgeBucket }>
   }
   context: {
-    location: 'casa' | 'parque' | 'escola' | 'area_externa'
+    location: QuickIdeasLocation
     time_window_min: number
-    energy: 'exausta' | 'normal' | 'animada'
+    energy: QuickIdeasEnergy
   }
   locale?: 'pt-BR'
 }
@@ -61,15 +66,20 @@ export async function POST(req: Request) {
       return NextResponse.json(res)
     }
 
-    const resolvedBucket: AgeBucket | undefined =
+    const resolvedBucket: QuickIdeasAgeBucket | undefined =
       body.profile.mode === 'all'
-        ? youngestBucket(body.profile.children.map((child) => child.age_bucket))
+        ? youngestBucket(body.profile.children)
         : body.profile.children.find((child) => child.id === body.profile.active_child_id)?.age_bucket ??
           body.profile.children[0]?.age_bucket
 
-    const bucket: AgeBucket = (resolvedBucket ?? '2-3') as AgeBucket
+    const bucket: QuickIdeasAgeBucket = resolvedBucket ?? '2-3'
 
-    const baseIdea = {
+    const badges: QuickIdeasBadge[] = ['curta', 'linguagem']
+    const ageAdaptations: Partial<Record<QuickIdeasAgeBucket, string>> = {
+      [bucket]: 'Adapte o tempo e as falas à idade.',
+    }
+
+    const baseIdea: QuickIdea = {
       id: 'cabana-lencois-10min',
       title: 'Cabana de Lençóis Aconchegante',
       summary: 'Montem uma cabaninha e contem uma história curta.',
@@ -80,17 +90,17 @@ export async function POST(req: Request) {
         'Estenda os lençóis entre as cadeiras para formar a cabana.',
         'Entrem com a lanterna e contem uma história curtinha.',
       ],
-      age_adaptations: { [bucket]: 'Adapte o tempo e as falas à idade.' },
+      age_adaptations: ageAdaptations,
       safety_notes: [
         'Supervisão constante; evite prender lençol em locais altos.',
         'Lanterna sem peças pequenas soltas.',
       ],
-      badges: ['curta', 'linguagem'],
+      badges,
       planner_payload: { type: 'idea', duration_min: 10, materials: ['lençóis', 'cadeiras', 'lanterna'] },
       rationale: 'Poucos materiais, cabe no tempo disponível e na energia atual.',
     }
 
-    const ideas =
+    const ideas: QuickIdea[] =
       body.plan === 'essencial'
         ? [baseIdea]
         : [
