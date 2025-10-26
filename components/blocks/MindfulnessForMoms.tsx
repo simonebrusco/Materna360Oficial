@@ -41,7 +41,7 @@ const COLLECTIONS = [
   },
   {
     id: 'acolhimento',
-    icon: '🤍',
+    icon: '���',
     titulo: 'Acolher emoções',
     descricao: 'Meditações guiadas para reconhecer sentimentos e transformá-los em cuidado consigo mesma.',
   },
@@ -65,7 +65,7 @@ export default function MindfulnessForMoms() {
   return (
     <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-10 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-12">
       <header className="space-y-2">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Bem-estar emocional</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-primary">Bem-estar emocional</span>
         <h2 className="flex items-center gap-3 text-[22px] font-semibold leading-[1.28] text-support-1">
           <span aria-hidden="true" className="text-2xl md:text-3xl">
             🎧
