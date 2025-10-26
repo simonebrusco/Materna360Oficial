@@ -10,6 +10,7 @@ import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getDayIndex } from '@/app/lib/dailyMessage'
 import { profilePreferredBuckets, type Profile } from '@/app/lib/ageRange'
+import { readProfileCookie } from '@/app/lib/profileCookie'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 
 export const dynamic = 'force-dynamic'
