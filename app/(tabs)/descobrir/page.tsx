@@ -190,6 +190,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     searchParams,
   })
 
+  const telemetryFlags = Object.fromEntries(
+    Object.entries(serverFlags).map(([key, value]) => [key, Boolean(value)])
+  ) as Record<string, boolean>
+
   const {
     recShelf: recShelfEnabled,
     flashRoutine: flashRoutineEnabled,
@@ -204,6 +208,14 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
 
   const dateKey = getBrazilDateKey()
+
+  const telemetryCtx = {
+    appVersion: process.env.NEXT_PUBLIC_APP_VERSION,
+    route: '/descobrir',
+    tz: 'America/Sao_Paulo',
+    dateKey,
+    flags: telemetryFlags,
+  }
 
   const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
     mode: requestedMode,
