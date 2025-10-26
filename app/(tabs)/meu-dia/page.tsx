@@ -1,4 +1,5 @@
 import { cookies as getCookies } from 'next/headers'
+import { cookies as getCookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
 import { MeuDiaClient } from './Client'
