@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import TrailHeader from '@/components/blocks/MindfulnessJourneysTrail/TrailHeader'
+import { CompleteButton } from '@/components/features/Journeys/CompleteButton'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 
@@ -263,21 +264,18 @@ export function CareJourneys() {
                       return (
                         <div
                           key={challenge}
-                          className={`flex items-center justify-between rounded-2xl border p-4 transition-all duration-200 ${
+                          className={`flex items-center justify-between gap-4 rounded-2xl border p-4 transition-all duration-200 ${
                             isDone
                               ? 'border-primary/40 bg-primary/10 text-primary'
                               : 'border-white/60 bg-white/90 text-support-2'
                           }`}
                         >
                           <p className={`text-sm ${isDone ? 'text-primary/90 line-through' : 'text-support-1'}`}>{challenge}</p>
-                          <Button
-                            variant={isDone ? 'secondary' : 'primary'}
-                            size="sm"
+                          <CompleteButton
+                            done={isDone}
                             onClick={() => handleToggleChallenge(activeJourneyState.journey.id, index)}
-                            className="ml-4 whitespace-nowrap"
-                          >
-                            {isDone ? 'Concluído' : 'Marcar como concluído'}
-                          </Button>
+                            data-testid="journey-complete-btn"
+                          />
                         </div>
                       )
                     })}
