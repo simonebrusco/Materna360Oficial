@@ -129,6 +129,101 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   printable: { icon: '🖨️', title: 'Printables para Brincar' },
 }
 
+function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
+  const [imageError, setImageError] = useState(false)
+
+  const bucketChips = profileMode === 'all' ? item.matchedBuckets : [item.primaryBucket]
+  const criticalFlag = item.safetyFlags?.find((flag) => {
+    const normalized = flag.toLowerCase()
+    return normalized.includes('peças pequenas') || normalized.includes('engasgo')
+  })
+  const safetyTooltip = item.safetyFlags?.join(' • ')
+  const isSaving = savingProductId === item.id
+
+  return (
+    <Card className="relative flex min-w-[260px] max-w-[260px] snap-start flex-col overflow-hidden bg-white/90 shadow-soft transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-elevated">
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
+          Parceria
+        </span>
+        {criticalFlag && (
+          <span
+            className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold text-primary shadow-soft"
+            title={safetyTooltip}
+          >
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            Cuidados
+          </span>
+        )}
+        {imageError ? (
+          <div className="flex h-full w-full items-center justify-center bg-secondary/40 text-xs font-semibold text-support-2/80">
+            Imagem indisponível
+          </div>
+        ) : (
+          <Image
+            src={item.imageUrl}
+            alt={item.title}
+            fill
+            sizes="(min-width: 1024px) 260px, 70vw"
+            className="object-cover"
+            onError={() => setImageError(true)}
+            loading="lazy"
+          />
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div>
+          <h3 className="text-base font-semibold text-support-1">{item.title}</h3>
+          {item.subtitle && <p className="mt-1 text-sm text-support-2/90">{item.subtitle}</p>}
+          {item.priceHint && (
+            <span className="mt-1 inline-block text-xs font-semibold text-primary/80">{item.priceHint}</span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
+          {bucketChips.map((bucket) => (
+            <span
+              key={`${item.id}-${bucket}`}
+              className="rounded-full bg-secondary/40 px-3 py-1 font-semibold text-support-2 shadow-soft"
+            >
+              {bucketLabels[bucket]}
+            </span>
+          ))}
+          {item.skills?.slice(0, 3).map((skill) => (
+            <span
+              key={`${item.id}-skill-${skill}`}
+              className="rounded-full border border-white/60 bg-white/80 px-3 py-1 font-semibold text-support-2/80 shadow-soft"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+        {item.reasons && item.reasons.length > 0 && (
+          <ul className="list-disc space-y-1 pl-5 text-xs text-support-2/90">
+            {item.reasons.slice(0, 3).map((reason) => (
+              <li key={`${item.id}-reason-${reason}`}>{reason}</li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-auto flex flex-col gap-2 pt-2">
+          <Button variant="primary" size="sm" className="w-full" onClick={() => onBuy(item)}>
+            <ShoppingBag className="h-4 w-4" aria-hidden />
+            Comprar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => void onSave(item)}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Salvando…' : 'Salvar no Planner'}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 export default function DescobrirClient({
   suggestions,
   filters,
@@ -295,7 +390,7 @@ export default function DescobrirClient({
       <Reveal delay={80}>
         <SectionWrapper
           title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
-          description="Combine idade e local para criar experi��ncias personalizadas em segundos."
+          description="Combine idade e local para criar experiências personalizadas em segundos."
         >
           <Card className="p-7">
             <div className="grid gap-6 md:grid-cols-2">
