@@ -189,13 +189,13 @@ export function CareJourneys() {
 
   return (
     <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_42px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
-      <header className="space-y-2">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-primary">Autocuidado guiado</span>
-        <h2 className="flex items-center gap-2 text-[22px] font-semibold leading-[1.28] text-support-1">
+      <header className="space-y-2 md:space-y-3">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">Autocuidado guiado</span>
+        <h2 className="flex items-center gap-2 text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
           <span aria-hidden="true">🌼</span>
           <span>Jornadas do Cuidar</span>
         </h2>
-        <p className="max-w-2xl text-[15px] leading-[1.45] text-support-2/85">
+        <p className="max-w-2xl text-sm leading-[1.45] text-support-2/85 md:text-base">
           Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
         </p>
         <div className="h-px w-full bg-support-2/15" />
