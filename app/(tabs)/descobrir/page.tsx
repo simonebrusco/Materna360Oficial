@@ -292,7 +292,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       profile={profileSummary}
       initialAgeFilter={initialAgeFilter}
       initialPlaceFilter={initialPlaceFilter}
-      recProducts={recProducts}
       recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
       flashRoutine={{
         enabled: flashRoutineEnabled,
