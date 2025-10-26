@@ -580,11 +580,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                   type="button"
                   onClick={() => setCategory(option.value)}
                   aria-pressed={isActive}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                    isActive
-                      ? 'border-primary bg-primary text-white shadow-glow'
-                      : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
-                  }`}
+                  className={chipClasses(isActive)}
                 >
                   <span className="mr-1" aria-hidden="true">
                     {option.icon}
@@ -608,11 +604,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => setTimeMax(isActive ? null : value)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                      isActive
-                        ? 'border-primary bg-primary text-white shadow-glow'
-                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
-                    }`}
+                    className={chipClasses(isActive)}
                   >
                     {value} min
                   </button>
@@ -632,11 +624,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                     type="button"
                     onClick={() => toggleEquipment(option.value)}
                     aria-pressed={isActive}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                      isActive
-                        ? 'border-primary bg-primary text-white shadow-glow'
-                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
-                    }`}
+                    className={chipClasses(isActive)}
                   >
                     {option.label}
                   </button>
@@ -656,11 +644,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                     type="button"
                     onClick={() => toggleDiet(option.value)}
                     aria-pressed={isActive}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                      isActive
-                        ? 'border-primary bg-primary text-white shadow-glow'
-                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
-                    }`}
+                    className={chipClasses(isActive)}
                   >
                     {option.label}
                   </button>
@@ -680,11 +664,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                     type="button"
                     onClick={() => setEnergy(option.value)}
                     aria-pressed={isActive}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                      isActive
-                        ? 'border-primary bg-primary text-white shadow-glow'
-                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
-                    }`}
+                    className={chipClasses(isActive)}
                   >
                     {option.label}
                   </button>
