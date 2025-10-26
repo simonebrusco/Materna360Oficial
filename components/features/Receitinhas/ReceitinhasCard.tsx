@@ -63,6 +63,13 @@ const BUDGET_OPTIONS: { value: RecipeBudget; label: string }[] = [
   { value: '$$$', label: '$$$ (especial)' },
 ]
 
+const chipClasses = (active: boolean) =>
+  `inline-flex h-[26px] items-center rounded-full border px-[12px] text-[12px] font-semibold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-[28px] md:px-4 md:text-[13px] ${
+    active
+      ? 'border-primary bg-primary text-white shadow-[0_0_0_1px_rgba(255,0,94,0.35)]'
+      : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-primary/40 hover:text-primary'
+  }`
+
 const HISTORY_STORAGE_KEY = 'receitinhas:history'
 const FAVORITES_STORAGE_KEY = 'receitinhas:favorites'
 const SHOPPING_LIST_STORAGE_KEY = 'materna360:shopping-list'
