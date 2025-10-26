@@ -169,13 +169,21 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
   }
 
-  const dateKey = getBrazilDateKey()
+  const serverFlags = getServerFlags({
+    cookies: (name) => jar.get(name)?.value,
+    searchParams,
+  })
 
-  const recShelfEnabled = isFeatureEnabled('discover.recShelf')
-  const flashRoutineEnabled = isFeatureEnabled('discover.flashRoutine')
-  const flashRoutineAIEnabled = isFeatureEnabled('discover.flashRoutineAI')
-  const selfCareEnabled = isFeatureEnabled('discover.selfCare')
-  const selfCareAIEnabled = isFeatureEnabled('discover.selfCareAI')
+  const {
+    recShelf: recShelfEnabled,
+    recShelfAI: recShelfAIEnabled,
+    flashRoutine: flashRoutineEnabled,
+    flashRoutineAI: flashRoutineAIEnabled,
+    selfCare: selfCareEnabled,
+    selfCareAI: selfCareAIEnabled,
+  } = serverFlags
+
+  const dateKey = getBrazilDateKey()
 
   const targetBuckets: QuickIdeasAgeBucket[] =
     requestedMode === 'all'
