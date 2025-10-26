@@ -237,10 +237,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     ? FlashRoutineSchema.parse(flashRoutineResult.routine)
     : null
 
-  const flashRoutine = flashRoutineEnabled && flashRoutineRoutine
+  const flashRoutine = flashRoutineEnabled && flashRoutineResult && flashRoutineRoutine
     ? {
         routine: flashRoutineRoutine,
-        strategy: flashRoutineResult?.source ?? null,
+        strategy: flashRoutineResult.source,
         analyticsSource: 'local' as const,
       }
     : null
