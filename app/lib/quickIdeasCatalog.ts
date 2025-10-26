@@ -222,14 +222,21 @@ const selectChildrenForMode = (
   return [children[0]]
 }
 
-export const youngestBucket = (children: DiscoverChild[]): QuickIdeasAgeBucket => {
+export const youngestBucket = (
+  children: Array<DiscoverChild | QuickIdeasAgeBucket>
+): QuickIdeasAgeBucket => {
   if (children.length === 0) {
     return '2-3'
   }
-  const ordered = [...children].sort(
-    (a, b) => AGE_BUCKET_ORDER.indexOf(a.age_bucket) - AGE_BUCKET_ORDER.indexOf(b.age_bucket)
+
+  const buckets = children.map((child) =>
+    typeof child === 'string' ? child : child.age_bucket
   )
-  return ordered[0]?.age_bucket ?? '2-3'
+
+  const ordered = [...buckets].sort(
+    (a, b) => AGE_BUCKET_ORDER.indexOf(a) - AGE_BUCKET_ORDER.indexOf(b)
+  )
+  return ordered[0] ?? '2-3'
 }
 
 export const buildDailySuggestions = (
