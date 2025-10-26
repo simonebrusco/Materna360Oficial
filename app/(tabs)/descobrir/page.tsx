@@ -213,8 +213,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
     : []
 
-  const recProducts = recShelfEnabled ? recProductsCatalog.filter((product) => product.active) : []
-
   const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
     mode: requestedMode,
     activeChildId,
