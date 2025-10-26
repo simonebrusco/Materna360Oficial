@@ -31,6 +31,10 @@ const getStore = () => {
       'quick_ideas_error': 0,
       'quick_ideas_access_denied': 0,
       'quick_ideas_bad_request': 0,
+      'discover_rec_impression': 0,
+      'discover_rec_click_buy': 0,
+      'discover_rec_save_planner': 0,
+      'discover_rec_view_details': 0,
     }
   }
 
