@@ -35,9 +35,9 @@ export default function TrailHeader() {
   const { completed, total, weekLabel } = useMindfulnessProgress()
   const [name, setName] = useState<string | undefined>(undefined)
 
-  const safeTotal = Math.max(typeof total === 'number' && Number.isFinite(total) ? total : 1, 1)
+  const safeTotal = Math.max(typeof total === 'number' && Number.isFinite(total) ? Math.floor(total) : 1, 1)
   const safeCompleted = Math.min(
-    Math.max(typeof completed === 'number' && Number.isFinite(completed) ? completed : 0, 0),
+    Math.max(typeof completed === 'number' && Number.isFinite(completed) ? Math.floor(completed) : 0, 0),
     safeTotal
   )
   const progressWidth = `${(safeCompleted / safeTotal) * 100}%`
@@ -51,10 +51,15 @@ export default function TrailHeader() {
     : 'Pequenos passos para cuidar de você todos os dias.'
 
   return (
-    <div data-testid="journeys-trail" className="rounded-3xl border border-white/70 bg-white/80 px-4 py-5 shadow-[0_18px_36px_-18px_rgba(47,58,86,0.28)] backdrop-blur-sm md:px-6 md:py-6">
-      <p className="text-sm text-support-2/80 md:text-base">{subtitle}</p>
+    <div data-testid="journeys-trail" className="rounded-3xl border border-white/70 bg-white/88 px-4 py-5 shadow-[0_16px_36px_-20px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-6 md:py-6">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <p className="text-sm text-support-2/80 md:text-[15px] md:leading-[1.45]">{subtitle}</p>
+        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary/70">
+          {safeCompleted}/{safeTotal}
+        </span>
+      </div>
 
-      <div className="mt-4 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-inner backdrop-blur">
+      <div className="mt-4 rounded-2xl border border-white/60 bg-white/75 p-4 shadow-inner backdrop-blur">
         <div
           role="progressbar"
           aria-valuenow={safeCompleted}
@@ -70,8 +75,8 @@ export default function TrailHeader() {
         </div>
 
         <div className="grid grid-cols-7 gap-2 sm:gap-3">
-          {Array.from({ length: total }).map((_, index) => {
-            const done = index < completed
+          {Array.from({ length: safeTotal }).map((_, index) => {
+            const done = index < safeCompleted
             return (
               <span
                 key={index}
@@ -88,7 +93,7 @@ export default function TrailHeader() {
 
         <div className="mt-3 flex items-center justify-between text-xs text-support-2/80">
           <span>
-            {completed}/{total} concluídos nesta {weekLabel.toLowerCase()}.
+            {safeCompleted}/{safeTotal} concluídos nesta {weekLabel.toLowerCase()}.
           </span>
           <span className="hidden sm:inline">Siga no seu ritmo 💗</span>
         </div>
