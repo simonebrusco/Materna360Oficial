@@ -526,7 +526,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
             </span>
             <div>
               <h2 className="text-xl font-semibold text-support-1">Receitinhas</h2>
-              <p className="text-sm text-support-2/80">Tell me 1 ingredient and I’ll handle the rest.</p>
+              <p className="text-sm text-support-2/80">Diga 1 ingrediente e eu preparo o resto.</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
