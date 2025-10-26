@@ -1,6 +1,8 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 
-interface SectionWrapperProps extends HTMLAttributes<HTMLElement> {
+type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>
+
+interface SectionWrapperProps extends BaseAttributes {
   as?: keyof JSX.IntrinsicElements
   eyebrow?: ReactNode
   title?: ReactNode
