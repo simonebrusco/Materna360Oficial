@@ -412,7 +412,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         }
         const data = (await response.json()) as RecipesApiResponse
         if (data.access.denied) {
-          setAccessModal(data.access.message || 'Dispon��vel apenas em planos pagos.')
+          setAccessModal(data.access.message || 'Disponível apenas em planos pagos.')
           setSuggestions([])
           setAggregatedShoppingList([])
           return
@@ -758,15 +758,17 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               <span className="text-xs text-support-2/70">Toque para ver detalhes completos</span>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2">
-              {suggestions.map((suggestion) => (
-                <article
-                  key={suggestion.id}
-                  className="min-w-[260px] flex-1 rounded-3xl border border-white/60 bg-white/95 p-5 shadow-soft transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
-                >
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-                    <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    {formatBadgeLabel(suggestion.badges?.[0] ?? '')}
-                  </div>
+              {suggestions.map((suggestion) => {
+                const headlineBadge = suggestion.badges?.[0] ?? 'Receita IA'
+                return (
+                  <article
+                    key={suggestion.id}
+                    className="min-w-[260px] flex-1 rounded-3xl border border-white/60 bg-white/95 p-5 shadow-soft transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
+                  >
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                      <Sparkles className="h-4 w-4" aria-hidden="true" />
+                      {formatBadgeLabel(headlineBadge)}
+                    </div>
                   <h4 className="mt-3 text-lg font-semibold text-support-1">{suggestion.title}</h4>
                   <p className="mt-2 text-sm text-support-2/80">{suggestion.summary}</p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-support-2/70">
@@ -799,7 +801,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                     </button>
                   </div>
                 </article>
-              ))}
+              )})}
             </div>
           </div>
         )}
