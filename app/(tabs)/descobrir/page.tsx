@@ -152,6 +152,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const recShelfEnabled = isFeatureEnabled('discover.recShelf')
   const flashRoutineEnabled = isFeatureEnabled('discover.flashRoutine')
   const flashRoutineAIEnabled = isFeatureEnabled('discover.flashRoutineAI')
+  const selfCareEnabled = isFeatureEnabled('discover.selfCare')
+  const selfCareAIEnabled = isFeatureEnabled('discover.selfCareAI')
 
   const activeChild = fallbackChildren.find((child) => child.id === rawActiveId) ?? fallbackChildren[0]
 
