@@ -16,6 +16,10 @@ export type TelemetryEvent =
   | 'discover_flash_save_planner'
   | 'discover_flash_start'
   | 'discover_flash_error'
+  | 'discover_selfcare_impression'
+  | 'discover_selfcare_done'
+  | 'discover_selfcare_save_planner'
+  | 'discover_selfcare_error'
 
 const GLOBAL_KEY = '__materna360Telemetry__'
 
