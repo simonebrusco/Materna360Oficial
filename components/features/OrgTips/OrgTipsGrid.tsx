@@ -306,7 +306,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.tempo}
                   onClick={() => toggleCollapse('tempo')}
-                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
                   <span>Tempo livre</span>
                   {!collapse.tempo && summaryTempo ? <span className={summaryPillClass}>{summaryTempo}</span> : null}
@@ -314,7 +314,7 @@ export function OrgTipsGrid() {
                     ›
                   </span>
                 </button>
-                <div style={collapseStyles(collapse.tempo)} aria-hidden={!collapse.tempo} className="pt-1">
+                <div style={collapseStyles(collapse.tempo)} aria-hidden={!collapse.tempo} className="px-1 py-1.5">
                   <div className="flex flex-wrap gap-[6px]">
                     {TEMPO_OPTIONS.map((option) => {
                       const active = fTempo === option.value
@@ -340,7 +340,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.tema}
                   onClick={() => toggleCollapse('tema')}
-                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
                   <span>Tema</span>
                   {!collapse.tema && summaryTema ? <span className={summaryPillClass}>{summaryTema}</span> : null}
@@ -348,7 +348,7 @@ export function OrgTipsGrid() {
                     ›
                   </span>
                 </button>
-                <div style={collapseStyles(collapse.tema)} aria-hidden={!collapse.tema} className="pt-1">
+                <div style={collapseStyles(collapse.tema)} aria-hidden={!collapse.tema} className="px-1 py-1.5">
                   <div className="flex flex-wrap gap-[6px]">
                     {TEMA_OPTIONS.map((option) => {
                       const active = fTema === option.value
@@ -374,7 +374,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.formato}
                   onClick={() => toggleCollapse('formato')}
-                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
                   <span>Formato</span>
                   {!collapse.formato && summaryFormato ? <span className={summaryPillClass}>{summaryFormato}</span> : null}
@@ -382,7 +382,7 @@ export function OrgTipsGrid() {
                     ›
                   </span>
                 </button>
-                <div style={collapseStyles(collapse.formato)} aria-hidden={!collapse.formato} className="pt-1">
+                <div style={collapseStyles(collapse.formato)} aria-hidden={!collapse.formato} className="px-1 py-1.5">
                   <div className="flex flex-wrap gap-[6px]">
                     {FORMATO_OPTIONS.map((option) => {
                       const active = fFormato === option.value
@@ -408,7 +408,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.comQuem}
                   onClick={() => toggleCollapse('comQuem')}
-                  className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
                   <span>Com quem</span>
                   {!collapse.comQuem && summaryComQuem ? <span className={summaryPillClass}>{summaryComQuem}</span> : null}
@@ -416,7 +416,7 @@ export function OrgTipsGrid() {
                     ›
                   </span>
                 </button>
-                <div style={collapseStyles(collapse.comQuem)} aria-hidden={!collapse.comQuem} className="pt-1">
+                <div style={collapseStyles(collapse.comQuem)} aria-hidden={!collapse.comQuem} className="px-1 py-1.5">
                   <div className="flex flex-wrap gap-[6px]">
                     {COM_QUEM_OPTIONS.map((option) => {
                       const active = fComQuem === option.value
