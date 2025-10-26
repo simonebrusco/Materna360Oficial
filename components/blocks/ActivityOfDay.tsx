@@ -322,7 +322,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
             <span className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
               {badgeLabel}
             </span>
-            <p className="mt-4 text-2xl font-bold text-support-1 md:text-3xl">{headlineTitle}</p>
+            <p className="mt-4 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">{headlineTitle}</p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
               <span className="inline-flex items-center gap-1">👧 {ageLabel}</span>
               {!isAllMode && hasDuration && (
