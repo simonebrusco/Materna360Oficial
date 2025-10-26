@@ -58,7 +58,7 @@ type ToastState = {
 type SuggestionChild = {
   id: string
   name?: string
-  age_bucket: string
+  age_bucket: QuickIdeasAgeBucket
 }
 
 type SuggestionCard = QuickIdea & {
