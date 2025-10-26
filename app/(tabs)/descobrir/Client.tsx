@@ -458,6 +458,72 @@ export default function DescobrirClient({
     }
   }
 
+  const handleStartFlashRoutine = () => {
+    if (!flashRoutine.enabled || !flashRoutine.routine) {
+      return
+    }
+    trackTelemetry('discover_flash_start', {
+      id: flashRoutine.routine.id,
+      total: flashRoutine.routine.totalMin,
+      source: flashRoutine.analyticsSource,
+    })
+    setToast({ message: 'Rotina iniciada! Aproveite os próximos minutos juntos.', type: 'info' })
+  }
+
+  const handleSaveFlashRoutine = async () => {
+    if (!flashRoutine.enabled || !flashRoutine.routine) {
+      return
+    }
+    setSavingRoutine(true)
+    trackTelemetry('discover_flash_save_planner', {
+      id: flashRoutine.routine.id,
+      source: flashRoutine.analyticsSource,
+    })
+
+    try {
+      const response = await fetch('/api/planner/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Flash Routine: ${flashRoutine.routine.title}`,
+          dateISO: dateKey,
+          timeISO: '09:30',
+          category: 'Descobrir',
+          link: '/descobrir',
+          payload: {
+            type: 'routine',
+            id: flashRoutine.routine.id,
+            title: flashRoutine.routine.title,
+            totalMin: flashRoutine.routine.totalMin,
+            steps: flashRoutine.routine.steps,
+            materials: flashRoutine.routine.materials,
+            safetyNotes: flashRoutine.routine.safetyNotes ?? [],
+          },
+          tags: ['rotina', flashRoutine.routine.locale],
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
+      }
+
+      setToast({ message: 'Rotina salva no Planner!', type: 'success' })
+    } catch (error) {
+      console.error('[FlashRoutine] Planner save failed:', error)
+      trackTelemetry('discover_flash_error', {
+        action: 'save_planner',
+        id: flashRoutine.routine.id,
+      })
+      setToast({
+        message: error instanceof Error ? error.message : 'Erro ao salvar a rotina.',
+        type: 'error',
+      })
+    } finally {
+      setSavingRoutine(false)
+    }
+  }
+
   return (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
