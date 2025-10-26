@@ -1,9 +1,9 @@
-export const runtime = 'edge'
-
 import { NextResponse } from 'next/server'
 
 import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog'
 import { trackTelemetry } from '@/app/lib/telemetry'
+
+export const runtime = 'edge'
 
 type AgeBucket = '0-1' | '2-3' | '4-5' | '6-7' | '8+'
 
