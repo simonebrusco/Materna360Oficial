@@ -390,7 +390,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `Receita IA: ${recipe.title}`,
+          title: `Receitinhas: ${recipe.title}`,
           dateISO: plannerDate,
           timeISO: plannerTime,
           category: plannerCategory,
