@@ -202,7 +202,7 @@ export function CareJourneys() {
       </header>
 
       <div className="mt-4 space-y-5 md:mt-5 md:space-y-6">
-        <TrailHeader />
+        <TrailHeader journeySummary={journeySummary} />
         <div className="grid grid-cols-1 gap-y-4 gap-x-3 md:grid-cols-2 md:gap-y-5 md:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
           {journeys.map((journey) => {
             const journeyProgress = progressMap[journey.id]
