@@ -209,24 +209,22 @@ const selectTargetChildren = (
 
 type MinimalChild = {
   name?: string
-  age_bucket: QuickIdeasChildInput['age_bucket']
+  age_bucket?: string | number | null
   [key: string]: unknown
 }
 
-const normalizeChildren = (
-  arr: QuickIdeasChildInput[] | readonly QuickIdeasChildInput[] | null | undefined
-): MinimalChild[] => {
+const normalizeChildren = (arr: unknown[] | null | undefined): MinimalChild[] => {
   if (!arr) {
     return []
   }
 
-  return (arr as QuickIdeasChildInput[])
+  return (arr as unknown[])
     .filter(Boolean)
-    .map((child) => ({
-      ...(child as object),
+    .map((child: any) => ({
+      ...(child ?? {}),
       name: child?.name ?? undefined,
-      age_bucket: child?.age_bucket as QuickIdeasChildInput['age_bucket'],
-    })) as MinimalChild[]
+      age_bucket: child?.age_bucket ?? undefined,
+    }))
 }
 
 const normalizeIdea = (idea: QuickIdea, fallbackLocation: QuickIdeasContextInput['location']): QuickIdea => {
@@ -336,7 +334,7 @@ export async function POST(request: Request) {
   }
 
   const { plan, profile, context } = payload
-  const rawChildren = selectTargetChildren(profile)
+  const rawChildren = (selectTargetChildren(profile) ?? []) as unknown[]
   const targetChildren = normalizeChildren(rawChildren)
   const ageBuckets = targetChildren.map((child) => child.age_bucket)
   const youngest = youngestBucket(targetChildren as any)
