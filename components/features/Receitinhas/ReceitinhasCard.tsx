@@ -802,7 +802,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                       <Timer className="h-3.5 w-3.5" aria-hidden="true" /> {suggestion.time_total_min} min
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-secondary/40 px-3 py-1">
-                      <PiggyBank className="h-3.5 w-3.5" aria-hidden="true" /> {suggestion.cost_tier}
+                      <PiggyBank className="h-3.5 w-3.5" aria-hidden="true" /> {formatBudgetLabel(suggestion.cost_tier)}
                     </span>
                   </div>
                   <div className="mt-5 flex gap-2">
