@@ -129,6 +129,13 @@ const generatePlannerId = (prefix: string, value: string): string => {
   return `${prefix}-${identifier}`.slice(0, 80)
 }
 
+const resolveRecipeId = (candidate: unknown, title: string, prefix: string): string => {
+  if (typeof candidate === 'string' && candidate.trim()) {
+    return candidate.trim()
+  }
+  return generatePlannerId(prefix, title)
+}
+
 type PlannerCategory = (typeof CATEGORY_OPTIONS)[number]
 
 type ProfileChild = {
