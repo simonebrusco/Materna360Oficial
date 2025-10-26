@@ -49,7 +49,7 @@ function BreathTimer() {
   return (
     <Card className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/90 px-6 py-10 text-center shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-10 md:py-12">
       <header className="space-y-3">
-        <span className="text-sm font-semibold text-support-2/80">Pausa consciente</span>
+        <span className="text-sm font-semibold text-primary">Pausa consciente</span>
         <h2 className="text-[22px] font-semibold text-support-1">Respiração Guiada</h2>
         <p className="mx-auto max-w-2xl text-sm text-support-2/80 md:text-base">
           Sincronize sua respiração com um ritmo suave e acolhedor.
