@@ -441,7 +441,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           return
         }
         if (data.access.limited_to_one) {
-          setToast({ message: 'Essencial plan: 1 recipe/day', type: 'info' })
+          setToast({ message: 'No Essencial você vê 1 receita por dia.', type: 'info' })
         }
         const received = data.suggestions ?? []
         setSuggestions(received)
