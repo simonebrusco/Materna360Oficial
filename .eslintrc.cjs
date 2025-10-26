@@ -7,6 +7,7 @@ module.exports = {
   rules: {
     'import/first': 'error',
     'no-duplicate-imports': 'error',
+    '@typescript-eslint/no-redeclare': 'error',
   },
   settings: {
     'import/resolver': {
