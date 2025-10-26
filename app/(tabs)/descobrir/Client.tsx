@@ -65,6 +65,17 @@ type SuggestionCard = QuickIdea & {
   child?: SuggestionChild
 }
 
+type ProfileSummary = {
+  mode: 'single' | 'all'
+  activeChildId?: string | null
+  children: SuggestionChild[]
+}
+
+type RecShelfState = {
+  enabled: boolean
+  groups: RecShelfGroup[]
+}
+
 type QuickIdeaFiltersSummary = {
   location: QuickIdeasLocation
   time_window_min: QuickIdeasTimeWindow
