@@ -1,8 +1,6 @@
-export const PLANNER_COOKIE_NAME = 'materna360-planner'
 import { trackTelemetry } from '@/app/lib/telemetry'
 
 import { validatePlannerItem, type PlannerItemT } from './plannerGuard'
-
 
 export const PLANNER_COOKIE_NAME = 'materna360-planner'
 export const MAX_PLANNER_ITEMS_PER_DAY = 20
