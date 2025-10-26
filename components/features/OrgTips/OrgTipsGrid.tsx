@@ -401,11 +401,11 @@ export function OrgTipsGrid() {
             {showResults ? (
               <>
                 <div className="contents" data-lote="A">
-                  {matchingLoteA.map((tip) => renderTipCard(tip))}
+                  {matchingLoteA.map(renderTipCard)}
                 </div>
                 {showAll ? (
                   <div className="contents" data-lote="B">
-                    {matchingLoteB.map((tip) => renderTipCard(tip))}
+                    {matchingLoteB.map(renderTipCard)}
                   </div>
                 ) : null}
               </>
