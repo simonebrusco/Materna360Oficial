@@ -606,7 +606,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </fieldset>
 
           <fieldset className="space-y-3">
-            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Equipamentos</legend>
+            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">EQUIPAMENTOS</legend>
             <div className="flex flex-wrap gap-2">
               {EQUIPMENT_OPTIONS.map((option) => {
                 const isActive = equipment.includes(option.value)
