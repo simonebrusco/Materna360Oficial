@@ -28,7 +28,7 @@ export default function ProfessionalCard({ pro }: ProfessionalCardProps) {
   const avatarSrc = pro.avatarUrl || FALLBACK_AVATAR
 
   return (
-    <article className="flex h-full flex-col gap-4 rounded-2xl border border-white/60 bg-white/85 p-4 shadow-soft md:p-5">
+    <article className="CardElevate flex h-full flex-col gap-4 rounded-2xl border border-white/60 bg-white/85 p-4 md:p-5">
       <div className="flex items-start gap-4">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/80 bg-white">
           <Image
