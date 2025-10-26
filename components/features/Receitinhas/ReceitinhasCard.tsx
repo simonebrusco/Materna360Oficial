@@ -703,7 +703,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </div>
 
           <fieldset className="flex items-center gap-2">
-            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Orçamento</legend>
+            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">ORÇAMENTO</legend>
             <div className="flex gap-2">
               {BUDGET_OPTIONS.map((option) => {
                 const isActive = option.value === budget
