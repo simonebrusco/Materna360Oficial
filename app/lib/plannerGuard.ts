@@ -3,7 +3,7 @@ import { z } from 'zod'
 const stringId = z.string().trim().min(1)
 const stringTitle = z.string().trim().min(1)
 const trimmedStringArray = z
-  .array(z.string().transform((value) => value.trim()).pipe(z.string()))
+  .array(z.string().transform((value) => value.trim()))
   .transform((values) => values.filter((value) => value.length > 0))
 
 const PlannerIdea = z
