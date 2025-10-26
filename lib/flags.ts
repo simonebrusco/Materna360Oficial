@@ -4,6 +4,7 @@ export interface FeatureFlags {
   enableAIRecommendations: boolean
   enableMentoringFeature: boolean
   enableCommunity: boolean
+  'discover.recShelf': boolean
 }
 
 const defaultFlags: FeatureFlags = {
