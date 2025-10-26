@@ -291,14 +291,15 @@ export function OrgTipsGrid() {
   return (
     <>
       <div className="space-y-4">
-        <div className="mx-auto max-w-[55rem] rounded-3xl border border-white/70 bg-white/92 p-3 shadow-[0_18px_44px_-30px_rgba(47,58,86,0.26)] backdrop-blur-sm sm:px-[14px] sm:py-[14px] md:px-4 md:py-4">
+        <div className="mx-auto max-w-[55rem] rounded-3xl border border-support-2/20 bg-white/95 p-3 shadow-[0_16px_38px_-28px_rgba(47,58,86,0.24)] backdrop-blur-sm sm:px-3 sm:py-3 md:px-4 md:py-4">
           <div className="space-y-3">
-            <header className="space-y-1.5">
-              <h3 className="text-[18px] font-semibold leading-[1.3] text-support-1">Dicas de Organização</h3>
-              <p className="text-[14px] leading-[1.45] text-support-2/80">Sugestões rápidas para organizar a rotina com leveza.</p>
+            <header className="space-y-2">
+              <h3 className="text-[18px] font-semibold leading-[1.28] text-support-1">Dicas de Organização</h3>
+              <p className="text-[13px] leading-[1.45] text-support-2/85">Sugestões rápidas para organizar a rotina com leveza.</p>
+              <div className="h-px w-full bg-support-2/15" />
             </header>
 
-            <div className="mt-3 grid gap-y-3 md:grid-cols-2 md:gap-x-4">
+            <div className="grid gap-y-2 md:grid-cols-2 md:gap-x-4">
               <section className="space-y-1">
                 <button
                   type="button"
