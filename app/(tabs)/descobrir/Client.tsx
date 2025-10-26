@@ -24,6 +24,7 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
+import type { RecProductKind } from '@/app/types/recProducts'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
