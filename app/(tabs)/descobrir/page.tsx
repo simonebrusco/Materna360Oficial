@@ -221,7 +221,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   })
 
-  const flashFilters = toFlashFilters(filters)
+  const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
 
   const flashRoutineResult = flashRoutineEnabled
     ? selectFlashRoutine({
