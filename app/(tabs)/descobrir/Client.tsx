@@ -158,6 +158,25 @@ export default function DescobrirClient({
     return parts.join(' • ')
   }, [filters])
 
+  useEffect(() => {
+    if (!recShelf.enabled || recShelf.groups.length === 0) {
+      return
+    }
+    const key = recShelf.groups.map((group) => `${group.kind}:${group.items.length}`).join('|')
+    if (impressionsKeyRef.current === key) {
+      return
+    }
+    recShelf.groups.forEach((group) => {
+      trackTelemetry('discover_rec_impression', {
+        kind: group.kind,
+        count: group.items.length,
+      })
+    })
+    impressionsKeyRef.current = key
+  }, [recShelf, impressionsKeyRef])
+
+  const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
+
   const handleStart = (id: string) => {
     setExpandedIdeaId((current) => (current === id ? null : id))
   }
