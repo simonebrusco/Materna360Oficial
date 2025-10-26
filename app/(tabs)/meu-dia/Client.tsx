@@ -121,27 +121,32 @@ export function MeuDiaClient({
 
       <SectionWrapper>
         <Reveal delay={360}>
-          <Card>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas R��pidas</h2>
-                <p className="text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
+          <Card className="notesCard">
+            <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
+              <div className="notesCard-text">
+                <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">📝 Notas R��pidas</h2>
+                <p className="notesCard-meta meta text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
               </div>
-              <Button variant="primary" size="sm" onClick={() => setShowNoteModal(true)}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowNoteModal(true)}
+                className="notesCard-action"
+              >
                 ＋ Adicionar
               </Button>
             </div>
 
             {notes.length > 0 ? (
-              <div className="space-y-2">
+              <div className="notesCard-list space-y-2">
                 {notes.map((note, idx) => (
-                  <div key={idx} className="rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                  <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
                     {note}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-support-2">Nenhuma nota registrada ainda.</p>
+              <p className="notesCard-empty empty text-sm text-support-2">Nenhuma nota registrada ainda.</p>
             )}
           </Card>
         </Reveal>
@@ -150,7 +155,7 @@ export function MeuDiaClient({
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
           <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
-            <Card className="w-full">
+            <Card className="w-full notesCard-modal">
               <h3 className="mb-2 text-lg font-semibold text-support-1">Adicionar Nota</h3>
               <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
               <textarea
