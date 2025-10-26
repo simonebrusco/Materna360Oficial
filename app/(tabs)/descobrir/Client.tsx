@@ -782,6 +782,100 @@ export default function DescobrirClient({
         </SectionWrapper>
       </Reveal>
 
+      {flashRoutine.enabled && flashRoutine.routine && (
+        <Reveal delay={220}>
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden>⚡</span>
+                <span>Flash Routine</span>
+              </span>
+            }
+            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
+          >
+            <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-support-1 md:text-xl">
+                    {flashRoutine.routine.title}
+                  </h3>
+                  <p className="text-sm text-support-2/90">
+                    {flashRoutine.routine.totalMin} minutos • {friendlyLocationLabel(flashRoutine.routine.locale)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-support-2 shadow-soft">
+                    {bucketLabels[flashRoutine.routine.ageBucket]}
+                  </span>
+                  <span className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
+                    Parceria
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
+                <ol className="space-y-3 text-sm text-support-1">
+                  {flashRoutine.routine.steps.map((step, index) => (
+                    <li key={`${flashRoutine.routine.id}-step-${index}`} className="flex gap-3">
+                      <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <p className="font-semibold">{step.title}</p>
+                        <p className="text-xs text-support-2/80">≈ {step.minutes} minutos</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {flashRoutine.routine.materials.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {flashRoutine.routine.materials.map((material) => (
+                      <span
+                        key={`${flashRoutine.routine.id}-material-${material}`}
+                        className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft"
+                      >
+                        {material}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {flashRoutine.routine.safetyNotes && flashRoutine.routine.safetyNotes.length > 0 && (
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <AlertTriangle className="h-4 w-4" aria-hidden /> Cuidados
+                  </h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-support-2/90">
+                    {flashRoutine.routine.safetyNotes.map((note, idx) => (
+                      <li key={`${flashRoutine.routine.id}-safety-${idx}`}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="primary" size="sm" onClick={handleStartFlashRoutine}>
+                  Começar rotina ({flashRoutine.routine.totalMin}’)
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleSaveFlashRoutine()}
+                  disabled={savingRoutine}
+                >
+                  {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
+                </Button>
+              </div>
+            </Card>
+          </SectionWrapper>
+        </Reveal>
+      )}
+
       {showRecShelf ? (
         recShelf.groups.map((group, shelfIndex) => {
           const shelfMeta = shelfLabels[group.kind]
