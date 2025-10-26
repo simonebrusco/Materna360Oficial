@@ -151,10 +151,8 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
               <span
                 key={index}
                 aria-hidden="true"
-                className={`h-4 w-4 rounded-full ring-1 ring-white/70 transition-transform duration-150 ${
-                  done
-                    ? 'bg-pink-500 shadow-[0_0_0_4px_rgba(244,114,182,0.25)]'
-                    : 'bg-white hover:scale-105'
+                className={`relative h-4 w-4 rounded-full bg-primary shadow-[0_0_0_2px_rgba(255,0,94,0.15)] ring-1 ring-[rgba(255,0,94,0.25)] transition-transform duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(255,0,94,0.5)] ${
+                  done ? 'opacity-100 hover:scale-105' : 'opacity-75 hover:scale-[1.06]'
                 }`}
               />
             )
