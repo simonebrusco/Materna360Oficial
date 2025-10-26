@@ -710,13 +710,18 @@ export default function DescobrirClient({
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
 
+      trackTelemetry('planner_save_ok', { type: 'routine', id: routine.id }, telemetryCtx)
       setToast({ message: 'Rotina salva no Planner!', type: 'success' })
     } catch (error) {
       console.error('[FlashRoutine] Planner save failed:', error)
-      trackTelemetry('discover_flash_error', {
-        action: 'save_planner',
-        id: routine.id,
-      })
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'flash',
+          reason: error instanceof Error ? error.message : 'unknown',
+        },
+        { ...telemetryCtx, source: analyticsSource }
+      )
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar a rotina.',
         type: 'error',
