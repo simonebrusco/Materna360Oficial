@@ -319,6 +319,30 @@ export default function DescobrirClient({
   const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
   const showSelfCare = selfCare.enabled && selfCare.items.length > 0
   const routine = flashRoutine.enabled ? flashRoutine.routine : null
+  const routineId = routine?.id ?? null
+  const analyticsSource = flashRoutine.analyticsSource ?? 'local'
+  const stableDateKey = dateKey
+
+  const flashRoutineTelemetryPayload = useMemo(() => {
+    if (!routine) {
+      return null
+    }
+
+    return {
+      id: routine.id,
+      age_bucket: routine.ageBucket,
+      locale: routine.locale,
+      total: routine.totalMin,
+    }
+  }, [routine])
+
+  const flashRoutineImpressionKey = useMemo(() => {
+    if (!routineId) {
+      return null
+    }
+
+    return `${stableDateKey}::${routineId}::${analyticsSource}`
+  }, [stableDateKey, routineId, analyticsSource])
 
   const RoutineEmptyState = () => (
     <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-sm text-support-2/80">
@@ -327,21 +351,22 @@ export default function DescobrirClient({
   )
 
   useEffect(() => {
-    if (!flashRoutine.enabled || !routine) {
+    if (!flashRoutineImpressionKey || !flashRoutineTelemetryPayload) {
       return
     }
-    if (flashRoutineImpressionRef.current === routine.id) {
+
+    if (flashRoutineImpressionRef.current === flashRoutineImpressionKey) {
       return
     }
+
     trackTelemetry('discover_flash_impression', {
-      id: routine.id,
-      age_bucket: routine.ageBucket,
-      locale: routine.locale,
-      total: routine.totalMin,
-      source: flashRoutine.analyticsSource,
+      ...flashRoutineTelemetryPayload,
+      source: analyticsSource,
+      dateKey: stableDateKey,
     })
-    flashRoutineImpressionRef.current = routine.id
-  }, [flashRoutine.enabled, routine])
+
+    flashRoutineImpressionRef.current = flashRoutineImpressionKey
+  }, [flashRoutineImpressionKey, flashRoutineTelemetryPayload, analyticsSource, stableDateKey])
 
   useEffect(() => {
     if (!showSelfCare) {
