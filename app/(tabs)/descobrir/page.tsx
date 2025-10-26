@@ -210,6 +210,16 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   })
 
+  const resolvedChildren = profileSummary.children
+  const activeChild =
+    (activeChildId ? resolvedChildren.find((child) => child.id === activeChildId) : null) ??
+    resolvedChildren[0]
+
+  const targetBuckets: QuickIdeasAgeBucket[] =
+    requestedMode === 'all'
+      ? resolvedChildren.map((child) => child.age_bucket)
+      : [(activeChild?.age_bucket ?? '2-3') as QuickIdeasAgeBucket]
+
   const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
 
   const flashRoutineResult = flashRoutineEnabled
