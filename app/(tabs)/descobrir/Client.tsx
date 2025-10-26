@@ -37,7 +37,7 @@ const activities = [
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 7, emoji: '����', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
   { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
@@ -137,7 +137,7 @@ const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
 
 const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   book: { icon: '📚', title: 'Livros que Inspiram' },
-  toy: { icon: '���', title: 'Brinquedos Inteligentes' },
+  toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
   printable: { icon: '🖨��', title: 'Printables para Brincar' },
 }
@@ -492,9 +492,18 @@ export default function DescobrirClient({
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
 
+      trackTelemetry('planner_save_ok', { type: 'idea', id: suggestion.id }, telemetryCtx)
       setToast({ message: 'Sugestão salva no Planner!', type: 'success' })
     } catch (error) {
       console.error('[QuickIdeas] Planner save failed:', error)
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'ideas',
+          reason: error instanceof Error ? error.message : 'unknown',
+        },
+        telemetryCtx
+      )
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
         type: 'error',
