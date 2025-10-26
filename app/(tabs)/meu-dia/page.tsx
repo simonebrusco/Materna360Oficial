@@ -1,205 +1,130 @@
-'use client'
+import { cookies as getCookies } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+
+import { MeuDiaClient } from './Client'
+
+import { SectionWrapper } from '@/components/common/SectionWrapper'
+import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/app/data/childContent'
+import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getDayIndex } from '@/app/lib/dailyMessage'
+import { profilePreferredBuckets, type Profile } from '@/app/lib/ageRange'
+import { readProfileCookie } from '@/app/lib/profileCookie'
+import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-import { useEffect, useState } from 'react'
+const TIME_ZONE = 'America/Sao_Paulo'
 
-import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
-import { Checklist } from '@/components/blocks/Checklist'
-import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
-import { MessageOfDay } from '@/components/blocks/MessageOfDay'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { Reveal } from '@/components/ui/Reveal'
-
-const quickActions = [
-  { emoji: '🏡', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
-  { emoji: '📸', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
-  { emoji: '🎯', title: 'Atividade do Dia', description: 'Faça com as crianças' },
-  { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
-]
-
-export default function MeuDiaPage() {
-  const [showNoteModal, setShowNoteModal] = useState(false)
-  const [noteText, setNoteText] = useState('')
-  const [notes, setNotes] = useState<string[]>([])
-
-  const [motherName, setMotherName] = useState('')
-  const [isLoaded, setIsLoaded] = useState(false)
-
-  useEffect(() => {
-    let active = true
-
-    const loadProfile = async () => {
-      try {
-        const response = await fetch('/api/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-        if (!response.ok) throw new Error('Failed to load profile')
-
-        const data = await response.json()
-        if (!active) return
-
-        setMotherName(typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : '')
-      } catch (error) {
-        console.error(error)
-        if (active) setMotherName('')
-      } finally {
-        if (active) setIsLoaded(true)
-      }
-    }
-
-    void loadProfile()
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const handleAddNote = () => {
-    if (noteText.trim()) {
-      setNotes((prev) => [noteText.trim(), ...prev])
-      setNoteText('')
-      setShowNoteModal(false)
-    }
+const firstNameOf = (name?: string) => {
+  if (!name) {
+    return 'Mãe'
   }
 
-  if (!isLoaded) {
-    return null
+  const trimmed = name.trim()
+  if (!trimmed) {
+    return 'Mãe'
   }
 
-  const resolveGreetingPrefix = () => {
-    const hour = new Date().getHours()
-    if (hour >= 5 && hour < 12) return 'Bom dia'
-    if (hour >= 12 && hour < 18) return 'Boa tarde'
-    return 'Boa noite'
+  const [first] = trimmed.split(/\s+/)
+  if (!first) {
+    return 'Mãe'
   }
 
-  const displayName = motherName || 'Mãe'
-  const greetingText = `${resolveGreetingPrefix()}, ${displayName}!`
+  const normalized = first.charAt(0).toUpperCase() + first.slice(1)
+  return normalized || 'Mãe'
+}
+
+const resolveGreetingPrefix = (date: Date) => {
+  const hourFormatter = new Intl.DateTimeFormat('pt-BR', {
+    hour: 'numeric',
+    hour12: false,
+    timeZone: TIME_ZONE,
+  })
+  const hour = Number.parseInt(hourFormatter.format(date), 10)
+
+  if (Number.isNaN(hour)) {
+    return 'Olá'
+  }
+
+  if (hour >= 5 && hour < 12) {
+    return 'Bom dia'
+  }
+
+  if (hour >= 12 && hour < 18) {
+    return 'Boa tarde'
+  }
+
+  return 'Boa noite'
+}
+
+const formatDisplayDate = (date: Date) =>
+  new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    timeZone: TIME_ZONE,
+  }).format(date)
+
+export default async function Page() {
+  noStore()
+
+  const jar = getCookies()
+  const { profile: normalizedProfile } = readProfileCookie(jar)
+
+  const now = new Date()
+  const displayName = firstNameOf(normalizedProfile.motherName)
+  const plannerTitle = `Planner da ${displayName}`
+  const greetingPrefix = resolveGreetingPrefix(now)
+  const greeting = `${greetingPrefix}, ${displayName}!`
+  const formattedDate = formatDisplayDate(now)
+
+  const currentDateKey = getBrazilDateKey(now)
+  const weekStartKey = getWeekStartKey(currentDateKey)
+  const { labels: weekLabels } = buildWeekLabels(weekStartKey)
+  const totalMessages = DAILY_MESSAGES.length
+  const selectedIndex = getDayIndex(currentDateKey, totalMessages)
+  const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
+  const dailyGreeting = baseMessage && displayName ? `${displayName}, ${baseMessage}` : baseMessage
+
+  const profileForClient: Profile = {
+    motherName: normalizedProfile.motherName,
+    children: normalizedProfile.children,
+  }
+
+  const initialBuckets = profilePreferredBuckets(profileForClient)
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(65%_65%_at_50%_0%,rgba(255,216,230,0.55),transparent)]"
-      />
-      <div className="relative space-y-8">
-        <Reveal>
-          <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-              Hoje
-            </span>
-            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">
-              {greetingText}
-            </h1>
-            <p className="text-sm text-support-2 md:text-base">
-              {new Date().toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-          </div>
-        </Reveal>
-
-        <Reveal delay={100}>
-          <MessageOfDay />
-        </Reveal>
-
-        <Reveal delay={160}>
-          <ActivityOfDay />
-        </Reveal>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {quickActions.map((action, index) => (
-            <Reveal key={action.title} delay={index * 80}>
-              <Card className="h-full">
-                <div className="mb-3 text-2xl">{action.emoji}</div>
-                <h3 className="text-base font-semibold text-support-1 md:text-lg">
-                  {action.title}
-                </h3>
-                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
-                <Button variant="secondary" size="sm" className="w-full">
-                  Acessar
-                </Button>
-              </Card>
-            </Reveal>
-          ))}
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
+      {/* m360-debug: {JSON.stringify(profile)} */}
+      <SectionWrapper className="relative" contentClassName="relative space-y-2">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(65%_65%_at_50%_0%,rgba(255,216,230,0.55),transparent)]"
+        />
+        <div>
+          <span className="eyebrow-capsule">Hoje</span>
+          <h1 data-testid="greeting-text" className="mt-2 text-3xl font-semibold text-support-1 md:text-4xl">
+            {greeting}
+          </h1>
+          <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
+          <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
         </div>
+      </SectionWrapper>
 
-        <Reveal delay={220}>
-          <FamilyPlanner />
-        </Reveal>
-
-        <Reveal delay={260}>
-          <Checklist />
-        </Reveal>
-
-        <Reveal delay={320}>
-          <Card>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas Rápidas</h2>
-                <p className="text-xs text-support-2/80">
-                  Capture ideias e lembretes em instantes.
-                </p>
-              </div>
-              <Button variant="primary" size="sm" onClick={() => setShowNoteModal(true)}>
-                ＋ Adicionar
-              </Button>
-            </div>
-
-            {notes.length > 0 ? (
-              <div className="space-y-2">
-                {notes.map((note, idx) => (
-                  <div
-                    key={`${note}-${idx}`}
-                    className="rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft"
-                  >
-                    {note}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-support-2">Nenhuma nota registrada ainda.</p>
-            )}
-          </Card>
-        </Reveal>
-
-        {showNoteModal && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
-            <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
-              <Card className="w-full">
-                <h3 className="mb-2 text-lg font-semibold text-support-1">Adicionar Nota</h3>
-                <p className="mb-4 text-sm text-support-2">
-                  Anote um pensamento, uma tarefa ou uma gratidão.
-                </p>
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Escreva sua nota aqui..."
-                  className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  rows={4}
-                />
-                <div className="mt-4 flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowNoteModal(false)}
-                    className="flex-1"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={handleAddNote} className="flex-1">
-                    Salvar
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      <MeuDiaClient
+        dailyGreeting={dailyGreeting}
+        currentDateKey={currentDateKey}
+        weekStartKey={weekStartKey}
+        weekLabels={weekLabels}
+        plannerTitle={plannerTitle}
+        profile={profileForClient}
+        dateKey={currentDateKey}
+        allActivities={CHILD_ACTIVITIES}
+        recommendations={CHILD_RECOMMENDATIONS}
+        initialBuckets={initialBuckets}
+      />
+    </main>
   )
 }

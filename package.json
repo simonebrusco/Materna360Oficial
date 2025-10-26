@@ -5,29 +5,56 @@
   "description": "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "lint": "next lint --max-warnings=0",
+    "prebuild": "npm run lint",
+    "build": "NODE_ENV=production next build",
     "start": "next start",
-    "lint": "next lint"
+    "test": "node scripts/run-tests-if-node20.mjs",
+    "e2e": "playwright test",
+    "test:run": "vitest run",
+    "test:watch": "vitest",
+    "test:recipes": "tsx tests/healthyRecipes.test.ts && tsx tests/plannerServer.test.ts && tsx tests/professionalsMatch.test.ts && tsx tests/professionalsSection.test.tsx",
+    "validate": "npm run lint && npm run test"
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",
     "@supabase/auth-helpers-nextjs": "0.10.0",
+    "@supabase/ssr": "0.5.1",
     "@supabase/supabase-js": "2.45.4",
     "autoprefixer": "10.4.19",
+    "clsx": "^2.1.1",
     "lucide-react": "0.460.0",
-    "next": "14.2.5",
+    "next": "14.2.7",
     "postcss": "8.4.41",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "tailwindcss": "3.4.10"
+    "tailwindcss": "3.4.10",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "20.11.30",
+    "@playwright/test": "^1.47.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^20.19.0",
     "@types/react": "18.2.66",
     "@types/react-dom": "18.2.22",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "@vitejs/plugin-react": "4.7.0",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5",
-    "typescript": "5.4.5"
+    "eslint-plugin-local": "file:eslint-plugin-local",
+    "jsdom": "^24.0.0",
+    "tsx": "4.15.2",
+    "typescript": "5.4.5",
+    "vite": "7.1.12",
+    "vitest": "^2.0.0"
   },
-  "engines": { "node": "20.x" }
+  "overrides": {
+    "@types/node": "^20.19.0"
+  },
+  "engines": {
+    "node": ">=20.19 <21"
+  },
+  "engineStrict": true
 }

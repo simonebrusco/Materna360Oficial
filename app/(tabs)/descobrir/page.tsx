@@ -1,247 +1,333 @@
-'use client'
+import { unstable_noStore as noStore } from 'next/cache'
+import { cookies } from 'next/headers'
 
-'use client'
+import DescobrirClient from './Client'
+import { toFlashFilters } from './utils/filters'
+
+import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
+import { FLASH_IDEAS_CATALOG } from '@/app/data/flashIdeas'
+import { FLASH_ROUTINES_CMS } from '@/app/data/flashRoutines'
+import { REC_PRODUCTS } from '@/app/data/recProducts'
+import { SELF_CARE_CMS } from '@/app/data/selfCare'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { buildDailySuggestions } from '@/app/lib/quickIdeasCatalog'
+import { buildRecShelves } from '@/app/lib/recShelf'
+import { selectFlashRoutine } from '@/app/lib/flashRoutine'
+import { selectSelfCareItems } from '@/app/lib/selfCare'
+import { readProfileCookie } from '@/app/lib/profileCookie'
+import { getServerFlags } from '@/app/lib/flags'
+import {
+  FlashRoutine as FlashRoutineSchema,
+  FlashRoutineFilters as FlashRoutineFiltersSchema,
+  IdeaLite as IdeaLiteSchema,
+  ProfileSummary as ProfileSummarySchema,
+  QuickIdeasFilters as QuickIdeasFiltersSchema,
+  RecProduct as RecProductSchema,
+  SelfCare as SelfCareSchema,
+  type AgeBucketT as AgeBucket,
+  type ProfileSummaryT,
+} from '@/app/lib/discoverSchemas'
+import type {
+  QuickIdea,
+  QuickIdeasAgeBucket,
+  QuickIdeasEnergy,
+  QuickIdeasLocation,
+  QuickIdeasTimeWindow,
+} from '@/app/types/quickIdeas'
+import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-import { useState } from 'react'
+const LOCATION_KEYS: QuickIdeasLocation[] = ['casa', 'parque', 'escola', 'area_externa']
+const ENERGY_KEYS: QuickIdeasEnergy[] = ['exausta', 'normal', 'animada']
+const TIME_VALUES: QuickIdeasTimeWindow[] = [5, 10, 20]
+const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
+  casa: 'Casa',
+  parque: 'Parque',
+  escola: 'Escola',
+  area_externa: 'Área Externa',
+}
 
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { Reveal } from '@/components/ui/Reveal'
+const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
+  if (!value) {
+    return 'casa'
+  }
+  const normalized = value.trim().toLowerCase() as QuickIdeasLocation
+  return LOCATION_KEYS.includes(normalized) ? normalized : 'casa'
+}
 
-export default function DescobrirPage() {
-  const [ageFilter, setAgeFilter] = useState<string | null>(null)
-  const [placeFilter, setPlaceFilter] = useState<string | null>(null)
-  const [showActivities, setShowActivities] = useState(false)
+const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
+  if (!value) {
+    return 'normal'
+  }
+  const normalized = value.trim().toLowerCase() as QuickIdeasEnergy
+  return ENERGY_KEYS.includes(normalized) ? normalized : 'normal'
+}
 
-  const activities = [
-    { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
-    { id: 2, emoji: '🌳', title: 'Caça ao Tesouro no Parque', age: '4+', place: 'Parque' },
-    { id: 3, emoji: '📚', title: 'Leitura em Ciranda', age: '0-7', place: 'Casa' },
-    { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
-    { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
-    { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-    { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
-    { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
-  ]
+const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
+  const numeric = Number(value)
+  if (TIME_VALUES.includes(numeric as QuickIdeasTimeWindow)) {
+    return numeric as QuickIdeasTimeWindow
+  }
+  if (numeric <= 5) {
+    return 5
+  }
+  if (numeric <= 10) {
+    return 10
+  }
+  return 20
+}
 
-  const filteredActivities = activities.filter((activity) => {
-    const matchesAge = !ageFilter || activity.age.includes(ageFilter.replace('+', ''))
-    const matchesPlace = !placeFilter || activity.place === placeFilter
-    return matchesAge && matchesPlace
+const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
+  if (!value) {
+    return '2-3'
+  }
+  const normalized = value.trim() as QuickIdeasAgeBucket
+  return ['0-1', '2-3', '4-5', '6-7', '8+'].includes(normalized) ? normalized : '2-3'
+}
+
+const normalizeChildId = (value?: string | null): string | null => {
+  if (!value) {
+    return null
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+type SearchParams = {
+  [key: string]: string | string[] | undefined
+}
+
+type SuggestionView = QuickIdea & {
+  child?: {
+    id: string
+    name?: string
+    age_bucket: QuickIdeasAgeBucket
+  }
+}
+
+const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
+  const seen = new Set<string>()
+  const result: T[] = []
+  items.forEach((item) => {
+    if (!seen.has(item.id)) {
+      seen.add(item.id)
+      result.push(item)
+    }
+  })
+  return result
+}
+
+const buildProfileChildren = (
+  children: Array<{ id?: string; name?: string | null; ageRange?: string | null }>
+): ProfileChildSummary[] => {
+  if (!children || children.length === 0) {
+    return []
+  }
+
+  const mapped = children.map<ProfileChildSummary>((child, index) => {
+    const id = child.id && child.id.trim() ? child.id.trim() : `child-${index + 1}`
+    const name = child.name && child.name.trim() ? child.name.trim() : undefined
+    const age_bucket = sanitizeAgeBucket(child.ageRange ?? undefined)
+    return { id, name, age_bucket }
   })
 
-  const books = [
-    { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
-    { emoji: '📖', title: 'Charlotte\'s Web', author: 'E.B. White' },
-    { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
-    { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
-  ]
+  return dedupeChildren(mapped)
+}
 
-  const toys = [
-    { emoji: '🧩', title: 'Quebra-Cabeças', age: '2+' },
-    { emoji: '🪀', title: 'Brinquedos de Corda', age: '3+' },
-    { emoji: '🧸', title: 'Pelúcias Educativas', age: '0+' },
-    { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
-  ]
+export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
+  noStore()
+
+  const jar = cookies()
+  const { profile, metadata } = readProfileCookie(jar)
+
+  const profileChildren = buildProfileChildren(profile.children ?? [])
+  const fallbackChildren =
+    profileChildren.length > 0
+      ? profileChildren
+      : [
+          {
+            id: 'demo-child',
+            name: 'Luna',
+            age_bucket: '2-3' as QuickIdeasAgeBucket,
+          },
+        ]
+
+  const rawModeValue =
+    typeof searchParams?.mode === 'string' ? searchParams.mode : metadata.mode
+  const normalizedMode =
+    typeof rawModeValue === 'string' ? rawModeValue.trim().toLowerCase() : ''
+  const requestedMode: ProfileMode =
+    normalizedMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
+
+  const searchParamChildId = normalizeChildId(
+    typeof searchParams?.child === 'string' ? searchParams.child : undefined
+  )
+  const metadataChildId = normalizeChildId(metadata.activeChildId ?? null)
+  const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
+
+  const activeChildId: string | null =
+    searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
+
+  const filters = QuickIdeasFiltersSchema.parse({
+    location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
+    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
+    energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
+  })
+
+  const serverFlags = getServerFlags({
+    cookies: (name) => jar.get(name)?.value,
+    searchParams,
+  })
+
+  const {
+    recShelf: recShelfEnabled,
+    flashRoutine: flashRoutineEnabled,
+    flashRoutineAI: flashRoutineAIEnabled,
+    selfCare: selfCareEnabled,
+    selfCareAI: selfCareAIEnabled,
+  } = serverFlags
+
+  const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
+  const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
+  const recProductsCatalog = RecProductSchema.array().parse(REC_PRODUCTS)
+  const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
+
+  const dateKey = getBrazilDateKey()
+
+  const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
+    mode: requestedMode,
+    activeChildId,
+    children: fallbackChildren,
+  })
+
+  const validatedProfile = profileSummary
+
+  const BUCKET_ORDER: Record<AgeBucket, number> = {
+    '0-1': 0,
+    '2-3': 1,
+    '4-5': 2,
+    '6-7': 3,
+    '8+': 4,
+  }
+
+  const children = Array.isArray(validatedProfile.children) ? validatedProfile.children : []
+
+  const computedBuckets: AgeBucket[] =
+    validatedProfile.mode === 'all'
+      ? Array.from(new Set(children.map((child) => child.age_bucket))).sort(
+          (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
+        )
+      : (() => {
+          const active =
+            (validatedProfile.activeChildId
+              ? children.find((child) => child.id === validatedProfile.activeChildId)
+              : undefined) ?? children[0]
+          return active ? [active.age_bucket] : []
+        })()
+
+  const targetBuckets: AgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
+
+  const recShelfGroups = recShelfEnabled
+    ? buildRecShelves({
+        products: recProductsCatalog,
+        targetBuckets,
+        location: filters.location,
+        dateKey,
+      })
+    : []
+
+  const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
+
+  const flashRoutineResult = flashRoutineEnabled
+    ? selectFlashRoutine({
+        ideas: ideasCatalog,
+        routines: routinesCatalog,
+        profile: { mode: profileSummary.mode, children: profileSummary.children },
+        filters: flashFilters,
+        dateKey,
+      })
+    : null
+
+  const flashRoutineRoutine = flashRoutineResult
+    ? FlashRoutineSchema.parse(flashRoutineResult.routine)
+    : null
+
+  const flashRoutine = flashRoutineEnabled && flashRoutineResult && flashRoutineRoutine
+    ? {
+        routine: flashRoutineRoutine,
+        strategy: flashRoutineResult.source,
+        analyticsSource: 'local' as const,
+      }
+    : null
+
+  const selfCareSelection = selfCareEnabled
+    ? selectSelfCareItems({
+        items: selfCareCatalog,
+        energy: filters.energy,
+        minutes: filters.time_window_min as 2 | 5 | 10,
+        dateKey,
+      })
+    : { items: [], rotationKey: '', source: 'fallback' as const }
+
+  const suggestions = buildDailySuggestions(
+    profileSummary,
+    filters,
+    dateKey,
+    QUICK_IDEAS_CATALOG
+  )
+
+  const suggestionViews: SuggestionView[] = suggestions.map(({ idea, child }) => ({
+    id: idea.id,
+    title: idea.title,
+    summary: idea.summary,
+    time_total_min: idea.time_total_min,
+    location: idea.location,
+    materials: idea.materials,
+    steps: idea.steps,
+    age_adaptations: idea.age_adaptations,
+    safety_notes: idea.safety_notes,
+    badges: idea.badges,
+    planner_payload: idea.planner_payload,
+    rationale: idea.rationale,
+    child: child
+      ? {
+          id: child.id,
+          name: child.name,
+          age_bucket: child.age_bucket,
+        }
+      : undefined,
+  }))
+
+  const initialAgeFilter = children[0]?.age_bucket ?? '2-3'
+  const initialPlaceFilter = LOCATION_LABEL[filters.location]
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(62%_62%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
-      />
-
-      <div className="relative space-y-10">
-        <Reveal>
-          <div className="space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">Inspirações</span>
-            <h1 className="text-3xl font-semibold text-support-1 md:text-4xl">🎨 Descobrir</h1>
-            <p className="max-w-2xl text-sm text-support-2 md:text-base">
-              Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
-            </p>
-          </div>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🔍 Filtros Inteligentes</h2>
-            <p className="mt-2 text-sm text-support-2">
-              Combine idade e local para criar experiências personalizadas em segundos.
-            </p>
-
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Idade</label>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {['0-1', '2-3', '4-5', '6-7', '8+'].map((age) => {
-                    const isActive = ageFilter === age
-                    return (
-                      <button
-                        key={age}
-                        onClick={() => setAgeFilter(isActive ? null : age)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
-                          isActive
-                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-                        }`}
-                      >
-                        {age} anos
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Local</label>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {['Casa', 'Parque', 'Escola', 'Área Externa'].map((place) => {
-                    const isActive = placeFilter === place
-                    return (
-                      <button
-                        key={place}
-                        onClick={() => setPlaceFilter(isActive ? null : place)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
-                          isActive
-                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-                        }`}
-                      >
-                        {place}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
-                ✨ Gerar Ideias
-              </Button>
-              {(ageFilter || placeFilter || showActivities) && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setAgeFilter(null)
-                    setPlaceFilter(null)
-                    setShowActivities(false)
-                  }}
-                  className="sm:w-auto"
-                >
-                  Limpar filtros
-                </Button>
-              )}
-            </div>
-          </Card>
-        </Reveal>
-
-        {showActivities && (
-          <Reveal delay={140}>
-            <div className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-xl font-semibold text-support-1 md:text-2xl">
-                  Atividades {filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}
-                </h2>
-              </div>
-
-              {filteredActivities.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {filteredActivities.map((activity, idx) => (
-                    <Reveal key={activity.id} delay={idx * 70}>
-                      <Card className="h-full p-6">
-                        <div className="text-4xl">{activity.emoji}</div>
-                        <h3 className="mt-3 text-lg font-semibold text-support-1">{activity.title}</h3>
-                        <div className="mt-3 flex gap-3 text-xs text-support-2">
-                          <span>👧 {activity.age} anos</span>
-                          <span>📍 {activity.place}</span>
-                        </div>
-                        <Button variant="secondary" size="sm" className="mt-6 w-full">
-                          Salvar no Planejador
-                        </Button>
-                      </Card>
-                    </Reveal>
-                  ))}
-                </div>
-              ) : (
-                <Card className="py-12 text-center">
-                  <p className="text-sm text-support-2">Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.</p>
-                </Card>
-              )}
-            </div>
-          </Reveal>
-        )}
-
-        <Reveal delay={200}>
-          <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
-            <div className="text-5xl">🌟</div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-support-1 md:text-xl">Sugestão do Dia</h2>
-              <p className="mt-2 text-sm text-support-2">
-                Construir uma cabana com lençóis e almofadas cria um refúgio aconchegante para contar histórias e estimular a imaginação.
-              </p>
-              <Button variant="primary" size="sm" className="mt-4">
-                Experimentar
-              </Button>
-            </div>
-          </Card>
-        </Reveal>
-
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">📚 Livros Recomendados</h2>
-          </Reveal>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {books.map((book, idx) => (
-              <Reveal key={book.title} delay={idx * 70}>
-                <Card className="h-full p-6">
-                  <div className="text-3xl">{book.emoji}</div>
-                  <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">por {book.author}</p>
-                  <Button variant="secondary" size="sm" className="mt-6 w-full">
-                    Ver Detalhes
-                  </Button>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🧸 Brinquedos Sugeridos</h2>
-          </Reveal>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {toys.map((toy, idx) => (
-              <Reveal key={toy.title} delay={idx * 70}>
-                <Card className="h-full p-6">
-                  <div className="text-3xl">{toy.emoji}</div>
-                  <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
-                  <Button variant="secondary" size="sm" className="mt-6 w-full">
-                    Ver Mais
-                  </Button>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
-        <Reveal delay={260}>
-          <Card className="p-7">
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">💚 Para Você</h2>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
-                <Button key={item} variant="outline" size="sm" className="w-full">
-                  {item}
-                </Button>
-              ))}
-            </div>
-          </Card>
-        </Reveal>
-      </div>
-    </div>
+    <DescobrirClient
+      suggestions={suggestionViews}
+      filters={filters}
+      dateKey={dateKey}
+      profile={profileSummary}
+      initialAgeFilter={initialAgeFilter}
+      initialPlaceFilter={initialPlaceFilter}
+      recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
+      flashRoutine={{
+        enabled: flashRoutineEnabled,
+        aiEnabled: flashRoutineAIEnabled,
+        routine: flashRoutine?.routine ?? null,
+        strategy: flashRoutine?.strategy ?? null,
+        analyticsSource: flashRoutine?.analyticsSource ?? 'local',
+      }}
+      selfCare={{
+        enabled: selfCareEnabled,
+        aiEnabled: selfCareAIEnabled,
+        items: selfCareSelection.items,
+        energy: filters.energy,
+        minutes: filters.time_window_min as 2 | 5 | 10,
+      }}
+      flags={serverFlags}
+    />
   )
 }

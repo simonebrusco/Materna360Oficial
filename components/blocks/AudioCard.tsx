@@ -1,8 +1,11 @@
 'use client'
 
+'use client'
+
 import { useState } from 'react'
-import { Card } from '@/components/ui/Card'
+
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/card'
 
 interface AudioCardProps {
   title: string
@@ -30,7 +33,7 @@ export function AudioCard({ title, duration, instructor, image, description }: A
         </div>
       </div>
 
-      <p className="mb-6 text-sm text-support-2 leading-relaxed">{description}</p>
+      <p className="mb-6 text-sm leading-relaxed text-support-2">{description}</p>
 
       <div className="flex gap-2">
         <Button

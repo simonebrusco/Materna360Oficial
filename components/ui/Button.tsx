@@ -1,12 +1,10 @@
-import React from 'react'
+import type { ReactNode } from 'react'
 
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
-
-type ButtonVariant = 'primary' | 'secondary' | 'outline'
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost'
 
 type ButtonSize = 'sm' | 'md' | 'lg'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   children: ReactNode
@@ -26,6 +24,7 @@ export function Button({
       'bg-secondary/80 text-support-1 shadow-soft hover:bg-secondary hover:shadow-elevated',
     outline:
       'border border-primary/60 text-primary bg-white/70 shadow-soft hover:bg-primary/10 hover:shadow-elevated',
+    ghost: 'bg-transparent text-support-1 shadow-none hover:bg-white/60 hover:shadow-soft',
   }
 
   const sizeStyles: Record<ButtonSize, string> = {
@@ -41,9 +40,7 @@ export function Button({
     >
       <span className="absolute inset-0 -z-10 rounded-full bg-white/0 transition-opacity duration-500 group-hover:bg-white/10" />
       <span className="absolute inset-x-4 top-1.5 -z-0 h-[10px] rounded-full bg-white/40 opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-100" />
-      <span className="relative z-10 flex items-center gap-2">
-        {children}
-      </span>
+      <span className="relative z-10 flex items-center gap-2">{children}</span>
     </button>
   )
 }

@@ -1,18 +1,16 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useMemo, useState } from 'react'
 
-import { CheckIn } from '@/components/blocks/CheckIn'
-stellar-den
+import GridRhythm from '@/components/common/GridRhythm'
+import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
-
-main
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
+
+export const dynamic = 'force-dynamic'
 
 type MoodHistory = {
   day: string
@@ -52,22 +50,22 @@ export default function Eu360Page() {
   }
 
   const moodHistory: MoodHistory[] = useMemo(
-    () => daysOfWeek.map((day, idx) => ({ day, emoji: MOODS[(idx + 2) % MOODS.length] })),
+    () => daysOfWeek.map((day, index) => ({ day, emoji: MOODS[(index + 2) % MOODS.length] })),
     []
   )
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(58%_58%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
       />
 
-      <div className="relative space-y-10">
-stellar-den
+      <SectionWrapper>
         <ProfileForm />
+      </SectionWrapper>
 
-main
+      <SectionWrapper>
         <Reveal>
           <Card className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white">
             <div className="text-center">
@@ -79,11 +77,12 @@ main
             </div>
           </Card>
         </Reveal>
+      </SectionWrapper>
 
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">🎯<span>Seu Progresso</span></span>}>
         <Reveal delay={80}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🎯 Seu Progresso</h2>
-            <div className="mt-5 space-y-5">
+            <div className="space-y-5">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-support-1">Nível 5</span>
@@ -106,11 +105,12 @@ main
             </div>
           </Card>
         </Reveal>
+      </SectionWrapper>
 
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">📊<span>Humor da Semana</span></span>}>
         <Reveal delay={140}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📊 Humor da Semana</h2>
-            <div className="mt-6 flex justify-between">
+            <div className="flex justify-between">
               {moodHistory.map(({ day, emoji }) => (
                 <div key={day} className="flex flex-col items-center gap-2">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-2xl shadow-soft transition-transform duration-300 hover:-translate-y-1">
@@ -120,47 +120,41 @@ main
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-xs text-support-2 text-center">
+            <p className="mt-4 text-center text-xs text-support-2">
               Toque em um emoji para registrar como você se sente neste momento.
             </p>
           </Card>
         </Reveal>
+      </SectionWrapper>
 
-        <Reveal delay={180}>
-          <CheckIn />
-        </Reveal>
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">🏅<span>Conquistas</span></span>}>
+        <GridRhythm className="grid-cols-2 sm:grid-cols-3">
+          {ACHIEVEMENTS.map((achievement, index) => (
+            <Reveal key={achievement.title} delay={index * 70} className="h-full">
+              <Card className="h-full text-center">
+                <p className="text-3xl">{achievement.emoji}</p>
+                <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
+                <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">{achievement.desc}</p>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
 
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🏅 Conquistas</h2>
-          </Reveal>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {ACHIEVEMENTS.map((achievement, idx) => (
-              <Reveal key={achievement.title} delay={idx * 70}>
-                <Card className="h-full p-6 text-center">
-                  <p className="text-3xl">{achievement.emoji}</p>
-                  <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">{achievement.desc}</p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
+      <SectionWrapper
+        title={<span className="inline-flex items-center gap-2">🙏<span>Gratidão</span></span>}
+        description="Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias."
+      >
         <Reveal delay={220}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🙏 Gratidão</h2>
-            <p className="mt-2 text-sm text-support-2">
-              Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias.
-            </p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 type="text"
                 value={gratitude}
-                onChange={(e) => setGratitude(e.target.value)}
+                onChange={(event) => setGratitude(event.target.value)}
                 placeholder="Pelo que você é grata hoje?"
                 className="flex-1 rounded-full border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                onKeyDown={(e) => e.key === 'Enter' && handleAddGratitude()}
+                onKeyDown={(event) => event.key === 'Enter' && handleAddGratitude()}
               />
               <Button variant="primary" size="sm" onClick={handleAddGratitude} className="sm:w-auto">
                 ＋ Adicionar
@@ -168,8 +162,8 @@ main
             </div>
             {gratitudes.length > 0 ? (
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {gratitudes.map((item, idx) => (
-                  <div key={`${item}-${idx}`} className="rounded-2xl bg-secondary/70 p-4 text-sm text-support-1 shadow-soft">
+                {gratitudes.map((item, index) => (
+                  <div key={`${item}-${index}`} className="rounded-2xl bg-secondary/70 p-4 text-sm text-support-1 shadow-soft">
                     “{item}”
                   </div>
                 ))}
@@ -179,11 +173,12 @@ main
             )}
           </Card>
         </Reveal>
+      </SectionWrapper>
 
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">📈<span>Resumo da Semana</span></span>}>
         <Reveal delay={260}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📈 Resumo da Semana</h2>
-            <div className="mt-5 space-y-4">
+            <div className="space-y-4">
               {WEEKLY_SUMMARY.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between">
@@ -199,24 +194,7 @@ main
             </div>
           </Card>
         </Reveal>
-
-        <Reveal delay={300}>
-          <Card className="bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">☕ Seu Tempo</h2>
-            <p className="mt-3 text-sm text-support-2">
-              Esta semana você se dedicou a momentos de autocuidado. Continue celebrando as suas conquistas! 💚
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button variant="primary" size="sm">
-                Próximas Atividades
-              </Button>
-              <Button variant="outline" size="sm">
-                Ver Histórico
-              </Button>
-            </div>
-          </Card>
-        </Reveal>
-      </div>
-    </div>
+      </SectionWrapper>
+    </main>
   )
 }

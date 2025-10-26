@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
+import { NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const MESSAGE_POOL = [
   'Você está fazendo um ótimo trabalho!',
@@ -107,7 +110,7 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
       throw new Error(`AI provider returned status ${response.status}`)
     }
 
-    const data: any = await response.json()
+    const data = (await response.json()) as any
     const aiMessage: string | undefined = data?.choices?.[0]?.message?.content?.trim()
 
     if (!aiMessage) {
@@ -121,7 +124,7 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
   }
 }
 
-export async function GET(request: Request): Promise<NextResponse<DailyMessageResponse>> {
+export async function GET(request: Request) {
   const now = new Date()
   const dateKey = getDateKey(now)
   const url = new URL(request.url)
@@ -131,7 +134,7 @@ export async function GET(request: Request): Promise<NextResponse<DailyMessageRe
     const candidate = await generateMessageWithAI(dateKey, providedName)
     const message = candidate ?? deterministicMessageFor(dateKey)
 
-    return NextResponse.json(
+    return NextResponse.json<DailyMessageResponse>(
       {
         message,
         generatedAt: now.toISOString(),
@@ -145,7 +148,7 @@ export async function GET(request: Request): Promise<NextResponse<DailyMessageRe
   } catch (error) {
     console.error('Failed to generate daily message:', error)
 
-    return NextResponse.json(
+    return NextResponse.json<DailyMessageResponse>(
       {
         message: deterministicMessageFor(dateKey),
         generatedAt: now.toISOString(),

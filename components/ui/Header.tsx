@@ -1,12 +1,16 @@
 'use client'
 
-import Link from 'next/link'
+'use client'
+
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+
 import {
   DEFAULT_STICKER_ID,
   STICKERS,
-  getStickerInfo,
   isProfileStickerId,
+  resolveSticker,
 } from '@/app/lib/stickers'
 
 interface HeaderProps {
@@ -19,9 +23,8 @@ const PROFILE_UPDATED_EVENT = 'materna:profile-updated'
 export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
-  const [isLoadingSticker, setIsLoadingSticker] = useState<boolean>(false)
+  const [isLoadingSticker, setIsLoadingSticker] = useState(false)
   const [imageSrc, setImageSrc] = useState<string>(STICKERS[DEFAULT_STICKER_ID].asset)
-  const [hasTriedPngFallback, setHasTriedPngFallback] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
@@ -31,7 +34,9 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   }, [])
 
   useEffect(() => {
-    if (!showNotification) return
+    if (!showNotification) {
+      return undefined
+    }
 
     let isMounted = true
 
@@ -42,26 +47,32 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           credentials: 'include',
           cache: 'no-store',
         })
-        if (!response.ok) throw new Error('Falha ao carregar perfil')
+
+        if (!response.ok) {
+          throw new Error('Falha ao carregar perfil')
+        }
 
         const data = await response.json()
-        if (!isMounted) return
+        if (!isMounted) {
+          return
+        }
 
-        const nextStickerId = isProfileStickerId(data?.figurinha)
-          ? data.figurinha
-          : DEFAULT_STICKER_ID
+        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
         setStickerId(nextStickerId)
       } catch (error) {
         console.error('Não foi possível obter o perfil para a figurinha:', error)
-        if (isMounted) setStickerId(DEFAULT_STICKER_ID)
+        if (isMounted) {
+          setStickerId(DEFAULT_STICKER_ID)
+        }
       } finally {
-        if (isMounted) setIsLoadingSticker(false)
+        if (isMounted) {
+          setIsLoadingSticker(false)
+        }
       }
     }
 
     const handleProfileUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ figurinha?: string }>
-      if (!isMounted) return
       const figurinhaId = customEvent.detail?.figurinha
       setStickerId(isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID)
     }
@@ -75,22 +86,14 @@ export function Header({ title, showNotification = false }: HeaderProps) {
     }
   }, [showNotification])
 
-  const sticker = useMemo(() => getStickerInfo(stickerId), [stickerId])
+  const sticker = useMemo(() => resolveSticker(stickerId), [stickerId])
 
   useEffect(() => {
     setImageSrc(sticker.asset)
-    setHasTriedPngFallback(false)
-  }, [sticker])
+  }, [sticker.asset])
 
   const handleImageError = () => {
-    if (!hasTriedPngFallback && sticker.asset.endsWith('.svg')) {
-      setHasTriedPngFallback(true)
-      setImageSrc(sticker.asset.replace('.svg', '.png'))
-      return
-    }
-    if (imageSrc !== STICKERS[DEFAULT_STICKER_ID].asset) {
-      setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
-    }
+    setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
   }
 
   return (
@@ -100,22 +103,27 @@ export function Header({ title, showNotification = false }: HeaderProps) {
       }`}
     >
       <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-[#ff2f78] to-[#ff7faa] text-lg font-semibold text-white shadow-glow animate-float">
-            M
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="text-xs font-semibold uppercase tracking-[0.36em] text-primary/70 animate-fade-down">
-              Materna360
-            </span>
-            <span
-              className="text-lg font-semibold text-support-1 animate-fade-down"
-              style={{ animationDelay: '0.05s' }}
-            >
-              {title}
-            </span>
-          </span>
+        <Link
+          href="/"
+          aria-label="Ir para a página inicial"
+          className="flex shrink-0 items-center"
+          prefetch={false}
+        >
+          <Image
+            src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
+            alt="Materna360"
+            width={200}
+            height={48}
+            priority
+            sizes="(max-width: 360px) 120px, (max-width: 768px) 160px, 180px"
+            style={{ width: 'clamp(120px, 18vw, 180px)', height: 'auto' }}
+            className="flex-shrink-0"
+          />
         </Link>
+
+        <h1 className="absolute left-1/2 hidden -translate-x-1/2 text-sm font-semibold text-support-2/80 sm:block">
+          {title}
+        </h1>
 
         {showNotification && (
           <div className="flex items-center gap-3">
@@ -130,14 +138,13 @@ export function Header({ title, showNotification = false }: HeaderProps) {
               {isLoadingSticker ? (
                 <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
               ) : (
-                <img
+                <Image
                   key={imageSrc}
                   src={imageSrc}
                   alt={sticker.label}
-                  aria-label={`Figurinha de perfil: ${sticker.label}`}
-                  className="h-7 w-7 shrink-0 object-contain"
-                  loading="lazy"
-                  decoding="async"
+                  width={44}
+                  height={44}
+                  className="h-7 w-7 shrink-0 rounded-full object-cover"
                   onError={handleImageError}
                 />
               )}

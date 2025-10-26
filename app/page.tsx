@@ -1,7 +1,8 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
 const featureCards = [
@@ -9,11 +10,11 @@ const featureCards = [
     href: '/meu-dia',
     title: 'Meu Dia',
     description: 'Organize sua rotina familiar com leveza e carinho.',
-    emoji: '🏡',
+    emoji: '���',
   },
   {
     href: '/cuidar',
-    title: 'Cuidar',
+    title: 'Cuide-se',
     description: 'Guias de autocuidado, respiração e meditação para você.',
     emoji: '🌿',
   },
@@ -40,9 +41,18 @@ export default function Home() {
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.34em] text-primary/80">
               Bem-vinda
             </span>
-            <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">
-              🌸 Materna360
-            </h1>
+            <div className="flex flex-col items-center gap-3">
+              <Image
+                src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
+                alt="Flor de cerejeira Materna360"
+                width={72}
+                height={72}
+                priority
+                className="object-contain"
+                style={{ width: 72, height: 72 }}
+              />
+              <h1 className="text-4xl font-bold text-support-1 sm:text-5xl md:text-6xl">Materna360</h1>
+            </div>
             <p className="mt-4 max-w-2xl text-base text-support-2 sm:text-lg md:text-xl">
               Uma experiência digital pensada para cuidar de você, da sua família e dos seus sonhos com tecnologia, carinho e serenidade.
             </p>

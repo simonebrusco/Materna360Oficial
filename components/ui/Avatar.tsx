@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Image from 'next/image'
+
 interface AvatarProps {
   src?: string
   alt: string
@@ -17,12 +19,24 @@ export const Avatar: React.FC<AvatarProps> = ({
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
     lg: 'w-16 h-16',
-  }
+  } as const
+
+  const sizePixels = {
+    sm: 32,
+    md: 48,
+    lg: 64,
+  } as const
 
   return (
-    <div className={`rounded-full bg-secondary flex items-center justify-center overflow-hidden ${sizeStyles[size]} ${className}`}>
+    <div className={`relative flex items-center justify-center overflow-hidden rounded-full bg-secondary ${sizeStyles[size]} ${className}`}>
       {src ? (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={`${sizePixels[size]}px`}
+          className="object-cover"
+        />
       ) : (
         <span className="text-support-1 font-semibold">{alt.charAt(0)}</span>
       )}
