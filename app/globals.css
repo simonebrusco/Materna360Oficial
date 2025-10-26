@@ -84,7 +84,11 @@
   }
 
   .section-eyebrow {
-    @apply text-[12px] font-semibold uppercase tracking-[0.5px] text-primary;
+    color: #ff005e;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
   }
 
   .eyebrow-capsule {
