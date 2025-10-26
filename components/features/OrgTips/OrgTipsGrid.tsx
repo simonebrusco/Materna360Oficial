@@ -281,7 +281,7 @@ export function OrgTipsGrid() {
     'ml-auto mr-2 inline-flex h-[22px] max-w-[160px] items-center truncate rounded-full bg-support-2/10 px-2 text-[11px] font-medium leading-none text-support-2/80 transition-colors duration-150 ease-out sm:text-[12px]'
 
   const chevronClass = (open: boolean) =>
-    `ml-2 inline-flex h-4 w-4 items-center justify-center text-[13px] leading-none transition-transform transition-colors duration-[160ms] ease-out group-hover:text-primary group-focus-visible:text-primary ${
+    `ml-2 inline-flex h-[14px] w-[14px] items-center justify-center text-[13px] leading-none transition-transform transition-colors duration-[160ms] ease-out group-hover:text-primary group-focus-visible:text-primary ${
       open ? 'rotate-90 text-support-1/80' : 'rotate-0 text-support-2/70'
     }`
 
