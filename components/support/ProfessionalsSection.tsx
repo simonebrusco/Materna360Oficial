@@ -6,7 +6,7 @@ export default function ProfessionalsSection() {
   return (
     <section
       id="profissionais-apoio"
-      className="SectionWrapper CardElevate rounded-3xl border-2 border-primary bg-white px-4 py-4 backdrop-blur-sm sm:px-5 sm:py-5 lg:px-6 lg:py-6"
+      className="SectionWrapper ProfessionalsScope ProfessionalsParent CardElevate rounded-3xl border-2 border-primary bg-white px-4 py-4 backdrop-blur-sm sm:px-5 sm:py-5 lg:px-6 lg:py-6"
       aria-labelledby="professionals-support-title"
     >
       <header className="space-y-2 md:space-y-3">
