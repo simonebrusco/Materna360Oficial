@@ -275,9 +275,7 @@ export default function DescobrirClient({
 
   const recShelfEnabled = discoverFlags.recShelf && recShelf.enabled
   const flashRoutineEnabled = discoverFlags.flashRoutine && flashRoutine.enabled
-  const flashRoutineAIEnabled = discoverFlags.flashRoutineAI && flashRoutine.aiEnabled
   const selfCareEnabled = discoverFlags.selfCare && selfCare.enabled
-  const selfCareAIEnabled = discoverFlags.selfCareAI && selfCare.aiEnabled
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity) => {
