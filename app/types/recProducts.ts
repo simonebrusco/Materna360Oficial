@@ -1,21 +1,4 @@
-import type { QuickIdeasAgeBucket, QuickIdeasLocation } from '@/app/types/quickIdeas'
+import type { RecProductT } from '@/app/lib/discoverSchemas'
 
-export type RecProductKind = 'book' | 'toy' | 'course' | 'printable'
-
-export type RecProduct = {
-  id: string
-  kind: RecProductKind
-  title: string
-  subtitle?: string
-  imageUrl: string
-  ageBuckets: QuickIdeasAgeBucket[]
-  skills?: string[]
-  retailer: string
-  affiliateUrl: string
-  priceHint?: string
-  reasons?: string[]
-  safetyFlags?: string[]
-  localeFit?: QuickIdeasLocation[]
-  sortWeight?: number
-  active: boolean
-}
+export type RecProduct = RecProductT
+export type RecProductKind = RecProduct['kind']
