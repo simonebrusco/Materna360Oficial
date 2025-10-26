@@ -6,7 +6,7 @@ export default function ProfessionalsSection() {
   return (
     <section
       id="profissionais-apoio"
-      className="SectionWrapper rounded-3xl border-2 border-primary bg-white/95 px-4 py-6 shadow-[0_34px_78px_-36px_rgba(255,0,94,0.28)] backdrop-blur-sm sm:px-5 sm:py-7 lg:px-6 lg:py-8"
+      className="SectionWrapper rounded-3xl border-2 border-primary bg-white/95 px-4 py-4 shadow-[0_34px_78px_-36px_rgba(255,0,94,0.28)] backdrop-blur-sm sm:px-5 sm:py-5 lg:px-6 lg:py-6"
       aria-labelledby="professionals-support-title"
     >
       <header className="space-y-2">
