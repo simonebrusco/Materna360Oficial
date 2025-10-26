@@ -224,7 +224,7 @@ export function OrgTipsGrid() {
         key={tip.id}
         data-testid={tip.testId}
         data-tags={tags}
-        className="group flex h-full min-h-[168px] flex-col justify-between rounded-3xl border border-white/70 bg-gradient-to-br from-white/95 via-white/90 to-secondary/15 p-6 shadow-[0_22px_48px_-26px_rgba(47,58,86,0.3)] transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_28px_60px_-26px_rgba(255,0,94,0.26)]"
+        className="group flex h-full min-h-[168px] flex-col justify-between rounded-3xl border border-support-2/20 bg-gradient-to-br from-white/97 via-white/92 to-secondary/15 p-6 shadow-[0_20px_46px_-26px_rgba(47,58,86,0.26)] transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_26px_58px_-24px_rgba(255,0,94,0.26)]"
       >
         <div className="space-y-3">
           <span aria-hidden="true" className="text-3xl">
