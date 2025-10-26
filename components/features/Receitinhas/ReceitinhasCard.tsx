@@ -734,7 +734,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Já já sai do forno 🍲
               </span>
             ) : (
-              'Generate recipe'
+              'Gerar receita'
             )}
           </Button>
           <span className="text-xs text-support-2/70">Plano atual: {plan === 'premium' ? 'Premium' : plan === 'essencial' ? 'Essencial' : 'Free'}</span>
