@@ -28,6 +28,8 @@ import type { RecProduct, RecProductKind } from '@/app/types/recProducts'
 import type { FlashRoutine } from '@/app/types/flashRoutine'
 import type { SelfCare, SelfCareEnergy } from '@/app/types/selfCare'
 import type { ProfileChildSummary, ProfileSummary } from '@/app/lib/profileTypes'
+import { getClientFlags } from '@/app/lib/flags'
+import type { DiscoverFlags } from '@/app/lib/flags'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
@@ -111,6 +113,7 @@ type DescobrirClientProps = {
   recShelf: RecShelfState
   flashRoutine: FlashRoutineState
   selfCare: SelfCareState
+  flags: DiscoverFlags
 }
 
 const badgeLabels: Record<QuickIdeasBadge, string> = {
@@ -250,6 +253,7 @@ export default function DescobrirClient({
   recShelf,
   flashRoutine,
   selfCare,
+  flags,
 }: DescobrirClientProps) {
   const [ageFilter, setAgeFilter] = useState<string | null>(initialAgeFilter)
   const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
@@ -261,6 +265,8 @@ export default function DescobrirClient({
   const [savingSelfCareId, setSavingSelfCareId] = useState<string | null>(null)
   const [completingSelfCareId, setCompletingSelfCareId] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
+
+  const discoverFlags = useMemo(() => getClientFlags(flags), [flags])
 
   const profileMode = profile.mode
   const impressionsKeyRef = useRef<string | null>(null)
