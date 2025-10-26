@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 
 import DescobrirClient from './Client'
 import { toFlashFilters } from './utils/filters'
+import { nearestQuickIdeasWindow } from './utils/timeWindows'
 
 import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
 import { FLASH_IDEAS_CATALOG } from '@/app/data/flashIdeas'
@@ -41,7 +42,6 @@ export const revalidate = 0
 
 const LOCATION_KEYS: QuickIdeasLocation[] = ['casa', 'parque', 'escola', 'area_externa']
 const ENERGY_KEYS: QuickIdeasEnergy[] = ['exausta', 'normal', 'animada']
-const TIME_VALUES: QuickIdeasTimeWindow[] = [5, 10, 20]
 const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
@@ -67,16 +67,7 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
   const numeric = Number(value)
-  if (TIME_VALUES.includes(numeric as QuickIdeasTimeWindow)) {
-    return numeric as QuickIdeasTimeWindow
-  }
-  if (numeric <= 5) {
-    return 5
-  }
-  if (numeric <= 10) {
-    return 10
-  }
-  return 20
+  return nearestQuickIdeasWindow(numeric)
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
@@ -272,9 +263,19 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
     : { items: [], rotationKey: '', source: 'fallback' as const }
 
+  const quickIdeasFilters = {
+    location: filters.location,
+    energy: filters.energy,
+    time_window_min: nearestQuickIdeasWindow(Number(filters.time_window_min)),
+  } satisfies {
+    location: QuickIdeasLocation
+    energy: QuickIdeasEnergy
+    time_window_min: QuickIdeasTimeWindow
+  }
+
   const suggestions = buildDailySuggestions(
     profileSummary,
-    filters,
+    quickIdeasFilters,
     dateKey,
     QUICK_IDEAS_CATALOG
   )
