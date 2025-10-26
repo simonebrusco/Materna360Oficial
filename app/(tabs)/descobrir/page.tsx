@@ -291,6 +291,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
         energy: filters.energy,
         minutes: filters.time_window_min as 2 | 5 | 10,
       }}
+      flags={serverFlags}
     />
   )
 }
