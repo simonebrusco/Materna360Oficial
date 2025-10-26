@@ -1029,6 +1029,8 @@ function RecipeDetailModal({
   aggregatedShoppingList,
 }: RecipeDetailModalProps) {
   const applicableAdaptation = suggestion.age_adaptations?.[ageBucket] ?? null
+  const ageLabel = AGE_BUCKET_LABELS[ageBucket] ?? ageBucket
+
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1250] flex items-start justify-center overflow-y-auto bg-black/45 p-4 md:p-10">
       <div className="relative mt-10 w-full max-w-2xl rounded-3xl bg-white/98 p-6 shadow-elevated md:p-8">
@@ -1113,7 +1115,7 @@ function RecipeDetailModal({
 
           {suggestion.safety_notes && suggestion.safety_notes.length > 0 && (
             <section className="space-y-2">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Notas de segurança</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Notas de seguran��a</h4>
               <ul className="space-y-1.5 text-sm text-support-1/80">
                 {suggestion.safety_notes.map((note) => (
                   <li key={note} className="flex items-start gap-2">
