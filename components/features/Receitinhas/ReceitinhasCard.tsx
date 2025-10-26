@@ -580,7 +580,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                   type="button"
                   onClick={() => setCategory(option.value)}
                   aria-pressed={isActive}
-                  className={chipClasses(isActive)}
+                  className={`${chipClasses(isActive)} gap-2`}
                 >
                   <span className="mr-1" aria-hidden="true">
                     {option.icon}
