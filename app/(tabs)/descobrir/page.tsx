@@ -150,7 +150,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     },
     filters,
     dateKey,
-    QUICK_IDEAS_CATALOG as QuickIdeaCatalogEntry[]
+    QUICK_IDEAS_CATALOG
   )
 
   const suggestionViews: SuggestionView[] = suggestions.map(({ idea, child }) => ({
