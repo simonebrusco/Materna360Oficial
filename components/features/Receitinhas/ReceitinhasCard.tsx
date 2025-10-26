@@ -758,7 +758,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         )}
 
         {!isLoading && error && (
-          <div className="rounded-2xl border border-white/70 bg-white/90 p-4 text-sm text-support-2">
+          <div className="rounded-2xl border border-support-2/20 bg-white/95 p-4 text-sm text-support-2">
             <p>{error}</p>
             <button
               type="button"
