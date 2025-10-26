@@ -74,7 +74,7 @@ type RecShelfState = {
 type FlashRoutineState = {
   enabled: boolean
   aiEnabled: boolean
-  routine: FlashRoutine | null
+  routine: FlashRoutineT | null
   strategy: 'cms' | 'composed' | 'fallback' | null
   analyticsSource: 'local' | 'ai'
 }
@@ -82,7 +82,7 @@ type FlashRoutineState = {
 type SelfCareState = {
   enabled: boolean
   aiEnabled: boolean
-  items: SelfCare[]
+  items: SelfCareT[]
   energy: SelfCareEnergy
   minutes: 2 | 5 | 10
 }
