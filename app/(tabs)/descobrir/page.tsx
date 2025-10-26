@@ -201,7 +201,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   })
 
-  const profile = profileSummary
+  const validatedProfile = profileSummary
 
   const BUCKET_ORDER: Record<AgeBucket, number> = {
     '0-1': 0,
