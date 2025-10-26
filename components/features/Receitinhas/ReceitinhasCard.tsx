@@ -441,6 +441,18 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
     setPlannerSaving(true)
     const recipe = plannerModal.suggestion
     try {
+      const shoppingList = sanitizeStringList(recipe.shopping_list)
+      const readyInMinutes = coerceIntWithin(recipe.time_total_min, 20, 1, 240)
+      const servings = coerceIntWithin(recipe.servings, 2, 1, 20)
+      const recipePayload = {
+        type: 'recipe' as const,
+        id: recipe.id || generatePlannerId('recipe', recipe.title),
+        title: recipe.title,
+        readyInMinutes,
+        servings,
+        shoppingList,
+      }
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -450,10 +462,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           timeISO: plannerTime,
           category: plannerCategory,
           link: '#receitinhas',
-          payload: {
-            recipeId: recipe.id,
-            shoppingList: recipe.shopping_list ?? [],
-          },
+          payload: recipePayload,
           tags: ['Receitinhas'],
         }),
       })
