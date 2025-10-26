@@ -532,16 +532,16 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9"
     >
       <form className="space-y-5 md:space-y-6" onSubmit={handleSubmit}>
-        <header className="space-y-3">
-          <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-primary">Alimentação inteligente</span>
+        <header className="space-y-3 md:space-y-4">
+          <span className="text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">Alimentação inteligente</span>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-secondary/60 text-xl">
                 🧡
               </span>
               <div className="space-y-1.5">
-                <h2 className="text-[22px] font-semibold leading-[1.28] text-support-1">Receitinhas</h2>
-                <p className="text-[15px] leading-[1.45] text-support-2/85">Diga 1 ingrediente e eu preparo o resto.</p>
+                <h2 className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">Receitinhas</h2>
+                <p className="text-sm leading-[1.45] text-support-2/85 md:text-base">Diga 1 ingrediente e eu preparo o resto.</p>
               </div>
             </div>
             <button
