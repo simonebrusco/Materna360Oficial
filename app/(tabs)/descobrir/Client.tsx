@@ -37,7 +37,7 @@ const activities = [
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '����', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
   { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
@@ -548,11 +548,15 @@ export default function DescobrirClient({
   }
 
   const handleBuyProduct = (product: RecShelfItem) => {
-    trackTelemetry('discover_rec_click_buy', {
-      id: product.id,
-      kind: product.kind,
-      retailer: product.retailer,
-    })
+    trackTelemetry(
+      'discover_rec_click_buy',
+      {
+        id: product.id,
+        kind: product.kind,
+        retailer: product.retailer,
+      },
+      telemetryCtx
+    )
 
     if (typeof window !== 'undefined') {
       const targetUrl = product.trackedAffiliateUrl || product.affiliateUrl
