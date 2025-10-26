@@ -8,6 +8,10 @@ export type TelemetryEvent =
   | 'quick_ideas_error'
   | 'quick_ideas_access_denied'
   | 'quick_ideas_bad_request'
+  | 'discover_rec_impression'
+  | 'discover_rec_click_buy'
+  | 'discover_rec_save_planner'
+  | 'discover_rec_view_details'
 
 const GLOBAL_KEY = '__materna360Telemetry__'
 
