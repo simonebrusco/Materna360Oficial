@@ -34,6 +34,39 @@ export type DailySuggestion = {
 const AGE_BUCKET_ORDER: QuickIdeasAgeBucket[] = ['0-1', '2-3', '4-5', '6-7', '8+']
 const AGE_BUCKET_SET = new Set<QuickIdeasAgeBucket>(AGE_BUCKET_ORDER)
 
+const SAFE_DEFAULT_IDEA: QuickIdeaCatalogEntry = {
+  id: 'casa-respiro-bolinhas',
+  title: 'Bolhas de Respiração Calminha',
+  summary: 'Façam respirações lentas soprando bolhas pertinho de uma tigela com espuma.',
+  time_total_min: 5,
+  location: 'casa',
+  materials: ['tigela pequena', 'água morna', 'detergente neutro', 'canudo grosso reutilizável'],
+  steps: [
+    'Misture a água morna com uma gota de detergente na tigela para formar bolhinhas.',
+    'Inspire pelo nariz e sopre suave pelo canudo para criar bolhas calmas juntos.',
+  ],
+  age_adaptations: {
+    '0-1': 'Sente o bebê no colo e sopre você mesma, deixando-o tocar bolhas grandes com a mão.',
+    '2-3': 'Ajude a segurar o canudo e contar até três antes de soprar devagar.',
+    '4-5': 'Proponha desenhar figuras na espuma usando o dedo indicador.',
+    '6-7': 'Crie desafios de soprar bolha maior e estourar com o dedo mindinho.',
+    '8+': 'Inclua respirações 4-6: inspire em 4 tempos e solte em 6 soprando as bolhas.',
+  },
+  safety_notes: [
+    'Use canudo grosso ou reutilizável para reduzir risco de engolir líquido.',
+    'Supervisione o uso do detergente e lave as mãos ao final.',
+  ],
+  badges: ['curta', 'sensorial'],
+  planner_payload: {
+    type: 'idea',
+    duration_min: 5,
+    materials: ['tigela pequena', 'água morna', 'detergente neutro', 'canudo grosso reutilizável'],
+  },
+  rationale: 'Fallback seguro: poucos passos em casa, acalma respiração e cabe em 5 minutos.',
+  ageBuckets: ['0-1', '2-3', '4-5', '6-7', '8+'],
+  suitableEnergies: ['exausta', 'normal'],
+}
+
 const FRIENDLY_LOCATION: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
