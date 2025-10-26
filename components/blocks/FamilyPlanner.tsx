@@ -826,18 +826,18 @@ export function FamilyPlanner({
 
   return (
     <Card className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/85 p-7 shadow-[0_8px_30px_rgba(0,0,0,0.05)] backdrop-blur-[2px] md:p-8">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-primary to-primary/60" />
-      <div className="space-y-6 md:space-y-8">
+      <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
+      <div className="space-y-4 md:space-y-5">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-xl space-y-2">
-            <span className="inline-block text-[12px] font-semibold uppercase tracking-[0.04em] text-support-2/85">
+          <div className="max-w-xl space-y-2 md:space-y-3">
+            <span className="inline-block text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">
               Equilíbrio
             </span>
             <div className="space-y-1.5">
-              <h2 data-testid="planner-title" className="text-xl font-semibold tracking-tight text-support-1 md:text-2xl">
+              <h2 data-testid="planner-title" className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
                 {resolvedPlannerTitle}
               </h2>
-              <p className="text-sm text-support-2 md:text-base">
+              <p className="text-sm leading-[1.45] text-support-2/85 md:text-base">
                 Planeje momentos especiais e acompanhe o que importa para a família.
               </p>
             </div>
