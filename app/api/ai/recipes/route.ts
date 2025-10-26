@@ -10,7 +10,7 @@ export async function POST(req: Request) {
         denied: true,
         limited_to_one: false,
         message:
-          'Receitinhas IA is part of paid plans. Try Essencial (1 recipe/day) or Premium (unlimited).',
+          'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).',
       },
       query_echo: body,
       suggestions: [],
