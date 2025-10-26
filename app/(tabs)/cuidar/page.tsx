@@ -28,6 +28,14 @@ const MindfulnessForMoms = nextDynamic(
   }
 )
 
+const ReceitinhasIA = nextDynamic(
+  () => import('@/components/blocks/ReceitinhasIA'),
+  {
+    ssr: false,
+    loading: () => <div className="animate-pulse h-60 rounded-3xl border bg-white/60" />,
+  }
+)
+
 const OrganizationTips = nextDynamic(
   () => import('@/components/blocks/OrganizationTips'),
   {
@@ -58,6 +66,7 @@ export default async function Page() {
       <section className="mt-6 space-y-6">
         <CareJourneys />
         <MindfulnessForMoms />
+        <ReceitinhasIA />
         <OrganizationTips />
       </section>
       <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
