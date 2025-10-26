@@ -186,6 +186,7 @@ export function CareJourneys() {
         <p className="max-w-2xl text-[15px] leading-[1.45] text-support-2/85">
           Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
         </p>
+        <div className="h-px w-full bg-support-2/15" />
       </header>
 
       <div className="mt-4 space-y-5 md:mt-5 md:space-y-6">
