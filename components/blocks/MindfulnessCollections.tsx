@@ -310,7 +310,7 @@ export function MindfulnessCollections() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-7">
         {GROUPS.map((group, index) => (
           <Reveal key={group.key} delay={index * 90} className="h-full">
-            <Card className="section-card relative h-full overflow-hidden bg-gradient-to-br from-[#ffd8e6] via-white to-white text-left">
+            <Card className="CardElevate section-card relative h-full overflow-hidden bg-gradient-to-br from-[#ffd8e6] via-white to-white text-left">
               <div className="flex h-full flex-col gap-5">
                 <span className="text-3xl" aria-hidden="true">
                   {group.icon}
