@@ -206,7 +206,7 @@ export function CareJourneys() {
         <div className="grid grid-cols-1 gap-y-4 gap-x-3 md:grid-cols-2 md:gap-y-5 md:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
           {journeys.map((journey) => {
             const journeyProgress = progressMap[journey.id]
-            const completedCount = journeyProgress.filter(Boolean).length
+            const completedCount = Number(journeySummary[journey.id]?.completed ?? journeyProgress.filter(Boolean).length)
 
             return (
               <Card
