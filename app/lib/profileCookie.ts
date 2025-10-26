@@ -1,10 +1,10 @@
 import { cookies, type ReadonlyRequestCookies } from 'next/headers'
 
-import { cookies as getCookies } from 'next/headers'
+import { cookies } from 'next/headers'
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange, AGE_RANGE_VALUES } from '@/app/lib/ageRange'
 
-type CookieStore = ReturnType<typeof getCookies>
+type CookieStore = ReturnType<typeof cookies>
 
 export type ProfileCookieState = {
   profile: Profile
@@ -173,7 +173,7 @@ const extractMetadata = (record: Record<string, unknown>) => {
 }
 
 export const readProfileCookie = (
-  jar: CookieStore = getCookies()
+  jar: CookieStore = cookies()
 ): ProfileCookieState => {
   const rawProfile = jar.get(PROFILE_COOKIE_NAME)?.value ?? null
   const record = parseProfileCookie(rawProfile)
