@@ -13,6 +13,7 @@ const defaultFlags: FeatureFlags = {
   enableAIRecommendations: true,
   enableMentoringFeature: true,
   enableCommunity: false,
+  'discover.recShelf': false,
 }
 
 export const getFeatureFlags = (): FeatureFlags => {
