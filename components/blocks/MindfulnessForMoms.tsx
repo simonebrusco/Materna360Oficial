@@ -89,8 +89,8 @@ export default function MindfulnessForMoms() {
               >
                 {collection.icon}
               </span>
-              <h3 className="mb-4 text-[28px] font-extrabold leading-tight text-support-1 md:text-[32px]">{collection.titulo}</h3>
-              <p className="text-[18px] leading-8 text-support-2 md:text-[20px]">{collection.descricao}</p>
+              <h3 className="mb-4 text-lg md:text-[22px] font-extrabold leading-tight text-support-1">{collection.titulo}</h3>
+              <p className="text-[13.5px] md:text-[15px] leading-relaxed text-support-2">{collection.descricao}</p>
             </div>
 
             <div className="mt-auto pt-8">
