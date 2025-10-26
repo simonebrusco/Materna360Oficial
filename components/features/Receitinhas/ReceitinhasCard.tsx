@@ -630,7 +630,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </fieldset>
 
           <fieldset className="space-y-3">
-            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Dieta</legend>
+            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">DIETA</legend>
             <div className="flex flex-wrap gap-2">
               {DIET_OPTIONS.map((option) => {
                 const isActive = diet.includes(option.value)
