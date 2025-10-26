@@ -399,7 +399,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
             recipeId: recipe.id,
             shoppingList: recipe.shopping_list ?? [],
           },
-          tags: ['Receita', 'IA'],
+          tags: ['Receitinhas'],
         }),
       })
       if (!response.ok) {
