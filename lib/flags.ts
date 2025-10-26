@@ -5,6 +5,8 @@ export interface FeatureFlags {
   enableMentoringFeature: boolean
   enableCommunity: boolean
   'discover.recShelf': boolean
+  'discover.flashRoutine': boolean
+  'discover.flashRoutineAI': boolean
 }
 
 const defaultFlags: FeatureFlags = {
@@ -14,6 +16,8 @@ const defaultFlags: FeatureFlags = {
   enableMentoringFeature: true,
   enableCommunity: false,
   'discover.recShelf': false,
+  'discover.flashRoutine': false,
+  'discover.flashRoutineAI': false,
 }
 
 export const getFeatureFlags = (): FeatureFlags => {
