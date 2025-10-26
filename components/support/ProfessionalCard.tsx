@@ -28,7 +28,7 @@ export default function ProfessionalCard({ pro }: ProfessionalCardProps) {
   const avatarSrc = pro.avatarUrl || FALLBACK_AVATAR
 
   return (
-    <article className="flex h-full flex-col gap-4 rounded-2xl border border-white/60 bg-white/80 p-5 shadow-soft">
+    <article className="flex h-full flex-col gap-4 rounded-2xl border border-white/60 bg-white/85 p-4 shadow-soft md:p-5">
       <div className="flex items-start gap-4">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/80 bg-white">
           <Image
@@ -58,7 +58,7 @@ export default function ProfessionalCard({ pro }: ProfessionalCardProps) {
             ) : null}
           </div>
           <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-primary/80">{pro.especialidade}</p>
-          <p className="mt-2 text-sm leading-relaxed text-support-2 line-clamp-4">{pro.bioCurta}</p>
+          <p className="mt-2 text-sm leading-relaxed text-support-2 line-clamp-2">{pro.bioCurta}</p>
           {pro.cidade ? <p className="mt-1 text-xs text-support-2/80">Atendimento a partir de {pro.cidade}</p> : null}
         </div>
       </div>
