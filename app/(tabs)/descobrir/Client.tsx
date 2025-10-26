@@ -87,6 +87,14 @@ type FlashRoutineState = {
   analyticsSource: 'local' | 'ai'
 }
 
+type SelfCareState = {
+  enabled: boolean
+  aiEnabled: boolean
+  items: SelfCare[]
+  energy: SelfCareEnergy
+  minutes: 2 | 5 | 10
+}
+
 type RecShelfCardProps = {
   item: RecShelfItem
   profileMode: 'single' | 'all'
