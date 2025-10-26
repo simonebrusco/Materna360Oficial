@@ -525,7 +525,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               🧡
             </span>
             <div>
-              <h2 className="text-xl font-semibold text-support-1">Receitinhas IA</h2>
+              <h2 className="text-xl font-semibold text-support-1">Receitinhas</h2>
               <p className="text-sm text-support-2/80">Tell me 1 ingredient and I’ll handle the rest.</p>
             </div>
           </div>
@@ -882,7 +882,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               <X className="h-4 w-4" />
             </button>
             <div className="space-y-4 pt-2">
-              <h3 className="text-lg font-semibold text-support-1">Receitinhas IA</h3>
+              <h3 className="text-lg font-semibold text-support-1">Receitinhas</h3>
               <p className="text-sm text-support-2">{accessModal}</p>
               <Button
                 variant="primary"
