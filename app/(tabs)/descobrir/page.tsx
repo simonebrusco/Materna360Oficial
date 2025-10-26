@@ -251,7 +251,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     : { items: [], rotationKey: '', source: 'fallback' as const }
 
   const suggestions = buildDailySuggestions(
-    profilePayload,
+    profileSummary,
     filters,
     dateKey,
     QUICK_IDEAS_CATALOG
@@ -287,7 +287,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       suggestions={suggestionViews}
       filters={filters}
       dateKey={dateKey}
-      profile={profilePayload}
+      profile={profileSummary}
       initialAgeFilter={initialAgeFilter}
       initialPlaceFilter={initialPlaceFilter}
       recProducts={recProducts}
