@@ -76,7 +76,7 @@ const SHOPPING_LIST_STORAGE_KEY = 'materna360:shopping-list'
 const PLAN_STORAGE_KEY = 'receitinhas:plan'
 
 const MAX_HISTORY = 3
-const PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
+const PLANNER_CATEGORIES = ['Caf�� da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 
 const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
   '0-6m': '0-6 meses',
@@ -852,7 +852,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         )}
 
         {!isLoading && !error && suggestions.length === 0 && history.length === 0 && (
-          <div className="rounded-2xl border border-white/60 bg-white/85 p-6 text-center text-sm text-support-2/80 shadow-soft">
+          <div className="rounded-2xl border border-support-2/20 bg-white/92 p-6 text-center text-sm text-support-2/80 shadow-[0_16px_32px_-24px_rgba(47,58,86,0.24)]">
             <p>Suas últimas receitas aparecem aqui.</p>
             <button
               type="button"
