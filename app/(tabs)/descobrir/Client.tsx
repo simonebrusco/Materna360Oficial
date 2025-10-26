@@ -24,7 +24,7 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
-import type { RecProductKind } from '@/app/types/recProducts'
+import type { RecProduct, RecProductKind } from '@/app/types/recProducts'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
@@ -34,7 +34,7 @@ const activities = [
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
   { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
-  { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
+  { id: 8, emoji: '🏗���', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
 const books = [
@@ -126,7 +126,7 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   book: { icon: '📚', title: 'Livros que Inspiram' },
   toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '����️', title: 'Printables para Brincar' },
+  printable: { icon: '🖨️', title: 'Printables para Brincar' },
 }
 
 function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
