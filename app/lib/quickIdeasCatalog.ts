@@ -182,6 +182,9 @@ const fallbackIdeaForBucket = (
   catalog: QuickIdeaCatalogEntry[],
   bucket: QuickIdeasAgeBucket
 ): QuickIdeaCatalogEntry => {
+  if (catalog.length === 0) {
+    return SAFE_DEFAULT_IDEA
+  }
   return catalog.find((idea) => idea.ageBuckets.includes(bucket)) ?? catalog[0]
 }
 
