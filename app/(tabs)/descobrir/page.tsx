@@ -143,13 +143,25 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
           },
         ]
 
-  const rawMode = typeof searchParams?.mode === 'string' ? searchParams?.mode : metadata.mode
-  const requestedMode = rawMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
+  const rawModeValue =
+    typeof searchParams?.mode === 'string' ? searchParams.mode : metadata.mode
+  const normalizedMode =
+    typeof rawModeValue === 'string' ? rawModeValue.trim().toLowerCase() : ''
+  const requestedMode: ProfileMode =
+    normalizedMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
 
-  const rawActiveId =
-    typeof searchParams?.child === 'string'
-      ? searchParams.child
-      : metadata.activeChildId ?? fallbackChildren[0]?.id
+  const searchParamChildId = normalizeChildId(
+    typeof searchParams?.child === 'string' ? searchParams.child : undefined
+  )
+  const metadataChildId = normalizeChildId(metadata.activeChildId ?? null)
+  const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
+
+  const activeChildId: string | null =
+    searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
+
+  const activeChild =
+    (activeChildId ? fallbackChildren.find((child) => child.id === activeChildId) : null) ??
+    fallbackChildren[0]
 
   const filters = {
     location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
