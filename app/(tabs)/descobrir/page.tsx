@@ -211,17 +211,17 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     '8+': 4,
   }
 
-  const children = Array.isArray(profile.children) ? profile.children : []
+  const children = Array.isArray(validatedProfile.children) ? validatedProfile.children : []
 
   const computedBuckets: AgeBucket[] =
-    profile.mode === 'all'
+    validatedProfile.mode === 'all'
       ? Array.from(new Set(children.map((child) => child.age_bucket))).sort(
           (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
         )
       : (() => {
           const active =
-            (profile.activeChildId
-              ? children.find((child) => child.id === profile.activeChildId)
+            (validatedProfile.activeChildId
+              ? children.find((child) => child.id === validatedProfile.activeChildId)
               : undefined) ?? children[0]
           return active ? [active.age_bucket] : []
         })()
