@@ -173,11 +173,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     (activeChildId ? fallbackChildren.find((child) => child.id === activeChildId) : null) ??
     fallbackChildren[0]
 
-  const filters = {
+  const filters = QuickIdeasFiltersSchema.parse({
     location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
     time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
     energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
-  }
+  })
 
   const serverFlags = getServerFlags({
     cookies: (name) => jar.get(name)?.value,
