@@ -394,7 +394,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           dateISO: plannerDate,
           timeISO: plannerTime,
           category: plannerCategory,
-          link: '#receitinhas-ia',
+          link: '#receitinhas',
           payload: {
             recipeId: recipe.id,
             shoppingList: recipe.shopping_list ?? [],
