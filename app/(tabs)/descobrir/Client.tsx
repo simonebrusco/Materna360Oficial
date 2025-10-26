@@ -642,11 +642,11 @@ export default function DescobrirClient({
     if (!flashRoutineEnabled || !routine) {
       return
     }
-    trackTelemetry('discover_flash_start', {
-      id: routine.id,
-      total: routine.totalMin,
-      source: flashRoutine.analyticsSource,
-    })
+    trackTelemetry(
+      'discover_flash_start',
+      { routineId: routine.id },
+      { ...telemetryCtx, source: analyticsSource }
+    )
     setToast({ message: 'Rotina iniciada! Aproveite os próximos minutos juntos.', type: 'info' })
   }
 
