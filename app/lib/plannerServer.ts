@@ -1,5 +1,8 @@
 export const PLANNER_COOKIE_NAME = 'materna360-planner'
-export const MAX_PLANNER_ITEMS_PER_DAY = 20
+import { trackTelemetry } from '@/app/lib/telemetry'
+
+import { validatePlannerItem, type PlannerItemT } from './plannerGuard'
+
 
 export const VALID_PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 export type PlannerCategory = (typeof VALID_PLANNER_CATEGORIES)[number]
@@ -11,7 +14,7 @@ export type PlannerPayload = {
   timeISO: string
   category: PlannerCategory
   link?: string
-  payload?: unknown
+  payload?: PlannerItemT
   tags?: string[]
   createdAt: string
 }
@@ -52,7 +55,7 @@ const defaultNowFactory = () => new Date()
 
 export function buildPlannerPayload(
   raw: any,
-  options?: { idFactory?: () => string; nowFactory?: () => Date }
+  options?: { idFactory?: () => string; nowFactory?: () => Date; plannerItem?: PlannerItemT }
 ): PlannerPayload {
   const idFactory = options?.idFactory ?? defaultIdFactory
   const nowFactory = options?.nowFactory ?? defaultNowFactory
@@ -75,6 +78,9 @@ export function buildPlannerPayload(
     throw new Error('Categoria inválida.')
   }
 
+  const normalizedPlannerItem =
+    options?.plannerItem ?? (raw?.payload !== undefined ? validatePlannerItem(raw.payload) : undefined)
+
   const payload: PlannerPayload = {
     id: idFactory(),
     title,
@@ -82,7 +88,7 @@ export function buildPlannerPayload(
     timeISO,
     category,
     link: typeof raw?.link === 'string' ? raw.link.trim() || undefined : undefined,
-    payload: raw?.payload ?? undefined,
+    payload: normalizedPlannerItem,
     tags: sanitizeTags(raw?.tags),
     createdAt: nowFactory().toISOString(),
   }
