@@ -39,8 +39,19 @@ const CATEGORY_OPTIONS: { value: RecipeCategory; label: string; icon: string }[]
 ]
 
 const TIME_OPTIONS = [10, 20, 30]
-const EQUIPMENT_OPTIONS = ['fogao', 'forno', 'airfryer', 'microondas'] as const
-const DIET_OPTIONS = ['sem_lactose', 'sem_gluten', 'vegetariano', 'vegano', 'sem_ovos'] as const
+const EQUIPMENT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'fogao', label: 'fogão' },
+  { value: 'forno', label: 'forno' },
+  { value: 'airfryer', label: 'airfryer' },
+  { value: 'microondas', label: 'micro-ondas' },
+]
+const DIET_OPTIONS: { value: string; label: string }[] = [
+  { value: 'sem_lactose', label: 'sem lactose' },
+  { value: 'sem_gluten', label: 'sem glúten' },
+  { value: 'vegetariano', label: 'vegetariano' },
+  { value: 'vegano', label: 'vegano' },
+  { value: 'sem_ovos', label: 'sem ovos' },
+]
 const ENERGY_OPTIONS: { value: RecipeEnergy; label: string }[] = [
   { value: 'exausta', label: 'Exausta' },
   { value: 'normal', label: 'Normal' },
@@ -48,8 +59,8 @@ const ENERGY_OPTIONS: { value: RecipeEnergy; label: string }[] = [
 ]
 const BUDGET_OPTIONS: { value: RecipeBudget; label: string }[] = [
   { value: '$', label: '$ (básico)' },
-  { value: '$$', label: '$$' },
-  { value: '$$$', label: '$$$' },
+  { value: '$$', label: '$$ (intermediário)' },
+  { value: '$$$', label: '$$$ (especial)' },
 ]
 
 const HISTORY_STORAGE_KEY = 'receitinhas:history'
@@ -60,14 +71,22 @@ const PLAN_STORAGE_KEY = 'receitinhas:plan'
 const MAX_HISTORY = 3
 const PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 
+const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
+  '0-6m': '0-6 meses',
+  '7-12m': '7-12 meses',
+  '1-2a': '1-2 anos',
+  '3-4a': '3-4 anos',
+  '5-6a': '5-6 anos',
+}
+
 const formatBudgetLabel = (value: RecipeBudget) => {
   switch (value) {
     case '$':
-      return 'R$'
+      return '$ (básico)'
     case '$$':
-      return 'R$ +' // short label
+      return '$$ (intermediário)'
     case '$$$':
-      return 'R$ ++'
+      return '$$$ (especial)'
     default:
       return value
   }
