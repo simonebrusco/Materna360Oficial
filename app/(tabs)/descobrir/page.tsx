@@ -206,14 +206,14 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const recShelfGroups = recShelfEnabled
     ? buildRecShelves({
-        products: REC_PRODUCTS,
+        products: recProductsCatalog,
         targetBuckets,
         location: filters.location,
         dateKey,
       })
     : []
 
-  const recProducts = recShelfEnabled ? REC_PRODUCTS.filter((product) => product.active) : []
+  const recProducts = recShelfEnabled ? recProductsCatalog.filter((product) => product.active) : []
 
   const profilePayload: ProfileSummary = {
     mode: requestedMode,
