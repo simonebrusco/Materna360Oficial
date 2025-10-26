@@ -128,9 +128,9 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
             style={{
               width: (function () {
                 const c = Math.max(0, Number(jornadasCompleted ?? 0))
-                const t = Math.max(1, Number(jornadasTotal ?? 7))
-                const clamped = Math.max(0, Math.min(c, t))
-                return `${(clamped / t) * 100}%`
+                const t = Math.max(1, Number(jornadasTotal ?? JOURNEY_WEEK_TARGET))
+                const pct = Math.min(100, Math.max(0, (Math.min(c, t) / t) * 100))
+                return `${pct}%`
               })(),
               transformOrigin: 'left center',
               willChange: 'width',
