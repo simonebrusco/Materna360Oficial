@@ -48,15 +48,15 @@ function BreathTimer() {
 
   return (
     <Card className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/90 px-6 py-10 text-center shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-10 md:py-12">
-      <header className="space-y-3">
-        <span className="text-sm font-semibold text-primary">Pausa consciente</span>
-        <h2 className="text-[22px] font-semibold text-support-1">Respiração Guiada</h2>
-        <p className="mx-auto max-w-2xl text-sm text-support-2/80 md:text-base">
+      <header className="space-y-2 md:space-y-3">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">Pausa consciente</span>
+        <h2 className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">Respiração Guiada</h2>
+        <p className="mx-auto max-w-2xl text-sm leading-[1.45] text-support-2/85 md:text-base">
           Sincronize sua respiração com um ritmo suave e acolhedor.
         </p>
       </header>
 
-      <div className="m360-heart mx-auto mt-6 flex items-center justify-center md:mt-8">
+      <div className="m360-heart mx-auto mt-4 flex items-center justify-center md:mt-5">
         <Image
           src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F5b7e725c13924063a116efc21a335af1"
           alt="Flor de cerejeira Materna360"
