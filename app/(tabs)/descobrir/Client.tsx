@@ -126,7 +126,7 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   book: { icon: '📚', title: 'Livros que Inspiram' },
   toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '🖨️', title: 'Printables para Brincar' },
+  printable: { icon: '����️', title: 'Printables para Brincar' },
 }
 
 function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
@@ -264,12 +264,18 @@ export default function DescobrirClient({
     return parts.join(' • ')
   }, [filters])
 
+  const recShelfImpressionKey = useMemo(() => {
+    if (!recShelf.enabled || recShelf.groups.length === 0) {
+      return ''
+    }
+    return recShelf.groups.map((group) => `${group.kind}:${group.items.length}`).join('|')
+  }, [recShelf.enabled, recShelf.groups])
+
   useEffect(() => {
     if (!recShelf.enabled || recShelf.groups.length === 0) {
       return
     }
-    const key = recShelf.groups.map((group) => `${group.kind}:${group.items.length}`).join('|')
-    if (impressionsKeyRef.current === key) {
+    if (impressionsKeyRef.current === recShelfImpressionKey) {
       return
     }
     recShelf.groups.forEach((group) => {
@@ -278,8 +284,8 @@ export default function DescobrirClient({
         count: group.items.length,
       })
     })
-    impressionsKeyRef.current = key
-  }, [recShelf.enabled, recShelf.groups])
+    impressionsKeyRef.current = recShelfImpressionKey
+  }, [recShelf.enabled, recShelf.groups, recShelfImpressionKey])
 
   const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
 
