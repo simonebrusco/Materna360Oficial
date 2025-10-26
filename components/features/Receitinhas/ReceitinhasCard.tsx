@@ -338,12 +338,13 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       url: `https://materna360.app/receitas/${encodeURIComponent(suggestion.id)}`,
     }
     try {
-      if (typeof navigator !== 'undefined' && 'share' in navigator) {
-        await (navigator as Navigator & { share(data: ShareData): Promise<void> }).share(shareData)
+      const nav = typeof window !== 'undefined' ? window.navigator : undefined
+      if (nav && 'share' in nav) {
+        await (nav as Navigator & { share(data: ShareData): Promise<void> }).share(shareData)
         return
       }
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(`${shareText}\n${shareData.url}`)
+      if (nav?.clipboard) {
+        await nav.clipboard.writeText(`${shareText}\n${shareData.url}`)
         setToast({ message: 'Link copiado para compartilhar 💌', type: 'success' })
       }
     } catch (error) {
