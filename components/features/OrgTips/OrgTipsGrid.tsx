@@ -278,11 +278,11 @@ export function OrgTipsGrid() {
     }`
 
   const summaryPillClass =
-    'ml-auto inline-flex h-[20px] items-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary/90'
+    'ml-auto mr-2 inline-flex h-[22px] max-w-[160px] items-center truncate rounded-full bg-support-2/10 px-2 text-[11px] font-medium leading-none text-support-2/80 transition-colors duration-150 ease-out sm:text-[12px]'
 
   const chevronClass = (open: boolean) =>
-    `ml-2 inline-flex h-5 w-5 items-center justify-center text-support-2 transition-transform duration-200 ${
-      open ? 'rotate-90' : 'rotate-0'
+    `ml-2 inline-flex h-4 w-4 items-center justify-center text-[13px] leading-none transition-transform transition-colors duration-[160ms] ease-out group-hover:text-primary group-focus-visible:text-primary ${
+      open ? 'rotate-90 text-support-1/80' : 'rotate-0 text-support-2/70'
     }`
 
   const textActionClass =
@@ -296,7 +296,7 @@ export function OrgTipsGrid() {
             <header className="space-y-2">
               <h3 className="text-[18px] font-semibold leading-[1.28] text-support-1">Dicas de Organização</h3>
               <p className="text-[13px] leading-[1.45] text-support-2/85">Sugestões rápidas para organizar a rotina com leveza.</p>
-              <div className="h-px w-full bg-support-2/15" />
+              <div className="h-px w-full bg-support-2/40" />
             </header>
 
             <div className="mt-3 grid gap-y-2 md:mt-4 md:grid-cols-2 md:gap-x-4">
@@ -306,7 +306,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.tempo}
                   onClick={() => toggleCollapse('tempo')}
-                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="group flex h-[34px] w-full items-center gap-2 rounded-xl border border-transparent px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors transition-transform duration-[160ms] ease-out hover:-translate-y-px hover:bg-[rgba(84,84,84,0.05)] hover:border-[rgba(84,84,84,0.4)] focus-visible:translate-y-0 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-1 focus-visible:ring-offset-white focus-visible:outline-none focus-visible:border-transparent"
                 >
                   <span>Tempo livre</span>
                   {!collapse.tempo && summaryTempo ? <span className={summaryPillClass}>{summaryTempo}</span> : null}
@@ -340,7 +340,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.tema}
                   onClick={() => toggleCollapse('tema')}
-                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="group flex h-[34px] w-full items-center gap-2 rounded-xl border border-transparent px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors transition-transform duration-[160ms] ease-out hover:-translate-y-px hover:bg-[rgba(84,84,84,0.05)] hover:border-[rgba(84,84,84,0.4)] focus-visible:translate-y-0 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-1 focus-visible:ring-offset-white focus-visible:outline-none focus-visible:border-transparent"
                 >
                   <span>Tema</span>
                   {!collapse.tema && summaryTema ? <span className={summaryPillClass}>{summaryTema}</span> : null}
@@ -374,7 +374,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.formato}
                   onClick={() => toggleCollapse('formato')}
-                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="group flex h-[34px] w-full items-center gap-2 rounded-xl border border-transparent px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors transition-transform duration-[160ms] ease-out hover:-translate-y-px hover:bg-[rgba(84,84,84,0.05)] hover:border-[rgba(84,84,84,0.4)] focus-visible:translate-y-0 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-1 focus-visible:ring-offset-white focus-visible:outline-none focus-visible:border-transparent"
                 >
                   <span>Formato</span>
                   {!collapse.formato && summaryFormato ? <span className={summaryPillClass}>{summaryFormato}</span> : null}
@@ -408,7 +408,7 @@ export function OrgTipsGrid() {
                   role="button"
                   aria-expanded={collapse.comQuem}
                   onClick={() => toggleCollapse('comQuem')}
-                  className="flex h-[34px] w-full items-center gap-2 rounded-xl px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors duration-200 hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                  className="group flex h-[34px] w-full items-center gap-2 rounded-xl border border-transparent px-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80 transition-colors transition-transform duration-[160ms] ease-out hover:-translate-y-px hover:bg-[rgba(84,84,84,0.05)] hover:border-[rgba(84,84,84,0.4)] focus-visible:translate-y-0 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-1 focus-visible:ring-offset-white focus-visible:outline-none focus-visible:border-transparent"
                 >
                   <span>Com quem</span>
                   {!collapse.comQuem && summaryComQuem ? <span className={summaryPillClass}>{summaryComQuem}</span> : null}
@@ -510,7 +510,7 @@ export function OrgTipsGrid() {
               ) : null}
             </div>
 
-            <div className="mt-2.5 border-t border-support-2/20" />
+            <div className="mt-2.5 border-t border-support-2/40" />
           </div>
         </div>
 
