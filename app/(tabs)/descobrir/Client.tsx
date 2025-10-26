@@ -641,7 +641,7 @@ export default function DescobrirClient({
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}))
-        throw new Error(payload?.error ?? 'N��o foi possível salvar no Planner.')
+        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
 
       setToast({ message: 'Rotina salva no Planner!', type: 'success' })
