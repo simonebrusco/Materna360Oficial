@@ -255,6 +255,7 @@ export default function DescobrirClient({
   const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
+  const [savingRoutine, setSavingRoutine] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const profileMode = profile.mode
