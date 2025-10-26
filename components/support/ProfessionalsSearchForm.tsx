@@ -49,13 +49,13 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-[0_22px_48px_-28px_rgba(47,58,86,0.28)] md:p-6"
+      className="space-y-5 rounded-2xl border border-white/80 bg-white/95 p-4 shadow-[0_26px_54px_-32px_rgba(47,58,86,0.26)] sm:p-5 md:p-6"
     >
-      <div className="grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-4">
-        <label className="flex flex-col text-sm">
+      <div className="flex flex-wrap items-start gap-y-2 gap-x-2 sm:items-center sm:gap-y-2.5 sm:gap-x-3 md:gap-x-4">
+        <label className="flex min-w-[180px] flex-1 flex-col text-sm">
           <span className="mb-1 text-support-2/80">Profissão</span>
           <select
-            className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+            className="h-11 rounded-xl border border-neutral-200 bg-white px-3 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
             value={filters.profissao}
             onChange={handleChange('profissao')}
           >
@@ -68,10 +68,10 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
           </select>
         </label>
 
-        <label className="flex flex-col text-sm">
+        <label className="flex min-w-[180px] flex-1 flex-col text-sm">
           <span className="mb-1 text-support-2/80">Faixa etária</span>
           <select
-            className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+            className="h-11 rounded-xl border border-neutral-200 bg-white px-3 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
             value={filters.faixaEtaria}
             onChange={handleChange('faixaEtaria')}
           >
@@ -83,10 +83,10 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
           </select>
         </label>
 
-        <label className="flex flex-col text-sm">
+        <label className="flex min-w-[180px] flex-1 flex-col text-sm">
           <span className="mb-1 text-support-2/80">Idioma</span>
           <select
-            className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+            className="h-11 rounded-xl border border-neutral-200 bg-white px-3 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
             value={filters.idioma}
             onChange={handleChange('idioma')}
           >
@@ -96,10 +96,10 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
           </select>
         </label>
 
-        <label className="flex flex-col text-sm">
+        <label className="flex min-w-[220px] flex-[2] flex-col text-sm">
           <span className="mb-1 text-support-2/80">Buscar</span>
           <input
-            className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+            className="h-11 rounded-xl border border-neutral-200 bg-white px-3 text-sm text-support-1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
             placeholder="Nome, tema ou palavra-chave"
             value={filters.termos}
             onChange={handleChange('termos')}
@@ -107,11 +107,17 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
         </label>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={handleReset}>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          className="w-full sm:w-auto"
+        >
           Limpar filtros
         </Button>
-        <Button type="submit" variant="primary" size="sm">
+        <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto">
           Buscar profissionais
         </Button>
       </div>
