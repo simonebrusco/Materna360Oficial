@@ -407,7 +407,7 @@ export default function DescobrirClient({
   )
 
   useEffect(() => {
-    if (!flashRoutineImpressionKey || !flashRoutineTelemetryPayload) {
+    if (!flashRoutineImpressionKey || !routine) {
       return
     }
 
@@ -415,14 +415,20 @@ export default function DescobrirClient({
       return
     }
 
-    trackTelemetry('discover_flash_impression', {
-      ...flashRoutineTelemetryPayload,
-      source: analyticsSource,
-      dateKey: stableDateKey,
-    })
-
     flashRoutineImpressionRef.current = flashRoutineImpressionKey
-  }, [flashRoutineImpressionKey, flashRoutineTelemetryPayload, analyticsSource, stableDateKey])
+    if (!sample(0.2)) {
+      return
+    }
+
+    trackTelemetry(
+      'discover_flash_impression',
+      {
+        routineId: routine.id,
+        source: analyticsSource,
+      },
+      { ...telemetryCtx, source: analyticsSource }
+    )
+  }, [flashRoutineImpressionKey, routine, analyticsSource, telemetryCtx])
 
   useEffect(() => {
     if (!showSelfCare) {
