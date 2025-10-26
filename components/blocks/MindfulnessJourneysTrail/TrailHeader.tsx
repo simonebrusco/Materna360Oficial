@@ -32,7 +32,7 @@ function readProfileNameSafely(): string | undefined {
 }
 
 export default function TrailHeader() {
-  const { completed, total, percentage, weekLabel } = useMindfulnessProgress()
+  const { completed, total, weekLabel } = useMindfulnessProgress()
   const [name, setName] = useState<string | undefined>(undefined)
 
   const safeTotal = Math.max(typeof total === 'number' && Number.isFinite(total) ? total : 1, 1)
