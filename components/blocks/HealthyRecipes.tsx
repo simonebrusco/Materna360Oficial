@@ -82,6 +82,53 @@ const QUICK_SUGGESTIONS = [
 
 const CATEGORY_OPTIONS = VALID_PLANNER_CATEGORIES
 
+const sanitizeStringList = (values: unknown): string[] => {
+  if (!Array.isArray(values)) {
+    return []
+  }
+  const seen = new Set<string>()
+  return values
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => {
+      if (!entry) {
+        return false
+      }
+      const key = entry.toLocaleLowerCase('pt-BR')
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+}
+
+const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: number): number => {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) {
+    return fallback
+  }
+  const rounded = Math.round(numeric)
+  if (max === undefined) {
+    return Math.max(min, rounded)
+  }
+  return Math.min(Math.max(min, rounded), max)
+}
+
+const generatePlannerId = (prefix: string, value: string): string => {
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+  const fallback =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10)
+  const identifier = normalized || fallback
+  return `${prefix}-${identifier}`.slice(0, 80)
+}
+
 type PlannerCategory = (typeof CATEGORY_OPTIONS)[number]
 
 type ProfileChild = {
