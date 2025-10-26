@@ -582,7 +582,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
         <div className="grid gap-5 lg:grid-cols-2">
           <fieldset className="space-y-3">
-            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Tempo máximo</legend>
+            <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">TEMPO MÁXIMO</legend>
             <div className="flex flex-wrap gap-2">
               {TIME_OPTIONS.map((value) => {
                 const isActive = timeMax === value
