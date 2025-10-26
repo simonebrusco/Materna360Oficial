@@ -406,7 +406,7 @@ export function OrgTipsGrid() {
               ) : null}
             </div>
 
-            <div className="mt-2.5 border-t border-white/40" />
+            <div className="mt-2.5 border-t border-support-2/20" />
           </div>
         </div>
 
