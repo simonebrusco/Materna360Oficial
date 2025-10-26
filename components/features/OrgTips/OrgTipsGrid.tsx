@@ -340,7 +340,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
+                  className="h-6 min-h-0 rounded-full border border-support-2/30 bg-white/60 px-[10px] text-[12px] font-semibold text-support-2/90 hover:border-primary/40 hover:text-primary !py-0"
                   onClick={() => applyPreset('exausta')}
                 >
                   Exausta (até 5 min)
@@ -349,7 +349,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
+                  className="h-6 min-h-0 rounded-full border border-support-2/30 bg-white/60 px-[10px] text-[12px] font-semibold text-support-2/90 hover:border-primary/40 hover:text-primary !py-0"
                   onClick={() => applyPreset('casa_fluida')}
                 >
                   Casa fluida (4–10 min)
@@ -358,7 +358,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
+                  className="h-6 min-h-0 rounded-full border border-support-2/30 bg-white/60 px-[10px] text-[12px] font-semibold text-support-2/90 hover:border-primary/40 hover:text-primary !py-0"
                   onClick={() => applyPreset('clareza')}
                 >
                   Clareza mental (3–5 min)
@@ -367,7 +367,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
+                  className="h-6 min-h-0 rounded-full border border-support-2/30 bg-white/60 px-[10px] text-[12px] font-semibold text-support-2/90 hover:border-primary/40 hover:text-primary !py-0"
                   onClick={() => applyPreset('tempo_rotina')}
                 >
                   Tempo &amp; Rotina (5–10 min)
