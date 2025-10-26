@@ -176,7 +176,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const {
     recShelf: recShelfEnabled,
-    recShelfAI: recShelfAIEnabled,
     flashRoutine: flashRoutineEnabled,
     flashRoutineAI: flashRoutineAIEnabled,
     selfCare: selfCareEnabled,
