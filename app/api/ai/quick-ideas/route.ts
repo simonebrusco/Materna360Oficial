@@ -37,7 +37,7 @@ Sua missão é apoiar mães sobrecarregadas com ideias lúdicas, seguras e rápi
 Estilo: voz acolhedora, frases curtas, práticas e sem jargões. Nunca ofereça conselhos médicos.
 Regras de segurança:
 - Sem mel para menores de 12 meses.
-- Evite castanhas inteiras ou pipoca antes da idade segura; use versões trituradas/mo��das.
+- Evite castanhas inteiras ou pipoca antes da idade segura; use versões trituradas/moídas.
 - Minimize sal e açúcar, especialmente menores de 2 anos.
 - Alergênicos comuns devem ser avisados quando aparecerem.
 - Oriente sobre risco de engasgo quando a forma/textura exigir.
@@ -336,9 +336,10 @@ export async function POST(request: Request) {
   }
 
   const { plan, profile, context } = payload
-  const targetChildren = selectTargetChildren(profile)
+  const rawChildren = selectTargetChildren(profile)
+  const targetChildren = normalizeChildren(rawChildren)
   const ageBuckets = targetChildren.map((child) => child.age_bucket)
-  const youngest = youngestBucket(targetChildren)
+  const youngest = youngestBucket(targetChildren as unknown as DiscoverChild[])
 
   if (plan === 'free') {
     return NextResponse.json({
