@@ -207,16 +207,15 @@ const selectTargetChildren = (
   return [profile.children[0]]
 }
 
-type MinimalDiscoverChild = {
-  id: string
+type MinimalChild = {
   name?: string
-  age_bucket: DiscoverChild['age_bucket']
+  age_bucket: QuickIdeasChildInput['age_bucket']
   [key: string]: unknown
 }
 
 const normalizeChildren = (
   arr: QuickIdeasChildInput[] | readonly QuickIdeasChildInput[] | null | undefined
-): MinimalDiscoverChild[] => {
+): MinimalChild[] => {
   if (!arr) {
     return []
   }
@@ -226,7 +225,8 @@ const normalizeChildren = (
     .map((child) => ({
       ...(child as object),
       name: child?.name ?? undefined,
-    })) as MinimalDiscoverChild[]
+      age_bucket: child?.age_bucket as QuickIdeasChildInput['age_bucket'],
+    })) as MinimalChild[]
 }
 
 const normalizeIdea = (idea: QuickIdea, fallbackLocation: QuickIdeasContextInput['location']): QuickIdea => {
@@ -339,7 +339,7 @@ export async function POST(request: Request) {
   const rawChildren = selectTargetChildren(profile)
   const targetChildren = normalizeChildren(rawChildren)
   const ageBuckets = targetChildren.map((child) => child.age_bucket)
-  const youngest = youngestBucket(targetChildren as unknown as DiscoverChild[])
+  const youngest = youngestBucket(targetChildren as any)
 
   if (plan === 'free') {
     return NextResponse.json({
