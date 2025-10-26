@@ -231,11 +231,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     : { items: [], rotationKey: '', source: 'fallback' as const }
 
   const suggestions = buildDailySuggestions(
-    {
-      mode: requestedMode,
-      activeChildId: rawActiveId ?? undefined,
-      children: fallbackChildren,
-    },
+    profilePayload,
     filters,
     dateKey,
     QUICK_IDEAS_CATALOG
