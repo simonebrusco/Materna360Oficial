@@ -518,7 +518,6 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 autoComplete="off"
                 inputMode="text"
                 id="receitinhas-ingredient"
-                {...{ 'x-webkit-speech': 'x-webkit-speech' }}
               />
             </label>
             <button
