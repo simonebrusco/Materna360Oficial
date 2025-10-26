@@ -72,9 +72,7 @@ export default async function Page() {
   noStore()
 
   const jar = getCookies()
-  const rawProfile = jar.get(PROFILE_COOKIE)?.value ?? null
-  const profileRecord = safeParseProfileCookie(rawProfile)
-  const normalizedProfile = normalizeProfileRecord(profileRecord)
+  const { profile: normalizedProfile } = readProfileCookie(jar)
 
   const now = new Date()
   const displayName = firstNameOf(normalizedProfile.motherName)
