@@ -45,7 +45,7 @@ const books = [
   { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
   { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
   { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
-  { emoji: '����', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
+  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
 ]
 
 const toys = [
@@ -421,6 +421,19 @@ export default function DescobrirClient({
   const handleSaveToPlanner = async (suggestion: SuggestionCard) => {
     setSavingIdeaId(suggestion.id)
     try {
+      const ideaDuration = coerceIntWithin(
+        suggestion.planner_payload?.duration_min ?? suggestion.time_total_min ?? 5,
+        suggestion.time_total_min ?? 5,
+        1
+      )
+      const ideaPayload = {
+        type: 'idea' as const,
+        id: suggestion.id,
+        title: suggestion.title,
+        duration_min: ideaDuration,
+        materials: sanitizeStringList(suggestion.planner_payload?.materials),
+      }
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -430,15 +443,7 @@ export default function DescobrirClient({
           timeISO: '15:00',
           category: 'Lanche',
           link: '/descobrir',
-          payload: {
-            type: suggestion.planner_payload.type,
-            id: suggestion.id,
-            title: suggestion.title,
-            duration_min: suggestion.planner_payload.duration_min,
-            materials: suggestion.planner_payload.materials,
-            steps: suggestion.steps,
-            location: suggestion.location,
-          },
+          payload: ideaPayload,
           tags: ['atividade', 'quick-idea', suggestion.location],
         }),
       })
