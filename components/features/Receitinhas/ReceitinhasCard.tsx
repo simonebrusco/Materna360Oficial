@@ -530,7 +530,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   return (
     <section
       id="receitinhas"
-      className={`CardElevate ${isCardHovering ? 'CardElevate--hover ' : ''}rounded-3xl border border-white/70 bg-white px-6 py-7 backdrop-blur-sm md:px-8 md:py-9`}
+      className={`CardElevate${isCardHovering ? ' CardElevate--hover' : ''} rounded-3xl border border-white/70 bg-white px-6 py-7 backdrop-blur-sm md:px-8 md:py-9`}
       onMouseEnter={() => setIsCardHovering(true)}
       onMouseLeave={() => setIsCardHovering(false)}
     >
