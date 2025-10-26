@@ -10,7 +10,7 @@ export default function ProfessionalsSection() {
       aria-labelledby="professionals-support-title"
     >
       <header className="space-y-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.045em] text-support-2/85">Rede Materna</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.045em] text-primary">Rede Materna</span>
         <h2 id="professionals-support-title" className="text-[20px] font-semibold text-support-1 md:text-[22px]">
           Profissionais de Apoio
         </h2>
