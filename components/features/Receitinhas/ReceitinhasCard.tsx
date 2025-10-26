@@ -734,7 +734,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </fieldset>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button type="submit" variant="primary" size="sm" className="rounded-full px-6">
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
