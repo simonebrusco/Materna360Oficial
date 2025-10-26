@@ -1,19 +1,6 @@
-import type {
-  QuickIdeasEnergy,
-  QuickIdeasLocation,
-  QuickIdeasTimeWindow,
-} from '@/app/types/quickIdeas'
-import type { FlashRoutineProps } from '@/app/types/flashRoutine'
+import type { FlashRoutineFiltersT, QuickIdeasFiltersT } from '@/app/lib/discoverSchemas'
 
-export type QuickIdeasFilters = {
-  location: QuickIdeasLocation
-  time_window_min: QuickIdeasTimeWindow | number
-  energy: QuickIdeasEnergy
-}
-
-export type FlashRoutineFilters = FlashRoutineProps['filters']
-
-export function toFlashFilters(filters: QuickIdeasFilters): FlashRoutineFilters {
+export function toFlashFilters(filters: QuickIdeasFiltersT): FlashRoutineFiltersT {
   return {
     locale: filters.location,
     time_window_min: Number(filters.time_window_min),
