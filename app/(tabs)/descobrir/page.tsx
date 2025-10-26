@@ -148,6 +148,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const dateKey = getBrazilDateKey()
 
   const recShelfEnabled = isFeatureEnabled('discover.recShelf')
+  const flashRoutineEnabled = isFeatureEnabled('discover.flashRoutine')
+  const flashRoutineAIEnabled = isFeatureEnabled('discover.flashRoutineAI')
 
   const activeChild = fallbackChildren.find((child) => child.id === rawActiveId) ?? fallbackChildren[0]
 
