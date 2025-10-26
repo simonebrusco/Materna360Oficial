@@ -271,14 +271,14 @@ export function OrgTipsGrid() {
   )
 
   const chipClasses = (active: boolean) =>
-    `inline-flex h-6 items-center break-words rounded-full border px-[10px] text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 sm:h-[26px] sm:text-[12px] md:h-7 md:px-3 md:text-[13px] ${
+    `inline-flex h-[26px] items-center break-words rounded-full border px-[10px] text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-7 md:px-3 md:text-[13px] ${
       active
         ? 'border-primary bg-primary text-white shadow-[0_0_0_1px_rgba(255,0,94,0.35)]'
-        : 'border-support-2/20 bg-white/70 text-support-2/90 hover:border-primary/40 hover:text-primary'
+        : 'border-support-2/30 bg-white/80 text-support-2/90 hover:border-primary/40 hover:text-primary'
     }`
 
   const summaryPillClass =
-    'ml-auto inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary/90'
+    'ml-auto inline-flex h-[20px] items-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary/90'
 
   const chevronClass = (open: boolean) =>
     `ml-2 inline-flex h-5 w-5 items-center justify-center text-support-2 transition-transform duration-200 ${
