@@ -61,19 +61,25 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
     }
 
     setJourneyStates((previous) => {
+      let changed = false
       const next = { ...previous }
       JOURNEY_IDS.forEach((id) => {
         const source = journeySummary[id]
         const rawCompleted = Number(source?.completed ?? 0)
         const rawTotal = Number(source?.total ?? JOURNEY_WEEK_TARGET)
         const sanitizedTotal = Number.isFinite(rawTotal) ? Math.max(0, Math.floor(rawTotal)) : JOURNEY_WEEK_TARGET
+        const resolvedTotal = sanitizedTotal > 0 ? sanitizedTotal : JOURNEY_WEEK_TARGET
         const sanitizedCompleted = Number.isFinite(rawCompleted) ? Math.max(0, Math.floor(rawCompleted)) : 0
-        next[id] = {
-          completed: sanitizedCompleted,
-          total: sanitizedTotal > 0 ? sanitizedTotal : JOURNEY_WEEK_TARGET,
+        const current = previous[id]
+        if (!current || current.completed !== sanitizedCompleted || current.total !== resolvedTotal) {
+          next[id] = {
+            completed: sanitizedCompleted,
+            total: resolvedTotal,
+          }
+          changed = true
         }
       })
-      return next
+      return changed ? next : previous
     })
   }, [journeySummary])
 
