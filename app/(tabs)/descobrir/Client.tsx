@@ -267,11 +267,14 @@ export default function DescobrirClient({
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [savingRoutine, setSavingRoutine] = useState(false)
+  const [savingSelfCareId, setSavingSelfCareId] = useState<string | null>(null)
+  const [completingSelfCareId, setCompletingSelfCareId] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const profileMode = profile.mode
   const impressionsKeyRef = useRef<string | null>(null)
   const flashRoutineImpressionRef = useRef<string | null>(null)
+  const selfCareImpressionRef = useRef<string | null>(null)
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity) => {
