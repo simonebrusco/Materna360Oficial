@@ -109,6 +109,7 @@ type DescobrirClientProps = {
   initialPlaceFilter?: string | null
   recProducts: RecProduct[]
   recShelf: RecShelfState
+  flashRoutine: FlashRoutineState
 }
 
 const badgeLabels: Record<QuickIdeasBadge, string> = {
