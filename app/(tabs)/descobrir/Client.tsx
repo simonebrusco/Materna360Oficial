@@ -392,19 +392,6 @@ export default function DescobrirClient({
   const analyticsSource = flashRoutine.analyticsSource ?? 'local'
   const stableDateKey = dateKey
 
-  const flashRoutineTelemetryPayload = useMemo(() => {
-    if (!routine) {
-      return null
-    }
-
-    return {
-      id: routine.id,
-      age_bucket: routine.ageBucket,
-      locale: routine.locale,
-      total: routine.totalMin,
-    }
-  }, [routine])
-
   const flashRoutineImpressionKey = useMemo(() => {
     if (!routineId) {
       return null
