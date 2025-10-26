@@ -1,9 +1,13 @@
-type TelemetryEvent =
+export type TelemetryEvent =
   | 'recipes.generate'
   | 'recipes.generate.error'
   | 'planner.save'
   | 'quick-ideas.generate'
   | 'quick-ideas.generate.error'
+  | 'quick_ideas_success'
+  | 'quick_ideas_error'
+  | 'quick_ideas_access_denied'
+  | 'quick_ideas_bad_request'
 
 const GLOBAL_KEY = '__materna360Telemetry__'
 
@@ -19,6 +23,10 @@ const getStore = () => {
       'planner.save': 0,
       'quick-ideas.generate': 0,
       'quick-ideas.generate.error': 0,
+      'quick_ideas_success': 0,
+      'quick_ideas_error': 0,
+      'quick_ideas_access_denied': 0,
+      'quick_ideas_bad_request': 0,
     }
   }
 
