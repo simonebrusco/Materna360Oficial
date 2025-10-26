@@ -299,7 +299,7 @@ export function OrgTipsGrid() {
               <div className="h-px w-full bg-support-2/15" />
             </header>
 
-            <div className="grid gap-y-2 md:grid-cols-2 md:gap-x-4">
+            <div className="mt-3 grid gap-y-2 md:mt-4 md:grid-cols-2 md:gap-x-4">
               <section className="space-y-1">
                 <button
                   type="button"
