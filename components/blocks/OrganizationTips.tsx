@@ -5,7 +5,7 @@ import { OrgTipsGrid } from '@/components/features/OrgTips/OrgTipsGrid'
 export default function OrganizationTips() {
   return (
     <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_24px_50px_-28px_rgba(47,58,86,0.3)] backdrop-blur md:px-8 md:py-10">
-      <header className="space-y-2.5">
+      <header className="sr-only">
         <span className="text-sm font-semibold text-support-2/80">Rotina leve</span>
         <h2 className="flex items-center gap-2 text-[22px] font-semibold text-support-1">
           <span aria-hidden="true">💡</span>
@@ -16,7 +16,7 @@ export default function OrganizationTips() {
         </p>
       </header>
 
-      <div className="mt-4 md:mt-5">
+      <div>
         <OrgTipsGrid />
       </div>
     </section>
