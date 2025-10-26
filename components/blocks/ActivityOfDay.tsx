@@ -322,7 +322,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
             <span className="eyebrow-capsule">
               {badgeLabel}
             </span>
-            <p className="mt-2 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 md:text-[17px] lg:text-[18px]">
+            <p className="mt-2 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">
               {headlineTitle}
             </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
