@@ -25,6 +25,7 @@ import type {
 } from '@/app/types/quickIdeas'
 import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
 import type { RecProduct, RecProductKind } from '@/app/types/recProducts'
+import type { FlashRoutine } from '@/app/types/flashRoutine'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
