@@ -1,4 +1,5 @@
 import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
+import { fnv1a } from '@/app/lib/hash'
 import {
   type QuickIdea,
   type QuickIdeaCatalogEntry,
