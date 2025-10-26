@@ -27,6 +27,7 @@ import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
 import type { RecProduct, RecProductKind } from '@/app/types/recProducts'
 import type { FlashRoutine } from '@/app/types/flashRoutine'
 import type { SelfCare, SelfCareEnergy } from '@/app/types/selfCare'
+import type { ProfileChildSummary, ProfileSummary } from '@/app/lib/profileTypes'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
@@ -58,20 +59,10 @@ type ToastState = {
   type: 'success' | 'error' | 'info'
 }
 
-type SuggestionChild = {
-  id: string
-  name?: string
-  age_bucket: QuickIdeasAgeBucket
-}
+type SuggestionChild = ProfileChildSummary
 
 type SuggestionCard = QuickIdea & {
   child?: SuggestionChild
-}
-
-type ProfileSummary = {
-  mode: 'single' | 'all'
-  activeChildId?: string | null
-  children: SuggestionChild[]
 }
 
 type RecShelfState = {
@@ -1147,7 +1138,7 @@ export default function DescobrirClient({
             </GridRhythm>
           </SectionWrapper>
 
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
+          <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Brinquedos Sugeridos</span></span>}>
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {toys.map((toy, idx) => (
                 <Reveal key={toy.title} delay={idx * 70} className="h-full">
