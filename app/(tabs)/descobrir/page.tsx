@@ -102,12 +102,12 @@ const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
 
 const buildProfileChildren = (
   children: Array<{ id?: string; name?: string | null; ageRange?: string | null }>
-): { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }[] => {
+): ProfileChildSummary[] => {
   if (!children || children.length === 0) {
     return []
   }
 
-  const mapped = children.map((child, index) => {
+  const mapped = children.map<ProfileChildSummary>((child, index) => {
     const id = child.id && child.id.trim() ? child.id.trim() : `child-${index + 1}`
     const name = child.name && child.name.trim() ? child.name.trim() : undefined
     const age_bucket = sanitizeAgeBucket(child.ageRange ?? undefined)
