@@ -398,6 +398,8 @@
 }
 
 .notesCard {
+  display: flex;
+  flex-direction: column;
   padding: 14px !important;
   gap: 12px;
 }
