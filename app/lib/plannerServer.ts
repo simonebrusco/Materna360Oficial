@@ -4,6 +4,9 @@ import { trackTelemetry } from '@/app/lib/telemetry'
 import { validatePlannerItem, type PlannerItemT } from './plannerGuard'
 
 
+export const PLANNER_COOKIE_NAME = 'materna360-planner'
+export const MAX_PLANNER_ITEMS_PER_DAY = 20
+
 export const VALID_PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 export type PlannerCategory = (typeof VALID_PLANNER_CATEGORIES)[number]
 
@@ -121,4 +124,18 @@ export const mergePlannerPayload = (
   const filtered = list.filter((item) => item.id !== payload.id)
   next[payload.dateISO] = [payload, ...filtered].slice(0, limit)
   return next
+}
+
+export async function saveToPlannerSafe(
+  raw: unknown
+): Promise<{ ok: true; item: PlannerItemT } | { ok: false; reason: string }> {
+  try {
+    const item = validatePlannerItem(raw)
+    trackTelemetry('planner_save_ok', { type: item.type, id: item.id })
+    return { ok: true, item }
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    trackTelemetry('planner_payload_invalid', { reason })
+    return { ok: false, reason: 'Invalid planner item' }
+  }
 }
