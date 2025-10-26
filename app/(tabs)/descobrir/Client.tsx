@@ -141,7 +141,10 @@ function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductI
   const isSaving = savingProductId === item.id
 
   return (
-    <Card className="relative flex min-w-[260px] max-w-[260px] snap-start flex-col overflow-hidden bg-white/90 shadow-soft transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-elevated">
+    <Card
+      role="listitem"
+      className="relative flex min-w-[260px] max-w-[260px] snap-start flex-col overflow-hidden bg-white/90 shadow-soft transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-elevated"
+    >
       <div className="relative aspect-[4/5] w-full overflow-hidden">
         <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
           Parceria
@@ -551,7 +554,7 @@ export default function DescobrirClient({
       )}
 
       <Reveal delay={200}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Sugestão do Dia</span></span>}>
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Filtros ativos: {friendlyFilters}
           </div>
