@@ -35,7 +35,7 @@ const activities = [
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '��', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
   { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
@@ -318,6 +318,13 @@ export default function DescobrirClient({
 
   const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
   const showSelfCare = selfCare.enabled && selfCare.items.length > 0
+  const routine = flashRoutine.enabled ? flashRoutine.routine : null
+
+  const RoutineEmptyState = () => (
+    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-sm text-support-2/80">
+      Rotina indisponível para este contexto. Tente ajustar tempo ou local.
+    </div>
+  )
 
   useEffect(() => {
     if (!flashRoutine.enabled || !flashRoutine.routine) {
