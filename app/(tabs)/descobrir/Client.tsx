@@ -247,6 +247,7 @@ export default function DescobrirClient({
   initialPlaceFilter = null,
   recProducts: _recProducts,
   recShelf,
+  flashRoutine,
 }: DescobrirClientProps) {
   const [ageFilter, setAgeFilter] = useState<string | null>(initialAgeFilter)
   const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
