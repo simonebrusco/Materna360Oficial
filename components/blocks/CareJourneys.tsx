@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import TrailHeader from '@/components/blocks/MindfulnessJourneysTrail/TrailHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 
@@ -180,6 +181,7 @@ export function CareJourneys() {
           <span aria-hidden="true">🌼</span>
           <span>Jornadas do Cuidar</span>
         </h2>
+        <TrailHeader />
         <p className="section-subtitle max-w-2xl">
           Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
         </p>
