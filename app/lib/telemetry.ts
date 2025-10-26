@@ -12,6 +12,10 @@ export type TelemetryEvent =
   | 'discover_rec_click_buy'
   | 'discover_rec_save_planner'
   | 'discover_rec_view_details'
+  | 'discover_flash_impression'
+  | 'discover_flash_save_planner'
+  | 'discover_flash_start'
+  | 'discover_flash_error'
 
 const GLOBAL_KEY = '__materna360Telemetry__'
 
