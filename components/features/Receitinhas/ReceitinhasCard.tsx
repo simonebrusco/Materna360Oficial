@@ -723,8 +723,8 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </fieldset>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="submit" variant="primary" size="sm" className="rounded-full px-6">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <Button type="submit" variant="primary" size="sm" className="h-9 rounded-full px-6 text-sm">
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Já já sai do forno 🍲
