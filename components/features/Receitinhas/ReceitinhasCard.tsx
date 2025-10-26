@@ -535,7 +535,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               <input
                 value={ingredient}
                 onChange={(event) => setIngredient(event.target.value)}
-                placeholder="e.g., chicken, zucchini, banana…"
+                placeholder="Ex.: frango, abobrinha, banana…"
                 aria-label="Informe um ingrediente"
                 className="w-full rounded-2xl border border-white/70 bg-white/95 px-4 py-3 text-sm font-medium text-support-1 shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 autoComplete="off"
