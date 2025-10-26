@@ -199,7 +199,7 @@ export function CareJourneys() {
             return (
               <Card
                 key={journey.id}
-                className="flex h-full min-h-[176px] cursor-pointer flex-col justify-between rounded-3xl border border-white/70 bg-white/95 p-5 shadow-[0_16px_40px_-22px_rgba(47,58,86,0.28)] transition-all duration-300 ease-gentle hover:-translate-y-1 hover:shadow-[0_24px_56px_-24px_rgba(255,0,94,0.28)] md:p-6"
+                className="flex h-full min-h-[176px] cursor-pointer flex-col justify-between rounded-3xl border border-support-2/20 bg-white/97 p-5 shadow-[0_16px_40px_-22px_rgba(47,58,86,0.26)] transition-all duration-300 ease-gentle hover:-translate-y-1 hover:shadow-[0_24px_56px_-24px_rgba(255,0,94,0.28)] md:p-6"
                 onClick={() => setActiveJourneyId(journey.id)}
               >
                 <div className="space-y-2.5">
