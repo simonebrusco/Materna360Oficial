@@ -319,9 +319,9 @@ export default function DescobrirClient({
     impressionsKeyRef.current = recShelfImpressionKey
   }, [recShelf.enabled, recShelf.groups, recShelfImpressionKey])
 
-  const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
-  const showSelfCare = selfCare.enabled && selfCare.items.length > 0
-  const routine = flashRoutine.enabled ? flashRoutine.routine : null
+  const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
+  const showSelfCare = selfCareEnabled && selfCare.items.length > 0
+  const routine = flashRoutineEnabled ? flashRoutine.routine : null
   const routineId = routine?.id ?? null
   const analyticsSource = flashRoutine.analyticsSource ?? 'local'
   const stableDateKey = dateKey
