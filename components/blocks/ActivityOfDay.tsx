@@ -319,10 +319,12 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
       <Card data-testid="activity-of-day" className="bg-gradient-to-br from-primary/12 via-white/95 to-white p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
+            <span className="eyebrow-capsule">
               {badgeLabel}
             </span>
-            <p className="mt-4 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">{headlineTitle}</p>
+            <p className="mt-2 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 md:text-[17px] lg:text-[18px]">
+              {headlineTitle}
+            </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
               <span className="inline-flex items-center gap-1">👧 {ageLabel}</span>
               {!isAllMode && hasDuration && (
