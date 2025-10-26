@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { trackTelemetry } from '@/app/lib/telemetry'
@@ -7,6 +8,7 @@ import {
   buildPlannerPayload,
   mergePlannerPayload,
   parsePlannerCookie,
+  saveToPlannerSafe,
 } from '@/app/lib/plannerServer'
 
 export const dynamic = 'force-dynamic'
@@ -20,9 +22,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
   }
 
+  const plannerValidation = await saveToPlannerSafe(body?.payload)
+  if (!plannerValidation.ok) {
+    return NextResponse.json({ error: plannerValidation.reason }, { status: 400 })
+  }
+
   let payload
   try {
-    payload = buildPlannerPayload(body)
+    payload = buildPlannerPayload(body, { plannerItem: plannerValidation.item })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dados inválidos.'
     return NextResponse.json({ error: message }, { status: 400 })
