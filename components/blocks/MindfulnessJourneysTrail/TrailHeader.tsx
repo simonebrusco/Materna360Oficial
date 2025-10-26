@@ -35,6 +35,13 @@ export default function TrailHeader() {
   const { completed, total, percentage, weekLabel } = useMindfulnessProgress()
   const [name, setName] = useState<string | undefined>(undefined)
 
+  const safeTotal = Math.max(typeof total === 'number' && Number.isFinite(total) ? total : 1, 1)
+  const safeCompleted = Math.min(
+    Math.max(typeof completed === 'number' && Number.isFinite(completed) ? completed : 0, 0),
+    safeTotal
+  )
+  const progressWidth = `${(safeCompleted / safeTotal) * 100}%`
+
   useEffect(() => {
     setName(readProfileNameSafely())
   }, [])
@@ -44,21 +51,21 @@ export default function TrailHeader() {
     : 'Pequenos passos para cuidar de você todos os dias.'
 
   return (
-    <div data-testid="journeys-trail" className="mb-6">
-      <p className="text-sm text-support-2 md:text-base">{subtitle}</p>
+    <div data-testid="journeys-trail" className="rounded-3xl border border-white/70 bg-white/80 px-4 py-5 shadow-[0_18px_36px_-18px_rgba(47,58,86,0.28)] backdrop-blur-sm md:px-6 md:py-6">
+      <p className="text-sm text-support-2/80 md:text-base">{subtitle}</p>
 
-      <div className="mt-4 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-soft backdrop-blur">
+      <div className="mt-4 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-inner backdrop-blur">
         <div
           role="progressbar"
-          aria-valuenow={completed}
+          aria-valuenow={safeCompleted}
           aria-valuemin={0}
-          aria-valuemax={total}
-          aria-label="Progresso semanal das jornadas"
+          aria-valuemax={safeTotal}
+          aria-label="Progresso das Jornadas do Cuidar"
           className="relative mb-3 h-2 w-full overflow-hidden rounded-full bg-white/80"
         >
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-pink-300 to-pink-500 transition-[width] duration-200 ease-out"
-            style={{ width: `${percentage}%` }}
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-pink-300 to-pink-500 transition-[width] duration-[600ms] ease-out"
+            style={{ width: progressWidth, transformOrigin: 'left center' }}
           />
         </div>
 
@@ -79,7 +86,7 @@ export default function TrailHeader() {
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-support-2">
+        <div className="mt-3 flex items-center justify-between text-xs text-support-2/80">
           <span>
             {completed}/{total} concluídos nesta {weekLabel.toLowerCase()}.
           </span>
