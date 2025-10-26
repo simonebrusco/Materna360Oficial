@@ -201,15 +201,33 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   })
 
-  const resolvedChildren = profileSummary.children
-  const activeChild =
-    (activeChildId ? resolvedChildren.find((child) => child.id === activeChildId) : null) ??
-    resolvedChildren[0]
+  const profile = profileSummary
 
-  const targetBuckets: QuickIdeasAgeBucket[] =
-    requestedMode === 'all'
-      ? resolvedChildren.map((child) => child.age_bucket)
-      : [(activeChild?.age_bucket ?? '2-3') as QuickIdeasAgeBucket]
+  const BUCKET_ORDER: Record<AgeBucket, number> = {
+    '0-1': 0,
+    '2-3': 1,
+    '4-5': 2,
+    '6-7': 3,
+    '8+': 4,
+  }
+
+  const children = Array.isArray(profile.children) ? profile.children : []
+
+  const computedBuckets: AgeBucket[] =
+    profile.mode === 'all'
+      ? Array.from(new Set(children.map((child) => child.age_bucket))).sort(
+          (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
+        )
+      : (() => {
+          const active =
+            (profile.activeChildId
+              ? children.find((child) => child.id === profile.activeChildId)
+              : undefined) ?? children[0]
+          return active ? [active.age_bucket] : []
+        })()
+
+  const targetBuckets: AgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
   const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
 
