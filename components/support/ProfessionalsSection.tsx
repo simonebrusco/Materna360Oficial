@@ -9,12 +9,12 @@ export default function ProfessionalsSection() {
       className="SectionWrapper rounded-3xl border-2 border-primary bg-white/95 px-4 py-4 shadow-[0_34px_78px_-36px_rgba(255,0,94,0.28)] backdrop-blur-sm sm:px-5 sm:py-5 lg:px-6 lg:py-6"
       aria-labelledby="professionals-support-title"
     >
-      <header className="space-y-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.045em] text-primary">Rede Materna</span>
-        <h2 id="professionals-support-title" className="text-[20px] font-semibold text-support-1 md:text-[22px]">
+      <header className="space-y-2 md:space-y-3">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">Rede Materna</span>
+        <h2 id="professionals-support-title" className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
           Profissionais de Apoio
         </h2>
-        <p className="max-w-2xl text-sm text-support-2/85 md:text-base">
+        <p className="max-w-2xl text-sm leading-[1.45] text-support-2/85 md:text-base">
           Use os filtros para encontrar especialistas em formato online que combinam com as necessidades da sua família.
         </p>
       </header>
