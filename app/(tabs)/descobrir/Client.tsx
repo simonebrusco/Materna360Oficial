@@ -525,12 +525,12 @@ export default function DescobrirClient({
   }
 
   const handleStartFlashRoutine = () => {
-    if (!flashRoutine.enabled || !flashRoutine.routine) {
+    if (!flashRoutineEnabled || !routine) {
       return
     }
     trackTelemetry('discover_flash_start', {
-      id: flashRoutine.routine.id,
-      total: flashRoutine.routine.totalMin,
+      id: routine.id,
+      total: routine.totalMin,
       source: flashRoutine.analyticsSource,
     })
     setToast({ message: 'Rotina iniciada! Aproveite os próximos minutos juntos.', type: 'info' })
