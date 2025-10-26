@@ -529,21 +529,30 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   return (
     <section
       id="receitinhas"
-      className="rounded-3xl border border-white/60 bg-white/90 px-6 py-8 shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-8 md:py-10"
+      className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9"
     >
-      <form className="space-y-4 md:space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-5 md:space-y-6" onSubmit={handleSubmit}>
         <header className="space-y-3">
-          <span className="text-sm font-semibold text-support-2/80">Alimentação inteligente</span>
-          <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/60 text-xl">
-              🧡
-            </span>
-            <div className="space-y-1">
-              <h2 className="text-[22px] font-semibold text-support-1">Receitinhas</h2>
-              <p className="text-sm text-support-2/80 md:text-base">Diga 1 ingrediente e eu preparo o resto.</p>
+          <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Alimentação inteligente</span>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-secondary/60 text-xl">
+                🧡
+              </span>
+              <div className="space-y-1.5">
+                <h2 className="text-[22px] font-semibold leading-[1.28] text-support-1">Receitinhas</h2>
+                <p className="text-[15px] leading-[1.45] text-support-2/85">Diga 1 ingrediente e eu preparo o resto.</p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleQuickIdeas}
+              className="inline-flex h-[32px] items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 text-[12px] font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            >
+              Quero ideias rápidas
+            </button>
           </div>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
             <label className="flex-1">
               <span className="sr-only">Ingrediente principal</span>
               <input
@@ -551,19 +560,12 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 onChange={(event) => setIngredient(event.target.value)}
                 placeholder="Ex.: frango, abobrinha, banana…"
                 aria-label="Informe um ingrediente"
-                className="w-full rounded-2xl border border-white/70 bg-white/95 px-4 py-3 text-sm font-medium text-support-1 shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                className="w-full rounded-2xl border border-neutral-200 bg-white/95 px-4 py-3 text-sm font-medium text-support-1 shadow-[inset_0_1px_8px_-4px_rgba(47,58,86,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 autoComplete="off"
                 inputMode="text"
                 id="receitinhas-ingredient"
               />
             </label>
-            <button
-              type="button"
-              onClick={handleQuickIdeas}
-              className="inline-flex items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-            >
-              Quero ideias rápidas
-            </button>
           </div>
         </header>
 
