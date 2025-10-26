@@ -63,44 +63,47 @@ export default function MindfulnessForMoms() {
     : COLLECTIONS.filter((collection) => !FEATURED_COLLECTION_IDS.has(collection.id))
 
   return (
-    <section className="space-y-10">
-      <header>
-        <h2 className="mb-6 flex items-center gap-3 text-[28px] font-extrabold text-support-1 md:text-[34px]">
+    <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_26px_54px_-28px_rgba(47,58,86,0.32)] backdrop-blur md:px-8 md:py-10">
+      <header className="space-y-2.5">
+        <span className="text-sm font-semibold text-support-2/80">Bem-estar emocional</span>
+        <h2 className="flex items-center gap-3 text-[22px] font-semibold text-support-1">
           <span aria-hidden="true" className="text-2xl md:text-3xl">
             🎧
           </span>
           Mindfulness para Mães
         </h2>
-        <p className="max-w-3xl text-lg leading-relaxed text-support-2">
+        <p className="max-w-3xl text-sm text-support-2/80 md:text-base">
           Pausas guiadas, curtas e acolhedoras, para respirar com intenção e cuidar do coração enquanto a rotina acontece.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+      <div className="mt-4 grid grid-cols-1 gap-y-4 gap-x-3 md:mt-5 md:grid-cols-3 md:gap-y-5 md:gap-x-4 lg:gap-y-6 lg:gap-x-6">
         {visibleCollections.map((collection) => (
           <article
             key={collection.id}
-            className="relative flex h-full flex-col rounded-[28px] bg-gradient-to-b from-white/92 to-white/70 p-8 shadow-[0_24px_60px_rgba(0,0,0,0.10)] ring-1 ring-white/60 backdrop-blur-sm transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_30px_72px_rgba(0,0,0,0.12)] md:p-10"
+            className="relative flex h-full min-h-[172px] flex-col rounded-[28px] border border-white/70 bg-gradient-to-b from-white/95 to-white/80 p-6 shadow-[0_22px_48px_-24px_rgba(47,58,86,0.28)] ring-1 ring-white/60 backdrop-blur-sm transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_30px_64px_-26px_rgba(255,0,94,0.28)] md:p-7"
           >
-            <div>
+            <div className="space-y-2.5">
               <span
-                className="mb-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-2xl shadow-sm"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-2xl shadow-sm"
                 aria-hidden="true"
               >
                 {collection.icon}
               </span>
-              <h3 className="mb-4 text-lg md:text-[22px] font-extrabold leading-tight text-support-1">{collection.titulo}</h3>
-              <p className="text-[13.5px] md:text-[15px] leading-relaxed text-support-2">{collection.descricao}</p>
+              <h3 className="text-lg font-semibold leading-tight text-support-1 md:text-xl">{collection.titulo}</h3>
+              <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
+                {collection.descricao}
+              </p>
             </div>
 
-            <div className="mt-auto pt-8">
+            <div className="mt-6">
               {collection.id === 'reconectar' ? (
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={() => setOpenReconecte(true)}
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className="rounded-2xl px-5"
+                  className="inline-flex items-center gap-2 rounded-full px-5"
                 >
                   <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
@@ -113,7 +116,7 @@ export default function MindfulnessForMoms() {
                   size="sm"
                   onClick={() => setOpenRenove(true)}
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className="rounded-2xl px-5"
+                  className="inline-flex items-center gap-2 rounded-full px-5"
                 >
                   <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
@@ -126,7 +129,7 @@ export default function MindfulnessForMoms() {
                   size="sm"
                   onClick={() => setOpenCalma(true)}
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className="rounded-2xl px-5"
+                  className="inline-flex items-center gap-2 rounded-full px-5"
                 >
                   <span aria-hidden="true" className="text-base leading-none">
                     ▶︎
@@ -137,7 +140,7 @@ export default function MindfulnessForMoms() {
                 <a
                   href="#mindfulness"
                   aria-label={`Ouvir ${collection.titulo}`}
-                  className={SECONDARY_TRIGGER_CLASS}
+                  className={`${SECONDARY_TRIGGER_CLASS} inline-flex items-center justify-center gap-2 rounded-full text-base`}
                 >
                   <span aria-hidden="true" className="text-lg leading-none">
                     ▶︎
