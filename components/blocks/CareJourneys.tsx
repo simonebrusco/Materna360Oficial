@@ -210,7 +210,7 @@ export function CareJourneys() {
                     {journey.description}
                   </p>
                 </div>
-                <div className="mt-6 flex items-center justify-between gap-3">
+                <div className="mt-4 flex items-center justify-between gap-3 md:mt-5">
                   <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
                     {completedCount}/7
                   </span>
