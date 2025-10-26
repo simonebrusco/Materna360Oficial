@@ -138,6 +138,8 @@ export default function DescobrirClient({
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
 
+  const profileMode = profile.mode
+
   const filteredActivities = useMemo(() => {
     return activities.filter((activity) => {
       const matchesAge = !ageFilter || activity.age.includes(ageFilter.replace('+', ''))
