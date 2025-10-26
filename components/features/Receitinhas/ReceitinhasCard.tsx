@@ -554,7 +554,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         </header>
 
         <fieldset className="space-y-3">
-          <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Categoria</legend>
+          <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">CATEGORIA</legend>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_OPTIONS.map((option) => {
               const isActive = category === option.value
