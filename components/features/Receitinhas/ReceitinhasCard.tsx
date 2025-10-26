@@ -909,7 +909,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                   window.location.href = '/planos'
                 }}
               >
-                See plans
+                Conhecer planos
               </Button>
             </div>
           </div>
