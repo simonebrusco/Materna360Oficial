@@ -836,7 +836,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Bookmark className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Últimas receitas</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Histórico</h3>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               {filteredHistory.map((entry) => (
