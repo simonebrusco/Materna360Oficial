@@ -1108,7 +1108,8 @@ function RecipeDetailModal({
 
           {applicableAdaptation && (
             <section className="space-y-2 rounded-2xl bg-secondary/40 p-4">
-              <h4 className="text-sm font-semibold text-support-1">Adaptação para {ageBucket}</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-support-2/70">Adaptações por idade</h4>
+              <p className="text-xs font-semibold text-support-1/70">Para {ageLabel}</p>
               <p className="text-sm text-support-1/80">{applicableAdaptation}</p>
             </section>
           )}
