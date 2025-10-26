@@ -175,6 +175,24 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
+  const flashRoutineResult = flashRoutineEnabled
+    ? selectFlashRoutine({
+        ideas: FLASH_IDEAS_CATALOG,
+        routines: FLASH_ROUTINES_CMS,
+        profile: { mode: requestedMode, children: fallbackChildren },
+        filters,
+        dateKey,
+      })
+    : null
+
+  const flashRoutine = flashRoutineEnabled && flashRoutineResult
+    ? {
+        routine: flashRoutineResult.routine,
+        strategy: flashRoutineResult.source,
+        analyticsSource: 'local' as const,
+      }
+    : null
+
   const suggestions = buildDailySuggestions(
     {
       mode: requestedMode,
