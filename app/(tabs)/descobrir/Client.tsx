@@ -260,6 +260,7 @@ export default function DescobrirClient({
 
   const profileMode = profile.mode
   const impressionsKeyRef = useRef<string | null>(null)
+  const flashRoutineImpressionRef = useRef<string | null>(null)
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity) => {
