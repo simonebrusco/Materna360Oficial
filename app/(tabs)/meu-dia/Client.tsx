@@ -11,6 +11,8 @@ import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
 import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
+import GridRhythm from '@/components/common/GridRhythm'
+import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -61,75 +63,89 @@ export function MeuDiaClient({
 
   return (
     <>
-      <Reveal delay={100}>
-        <DailyMessageCard greeting={dailyGreeting} />
-      </Reveal>
+      <SectionWrapper>
+        <Reveal delay={100}>
+          <DailyMessageCard greeting={dailyGreeting} />
+        </Reveal>
+      </SectionWrapper>
 
-      <Reveal delay={160}>
-        <CheckInCard />
-      </Reveal>
+      <SectionWrapper>
+        <Reveal delay={160}>
+          <CheckInCard />
+        </Reveal>
+      </SectionWrapper>
 
-      <Reveal delay={220}>
-        <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
-      </Reveal>
+      <SectionWrapper>
+        <Reveal delay={220}>
+          <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+        </Reveal>
+      </SectionWrapper>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {quickActions.map((action, index) => (
-          <Reveal key={action.title} delay={index * 80}>
-            <Card className="h-full">
-              <div className="mb-3 text-2xl">{action.emoji}</div>
-              <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
-              <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
-              <Button variant="secondary" size="sm" className="w-full">
-                Acessar
+      <SectionWrapper>
+        <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+          {quickActions.map((action, index) => (
+            <Reveal key={action.title} delay={index * 80} className="h-full">
+              <Card className="h-full">
+                <div className="mb-3 text-2xl">{action.emoji}</div>
+                <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
+                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
+                <Button variant="primary" size="sm" className="w-full">
+                  Acessar
+                </Button>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
+
+      <SectionWrapper>
+        <Reveal delay={280}>
+          <FamilyPlanner
+            currentDateKey={currentDateKey}
+            weekStartKey={weekStartKey}
+            weekLabels={weekLabels}
+            plannerTitle={plannerTitle}
+            profile={profile}
+            dateKey={dateKey}
+            recommendations={recommendations}
+            initialBuckets={initialBuckets}
+          />
+        </Reveal>
+      </SectionWrapper>
+
+      <SectionWrapper>
+        <Reveal delay={320}>
+          <Checklist currentDateKey={currentDateKey} />
+        </Reveal>
+      </SectionWrapper>
+
+      <SectionWrapper>
+        <Reveal delay={360}>
+          <Card>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas Rápidas</h2>
+                <p className="text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
+              </div>
+              <Button variant="primary" size="sm" onClick={() => setShowNoteModal(true)}>
+                ＋ Adicionar
               </Button>
-            </Card>
-          </Reveal>
-        ))}
-      </div>
-
-      <Reveal delay={280}>
-        <FamilyPlanner
-          currentDateKey={currentDateKey}
-          weekStartKey={weekStartKey}
-          weekLabels={weekLabels}
-          plannerTitle={plannerTitle}
-          profile={profile}
-          dateKey={dateKey}
-          recommendations={recommendations}
-          initialBuckets={initialBuckets}
-        />
-      </Reveal>
-
-      <Reveal delay={320}>
-        <Checklist currentDateKey={currentDateKey} />
-      </Reveal>
-
-      <Reveal delay={360}>
-        <Card>
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas Rápidas</h2>
-              <p className="text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
             </div>
-            <Button variant="primary" size="sm" onClick={() => setShowNoteModal(true)}>
-              ＋ Adicionar
-            </Button>
-          </div>
 
-          {notes.length > 0 ? (
-            <div className="space-y-2">
-              {notes.map((note, idx) => (
-                <div key={idx} className="rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
-                  {note}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-support-2">Nenhuma nota registrada ainda.</p>
-          )}
-        </Card>
-      </Reveal>
+            {notes.length > 0 ? (
+              <div className="space-y-2">
+                {notes.map((note, idx) => (
+                  <div key={idx} className="rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                    {note}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-support-2">Nenhuma nota registrada ainda.</p>
+            )}
+          </Card>
+        </Reveal>
+      </SectionWrapper>
 
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
