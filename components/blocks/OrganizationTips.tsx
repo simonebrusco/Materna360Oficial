@@ -4,19 +4,20 @@ import { OrgTipsGrid } from '@/components/features/OrgTips/OrgTipsGrid'
 
 export default function OrganizationTips() {
   return (
-    <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_24px_50px_-28px_rgba(47,58,86,0.3)] backdrop-blur md:px-8 md:py-10">
-      <header className="sr-only">
-        <span className="text-sm font-semibold text-support-2/80">Rotina leve</span>
-        <h2 className="flex items-center gap-2 text-[22px] font-semibold text-support-1">
+    <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
+      <header className="space-y-2">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Rotina leve</span>
+        <h2 className="flex items-center gap-2 text-[22px] font-semibold leading-[1.28] text-support-1">
           <span aria-hidden="true">💡</span>
           <span>Dicas de Organização</span>
         </h2>
-        <p className="max-w-2xl text-sm text-support-2/80 md:text-base">
+        <p className="max-w-2xl text-[15px] leading-[1.45] text-support-2/85">
           Sugestões rápidas para organizar a rotina com gentileza e criar espaços de respiro no dia a dia.
         </p>
+        <div className="h-px w-full bg-support-2/15" />
       </header>
 
-      <div>
+      <div className="mt-4 md:mt-5">
         <OrgTipsGrid />
       </div>
     </section>
