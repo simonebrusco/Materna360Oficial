@@ -77,6 +77,14 @@ type RecShelfState = {
   groups: RecShelfGroup[]
 }
 
+type RecShelfCardProps = {
+  item: RecShelfItem
+  profileMode: 'single' | 'all'
+  onSave: (item: RecShelfItem) => Promise<void>
+  onBuy: (item: RecShelfItem) => void
+  savingProductId: string | null
+}
+
 type QuickIdeaFiltersSummary = {
   location: QuickIdeasLocation
   time_window_min: QuickIdeasTimeWindow
@@ -287,7 +295,7 @@ export default function DescobrirClient({
       <Reveal delay={80}>
         <SectionWrapper
           title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
-          description="Combine idade e local para criar experiências personalizadas em segundos."
+          description="Combine idade e local para criar experi��ncias personalizadas em segundos."
         >
           <Card className="p-7">
             <div className="grid gap-6 md:grid-cols-2">
