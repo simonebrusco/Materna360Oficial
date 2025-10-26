@@ -608,13 +608,13 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           <fieldset className="space-y-3">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">Equipamentos</legend>
             <div className="flex flex-wrap gap-2">
-              {EQUIPMENT_OPTIONS.map((value) => {
-                const isActive = equipment.includes(value)
+              {EQUIPMENT_OPTIONS.map((option) => {
+                const isActive = equipment.includes(option.value)
                 return (
                   <button
-                    key={value}
+                    key={option.value}
                     type="button"
-                    onClick={() => toggleEquipment(value)}
+                    onClick={() => toggleEquipment(option.value)}
                     aria-pressed={isActive}
                     className={`rounded-full border px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
                       isActive
@@ -622,7 +622,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                         : 'border-white/70 bg-white/90 text-support-1 hover:bg-secondary/50'
                     }`}
                   >
-                    {value}
+                    {option.label}
                   </button>
                 )
               })}
