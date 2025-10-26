@@ -434,7 +434,7 @@
 }
 
 .notesCard-text::before {
-  content: 'Notas Rápidas';
+  content: 'Notas R\u00E1pidas';
   position: absolute;
   top: 0;
   left: 0;
