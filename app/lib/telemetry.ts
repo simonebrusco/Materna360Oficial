@@ -39,6 +39,10 @@ const getStore = () => {
       'discover_rec_click_buy': 0,
       'discover_rec_save_planner': 0,
       'discover_rec_view_details': 0,
+      'discover_flash_impression': 0,
+      'discover_flash_save_planner': 0,
+      'discover_flash_start': 0,
+      'discover_flash_error': 0,
     }
   }
 
