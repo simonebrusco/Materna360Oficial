@@ -176,21 +176,21 @@ export function CareJourneys() {
   }
 
   return (
-    <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_24px_48px_-28px_rgba(47,58,86,0.32)] backdrop-blur-sm md:px-8 md:py-10">
-      <header className="space-y-2.5">
-        <span className="text-sm font-semibold text-support-2/80">Autocuidado guiado</span>
-        <h2 className="flex items-center gap-2 text-[22px] font-semibold text-support-1">
+    <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_42px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
+      <header className="space-y-2">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Autocuidado guiado</span>
+        <h2 className="flex items-center gap-2 text-[22px] font-semibold leading-[1.28] text-support-1">
           <span aria-hidden="true">🌼</span>
           <span>Jornadas do Cuidar</span>
         </h2>
-        <p className="max-w-2xl text-sm text-support-2/80 md:text-base">
+        <p className="max-w-2xl text-[15px] leading-[1.45] text-support-2/85">
           Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
         </p>
       </header>
 
       <div className="mt-4 space-y-5 md:mt-5 md:space-y-6">
         <TrailHeader />
-        <div className="grid grid-cols-1 gap-y-4 gap-x-3 sm:grid-cols-2 sm:gap-y-5 sm:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
+        <div className="grid grid-cols-1 gap-y-4 gap-x-3 md:grid-cols-2 md:gap-y-5 md:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
           {journeys.map((journey) => {
             const journeyProgress = progressMap[journey.id]
             const completedCount = journeyProgress.filter(Boolean).length
@@ -198,7 +198,7 @@ export function CareJourneys() {
             return (
               <Card
                 key={journey.id}
-                className="flex h-full min-h-[168px] cursor-pointer flex-col justify-between rounded-3xl border border-white/70 bg-white/95 p-5 shadow-[0_18px_44px_-24px_rgba(47,58,86,0.35)] transition-all duration-300 ease-gentle hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(255,0,94,0.32)] md:p-6"
+                className="flex h-full min-h-[176px] cursor-pointer flex-col justify-between rounded-3xl border border-white/70 bg-white/95 p-5 shadow-[0_16px_40px_-22px_rgba(47,58,86,0.28)] transition-all duration-300 ease-gentle hover:-translate-y-1 hover:shadow-[0_24px_56px_-24px_rgba(255,0,94,0.28)] md:p-6"
                 onClick={() => setActiveJourneyId(journey.id)}
               >
                 <div className="space-y-2.5">
