@@ -147,7 +147,7 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   book: { icon: '📚', title: 'Livros que Inspiram' },
   toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '🖨️', title: 'Printables para Brincar' },
+  printable: { icon: '🖨��', title: 'Printables para Brincar' },
 }
 
 function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
@@ -327,21 +327,21 @@ export default function DescobrirClient({
   )
 
   useEffect(() => {
-    if (!flashRoutine.enabled || !flashRoutine.routine) {
+    if (!flashRoutine.enabled || !routine) {
       return
     }
-    if (flashRoutineImpressionRef.current === flashRoutine.routine.id) {
+    if (flashRoutineImpressionRef.current === routine.id) {
       return
     }
     trackTelemetry('discover_flash_impression', {
-      id: flashRoutine.routine.id,
-      age_bucket: flashRoutine.routine.ageBucket,
-      locale: flashRoutine.routine.locale,
-      total: flashRoutine.routine.totalMin,
+      id: routine.id,
+      age_bucket: routine.ageBucket,
+      locale: routine.locale,
+      total: routine.totalMin,
       source: flashRoutine.analyticsSource,
     })
-    flashRoutineImpressionRef.current = flashRoutine.routine.id
-  }, [flashRoutine])
+    flashRoutineImpressionRef.current = routine.id
+  }, [flashRoutine.enabled, routine])
 
   useEffect(() => {
     if (!showSelfCare) {
