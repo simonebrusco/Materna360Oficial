@@ -32,6 +32,7 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
     idioma: initial?.idioma ?? DEFAULT_FILTERS.idioma,
     termos: initial?.termos ?? DEFAULT_FILTERS.termos,
   })
+  const [isHoveringCard, setIsHoveringCard] = useState(false)
 
   const handleChange = (key: keyof ProfessionalsSearchFilters) => (event: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     setFilters((previous) => ({ ...previous, [key]: event.target.value }))
@@ -49,7 +50,9 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-2xl border border-white/80 bg-white/95 p-4 shadow-[0_26px_54px_-32px_rgba(47,58,86,0.26)] sm:p-5 md:p-6"
+      className={`CardElevate${isHoveringCard ? ' CardElevate--hover' : ''} space-y-5 rounded-2xl border border-white/80 bg-white p-4 sm:p-5 md:p-6`}
+      onMouseEnter={() => setIsHoveringCard(true)}
+      onMouseLeave={() => setIsHoveringCard(false)}
     >
       <div className="flex flex-wrap items-start gap-y-2 gap-x-2 sm:items-center sm:gap-y-2.5 sm:gap-x-3 md:gap-x-4">
         <label className="flex min-w-[180px] flex-1 flex-col text-sm">
