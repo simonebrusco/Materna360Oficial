@@ -10,17 +10,20 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
+import { trackTelemetry } from '@/app/lib/telemetry'
 import {
   friendlyEnergyLabel,
   friendlyLocationLabel,
 } from '@/app/lib/quickIdeasCatalog'
 import type {
   QuickIdea,
+  QuickIdeasAgeBucket,
   QuickIdeasBadge,
   QuickIdeasEnergy,
   QuickIdeasLocation,
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
+import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
 
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
