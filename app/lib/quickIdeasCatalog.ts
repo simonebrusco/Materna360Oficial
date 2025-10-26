@@ -244,13 +244,14 @@ export const buildDailySuggestions = (
     time_window_min: sanitizeTimeWindow(filtersInput.time_window_min),
   }
 
+  const effectiveCatalog = catalog.length > 0 ? catalog : [SAFE_DEFAULT_IDEA]
   const normalizedChildren = ensureChildren(profile.children)
   const selectedChildren = selectChildrenForMode(normalizedChildren, profile.mode, profile.activeChildId)
 
   return selectedChildren.map((child) => {
-    const pool = filterCatalogForChild(catalog, child.age_bucket, sanitizedFilters)
+    const pool = filterCatalogForChild(effectiveCatalog, child.age_bucket, sanitizedFilters)
     const key = `${dateKey}:${child.id}:${sanitizedFilters.location}:${sanitizedFilters.time_window_min}`
-    const idea = pickIdea(pool, child.age_bucket, catalog, key)
+    const idea = pickIdea(pool, child.age_bucket, effectiveCatalog, key)
     return {
       idea,
       child,
