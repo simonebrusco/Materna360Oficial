@@ -259,6 +259,13 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
         strategy: flashRoutine?.strategy ?? null,
         analyticsSource: flashRoutine?.analyticsSource ?? 'local',
       }}
+      selfCare={{
+        enabled: selfCareEnabled,
+        aiEnabled: selfCareAIEnabled,
+        items: selfCareSelection.items,
+        energy: filters.energy,
+        minutes: filters.time_window_min as 2 | 5 | 10,
+      }}
     />
   )
 }
