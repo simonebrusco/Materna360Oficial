@@ -90,13 +90,13 @@ export default function MindfulnessModal({
             <h2
               ref={titleRef}
               tabIndex={-1}
-              className="text-2xl font-semibold text-support-1 outline-none md:text-3xl"
+              className="text-lg md:text-[22px] font-extrabold leading-tight text-support-1 outline-none"
             >
               {title}
             </h2>
           </div>
 
-          <p className="mt-3 leading-relaxed text-support-2 md:text-lg">{subtitle}</p>
+          <p className="mt-3 text-[13.5px] md:text-[15px] leading-relaxed text-support-2">{subtitle}</p>
 
           <div className="mt-6 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
             {tracks.map((track) => (
