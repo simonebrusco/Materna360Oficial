@@ -295,14 +295,14 @@ export default function DescobrirClient({
   }, [filters])
 
   const recShelfImpressionKey = useMemo(() => {
-    if (!recShelf.enabled || recShelf.groups.length === 0) {
+    if (!recShelfEnabled || recShelf.groups.length === 0) {
       return ''
     }
     return recShelf.groups.map((group) => `${group.kind}:${group.items.length}`).join('|')
-  }, [recShelf.enabled, recShelf.groups])
+  }, [recShelfEnabled, recShelf.groups])
 
   useEffect(() => {
-    if (!recShelf.enabled || recShelf.groups.length === 0) {
+    if (!recShelfEnabled || recShelf.groups.length === 0) {
       return
     }
     if (impressionsKeyRef.current === recShelfImpressionKey) {
