@@ -73,8 +73,9 @@ export default function MindfulnessForMoms() {
           Mindfulness para Mães
         </h2>
         <p className="max-w-3xl text-[15px] leading-[1.45] text-support-2/85">
-          Pausas guiadas, curtas e acolhedoras, para respirar com intenção e cuidar do cora��ão enquanto a rotina acontece.
+          Pausas guiadas, curtas e acolhedoras, para respirar com intenção e cuidar do coração enquanto a rotina acontece.
         </p>
+        <div className="h-px w-full bg-support-2/15" />
       </header>
 
       <div className="mt-4 grid grid-cols-1 gap-y-4 gap-x-3 md:mt-5 md:grid-cols-3 md:gap-y-5 md:gap-x-4 lg:gap-y-6 lg:gap-x-6">
