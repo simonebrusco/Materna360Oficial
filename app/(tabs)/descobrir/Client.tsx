@@ -106,6 +106,21 @@ const badgeLabels: Record<QuickIdeasBadge, string> = {
 const badgeClassName =
   'inline-flex items-center gap-1 rounded-full border border-white/60 bg-white/75 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft'
 
+const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
+  '0-1': '0-1 anos',
+  '2-3': '2-3 anos',
+  '4-5': '4-5 anos',
+  '6-7': '6-7 anos',
+  '8+': '8+ anos',
+}
+
+const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
+  book: { icon: '📚', title: 'Livros que Inspiram' },
+  toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
+  course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
+  printable: { icon: '🖨️', title: 'Printables para Brincar' },
+}
+
 export default function DescobrirClient({
   suggestions,
   filters,
