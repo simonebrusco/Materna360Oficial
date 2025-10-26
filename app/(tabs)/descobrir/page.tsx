@@ -300,7 +300,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       : undefined,
   }))
 
-  const initialAgeFilter = resolvedChildren[0]?.age_bucket ?? '2-3'
+  const initialAgeFilter = children[0]?.age_bucket ?? '2-3'
   const initialPlaceFilter = LOCATION_LABEL[filters.location]
 
   return (
