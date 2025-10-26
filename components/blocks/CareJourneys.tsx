@@ -80,7 +80,7 @@ const journeys: Journey[] = [
   {
     id: 'gratidao',
     title: 'Gratidão',
-    emoji: '��',
+    emoji: '🌸',
     description: '7 dias para perceber o que floresce.',
     challenges: [
       'Agradeça por algo simples do seu dia.',
@@ -188,7 +188,7 @@ export function CareJourneys() {
         </p>
       </header>
 
-      <div className="mt-6 space-y-6">
+      <div className="mt-4 space-y-5 md:mt-5 md:space-y-6">
         <TrailHeader />
         <div className="grid grid-cols-1 gap-y-4 gap-x-3 sm:grid-cols-2 sm:gap-y-5 sm:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
           {journeys.map((journey) => {
