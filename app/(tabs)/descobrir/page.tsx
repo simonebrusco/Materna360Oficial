@@ -5,10 +5,7 @@ import DescobrirClient from './Client'
 
 import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
-import {
-  buildDailySuggestions,
-  friendlyLocationLabel,
-} from '@/app/lib/quickIdeasCatalog'
+import { buildDailySuggestions } from '@/app/lib/quickIdeasCatalog'
 import { readProfileCookie } from '@/app/lib/profileCookie'
 import type {
   QuickIdea,
