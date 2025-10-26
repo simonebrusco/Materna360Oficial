@@ -169,10 +169,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const activeChildId: string | null =
     searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  const activeChild =
-    (activeChildId ? fallbackChildren.find((child) => child.id === activeChildId) : null) ??
-    fallbackChildren[0]
-
   const filters = QuickIdeasFiltersSchema.parse({
     location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
     time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
