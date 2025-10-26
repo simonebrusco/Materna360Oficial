@@ -176,53 +176,62 @@ export function CareJourneys() {
   }
 
   return (
-    <section className="space-y-6">
-      <div>
-        <h2 className="section-title flex items-center gap-2">
+    <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-[0_24px_48px_-28px_rgba(47,58,86,0.32)] backdrop-blur-sm md:px-8 md:py-10">
+      <header className="space-y-2.5">
+        <span className="text-sm font-semibold text-support-2/80">Autocuidado guiado</span>
+        <h2 className="flex items-center gap-2 text-[22px] font-semibold text-support-1">
           <span aria-hidden="true">🌼</span>
           <span>Jornadas do Cuidar</span>
         </h2>
-        <TrailHeader />
-        <p className="section-subtitle max-w-2xl">
+        <p className="max-w-2xl text-sm text-support-2/80 md:text-base">
           Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
         </p>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {journeys.map((journey) => {
-          const journeyProgress = progressMap[journey.id]
-          const completedCount = journeyProgress.filter(Boolean).length
-          const isCompleted = completedCount === journey.challenges.length
+      <div className="mt-6 space-y-6">
+        <TrailHeader />
+        <div className="grid grid-cols-1 gap-y-4 gap-x-3 sm:grid-cols-2 sm:gap-y-5 sm:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
+          {journeys.map((journey) => {
+            const journeyProgress = progressMap[journey.id]
+            const completedCount = journeyProgress.filter(Boolean).length
+            const isCompleted = completedCount === journey.challenges.length
 
-          return (
-            <Card
-              key={journey.id}
-              className="section-card flex h-full cursor-pointer flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
-              onClick={() => setActiveJourneyId(journey.id)}
-            >
-              <div className="space-y-3">
-                <span className="text-3xl">{journey.emoji}</span>
-                <h3 className="text-lg font-semibold text-support-1">{journey.title}</h3>
-                <p className="text-sm text-support-2">{journey.description}</p>
-              </div>
-              <div className="mt-6 flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">{completedCount}/7</span>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  aria-label={`Ver mais – ${journey.title}`}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    setActiveJourneyId(journey.id)
-                  }}
-                  className="shrink-0"
-                >
-                  Ver mais
-                </Button>
-              </div>
-            </Card>
-          )
-        })}
+            return (
+              <Card
+                key={journey.id}
+                className="flex h-full min-h-[168px] cursor-pointer flex-col justify-between rounded-3xl border border-white/70 bg-white/95 p-5 shadow-[0_18px_44px_-24px_rgba(47,58,86,0.35)] transition-all duration-300 ease-gentle hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(255,0,94,0.32)] md:p-6"
+                onClick={() => setActiveJourneyId(journey.id)}
+              >
+                <div className="space-y-2.5">
+                  <span className="text-3xl" aria-hidden="true">
+                    {journey.emoji}
+                  </span>
+                  <h3 className="text-lg font-semibold text-support-1">{journey.title}</h3>
+                  <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
+                    {journey.description}
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
+                    {completedCount}/7
+                  </span>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    aria-label={`Ver mais – ${journey.title}`}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setActiveJourneyId(journey.id)
+                    }}
+                    className="shrink-0"
+                  >
+                    Ver mais
+                  </Button>
+                </div>
+              </Card>
+            )
+          })}
+        </div>
       </div>
 
       {isMounted &&
