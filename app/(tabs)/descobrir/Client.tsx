@@ -304,6 +304,23 @@ export default function DescobrirClient({
 
   const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
 
+  useEffect(() => {
+    if (!flashRoutine.enabled || !flashRoutine.routine) {
+      return
+    }
+    if (flashRoutineImpressionRef.current === flashRoutine.routine.id) {
+      return
+    }
+    trackTelemetry('discover_flash_impression', {
+      id: flashRoutine.routine.id,
+      age_bucket: flashRoutine.routine.ageBucket,
+      locale: flashRoutine.routine.locale,
+      total: flashRoutine.routine.totalMin,
+      source: flashRoutine.analyticsSource,
+    })
+    flashRoutineImpressionRef.current = flashRoutine.routine.id
+  }, [flashRoutine, flashRoutineImpressionRef])
+
   const handleStart = (id: string) => {
     setExpandedIdeaId((current) => (current === id ? null : id))
   }
