@@ -8,6 +8,21 @@
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
   --font-secondary: 'Quicksand', sans-serif;
+  --rhythm-section-d: 56px;
+  --rhythm-section-t: 48px;
+  --rhythm-section-m: 32px;
+  --rhythm-grid-col-d: 24px;
+  --rhythm-grid-col-t: 16px;
+  --rhythm-grid-col-m: 12px;
+  --rhythm-grid-row-d: 24px;
+  --rhythm-grid-row-t: 20px;
+  --rhythm-grid-row-m: 16px;
+  --rhythm-card-pad-d: 20px;
+  --rhythm-card-pad-t: 16px;
+  --rhythm-card-pad-m: 14px;
+  --safearea-bottom-d: 80px;
+  --safearea-bottom-t: 72px;
+  --safearea-bottom-m: 64px;
 }
 
 @layer base {
