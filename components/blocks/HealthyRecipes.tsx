@@ -385,6 +385,21 @@ export function HealthyRecipesSection() {
     }
 
     try {
+      const readyInMinutes = coerceIntWithin(plannerModal.recipe.readyInMinutes, 20, 1, 240)
+      const servings = coerceIntWithin(plannerModal.recipe.servings, 2, 1, 20)
+      const note = typeof plannerNote === 'string' ? plannerNote.trim() : ''
+      const recipeId = resolveRecipeId((plannerModal.recipe as Record<string, unknown>).id, plannerModal.recipe.title, 'healthy-recipe')
+
+      const recipePayload = {
+        type: 'recipe' as const,
+        id: recipeId,
+        title: plannerModal.recipe.title,
+        readyInMinutes,
+        servings,
+        shoppingList: sanitizeStringList([]),
+        note: note || undefined,
+      }
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: {
@@ -396,10 +411,7 @@ export function HealthyRecipesSection() {
           timeISO: plannerTime,
           category: plannerCategory,
           link: '#receitas-saudaveis',
-          payload: {
-            recipe: plannerModal.recipe,
-            note: plannerNote,
-          },
+          payload: recipePayload,
           tags: Array.from(
             new Set(['receita', 'alimentação', 'saudável', ...(plannerModal.recipe.planner.tags ?? [])])
           ),
