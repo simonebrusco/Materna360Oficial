@@ -829,11 +829,11 @@ export default function DescobrirClient({
                 </ol>
               </div>
 
-              {flashRoutine.routine.materials.length > 0 && (
+              {flashRoutine.routine.materials && flashRoutine.routine.materials.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {flashRoutine.routine.materials.map((material) => (
+                    {flashRoutine.routine.materials?.map((material) => (
                       <span
                         key={`${flashRoutine.routine.id}-material-${material}`}
                         className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft"
