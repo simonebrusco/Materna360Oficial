@@ -24,6 +24,8 @@ import {
   QuickIdeasFilters as QuickIdeasFiltersSchema,
   RecProduct as RecProductSchema,
   SelfCare as SelfCareSchema,
+  type AgeBucketT as AgeBucket,
+  type ProfileSummaryT,
 } from '@/app/lib/discoverSchemas'
 import type {
   QuickIdea,
@@ -33,10 +35,6 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
-import type {
-  AgeBucketT as AgeBucket,
-  ProfileSummaryT,
-} from '@/app/lib/discoverSchemas'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
