@@ -70,7 +70,7 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
       <div className="relative space-y-12">
         <Reveal>
           <div className="space-y-4">
-            <span className="section-eyebrow">Autocuidado</span>
+            <span className="section-eyebrow eyebrow-capsule">Autocuidado</span>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <span aria-hidden="true" className="text-3xl">🌿</span>
