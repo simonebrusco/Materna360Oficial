@@ -195,15 +195,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const dateKey = getBrazilDateKey()
 
-  const recShelfGroups = recShelfEnabled
-    ? buildRecShelves({
-        products: recProductsCatalog,
-        targetBuckets,
-        location: filters.location,
-        dateKey,
-      })
-    : []
-
   const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
     mode: requestedMode,
     activeChildId,
