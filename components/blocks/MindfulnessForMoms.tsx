@@ -82,7 +82,7 @@ export default function MindfulnessForMoms() {
         {visibleCollections.map((collection) => (
           <article
             key={collection.id}
-            className="relative flex h-full min-h-[172px] flex-col rounded-[28px] border border-support-2/20 bg-gradient-to-b from-white/98 to-white/90 p-4 shadow-[0_18px_40px_-24px_rgba(47,58,86,0.24)] ring-1 ring-white/60 backdrop-blur-sm transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_26px_56px_-24px_rgba(255,0,94,0.26)] md:p-5 lg:p-6"
+            className="CardElevate relative flex h-full min-h-[172px] flex-col rounded-[28px] border border-support-2/20 bg-gradient-to-b from-white/98 to-white/90 p-4 ring-1 ring-white/60 backdrop-blur-sm md:p-5 lg:p-6"
           >
             <div className="space-y-2.5">
               <span
