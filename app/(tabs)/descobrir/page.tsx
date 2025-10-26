@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
 
 import DescobrirClient from './Client'
+import { toFlashFilters } from './utils/filters'
 
 import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
 import { FLASH_IDEAS_CATALOG } from '@/app/data/flashIdeas'
@@ -179,12 +180,14 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
+  const flashFilters = toFlashFilters(filters)
+
   const flashRoutineResult = flashRoutineEnabled
     ? selectFlashRoutine({
         ideas: FLASH_IDEAS_CATALOG,
         routines: FLASH_ROUTINES_CMS,
         profile: { mode: requestedMode, children: fallbackChildren },
-        filters,
+        filters: flashFilters,
         dateKey,
       })
     : null
