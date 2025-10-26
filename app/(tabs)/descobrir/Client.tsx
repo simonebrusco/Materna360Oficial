@@ -698,6 +698,19 @@ export default function DescobrirClient({
     trackTelemetry('discover_selfcare_save_planner', { id: item.id, minutes: item.minutes })
 
     try {
+      const steps = sanitizeStringList(item.steps).slice(0, 6)
+      if (steps.length < 2) {
+        throw new Error('Autocuidado sem passos suficientes para salvar no Planner.')
+      }
+
+      const selfCarePayload = {
+        type: 'selfcare' as const,
+        id: item.id,
+        title: item.title,
+        minutes: item.minutes,
+        steps,
+      }
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -707,13 +720,7 @@ export default function DescobrirClient({
           timeISO: '10:00',
           category: 'Cuide-se',
           link: '/descobrir',
-          payload: {
-            type: 'selfcare',
-            id: item.id,
-            title: item.title,
-            minutes: item.minutes,
-            steps: item.steps,
-          },
+          payload: selfCarePayload,
           tags: ['selfcare', `${item.minutes}min`],
         }),
       })
@@ -1012,7 +1019,7 @@ export default function DescobrirClient({
                     {routine?.title ?? 'Rotina sugerida'}
                   </h3>
                   <p className="text-sm text-support-2/90">
-                    {routine ? `${routine.totalMin} minutos �� ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
+                    {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
