@@ -180,7 +180,7 @@ export async function POST(req: Request) {
       access: {
         denied: false,
         limited_to_one: true,
-        message: 'Essencial plan: 1 recipe per day.',
+        message: 'No Essencial você vê 1 receita por dia.',
       },
       suggestions: [demo.suggestions[0]],
     })
