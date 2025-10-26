@@ -1,5 +1,7 @@
 import { Reveal } from '@/components/ui/Reveal'
 
+import { Reveal } from '@/components/ui/Reveal'
+
 import ProfessionalsSectionClient from './ProfessionalsSectionClient'
 
 export default function ProfessionalsSection() {
