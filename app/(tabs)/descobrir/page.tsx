@@ -192,6 +192,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
+  const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
+  const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
+  const recProductsCatalog = RecProductSchema.array().parse(REC_PRODUCTS)
+  const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
+
   const dateKey = getBrazilDateKey()
 
   const targetBuckets: QuickIdeasAgeBucket[] =
