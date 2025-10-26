@@ -45,7 +45,7 @@ const books = [
   { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
   { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
   { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
-  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
+  { emoji: '����', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
 ]
 
 const toys = [
@@ -140,6 +140,38 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
   printable: { icon: '🖨��', title: 'Printables para Brincar' },
+}
+
+const sanitizeStringList = (values: unknown): string[] => {
+  if (!Array.isArray(values)) {
+    return []
+  }
+  const seen = new Set<string>()
+  return values
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => {
+      if (!entry) {
+        return false
+      }
+      const key = entry.toLocaleLowerCase('pt-BR')
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+}
+
+const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: number): number => {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) {
+    return fallback
+  }
+  const rounded = Math.round(numeric)
+  if (max === undefined) {
+    return Math.max(min, rounded)
+  }
+  return Math.min(Math.max(min, rounded), max)
 }
 
 function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
