@@ -585,7 +585,7 @@ export default function DescobrirClient({
     }
   }
 
-  const handleSelfCareDone = async (item: SelfCare) => {
+  const handleSelfCareDone = async (item: SelfCareT) => {
     setCompletingSelfCareId(item.id)
     trackTelemetry('discover_selfcare_done', {
       id: item.id,
@@ -618,7 +618,7 @@ export default function DescobrirClient({
     }
   }
 
-  const handleSelfCareSave = async (item: SelfCare) => {
+  const handleSelfCareSave = async (item: SelfCareT) => {
     setSavingSelfCareId(item.id)
     trackTelemetry('discover_selfcare_save_planner', { id: item.id, minutes: item.minutes })
 
@@ -928,7 +928,7 @@ export default function DescobrirClient({
                 <span>Flash Routine</span>
               </span>
             }
-            description="Sequência r��pida de 15 a 20 minutos para fortalecer a conexão."
+            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
           >
             <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1128,7 +1128,7 @@ export default function DescobrirClient({
         })
       ) : (
         <>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Livros Recomendados</span></span>}>
+          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
                 <Reveal key={book.title} delay={idx * 70} className="h-full">
