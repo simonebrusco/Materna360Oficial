@@ -1150,27 +1150,37 @@ function RecipeDetailModal({
             <Button variant="primary" size="sm" className="flex-1 rounded-full" type="button" onClick={onSavePlanner}>
               Salvar no Planner
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 rounded-full" type="button" onClick={onAddShoppingList}>
-              Adicionar à lista
-            </Button>
-            <button
+            <Button
+              variant={isFavorite ? 'primary' : 'outline'}
+              size="sm"
+              className="flex-1 rounded-full inline-flex items-center justify-center gap-2"
               type="button"
               onClick={onFavoriteToggle}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                isFavorite ? 'bg-primary/10 text-primary' : 'text-primary'
-              }`}
-              aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+              aria-pressed={isFavorite}
             >
               {isFavorite ? <Heart className="h-4 w-4" /> : <HeartOff className="h-4 w-4" />}
-            </button>
-            <button
+              Favoritar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-full inline-flex items-center justify-center gap-2"
+              type="button"
+              onClick={onAddShoppingList}
+            >
+              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+              Adicionar à lista de compras
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-full inline-flex items-center justify-center gap-2"
               type="button"
               onClick={onShare}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-              aria-label="Compartilhar receita"
             >
-              <Share2 className="h-4 w-4" />
-            </button>
+              <Share2 className="h-4 w-4" aria-hidden="true" />
+              Compartilhar
+            </Button>
           </div>
 
           {aggregatedShoppingList.length > 0 && (
