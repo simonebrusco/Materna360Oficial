@@ -50,7 +50,7 @@ export default function ProfessionalsSearchForm({ onSearch, initial }: Professio
   return (
     <form
       onSubmit={handleSubmit}
-      className={`CardElevate${isHoveringCard ? ' CardElevate--hover' : ''} space-y-5 rounded-2xl border border-white/80 bg-white p-4 sm:p-5 md:p-6`}
+      className={`CardElevate${isHoveringCard ? ' CardElevate--hover is-forced-hover' : ''} space-y-5 rounded-2xl border border-white/80 bg-white p-4 sm:p-5 md:p-6`}
       onMouseEnter={() => setIsHoveringCard(true)}
       onMouseLeave={() => setIsHoveringCard(false)}
     >
