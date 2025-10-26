@@ -207,6 +207,22 @@
     mask: linear-gradient(#000, transparent 65%);
     pointer-events: none;
   }
+
+  .PageSafeBottom {
+    padding-bottom: var(--safearea-bottom-m);
+  }
+
+  @media (min-width: 768px) {
+    .PageSafeBottom {
+      padding-bottom: var(--safearea-bottom-t);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .PageSafeBottom {
+      padding-bottom: var(--safearea-bottom-d);
+    }
+  }
 }
 
 @keyframes m360HeartPulse {
