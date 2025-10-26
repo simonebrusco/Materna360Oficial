@@ -435,7 +435,10 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         }
         const data = (await response.json()) as RecipesApiResponse
         if (data.access.denied) {
-          setAccessModal(data.access.message || 'Disponível apenas em planos pagos.')
+          setAccessModal(
+          data.access.message ||
+            'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).'
+        )
           setSuggestions([])
           setAggregatedShoppingList([])
           return
