@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Copy, Play, Share2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, Copy, Play, Share2, ShoppingBag } from 'lucide-react'
+import Image from 'next/image'
 
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
