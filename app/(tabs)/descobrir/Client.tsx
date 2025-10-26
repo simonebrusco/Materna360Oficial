@@ -139,6 +139,7 @@ export default function DescobrirClient({
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const profileMode = profile.mode
+  const impressionsKeyRef = useRef<string | null>(null)
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity) => {
