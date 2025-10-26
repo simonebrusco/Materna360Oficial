@@ -924,7 +924,7 @@ export default function DescobrirClient({
         </SectionWrapper>
       </Reveal>
 
-      {flashRoutine.enabled && (
+      {flashRoutineEnabled && (
         <Reveal delay={220}>
           <SectionWrapper
             title={
