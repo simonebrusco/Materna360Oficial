@@ -59,16 +59,14 @@ export default async function Page() {
   noStore()
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8 my-6">
-      <section className="rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft">
+    <div className="mx-auto max-w-[70rem] space-y-8 px-6 pt-10 pb-[64px] md:space-y-12 md:px-8 md:pt-12 md:pb-[72px] lg:space-y-14 lg:px-10 lg:pt-14 lg:pb-20">
+      <section className="rounded-3xl border border-white/60 bg-white/85 px-6 py-8 shadow-soft/70 backdrop-blur">
         <BreathCard />
       </section>
-      <section className="mt-6 space-y-6">
-        <CareJourneys />
-        <MindfulnessForMoms />
-        <ReceitinhasIA />
-        <OrganizationTips />
-      </section>
+      <CareJourneys />
+      <MindfulnessForMoms />
+      <ReceitinhasIA />
+      <OrganizationTips />
       <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
         <HealthyRecipesSection />
       </Suspense>
