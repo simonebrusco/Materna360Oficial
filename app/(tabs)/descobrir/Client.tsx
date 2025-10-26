@@ -137,7 +137,7 @@ const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
 
 const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   book: { icon: '📚', title: 'Livros que Inspiram' },
-  toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
+  toy: { icon: '���', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
   printable: { icon: '🖨��', title: 'Printables para Brincar' },
 }
@@ -438,13 +438,20 @@ export default function DescobrirClient({
     if (selfCareImpressionRef.current === key) {
       return
     }
-    trackTelemetry('discover_selfcare_impression', {
-      count: selfCare.items.length,
-      energy: selfCare.energy,
-      minutes: selfCare.minutes,
-    })
     selfCareImpressionRef.current = key
-  }, [showSelfCare, selfCare])
+    if (!sample(0.2)) {
+      return
+    }
+    trackTelemetry(
+      'discover_selfcare_impression',
+      {
+        count: selfCare.items.length,
+        minutes: selfCare.minutes,
+        energy: selfCare.energy,
+      },
+      telemetryCtx
+    )
+  }, [showSelfCare, selfCare, telemetryCtx])
 
   const handleStart = (id: string) => {
     setExpandedIdeaId((current) => (current === id ? null : id))
