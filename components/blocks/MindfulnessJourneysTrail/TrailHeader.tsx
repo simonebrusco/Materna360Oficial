@@ -31,23 +31,69 @@ function readProfileNameSafely(): string | undefined {
   }
 }
 
-export default function TrailHeader() {
-  const { completed, total, weekLabel } = useMindfulnessProgress()
+const JOURNEY_IDS = ['amor-proprio', 'calma', 'energia-positiva', 'gratidao', 'descanso', 'confianca'] as const
+
+export type JourneySummary = Partial<Record<(typeof JOURNEY_IDS)[number], { completed?: number; total?: number }>>
+
+type JourneyProgressState = Record<(typeof JOURNEY_IDS)[number], { completed: number; total: number }>
+
+type TrailHeaderProps = {
+  journeySummary?: JourneySummary
+}
+
+const JOURNEY_WEEK_TARGET = 7
+
+export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
+  const { weekLabel } = useMindfulnessProgress()
+  const [journeyStates, setJourneyStates] = useState<JourneyProgressState>(() => {
+    return JOURNEY_IDS.reduce<JourneyProgressState>((acc, id) => {
+      acc[id] = { completed: 0, total: JOURNEY_WEEK_TARGET }
+      return acc
+    }, {} as JourneyProgressState)
+  })
   const [jornadasCompleted, setJornadasCompleted] = useState<number>(0)
-  const [jornadasTotal, setJornadasTotal] = useState<number>(7)
+  const [jornadasTotal, setJornadasTotal] = useState<number>(JOURNEY_WEEK_TARGET)
   const [name, setName] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    const rawTotal = Number.isFinite(total) ? Math.floor(Number(total)) : 7
-    const nextTotal = Math.max(rawTotal, 1)
-    const rawCompleted = Number.isFinite(completed) ? Math.floor(Number(completed)) : 0
-    const nextCompleted = Math.max(0, Math.min(rawCompleted, nextTotal))
+    if (!journeySummary) {
+      return
+    }
 
-    setJornadasTotal((previous) => (previous === nextTotal ? previous : nextTotal))
-    setJornadasCompleted((previous) => (previous === nextCompleted ? previous : nextCompleted))
-  }, [completed, total])
+    setJourneyStates((previous) => {
+      const next = { ...previous }
+      JOURNEY_IDS.forEach((id) => {
+        const source = journeySummary[id]
+        const rawCompleted = Number(source?.completed ?? 0)
+        const rawTotal = Number(source?.total ?? JOURNEY_WEEK_TARGET)
+        const sanitizedTotal = Number.isFinite(rawTotal) ? Math.max(0, Math.floor(rawTotal)) : JOURNEY_WEEK_TARGET
+        const sanitizedCompleted = Number.isFinite(rawCompleted) ? Math.max(0, Math.floor(rawCompleted)) : 0
+        next[id] = {
+          completed: sanitizedCompleted,
+          total: sanitizedTotal > 0 ? sanitizedTotal : JOURNEY_WEEK_TARGET,
+        }
+      })
+      return next
+    })
+  }, [journeySummary])
 
-  const totalSafe = Math.max(Number(jornadasTotal ?? 7), 1)
+  const aggregatedCompleted = useMemo(() => {
+    const sum = JOURNEY_IDS.reduce((acc, id) => {
+      const value = Number(journeyStates[id]?.completed ?? 0)
+      return acc + (Number.isFinite(value) ? value : 0)
+    }, 0)
+    return Math.max(0, Math.min(JOURNEY_WEEK_TARGET, sum))
+  }, [journeyStates])
+
+  useEffect(() => {
+    setJornadasCompleted(aggregatedCompleted)
+  }, [aggregatedCompleted])
+
+  useEffect(() => {
+    setJornadasTotal(JOURNEY_WEEK_TARGET)
+  }, [])
+
+  const totalSafe = Math.max(Number(jornadasTotal ?? JOURNEY_WEEK_TARGET), 1)
   const completedSafe = Math.max(0, Math.min(Number(jornadasCompleted ?? 0), totalSafe))
   const safeWeekLabel = typeof weekLabel === 'string' && weekLabel.trim().length > 0 ? weekLabel : 'Semana'
 
