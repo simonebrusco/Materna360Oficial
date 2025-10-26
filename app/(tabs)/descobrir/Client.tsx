@@ -555,6 +555,82 @@ export default function DescobrirClient({
     }
   }
 
+  const handleSelfCareDone = async (item: SelfCare) => {
+    setCompletingSelfCareId(item.id)
+    trackTelemetry('discover_selfcare_done', {
+      id: item.id,
+      minutes: item.minutes,
+      energy: selfCare.energy,
+    })
+
+    try {
+      const response = await fetch('/api/cuidese/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, minutes: item.minutes, energy: selfCare.energy, dateKey }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error ?? 'Não foi possível registrar no Cuide-se.')
+      }
+
+      setToast({ message: 'Autocuidado concluído! 💛', type: 'success' })
+    } catch (error) {
+      console.error('[SelfCare] Done failed:', error)
+      trackTelemetry('discover_selfcare_error', { action: 'done', id: item.id })
+      setToast({
+        message: error instanceof Error ? error.message : 'Tente novamente mais tarde.',
+        type: 'error',
+      })
+    } finally {
+      setCompletingSelfCareId(null)
+    }
+  }
+
+  const handleSelfCareSave = async (item: SelfCare) => {
+    setSavingSelfCareId(item.id)
+    trackTelemetry('discover_selfcare_save_planner', { id: item.id, minutes: item.minutes })
+
+    try {
+      const response = await fetch('/api/planner/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Autocuidado: ${item.title}`,
+          dateISO: dateKey,
+          timeISO: '10:00',
+          category: 'Cuide-se',
+          link: '/descobrir',
+          payload: {
+            type: 'selfcare',
+            id: item.id,
+            title: item.title,
+            minutes: item.minutes,
+            steps: item.steps,
+          },
+          tags: ['selfcare', `${item.minutes}min`],
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
+      }
+
+      setToast({ message: 'Salvo no Planner!', type: 'success' })
+    } catch (error) {
+      console.error('[SelfCare] Save failed:', error)
+      trackTelemetry('discover_selfcare_error', { action: 'save_planner', id: item.id })
+      setToast({
+        message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
+        type: 'error',
+      })
+    } finally {
+      setSavingSelfCareId(null)
+    }
+  }
+
   return (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
@@ -822,7 +898,7 @@ export default function DescobrirClient({
                 <span>Flash Routine</span>
               </span>
             }
-            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
+            description="Sequência rápida de 15 a 20 minutos para fortalecer a conex��o."
           >
             <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
