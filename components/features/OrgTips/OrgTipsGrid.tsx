@@ -380,7 +380,7 @@ export function OrgTipsGrid() {
                 type="button"
                 variant="primary"
                 size="sm"
-                className="h-[30px] min-h-0 px-[14px] text-[13px] font-semibold !py-0"
+                className="h-7 min-h-0 px-[14px] text-[13px] font-semibold !py-0"
                 onClick={handleShowResults}
               >
                 Ver sugestões
@@ -389,7 +389,7 @@ export function OrgTipsGrid() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-[30px] min-h-0 px-[14px] text-[13px] font-semibold text-support-2/90 hover:text-primary !py-0"
+                className="h-7 min-h-0 px-[14px] text-[13px] font-semibold text-support-2/90 hover:text-primary !py-0"
                 onClick={clearFilters}
               >
                 Limpar filtros
