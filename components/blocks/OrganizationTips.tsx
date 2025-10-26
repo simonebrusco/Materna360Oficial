@@ -6,7 +6,7 @@ export default function OrganizationTips() {
   return (
     <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
       <header className="space-y-2 md:space-y-3">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.5px] text-primary">Rotina leve</span>
+        <span className="eyebrow-capsule">Rotina leve</span>
         <h2 className="flex items-center gap-2 text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
           <span aria-hidden="true">💡</span>
           <span>Dicas de Organização</span>
