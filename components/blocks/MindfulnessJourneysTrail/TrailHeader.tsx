@@ -112,7 +112,7 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
     : 'Pequenos passos para cuidar de você todos os dias.'
 
   return (
-    <div data-testid="journeys-trail" className="rounded-3xl border border-white/70 bg-white/88 px-4 py-5 shadow-[0_16px_36px_-20px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-6 md:py-6">
+    <div data-testid="journeys-trail" className="CardElevate rounded-3xl border border-white/70 bg-white/88 px-4 py-5 backdrop-blur-sm md:px-6 md:py-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
         <p className="text-sm text-support-2/80 md:text-[15px] md:leading-[1.45]">{subtitle}</p>
         <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
