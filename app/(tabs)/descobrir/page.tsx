@@ -182,14 +182,14 @@ export default function DescobrirPage() {
       )}
 
       <Reveal delay={200}>
-        <SectionWrapper
-          title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}
-          description="Construir uma cabana com lençóis e almofadas cria um refúgio aconchegante para contar histórias e estimular a imaginação."
-        >
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
           <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
             <div className="text-5xl">🌟</div>
             <div className="flex-1">
-              <Button variant="primary" size="sm" className="mt-2 w-full sm:w-auto">
+              <p className="text-sm text-support-2 GridRhythm-descriptionClamp md:text-base">
+                Construir uma cabana com lençóis e almofadas cria um refúgio aconchegante para contar histórias e estimular a imaginação.
+              </p>
+              <Button variant="primary" size="sm" className="mt-4 w-full sm:w-auto">
                 Experimentar
               </Button>
             </div>
