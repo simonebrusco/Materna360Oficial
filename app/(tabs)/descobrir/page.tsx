@@ -215,11 +215,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const recProducts = recShelfEnabled ? recProductsCatalog.filter((product) => product.active) : []
 
-  const profilePayload: ProfileSummary = {
+  const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
     mode: requestedMode,
     activeChildId,
     children: fallbackChildren,
-  }
+  })
 
   const flashFilters = toFlashFilters(filters)
 
