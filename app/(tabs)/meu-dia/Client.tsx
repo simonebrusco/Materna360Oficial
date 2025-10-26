@@ -82,7 +82,7 @@ export function MeuDiaClient({
       </SectionWrapper>
 
       <SectionWrapper>
-        <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+        <GridRhythm className="GridRhythm grid-cols-1 sm:grid-cols-2">
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
               <Card className="h-full">
@@ -124,7 +124,7 @@ export function MeuDiaClient({
           <Card>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas Rápidas</h2>
+                <h2 className="text-lg font-semibold text-support-1 md:text-xl">📝 Notas R��pidas</h2>
                 <p className="text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
               </div>
               <Button variant="primary" size="sm" onClick={() => setShowNoteModal(true)}>
