@@ -4,7 +4,7 @@ import { cookies as getCookies } from 'next/headers'
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange, AGE_RANGE_VALUES } from '@/app/lib/ageRange'
 
- type CookieStore = ReturnType<typeof getCookies>
+type CookieStore = ReturnType<typeof getCookies>
 
 export type ProfileCookieState = {
   profile: Profile
