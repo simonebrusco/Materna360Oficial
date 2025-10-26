@@ -801,26 +801,26 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                       </span>
                     </div>
                     <div className="mt-4 flex gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="flex-1 rounded-full"
-                      type="button"
-                      onClick={() => openDetail(suggestion)}
-                    >
-                      Ver detalhes
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => handleFavoritesToggle(suggestion)}
-                      aria-label={favorites.has(suggestion.id) ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
-                      className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                        favorites.has(suggestion.id) ? 'bg-primary/10 text-primary' : 'bg-white text-primary'
-                      }`}
-                    >
-                      {favorites.has(suggestion.id) ? <Heart className="h-4 w-4" /> : <HeartOff className="h-4 w-4" />}
-                    </button>
-                  </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="flex-1 rounded-full"
+                        type="button"
+                        onClick={() => openDetail(suggestion)}
+                      >
+                        Ver detalhes
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => handleFavoritesToggle(suggestion)}
+                        aria-label={favorites.has(suggestion.id) ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
+                        className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
+                          favorites.has(suggestion.id) ? 'bg-primary/10 text-primary' : 'bg-white text-primary'
+                        }`}
+                      >
+                        {favorites.has(suggestion.id) ? <Heart className="h-4 w-4" /> : <HeartOff className="h-4 w-4" />}
+                      </button>
+                    </div>
                 </article>
               )})}
             </div>
