@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import TrailHeader from '@/components/blocks/MindfulnessJourneysTrail/TrailHeader'
+import TrailHeader, { type JourneySummary } from '@/components/blocks/MindfulnessJourneysTrail/TrailHeader'
 import { CompleteButton } from '@/components/features/Journeys/CompleteButton'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
