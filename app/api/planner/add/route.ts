@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  const cookieStore = cookies()
+  const cookieStore = getCookies()
   const existingRaw = cookieStore.get(PLANNER_COOKIE_NAME)?.value
   const plannerMap = parsePlannerCookie(existingRaw)
   const nextMap = mergePlannerPayload(plannerMap, payload)
