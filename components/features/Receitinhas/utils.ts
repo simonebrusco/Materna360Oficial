@@ -28,6 +28,7 @@ export type RecipeSuggestion = {
   steps: string[]
   age_adaptations?: Record<string, string>
   safety_notes?: string[]
+  tips?: string[]
   shopping_list?: string[]
   microcopy?: string
   racional?: string
