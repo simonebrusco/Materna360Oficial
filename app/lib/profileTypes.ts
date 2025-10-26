@@ -1,15 +1,5 @@
-import type { QuickIdeasAgeBucket } from '@/app/types/quickIdeas'
+import type { ProfileChildT, ProfileSummaryT } from '@/app/lib/discoverSchemas'
 
-export type ProfileMode = 'single' | 'all'
-
-export type ProfileChildSummary = {
-  id: string
-  name?: string
-  age_bucket: QuickIdeasAgeBucket
-}
-
-export type ProfileSummary = {
-  mode: ProfileMode
-  activeChildId: string | null
-  children: ProfileChildSummary[]
-}
+export type ProfileMode = ProfileSummaryT['mode']
+export type ProfileChildSummary = ProfileChildT
+export type ProfileSummary = ProfileSummaryT
