@@ -4,10 +4,13 @@ import { cookies } from 'next/headers'
 import DescobrirClient from './Client'
 
 import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
+import { FLASH_IDEAS_CATALOG } from '@/app/data/flashIdeas'
+import { FLASH_ROUTINES_CMS } from '@/app/data/flashRoutines'
 import { REC_PRODUCTS } from '@/app/data/recProducts'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { buildDailySuggestions } from '@/app/lib/quickIdeasCatalog'
 import { buildRecShelves } from '@/app/lib/recShelf'
+import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { readProfileCookie } from '@/app/lib/profileCookie'
 import { isFeatureEnabled } from '@/lib/flags'
 import type {
