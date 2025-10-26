@@ -538,7 +538,7 @@ export default function DescobrirClient({
         title: product.title,
         kind: product.kind,
         imageUrl,
-        retailer: product.retailer.trim(),
+        retailer: typeof product.retailer === 'string' ? product.retailer.trim() : product.retailer,
         affiliateUrl,
       }
 
