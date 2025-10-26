@@ -854,6 +854,19 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           </div>
         )}
 
+        {!isLoading && !error && suggestions.length === 0 && history.length === 0 && (
+          <div className="rounded-2xl border border-white/60 bg-white/85 p-6 text-center text-sm text-support-2/80 shadow-soft">
+            <p>Suas últimas receitas aparecem aqui.</p>
+            <button
+              type="button"
+              onClick={handleQuickIdeas}
+              className="mt-4 inline-flex items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+            >
+              Quero ideias rápidas
+            </button>
+          </div>
+        )}
+
         {!isLoading && aggregatedShoppingList.length > 0 && (
           <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
             <h4 className="text-sm font-semibold text-primary">Lista consolidada</h4>
