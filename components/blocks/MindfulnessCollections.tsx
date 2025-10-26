@@ -189,7 +189,7 @@ function MindfulnessTrackItem({ track, isHeard, onToggle }: MindfulnessTrackItem
   const [duration, setDuration] = useState<number | null>(null)
 
   return (
-    <li className="section-card p-5 transition-shadow duration-300 hover:shadow-elevated">
+    <li className="CardElevate section-card p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
           <p className="text-sm font-semibold text-support-1 md:text-base">{track.title}</p>
