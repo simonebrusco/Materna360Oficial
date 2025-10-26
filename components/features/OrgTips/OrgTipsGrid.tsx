@@ -375,7 +375,7 @@ export function OrgTipsGrid() {
               </div>
             </div>
 
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+            <div className="mt-2 sm:mt-[10px] flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
               <Button
                 type="button"
                 variant="primary"
