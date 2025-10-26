@@ -84,7 +84,28 @@
   }
 
   .section-eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.28em] text-primary/70;
+    @apply text-[12px] font-semibold uppercase tracking-[0.5px] text-primary;
+  }
+
+  .eyebrow-capsule {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background-color: #ffffff;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ff005e;
+  }
+
+  @media (min-width: 768px) {
+    .eyebrow-capsule {
+      padding: 4px 10px;
+    }
   }
 
   .SectionWrapper {
