@@ -1,17 +1,8 @@
-export type SelfCareEnergy = 'exausta' | 'normal' | 'animada'
+import type { SelfCareT } from '@/app/lib/discoverSchemas'
 
-export type SelfCare = {
-  id: string
-  title: string
-  minutes: 2 | 5 | 10
-  energyFit: SelfCareEnergy[]
-  steps: string[]
-  tip?: string
-  image?: string
-  active: boolean
-  sortWeight?: number
-  createdAt?: string
-}
+export type SelfCareEnergy = SelfCareT['energyFit'][number]
+
+export type SelfCare = SelfCareT
 
 export type SelfCareProps = {
   cues: { energy: SelfCareEnergy }
