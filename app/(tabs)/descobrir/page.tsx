@@ -162,6 +162,12 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
     : []
 
+  const profilePayload = {
+    mode: requestedMode,
+    activeChildId: activeChild?.id ?? fallbackChildren[0]?.id,
+    children: fallbackChildren,
+  }
+
   const suggestions = buildDailySuggestions(
     {
       mode: requestedMode,
