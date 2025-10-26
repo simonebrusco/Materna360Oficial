@@ -69,6 +69,10 @@ export function MeuDiaClient({
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
 
+  const notesLabel = safeUtf(NOTES_LABEL)
+  const notesDescription = safeUtf(NOTES_DESCRIPTION)
+  const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
+
   const handleAddNote = () => {
     if (noteText.trim()) {
       setNotes([noteText, ...notes])
@@ -140,8 +144,13 @@ export function MeuDiaClient({
           <Card className="notesCard">
             <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
               <div className="notesCard-text">
-                <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">📝 Notas R��pidas</h2>
-                <p className="notesCard-meta meta text-xs text-support-2/80">Capture ideias e lembretes em instantes.</p>
+                <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
+                  <span aria-hidden="true" className="mr-1">
+                    📝
+                  </span>
+                  {notesLabel}
+                </h2>
+                <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
               </div>
               <Button
                 variant="primary"
@@ -162,7 +171,7 @@ export function MeuDiaClient({
                 ))}
               </div>
             ) : (
-              <p className="notesCard-empty empty text-sm text-support-2">Nenhuma nota registrada ainda.</p>
+              <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
             )}
           </Card>
         </Reveal>
