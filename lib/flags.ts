@@ -7,6 +7,8 @@ export interface FeatureFlags {
   'discover.recShelf': boolean
   'discover.flashRoutine': boolean
   'discover.flashRoutineAI': boolean
+  'discover.selfCare': boolean
+  'discover.selfCareAI': boolean
 }
 
 const defaultFlags: FeatureFlags = {
@@ -18,6 +20,8 @@ const defaultFlags: FeatureFlags = {
   'discover.recShelf': false,
   'discover.flashRoutine': false,
   'discover.flashRoutineAI': false,
+  'discover.selfCare': false,
+  'discover.selfCareAI': false,
 }
 
 export const getFeatureFlags = (): FeatureFlags => {
