@@ -1,13 +1,19 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type MouseEvent } from 'react'
 
 import type { OrgTip } from '@/data/org-tips'
 import { Button } from '@/components/ui/Button'
 
 const FOCUSABLE_SELECTOR = [
-  'a[href]','button','textarea','input','select','details','[tabindex]:not([tabindex="-1"])'
-].join(',' )
+  'a[href]',
+  'button',
+  'textarea',
+  'input',
+  'select',
+  'details',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
 
 type OrgTipModalProps = {
   tip: OrgTip
@@ -73,7 +79,7 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
     }
   }, [open, onClose])
 
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === backdropRef.current) {
       onClose()
     }
@@ -110,7 +116,7 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
         </button>
 
         <div className="flex items-center gap-3">
-          <span aria-hidden className="text-2xl">
+          <span aria-hidden="true" className="text-2xl">
             {tip.icon}
           </span>
           <h2
