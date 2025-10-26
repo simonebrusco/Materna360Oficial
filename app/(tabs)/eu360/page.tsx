@@ -1,9 +1,9 @@
 'use client'
 
-'use client'
-
 import { useMemo, useState } from 'react'
 
+import GridRhythm from '@/components/common/GridRhythm'
+import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
@@ -55,15 +55,17 @@ export default function Eu360Page() {
   )
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 pb-28 pt-10 sm:px-6 md:px-8">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(58%_58%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
       />
 
-      <div className="relative space-y-10">
+      <SectionWrapper>
         <ProfileForm />
+      </SectionWrapper>
 
+      <SectionWrapper>
         <Reveal>
           <Card className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white">
             <div className="text-center">
@@ -75,11 +77,12 @@ export default function Eu360Page() {
             </div>
           </Card>
         </Reveal>
+      </SectionWrapper>
 
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">🎯<span>Seu Progresso</span></span>}>
         <Reveal delay={80}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🎯 Seu Progresso</h2>
-            <div className="mt-5 space-y-5">
+            <div className="space-y-5">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-support-1">Nível 5</span>
@@ -102,11 +105,12 @@ export default function Eu360Page() {
             </div>
           </Card>
         </Reveal>
+      </SectionWrapper>
 
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">📊<span>Humor da Semana</span></span>}>
         <Reveal delay={140}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📊 Humor da Semana</h2>
-            <div className="mt-6 flex justify-between">
+            <div className="flex justify-between">
               {moodHistory.map(({ day, emoji }) => (
                 <div key={day} className="flex flex-col items-center gap-2">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-2xl shadow-soft transition-transform duration-300 hover:-translate-y-1">
@@ -121,31 +125,29 @@ export default function Eu360Page() {
             </p>
           </Card>
         </Reveal>
+      </SectionWrapper>
 
-        <div className="space-y-5">
-          <Reveal>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">🏅 Conquistas</h2>
-          </Reveal>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {ACHIEVEMENTS.map((achievement, index) => (
-              <Reveal key={achievement.title} delay={index * 70}>
-                <Card className="h-full p-6 text-center">
-                  <p className="text-3xl">{achievement.emoji}</p>
-                  <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
-                  <p className="mt-2 text-xs text-support-2">{achievement.desc}</p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">🏅<span>Conquistas</span></span>}>
+        <GridRhythm className="grid-cols-2 sm:grid-cols-3">
+          {ACHIEVEMENTS.map((achievement, index) => (
+            <Reveal key={achievement.title} delay={index * 70} className="h-full">
+              <Card className="h-full text-center">
+                <p className="text-3xl">{achievement.emoji}</p>
+                <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
+                <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">{achievement.desc}</p>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
 
+      <SectionWrapper
+        title={<span className="inline-flex items-center gap-2">🙏<span>Gratidão</span></span>}
+        description="Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias."
+      >
         <Reveal delay={220}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">🙏 Gratidão</h2>
-            <p className="mt-2 text-sm text-support-2">
-              Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias.
-            </p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 type="text"
                 value={gratitude}
@@ -171,11 +173,12 @@ export default function Eu360Page() {
             )}
           </Card>
         </Reveal>
+      </SectionWrapper>
 
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">📈<span>Resumo da Semana</span></span>}>
         <Reveal delay={260}>
           <Card className="p-7">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">📈 Resumo da Semana</h2>
-            <div className="mt-5 space-y-4">
+            <div className="space-y-4">
               {WEEKLY_SUMMARY.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between">
@@ -191,7 +194,7 @@ export default function Eu360Page() {
             </div>
           </Card>
         </Reveal>
-      </div>
-    </div>
+      </SectionWrapper>
+    </main>
   )
 }
