@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Toast } from '@/components/ui/Toast'
-import type { OrgTip } from '@/data/org-tips'
-import { ORG_TIPS } from '@/data/org-tips'
+import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
 import { OrgTipModal } from './OrgTipModal'
 
