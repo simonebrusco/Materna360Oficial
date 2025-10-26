@@ -571,7 +571,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
         <fieldset className="space-y-3">
           <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">CATEGORIA</legend>
-          <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
+          <div className="flex flex-wrap gap-[6px]">
             {CATEGORY_OPTIONS.map((option) => {
               const isActive = category === option.value
               return (
@@ -599,7 +599,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         <div className="grid gap-y-4 gap-x-3 lg:grid-cols-2 lg:gap-y-5 lg:gap-x-4">
           <fieldset className="space-y-3">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">TEMPO MÁXIMO</legend>
-            <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
+            <div className="flex flex-wrap gap-[6px]">
               {TIME_OPTIONS.map((value) => {
                 const isActive = timeMax === value
                 return (
@@ -623,7 +623,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
           <fieldset className="space-y-3">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">EQUIPAMENTOS</legend>
-            <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
+            <div className="flex flex-wrap gap-[6px]">
               {EQUIPMENT_OPTIONS.map((option) => {
                 const isActive = equipment.includes(option.value)
                 return (
@@ -647,7 +647,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
           <fieldset className="space-y-3">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">DIETA</legend>
-            <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
+            <div className="flex flex-wrap gap-[6px]">
               {DIET_OPTIONS.map((option) => {
                 const isActive = diet.includes(option.value)
                 return (
@@ -671,7 +671,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
           <fieldset className="space-y-3">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">ENERGIA</legend>
-            <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
+            <div className="flex flex-wrap gap-[6px]">
               {ENERGY_OPTIONS.map((option) => {
                 const isActive = option.value === energy
                 return (
@@ -720,7 +720,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
           <fieldset className="flex flex-wrap items-center gap-2">
             <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-support-2/70">ORÇAMENTO</legend>
-            <div className="flex flex-wrap gap-x-2 gap-y-2 md:gap-x-3">
+            <div className="flex flex-wrap gap-[6px]">
               {BUDGET_OPTIONS.map((option) => {
                 const isActive = option.value === budget
                 return (
