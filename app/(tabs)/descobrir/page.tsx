@@ -239,6 +239,13 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       initialPlaceFilter={initialPlaceFilter}
       recProducts={recProducts}
       recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
+      flashRoutine={{
+        enabled: flashRoutineEnabled,
+        aiEnabled: flashRoutineAIEnabled,
+        routine: flashRoutine?.routine ?? null,
+        strategy: flashRoutine?.strategy ?? null,
+        analyticsSource: flashRoutine?.analyticsSource ?? 'local',
+      }}
     />
   )
 }
