@@ -369,14 +369,21 @@ export default function DescobrirClient({
     if (impressionsKeyRef.current === recShelfImpressionKey) {
       return
     }
-    recShelf.groups.forEach((group) => {
-      trackTelemetry('discover_rec_impression', {
-        kind: group.kind,
-        count: group.items.length,
-      })
-    })
     impressionsKeyRef.current = recShelfImpressionKey
-  }, [recShelfEnabled, recShelf.groups, recShelfImpressionKey])
+    if (!sample(0.2)) {
+      return
+    }
+    const kinds = recShelf.groups.map((group) => group.kind).slice(0, 4)
+    trackTelemetry(
+      'discover_rec_impression',
+      {
+        shelves: recShelf.groups.length,
+        ageBuckets: targetBuckets,
+        kinds,
+      },
+      telemetryCtx
+    )
+  }, [recShelfEnabled, recShelf.groups, recShelfImpressionKey, targetBuckets, telemetryCtx])
 
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
   const showSelfCare = selfCareEnabled && selfCare.items.length > 0
