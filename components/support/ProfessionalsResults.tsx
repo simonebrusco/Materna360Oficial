@@ -116,7 +116,7 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   return (
     <div className="space-y-6">
       {showSkeletonGrid ? (
-        <div className="grid grid-cols-1 gap-y-4 gap-x-3 md:grid-cols-2 md:gap-y-5 md:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
+        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
             <div key={index} className="h-56 rounded-2xl border border-white/60 bg-white/60 animate-pulse" />
           ))}
@@ -124,7 +124,7 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       ) : null}
 
       {data.length > 0 ? (
-        <div className="grid grid-cols-1 gap-y-4 gap-x-3 md:grid-cols-2 md:gap-y-5 md:gap-x-4 lg:grid-cols-3 lg:gap-y-6 lg:gap-x-6">
+        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((pro) => (
             <ProfessionalCard key={pro.id} pro={pro} />
           ))}
