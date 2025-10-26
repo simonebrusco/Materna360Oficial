@@ -86,9 +86,10 @@ type DescobrirClientProps = {
   suggestions: SuggestionCard[]
   filters: QuickIdeaFiltersSummary
   dateKey: string
-  profileMode: 'single' | 'all'
+  profile: ProfileSummary
   initialAgeFilter?: string | null
   initialPlaceFilter?: string | null
+  recShelf: RecShelfState
 }
 
 const badgeLabels: Record<QuickIdeasBadge, string> = {
