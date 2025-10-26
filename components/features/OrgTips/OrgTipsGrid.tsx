@@ -232,10 +232,10 @@ export function OrgTipsGrid() {
   )
 
   const chipClasses = (active: boolean) =>
-    `inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
+    `inline-flex h-6 items-center rounded-full border px-[10px] text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 sm:h-[26px] sm:text-[12px] md:h-7 md:px-3 md:text-[13px] ${
       active
-        ? 'border-primary bg-primary/15 text-primary shadow-[0_0_0_1px_rgba(255,0,94,0.35)]'
-        : 'border-white/60 bg-white text-support-2 hover:border-primary/40 hover:text-primary'
+        ? 'border-primary bg-primary text-white shadow-[0_0_0_1px_rgba(255,0,94,0.35)]'
+        : 'border-white/50 bg-white text-support-2/90 hover:border-primary/40 hover:text-primary'
     }`
 
   const textActionClass =
@@ -244,17 +244,17 @@ export function OrgTipsGrid() {
   return (
     <>
       <div className="space-y-4">
-        <div className="rounded-3xl border border-white/70 bg-white/92 p-4 shadow-[0_24px_48px_-30px_rgba(47,58,86,0.32)] backdrop-blur-sm sm:p-5 md:p-6">
-          <div className="space-y-5">
-            <header className="space-y-2">
-              <h3 className="text-lg font-semibold text-support-1">Dicas de Organização</h3>
-              <p className="text-sm text-support-2/80 md:text-base">Sugestões rápidas para organizar a rotina com leveza.</p>
+        <div className="mx-auto max-w-[55rem] rounded-3xl border border-white/70 bg-white/92 p-3 shadow-[0_18px_44px_-30px_rgba(47,58,86,0.26)] backdrop-blur-sm sm:px-[14px] sm:py-[14px] md:px-4 md:py-4">
+          <div className="space-y-3">
+            <header className="space-y-1.5">
+              <h3 className="text-[18px] font-semibold leading-[1.3] text-support-1">Dicas de Organização</h3>
+              <p className="text-[14px] leading-[1.45] text-support-2/80">Sugestões rápidas para organizar a rotina com leveza.</p>
             </header>
 
-            <div className="space-y-4">
-              <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-support-2/80">Tempo livre</h4>
-                <div className="flex flex-wrap gap-2">
+            <div className="mt-3 grid gap-y-2 md:grid-cols-2 md:gap-x-4">
+              <section className="space-y-1.5">
+                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Tempo livre</h4>
+                <div className="flex flex-wrap gap-[6px]">
                   {TEMPO_OPTIONS.map((option) => {
                     const active = fTempo === option.value
                     return (
@@ -272,9 +272,9 @@ export function OrgTipsGrid() {
                 </div>
               </section>
 
-              <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-support-2/80">Tema</h4>
-                <div className="flex flex-wrap gap-2">
+              <section className="space-y-1.5">
+                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Tema</h4>
+                <div className="flex flex-wrap gap-[6px]">
                   {TEMA_OPTIONS.map((option) => {
                     const active = fTema === option.value
                     return (
@@ -292,9 +292,9 @@ export function OrgTipsGrid() {
                 </div>
               </section>
 
-              <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-support-2/80">Formato</h4>
-                <div className="flex flex-wrap gap-2">
+              <section className="space-y-1.5">
+                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Formato</h4>
+                <div className="flex flex-wrap gap-[6px]">
                   {FORMATO_OPTIONS.map((option) => {
                     const active = fFormato === option.value
                     return (
@@ -312,9 +312,9 @@ export function OrgTipsGrid() {
                 </div>
               </section>
 
-              <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-support-2/80">Com quem</h4>
-                <div className="flex flex-wrap gap-2">
+              <section className="space-y-1.5">
+                <h4 className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/80">Com quem</h4>
+                <div className="flex flex-wrap gap-[6px]">
                   {COM_QUEM_OPTIONS.map((option) => {
                     const active = fComQuem === option.value
                     return (
@@ -333,14 +333,14 @@ export function OrgTipsGrid() {
               </section>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-support-2/70">Presets rápidos</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-1.5">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.05em] text-support-2/70">Presets rápidos</p>
+              <div className="flex flex-wrap gap-[6px]">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="bg-white/80 px-4 text-sm font-semibold text-support-2/90 hover:text-primary"
+                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
                   onClick={() => applyPreset('exausta')}
                 >
                   Exausta (até 5 min)
@@ -349,7 +349,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="bg-white/80 px-4 text-sm font-semibold text-support-2/90 hover:text-primary"
+                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
                   onClick={() => applyPreset('casa_fluida')}
                 >
                   Casa fluida (4–10 min)
@@ -358,7 +358,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="bg-white/80 px-4 text-sm font-semibold text-support-2/90 hover:text-primary"
+                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
                   onClick={() => applyPreset('clareza')}
                 >
                   Clareza mental (3–5 min)
@@ -367,7 +367,7 @@ export function OrgTipsGrid() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="bg-white/80 px-4 text-sm font-semibold text-support-2/90 hover:text-primary"
+                  className="h-6 min-h-0 rounded-full px-[10px] text-[12px] font-semibold text-support-2/90 hover:text-primary !py-0"
                   onClick={() => applyPreset('tempo_rotina')}
                 >
                   Tempo &amp; Rotina (5–10 min)
@@ -375,11 +375,23 @@ export function OrgTipsGrid() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 md:gap-4">
-              <Button type="button" variant="primary" size="sm" className="px-6" onClick={handleShowResults}>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="h-[30px] min-h-0 px-[14px] text-[13px] font-semibold !py-0"
+                onClick={handleShowResults}
+              >
                 Ver sugestões
               </Button>
-              <Button type="button" variant="outline" size="sm" className="px-6" onClick={clearFilters}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-[30px] min-h-0 px-[14px] text-[13px] font-semibold text-support-2/90 hover:text-primary !py-0"
+                onClick={clearFilters}
+              >
                 Limpar filtros
               </Button>
               {showResults && !showAll ? (
@@ -393,6 +405,8 @@ export function OrgTipsGrid() {
                 </button>
               ) : null}
             </div>
+
+            <div className="mt-2.5 border-t border-white/40" />
           </div>
         </div>
 
