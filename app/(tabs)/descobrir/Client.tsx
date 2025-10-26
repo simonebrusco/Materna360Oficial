@@ -317,6 +317,7 @@ export default function DescobrirClient({
   }, [recShelf.enabled, recShelf.groups, recShelfImpressionKey])
 
   const showRecShelf = recShelf.enabled && recShelf.groups.length > 0
+  const showSelfCare = selfCare.enabled && selfCare.items.length > 0
 
   useEffect(() => {
     if (!flashRoutine.enabled || !flashRoutine.routine) {
@@ -333,7 +334,23 @@ export default function DescobrirClient({
       source: flashRoutine.analyticsSource,
     })
     flashRoutineImpressionRef.current = flashRoutine.routine.id
-  }, [flashRoutine, flashRoutineImpressionRef])
+  }, [flashRoutine])
+
+  useEffect(() => {
+    if (!showSelfCare) {
+      return
+    }
+    const key = selfCare.items.map((item) => item.id).join('|')
+    if (selfCareImpressionRef.current === key) {
+      return
+    }
+    trackTelemetry('discover_selfcare_impression', {
+      count: selfCare.items.length,
+      energy: selfCare.energy,
+      minutes: selfCare.minutes,
+    })
+    selfCareImpressionRef.current = key
+  }, [showSelfCare, selfCare])
 
   const handleStart = (id: string) => {
     setExpandedIdeaId((current) => (current === id ? null : id))
