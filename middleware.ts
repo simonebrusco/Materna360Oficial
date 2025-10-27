@@ -4,9 +4,9 @@ import { NextResponse } from 'next/server'
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const pathname = request.nextUrl.pathname
 
-  if (!pathname.startsWith('/(tabs)')) {
+  if (!TABS_PREFIX_PATTERN.test(pathname)) {
     return NextResponse.next()
   }
 
@@ -17,5 +17,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:path*'],
+  matcher: ['/(tabs)/:path*'],
 }
