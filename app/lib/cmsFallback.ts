@@ -13,18 +13,36 @@ async function readJsonSafe(relPath: string): Promise<Json | null> {
   }
 }
 
-export async function getRecShelfWithFallback(): Promise<any> {
+type RecShelfSeed = {
+  books?: unknown[];
+  toys?: unknown[];
+  courses?: unknown[];
+  printables?: unknown[];
+};
+
+const flattenRecShelf = (data: RecShelfSeed | unknown): unknown[] => {
+  if (!data || typeof data !== 'object') {
+    return [];
+  }
+
+  const seed = data as RecShelfSeed;
+  return ['books', 'toys', 'courses', 'printables']
+    .flatMap((key) => {
+      const items = seed[key as keyof RecShelfSeed];
+      return Array.isArray(items) ? items : [];
+    })
+    .filter(Boolean);
+};
+
+export async function getRecShelfWithFallback(): Promise<any[]> {
   const cms = await tryGetRecShelfFromCMS();
-  if (cms && Array.isArray(cms.books) && cms.books.length) {
+  if (Array.isArray(cms) && cms.length) {
     return cms;
   }
 
   const seed = await readJsonSafe('app/cms/recShelf.seed.json');
-  if (seed && typeof seed === 'object') {
-    return seed;
-  }
-
-  return { books: [], toys: [], courses: [], printables: [] };
+  const flattened = flattenRecShelf(seed);
+  return flattened as any[];
 }
 
 export async function getQuickIdeasWithFallback(): Promise<any[]> {
@@ -41,8 +59,8 @@ export async function getQuickIdeasWithFallback(): Promise<any[]> {
   return [];
 }
 
-async function tryGetRecShelfFromCMS(): Promise<any> {
-  return { books: [], toys: [], courses: [], printables: [] };
+async function tryGetRecShelfFromCMS(): Promise<any[]> {
+  return [];
 }
 
 async function tryGetQuickIdeasFromCMS(): Promise<any[]> {
