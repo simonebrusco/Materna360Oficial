@@ -317,7 +317,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
     items: [],
     rotationKey: '',
-    source: 'fallback',
+    source: 'fallback' as const,
   }
   if (selfCareEnabled) {
     try {
@@ -340,7 +340,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       selfCareSelection = {
         items: [],
         rotationKey: '',
-        source: 'fallback',
+        source: 'fallback' as const,
       }
     }
   }
