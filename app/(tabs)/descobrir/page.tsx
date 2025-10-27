@@ -276,19 +276,35 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
 
-  const flashRoutineResult = flashRoutineEnabled
-    ? selectFlashRoutine({
+  let flashRoutineResult: ReturnType<typeof selectFlashRoutine> | null = null
+  let flashRoutineRoutine: FlashRoutineT | null = null
+  if (flashRoutineEnabled) {
+    try {
+      const result = selectFlashRoutine({
         ideas: ideasCatalog,
         routines: routinesCatalog,
         profile: { mode: profileSummary.mode, children: profileSummary.children },
         filters: flashFilters,
         dateKey,
       })
-    : null
-
-  const flashRoutineRoutine = flashRoutineResult
-    ? FlashRoutineSchema.parse(flashRoutineResult.routine)
-    : null
+      if (result) {
+        flashRoutineResult = result
+        flashRoutineRoutine = FlashRoutineSchema.parse(result.routine)
+      }
+    } catch (error) {
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'flash',
+          reason: error instanceof Error ? error.message : 'unknown',
+          fatal: false,
+        },
+        { ...telemetryCtx, source: flashRoutineAIEnabled ? 'ai' : 'local' }
+      )
+      flashRoutineResult = null
+      flashRoutineRoutine = null
+    }
+  }
 
   const flashRoutine = flashRoutineEnabled && flashRoutineResult && flashRoutineRoutine
     ? {
