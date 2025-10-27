@@ -29,6 +29,7 @@ import {
   SelfCare as SelfCareSchema,
   type AgeBucketT as AgeBucket,
   type ProfileSummaryT,
+  type FlashRoutineT,
 } from '@/app/lib/discoverSchemas'
 import type {
   QuickIdea,
