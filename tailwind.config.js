@@ -23,11 +23,13 @@ module.exports = {
         quicksand: ['Quicksand', 'sans-serif'],
       },
       boxShadow: {
+        card: '0 8px 24px rgba(0,0,0,0.06)',
         soft: '0 22px 45px -26px rgba(47, 58, 86, 0.55)',
         elevated: '0 35px 60px -25px rgba(255, 0, 94, 0.45)',
         glow: '0 20px 45px -20px rgba(255, 0, 94, 0.48)',
       },
       borderRadius: {
+        xl2: '1rem',
         'soft-3xl': '1.75rem',
       },
       backgroundImage: {
