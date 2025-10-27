@@ -969,130 +969,132 @@ export default function DescobrirClient({
         </Reveal>
       )}
 
-      <Reveal delay={200}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
-          <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
-            Filtros ativos: {friendlyFilters}
-          </div>
-          <div className="flex flex-col gap-4">
-            {suggestions.length === 0 ? (
-              <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
-                <p className="text-sm text-support-2 md:text-base">
-                  Ainda não temos sugestões para estes filtros. Ajuste as preferências para descobrir novas ideias.
-                </p>
-              </Card>
-            ) : (
-              suggestions.map((suggestion, index) => (
-                <Reveal key={suggestion.id} delay={index * 60}>
-                  <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
-                    <div className="text-5xl" aria-hidden>
-                      🌟
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
-                          Sugestão personalizada
-                          {profileMode === 'all' && suggestion.child
-                            ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
-                            : ''}
-                        </span>
-                        <span className="text-xs text-support-2/80">
-                          ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
-                        </span>
+      <SectionBoundary title="Ideias em 1 Clique">
+        <Reveal delay={200}>
+          <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
+            <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
+              Filtros ativos: {friendlyFilters}
+            </div>
+            <div className="flex flex-col gap-4">
+              {suggestions.length === 0 ? (
+                <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
+                  <p className="text-sm text-support-2 md:text-base">
+                    Ainda não temos sugestões para estes filtros. Ajuste as preferências para descobrir novas ideias.
+                  </p>
+                </Card>
+              ) : (
+                suggestions.map((suggestion, index) => (
+                  <Reveal key={suggestion.id} delay={index * 60}>
+                    <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
+                      <div className="text-5xl" aria-hidden>
+                        🌟
                       </div>
-
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-support-1 md:text-xl">{suggestion.title}</h3>
-                        <p className="text-sm text-support-2 md:text-base">{suggestion.summary}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
-                        {suggestion.badges.slice(0, 2).map((badge) => (
-                          <span key={badge} className={badgeClassName}>
-                            {badgeLabels[badge]}
+                      <div className="flex-1 space-y-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
+                            Sugestão personalizada
+                            {profileMode === 'all' && suggestion.child
+                              ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
+                              : ''}
                           </span>
-                        ))}
-                      </div>
+                          <span className="text-xs text-support-2/80">
+                            ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
+                          </span>
+                        </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="sm:w-auto"
-                          onClick={() => handleStart(suggestion.id)}
-                        >
-                          <Play className="h-4 w-4" aria-hidden />
-                          {expandedIdeaId === suggestion.id ? 'Ocultar passos' : 'Começar agora'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="sm:w-auto"
-                          onClick={() => void handleSaveToPlanner(suggestion)}
-                          disabled={savingIdeaId === suggestion.id}
-                        >
-                          {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="sm:w-auto"
-                          onClick={() => void handleShare(suggestion)}
-                        >
-                          <Share2 className="h-4 w-4" aria-hidden />
-                          Compartilhar
-                        </Button>
-                      </div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-support-1 md:text-xl">{suggestion.title}</h3>
+                          <p className="text-sm text-support-2 md:text-base">{suggestion.summary}</p>
+                        </div>
 
-                      {expandedIdeaId === suggestion.id && (
-                        <div className="space-y-4 rounded-2xl border border-white/60 bg-white/92 p-4 shadow-soft">
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
-                              <button
-                                type="button"
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
-                                onClick={() => void handleCopySteps(suggestion)}
-                              >
-                                <Copy className="h-3.5 w-3.5" aria-hidden /> Copiar passos
-                              </button>
-                            </div>
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
-                              {suggestion.materials.map((item) => (
-                                <li key={item}>{item}</li>
-                              ))}
-                            </ul>
-                          </div>
+                        <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
+                          {suggestion.badges.slice(0, 2).map((badge) => (
+                            <span key={badge} className={badgeClassName}>
+                              {badgeLabels[badge]}
+                            </span>
+                          ))}
+                        </div>
 
-                          <div>
-                            <h4 className="text-sm font-semibold text-support-1">Passo a passo</h4>
-                            <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-support-2/90">
-                              {suggestion.steps.map((step, idx) => (
-                                <li key={idx}>{step}</li>
-                              ))}
-                            </ol>
-                          </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="sm:w-auto"
+                            onClick={() => handleStart(suggestion.id)}
+                          >
+                            <Play className="h-4 w-4" aria-hidden />
+                            {expandedIdeaId === suggestion.id ? 'Ocultar passos' : 'Começar agora'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="sm:w-auto"
+                            onClick={() => void handleSaveToPlanner(suggestion)}
+                            disabled={savingIdeaId === suggestion.id}
+                          >
+                            {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="sm:w-auto"
+                            onClick={() => void handleShare(suggestion)}
+                          >
+                            <Share2 className="h-4 w-4" aria-hidden />
+                            Compartilhar
+                          </Button>
+                        </div>
 
-                          {suggestion.safety_notes.length > 0 && (
+                        {expandedIdeaId === suggestion.id && (
+                          <div className="space-y-4 rounded-2xl border border-white/60 bg-white/92 p-4 shadow-soft">
                             <div>
-                              <h4 className="text-sm font-semibold text-primary">Cuidados</h4>
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                                  onClick={() => void handleCopySteps(suggestion)}
+                                >
+                                  <Copy className="h-3.5 w-3.5" aria-hidden /> Copiar passos
+                                </button>
+                              </div>
                               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
-                                {suggestion.safety_notes.map((note, idx) => (
-                                  <li key={idx}>{note}</li>
+                                {suggestion.materials.map((item) => (
+                                  <li key={item}>{item}</li>
                                 ))}
                               </ul>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </Reveal>
-              ))
-            )}
-          </div>
-        </SectionWrapper>
-      </Reveal>
+
+                            <div>
+                              <h4 className="text-sm font-semibold text-support-1">Passo a passo</h4>
+                              <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-support-2/90">
+                                {suggestion.steps.map((step, idx) => (
+                                  <li key={idx}>{step}</li>
+                                ))}
+                              </ol>
+                            </div>
+
+                            {suggestion.safety_notes.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-semibold text-primary">Cuidados</h4>
+                                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
+                                  {suggestion.safety_notes.map((note, idx) => (
+                                    <li key={idx}>{note}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  </Reveal>
+                ))
+              )}
+            </div>
+          </SectionWrapper>
+        </Reveal>
+      </SectionBoundary>
 
       {flashRoutineEnabled && (
         <Reveal delay={220}>
