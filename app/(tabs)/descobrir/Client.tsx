@@ -319,15 +319,17 @@ export default function DescobrirClient({
     } satisfies Record<string, boolean>
   }, [discoverFlags])
 
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev'
+
   const telemetryCtx = useMemo(() => {
     return {
-      appVersion: process.env.NEXT_PUBLIC_APP_VERSION,
+      appVersion,
       route: '/descobrir',
       tz: 'America/Sao_Paulo',
       dateKey,
       flags: telemetryFlags,
     }
-  }, [dateKey, telemetryFlags])
+  }, [appVersion, dateKey, telemetryFlags])
 
   const profileMode = profile.mode
   const impressionsKeyRef = useRef<string | null>(null)
