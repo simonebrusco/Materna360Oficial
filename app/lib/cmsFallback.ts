@@ -13,6 +13,35 @@ async function readJsonSafe(relPath: string): Promise<Json | null> {
   }
 }
 
+async function fetchJSON(url: string, init?: RequestInit): Promise<unknown> {
+  const { headers: initHeaders, ...rest } = init ?? {};
+  const headers = new Headers(initHeaders ?? {});
+
+  headers.set('Content-Type', 'application/json');
+  if (process.env.CMS_API_KEY) {
+    headers.set('Authorization', `Bearer ${process.env.CMS_API_KEY}`);
+  }
+
+  const response = await fetch(url, {
+    ...rest,
+    headers,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`CMS ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+function cmsUrl(pathname: string, qs = ''): string {
+  const base = process.env.CMS_BASE_URL?.replace(/\/+$/, '') ?? '';
+  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const query = qs ? (qs.startsWith('?') ? qs.slice(1) : qs) : '';
+  return `${base}${normalizedPath}${query ? `?${query}` : ''}`;
+}
+
 type RecShelfSeed = {
   books?: unknown[];
   toys?: unknown[];
@@ -257,10 +286,30 @@ export async function getQuickIdeasWithFallback(): Promise<any[]> {
   return normalized as any[];
 }
 
-async function tryGetRecShelfFromCMS(): Promise<any[]> {
-  return [];
+export async function tryGetRecShelfFromCMS(): Promise<any[]> {
+  if (!process.env.CMS_BASE_URL) {
+    return [];
+  }
+
+  try {
+    const payload = await fetchJSON(cmsUrl('/api/recshelf', 'active=1'));
+    const flattened = flattenRecShelf(payload);
+    return flattened as any[];
+  } catch {
+    return [];
+  }
 }
 
-async function tryGetQuickIdeasFromCMS(): Promise<any[]> {
-  return [];
+export async function tryGetQuickIdeasFromCMS(): Promise<any[]> {
+  if (!process.env.CMS_BASE_URL) {
+    return [];
+  }
+
+  try {
+    const payload = await fetchJSON(cmsUrl('/api/quick-ideas', 'active=1'));
+    const normalized = normalizeQuickIdeas(payload);
+    return normalized as any[];
+  } catch {
+    return [];
+  }
 }
