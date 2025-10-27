@@ -38,6 +38,13 @@
 }
 
 @layer base {
+  html,
+  body {
+    height: 100%;
+    background-color: rgb(var(--neutral-1));
+    color: rgb(var(--support-1));
+  }
+
   html {
     @apply scroll-smooth;
   }
@@ -45,6 +52,12 @@
   body {
     @apply min-h-screen bg-gradient-to-b from-pink-50/60 to-white text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 
   h1,
