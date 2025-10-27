@@ -25,8 +25,6 @@ const nextConfig = {
       rules.push({ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` })
     }
 
-    rules.push({ source: '/(tabs)/:path*', destination: '/:path*' })
-
     return rules
   },
   async headers() {
