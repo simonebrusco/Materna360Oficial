@@ -1,0 +1,84 @@
+[
+  {
+    "id": "qi-01-cabana",
+    "title": "Cabana de Lençol Express",
+    "durationMin": 10,
+    "materials": ["2 cadeiras", "1 lençol"],
+    "steps": ["Monte as cadeiras", "Cubra com lençol", "Leve um livro para dentro"],
+    "ageBuckets": ["2-3", "4-5"],
+    "locales": ["casa"],
+    "safetyNotes": ["Supervisão de um adulto."],
+    "tags": ["imaginação"],
+    "active": true
+  },
+  {
+    "id": "qi-02-tesouros",
+    "title": "Caça aos Tesouros Coloridos",
+    "durationMin": 15,
+    "materials": ["papéis coloridos", "cesta"],
+    "steps": ["Espalhe 5 cores", "Busque por cor", "Confira juntos"],
+    "ageBuckets": ["4-5", "6-7"],
+    "locales": ["casa", "escola"],
+    "active": true
+  },
+  {
+    "id": "qi-03-pedrinhas",
+    "title": "Desenhos com Pedrinhas",
+    "durationMin": 15,
+    "materials": ["pedrinhas", "gravetos"],
+    "steps": ["Reúna no parque", "Monte formas", "Fotografe"],
+    "ageBuckets": ["4-5", "6-7", "8+"],
+    "locales": ["parque", "area_externa"],
+    "active": true
+  },
+  {
+    "id": "qi-04-alvos",
+    "title": "Arremesso em Alvos",
+    "durationMin": 10,
+    "materials": ["fitas adesivas", "bolinhas de meia"],
+    "steps": ["Crie 3 alvos", "Arremesse", "Some os pontos"],
+    "ageBuckets": ["2-3", "4-5", "6-7"],
+    "locales": ["casa", "escola"],
+    "active": true
+  },
+  {
+    "id": "qi-05-sombras",
+    "title": "Teatro de Sombras",
+    "durationMin": 15,
+    "materials": ["lanterna", "papel"],
+    "steps": ["Recorte figuras", "Projete na parede", "Conte história"],
+    "ageBuckets": ["4-5", "6-7", "8+"],
+    "locales": ["casa"],
+    "active": true
+  },
+  {
+    "id": "qi-06-bolinhas",
+    "title": "Corrida de Bolinhas",
+    "durationMin": 5,
+    "materials": ["canudos", "bolinhas de papel"],
+    "steps": ["Sopre as bolinhas", "Contorne obstáculos", "Chegue à linha final"],
+    "ageBuckets": ["2-3", "4-5"],
+    "locales": ["casa", "escola"],
+    "active": true
+  },
+  {
+    "id": "qi-07-letras",
+    "title": "Caça às Letras do Nome",
+    "durationMin": 10,
+    "materials": ["post-its", "caneta"],
+    "steps": ["Escreva letras", "Espalhe", "Cole na ordem"],
+    "ageBuckets": ["4-5", "6-7"],
+    "locales": ["casa", "escola"],
+    "active": true
+  },
+  {
+    "id": "qi-08-natureza",
+    "title": "Bingo da Natureza",
+    "durationMin": 20,
+    "materials": ["folha com itens", "lápis"],
+    "steps": ["Liste 6 coisas", "Procure", "Marque"],
+    "ageBuckets": ["6-7", "8+"],
+    "locales": ["parque", "area_externa"],
+    "active": true
+  }
+]

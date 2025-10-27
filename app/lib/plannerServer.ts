@@ -1,3 +1,10 @@
+
+import { trackTelemetry } from '@/app/lib/telemetry'
+
+import { validatePlannerItem, type PlannerItemT } from './plannerGuard'
+
+
+
 export const PLANNER_COOKIE_NAME = 'materna360-planner'
 export const MAX_PLANNER_ITEMS_PER_DAY = 20
 
@@ -11,7 +18,11 @@ export type PlannerPayload = {
   timeISO: string
   category: PlannerCategory
   link?: string
+
+  payload?: PlannerItemT
+
   payload?: unknown
+
   tags?: string[]
   createdAt: string
 }
@@ -52,7 +63,11 @@ const defaultNowFactory = () => new Date()
 
 export function buildPlannerPayload(
   raw: any,
+
+  options?: { idFactory?: () => string; nowFactory?: () => Date; plannerItem?: PlannerItemT }
+
   options?: { idFactory?: () => string; nowFactory?: () => Date }
+
 ): PlannerPayload {
   const idFactory = options?.idFactory ?? defaultIdFactory
   const nowFactory = options?.nowFactory ?? defaultNowFactory
@@ -75,6 +90,12 @@ export function buildPlannerPayload(
     throw new Error('Categoria inválida.')
   }
 
+
+  const normalizedPlannerItem =
+    options?.plannerItem ?? (raw?.payload !== undefined ? validatePlannerItem(raw.payload) : undefined)
+
+
+
   const payload: PlannerPayload = {
     id: idFactory(),
     title,
@@ -82,7 +103,11 @@ export function buildPlannerPayload(
     timeISO,
     category,
     link: typeof raw?.link === 'string' ? raw.link.trim() || undefined : undefined,
+
+    payload: normalizedPlannerItem,
+
     payload: raw?.payload ?? undefined,
+
     tags: sanitizeTags(raw?.tags),
     createdAt: nowFactory().toISOString(),
   }
@@ -116,3 +141,19 @@ export const mergePlannerPayload = (
   next[payload.dateISO] = [payload, ...filtered].slice(0, limit)
   return next
 }
+
+
+export async function saveToPlannerSafe(
+  raw: unknown
+): Promise<{ ok: true; item: PlannerItemT } | { ok: false; reason: string }> {
+  try {
+    const item = validatePlannerItem(raw)
+    trackTelemetry('planner_save_ok', { type: item.type, id: item.id })
+    return { ok: true, item }
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    trackTelemetry('planner_payload_invalid', { reason })
+    return { ok: false, reason: 'Invalid planner item' }
+  }
+}
+

@@ -49,7 +49,11 @@ const TIME_OPTIONS: { value: RecipeTimeOption; label: string }[] = [
 const AGE_BAND_LABEL: Record<string, string> = {
   '6-8m': '6–8 meses',
   '9-12m': '9–12 meses',
+
+  '1-2y': '1��2 anos',
+
   '1-2y': '1���2 anos',
+
   '2-6y': '2–6 anos',
 }
 
@@ -81,6 +85,62 @@ const QUICK_SUGGESTIONS = [
 ]
 
 const CATEGORY_OPTIONS = VALID_PLANNER_CATEGORIES
+
+
+const sanitizeStringList = (values: unknown): string[] => {
+  if (!Array.isArray(values)) {
+    return []
+  }
+  const seen = new Set<string>()
+  return values
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => {
+      if (!entry) {
+        return false
+      }
+      const key = entry.toLocaleLowerCase('pt-BR')
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+}
+
+const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: number): number => {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) {
+    return fallback
+  }
+  const rounded = Math.round(numeric)
+  if (max === undefined) {
+    return Math.max(min, rounded)
+  }
+  return Math.min(Math.max(min, rounded), max)
+}
+
+const generatePlannerId = (prefix: string, value: string): string => {
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+  const fallback =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10)
+  const identifier = normalized || fallback
+  return `${prefix}-${identifier}`.slice(0, 80)
+}
+
+const resolveRecipeId = (candidate: unknown, title: string, prefix: string): string => {
+  if (typeof candidate === 'string' && candidate.trim()) {
+    return candidate.trim()
+  }
+  return generatePlannerId(prefix, title)
+}
+
 
 type PlannerCategory = (typeof CATEGORY_OPTIONS)[number]
 
@@ -331,6 +391,23 @@ export function HealthyRecipesSection() {
     }
 
     try {
+
+      const readyInMinutes = coerceIntWithin(plannerModal.recipe.readyInMinutes, 20, 1, 240)
+      const servings = coerceIntWithin(plannerModal.recipe.servings, 2, 1, 20)
+      const note = typeof plannerNote === 'string' ? plannerNote.trim() : ''
+      const recipeId = resolveRecipeId((plannerModal.recipe as Record<string, unknown>).id, plannerModal.recipe.title, 'healthy-recipe')
+
+      const recipePayload = {
+        type: 'recipe' as const,
+        id: recipeId,
+        title: plannerModal.recipe.title,
+        readyInMinutes,
+        servings,
+        shoppingList: [],
+        note: note || undefined,
+      }
+
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: {
@@ -342,10 +419,14 @@ export function HealthyRecipesSection() {
           timeISO: plannerTime,
           category: plannerCategory,
           link: '#receitas-saudaveis',
+
+          payload: recipePayload,
+
           payload: {
             recipe: plannerModal.recipe,
             note: plannerNote,
           },
+
           tags: Array.from(
             new Set(['receita', 'alimentação', 'saudável', ...(plannerModal.recipe.planner.tags ?? [])])
           ),
