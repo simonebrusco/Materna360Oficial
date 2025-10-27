@@ -4,7 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Materna360 token fallbacks (safe to keep) ===== */
 :root {
+  /* RGB triplets for Tailwind color mapping */
+  --primary: 242 84 130; /* #F25482 → brand pink */
+  --support-1: 33 37 41; /* #212529 → dark text */
+  --support-2: 108 117 125; /* #6C757D → muted text */
+  --neutral-1: 248 249 250; /* #F8F9FA → bg soft */
+  --neutral-2: 255 255 255; /* #FFFFFF → white */
+
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
   --font-secondary: 'Quicksand', sans-serif;
