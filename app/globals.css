@@ -244,6 +244,14 @@
 }
 
 @layer utilities {
+  .shadow-card {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .rounded-2xl {
+    border-radius: 1rem;
+  }
+
   .blurred-border {
     position: relative;
   }
