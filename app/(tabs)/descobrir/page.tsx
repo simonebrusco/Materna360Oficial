@@ -314,21 +314,57 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       }
     : null
 
-  const selfCareSelection = selfCareEnabled
-    ? selectSelfCareItems({
+  let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
+    items: [],
+    rotationKey: '',
+    source: 'fallback',
+  }
+  if (selfCareEnabled) {
+    try {
+      selfCareSelection = selectSelfCareItems({
         items: selfCareCatalog,
         energy: filters.energy,
         minutes: filters.time_window_min as 2 | 5 | 10,
         dateKey,
       })
-    : { items: [], rotationKey: '', source: 'fallback' as const }
+    } catch (error) {
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'selfcare',
+          reason: error instanceof Error ? error.message : 'unknown',
+          fatal: false,
+        },
+        telemetryCtx
+      )
+      selfCareSelection = {
+        items: [],
+        rotationKey: '',
+        source: 'fallback',
+      }
+    }
+  }
 
-  const suggestions = buildDailySuggestions(
-    profileSummary,
-    filters,
-    dateKey,
-    QUICK_IDEAS_CATALOG
-  )
+  let suggestions: ReturnType<typeof buildDailySuggestions> = []
+  try {
+    suggestions = buildDailySuggestions(
+      profileSummary,
+      filters,
+      dateKey,
+      QUICK_IDEAS_CATALOG
+    )
+  } catch (error) {
+    trackTelemetry(
+      'discover_section_error',
+      {
+        section: 'ideas',
+        reason: error instanceof Error ? error.message : 'unknown',
+        fatal: false,
+      },
+      telemetryCtx
+    )
+    suggestions = []
+  }
 
   const suggestionViews: SuggestionView[] = suggestions.map(({ idea, child }) => ({
     id: idea.id,
