@@ -17,7 +17,17 @@ export type TelemetryEvent =
   | 'planner_payload_invalid'
   | 'curator_request'
   | 'curator_response'
-  | 'curator_error';
+  | 'curator_error'
+  // Legacy surfaces (AI recipes / quick ideas / planner)
+  | 'recipes.generate'
+  | 'recipes.generate.error'
+  | 'quick-ideas.generate'
+  | 'quick-ideas.generate.error'
+  | 'quick_ideas_success'
+  | 'quick_ideas_error'
+  | 'quick_ideas_access_denied'
+  | 'quick_ideas_bad_request'
+  | 'planner.save';
 
 export type TelemetryContext = {
   appVersion?: string;
