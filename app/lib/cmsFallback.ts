@@ -153,7 +153,7 @@ const normalizeQuickIdeas = (items: unknown): unknown[] => {
         suitableEnergies,
       };
     })
-    .filter((value): value is Record<string, unknown> => Boolean(value));
+    .filter((value): value is NonNullable<typeof value> => value !== null);
 };
 
 export async function getRecShelfWithFallback(): Promise<any[]> {
