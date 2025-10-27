@@ -9,11 +9,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#ff005e',
+        primary: 'rgb(var(--primary) / <alpha-value>)',
         secondary: '#ffd8e6',
-        'support-1': '#2f3a56',
-        'support-2': '#545454',
+        'support-1': 'rgb(var(--support-1) / <alpha-value>)',
+        'support-2': 'rgb(var(--support-2) / <alpha-value>)',
         'support-3': 'rgba(255, 255, 255, 0.65)',
+        'neutral-1': 'rgb(var(--neutral-1) / <alpha-value>)',
+        'neutral-2': 'rgb(var(--neutral-2) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
