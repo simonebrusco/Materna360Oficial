@@ -19,9 +19,15 @@ const nextConfig = {
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
   },
   async rewrites() {
-    return isValidSupabaseUrl(AUDIO_BASE)
-      ? [{ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` }]
-      : []
+    const rules = []
+
+    if (isValidSupabaseUrl(AUDIO_BASE)) {
+      rules.push({ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` })
+    }
+
+    rules.push({ source: '/\\(tabs\\)/:path*', destination: '/:path*' })
+
+    return rules
   },
   async headers() {
     return [
