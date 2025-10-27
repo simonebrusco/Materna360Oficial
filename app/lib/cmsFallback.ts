@@ -45,6 +45,84 @@ const allowedLocations = new Set(['casa', 'parque', 'escola', 'area_externa']);
 const allowedBadges = new Set(['curta', 'sem_bagunça', 'ao_ar_livre', 'motor_fino', 'motor_grosso', 'linguagem', 'sensorial']);
 const allowedEnergies = new Set(['exausta', 'normal', 'animada']);
 
+const allowedRecKinds = new Set(['book', 'toy', 'course', 'printable']);
+
+const ensureAbsoluteUrl = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+  if (trimmed.startsWith('/')) {
+    return `https://example.com${trimmed}`;
+  }
+  return `https://${trimmed}`;
+};
+
+const normalizeRecProduct = (item: unknown): Record<string, unknown> | null => {
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+
+  const data = item as Record<string, unknown>;
+  const id = typeof data.id === 'string' ? data.id.trim() : '';
+  const kind = typeof data.kind === 'string' ? data.kind.trim() : '';
+  const title = typeof data.title === 'string' ? data.title.trim() : '';
+  const imageUrl = ensureAbsoluteUrl(data.imageUrl);
+  const affiliateUrl = ensureAbsoluteUrl(data.affiliateUrl);
+  const retailer = typeof data.retailer === 'string' ? data.retailer.trim() : '';
+  const active = typeof data.active === 'boolean' ? data.active : Boolean(data.active);
+  const ageBuckets = Array.isArray(data.ageBuckets)
+    ? data.ageBuckets.filter((bucket): bucket is string => typeof bucket === 'string')
+    : [];
+
+  if (!id || !allowedRecKinds.has(kind) || !title || !imageUrl || !affiliateUrl || ageBuckets.length === 0 || !retailer) {
+    return null;
+  }
+
+  const subtitle = typeof data.subtitle === 'string' ? data.subtitle : undefined;
+  const priceHint = typeof data.priceHint === 'string' ? data.priceHint : undefined;
+  const reasons = Array.isArray(data.reasons)
+    ? data.reasons.filter((reason): reason is string => typeof reason === 'string')
+    : undefined;
+  const safetyFlags = Array.isArray(data.safetyFlags)
+    ? data.safetyFlags.filter((flag): flag is string => typeof flag === 'string')
+    : undefined;
+  const localeFit = Array.isArray(data.localeFit)
+    ? data.localeFit.filter((locale): locale is string => typeof locale === 'string')
+    : undefined;
+  const sortWeight = typeof data.sortWeight === 'number' ? data.sortWeight : undefined;
+  const skills = Array.isArray(data.skills)
+    ? data.skills.filter((skill): skill is string => typeof skill === 'string')
+    : undefined;
+
+  return {
+    id,
+    kind,
+    title,
+    subtitle,
+    imageUrl,
+    ageBuckets,
+    skills,
+    retailer,
+    affiliateUrl,
+    priceHint,
+    reasons,
+    safetyFlags,
+    localeFit,
+    sortWeight,
+    active,
+  };
+};
+
 const flattenRecShelf = (data: RecShelfSeed | unknown): unknown[] => {
   if (!data || typeof data !== 'object') {
     return [];
@@ -56,7 +134,8 @@ const flattenRecShelf = (data: RecShelfSeed | unknown): unknown[] => {
       const items = seed[key as keyof RecShelfSeed];
       return Array.isArray(items) ? items : [];
     })
-    .filter(Boolean);
+    .map((item) => normalizeRecProduct(item))
+    .filter((value): value is NonNullable<typeof value> => value !== null);
 };
 
 const normalizeQuickIdeas = (items: unknown): unknown[] => {
