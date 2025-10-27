@@ -76,6 +76,7 @@ const SHOPPING_LIST_STORAGE_KEY = 'materna360:shopping-list'
 const PLAN_STORAGE_KEY = 'receitinhas:plan'
 
 const MAX_HISTORY = 3
+
 const PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 
 const sanitizeStringList = (values: unknown): string[] => {
@@ -124,6 +125,9 @@ const generatePlannerId = (prefix: string, value: string): string => {
   const identifier = normalized || fallback
   return `${prefix}-${identifier}`.slice(0, 80)
 }
+
+const PLANNER_CATEGORIES = ['Caf�� da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
+
 
 const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
   '0-6m': '0-6 meses',
@@ -441,6 +445,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
     setPlannerSaving(true)
     const recipe = plannerModal.suggestion
     try {
+
       const shoppingList = sanitizeStringList(recipe.shopping_list)
       const readyInMinutes = coerceIntWithin(recipe.time_total_min, 20, 1, 240)
       const servings = coerceIntWithin(recipe.servings, 2, 1, 20)
@@ -453,6 +458,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
         shoppingList,
       }
 
+
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -462,7 +468,14 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           timeISO: plannerTime,
           category: plannerCategory,
           link: '#receitinhas',
+
           payload: recipePayload,
+
+          payload: {
+            recipeId: recipe.id,
+            shoppingList: recipe.shopping_list ?? [],
+          },
+
           tags: ['Receitinhas'],
         }),
       })
