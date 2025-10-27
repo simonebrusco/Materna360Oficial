@@ -10,10 +10,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const url = request.nextUrl.clone()
-  url.pathname = pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
+  const normalizedPath = pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
+  const redirectUrl = new URL(normalizedPath, request.url)
 
-  return NextResponse.rewrite(url)
+  return NextResponse.rewrite(redirectUrl)
 }
 
 export const config = {
