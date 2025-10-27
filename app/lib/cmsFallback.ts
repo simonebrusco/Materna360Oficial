@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import fs from 'node:fs/promises';
 import path from 'node:path';
 
 type Json = unknown;
