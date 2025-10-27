@@ -535,7 +535,7 @@ export default function DescobrirClient({
       setToast({ message: 'Detalhes copiados para compartilhar!', type: 'info' })
     } catch (error) {
       console.error('[QuickIdeas] Share failed:', error)
-      setToast({ message: 'Não foi possível compartilhar agora.', type: 'error' })
+      setToast({ message: 'Não foi poss��vel compartilhar agora.', type: 'error' })
     }
   }
 
@@ -1096,108 +1096,110 @@ export default function DescobrirClient({
         </Reveal>
       </SectionBoundary>
 
-      {flashRoutineEnabled && (
-        <Reveal delay={220}>
-          <SectionWrapper
-            title={
-              <span className="inline-flex items-center gap-2">
-                <span aria-hidden>⚡</span>
-                <span>Flash Routine</span>
-              </span>
-            }
-            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
-          >
-            <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-support-1 md:text-xl">
-                    {routine?.title ?? 'Rotina sugerida'}
-                  </h3>
-                  <p className="text-sm text-support-2/90">
-                    {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {routine && (
-                    <span className="rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-support-2 shadow-soft">
-                      {bucketLabels[routine.ageBucket]}
-                    </span>
-                  )}
-                  <span className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
-                    Parceria
-                  </span>
-                </div>
-              </div>
-
-              {!routine || !Array.isArray(routine.steps) || routine.steps.length === 0 ? (
-                <RoutineEmptyState />
-              ) : (
-                <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
-                  <ol className="space-y-3 text-sm text-support-1">
-                    {routine.steps.map((step, index) => (
-                      <li key={`${routine.id ?? 'routine'}-step-${index}`} className="flex gap-3">
-                        <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                          {index + 1}
-                        </span>
-                        <div>
-                          <p className="font-semibold">{step.title}</p>
-                          {typeof step.minutes === 'number' && (
-                            <p className="text-xs text-support-2/80">≈ {step.minutes} minutos</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {routine?.materials?.length ? (
-                <div>
-                  <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {routine.materials.map((material, index) => (
-                      <span
-                        key={`${routine.id ?? 'routine'}-material-${index}`}
-                        className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft"
-                      >
-                        {material}
+      <SectionBoundary title="Roteiro Relâmpago">
+        {flashRoutineEnabled && (
+          <Reveal delay={220}>
+            <SectionWrapper
+              title={
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden>⚡</span>
+                  <span>Flash Routine</span>
+                </span>
+              }
+              description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
+            >
+              <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-support-1 md:text-xl">
+                      {routine?.title ?? 'Rotina sugerida'}
+                    </h3>
+                    <p className="text-sm text-support-2/90">
+                      {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {routine && (
+                      <span className="rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-support-2 shadow-soft">
+                        {bucketLabels[routine.ageBucket]}
                       </span>
-                    ))}
+                    )}
+                    <span className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
+                      Parceria
+                    </span>
                   </div>
                 </div>
-              ) : null}
 
-              {routine?.safetyNotes?.length ? (
-                <div>
-                  <h4 className="flex items-center gap-2 text-sm font-semibold text-primary">
-                    <AlertTriangle className="h-4 w-4" aria-hidden /> Cuidados
-                  </h4>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-support-2/90">
-                    {routine.safetyNotes.map((note, idx) => (
-                      <li key={`${routine.id ?? 'routine'}-safety-${idx}`}>{note}</li>
-                    ))}
-                  </ul>
+                {!routine || !Array.isArray(routine.steps) || routine.steps.length === 0 ? (
+                  <RoutineEmptyState />
+                ) : (
+                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
+                    <ol className="space-y-3 text-sm text-support-1">
+                      {routine.steps.map((step, index) => (
+                        <li key={`${routine.id ?? 'routine'}-step-${index}`} className="flex gap-3">
+                          <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                            {index + 1}
+                          </span>
+                          <div>
+                            <p className="font-semibold">{step.title}</p>
+                            {typeof step.minutes === 'number' && (
+                              <p className="text-xs text-support-2/80">≈ {step.minutes} minutos</p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {routine?.materials?.length ? (
+                  <div>
+                    <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {routine.materials.map((material, index) => (
+                        <span
+                          key={`${routine.id ?? 'routine'}-material-${index}`}
+                          className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft"
+                        >
+                          {material}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {routine?.safetyNotes?.length ? (
+                  <div>
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-primary">
+                      <AlertTriangle className="h-4 w-4" aria-hidden /> Cuidados
+                    </h4>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-support-2/90">
+                      {routine.safetyNotes.map((note, idx) => (
+                        <li key={`${routine.id ?? 'routine'}-safety-${idx}`}>{note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Button variant="primary" size="sm" onClick={handleStartFlashRoutine} disabled={!routine} aria-disabled={!routine}>
+                    {routine ? `Começar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleSaveFlashRoutine()}
+                    disabled={!routine || savingRoutine}
+                    aria-disabled={!routine || savingRoutine}
+                  >
+                    {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
+                  </Button>
                 </div>
-              ) : null}
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Button variant="primary" size="sm" onClick={handleStartFlashRoutine} disabled={!routine} aria-disabled={!routine}>
-                  {routine ? `Começar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void handleSaveFlashRoutine()}
-                  disabled={!routine || savingRoutine}
-                  aria-disabled={!routine || savingRoutine}
-                >
-                  {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
-                </Button>
-              </div>
-            </Card>
-          </SectionWrapper>
-        </Reveal>
-      )}
+              </Card>
+            </SectionWrapper>
+          </Reveal>
+        )}
+      </SectionBoundary>
 
       {showSelfCare && (
         <Reveal delay={240}>
