@@ -4,7 +4,7 @@
   "private": true,
   "description": "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "lint": "next lint --max-warnings=0",
     "prebuild": "npm run lint",
     "build": "NODE_ENV=production next build",
@@ -14,7 +14,8 @@
     "test:run": "vitest run",
     "test:watch": "vitest",
     "test:recipes": "tsx tests/healthyRecipes.test.ts && tsx tests/plannerServer.test.ts && tsx tests/professionalsMatch.test.ts && tsx tests/professionalsSection.test.tsx",
-    "validate": "npm run lint && npm run test"
+    "validate": "npm run lint && npm run test",
+    "check:node": "node -e \"const v=process.versions.node.split('.') ; if(+v[0]<20) { console.error('Node 20+ required'); process.exit(1) }\""
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",
@@ -54,7 +55,11 @@
     "@types/node": "^20.19.0"
   },
   "engines": {
-    "node": ">=20.19 <21"
+    "node": ">=20.19 <21",
+    "npm": ">=10.8.0"
   },
-  "engineStrict": true
+  "volta": {
+    "node": "20.19.0",
+    "npm": "10.8.2"
+  }
 }
