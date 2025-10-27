@@ -17,7 +17,6 @@ import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
-import '@/app/lib/telemetryServer'
 import {
   FlashRoutine as FlashRoutineSchema,
   FlashRoutineFilters as FlashRoutineFiltersSchema,
