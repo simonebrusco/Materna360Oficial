@@ -39,6 +39,7 @@ const nextConfig = {
     if (isServer) {
       config.output = config.output || {}
       config.output.chunkFilename = 'chunks/[id].js'
+      console.log('[materna360] server chunkFilename set to', config.output.chunkFilename)
     }
 
     return config
