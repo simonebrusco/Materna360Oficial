@@ -1271,79 +1271,81 @@ export default function DescobrirClient({
         )}
       </SectionBoundary>
 
-      {showRecShelf ? (
-        recShelf.groups.map((group, shelfIndex) => {
-          const shelfMeta = shelfLabels[group.kind]
-          return (
-            <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
-              <SectionWrapper
-                title={
-                  <span className="inline-flex items-center gap-2">
-                    <span aria-hidden>{shelfMeta.icon}</span>
-                    <span>{shelfMeta.title}</span>
-                  </span>
-                }
-              >
-                <div className="-mx-4 overflow-hidden sm:mx-0">
-                  <div
-                    className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0"
-                    role="list"
-                    aria-label={`Recomendações de ${shelfMeta.title}`}
-                  >
-                    {group.items.map((item, idx) => (
-                      <Reveal key={item.id} delay={idx * 40} className="h-full">
-                        <RecShelfCarouselCard
-                          item={item}
-                          profileMode={profileMode}
-                          onBuy={handleBuyProduct}
-                          onSave={handleSaveProduct}
-                          savingProductId={savingProductId}
-                        />
-                      </Reveal>
-                    ))}
+      <SectionBoundary title="Recomendações">
+        {showRecShelf ? (
+          recShelf.groups.map((group, shelfIndex) => {
+            const shelfMeta = shelfLabels[group.kind]
+            return (
+              <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
+                <SectionWrapper
+                  title={
+                    <span className="inline-flex items-center gap-2">
+                      <span aria-hidden>{shelfMeta.icon}</span>
+                      <span>{shelfMeta.title}</span>
+                    </span>
+                  }
+                >
+                  <div className="-mx-4 overflow-hidden sm:mx-0">
+                    <div
+                      className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0"
+                      role="list"
+                      aria-label={`Recomendações de ${shelfMeta.title}`}
+                    >
+                      {group.items.map((item, idx) => (
+                        <Reveal key={item.id} delay={idx * 40} className="h-full">
+                          <RecShelfCarouselCard
+                            item={item}
+                            profileMode={profileMode}
+                            onBuy={handleBuyProduct}
+                            onSave={handleSaveProduct}
+                            savingProductId={savingProductId}
+                          />
+                        </Reveal>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </SectionWrapper>
-            </Reveal>
-          )
-        })
-      ) : (
-        <>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-              {books.map((book, idx) => (
-                <Reveal key={book.title} delay={idx * 70} className="h-full">
-                  <Card className="h-full">
-                    <div className="text-3xl">{book.emoji}</div>
-                    <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
-                    <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
-                    <Button variant="primary" size="sm" className="mt-6 w-full">
-                      Ver Detalhes
-                    </Button>
-                  </Card>
-                </Reveal>
-              ))}
-            </GridRhythm>
-          </SectionWrapper>
+                </SectionWrapper>
+              </Reveal>
+            )
+          })
+        ) : (
+          <>
+            <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
+              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+                {books.map((book, idx) => (
+                  <Reveal key={book.title} delay={idx * 70} className="h-full">
+                    <Card className="h-full">
+                      <div className="text-3xl">{book.emoji}</div>
+                      <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
+                      <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
+                      <Button variant="primary" size="sm" className="mt-6 w-full">
+                        Ver Detalhes
+                      </Button>
+                    </Card>
+                  </Reveal>
+                ))}
+              </GridRhythm>
+            </SectionWrapper>
 
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Brinquedos Sugeridos</span></span>}>
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-              {toys.map((toy, idx) => (
-                <Reveal key={toy.title} delay={idx * 70} className="h-full">
-                  <Card className="h-full">
-                    <div className="text-3xl">{toy.emoji}</div>
-                    <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
-                    <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
-                    <Button variant="primary" size="sm" className="mt-6 w-full">
-                      Ver Mais
-                    </Button>
-                  </Card>
-                </Reveal>
-              ))}
-            </GridRhythm>
-          </SectionWrapper>
-        </>
-      )}
+            <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Brinquedos Sugeridos</span></span>}>
+              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+                {toys.map((toy, idx) => (
+                  <Reveal key={toy.title} delay={idx * 70} className="h-full">
+                    <Card className="h-full">
+                      <div className="text-3xl">{toy.emoji}</div>
+                      <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
+                      <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
+                      <Button variant="primary" size="sm" className="mt-6 w-full">
+                        Ver Mais
+                      </Button>
+                    </Card>
+                  </Reveal>
+                ))}
+              </GridRhythm>
+            </SectionWrapper>
+          </>
+        )}
+      </SectionBoundary>
 
       <Reveal delay={260}>
         <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
