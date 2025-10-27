@@ -38,14 +38,10 @@ const nextConfig = {
   webpack(config, { isServer }) {
     if (isServer) {
       config.output = config.output || {}
-      console.log('[materna360] original server output path', config.output.path)
       config.output.chunkFilename = 'chunks/[id].js'
-      console.log('[materna360] server chunkFilename set to', config.output.chunkFilename)
-      console.log('[materna360] effective server output path', config.output.path)
       config.optimization = config.optimization || {}
       config.optimization.splitChunks = false
       config.optimization.runtimeChunk = false
-      console.log('[materna360] server splitChunks disabled')
     }
 
     return config
