@@ -38,16 +38,7 @@ const nextConfig = {
   webpack(config, { isServer }) {
     if (isServer) {
       config.output = config.output || {}
-      const chunkFilename = config.output.chunkFilename
-      if (typeof chunkFilename === 'string' && chunkFilename.length > 0) {
-        let adjusted = chunkFilename.replace(/^chunks\//, '')
-        if (adjusted.includes('[name]')) {
-          adjusted = adjusted.replace('[name]', '[id]')
-        }
-        config.output.chunkFilename = adjusted
-      } else {
-        config.output.chunkFilename = '[id].js'
-      }
+      config.output.chunkFilename = 'chunks/[id].js'
     }
 
     return config
