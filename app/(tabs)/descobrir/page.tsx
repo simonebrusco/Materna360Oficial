@@ -5,14 +5,13 @@ import DescobrirClient from './Client'
 import { toFlashFilters } from './utils/filters'
 import { nearestQuickIdeasWindow } from './utils/timeWindows'
 
-import { QUICK_IDEAS_CATALOG } from '@/app/data/quickIdeasCatalog'
 import { FLASH_IDEAS_CATALOG } from '@/app/data/flashIdeas'
 import { FLASH_ROUTINES_CMS } from '@/app/data/flashRoutines'
-import { REC_PRODUCTS } from '@/app/data/recProducts'
 import { SELF_CARE_CMS } from '@/app/data/selfCare'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { buildDailySuggestions } from '@/app/lib/quickIdeasCatalog'
 import { buildRecShelves } from '@/app/lib/recShelf'
+import { getRecShelfWithFallback, getQuickIdeasWithFallback } from '@/app/lib/cmsFallback'
 import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
@@ -37,6 +36,7 @@ import type {
   QuickIdeasEnergy,
   QuickIdeasLocation,
   QuickIdeasTimeWindow,
+  QuickIdeaCatalogEntry,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
 
@@ -205,7 +205,12 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
   const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
-  const recProductsCatalog = RecProductSchema.array().parse(REC_PRODUCTS)
+  const [recShelfRaw, quickIdeasRaw] = await Promise.all([
+    getRecShelfWithFallback(),
+    getQuickIdeasWithFallback(),
+  ])
+  const recProductsCatalog = RecProductSchema.array().parse(recShelfRaw)
+  const quickIdeasCatalog = (Array.isArray(quickIdeasRaw) ? quickIdeasRaw : []) as QuickIdeaCatalogEntry[]
   const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
 
   const dateKey = getBrazilDateKey()
@@ -352,7 +357,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       profileSummary,
       filters,
       dateKey,
-      QUICK_IDEAS_CATALOG
+      quickIdeasCatalog
     )
   } catch (error) {
     trackTelemetry(
