@@ -251,14 +251,28 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const targetBuckets: AgeBucket[] =
     computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
-  const recShelfGroups = recShelfEnabled
-    ? buildRecShelves({
+  let recShelfGroups: ReturnType<typeof buildRecShelves> = []
+  if (recShelfEnabled) {
+    try {
+      recShelfGroups = buildRecShelves({
         products: recProductsCatalog,
         targetBuckets,
         location: filters.location,
         dateKey,
       })
-    : []
+    } catch (error) {
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'recshelf',
+          reason: error instanceof Error ? error.message : 'unknown',
+          fatal: false,
+        },
+        telemetryCtx
+      )
+      recShelfGroups = []
+    }
+  }
 
   const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
 
