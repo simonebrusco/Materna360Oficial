@@ -1,9 +1,10 @@
 /** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/features/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{ts,tsx,js,jsx}',
+    './app/(tabs)/**/*.{ts,tsx,js,jsx}',
+    './components/**/*.{ts,tsx,js,jsx}',
   ],
   theme: {
     extend: {
@@ -65,5 +66,9 @@ module.exports = {
       },
     },
   },
+  safelist: [
+    { pattern: /^(bg|text|from|via|to|shadow|rounded|border|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|grid-cols|col-span|gap)-/ },
+    { pattern: /(bg|text)-[a-zA-Z0-9-]+\/[0-9]{1,3}/ },
+  ],
   plugins: [],
 }
