@@ -817,7 +817,7 @@ export function HealthyRecipesSection() {
               <div>
                 <h3 className="text-lg font-semibold text-support-1">Salvar no Planner</h3>
                 <p className="mt-1 text-xs text-support-2">
-                  Defina quando você quer preparar "{plannerModal.recipe.title}".
+                  Defina quando você quer preparar &quot;{plannerModal.recipe.title}&quot;.
                 </p>
               </div>
               <button
