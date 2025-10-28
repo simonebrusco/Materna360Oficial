@@ -5,17 +5,15 @@
   "description": "Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil.",
   "scripts": {
     "dev": "pnpm exec next dev -p 3000",
-    "lint": "next lint --max-warnings=0",
-    "prebuild": "npm run lint",
-    "build": "NODE_ENV=production next build",
+    "build": "next build",
     "start": "next start",
+    "lint": "next lint --max-warnings=0",
     "test": "node scripts/run-tests-if-node20.mjs",
     "e2e": "playwright test",
     "test:run": "vitest run",
     "test:watch": "vitest",
-    "test:recipes": "tsx tests/healthyRecipes.test.ts && tsx tests/plannerServer.test.ts && tsx tests/professionalsMatch.test.ts && tsx tests/professionalsSection.test.tsx",
-    "validate": "npm run lint && npm run test",
-    "check:node": "node -e \"const v=process.versions.node.split('.') ; if(+v[0]<20) { console.error('Node 20+ required'); process.exit(1) }\""
+    "validate": "pnpm run lint && pnpm run test",
+    "check:node": "node -e \"const v=process.versions.node.split('.') ; if(+v[0]<20){ console.error('Node 20+ required'); process.exit(1) }\""
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",
@@ -44,7 +42,6 @@
     "@vitejs/plugin-react": "4.7.0",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5",
-    "eslint-plugin-local": "file:eslint-plugin-local",
     "jsdom": "^24.0.0",
     "tsx": "4.15.2",
     "typescript": "5.4.5",
@@ -55,12 +52,12 @@
     "@types/node": "^20.19.0"
   },
   "engines": {
-    "node": ">=20 <21",
+    "node": ">=20.19 <21",
     "npm": ">=10.8.0"
   },
   "volta": {
     "node": "20.19.0",
     "npm": "10.8.2"
   },
-  "packageManager": "pnpm@9.12.0+sha512.4abf725084d7bcbafbd728bfc7bee61f2f791f977fd87542b3579dcb23504d170d46337945e4c66485cd12d588a0c0e570ed9c477e7ccdd8507cf05f3f92eaca"
+  "engineStrict": true
 }
