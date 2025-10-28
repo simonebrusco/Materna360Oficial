@@ -1,4 +1,3 @@
-
 import { trackTelemetry } from '@/app/lib/telemetry'
 
 import { validatePlannerItem, type PlannerItemT } from './plannerGuard'
@@ -63,11 +62,7 @@ const defaultNowFactory = () => new Date()
 
 export function buildPlannerPayload(
   raw: any,
-
   options?: { idFactory?: () => string; nowFactory?: () => Date; plannerItem?: PlannerItemT }
-
-  options?: { idFactory?: () => string; nowFactory?: () => Date }
-
 ): PlannerPayload {
   const idFactory = options?.idFactory ?? defaultIdFactory
   const nowFactory = options?.nowFactory ?? defaultNowFactory
@@ -156,4 +151,3 @@ export async function saveToPlannerSafe(
     return { ok: false, reason: 'Invalid planner item' }
   }
 }
-
