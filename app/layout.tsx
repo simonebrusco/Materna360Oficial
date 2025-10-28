@@ -28,9 +28,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${poppins.variable} ${quicksand.variable}`}>
-      <head>
-        <link rel="stylesheet" href="/globals.css" />
-      </head>
       <body>{children}</body>
     </html>
   )
