@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useEffect, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
