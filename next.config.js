@@ -14,21 +14,6 @@ function isValidSupabaseUrl(url) {
 const RAW = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE || DEFAULT_AUDIO_BASE
 const AUDIO_BASE = sanitizeBase(RAW)
 
-
-const nextConfig = {
-  images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
-  },
-  async rewrites() {
-    const rules = []
-
-    if (isValidSupabaseUrl(AUDIO_BASE)) {
-      rules.push({ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` })
-    }
-
-    return rules
-
-
 const nextConfig = {
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
@@ -37,7 +22,6 @@ const nextConfig = {
     return isValidSupabaseUrl(AUDIO_BASE)
       ? [{ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` }]
       : []
-
   },
   async headers() {
     return [
@@ -47,7 +31,6 @@ const nextConfig = {
       },
     ]
   },
-
   webpack(config, { isServer }) {
     if (isServer) {
       config.output = config.output || {}
@@ -59,7 +42,6 @@ const nextConfig = {
 
     return config
   },
-
-
 }
+
 module.exports = nextConfig
