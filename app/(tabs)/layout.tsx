@@ -11,6 +11,7 @@ export default function TabsLayout({
 }) {
   return (
     <div className="relative flex min-h-screen flex-col">
+      <ComponentsLoader />
       <Header title="Materna360" showNotification />
       <main className="relative flex-1 pb-32">
         <div
