@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 import DescobrirClient from './Client'
+import '@/app/styles/_effects.module.css'
 
 type SearchParams = {
   [key: string]: string | string[] | undefined
