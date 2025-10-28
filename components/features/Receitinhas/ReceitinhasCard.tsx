@@ -126,8 +126,6 @@ const generatePlannerId = (prefix: string, value: string): string => {
   return `${prefix}-${identifier}`.slice(0, 80)
 }
 
-const PLANNER_CATEGORIES = ['Caf�� da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
-
 
 const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
   '0-6m': '0-6 meses',
