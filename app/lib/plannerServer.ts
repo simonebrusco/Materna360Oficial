@@ -20,8 +20,6 @@ export type PlannerPayload = {
 
   payload?: PlannerItemT
 
-  payload?: unknown
-
   tags?: string[]
   createdAt: string
 }
