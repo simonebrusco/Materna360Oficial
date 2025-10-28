@@ -1,3 +1,3 @@
 'use client'
 
-export { MeuDiaClient as default } from './meu-dia-client'
+export { MeuDiaClient, MeuDiaClient as default } from './meu-dia-client'
