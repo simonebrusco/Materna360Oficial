@@ -3,7 +3,7 @@ const path = require('path')
 module.exports = {
   root: true,
   extends: ['next/core-web-vitals'],
-  plugins: ['import', 'local', '@typescript-eslint'],
+  plugins: ['import', '@typescript-eslint'],
   rules: {
     'import/first': 'error',
     'no-duplicate-imports': 'error',
