@@ -1,8 +1,5 @@
-import './globals.css'
-
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import '@/app/lib/telemetryServer'
 
 export const metadata: Metadata = {
   title: 'Materna360',
