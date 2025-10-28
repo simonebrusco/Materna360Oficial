@@ -1,5 +1,3 @@
-import './globals.css'
-
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Poppins, Quicksand } from 'next/font/google'
@@ -30,6 +28,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${poppins.variable} ${quicksand.variable}`}>
+      <head>
+        <link rel="stylesheet" href="/globals.css" />
+      </head>
       <body>{children}</body>
     </html>
   )
