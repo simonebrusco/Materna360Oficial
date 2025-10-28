@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import nextDynamic from 'next/dynamic'
 import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
-import '@/app/styles/_effects.module.css'
+import '@/app/styles/_effects.css'
 
 const BreathCard = nextDynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
