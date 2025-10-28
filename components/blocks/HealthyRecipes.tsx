@@ -47,11 +47,7 @@ const TIME_OPTIONS: { value: RecipeTimeOption; label: string }[] = [
 const AGE_BAND_LABEL: Record<string, string> = {
   '6-8m': '6–8 meses',
   '9-12m': '9–12 meses',
-
-  '1-2y': '1��2 anos',
-
-  '1-2y': '1���2 anos',
-
+  '1-2y': '1–2 anos',
   '2-6y': '2–6 anos',
 }
 
@@ -83,7 +79,6 @@ const QUICK_SUGGESTIONS = [
 ]
 
 const CATEGORY_OPTIONS = VALID_PLANNER_CATEGORIES
-
 
 const sanitizeStringList = (values: unknown): string[] => {
   if (!Array.isArray(values)) {
@@ -138,7 +133,6 @@ const resolveRecipeId = (candidate: unknown, title: string, prefix: string): str
   }
   return generatePlannerId(prefix, title)
 }
-
 
 type PlannerCategory = (typeof CATEGORY_OPTIONS)[number]
 
@@ -389,7 +383,6 @@ export function HealthyRecipesSection() {
     }
 
     try {
-
       const readyInMinutes = coerceIntWithin(plannerModal.recipe.readyInMinutes, 20, 1, 240)
       const servings = coerceIntWithin(plannerModal.recipe.servings, 2, 1, 20)
       const note = typeof plannerNote === 'string' ? plannerNote.trim() : ''
@@ -405,7 +398,6 @@ export function HealthyRecipesSection() {
         note: note || undefined,
       }
 
-
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: {
@@ -417,14 +409,7 @@ export function HealthyRecipesSection() {
           timeISO: plannerTime,
           category: plannerCategory,
           link: '#receitas-saudaveis',
-
           payload: recipePayload,
-
-          payload: {
-            recipe: plannerModal.recipe,
-            note: plannerNote,
-          },
-
           tags: Array.from(
             new Set(['receita', 'alimentação', 'saudável', ...(plannerModal.recipe.planner.tags ?? [])])
           ),
@@ -832,7 +817,7 @@ export function HealthyRecipesSection() {
               <div>
                 <h3 className="text-lg font-semibold text-support-1">Salvar no Planner</h3>
                 <p className="mt-1 text-xs text-support-2">
-                  Defina quando você quer preparar “{plannerModal.recipe.title}”.
+                  Defina quando você quer preparar "{plannerModal.recipe.title}".
                 </p>
               </div>
               <button
