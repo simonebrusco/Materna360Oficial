@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useState } from 'react'
 
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
