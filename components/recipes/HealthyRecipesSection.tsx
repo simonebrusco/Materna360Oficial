@@ -97,19 +97,24 @@ const GteSixState = (props: { stages: StageMeta[]; initialStage: RecipeStageKey 
 )
 
 export default async function HealthyRecipesSection() {
-  const profile = await getBabyProfile()
-  const age = sanitizeAge(profile?.babyAgeMonths ?? null)
+  try {
+    const profile = await getBabyProfile()
+    const age = sanitizeAge(profile?.babyAgeMonths ?? null)
 
-  if (age === null) {
+    if (age === null) {
+      return <UnknownState />
+    }
+
+    if (age < 6) {
+      return null
+    }
+
+    const stages = buildStageMeta()
+    const initialStage = mapAgeToStage(age)
+
+    return <GteSixState stages={stages} initialStage={initialStage} />
+  } catch (error) {
+    console.error('[HealthyRecipesSection] Error rendering:', error)
     return <UnknownState />
   }
-
-  if (age < 6) {
-    return null
-  }
-
-  const stages = buildStageMeta()
-  const initialStage = mapAgeToStage(age)
-
-  return <GteSixState stages={stages} initialStage={initialStage} />
 }
