@@ -1,5 +1,81 @@
-/* Global CSS content has been split into modular files:
- * - app/styles/_base.css - Tailwind directives and root tokens
- * - app/styles/_components.css - Component utilities and custom classes
- * - app/styles/_effects.css - Animations and complex effects (lazy-loaded)
- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Materna360 token fallbacks (safe to keep) ===== */
+:root {
+  /* RGB triplets for Tailwind color mapping */
+  --primary: 242 84 130; /* #F25482 → brand pink */
+  --support-1: 33 37 41; /* #212529 → dark text */
+  --support-2: 108 117 125; /* #6C757D → muted text */
+  --neutral-1: 248 249 250; /* #F8F9FA → bg soft */
+  --neutral-2: 255 255 255; /* #FFFFFF → white */
+
+  color-scheme: light;
+  --font-primary: 'Poppins', sans-serif;
+  --font-secondary: 'Quicksand', sans-serif;
+  --rhythm-section-d: 56px;
+  --rhythm-section-t: 48px;
+  --rhythm-section-m: 32px;
+  --rhythm-grid-col-d: 24px;
+  --rhythm-grid-col-t: 16px;
+  --rhythm-grid-col-m: 12px;
+  --rhythm-grid-row-d: 24px;
+  --rhythm-grid-row-t: 20px;
+  --rhythm-grid-row-m: 16px;
+  --rhythm-card-pad-d: 20px;
+  --rhythm-card-pad-t: 16px;
+  --rhythm-card-pad-m: 14px;
+  --safearea-bottom-d: 80px;
+  --safearea-bottom-t: 72px;
+  --safearea-bottom-m: 64px;
+  --shadow-card-base: 0 6px 22px rgba(16, 24, 40, 0.06), 0 1px 0 rgba(16, 24, 40, 0.03);
+  --shadow-card-hover-neutral: 0 12px 28px rgba(16, 24, 40, 0.12), 0 2px 0 rgba(16, 24, 40, 0.04);
+  --shadow-card-active: 0 8px 20px rgba(16, 24, 40, 0.1), 0 1px 0 rgba(16, 24, 40, 0.04);
+  --glow-pink: 0 24px 48px rgba(255, 0, 94, 0.18);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    background-color: rgb(var(--neutral-1));
+    color: rgb(var(--support-1));
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-gradient-to-b from-pink-50/60 to-white text-support-1 antialiased font-sans;
+    font-family: var(--font-primary);
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight text-support-1;
+  }
+
+  p {
+    @apply text-sm leading-relaxed text-support-2 md:text-base;
+  }
+
+  a {
+    @apply text-primary transition-colors duration-300 hover:text-primary/85;
+  }
+
+  ::selection {
+    @apply bg-primary text-white;
+  }
+}
