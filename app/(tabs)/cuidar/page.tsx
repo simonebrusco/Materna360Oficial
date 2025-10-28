@@ -58,21 +58,33 @@ export const revalidate = 0
 export default async function Page() {
   noStore()
 
-  return (
-    <div className="mx-auto max-w-[70rem] space-y-8 px-6 pt-8 pb-16 md:space-y-12 md:px-8 md:pt-12 md:pb-[72px] lg:space-y-14 lg:px-10 lg:pt-14 lg:pb-20">
-      <section className="rounded-3xl border border-white/70 bg-white/90 px-6 py-7 shadow-[0_18px_42px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
-        <BreathCard />
-      </section>
-      <CareJourneys />
-      <MindfulnessForMoms />
-      <ReceitinhasIA />
-      <OrganizationTips />
-      <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
-        <HealthyRecipesSection />
-      </Suspense>
-      <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
-        <ProfessionalsSection />
-      </Suspense>
-    </div>
-  )
+  try {
+    return (
+      <div className="mx-auto max-w-[70rem] space-y-8 px-6 pt-8 pb-16 md:space-y-12 md:px-8 md:pt-12 md:pb-[72px] lg:space-y-14 lg:px-10 lg:pt-14 lg:pb-20">
+        <section className="rounded-3xl border border-white/70 bg-white/90 px-6 py-7 shadow-[0_18px_42px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
+          <BreathCard />
+        </section>
+        <CareJourneys />
+        <MindfulnessForMoms />
+        <ReceitinhasIA />
+        <OrganizationTips />
+        <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
+          <HealthyRecipesSection />
+        </Suspense>
+        <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
+          <ProfessionalsSection />
+        </Suspense>
+      </div>
+    )
+  } catch (error) {
+    console.error('[Cuidar Page] Error rendering page:', error)
+    return (
+      <div className="mx-auto max-w-[70rem] space-y-8 px-6 pt-8 pb-16">
+        <div className="rounded-3xl border border-primary/30 bg-primary/10 px-6 py-8 text-center text-primary">
+          <h1 className="text-xl font-semibold">Algo não funcionou como esperado</h1>
+          <p className="mt-2 text-sm">Por favor, tente recarregar a página.</p>
+        </div>
+      </div>
+    )
+  }
 }
