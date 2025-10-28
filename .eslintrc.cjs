@@ -16,12 +16,4 @@ module.exports = {
       },
     },
   },
-  overrides: [
-    {
-      files: ['components/**/*.{ts,tsx,js,jsx}'],
-      rules: {
-        'local/no-client-greeting-prefix': 'error',
-      },
-    },
-  ],
 }
