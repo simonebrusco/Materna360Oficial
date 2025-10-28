@@ -36,7 +36,7 @@ import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discov
 type ToastState = {
   message: string
   type: 'success' | 'error' | 'info'
-}
+} | null
 
 type DescobrirClientProps = {
   initialRecipesQuery?: { stage: string }
@@ -51,10 +51,8 @@ export default function DescobrirClient({
   shelves = [],
   flags,
 }: DescobrirClientProps) {
-  const [toast, setToast] = useState<ToastState | null>(null)
-
-  const discoverFlags = useMemo(() => getClientFlags(flags), [flags])
-
+  const [toast, setToast] = useState<ToastState>(null)
+  const discoverFlags = getClientFlags(flags)
   const showRecShelf = discoverFlags.recShelf && shelves.length > 0
   const showFlashRoutine = discoverFlags.flashRoutine
   const showSelfCare = discoverFlags.selfCare

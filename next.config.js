@@ -1,46 +1,16 @@
-/** @type {import('next').NextConfig} */
-const DEFAULT_AUDIO_BASE = 'https://swvuifjderyqsshguaxk.supabase.co/storage/v1/object/public' // public, not secret
-function sanitizeBase(input) {
-  return (input || '').toString().trim().replace(/\/+$/, '')
-}
-function isValidSupabaseUrl(url) {
+const AUDIO_BASE = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE ?? ''
+
+const isValidSupabaseUrl = (url) => {
   try {
-    const u = new URL(url)
-    return /\.supabase\.co$/.test(u.hostname)
+    return new URL(url).protocol === 'https:'
   } catch {
     return false
   }
 }
-const RAW = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE || DEFAULT_AUDIO_BASE
-const AUDIO_BASE = sanitizeBase(RAW)
 
 const nextConfig = {
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
-  },
-  async rewrites() {
-    return isValidSupabaseUrl(AUDIO_BASE)
-      ? [{ source: '/audio/:path*', destination: `${AUDIO_BASE}/:path*` }]
-      : []
-  },
-  async headers() {
-    return [
-      {
-        source: '/audio/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-    ]
-  },
-  webpack(config, { isServer }) {
-    if (isServer) {
-      config.output = config.output || {}
-      config.output.chunkFilename = 'chunks/[id].js'
-      config.optimization = config.optimization || {}
-      config.optimization.splitChunks = false
-      config.optimization.runtimeChunk = false
-    }
-
-    return config
   },
 }
 

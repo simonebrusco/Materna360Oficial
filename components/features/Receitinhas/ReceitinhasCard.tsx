@@ -126,7 +126,6 @@ const generatePlannerId = (prefix: string, value: string): string => {
   return `${prefix}-${identifier}`.slice(0, 80)
 }
 
-
 const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
   '0-6m': '0-6 meses',
   '7-12m': '7-12 meses',

@@ -2,22 +2,17 @@
 
 export default function GlobalError({
   error,
-  reset,
 }: {
-  error: Error
-  reset: () => void
+  error: Error & { digest?: string }
 }) {
-  console.error(error)
-
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold">Ocorreu um erro global.</h2>
-      <button
-        onClick={() => reset()}
-        className="mt-4 rounded-lg bg-black px-4 py-2 text-white"
-      >
-        Recarregar
-      </button>
-    </div>
+    <html>
+      <body>
+        <div style={{ padding: '20px', color: '#b00' }}>
+          <h1>Erro na aplicação</h1>
+          <p>{error.message}</p>
+        </div>
+      </body>
+    </html>
   )
 }
