@@ -1,5 +1,5 @@
 'use client'
 
-export function MeuDiaClient() {
+export function MeuDiaClient(props: any) {
   return null
 }
