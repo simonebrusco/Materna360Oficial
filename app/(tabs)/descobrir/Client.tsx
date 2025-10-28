@@ -12,7 +12,7 @@ import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
 
-import { trackTelemetry, sample } from '@/app/lib/telemetry'
+import { trackTelemetry } from '@/app/lib/telemetry'
 
 import {
   friendlyEnergyLabel,
