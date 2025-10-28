@@ -1,7 +1,21 @@
-import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export function middleware() {
-  return NextResponse.next();
+const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
+
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  if (!TABS_PREFIX_PATTERN.test(pathname)) {
+    return NextResponse.next()
+  }
+
+  const normalizedPath = pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
+  const redirectUrl = new URL(normalizedPath, request.url)
+
+  return NextResponse.rewrite(redirectUrl)
 }
 
-export const config = { matcher: [] };
+export const config = {
+  matcher: ['/(tabs)/:path*'],
+}
