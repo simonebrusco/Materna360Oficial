@@ -2,6 +2,7 @@
 
 import { Header } from '@/components/ui/Header'
 import { TabBar } from '@/components/ui/TabBar'
+import ComponentsLoader from '@/components/ComponentsLoader'
 
 export default function TabsLayout({
   children,
