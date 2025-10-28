@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+import ComponentsLoader from '@/components/ComponentsLoader'
 
 const featureCards = [
   {
@@ -15,7 +16,7 @@ const featureCards = [
   {
     href: '/cuidar',
     title: 'Cuide-se',
-    description: 'Guias de autocuidado, respiração e meditação para você.',
+    description: 'Guias de autocuidado, respira��ão e meditação para você.',
     emoji: '🌿',
   },
   {
