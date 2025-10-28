@@ -1,4 +1,4 @@
-import '../styles/_base.css'
+import './styles/_base.css'
 
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
