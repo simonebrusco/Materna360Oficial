@@ -1,4 +1,3 @@
-
 type TelemetryPayload = Record<string, unknown>;
 
 export type TelemetryEvent =
@@ -6,12 +5,15 @@ export type TelemetryEvent =
   | 'discover_rec_impression'
   | 'discover_rec_click_buy'
   | 'discover_rec_save_planner'
+  | 'discover_rec_view_details'
   | 'discover_flash_impression'
   | 'discover_flash_start'
   | 'discover_flash_save_planner'
+  | 'discover_flash_error'
   | 'discover_selfcare_impression'
   | 'discover_selfcare_done'
   | 'discover_selfcare_save_planner'
+  | 'discover_selfcare_error'
   // Errors / infra
   | 'discover_section_error'
   | 'planner_save_ok'
@@ -22,20 +24,13 @@ export type TelemetryEvent =
   // Legacy surfaces (AI recipes / quick ideas / planner)
   | 'recipes.generate'
   | 'recipes.generate.error'
-
-export type TelemetryEvent =
-  | 'recipes.generate'
-  | 'recipes.generate.error'
   | 'planner.save'
-
   | 'quick-ideas.generate'
   | 'quick-ideas.generate.error'
   | 'quick_ideas_success'
   | 'quick_ideas_error'
   | 'quick_ideas_access_denied'
-  | 'quick_ideas_bad_request'
-
-  | 'planner.save';
+  | 'quick_ideas_bad_request';
 
 export type TelemetryContext = {
   appVersion?: string;
@@ -59,36 +54,6 @@ export function setTelemetryProvider(
 export function sample(p = 1): boolean {
   return Math.random() < p;
 }
-
-export function trackTelemetry(
-  event: TelemetryEvent,
-  payload: TelemetryPayload = {},
-  ctx: TelemetryContext = {},
-): void {
-  try {
-    if (provider) {
-      void provider(event, payload, ctx);
-    } else {
-      // eslint-disable-next-line no-console
-      console.debug(`[telemetry] ${event}`, { payload, ctx });
-    }
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('[telemetry] provider error', err);
-  }
-
-  | 'discover_rec_impression'
-  | 'discover_rec_click_buy'
-  | 'discover_rec_save_planner'
-  | 'discover_rec_view_details'
-  | 'discover_flash_impression'
-  | 'discover_flash_save_planner'
-  | 'discover_flash_start'
-  | 'discover_flash_error'
-  | 'discover_selfcare_impression'
-  | 'discover_selfcare_done'
-  | 'discover_selfcare_save_planner'
-  | 'discover_selfcare_error'
 
 const GLOBAL_KEY = '__materna360Telemetry__'
 
@@ -120,21 +85,43 @@ const getStore = () => {
       'discover_selfcare_done': 0,
       'discover_selfcare_save_planner': 0,
       'discover_selfcare_error': 0,
+      'discover_section_error': 0,
+      'planner_save_ok': 0,
+      'planner_payload_invalid': 0,
+      'curator_request': 0,
+      'curator_response': 0,
+      'curator_error': 0,
     }
   }
 
   return globalRef[GLOBAL_KEY] as Record<TelemetryEvent, number>
 }
 
-export function trackTelemetry(event: TelemetryEvent, metadata?: Record<string, unknown>) {
+export function trackTelemetry(
+  event: TelemetryEvent,
+  payload: TelemetryPayload = {},
+  ctx: TelemetryContext = {},
+): void {
+  try {
+    if (provider) {
+      void provider(event, payload, ctx);
+    } else {
+      // eslint-disable-next-line no-console
+      console.debug(`[telemetry] ${event}`, { payload, ctx });
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[telemetry] provider error', err);
+  }
+
   const store = getStore()
   store[event] = (store[event] ?? 0) + 1
 
   const info = {
     count: store[event],
-    ...metadata,
+    ...payload,
   }
 
+  // eslint-disable-next-line no-console
   console.info(`[telemetry] ${event}`, info)
-
 }
