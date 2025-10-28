@@ -35,7 +35,9 @@ const featureCards = [
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen pb-20">
+    <>
+      <ComponentsLoader />
+      <main className="relative min-h-screen pb-20">
       <section className="relative overflow-hidden pb-20 pt-16">
         <div className="hero-gradient">
           <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 text-center sm:px-6 md:py-24 animate-fade-up">
@@ -139,5 +141,6 @@ export default function Home() {
         <span className="pointer-events-none absolute -right-6 bottom-6 h-36 w-36 rounded-full bg-secondary/70 blur-3xl" aria-hidden />
       </section>
     </main>
+    </>
   )
 }
