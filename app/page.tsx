@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
-import '@/app/styles/_components.css'
+import '@/app/styles/components.css'
 
 const featureCards = [
   {
