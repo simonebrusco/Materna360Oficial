@@ -1,17 +1,7 @@
-const AUDIO_BASE = process.env.NEXT_PUBLIC_SUPABASE_AUDIO_BASE ?? ''
-
-const isValidSupabaseUrl = (url) => {
-  try {
-    return new URL(url).protocol === 'https:'
-  } catch {
-    return false
-  }
-}
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/**' }],
-  },
-}
+  reactStrictMode: false,
+  experimental: {},
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
