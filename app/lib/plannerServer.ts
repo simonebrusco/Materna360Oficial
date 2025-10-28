@@ -99,8 +99,6 @@ export function buildPlannerPayload(
 
     payload: normalizedPlannerItem,
 
-    payload: raw?.payload ?? undefined,
-
     tags: sanitizeTags(raw?.tags),
     createdAt: nowFactory().toISOString(),
   }
