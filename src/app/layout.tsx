@@ -1,15 +1,16 @@
-import './globals.css';
-import type { Metadata } from 'next';
+import './globals.css'
+import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Materna360',
-};
+  description: 'Cuidado e bem-estar para mães',
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-dvh bg-white text-black">{children}</body>
+      <body className="bg-[#FFF9FB] text-support-1 antialiased">{children}</body>
     </html>
-  );
+  )
 }
