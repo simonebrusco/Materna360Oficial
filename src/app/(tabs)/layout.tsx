@@ -1,1 +1,3 @@
-export { default } from '../../../app/(tabs)/layout';
+export default function TabsLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
