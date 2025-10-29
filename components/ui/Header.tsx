@@ -46,8 +46,10 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
         try {
           const response = await fetch('/api/profile', {
-            credentials: 'include',
-            cache: 'no-store',
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
             signal: controller.signal,
           })
 
