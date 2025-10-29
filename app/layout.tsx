@@ -1,35 +1,13 @@
-import './globals.css'
-
-import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
-import { Poppins, Quicksand } from 'next/font/google'
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-  variable: '--font-poppins',
-})
-
-const quicksand = Quicksand({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  display: 'swap',
-  variable: '--font-quicksand',
-})
-
-export const metadata: Metadata = {
+export const metadata = {
   title: 'Materna360',
-  description: 'Um ecossistema digital de bem-estar familiar',
+  description: 'Materna360 app',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode
-}) {
+import './globals.css'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${poppins.variable} ${quicksand.variable}`}>
+    <html lang="pt-BR">
       <body>{children}</body>
     </html>
   )
