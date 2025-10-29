@@ -41,53 +41,24 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
     const loadProfile = async () => {
       setIsLoadingSticker(true)
-      let lastError: Error | null = null
-      const maxRetries = 2
+      try {
+        const res = await safeFetch('/api/profile', { method: 'GET' })
+        const data = await res.json()
 
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 5000)
-
-          try {
-            const response = await fetch('/api/profile', {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              signal: controller.signal,
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) {
-              throw new Error(`Falha ao carregar perfil: ${response.status}`)
-            }
-
-            const data = await response.json()
-            if (!isMounted) {
-              return
-            }
-
-            const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
-            setStickerId(nextStickerId)
-            setIsLoadingSticker(false)
-            return
-          } catch (fetchError) {
-            clearTimeout(timeoutId)
-            throw fetchError
-          }
-        } catch (error) {
-          lastError = error instanceof Error ? error : new Error(String(error))
-          if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100))
-          }
+        if (!isMounted) {
+          return
         }
-      }
 
-      if (isMounted) {
-        setStickerId(DEFAULT_STICKER_ID)
-        setIsLoadingSticker(false)
+        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
+        setStickerId(nextStickerId)
+      } catch (error) {
+        if (isMounted) {
+          setStickerId(DEFAULT_STICKER_ID)
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingSticker(false)
+        }
       }
     }
 
