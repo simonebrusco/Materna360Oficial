@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  appDir: 'src/app',
   async rewrites() {
     return [
       { source: '/(tabs)/:path*', destination: '/:path*' },
