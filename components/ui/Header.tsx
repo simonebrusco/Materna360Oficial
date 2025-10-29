@@ -42,14 +42,21 @@ export function Header({ title, showNotification = false }: HeaderProps) {
     const loadProfile = async () => {
       setIsLoadingSticker(true)
       try {
-        const res = await safeFetch('/api/profile', { method: 'GET' })
-        const data = await res.json()
+        const ctrl = new AbortController()
+        const t = setTimeout(() => ctrl.abort(), 5000)
+
+        const r = await fetch('/api/profile', { cache: 'no-store', signal: ctrl.signal })
+        clearTimeout(t)
+
+        const data = await r.json().catch(() => ({} as any))
+        const profile = (data?.profile as any) ?? {}
 
         if (!isMounted) {
           return
         }
 
-        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
+        const stickerId = profile?.stickerId ?? DEFAULT_STICKER_ID
+        const nextStickerId = isProfileStickerId(stickerId) ? stickerId : DEFAULT_STICKER_ID
         setStickerId(nextStickerId)
       } catch (error) {
         if (isMounted) {
