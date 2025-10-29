@@ -3,48 +3,32 @@ import { cookies } from 'next/headers'
 
 import DescobrirClient from './Client'
 import { toFlashFilters } from './utils/filters'
-
 import { nearestQuickIdeasWindow } from './utils/timeWindows'
 
 import { FLASH_IDEAS_CATALOG } from '@/data/flashIdeas'
 import { FLASH_ROUTINES_CMS } from '@/data/flashRoutines'
-
-
 import { QUICK_IDEAS_CATALOG } from '@/data/quickIdeasCatalog'
-import { FLASH_IDEAS_CATALOG } from '@/data/flashIdeas'
-import { FLASH_ROUTINES_CMS } from '@/data/flashRoutines'
 import { REC_PRODUCTS } from '@/data/recProducts'
-
 import { SELF_CARE_CMS } from '@/data/selfCare'
+
 import { getBrazilDateKey } from '@/lib/dateKey'
 import { buildDailySuggestions } from '@/lib/quickIdeasCatalog'
 import { buildRecShelves } from '@/lib/recShelf'
-
 import { getRecShelfWithFallback, getQuickIdeasWithFallback } from '@/lib/cmsFallback'
-
-
 import { selectFlashRoutine } from '@/lib/flashRoutine'
 import { selectSelfCareItems } from '@/lib/selfCare'
 import { readProfileCookie } from '@/lib/profileCookie'
 import { getServerFlags } from '@/lib/flags'
-
 import { trackTelemetry } from '@/lib/telemetry'
-
 
 import {
   FlashRoutine as FlashRoutineSchema,
-  FlashRoutineFilters as FlashRoutineFiltersSchema,
   IdeaLite as IdeaLiteSchema,
   ProfileSummary as ProfileSummarySchema,
   QuickIdeasFilters as QuickIdeasFiltersSchema,
   RecProduct as RecProductSchema,
   SelfCare as SelfCareSchema,
-  type AgeBucketT as AgeBucket,
   type ProfileSummaryT,
-
-  type FlashRoutineT,
-
-
 } from '@/lib/discoverSchemas'
 import type {
   QuickIdea,
@@ -52,10 +36,7 @@ import type {
   QuickIdeasEnergy,
   QuickIdeasLocation,
   QuickIdeasTimeWindow,
-
   QuickIdeaCatalogEntry,
-
-
 } from '@/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/lib/profileTypes'
 
@@ -64,8 +45,6 @@ export const revalidate = 0
 
 const LOCATION_KEYS: QuickIdeasLocation[] = ['casa', 'parque', 'escola', 'area_externa']
 const ENERGY_KEYS: QuickIdeasEnergy[] = ['exausta', 'normal', 'animada']
-
-
 const TIME_VALUES: QuickIdeasTimeWindow[] = [5, 10, 20]
 
 const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
@@ -76,21 +55,16 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
-  if (!value) {
-    return 'casa'
-  }
+  if (!value) return 'casa'
   const normalized = value.trim().toLowerCase() as QuickIdeasLocation
   return LOCATION_KEYS.includes(normalized) ? normalized : 'casa'
 }
 
 const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
-  if (!value) {
-    return 'normal'
-  }
+  if (!value) return 'normal'
   const normalized = value.trim().toLowerCase() as QuickIdeasEnergy
   return ENERGY_KEYS.includes(normalized) ? normalized : 'normal'
 }
-
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
   const numeric = Number(value)
@@ -98,31 +72,19 @@ const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
-  if (!value) {
-    return '2-3'
-  }
+  if (!value) return '2-3'
   const normalized = value.trim() as QuickIdeasAgeBucket
   return ['0-1', '2-3', '4-5', '6-7', '8+'].includes(normalized) ? normalized : '2-3'
 }
 
 const normalizeChildId = (value?: string | null): string | null => {
-  if (!value) {
-    return null
-  }
+  if (!value) return null
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
 }
 
 type SearchParams = {
   [key: string]: string | string[] | undefined
-}
-
-type SuggestionView = QuickIdea & {
-  child?: {
-    id: string
-    name?: string
-    age_bucket: QuickIdeasAgeBucket
-  }
 }
 
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
@@ -188,7 +150,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const activeChildId: string | null =
     searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  const parsedFilters = QuickIdeasFiltersSchema.parse({
+  const filters = QuickIdeasFiltersSchema.parse({
     location: sanitizeLocation(
       typeof searchParams?.location === 'string' ? searchParams.location : undefined
     ),
@@ -200,24 +162,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     ),
   })
 
-  const filters = {
-    location: parsedFilters.location,
-    energy: parsedFilters.energy,
-    time_window_min: nearestQuickIdeasWindow(parsedFilters.time_window_min),
-  } satisfies {
-    location: QuickIdeasLocation
-    energy: QuickIdeasEnergy
-    time_window_min: QuickIdeasTimeWindow
-  }
-
   const serverFlags = getServerFlags({
     cookies: (name) => jar.get(name)?.value,
     searchParams,
   })
-
-  const telemetryFlags = Object.fromEntries(
-    Object.entries(serverFlags).map(([key, value]) => [key, Boolean(value)])
-  ) as Record<string, boolean>
 
   const {
     recShelf: recShelfEnabled,
@@ -228,11 +176,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   } = serverFlags
 
   const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
-  const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
   const [recShelfRaw, quickIdeasRaw] = await Promise.all([
     getRecShelfWithFallback(),
     getQuickIdeasWithFallback(),
   ])
+
   const recProductsCatalog = RecProductSchema.array().parse(recShelfRaw)
   const quickIdeasCatalog = (Array.isArray(quickIdeasRaw) ? quickIdeasRaw : []) as QuickIdeaCatalogEntry[]
   const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
@@ -244,7 +192,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     route: '/descobrir',
     tz: 'America/Sao_Paulo',
     dateKey,
-    flags: telemetryFlags,
   }
 
   const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
@@ -253,18 +200,35 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   })
 
+  const suggestions = buildDailySuggestions(profileSummary, filters, dateKey, quickIdeasCatalog)
+  const recShelfGroups = buildRecShelves(recProductsCatalog, profileSummary)
+  const flashRoutine = selectFlashRoutine([], profileSummary, filters, dateKey)
+  const selfCareSelection = selectSelfCareItems(selfCareCatalog, profileSummary, filters, dateKey)
 
-
-const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
-  const numeric = Number(value)
-  if (TIME_VALUES.includes(numeric as QuickIdeasTimeWindow)) {
-    return numeric as QuickIdeasTimeWindow
-  }
-  if (numeric <= 5) {
-    return 5
-  }
-  if (numeric <= 10) {
-    return 10
-  }
-  return 20
+  return (
+    <DescobrirClient
+      suggestions={suggestions}
+      filters={filters}
+      dateKey={dateKey}
+      profile={profileSummary}
+      initialAgeFilter={'2-3'}
+      initialPlaceFilter={'Casa'}
+      recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
+      flashRoutine={{
+        enabled: flashRoutineEnabled,
+        aiEnabled: flashRoutineAIEnabled,
+        routine: flashRoutine?.routine ?? null,
+        strategy: flashRoutine?.strategy ?? null,
+        analyticsSource: flashRoutine?.analyticsSource ?? 'local',
+      }}
+      selfCare={{
+        enabled: selfCareEnabled,
+        aiEnabled: selfCareAIEnabled,
+        items: selfCareSelection.items,
+        energy: filters.energy,
+        minutes: filters.time_window_min as 2 | 5 | 10,
+      }}
+      flags={serverFlags}
+    />
+  )
 }
