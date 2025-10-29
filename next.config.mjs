@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  async redirects() {
+  async rewrites() {
     return [
-      { source: '/(tabs)/meu-dia', destination: '/meu-dia', permanent: false },
-      { source: '/%28tabs%29/meu-dia', destination: '/meu-dia', permanent: false },
+      { source: '/(tabs)/:path*', destination: '/:path*' },
+      { source: '/%28tabs%29/:path*', destination: '/:path*' },
     ]
   },
   images: {
