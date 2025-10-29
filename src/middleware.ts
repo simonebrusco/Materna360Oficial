@@ -6,16 +6,8 @@ export const config = {
 };
 
 export default function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  // Rewrite /(tabs)/path to /path
-  if (pathname.startsWith('/(tabs)/')) {
-    const newPathname = pathname.replace('/(tabs)/', '/');
-    return NextResponse.rewrite(new URL(newPathname, req.url));
-  }
-
   // Redirect /404 to /meu-dia
-  if (pathname === '/404') {
+  if (req.nextUrl.pathname === '/404') {
     return NextResponse.redirect(new URL('/meu-dia', req.url));
   }
 
