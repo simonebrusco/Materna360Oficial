@@ -1,9 +1,12 @@
 import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
 
-import DescobrirClient from './Client'
-import { toFlashFilters } from './utils/filters'
-import { nearestQuickIdeasWindow } from './utils/timeWindows'
+import DescobrirClient from './client'
+import { toFlashFilters } from '@/app/lib/filters'
+import { nearestQuickIdeasWindow } from '@/app/lib/timeWindows'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 import { FLASH_IDEAS_CATALOG } from '@/data/flashIdeas'
 import { FLASH_ROUTINES_CMS } from '@/data/flashRoutines'
