@@ -109,16 +109,16 @@ export default function HomePage() {
       <section className="relative bg-gradient-to-b from-[#ffd8e6] to-white pt-24 sm:pt-28 pb-16 sm:pb-20 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 [background:radial-gradient(80%_60%_at_90%_90%,rgba(255,216,230,0.6),transparent_60%)]" />
         <div className="mx-auto max-w-5xl px-6 sm:px-8 text-center relative">
-          <div className="inline-flex items-center rounded-full px-4 py-1.5 text-[11px] tracking-[0.24em] font-semibold uppercase text-[#2f3a56] bg-white/70 ring-1 ring-white/70 backdrop-blur shadow-[inset_0_-1px_0_rgba(255,255,255,0.6),0_2px_6px_rgba(0,0,0,0.06)] mb-5" aria-hidden="true">
+          <div className="inline-flex items-center rounded-full px-4 py-1.5 text-[11px] tracking-[0.24em] font-semibold uppercase text-white bg-[#ff005e] shadow-[0_6px_16px_rgba(255,0,94,0.35)] mb-5" aria-hidden="true">
             BEM-VINDA
           </div>
-          <div className="text-[52px] sm:text-[56px] mb-3" aria-hidden>
-            <span className="drop-shadow-[0_6px_14px_rgba(255,0,94,0.35)]">❤️</span>
+          <div className="text-[64px] sm:text-[72px] mb-4" aria-hidden>
+            <span className="drop-shadow-[0_10px_22px_rgba(255,0,94,0.35)]">❤️</span>
           </div>
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-[#1a1e27]">
             Materna360
           </h1>
-          <p className="mt-5 mx-auto max-w-3xl text-lg sm:text-xl leading-relaxed text-[#6b7280]">
+          <p className="mt-5 mx-auto max-w-3xl text-lg sm:text-xl leading-relaxed text-[#6b7280]/95">
             Uma experiência digital pensada para cuidar de você, da sua família e dos seus
             sonhos com tecnologia, carinho e serenidade.
           </p>
@@ -130,9 +130,9 @@ export default function HomePage() {
             >
               Começar Agora
             </Link>
-            <div className="inline-flex items-center rounded-full px-4 py-1.5 text-[11px] tracking-[0.22em] font-semibold uppercase text-[#2f3a56] bg-white/70 ring-1 ring-white/70 backdrop-blur shadow-[inset_0_-1px_0_rgba(255,255,255,0.6),0_2px_6px_rgba(0,0,0,0.06)]" aria-hidden="true">
+            <span className="text-[11px] tracking-[0.22em] font-semibold uppercase text-[#9ca3af]" aria-hidden="true">
               EXPERIÊNCIA IMERSIVA MATERNA360
-            </div>
+            </span>
           </div>
         </div>
       </section>
