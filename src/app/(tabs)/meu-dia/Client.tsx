@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { Profile } from '@/app/lib/ageRange'
+import type { Profile } from '@/lib/ageRange'
 
 type MeuDiaClientProps = {
   dailyGreeting: string
