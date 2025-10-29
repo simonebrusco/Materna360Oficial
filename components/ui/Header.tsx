@@ -9,7 +9,7 @@ import {
   STICKERS,
   isProfileStickerId,
   resolveSticker,
-} from '@/app/lib/stickers'
+} from '@/lib/stickers'
 
 interface HeaderProps {
   title: string
