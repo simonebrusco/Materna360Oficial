@@ -1,7 +1,7 @@
 import { cookies as getCookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
-import { MeuDiaClient } from './Client'
+import MeuDiaClient from './Client'
 
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/data/childContent'
