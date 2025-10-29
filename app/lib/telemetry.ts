@@ -5,7 +5,11 @@ type TelemetryEvent =
   | 'discover_rec_impression'
   | 'discover_rec_click_buy'
   | 'discover_rec_save_planner'
-  | 'discover_rec_view_details';
+  | 'discover_rec_view_details'
+  | 'quick_ideas_bad_request'
+  | 'quick_ideas_access_denied'
+  | 'quick_ideas_success'
+  | 'quick_ideas_error';
 
 function getStore(): Record<TelemetryEvent, number> {
   const g = globalThis as any;
