@@ -41,24 +41,34 @@ export function Header({ title, showNotification = false }: HeaderProps) {
     const loadProfile = async () => {
       setIsLoadingSticker(true)
       try {
-        const response = await fetch('/api/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
 
-        if (!response.ok) {
-          throw new Error('Falha ao carregar perfil')
+        try {
+          const response = await fetch('/api/profile', {
+            credentials: 'include',
+            cache: 'no-store',
+            signal: controller.signal,
+          })
+
+          clearTimeout(timeoutId)
+
+          if (!response.ok) {
+            throw new Error(`Falha ao carregar perfil: ${response.status}`)
+          }
+
+          const data = await response.json()
+          if (!isMounted) {
+            return
+          }
+
+          const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
+          setStickerId(nextStickerId)
+        } catch (fetchError) {
+          clearTimeout(timeoutId)
+          throw fetchError
         }
-
-        const data = await response.json()
-        if (!isMounted) {
-          return
-        }
-
-        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
-        setStickerId(nextStickerId)
       } catch (error) {
-        console.error('Não foi possível obter o perfil para a figurinha:', error)
         if (isMounted) {
           setStickerId(DEFAULT_STICKER_ID)
         }
