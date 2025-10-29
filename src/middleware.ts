@@ -6,18 +6,18 @@ export const config = {
 };
 
 export default function middleware(req: NextRequest) {
-  let url = req.nextUrl.clone();
-  
-  // Strip /(tabs) prefix from URL
-  if (url.pathname.startsWith('/(tabs)/')) {
-    url.pathname = url.pathname.replace('/(tabs)/', '/');
+  const { pathname } = req.nextUrl;
+
+  // Rewrite /(tabs)/path to /path
+  if (pathname.startsWith('/(tabs)/')) {
+    const newPathname = pathname.replace('/(tabs)/', '/');
+    return NextResponse.rewrite(new URL(newPathname, req.url));
   }
-  
+
   // Redirect /404 to /meu-dia
-  if (url.pathname === '/404') {
-    url.pathname = '/meu-dia';
-    return NextResponse.redirect(url);
+  if (pathname === '/404') {
+    return NextResponse.redirect(new URL('/meu-dia', req.url));
   }
-  
+
   return NextResponse.next();
 }
