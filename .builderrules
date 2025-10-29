@@ -1,5 +1,3 @@
-PROJECT RULES — Materna360Oficial
-
 Tech & tooling
 - Framework: Next.js 14 (App Router, src/app).
 - Language: TypeScript.
@@ -7,37 +5,34 @@ Tech & tooling
 - Icons: lucide-react.
 - Animations: Framer Motion (subtle, premium feel).
 - Package manager: npm (use `npm ci` in CI/Builder).
-- Node: 20.x (match Vercel setting).
+- Node: 20.x (match Vercel).
 
 Structure & paths
 - Keep the App Router in `src/app`.
-- Shared components live in `components/` (subfolders: `components/ui`, `components/features`).
-- Path alias is `@/*` (do NOT switch to `src/*`).
-- Do not duplicate pages or move files out of `src/app` without strong reason.
+- Real pages are under `src/app/(tabs)/{meu-dia,cuidar,descobrir,eu360}`.
+- `components/` holds shared UI (`components/ui`) and features (`components/features`).
+- Path alias is `@/*` (do NOT change). Don’t duplicate or move pages out of `src/app`.
 
 Dev server & scripts
-- Dev server runs on http://localhost:3000.
-- `scripts.dev` must be `next dev -p 3000`.
-- When the Builder needs deps, run `npm ci` (not `npm install`) unless `ci` fails.
+- Dev server runs on http://localhost:3001.
+- `scripts.dev` must be `next dev -p 3001`.
+- When Builder needs deps, run `npm ci` (not `npm install`). If lockfile diverges, allow `--no-frozen-lockfile` in Builder and commit the updated `package-lock.json`.
 
 Branching & PRs
-- Default working branch: `stellar-den`. Open PRs **from `stellar-den` into `main`**.
+- Default working branch: `main`.
+- Open PRs **from `main`** (or short-lived `builder/*` feature branches) **into `main`**.
 - Mark PRs as **Draft** by default.
-- Use Conventional Commits (e.g., `feat:`, `fix:`, `chore:`).
+- Use Conventional Commits (`feat:`, `fix:`, `chore:`).
 - Do not change repository or create new ones.
 
 Design guidelines
-- Keep a “premium” look: soft shadows, rounded corners, smooth micro-interactions.
-- Respect the brand palette (Primary: #ff005e; Secondary: #ffd8e6).
-- Ensure mobile-first responsiveness and a11y (focus states, readable contrast).
+- Premium look: soft shadows, rounded corners, smooth micro-interactions.
+- Brand palette: Primary #ff005e; Secondary #ffd8e6.
+- Mobile-first + a11y (focus states, readable contrast).
 
 What NOT to change
-- Do not rename the project or packages arbitrarily.
-- Do not alter `@/*` alias, `tsconfig.json` baseUrl/paths, or the port 3000.
-- Do not hardcode secrets; use `.env` with existing var names.
-- Do not introduce breaking changes to API routes or Next config.
+- Don’t rename packages arbitrarily.
+- Don’t alter `@/*` alias or ports (keep 3001 for Builder dev).
+- Don’t hardcode secrets; use env vars (public only as `NEXT_PUBLIC_*` in Builder).
+- Don’t introduce breaking changes to API routes or Next config (use ESM, `next.config.mjs`).
 
-Deliverables expectations
-- When adding screens (e.g., “Meu Dia”, “Cuidar”, “Descobrir”, “Eu360”), keep the bottom tab bar consistent.
-- Use reusable UI atoms from `components/ui` and compose features in `components/features`.
-- Add subtle motion (opacity/translate/scale) and consistent shadow tokens per Tailwind config.
