@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic'
-import { getBabyProfile } from '@/app/lib/baby'
+import { getBabyProfile } from '@/lib/baby'
 
 const RecipesGrid = dynamic(() => import('./RecipesGrid'), { ssr: false })
 const EmptyState = dynamic(

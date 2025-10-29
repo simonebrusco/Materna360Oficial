@@ -1,4 +1,4 @@
-import { getBabyProfile } from '@/app/lib/baby'
+import { getBabyProfile } from '@/lib/baby'
 import { ReceitinhasCard } from '@/components/features/Receitinhas/ReceitinhasCard'
 import type { PlanTier } from '@/components/features/Receitinhas/utils'
 
