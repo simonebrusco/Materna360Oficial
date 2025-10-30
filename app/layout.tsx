@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 
 import '@/app/lib/telemetryServer'
 import { inter } from './fonts'
+import FetchPolyfill from '@/app/lib/FetchPolyfill'
 
 export const metadata: Metadata = {
   title: 'Materna360',
