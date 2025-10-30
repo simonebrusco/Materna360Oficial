@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/Button'
 import { Toast } from '@/components/ui/Toast'
 
 import {
-  // 🔧 removido: type AgeBucket,
   type PlanTier,
   type RecipeBudget,
   type RecipeCategory,
