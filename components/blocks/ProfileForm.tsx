@@ -72,55 +72,75 @@ export function ProfileForm() {
 
   useEffect(() => {
     let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
 
     const loadProfile = async () => {
       try {
-        const response = await fetch('/api/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
+        // Set a 10 second timeout for the entire operation
+        const abortController = new AbortController()
+        const timeoutHandle = setTimeout(() => abortController.abort(), 10000)
 
-        if (response.ok) {
-          const data = await response.json()
-          const savedName =
-            typeof data?.motherName === 'string'
-              ? data.motherName
-              : typeof data?.nomeMae === 'string'
-                ? data.nomeMae
-                : ''
+        try {
+          const response = await fetch('/api/profile', {
+            credentials: 'include',
+            cache: 'no-store',
+            signal: abortController.signal,
+          })
 
-          if (isMounted) {
-            setForm((previous) => ({
-              ...previous,
-              nomeMae: savedName,
-            }))
+          if (response.ok) {
+            const data = await response.json()
+            const savedName =
+              typeof data?.motherName === 'string'
+                ? data.motherName
+                : typeof data?.nomeMae === 'string'
+                  ? data.nomeMae
+                  : ''
+
+            if (isMounted) {
+              setForm((previous) => ({
+                ...previous,
+                nomeMae: savedName,
+              }))
+            }
           }
+        } finally {
+          clearTimeout(timeoutHandle)
         }
       } catch (error) {
-        console.error('Falha ao carregar nome do perfil:', error)
         if (isMounted) {
+          console.error('Falha ao carregar nome do perfil:', error)
           setForm((previous) => ({ ...previous, nomeMae: '' }))
         }
       }
 
       try {
-        const eu360Response = await fetch('/api/eu360/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
+        const abortController = new AbortController()
+        const timeoutHandle = setTimeout(() => abortController.abort(), 10000)
 
-        if (eu360Response.ok) {
-          const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
-          if (isMounted) {
-            setForm((previous) => ({
-              ...previous,
-              nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
-            }))
-            setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
+        try {
+          const eu360Response = await fetch('/api/eu360/profile', {
+            credentials: 'include',
+            cache: 'no-store',
+            signal: abortController.signal,
+          })
+
+          if (eu360Response.ok) {
+            const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
+            if (isMounted) {
+              setForm((previous) => ({
+                ...previous,
+                nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
+              }))
+              setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
+            }
           }
+        } finally {
+          clearTimeout(timeoutHandle)
         }
       } catch (error) {
-        console.error(error)
+        if (isMounted) {
+          console.error('Falha ao carregar perfil eu360:', error)
+        }
       }
 
       if (isMounted) {
@@ -132,6 +152,9 @@ export function ProfileForm() {
 
     return () => {
       isMounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     }
   }, [])
 
