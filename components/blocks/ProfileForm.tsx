@@ -72,39 +72,27 @@ export function ProfileForm() {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
     const loadProfile = async () => {
       try {
-        // Set a 10 second timeout for the entire operation
-        const abortController = new AbortController()
-        const timeoutHandle = setTimeout(() => abortController.abort(), 10000)
+        const response = await fetch('/api/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
 
-        try {
-          const response = await fetch('/api/profile', {
-            credentials: 'include',
-            cache: 'no-store',
-            signal: abortController.signal,
-          })
+        if (response.ok && isMounted) {
+          const data = await response.json()
+          const savedName =
+            typeof data?.motherName === 'string'
+              ? data.motherName
+              : typeof data?.nomeMae === 'string'
+                ? data.nomeMae
+                : ''
 
-          if (response.ok) {
-            const data = await response.json()
-            const savedName =
-              typeof data?.motherName === 'string'
-                ? data.motherName
-                : typeof data?.nomeMae === 'string'
-                  ? data.nomeMae
-                  : ''
-
-            if (isMounted) {
-              setForm((previous) => ({
-                ...previous,
-                nomeMae: savedName,
-              }))
-            }
-          }
-        } finally {
-          clearTimeout(timeoutHandle)
+          setForm((previous) => ({
+            ...previous,
+            nomeMae: savedName,
+          }))
         }
       } catch (error) {
         if (isMounted) {
@@ -114,28 +102,18 @@ export function ProfileForm() {
       }
 
       try {
-        const abortController = new AbortController()
-        const timeoutHandle = setTimeout(() => abortController.abort(), 10000)
+        const eu360Response = await fetch('/api/eu360/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
 
-        try {
-          const eu360Response = await fetch('/api/eu360/profile', {
-            credentials: 'include',
-            cache: 'no-store',
-            signal: abortController.signal,
-          })
-
-          if (eu360Response.ok) {
-            const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
-            if (isMounted) {
-              setForm((previous) => ({
-                ...previous,
-                nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
-              }))
-              setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
-            }
-          }
-        } finally {
-          clearTimeout(timeoutHandle)
+        if (eu360Response.ok && isMounted) {
+          const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
+          setForm((previous) => ({
+            ...previous,
+            nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
+          }))
+          setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
         }
       } catch (error) {
         if (isMounted) {
@@ -152,9 +130,6 @@ export function ProfileForm() {
 
     return () => {
       isMounted = false
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
     }
   }, [])
 
