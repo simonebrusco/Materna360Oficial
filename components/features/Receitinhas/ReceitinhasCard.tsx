@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/Button'
 import { Toast } from '@/components/ui/Toast'
 
 import {
-  type AgeBucket,
+  // 🔧 removido: type AgeBucket,
   type PlanTier,
   type RecipeBudget,
   type RecipeCategory,
@@ -86,13 +86,9 @@ const sanitizeStringList = (values: unknown): string[] => {
   return values
     .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
     .filter((entry) => {
-      if (!entry) {
-        return false
-      }
+      if (!entry) return false
       const key = entry.toLocaleLowerCase('pt-BR')
-      if (seen.has(key)) {
-        return false
-      }
+      if (seen.has(key)) return false
       seen.add(key)
       return true
     })
@@ -100,13 +96,9 @@ const sanitizeStringList = (values: unknown): string[] => {
 
 const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: number): number => {
   const numeric = typeof value === 'number' ? value : Number(value)
-  if (!Number.isFinite(numeric)) {
-    return fallback
-  }
+  if (!Number.isFinite(numeric)) return fallback
   const rounded = Math.round(numeric)
-  if (max === undefined) {
-    return Math.max(min, rounded)
-  }
+  if (max === undefined) return Math.max(min, rounded)
   return Math.min(Math.max(min, rounded), max)
 }
 
@@ -125,7 +117,8 @@ const generatePlannerId = (prefix: string, value: string): string => {
   return `${prefix}-${identifier}`.slice(0, 80)
 }
 
-const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
+// 🔧 trocado para string
+const AGE_BUCKET_LABELS: Record<string, string> = {
   '0-6m': '0-6 meses',
   '7-12m': '7-12 meses',
   '1-2a': '1-2 anos',
@@ -147,13 +140,9 @@ const formatBudgetLabel = (value: RecipeBudget) => {
 }
 
 const planFromStorage = (fallback: PlanTier): PlanTier => {
-  if (typeof window === 'undefined') {
-    return fallback
-  }
+  if (typeof window === 'undefined') return fallback
   const stored = window.localStorage.getItem(PLAN_STORAGE_KEY)
-  if (stored === 'free' || stored === 'essencial' || stored === 'premium') {
-    return stored
-  }
+  if (stored === 'free' || stored === 'essencial' || stored === 'premium') return stored
   return fallback
 }
 
@@ -179,18 +168,12 @@ type PlannerModalState = {
 }
 
 const readHistory = (): HistoryEntry[] => {
-  if (typeof window === 'undefined') {
-    return []
-  }
+  if (typeof window === 'undefined') return []
   try {
     const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY)
-    if (!raw) {
-      return []
-    }
+    if (!raw) return []
     const parsed = JSON.parse(raw) as HistoryEntry[]
-    if (Array.isArray(parsed)) {
-      return parsed
-    }
+    if (Array.isArray(parsed)) return parsed
   } catch (error) {
     console.error('[Receitinhas] Failed to read history', error)
   }
@@ -198,9 +181,7 @@ const readHistory = (): HistoryEntry[] => {
 }
 
 const persistHistory = (entries: HistoryEntry[]) => {
-  if (typeof window === 'undefined') {
-    return
-  }
+  if (typeof window === 'undefined') return
   try {
     window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(entries))
   } catch (error) {
@@ -209,18 +190,12 @@ const persistHistory = (entries: HistoryEntry[]) => {
 }
 
 const readFavorites = (): Set<string> => {
-  if (typeof window === 'undefined') {
-    return new Set()
-  }
+  if (typeof window === 'undefined') return new Set()
   try {
     const raw = window.localStorage.getItem(FAVORITES_STORAGE_KEY)
-    if (!raw) {
-      return new Set()
-    }
+    if (!raw) return new Set()
     const parsed = JSON.parse(raw) as string[]
-    if (Array.isArray(parsed)) {
-      return new Set(parsed)
-    }
+    if (Array.isArray(parsed)) return new Set(parsed)
   } catch (error) {
     console.error('[Receitinhas] Failed to read favorites', error)
   }
@@ -228,9 +203,7 @@ const readFavorites = (): Set<string> => {
 }
 
 const persistFavorites = (favorites: Set<string>) => {
-  if (typeof window === 'undefined') {
-    return
-  }
+  if (typeof window === 'undefined') return
   try {
     window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(favorites)))
   } catch (error) {
@@ -239,9 +212,7 @@ const persistFavorites = (favorites: Set<string>) => {
 }
 
 const mergeShoppingList = (items: string[]) => {
-  if (typeof window === 'undefined') {
-    return
-  }
+  if (typeof window === 'undefined') return
   try {
     const raw = window.localStorage.getItem(SHOPPING_LIST_STORAGE_KEY)
     const current = raw ? JSON.parse(raw) : []
@@ -250,9 +221,7 @@ const mergeShoppingList = (items: string[]) => {
     )
     for (const item of items) {
       const normalizedItem = item.trim()
-      if (normalizedItem) {
-        normalized.add(normalizedItem)
-      }
+      if (normalizedItem) normalized.add(normalizedItem)
     }
     window.localStorage.setItem(SHOPPING_LIST_STORAGE_KEY, JSON.stringify(Array.from(normalized)))
   } catch (error) {
@@ -261,9 +230,7 @@ const mergeShoppingList = (items: string[]) => {
 }
 
 const suggestionMatchesSearch = (suggestion: RecipeSuggestion, query: string) => {
-  if (!query) {
-    return true
-  }
+  if (!query) return true
   const normalizedQuery = query.toLowerCase()
   return (
     suggestion.title.toLowerCase().includes(normalizedQuery) ||
@@ -301,7 +268,8 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const ageBucket = useMemo<AgeBucket>(() => mapMonthsToBucket(childAgeMonths), [childAgeMonths])
+  // 🔧 agora string
+  const ageBucket = useMemo<string>(() => mapMonthsToBucket(childAgeMonths), [childAgeMonths])
   const latestRequestRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -311,9 +279,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   }, [initialPlan])
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
+    if (typeof window === 'undefined') return
     try {
       window.localStorage.setItem(PLAN_STORAGE_KEY, plan)
     } catch (error) {
@@ -346,9 +312,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
   const handleServingsChange = (direction: 'dec' | 'inc') => {
     setServings((previous) => {
-      if (direction === 'dec') {
-        return Math.max(1, previous - 1)
-      }
+      if (direction === 'dec') return Math.max(1, previous - 1)
       return Math.min(6, previous + 1)
     })
   }
@@ -431,9 +395,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   }
 
   const handlePlannerSave = async () => {
-    if (!plannerModal.open || !plannerModal.suggestion) {
-      return
-    }
+    if (!plannerModal.open || !plannerModal.suggestion) return
     if (!plannerDate || !plannerTime) {
       setToast({ message: 'Escolha data e horário.', type: 'error' })
       return
@@ -466,9 +428,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           tags: ['Receitinhas'],
         }),
       })
-      if (!response.ok) {
-        throw new Error('Planner response not ok')
-      }
+      if (!response.ok) throw new Error('Planner response not ok')
       setToast({ message: 'Receita salva no Planner ✨', type: 'success' })
       dismissPlannerModal()
     } catch (error) {
@@ -487,22 +447,19 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
       const controller = new AbortController()
       latestRequestRef.current = controller
       try {
-        console.debug('recipes.generate', payload)
         const response = await fetch('/api/ai/recipes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
           signal: controller.signal,
         })
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const data = (await response.json()) as RecipesApiResponse
         if (data.access.denied) {
           setAccessModal(
-          data.access.message ||
-            'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).'
-        )
+            data.access.message ||
+              'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).'
+          )
           setSuggestions([])
           setAggregatedShoppingList([])
           return
@@ -517,15 +474,12 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           setError('Nenhuma sugestão desta vez. Que tal ajustar os filtros?')
         }
       } catch (error) {
-        if ((error as Error).name === 'AbortError') {
-          return
-        }
+        if ((error as Error).name === 'AbortError') return
         console.error('[Receitinhas] Generate failed', error)
         setError('Não conseguimos gerar agora. Tente novamente em instantes.')
         setSuggestions([])
         setAggregatedShoppingList([])
         setToast({ message: 'Não foi possível gerar receitas agora.', type: 'error' })
-        console.debug('recipes.generate.error', { payload, error })
       } finally {
         setIsLoading(false)
       }
@@ -606,7 +560,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
             <button
               type="button"
               onClick={handleQuickIdeas}
-              className="inline-flex h-[32px] items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 text-[12px] font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+              className="inline-flex h-[32px] items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 text-[12px] font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60"
             >
               Quero ideias rápidas
             </button>
@@ -679,12 +633,12 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                 const isActive = equipment.includes(option.value)
                 return (
                   <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => toggleEquipment(option.value)}
-                  aria-pressed={isActive}
-                  className={`${chipClasses(isActive)} capitalize`}
-                >
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleEquipment(option.value)}
+                    aria-pressed={isActive}
+                    className={`${chipClasses(isActive)} capitalize`}
+                  >
                     {option.label}
                   </button>
                 )
@@ -804,7 +758,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
-                  className="min-w-[240px] flex-1 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
+                  className="min-w=[240px] flex-1 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
                 >
                   <div className="h-6 w-2/3 animate-pulse rounded-full bg-secondary/40" />
                   <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-secondary/30" />
@@ -880,8 +834,9 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
                         {favorites.has(suggestion.id) ? <Heart className="h-4 w-4" /> : <HeartOff className="h-4 w-4" />}
                       </button>
                     </div>
-                </article>
-              )})}
+                  </article>
+                )
+              })}
             </div>
           </div>
         )}
@@ -1061,9 +1016,10 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   )
 }
 
+// 🔧 ageBucket como string nas props
 type RecipeDetailModalProps = {
   suggestion: RecipeSuggestion
-  ageBucket: AgeBucket
+  ageBucket: string
   onClose: () => void
   isFavorite: boolean
   onFavoriteToggle: () => void
