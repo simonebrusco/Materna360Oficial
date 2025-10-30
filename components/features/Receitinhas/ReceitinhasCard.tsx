@@ -1017,9 +1017,10 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 }
 
 // 🔧 ageBucket como string nas props
+
 type RecipeDetailModalProps = {
   suggestion: RecipeSuggestion
-  ageBucket: string
+  ageBucket: AgeBucket
   onClose: () => void
   isFavorite: boolean
   onFavoriteToggle: () => void
@@ -1046,9 +1047,6 @@ function RecipeDetailModal({
   })()
 
   const ageLabel = AGE_BUCKET_LABELS[ageBucket] ?? ageBucket
-  // ...resto do componente
-}
-
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1250] flex items-start justify-center overflow-y-auto bg-black/45 p-4 md:p-10">
