@@ -65,48 +65,54 @@ function normalizeAgeMonths(raw: unknown): number | null {
 }
 
 export async function GET() {
-  const supabase = tryCreateServerSupabase()
-  if (!supabase) {
-    console.error('[Eu360] Supabase client unavailable. Returning empty profile.')
+  try {
+    const supabase = tryCreateServerSupabase()
+    if (!supabase) {
+      console.error('[Eu360] Supabase client unavailable. Returning empty profile.')
+      return successResponse({ name: '', birthdate: null, age_months: null })
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError) {
+      console.error('[Eu360] Failed to verify user:', authError.message)
+    }
+
+    if (!user) {
+      return successResponse({ name: '', birthdate: null, age_months: null })
+    }
+
+    const [profileResult, babyResult] = await Promise.all([
+      supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(),
+      supabase.from('babies').select('birthdate, age_months').eq('user_id', user.id).maybeSingle(),
+    ])
+
+    if (profileResult.error) {
+      console.error('[Eu360] Failed to load profile:', profileResult.error.message)
+    }
+
+    if (babyResult.error) {
+      console.error('[Eu360] Failed to load baby profile:', babyResult.error.message)
+    }
+
+    const name = normalizeName(profileResult.data?.name ?? '')
+    const birthdate = typeof babyResult.data?.birthdate === 'string' ? babyResult.data.birthdate : null
+    const ageMonthsFromBirthdate = monthsFromBirthdate(birthdate)
+    const ageMonths =
+      ageMonthsFromBirthdate !== null
+        ? ageMonthsFromBirthdate
+        : typeof babyResult.data?.age_months === 'number'
+          ? babyResult.data.age_months
+          : null
+
+    return successResponse({ name, birthdate, age_months: ageMonths })
+  } catch (error) {
+    console.error('[Eu360] Unexpected error in GET:', error)
     return successResponse({ name: '', birthdate: null, age_months: null })
   }
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError) {
-    console.error('[Eu360] Failed to verify user:', authError.message)
-  }
-
-  if (!user) {
-    return successResponse({ name: '', birthdate: null, age_months: null })
-  }
-
-  const [profileResult, babyResult] = await Promise.all([
-    supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(),
-    supabase.from('babies').select('birthdate, age_months').eq('user_id', user.id).maybeSingle(),
-  ])
-
-  if (profileResult.error) {
-    console.error('[Eu360] Failed to load profile:', profileResult.error.message)
-  }
-
-  if (babyResult.error) {
-    console.error('[Eu360] Failed to load baby profile:', babyResult.error.message)
-  }
-
-  const name = normalizeName(profileResult.data?.name ?? '')
-  const birthdate = typeof babyResult.data?.birthdate === 'string' ? babyResult.data.birthdate : null
-  const ageMonthsFromBirthdate = monthsFromBirthdate(birthdate)
-  const ageMonths =
-    ageMonthsFromBirthdate !== null
-      ? ageMonthsFromBirthdate
-      : typeof babyResult.data?.age_months === 'number'
-        ? babyResult.data.age_months
-        : null
-
-  return successResponse({ name, birthdate, age_months: ageMonths })
 }
 
 export async function POST(request: Request) {
