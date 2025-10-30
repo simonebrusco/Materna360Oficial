@@ -8,12 +8,12 @@ import { initSafeFetch } from './SafeFetch'
  * Initializes SafeFetch as early as possible to wrap window.fetch.
  */
 export default function FetchPolyfill() {
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    // Initialize safe fetch wrapper immediately
+  // Initialize immediately during render (synchronously) to wrap fetch before FullStory
+  if (typeof window !== 'undefined') {
     initSafeFetch()
+  }
 
+  useEffect(() => {
     // Detect and disable prefetching if FullStory is present
     // FullStory breaks RSC prefetch, causing navigation failures
     if ((window as any).FS && (window as any).FS.identify) {
