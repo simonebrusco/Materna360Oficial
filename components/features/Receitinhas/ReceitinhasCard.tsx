@@ -1040,8 +1040,15 @@ function RecipeDetailModal({
   onShare,
   aggregatedShoppingList,
 }: RecipeDetailModalProps) {
-  const applicableAdaptation = suggestion.age_adaptations?.[ageBucket] ?? null
+  const applicableAdaptation = (() => {
+    const dict = suggestion.age_adaptations as Record<string, string> | undefined
+    return dict ? (dict[ageBucket] ?? null) : null
+  })()
+
   const ageLabel = AGE_BUCKET_LABELS[ageBucket] ?? ageBucket
+  // ...resto do componente
+}
+
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1250] flex items-start justify-center overflow-y-auto bg-black/45 p-4 md:p-10">
