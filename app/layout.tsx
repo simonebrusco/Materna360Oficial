@@ -1,15 +1,8 @@
-
-import '@/app/globals.css'
-import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
-
-import '@/app/lib/telemetryServer'
-
 import './globals.css'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
-
+import '@/app/lib/telemetryServer'
 import { inter } from './fonts'
 
 export const metadata: Metadata = {
