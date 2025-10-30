@@ -14,7 +14,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" className={inter.variable}>
-      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>{children}</body>
+      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>
+        <FetchPolyfill />
+        {children}
+      </body>
     </html>
   )
 }
