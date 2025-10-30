@@ -41,12 +41,14 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
     const loadProfile = async () => {
       setIsLoadingSticker(true)
+      let timeoutId: NodeJS.Timeout | null = null
       try {
         const ctrl = new AbortController()
-        const t = setTimeout(() => ctrl.abort(), 5000)
+        timeoutId = setTimeout(() => ctrl.abort(), 5000)
 
         const r = await fetch('/api/profile', { cache: 'no-store', signal: ctrl.signal })
-        clearTimeout(t)
+
+        if (timeoutId) clearTimeout(timeoutId)
 
         const data = await r.json().catch(() => ({} as any))
         const profile = (data?.profile as any) ?? {}
@@ -59,10 +61,12 @@ export function Header({ title, showNotification = false }: HeaderProps) {
         const nextStickerId = isProfileStickerId(stickerId) ? stickerId : DEFAULT_STICKER_ID
         setStickerId(nextStickerId)
       } catch (error) {
+        // Silently handle AbortError (timeout) and other errors
         if (isMounted) {
           setStickerId(DEFAULT_STICKER_ID)
         }
       } finally {
+        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setIsLoadingSticker(false)
         }
