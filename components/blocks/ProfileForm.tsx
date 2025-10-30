@@ -74,9 +74,6 @@ export function ProfileForm() {
     let isMounted = true
 
     const loadProfile = async () => {
-      // Wait a moment for FullStory to fully initialize
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
       try {
         const response = await fetch('/api/profile', {
           credentials: 'include',
@@ -99,7 +96,8 @@ export function ProfileForm() {
         }
       } catch (error) {
         if (isMounted) {
-          console.error('Falha ao carregar nome do perfil:', error instanceof Error ? error.message : String(error))
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.error('Falha ao carregar nome do perfil:', errorMsg)
           setForm((previous) => ({ ...previous, nomeMae: '' }))
         }
       }
@@ -120,10 +118,8 @@ export function ProfileForm() {
         }
       } catch (error) {
         if (isMounted) {
-          console.error(
-            'Falha ao carregar perfil eu360:',
-            error instanceof Error ? error.message : String(error)
-          )
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.error('Falha ao carregar perfil eu360:', errorMsg)
         }
       }
 
