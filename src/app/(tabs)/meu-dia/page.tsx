@@ -1,8 +1,6 @@
 import { cookies as getCookies } from 'next/headers'
 import { unstable_noStore as noStore } from 'next/cache'
 
-import { MeuDiaClient } from './Client'
-
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/data/childContent'
 import { DAILY_MESSAGES } from '@/data/dailyMessages'
@@ -11,69 +9,54 @@ import { getDayIndex } from '@/lib/dailyMessage'
 import { profilePreferredBuckets, type Profile } from '@/lib/ageRange'
 import { readProfileCookie } from '@/lib/profileCookie'
 import { buildWeekLabels, getWeekStartKey } from '@/lib/weekLabels'
+import MeuDiaClient from './client-shell'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-const TIME_ZONE = 'America/Sao_Paulo'
+const TZ = 'America/Sao_Paulo'
 
 const firstNameOf = (name?: string) => {
   if (!name) return 'Mãe'
-  const trimmed = name.trim()
-  if (!trimmed) return 'Mãe'
-  const [first] = trimmed.split(/\s+/)
-  if (!first) return 'Mãe'
-  const normalized = first.charAt(0).toUpperCase() + first.slice(1)
-  return normalized || 'Mãe'
+  const first = name.trim().split(/\s+/)[0] || 'Mãe'
+  return first.charAt(0).toUpperCase() + first.slice(1)
 }
 
-const resolveGreetingPrefix = (date: Date) => {
-  const hourFormatter = new Intl.DateTimeFormat('pt-BR', {
-    hour: 'numeric',
-    hour12: false,
-    timeZone: TIME_ZONE,
-  })
-  const hour = Number.parseInt(hourFormatter.format(date), 10)
+const greetingPrefix = (d: Date) => {
+  const hour = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hour12: false, timeZone: TZ }).format(d))
   if (Number.isNaN(hour)) return 'Olá'
   if (hour >= 5 && hour < 12) return 'Bom dia'
   if (hour >= 12 && hour < 18) return 'Boa tarde'
   return 'Boa noite'
 }
 
-const formatDisplayDate = (date: Date) =>
-  new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    timeZone: TIME_ZONE,
-  }).format(date)
+const formatDisplayDate = (d: Date) =>
+  new Intl.DateTimeFormat('pt-BR', { weekday: 'long', month: 'long', day: 'numeric', timeZone: TZ }).format(d)
 
 export default async function Page() {
   noStore()
 
   const jar = getCookies()
-  const { profile: normalizedProfile } = readProfileCookie(jar)
+  const { profile: normalized } = readProfileCookie(jar)
 
   const now = new Date()
-  const displayName = firstNameOf(normalizedProfile.motherName)
+  const displayName = firstNameOf(normalized.motherName)
   const plannerTitle = `Planner da ${displayName}`
-  const greetingPrefix = resolveGreetingPrefix(now)
-  const greeting = `${greetingPrefix}, ${displayName}!`
+  const greeting = `${greetingPrefix(now)}, ${displayName}!`
   const formattedDate = formatDisplayDate(now)
 
   const currentDateKey = getBrazilDateKey(now)
   const weekStartKey = getWeekStartKey(currentDateKey)
   const { labels: weekLabels } = buildWeekLabels(weekStartKey)
-  const totalMessages = DAILY_MESSAGES.length
-  const selectedIndex = getDayIndex(currentDateKey, totalMessages)
-  const baseMessage = totalMessages > 0 ? DAILY_MESSAGES[selectedIndex] : ''
+
+  const sel = getDayIndex(currentDateKey, DAILY_MESSAGES.length)
+  const baseMessage = DAILY_MESSAGES.length ? DAILY_MESSAGES[sel] : ''
   const dailyGreeting = baseMessage && displayName ? `${displayName}, ${baseMessage}` : baseMessage
 
   const profileForClient: Profile = {
-    motherName: normalizedProfile.motherName,
-    children: normalizedProfile.children,
+    motherName: normalized.motherName,
+    children: normalized.children,
   }
-
   const initialBuckets = profilePreferredBuckets(profileForClient)
 
   return (
