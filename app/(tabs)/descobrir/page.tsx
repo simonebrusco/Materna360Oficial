@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers'
-import { noStore } from 'next/cache'
 
 import { getProfile } from '@/app/lib/profileServer'
 import {
@@ -133,8 +132,6 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  noStore()
-
   const jar = cookies()
   const serverProfile = await getProfile(jar)
 
