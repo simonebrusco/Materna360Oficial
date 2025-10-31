@@ -29,6 +29,11 @@ import type {
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
 
+import type { AgeBucketT as AgeBucket, FlashRoutine as FlashRoutineT } from '@/app/lib/discoverSchemas'
+
+import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
+
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const fetchCache = 'force-no-store'
@@ -103,7 +108,10 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
+
+
   // desativa cache no servidor (fallback para variações da API)
+
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -239,7 +247,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
       if (result) {
         flashRoutineResult = result
-        flashRoutineRoutine = result.routine as any
+
       }
     } catch (error) {
       trackTelemetry(
@@ -257,6 +265,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       ? { routine: flashRoutineRoutine, strategy: flashRoutineResult.source, analyticsSource: 'local' as const }
       : null
 
+  // SelfCare
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
     items: [],
     rotationKey: '',
@@ -280,6 +289,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
+  // Sugestões diárias
   let suggestions: ReturnType<typeof buildDailySuggestions> = []
   try {
     suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
