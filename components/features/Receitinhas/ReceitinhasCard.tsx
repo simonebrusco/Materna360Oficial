@@ -12,7 +12,8 @@ export const PLANNER_CATEGORIES = [
   'Eu360',
 ] as const
 
-const generatePlannerId = (prefix: string, item: CmsRecShelfItem): string => {
+const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
+  if (!item?.title) return `${prefix}-unknown`
   return `${prefix}-${item.title
     .toLowerCase()
     .normalize('NFD')
