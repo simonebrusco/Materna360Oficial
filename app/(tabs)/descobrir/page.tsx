@@ -27,7 +27,11 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+simonebrusco-patch-32
 import type { AgeBucketT as AgeBucket, FlashRoutine as FlashRoutineT } from '@/app/lib/discoverSchemas'
+
+import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
+
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -39,7 +43,7 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
   escola: 'Escola',
-  area_externa: 'Área Externa',
+  area_externa: 'Area Externa',
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
@@ -109,7 +113,8 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // Evita cache (compatível entre versões do Next)
+
+
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -135,7 +140,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
   const activeChildId: string | null = searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  // Filtros já sanitizados (sem depender de zod.parse na runtime)
   const filters = {
     location: sanitizeLocation(
       typeof searchParams?.location === 'string' ? searchParams.location : undefined
@@ -169,7 +173,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
-  // Catálogos (sem validação pesada para evitar crashes)
   const ideasCatalog = FLASH_IDEAS_CATALOG
   const routinesCatalog = FLASH_ROUTINES_CMS
   const recProductsCatalog = REC_PRODUCTS
@@ -185,7 +188,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     flags: telemetryFlags,
   }
 
-  // Profile “summary” mínimo
   const profileSummary = {
     mode: requestedMode,
     activeChildId,
@@ -210,7 +212,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
-  // RecShelf
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
     try {
@@ -230,10 +231,9 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
-  // FlashRoutine
   const flashFilters = toFlashFilters(filters)
   let flashRoutineResult: ReturnType<typeof selectFlashRoutine> | null = null
-  let flashRoutineRoutine: FlashRoutineT | null = null
+  let flashRoutineRoutine: any = null
   if (flashRoutineEnabled) {
     try {
       const result = selectFlashRoutine({
@@ -245,7 +245,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
       if (result) {
         flashRoutineResult = result
-        flashRoutineRoutine = result.routine as FlashRoutineT
+
       }
     } catch (error) {
       trackTelemetry(
