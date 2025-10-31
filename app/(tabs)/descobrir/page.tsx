@@ -18,6 +18,7 @@ import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
+
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -38,7 +39,7 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
   escola: 'Escola',
-  area_externa: 'Area Externa',
+  area_externa: 'Área Externa',
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
@@ -66,16 +67,10 @@ const sanitizeTime = (value?: string | null): number => {
   return Number.isFinite(num) && num > 0 ? num : 15
 }
 
-type SearchParams = {
-  [key: string]: string | string[] | undefined
-}
+type SearchParams = { [key: string]: string | string[] | undefined }
 
 type SuggestionView = QuickIdea & {
-  child?: {
-    id: string
-    name?: string
-    age_bucket: QuickIdeasAgeBucket
-  }
+  child?: { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
 }
 
 const normalizeChildId = (value?: string | null): string | null => {
@@ -178,7 +173,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
   const children = Array.isArray(profileSummary.children) ? profileSummary.children : fallbackChildren
 
-  const computedBuckets: AgeBucket[] =
+  const computedBuckets: QuickIdeasAgeBucket[] =
     profileSummary.mode === 'all'
       ? Array.from(new Set(children.map((c) => c.age_bucket))).sort((a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b])
       : (() => {
@@ -188,7 +183,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
           return active ? [active.age_bucket] : []
         })()
 
-  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
+  const targetBuckets: QuickIdeasAgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as QuickIdeasAgeBucket[])
 
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
