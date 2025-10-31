@@ -19,15 +19,30 @@ import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
-import type {
-  QuickIdea,
-  QuickIdeasAgeBucket,
-  QuickIdeasEnergy,
-  QuickIdeasLocation,
-  QuickIdeasTimeWindow,
-} from '@/app/types/quickIdeas'
-import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
-import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
+
+// Tipos locais simples para evitar conflitos de types
+type QuickIdeasLocation = 'casa' | 'parque' | 'escola' | 'area_externa'
+type QuickIdeasEnergy = 'exausta' | 'normal' | 'animada'
+type QuickIdeasTimeWindow = 2 | 5 | 10
+type QuickIdeasAgeBucket = '0-1' | '2-3' | '4-5' | '6-7' | '8+'
+
+type QuickIdea = {
+  id: string
+  title: string
+  summary?: string
+  time_total_min: number
+  location: QuickIdeasLocation
+  materials?: string[]
+  steps?: string[]
+  age_adaptations?: any
+  safety_notes?: string[]
+  badges?: string[]
+  planner_payload?: any
+  rationale?: string
+}
+
+type ProfileChildSummary = { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
+type ProfileMode = 'single' | 'all'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -39,7 +54,7 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
   escola: 'Escola',
-  area_externa: 'Area Externa',
+  area_externa: 'Área Externa',
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
@@ -71,16 +86,10 @@ const normalizeChildId = (value?: string | null): string | null => {
   return trimmed.length > 0 ? trimmed : null
 }
 
-type SearchParams = {
-  [key: string]: string | string[] | undefined
-}
+type SearchParams = { [key: string]: string | string[] | undefined }
 
 type SuggestionView = QuickIdea & {
-  child?: {
-    id: string
-    name?: string
-    age_bucket: QuickIdeasAgeBucket
-  }
+  child?: { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
 }
 
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
@@ -109,7 +118,7 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // disable caching (compatible across Next versions)
+  // Desativa cache (compatível com variações do Next)
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -189,10 +198,16 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
-  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
+  const BUCKET_ORDER: Record<QuickIdeasAgeBucket, number> = {
+    '0-1': 0,
+    '2-3': 1,
+    '4-5': 2,
+    '6-7': 3,
+    '8+': 4,
+  }
   const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
-  const computedBuckets: AgeBucket[] =
+  const computedBuckets: QuickIdeasAgeBucket[] =
     profileSummary.mode === 'all'
       ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
           (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
@@ -205,7 +220,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
           return active ? [active.age_bucket] : []
         })()
 
-  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
+  const targetBuckets: QuickIdeasAgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as QuickIdeasAgeBucket[])
 
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
@@ -286,10 +302,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
   } catch (error) {
     trackTelemetry(
-      'discover_section_error',
-      { section: 'ideas', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
-      telemetryCtx
-    )
+        'discover_section_error',
+        { section: 'ideas', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
+        telemetryCtx
+      )
     suggestions = []
   }
 
