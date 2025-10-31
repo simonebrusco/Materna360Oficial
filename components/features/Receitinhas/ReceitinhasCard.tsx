@@ -22,11 +22,15 @@ const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
 }
 
 interface ReceitinhasCardProps {
-  item: CmsRecShelfItem
+  item?: CmsRecShelfItem
   onSave?: (item: CmsRecShelfItem) => void
 }
 
 export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
+  if (!item) {
+    return null
+  }
+
   const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
 
   return (
