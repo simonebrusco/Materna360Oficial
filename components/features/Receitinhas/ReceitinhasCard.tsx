@@ -126,7 +126,6 @@ const generatePlannerId = (prefix: string, value: string): string => {
   return `${prefix}-${identifier}`.slice(0, 80)
 }
 
-const PLANNER_CATEGORIES = ['Caf�� da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 
 
 const AGE_BUCKET_LABELS: Record<AgeBucket, string> = {
@@ -470,11 +469,6 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
           link: '#receitinhas',
 
           payload: recipePayload,
-
-          payload: {
-            recipeId: recipe.id,
-            shoppingList: recipe.shopping_list ?? [],
-          },
 
           tags: ['Receitinhas'],
         }),

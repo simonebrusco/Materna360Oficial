@@ -4,21 +4,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Copy, Play, Share2, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
 
-
-import SectionBoundary from '@/components/common/SectionBoundary'
-
-
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
-
 import { trackTelemetry, sample } from '@/app/lib/telemetry'
-
-import { trackTelemetry } from '@/app/lib/telemetry'
-
 import {
   friendlyEnergyLabel,
   friendlyLocationLabel,
@@ -150,7 +142,6 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   printable: { icon: '🖨��', title: 'Printables para Brincar' },
 }
 
-
 const sanitizeStringList = (values: unknown): string[] => {
   if (!Array.isArray(values)) {
     return []
@@ -182,8 +173,6 @@ const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: nu
   }
   return Math.min(Math.max(min, rounded), max)
 }
-
-
 
 function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
   const [imageError, setImageError] = useState(false)
@@ -308,7 +297,6 @@ export default function DescobrirClient({
 
   const discoverFlags = useMemo(() => getClientFlags(flags), [flags])
 
-
   const targetBuckets = useMemo(() => {
     const children = Array.isArray(profile.children) ? profile.children : []
     if (profile.mode === 'all') {
@@ -342,8 +330,6 @@ export default function DescobrirClient({
       flags: telemetryFlags,
     }
   }, [appVersion, dateKey, telemetryFlags])
-
-
 
   const profileMode = profile.mode
   const impressionsKeyRef = useRef<string | null>(null)
@@ -385,7 +371,6 @@ export default function DescobrirClient({
     if (impressionsKeyRef.current === recShelfImpressionKey) {
       return
     }
-
     impressionsKeyRef.current = recShelfImpressionKey
     if (!sample(0.2)) {
       return
@@ -402,38 +387,12 @@ export default function DescobrirClient({
     )
   }, [recShelfEnabled, recShelf.groups, recShelfImpressionKey, targetBuckets, telemetryCtx])
 
-    recShelf.groups.forEach((group) => {
-      trackTelemetry('discover_rec_impression', {
-        kind: group.kind,
-        count: group.items.length,
-      })
-    })
-    impressionsKeyRef.current = recShelfImpressionKey
-  }, [recShelfEnabled, recShelf.groups, recShelfImpressionKey])
-
-
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
   const showSelfCare = selfCareEnabled && selfCare.items.length > 0
   const routine = flashRoutineEnabled ? flashRoutine.routine : null
   const routineId = routine?.id ?? null
   const analyticsSource = flashRoutine.analyticsSource ?? 'local'
   const stableDateKey = dateKey
-
-
-
-  const flashRoutineTelemetryPayload = useMemo(() => {
-    if (!routine) {
-      return null
-    }
-
-    return {
-      id: routine.id,
-      age_bucket: routine.ageBucket,
-      locale: routine.locale,
-      total: routine.totalMin,
-    }
-  }, [routine])
-
 
   const flashRoutineImpressionKey = useMemo(() => {
     if (!routineId) {
@@ -450,18 +409,13 @@ export default function DescobrirClient({
   )
 
   useEffect(() => {
-
     if (!flashRoutineImpressionKey || !routine) {
-
-    if (!flashRoutineImpressionKey || !flashRoutineTelemetryPayload) {
-
       return
     }
 
     if (flashRoutineImpressionRef.current === flashRoutineImpressionKey) {
       return
     }
-
 
     flashRoutineImpressionRef.current = flashRoutineImpressionKey
     if (!sample(0.2)) {
@@ -478,16 +432,6 @@ export default function DescobrirClient({
     )
   }, [flashRoutineImpressionKey, routine, analyticsSource, telemetryCtx])
 
-    trackTelemetry('discover_flash_impression', {
-      ...flashRoutineTelemetryPayload,
-      source: analyticsSource,
-      dateKey: stableDateKey,
-    })
-
-    flashRoutineImpressionRef.current = flashRoutineImpressionKey
-  }, [flashRoutineImpressionKey, flashRoutineTelemetryPayload, analyticsSource, stableDateKey])
-
-
   useEffect(() => {
     if (!showSelfCare) {
       return
@@ -496,7 +440,6 @@ export default function DescobrirClient({
     if (selfCareImpressionRef.current === key) {
       return
     }
-
     selfCareImpressionRef.current = key
     if (!sample(0.2)) {
       return
@@ -512,15 +455,6 @@ export default function DescobrirClient({
     )
   }, [showSelfCare, selfCare, telemetryCtx])
 
-    trackTelemetry('discover_selfcare_impression', {
-      count: selfCare.items.length,
-      energy: selfCare.energy,
-      minutes: selfCare.minutes,
-    })
-    selfCareImpressionRef.current = key
-  }, [showSelfCare, selfCare])
-
-
   const handleStart = (id: string) => {
     setExpandedIdeaId((current) => (current === id ? null : id))
   }
@@ -528,7 +462,6 @@ export default function DescobrirClient({
   const handleSaveToPlanner = async (suggestion: SuggestionCard) => {
     setSavingIdeaId(suggestion.id)
     try {
-
       const ideaDuration = coerceIntWithin(
         suggestion.planner_payload?.duration_min ?? suggestion.time_total_min ?? 5,
         suggestion.time_total_min ?? 5,
@@ -542,8 +475,6 @@ export default function DescobrirClient({
         materials: sanitizeStringList(suggestion.planner_payload?.materials),
       }
 
-
-
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -553,19 +484,7 @@ export default function DescobrirClient({
           timeISO: '15:00',
           category: 'Lanche',
           link: '/descobrir',
-
           payload: ideaPayload,
-
-          payload: {
-            type: suggestion.planner_payload.type,
-            id: suggestion.id,
-            title: suggestion.title,
-            duration_min: suggestion.planner_payload.duration_min,
-            materials: suggestion.planner_payload.materials,
-            steps: suggestion.steps,
-            location: suggestion.location,
-          },
-
           tags: ['atividade', 'quick-idea', suggestion.location],
         }),
       })
@@ -574,7 +493,6 @@ export default function DescobrirClient({
         const payload = await response.json().catch(() => ({}))
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
-
 
       trackTelemetry('planner_save_ok', { type: 'idea', id: suggestion.id }, telemetryCtx)
       setToast({ message: 'Sugestão salva no Planner!', type: 'success' })
@@ -588,11 +506,6 @@ export default function DescobrirClient({
         },
         telemetryCtx
       )
-
-      setToast({ message: 'Sugestão salva no Planner!', type: 'success' })
-    } catch (error) {
-      console.error('[QuickIdeas] Planner save failed:', error)
-
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
         type: 'error',
@@ -637,7 +550,6 @@ export default function DescobrirClient({
   }
 
   const handleBuyProduct = (product: RecShelfItem) => {
-stellar-den
     trackTelemetry(
       'discover_rec_click_buy',
       {
@@ -648,13 +560,6 @@ stellar-den
       telemetryCtx
     )
 
-    trackTelemetry('discover_rec_click_buy', {
-      id: product.id,
-      kind: product.kind,
-      retailer: product.retailer,
-    })
-
-
     if (typeof window !== 'undefined') {
       const targetUrl = product.trackedAffiliateUrl || product.affiliateUrl
       window.open(targetUrl, '_blank', 'noopener,noreferrer')
@@ -663,7 +568,6 @@ stellar-den
 
   const handleSaveProduct = async (product: RecShelfItem) => {
     setSavingProductId(product.id)
-
     trackTelemetry(
       'discover_rec_save_planner',
       { id: product.id, kind: product.kind },
@@ -696,11 +600,6 @@ stellar-den
         affiliateUrl,
       }
 
-
-    trackTelemetry('discover_rec_save_planner', { id: product.id, kind: product.kind })
-
-    try {
-
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -710,19 +609,7 @@ stellar-den
           timeISO: '09:00',
           category: 'Descobrir',
           link: '/descobrir',
-
           payload: productPayload,
-
-          payload: {
-            type: 'product',
-            id: product.id,
-            title: product.title,
-            kind: product.kind,
-            imageUrl: product.imageUrl,
-            retailer: product.retailer,
-            affiliateUrl: product.trackedAffiliateUrl,
-          },
-
           tags: ['produto', product.kind],
         }),
       })
@@ -731,7 +618,6 @@ stellar-den
         const payload = await response.json().catch(() => ({}))
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
-
 
       trackTelemetry('planner_save_ok', { type: 'product', id: product.id }, telemetryCtx)
       setToast({ message: 'Produto salvo no Planner!', type: 'success' })
@@ -745,11 +631,6 @@ stellar-den
         },
         telemetryCtx
       )
-
-      setToast({ message: 'Produto salvo no Planner!', type: 'success' })
-    } catch (error) {
-      console.error('[RecShelf] Planner save failed:', error)
-
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
         type: 'error',
@@ -763,19 +644,11 @@ stellar-den
     if (!flashRoutineEnabled || !routine) {
       return
     }
-
     trackTelemetry(
       'discover_flash_start',
       { routineId: routine.id },
       { ...telemetryCtx, source: analyticsSource }
     )
-
-    trackTelemetry('discover_flash_start', {
-      id: routine.id,
-      total: routine.totalMin,
-      source: flashRoutine.analyticsSource,
-    })
-
     setToast({ message: 'Rotina iniciada! Aproveite os próximos minutos juntos.', type: 'info' })
   }
 
@@ -784,7 +657,6 @@ stellar-den
       return
     }
     setSavingRoutine(true)
-
     trackTelemetry(
       'discover_flash_save_planner',
       { routineId: routine.id },
@@ -821,14 +693,6 @@ stellar-den
         safetyNotes: sanitizeStringList(routine.safetyNotes ?? []),
       }
 
-
-    trackTelemetry('discover_flash_save_planner', {
-      id: routine.id,
-      source: flashRoutine.analyticsSource,
-    })
-
-    try {
-
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -838,26 +702,13 @@ stellar-den
           timeISO: '09:30',
           category: 'Descobrir',
           link: '/descobrir',
-
           payload: routinePayload,
-
-          payload: {
-            type: 'routine',
-            id: routine.id,
-            title: routine.title,
-            totalMin: routine.totalMin,
-            steps: routine.steps,
-            materials: routine.materials,
-            safetyNotes: routine.safetyNotes ?? [],
-          },
-
           tags: ['rotina', routine.locale],
         }),
       })
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}))
-
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
 
@@ -873,18 +724,6 @@ stellar-den
         },
         { ...telemetryCtx, source: analyticsSource }
       )
-
-        throw new Error(payload?.error ?? 'N��o foi possível salvar no Planner.')
-      }
-
-      setToast({ message: 'Rotina salva no Planner!', type: 'success' })
-    } catch (error) {
-      console.error('[FlashRoutine] Planner save failed:', error)
-      trackTelemetry('discover_flash_error', {
-        action: 'save_planner',
-        id: routine.id,
-      })
-
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar a rotina.',
         type: 'error',
@@ -896,19 +735,11 @@ stellar-den
 
   const handleSelfCareDone = async (item: SelfCareT) => {
     setCompletingSelfCareId(item.id)
-
     trackTelemetry(
       'discover_selfcare_done',
       { id: item.id, minutes: item.minutes },
       telemetryCtx
     )
-
-    trackTelemetry('discover_selfcare_done', {
-      id: item.id,
-      minutes: item.minutes,
-      energy: selfCare.energy,
-    })
-
 
     try {
       const response = await fetch('/api/cuidese/complete', {
@@ -925,7 +756,6 @@ stellar-den
       setToast({ message: 'Autocuidado concluído! 💛', type: 'success' })
     } catch (error) {
       console.error('[SelfCare] Done failed:', error)
-
       trackTelemetry(
         'discover_section_error',
         {
@@ -934,9 +764,6 @@ stellar-den
         },
         telemetryCtx
       )
-
-      trackTelemetry('discover_selfcare_error', { action: 'done', id: item.id })
-
       setToast({
         message: error instanceof Error ? error.message : 'Tente novamente mais tarde.',
         type: 'error',
@@ -948,7 +775,6 @@ stellar-den
 
   const handleSelfCareSave = async (item: SelfCareT) => {
     setSavingSelfCareId(item.id)
-
     trackTelemetry(
       'discover_selfcare_save_planner',
       { id: item.id, minutes: item.minutes },
@@ -969,11 +795,6 @@ stellar-den
         steps,
       }
 
-
-    trackTelemetry('discover_selfcare_save_planner', { id: item.id, minutes: item.minutes })
-
-    try {
-
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -983,17 +804,7 @@ stellar-den
           timeISO: '10:00',
           category: 'Cuide-se',
           link: '/descobrir',
-
           payload: selfCarePayload,
-
-          payload: {
-            type: 'selfcare',
-            id: item.id,
-            title: item.title,
-            minutes: item.minutes,
-            steps: item.steps,
-          },
-
           tags: ['selfcare', `${item.minutes}min`],
         }),
       })
@@ -1002,7 +813,6 @@ stellar-den
         const payload = await response.json().catch(() => ({}))
         throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
       }
-
 
       trackTelemetry('planner_save_ok', { type: 'selfcare', id: item.id }, telemetryCtx)
       setToast({ message: 'Salvo no Planner!', type: 'success' })
@@ -1016,12 +826,6 @@ stellar-den
         },
         telemetryCtx
       )
-
-      setToast({ message: 'Salvo no Planner!', type: 'success' })
-    } catch (error) {
-      console.error('[SelfCare] Save failed:', error)
-      trackTelemetry('discover_selfcare_error', { action: 'save_planner', id: item.id })
-
       setToast({
         message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
         type: 'error',
@@ -1163,385 +967,6 @@ stellar-den
           </SectionWrapper>
         </Reveal>
       )}
-
-
-      <SectionBoundary title="Ideias em 1 Clique">
-        <Reveal delay={200}>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
-            <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
-              Filtros ativos: {friendlyFilters}
-            </div>
-            <div className="flex flex-col gap-4">
-              {suggestions.length === 0 ? (
-                <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
-                  <p className="text-sm text-support-2 md:text-base">
-                    Ainda não temos sugestões para estes filtros. Ajuste as preferências para descobrir novas ideias.
-                  </p>
-                </Card>
-              ) : (
-                suggestions.map((suggestion, index) => (
-                  <Reveal key={suggestion.id} delay={index * 60}>
-                    <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
-                      <div className="text-5xl" aria-hidden>
-                        🌟
-                      </div>
-                      <div className="flex-1 space-y-4">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
-                            Sugestão personalizada
-                            {profileMode === 'all' && suggestion.child
-                              ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
-                              : ''}
-                          </span>
-                          <span className="text-xs text-support-2/80">
-                            ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <h3 className="text-lg font-semibold text-support-1 md:text-xl">{suggestion.title}</h3>
-                          <p className="text-sm text-support-2 md:text-base">{suggestion.summary}</p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
-                          {suggestion.badges.slice(0, 2).map((badge) => (
-                            <span key={badge} className={badgeClassName}>
-                              {badgeLabels[badge]}
-                            </span>
-                          ))}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="sm:w-auto"
-                            onClick={() => handleStart(suggestion.id)}
-                          >
-                            <Play className="h-4 w-4" aria-hidden />
-                            {expandedIdeaId === suggestion.id ? 'Ocultar passos' : 'Começar agora'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="sm:w-auto"
-                            onClick={() => void handleSaveToPlanner(suggestion)}
-                            disabled={savingIdeaId === suggestion.id}
-                          >
-                            {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="sm:w-auto"
-                            onClick={() => void handleShare(suggestion)}
-                          >
-                            <Share2 className="h-4 w-4" aria-hidden />
-                            Compartilhar
-                          </Button>
-                        </div>
-
-                        {expandedIdeaId === suggestion.id && (
-                          <div className="space-y-4 rounded-2xl border border-white/60 bg-white/92 p-4 shadow-soft">
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
-                                <button
-                                  type="button"
-                                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
-                                  onClick={() => void handleCopySteps(suggestion)}
-                                >
-                                  <Copy className="h-3.5 w-3.5" aria-hidden /> Copiar passos
-                                </button>
-                              </div>
-                              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
-                                {suggestion.materials.map((item) => (
-                                  <li key={item}>{item}</li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            <div>
-                              <h4 className="text-sm font-semibold text-support-1">Passo a passo</h4>
-                              <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-support-2/90">
-                                {suggestion.steps.map((step, idx) => (
-                                  <li key={idx}>{step}</li>
-                                ))}
-                              </ol>
-                            </div>
-
-                            {suggestion.safety_notes.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-primary">Cuidados</h4>
-                                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
-                                  {suggestion.safety_notes.map((note, idx) => (
-                                    <li key={idx}>{note}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  </Reveal>
-                ))
-              )}
-            </div>
-          </SectionWrapper>
-        </Reveal>
-      </SectionBoundary>
-
-      <SectionBoundary title="Roteiro Relâmpago">
-        {flashRoutineEnabled && (
-          <Reveal delay={220}>
-            <SectionWrapper
-              title={
-                <span className="inline-flex items-center gap-2">
-                  <span aria-hidden>⚡</span>
-                  <span>Flash Routine</span>
-                </span>
-              }
-              description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
-            >
-              <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-support-1 md:text-xl">
-                      {routine?.title ?? 'Rotina sugerida'}
-                    </h3>
-                    <p className="text-sm text-support-2/90">
-                      {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {routine && (
-                      <span className="rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-support-2 shadow-soft">
-                        {bucketLabels[routine.ageBucket]}
-                      </span>
-                    )}
-                    <span className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
-                      Parceria
-                    </span>
-                  </div>
-                </div>
-
-                {!routine || !Array.isArray(routine.steps) || routine.steps.length === 0 ? (
-                  <RoutineEmptyState />
-                ) : (
-                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
-                    <ol className="space-y-3 text-sm text-support-1">
-                      {routine.steps.map((step, index) => (
-                        <li key={`${routine.id ?? 'routine'}-step-${index}`} className="flex gap-3">
-                          <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                            {index + 1}
-                          </span>
-                          <div>
-                            <p className="font-semibold">{step.title}</p>
-                            {typeof step.minutes === 'number' && (
-                              <p className="text-xs text-support-2/80">≈ {step.minutes} minutos</p>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-
-                {routine?.materials?.length ? (
-                  <div>
-                    <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {routine.materials.map((material, index) => (
-                        <span
-                          key={`${routine.id ?? 'routine'}-material-${index}`}
-                          className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft"
-                        >
-                          {material}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {routine?.safetyNotes?.length ? (
-                  <div>
-                    <h4 className="flex items-center gap-2 text-sm font-semibold text-primary">
-                      <AlertTriangle className="h-4 w-4" aria-hidden /> Cuidados
-                    </h4>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-support-2/90">
-                      {routine.safetyNotes.map((note, idx) => (
-                        <li key={`${routine.id ?? 'routine'}-safety-${idx}`}>{note}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Button variant="primary" size="sm" onClick={handleStartFlashRoutine} disabled={!routine} aria-disabled={!routine}>
-                    {routine ? `Começar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void handleSaveFlashRoutine()}
-                    disabled={!routine || savingRoutine}
-                    aria-disabled={!routine || savingRoutine}
-                  >
-                    {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
-                  </Button>
-                </div>
-              </Card>
-            </SectionWrapper>
-          </Reveal>
-        )}
-      </SectionBoundary>
-
-      <SectionBoundary title="Para Você">
-        {showSelfCare && (
-          <Reveal delay={240}>
-            <SectionWrapper
-              title={
-                <span className="inline-flex items-center gap-2">
-                  <span aria-hidden>💛</span>
-                  <span>Cuide-se rápido</span>
-                </span>
-              }
-              description={`Sugestões de ${selfCare.minutes} minutos para energia ${selfCare.energy}.`}
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                {selfCare.items.map((item) => (
-                  <Card key={item.id} className="flex flex-col gap-4 bg-white/92 p-6 shadow-soft">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <h3 className="text-base font-semibold text-support-1">{item.title}</h3>
-                        <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                          {item.minutes} minutos
-                        </span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void handleSelfCareDone(item)}
-                        disabled={completingSelfCareId === item.id}
-                      >
-                        {completingSelfCareId === item.id ? 'Registrando…' : 'Fiz agora'}
-                      </Button>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
-                      <ul className="space-y-2 text-sm text-support-1">
-                        {item.steps.slice(0, 2).map((step, idx) => (
-                          <li key={`${item.id}-step-${idx}`} className="flex gap-2">
-                            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                              {idx + 1}
-                            </span>
-                            <span>{step}</span>
-                          </li>
-                        ))}
-                        {item.steps.length > 2 && (
-                          <li className="text-xs text-support-2/80">+ {item.steps.length - 2} passo(s) extras no Planner</li>
-                        )}
-                      </ul>
-                    </div>
-
-                    {item.tip && (
-                      <p className="text-xs font-semibold text-primary/80">{item.tip}</p>
-                    )}
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void handleSelfCareSave(item)}
-                        disabled={savingSelfCareId === item.id}
-                      >
-                        {savingSelfCareId === item.id ? 'Salvando…' : 'Salvar no Planner'}
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </SectionWrapper>
-          </Reveal>
-        )}
-      </SectionBoundary>
-
-      <SectionBoundary title="Recomendações">
-        {showRecShelf ? (
-          recShelf.groups.map((group, shelfIndex) => {
-            const shelfMeta = shelfLabels[group.kind]
-            return (
-              <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
-                <SectionWrapper
-                  title={
-                    <span className="inline-flex items-center gap-2">
-                      <span aria-hidden>{shelfMeta.icon}</span>
-                      <span>{shelfMeta.title}</span>
-                    </span>
-                  }
-                >
-                  <div className="-mx-4 overflow-hidden sm:mx-0">
-                    <div
-                      className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0"
-                      role="list"
-                      aria-label={`Recomendações de ${shelfMeta.title}`}
-                    >
-                      {group.items.map((item, idx) => (
-                        <Reveal key={item.id} delay={idx * 40} className="h-full">
-                          <RecShelfCarouselCard
-                            item={item}
-                            profileMode={profileMode}
-                            onBuy={handleBuyProduct}
-                            onSave={handleSaveProduct}
-                            savingProductId={savingProductId}
-                          />
-                        </Reveal>
-                      ))}
-                    </div>
-                  </div>
-                </SectionWrapper>
-              </Reveal>
-            )
-          })
-        ) : (
-          <>
-            <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
-              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-                {books.map((book, idx) => (
-                  <Reveal key={book.title} delay={idx * 70} className="h-full">
-                    <Card className="h-full">
-                      <div className="text-3xl">{book.emoji}</div>
-                      <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
-                      <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
-                      <Button variant="primary" size="sm" className="mt-6 w-full">
-                        Ver Detalhes
-                      </Button>
-                    </Card>
-                  </Reveal>
-                ))}
-              </GridRhythm>
-            </SectionWrapper>
-
-            <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Brinquedos Sugeridos</span></span>}>
-              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-                {toys.map((toy, idx) => (
-                  <Reveal key={toy.title} delay={idx * 70} className="h-full">
-                    <Card className="h-full">
-                      <div className="text-3xl">{toy.emoji}</div>
-                      <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
-                      <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
-                      <Button variant="primary" size="sm" className="mt-6 w-full">
-                        Ver Mais
-                      </Button>
-                    </Card>
-                  </Reveal>
-                ))}
-              </GridRhythm>
-            </SectionWrapper>
-          </>
-        )}
-      </SectionBoundary>
 
       <Reveal delay={200}>
         <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
@@ -1912,7 +1337,6 @@ stellar-den
           </SectionWrapper>
         </>
       )}
-
 
       <Reveal delay={260}>
         <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
