@@ -19,18 +19,6 @@ import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
-import {
-  FlashRoutine as FlashRoutineSchema,
-  FlashRoutineFilters as FlashRoutineFiltersSchema,
-  IdeaLite as IdeaLiteSchema,
-  ProfileSummary as ProfileSummarySchema,
-  QuickIdeasFilters as QuickIdeasFiltersSchema,
-  RecProduct as RecProductSchema,
-  SelfCare as SelfCareSchema,
-  type AgeBucketT as AgeBucket,
-  type ProfileSummaryT,
-  type FlashRoutineT,
-} from '@/app/lib/discoverSchemas'
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -39,6 +27,7 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+import type { AgeBucketT as AgeBucket, FlashRoutine as FlashRoutineT } from '@/app/lib/discoverSchemas'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -97,12 +86,12 @@ type SuggestionView = QuickIdea & {
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
   const seen = new Set<string>()
   const result: T[] = []
-  items.forEach((item) => {
+  for (const item of items) {
     if (!seen.has(item.id)) {
       seen.add(item.id)
       result.push(item)
     }
-  })
+  }
   return result
 }
 
@@ -110,21 +99,19 @@ const buildProfileChildren = (
   children: Array<{ id?: string; name?: string | null; ageRange?: string | null }>
 ): ProfileChildSummary[] => {
   if (!children || children.length === 0) return []
-
   const mapped = children.map<ProfileChildSummary>((child, index) => {
     const id = child.id && child.id.trim() ? child.id.trim() : `child-${index + 1}`
     const name = child.name && child.name.trim() ? child.name.trim() : undefined
     const age_bucket = sanitizeAgeBucket(child.ageRange ?? undefined)
     return { id, name, age_bucket }
   })
-
   return dedupeChildren(mapped)
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // evita cache no lado do servidor (com fallback caso a função mude entre versões)
+  // Evita cache (compatível entre versões do Next)
   if (typeof (noStore as any) === 'function') {
-    (noStore as any)()
+    ;(noStore as any)()
   }
 
   const jar = cookies()
@@ -148,18 +135,17 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
   const activeChildId: string | null = searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  const parsedFilters = QuickIdeasFiltersSchema.parse({
+  // Filtros já sanitizados (sem depender de zod.parse na runtime)
+  const filters = {
     location: sanitizeLocation(
       typeof searchParams?.location === 'string' ? searchParams.location : undefined
     ),
-    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
-    energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
-  })
-
-  const filters = {
-    location: parsedFilters.location,
-    energy: parsedFilters.energy,
-    time_window_min: nearestQuickIdeasWindow(parsedFilters.time_window_min),
+    energy: sanitizeEnergy(
+      typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
+    ),
+    time_window_min: nearestQuickIdeasWindow(
+      sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined)
+    ),
   } satisfies {
     location: QuickIdeasLocation
     energy: QuickIdeasEnergy
@@ -183,10 +169,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
-  const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
-  const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
-  const recProductsCatalog = RecProductSchema.array().parse(REC_PRODUCTS)
-  const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
+  // Catálogos (sem validação pesada para evitar crashes)
+  const ideasCatalog = FLASH_IDEAS_CATALOG
+  const routinesCatalog = FLASH_ROUTINES_CMS
+  const recProductsCatalog = REC_PRODUCTS
+  const selfCareCatalog = SELF_CARE_CMS
 
   const dateKey = getBrazilDateKey()
 
@@ -198,32 +185,32 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     flags: telemetryFlags,
   }
 
-  const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
+  // Profile “summary” mínimo
+  const profileSummary = {
     mode: requestedMode,
     activeChildId,
     children: fallbackChildren,
-  })
-
-  const validatedProfile = profileSummary
+  }
 
   const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-  const children = Array.isArray(validatedProfile.children) ? validatedProfile.children : []
+  const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
   const computedBuckets: AgeBucket[] =
-    validatedProfile.mode === 'all'
+    profileSummary.mode === 'all'
       ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
           (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
         )
       : (() => {
           const active =
-            (validatedProfile.activeChildId
-              ? children.find((c) => c.id === validatedProfile.activeChildId)
+            (profileSummary.activeChildId
+              ? children.find((c) => c.id === profileSummary.activeChildId)
               : undefined) ?? children[0]
           return active ? [active.age_bucket] : []
         })()
 
   const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
+  // RecShelf
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
     try {
@@ -243,8 +230,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
-  const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
-
+  // FlashRoutine
+  const flashFilters = toFlashFilters(filters)
   let flashRoutineResult: ReturnType<typeof selectFlashRoutine> | null = null
   let flashRoutineRoutine: FlashRoutineT | null = null
   if (flashRoutineEnabled) {
@@ -258,7 +245,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
       if (result) {
         flashRoutineResult = result
-        flashRoutineRoutine = FlashRoutineSchema.parse(result.routine)
+        flashRoutineRoutine = result.routine as FlashRoutineT
       }
     } catch (error) {
       trackTelemetry(
@@ -276,6 +263,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       ? { routine: flashRoutineRoutine, strategy: flashRoutineResult.source, analyticsSource: 'local' as const }
       : null
 
+  // SelfCare
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
     items: [],
     rotationKey: '',
@@ -299,9 +287,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
+  // Sugestões diárias
   let suggestions: ReturnType<typeof buildDailySuggestions> = []
   try {
-    suggestions = buildDailySuggestions(profileSummary, filters, dateKey, QUICK_IDEAS_CATALOG)
+    suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
   } catch (error) {
     trackTelemetry(
       'discover_section_error',
@@ -324,7 +313,13 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     badges: idea.badges,
     planner_payload: idea.planner_payload,
     rationale: idea.rationale,
-    child: child ? { id: child.id, name: child.name, age_bucket: child.age_bucket } : undefined,
+    child: child
+      ? {
+          id: child.id,
+          name: child.name,
+          age_bucket: child.age_bucket,
+        }
+      : undefined,
   }))
 
   const initialAgeFilter = children[0]?.age_bucket ?? '2-3'
@@ -335,7 +330,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       suggestions={suggestionViews}
       filters={filters}
       dateKey={dateKey}
-      profile={profileSummary}
+      profile={profileSummary as any}
       initialAgeFilter={initialAgeFilter}
       initialPlaceFilter={initialPlaceFilter}
       recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
