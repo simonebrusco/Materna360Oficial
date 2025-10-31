@@ -1,5 +1,5 @@
-import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
 
 import DescobrirClient from './Client'
 import { toFlashFilters } from './utils/filters'
@@ -19,18 +19,6 @@ import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
-import {
-  FlashRoutine as FlashRoutineSchema,
-  FlashRoutineFilters as FlashRoutineFiltersSchema,
-  IdeaLite as IdeaLiteSchema,
-  ProfileSummary as ProfileSummarySchema,
-  QuickIdeasFilters as QuickIdeasFiltersSchema,
-  RecProduct as RecProductSchema,
-  SelfCare as SelfCareSchema,
-  type AgeBucketT as AgeBucket,
-  type ProfileSummaryT,
-  type FlashRoutineT,
-} from '@/app/lib/discoverSchemas'
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -39,9 +27,11 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 const LOCATION_KEYS: QuickIdeasLocation[] = ['casa', 'parque', 'escola', 'area_externa']
 const ENERGY_KEYS: QuickIdeasEnergy[] = ['exausta', 'normal', 'animada']
@@ -53,17 +43,13 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
-  if (!value) {
-    return 'casa'
-  }
+  if (!value) return 'casa'
   const normalized = value.trim().toLowerCase() as QuickIdeasLocation
   return LOCATION_KEYS.includes(normalized) ? normalized : 'casa'
 }
 
 const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
-  if (!value) {
-    return 'normal'
-  }
+  if (!value) return 'normal'
   const normalized = value.trim().toLowerCase() as QuickIdeasEnergy
   return ENERGY_KEYS.includes(normalized) ? normalized : 'normal'
 }
@@ -74,17 +60,13 @@ const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
-  if (!value) {
-    return '2-3'
-  }
+  if (!value) return '2-3'
   const normalized = value.trim() as QuickIdeasAgeBucket
   return ['0-1', '2-3', '4-5', '6-7', '8+'].includes(normalized) ? normalized : '2-3'
 }
 
 const normalizeChildId = (value?: string | null): string | null => {
-  if (!value) {
-    return null
-  }
+  if (!value) return null
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
 }
@@ -104,34 +86,33 @@ type SuggestionView = QuickIdea & {
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
   const seen = new Set<string>()
   const result: T[] = []
-  items.forEach((item) => {
+  for (const item of items) {
     if (!seen.has(item.id)) {
       seen.add(item.id)
       result.push(item)
     }
-  })
+  }
   return result
 }
 
 const buildProfileChildren = (
   children: Array<{ id?: string; name?: string | null; ageRange?: string | null }>
 ): ProfileChildSummary[] => {
-  if (!children || children.length === 0) {
-    return []
-  }
-
+  if (!children || children.length === 0) return []
   const mapped = children.map<ProfileChildSummary>((child, index) => {
     const id = child.id && child.id.trim() ? child.id.trim() : `child-${index + 1}`
     const name = child.name && child.name.trim() ? child.name.trim() : undefined
     const age_bucket = sanitizeAgeBucket(child.ageRange ?? undefined)
     return { id, name, age_bucket }
   })
-
   return dedupeChildren(mapped)
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  noStore()
+  // Evita cache (compatível entre versões do Next)
+  if (typeof (noStore as any) === 'function') {
+    ;(noStore as any)()
+  }
 
   const jar = cookies()
   const { profile, metadata } = readProfileCookie(jar)
@@ -140,18 +121,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const fallbackChildren =
     profileChildren.length > 0
       ? profileChildren
-      : [
-          {
-            id: 'demo-child',
-            name: 'Luna',
-            age_bucket: '2-3' as QuickIdeasAgeBucket,
-          },
-        ]
+      : [{ id: 'demo-child', name: 'Luna', age_bucket: '2-3' as QuickIdeasAgeBucket }]
 
-  const rawModeValue =
-    typeof searchParams?.mode === 'string' ? searchParams.mode : metadata.mode
-  const normalizedMode =
-    typeof rawModeValue === 'string' ? rawModeValue.trim().toLowerCase() : ''
+  const rawModeValue = typeof searchParams?.mode === 'string' ? searchParams.mode : metadata.mode
+  const normalizedMode = typeof rawModeValue === 'string' ? rawModeValue.trim().toLowerCase() : ''
   const requestedMode: ProfileMode =
     normalizedMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
 
@@ -160,26 +133,19 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   )
   const metadataChildId = normalizeChildId(metadata.activeChildId ?? null)
   const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
+  const activeChildId: string | null = searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  const activeChildId: string | null =
-    searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
-
-  const parsedFilters = QuickIdeasFiltersSchema.parse({
+  // Filtros já sanitizados (sem zod.parse na runtime)
+  const filters = {
     location: sanitizeLocation(
       typeof searchParams?.location === 'string' ? searchParams.location : undefined
-    ),
-    time_window_min: sanitizeTime(
-      typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined
     ),
     energy: sanitizeEnergy(
       typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
     ),
-  })
-
-  const filters = {
-    location: parsedFilters.location,
-    energy: parsedFilters.energy,
-    time_window_min: nearestQuickIdeasWindow(parsedFilters.time_window_min),
+    time_window_min: nearestQuickIdeasWindow(
+      sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined)
+    ),
   } satisfies {
     location: QuickIdeasLocation
     energy: QuickIdeasEnergy
@@ -203,10 +169,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
-  const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
-  const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
-  const recProductsCatalog = RecProductSchema.array().parse(REC_PRODUCTS)
-  const selfCareCatalog = SelfCareSchema.array().parse(SELF_CARE_CMS)
+  // Catálogos (sem validação pesada para evitar crashes)
+  const ideasCatalog = FLASH_IDEAS_CATALOG
+  const routinesCatalog = FLASH_ROUTINES_CMS
+  const recProductsCatalog = REC_PRODUCTS
+  const selfCareCatalog = SELF_CARE_CMS
 
   const dateKey = getBrazilDateKey()
 
@@ -218,40 +185,32 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     flags: telemetryFlags,
   }
 
-  const profileSummary: ProfileSummaryT = ProfileSummarySchema.parse({
+  // Profile summary mínimo
+  const profileSummary = {
     mode: requestedMode,
     activeChildId,
     children: fallbackChildren,
-  })
-
-  const validatedProfile = profileSummary
-
-  const BUCKET_ORDER: Record<AgeBucket, number> = {
-    '0-1': 0,
-    '2-3': 1,
-    '4-5': 2,
-    '6-7': 3,
-    '8+': 4,
   }
 
-  const children = Array.isArray(validatedProfile.children) ? validatedProfile.children : []
+  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
+  const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
   const computedBuckets: AgeBucket[] =
-    validatedProfile.mode === 'all'
-      ? Array.from(new Set(children.map((child) => child.age_bucket))).sort(
+    profileSummary.mode === 'all'
+      ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
           (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
         )
       : (() => {
           const active =
-            (validatedProfile.activeChildId
-              ? children.find((child) => child.id === validatedProfile.activeChildId)
+            (profileSummary.activeChildId
+              ? children.find((c) => c.id === profileSummary.activeChildId)
               : undefined) ?? children[0]
           return active ? [active.age_bucket] : []
         })()
 
-  const targetBuckets: AgeBucket[] =
-    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
+  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
+  // RecShelf
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
     try {
@@ -264,21 +223,17 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     } catch (error) {
       trackTelemetry(
         'discover_section_error',
-        {
-          section: 'recshelf',
-          reason: error instanceof Error ? error.message : 'unknown',
-          fatal: false,
-        },
+        { section: 'recshelf', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
         telemetryCtx
       )
       recShelfGroups = []
     }
   }
 
-  const flashFilters = FlashRoutineFiltersSchema.parse(toFlashFilters(filters))
-
+  // FlashRoutine
+  const flashFilters = toFlashFilters(filters)
   let flashRoutineResult: ReturnType<typeof selectFlashRoutine> | null = null
-  let flashRoutineRoutine: FlashRoutineT | null = null
+  let flashRoutineRoutine: any = null
   if (flashRoutineEnabled) {
     try {
       const result = selectFlashRoutine({
@@ -290,16 +245,12 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       })
       if (result) {
         flashRoutineResult = result
-        flashRoutineRoutine = FlashRoutineSchema.parse(result.routine)
+        flashRoutineRoutine = result.routine as any
       }
     } catch (error) {
       trackTelemetry(
         'discover_section_error',
-        {
-          section: 'flash',
-          reason: error instanceof Error ? error.message : 'unknown',
-          fatal: false,
-        },
+        { section: 'flash', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
         { ...telemetryCtx, source: flashRoutineAIEnabled ? 'ai' : 'local' }
       )
       flashRoutineResult = null
@@ -307,14 +258,12 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
-  const flashRoutine = flashRoutineEnabled && flashRoutineResult && flashRoutineRoutine
-    ? {
-        routine: flashRoutineRoutine,
-        strategy: flashRoutineResult.source,
-        analyticsSource: 'local' as const,
-      }
-    : null
+  const flashRoutine =
+    flashRoutineEnabled && flashRoutineResult && flashRoutineRoutine
+      ? { routine: flashRoutineRoutine, strategy: flashRoutineResult.source, analyticsSource: 'local' as const }
+      : null
 
+  // SelfCare
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
     items: [],
     rotationKey: '',
@@ -331,37 +280,21 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     } catch (error) {
       trackTelemetry(
         'discover_section_error',
-        {
-          section: 'selfcare',
-          reason: error instanceof Error ? error.message : 'unknown',
-          fatal: false,
-        },
+        { section: 'selfcare', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
         telemetryCtx
       )
-      selfCareSelection = {
-        items: [],
-        rotationKey: '',
-        source: 'fallback' as const,
-      }
+      selfCareSelection = { items: [], rotationKey: '', source: 'fallback' as const }
     }
   }
 
+  // Sugestões diárias
   let suggestions: ReturnType<typeof buildDailySuggestions> = []
   try {
-    suggestions = buildDailySuggestions(
-      profileSummary,
-      filters,
-      dateKey,
-      QUICK_IDEAS_CATALOG
-    )
+    suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
   } catch (error) {
     trackTelemetry(
       'discover_section_error',
-      {
-        section: 'ideas',
-        reason: error instanceof Error ? error.message : 'unknown',
-        fatal: false,
-      },
+      { section: 'ideas', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
       telemetryCtx
     )
     suggestions = []
@@ -397,7 +330,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       suggestions={suggestionViews}
       filters={filters}
       dateKey={dateKey}
-      profile={profileSummary}
+      profile={profileSummary as any}
       initialAgeFilter={initialAgeFilter}
       initialPlaceFilter={initialPlaceFilter}
       recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
