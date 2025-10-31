@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
 
 import DescobrirClient from './Client'
 import { toFlashFilters } from './utils/filters'
@@ -121,6 +122,11 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
+  // evita cache no lado do servidor (com fallback caso a função mude entre versões)
+  if (typeof (noStore as any) === 'function') {
+    (noStore as any)()
+  }
+
   const jar = cookies()
   const { profile, metadata } = readProfileCookie(jar)
 
@@ -135,13 +141,17 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const requestedMode: ProfileMode =
     normalizedMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
 
-  const searchParamChildId = normalizeChildId(typeof searchParams?.child === 'string' ? searchParams.child : undefined)
+  const searchParamChildId = normalizeChildId(
+    typeof searchParams?.child === 'string' ? searchParams.child : undefined
+  )
   const metadataChildId = normalizeChildId(metadata.activeChildId ?? null)
   const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
   const activeChildId: string | null = searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
   const parsedFilters = QuickIdeasFiltersSchema.parse({
-    location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
+    location: sanitizeLocation(
+      typeof searchParams?.location === 'string' ? searchParams.location : undefined
+    ),
     time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
     energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
   })
@@ -165,8 +175,13 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     Object.entries(serverFlags).map(([key, value]) => [key, Boolean(value)])
   ) as Record<string, boolean>
 
-  const { recShelf: recShelfEnabled, flashRoutine: flashRoutineEnabled, flashRoutineAI: flashRoutineAIEnabled, selfCare: selfCareEnabled, selfCareAI: selfCareAIEnabled } =
-    serverFlags
+  const {
+    recShelf: recShelfEnabled,
+    flashRoutine: flashRoutineEnabled,
+    flashRoutineAI: flashRoutineAIEnabled,
+    selfCare: selfCareEnabled,
+    selfCareAI: selfCareAIEnabled,
+  } = serverFlags
 
   const ideasCatalog = IdeaLiteSchema.array().parse(FLASH_IDEAS_CATALOG)
   const routinesCatalog = FlashRoutineSchema.array().parse(FLASH_ROUTINES_CMS)
@@ -196,11 +211,14 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const computedBuckets: AgeBucket[] =
     validatedProfile.mode === 'all'
-      ? Array.from(new Set(children.map((c) => c.age_bucket))).sort((a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b])
+      ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
+          (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
+        )
       : (() => {
           const active =
-            (validatedProfile.activeChildId ? children.find((c) => c.id === validatedProfile.activeChildId) : undefined) ??
-            children[0]
+            (validatedProfile.activeChildId
+              ? children.find((c) => c.id === validatedProfile.activeChildId)
+              : undefined) ?? children[0]
           return active ? [active.age_bucket] : []
         })()
 
@@ -258,7 +276,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       ? { routine: flashRoutineRoutine, strategy: flashRoutineResult.source, analyticsSource: 'local' as const }
       : null
 
-  let selfCareSelection: ReturnType<typeof selectSelfCareItems> = { items: [], rotationKey: '', source: 'fallback' as const }
+  let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
+    items: [],
+    rotationKey: '',
+    source: 'fallback' as const,
+  }
   if (selfCareEnabled) {
     try {
       selfCareSelection = selectSelfCareItems({
