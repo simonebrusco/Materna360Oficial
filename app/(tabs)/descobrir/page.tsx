@@ -20,6 +20,7 @@ import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
 
+
 // Tipos locais simples para evitar conflitos de types
 type QuickIdeasLocation = 'casa' | 'parque' | 'escola' | 'area_externa'
 type QuickIdeasEnergy = 'exausta' | 'normal' | 'animada'
@@ -43,6 +44,16 @@ type QuickIdea = {
 
 type ProfileChildSummary = { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
 type ProfileMode = 'single' | 'all'
+
+import type {
+  QuickIdea,
+  QuickIdeasAgeBucket,
+  QuickIdeasEnergy,
+  QuickIdeasLocation,
+  QuickIdeasTimeWindow,
+} from '@/app/types/quickIdeas'
+import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -70,8 +81,8 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 }
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
-  const numeric = Number(value)
-  return nearestQuickIdeasWindow(numeric)
+  // garante compatibilidade de tipo com a função utilitária
+  return nearestQuickIdeasWindow(Number(value)) as QuickIdeasTimeWindow
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
@@ -118,7 +129,11 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
+
   // Desativa cache (compatível com variações do Next)
+
+  // desativa cache no servidor (fallback para variações da API)
+
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -151,9 +166,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     energy: sanitizeEnergy(
       typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
     ),
-    time_window_min: nearestQuickIdeasWindow(
-      sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined)
-    ),
+    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
   } satisfies {
     location: QuickIdeasLocation
     energy: QuickIdeasEnergy
