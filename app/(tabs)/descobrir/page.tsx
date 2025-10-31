@@ -19,6 +19,7 @@ import { readProfileCookie } from '@/app/lib/profileCookie'
 import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
+
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -27,7 +28,6 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
-import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -39,7 +39,7 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
   escola: 'Escola',
-  area_externa: 'Area Externa',
+  area_externa: 'Área Externa',
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
@@ -55,8 +55,8 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 }
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
-  const numeric = Number(value)
-  return nearestQuickIdeasWindow(numeric)
+  // garante compatibilidade de tipo com a função utilitária
+  return nearestQuickIdeasWindow(Number(value)) as QuickIdeasTimeWindow
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
@@ -71,16 +71,10 @@ const normalizeChildId = (value?: string | null): string | null => {
   return trimmed.length > 0 ? trimmed : null
 }
 
-type SearchParams = {
-  [key: string]: string | string[] | undefined
-}
+type SearchParams = { [key: string]: string | string[] | undefined }
 
 type SuggestionView = QuickIdea & {
-  child?: {
-    id: string
-    name?: string
-    age_bucket: QuickIdeasAgeBucket
-  }
+  child?: { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
 }
 
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
@@ -109,7 +103,7 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // disable caching (compatible across Next versions)
+  // desativa cache no servidor (fallback para variações da API)
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -142,9 +136,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     energy: sanitizeEnergy(
       typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
     ),
-    time_window_min: nearestQuickIdeasWindow(
-      sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined)
-    ),
+    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
   } satisfies {
     location: QuickIdeasLocation
     energy: QuickIdeasEnergy
@@ -189,10 +181,16 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
-  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
+  const BUCKET_ORDER: Record<QuickIdeasAgeBucket, number> = {
+    '0-1': 0,
+    '2-3': 1,
+    '4-5': 2,
+    '6-7': 3,
+    '8+': 4,
+  }
   const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
-  const computedBuckets: AgeBucket[] =
+  const computedBuckets: QuickIdeasAgeBucket[] =
     profileSummary.mode === 'all'
       ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
           (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
@@ -205,7 +203,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
           return active ? [active.age_bucket] : []
         })()
 
-  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
+  const targetBuckets: QuickIdeasAgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as QuickIdeasAgeBucket[])
 
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
