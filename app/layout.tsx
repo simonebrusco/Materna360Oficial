@@ -25,20 +25,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 if (typeof window === 'undefined') return;
                 let originalFetch = window.fetch;
                 let isSafeFetchInitialized = false;
-
+                
                 function isFullStoryPresent() {
                   return !!(window.FS);
                 }
-
+                
                 function fetchViaXHR(input, init) {
                   return new Promise((resolve, reject) => {
                     try {
                       const xhr = new XMLHttpRequest();
                       const url = input instanceof Request ? input.url : String(input);
                       const method = (init?.method || 'GET').toUpperCase();
-
+                      
                       xhr.open(method, url, true);
-
+                      
                       if (init?.headers) {
                         const headers = init.headers instanceof Headers
                           ? Object.fromEntries(init.headers.entries())
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                           xhr.setRequestHeader(key, val);
                         });
                       }
-
+                      
                       xhr.onload = () => {
                         const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream';
                         const response = new Response(xhr.responseText || xhr.response, {
@@ -59,23 +59,23 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         });
                         resolve(response);
                       };
-
+                      
                       xhr.onerror = () => reject(new TypeError('XMLHttpRequest failed'));
                       xhr.ontimeout = () => reject(new TypeError('XMLHttpRequest timeout'));
                       xhr.withCredentials = init?.credentials === 'include';
-
+                      
                       xhr.send(init?.body ? String(init.body) : null);
                     } catch (error) {
                       reject(error);
                     }
                   });
                 }
-
+                
                 window.fetch = function safeFetch(input, init) {
                   if (isFullStoryPresent()) {
                     return fetchViaXHR(input, init);
                   }
-
+                  
                   return new Promise((resolve, reject) => {
                     originalFetch.call(window, input, init)
                       .then(resolve)

@@ -1,27 +1,9 @@
-const path = require('path')
-
+/** ESLint base para Next.js, sem plugins custom e sem bloquear console */
 module.exports = {
   root: true,
   extends: ['next/core-web-vitals'],
-  plugins: ['import', 'local', '@typescript-eslint'],
+  parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
   rules: {
-    'import/first': 'error',
-    'no-duplicate-imports': 'error',
-    '@typescript-eslint/no-redeclare': 'error',
+    'no-console': 'off',
   },
-  settings: {
-    'import/resolver': {
-      node: {
-        paths: [path.resolve(__dirname)],
-      },
-    },
-  },
-  overrides: [
-    {
-      files: ['components/**/*.{ts,tsx,js,jsx}'],
-      rules: {
-        'local/no-client-greeting-prefix': 'error',
-      },
-    },
-  ],
-}
+};

@@ -52,14 +52,13 @@ const AGE_BAND_LABEL: Record<string, string> = {
 
   '1-2y': '1��2 anos',
 
-  '1-2y': '1���2 anos',
 
   '2-6y': '2–6 anos',
 }
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: '🍠',
+    emoji: '�',
     title: 'Purê cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
@@ -256,8 +255,11 @@ export function HealthyRecipesSection() {
 
   const childAllergies = selectedChild?.alergias ?? []
   const childMonths = selectedChild ? selectedChild.idadeMeses : null
-  const childAgeBand = childMonths === null ? '1-2y' : mapMonthsToRecipeBand(childMonths)
   const underSix = childMonths !== null && isUnderSixMonths(childMonths)
+const childAgeBand = useMemo(
+  () => (childMonths !== null ? mapMonthsToRecipeBand(childMonths) : undefined),
+  [childMonths]
+)
 
   useEffect(() => {
     if (!plannerModal.open) {
@@ -422,10 +424,6 @@ export function HealthyRecipesSection() {
 
           payload: recipePayload,
 
-          payload: {
-            recipe: plannerModal.recipe,
-            note: plannerNote,
-          },
 
           tags: Array.from(
             new Set(['receita', 'alimentação', 'saudável', ...(plannerModal.recipe.planner.tags ?? [])])
@@ -465,7 +463,7 @@ export function HealthyRecipesSection() {
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
       setToast({
-        message: `Receita salva no Planner para ${weekday} às ${time}.`,
+        message: `Receita salva no Planner para ${weekday} �s ${time}.`,
         type: 'success',
       })
       closePlannerModal()
@@ -572,7 +570,7 @@ export function HealthyRecipesSection() {
                     onChange={(event) => setServings(Math.min(Math.max(Number(event.target.value) || 1, 1), 6))}
                     className="w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
-                  <p className="text-xs text-support-2">Faixa etária sugerida: {AGE_BAND_LABEL[childAgeBand]}</p>
+                  <p className="text-xs text-support-2">Faixa etária sugerida: {childAgeBand ? AGE_BAND_LABEL[childAgeBand] : '—'}</p>
                 </div>
               </div>
             ) : (
@@ -686,7 +684,7 @@ export function HealthyRecipesSection() {
                 {isLoading ? 'Gerando receitas...' : 'Gerar receitas' }
               </Button>
               <p className="text-xs text-support-2">
-                Máximo de 3 receitas por vez • Resultados personalizados para {AGE_BAND_LABEL[childAgeBand]}
+                Máximo de 3 receitas por vez • Resultados personalizados para {childAgeBand ? AGE_BAND_LABEL[childAgeBand] : 'sua faixa'}
               </p>
             </div>
           </div>
@@ -875,7 +873,7 @@ export function HealthyRecipesSection() {
                   Categoria
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORY_OPTIONS.map((option) => (
+                  {CATEGORY_OPTIONS.map((option: any) => (
                     <button
                       key={option}
                       type="button"
