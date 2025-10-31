@@ -151,11 +151,39 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
   const activeChildId: string | null = searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
-  const parsedFilters = QuickIdeasFiltersSchema.parse({
-    location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
-    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
-    energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
-  })
+  // --- SAFE FILTER PARSING (replace the old parsedFilters block with this) ---
+  const safeLocation = sanitizeLocation(
+    typeof searchParams?.location === 'string' ? searchParams.location : undefined
+  )
+  const safeTimeWin = sanitizeTime(
+    typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined
+  )
+  const safeEnergy = sanitizeEnergy(
+    typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
+  )
+
+  const parsedFilters = (() => {
+    try {
+      return QuickIdeasFiltersSchema.parse({
+        location: safeLocation,
+        time_window_min: safeTimeWin,
+        energy: safeEnergy,
+      })
+    } catch {
+      return {
+        location: (['casa', 'parque', 'escola', 'area_externa'] as const).includes(safeLocation)
+          ? safeLocation
+          : 'casa',
+        time_window_min: Number.isFinite(Number(safeTimeWin)) ? Number(safeTimeWin) : 10,
+        energy: (['exausta', 'normal', 'animada'] as const).includes(safeEnergy) ? safeEnergy : 'normal',
+      } as {
+        location: QuickIdeasLocation
+        time_window_min: QuickIdeasTimeWindow
+        energy: QuickIdeasEnergy
+      }
+    }
+  })()
+  // --- END SAFE FILTER PARSING ---
 
   const filters = {
     location: parsedFilters.location,
