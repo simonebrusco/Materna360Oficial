@@ -78,9 +78,7 @@ const MAX_HISTORY = 3
 const PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
 
 const sanitizeStringList = (values: unknown): string[] => {
-  if (!Array.isArray(values)) {
-    return []
-  }
+  if (!Array.isArray(values)) return []
   const seen = new Set<string>()
   return values
     .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
@@ -116,7 +114,7 @@ const generatePlannerId = (prefix: string, value: string): string => {
   return `${prefix}-${identifier}`.slice(0, 80)
 }
 
-// 🔧 trocado para string
+// rótulos por faixa de idade
 const AGE_BUCKET_LABELS: Record<string, string> = {
   '0-6m': '0-6 meses',
   '7-12m': '7-12 meses',
@@ -267,7 +265,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
 
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  // 🔧 agora string
+  // usamos string para simplificar a tipagem cruzada
   const ageBucket = useMemo<string>(() => mapMonthsToBucket(childAgeMonths), [childAgeMonths])
   const latestRequestRef = useRef<AbortController | null>(null)
 
@@ -559,7 +557,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
             <button
               type="button"
               onClick={handleQuickIdeas}
-              className="inline-flex h-[32px] items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 text-[12px] font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60"
+              className="inline-flex h-[32px] items-center justify-center rounded-full border border-primary/40 bg-white/80 px-4 text-[12px] font-semibold text-primary transition hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
             >
               Quero ideias rápidas
             </button>
@@ -757,7 +755,7 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
-                  className="min-w=[240px] flex-1 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
+                  className="min-w-[240px] flex-1 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-soft"
                 >
                   <div className="h-6 w-2/3 animate-pulse rounded-full bg-secondary/40" />
                   <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-secondary/30" />
@@ -1015,11 +1013,9 @@ export function ReceitinhasCard({ childAgeMonths, initialPlan }: ReceitinhasCard
   )
 }
 
-// 🔧 ageBucket como string nas props
-
 type RecipeDetailModalProps = {
   suggestion: RecipeSuggestion
-  ageBucket: AgeBucket
+  ageBucket: string
   onClose: () => void
   isFavorite: boolean
   onFavoriteToggle: () => void
