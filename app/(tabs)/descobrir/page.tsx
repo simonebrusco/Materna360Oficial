@@ -66,20 +66,6 @@ const sanitizeTime = (value?: string | null): number => {
   return Number.isFinite(num) && num > 0 ? num : 15
 }
 
-const nearestQuickIdeasWindow = (minutes: number): QuickIdeasTimeWindow => {
-  if (minutes <= 10) return 10
-  if (minutes <= 20) return 20
-  if (minutes <= 30) return 30
-  if (minutes <= 60) return 60
-  return 120
-}
-
-const toFlashFilters = (filters: { location: QuickIdeasLocation; energy: QuickIdeasEnergy; time_window_min: QuickIdeasTimeWindow }): unknown => ({
-  locale: filters.location,
-  time_window_min: filters.time_window_min,
-  energy: filters.energy,
-})
-
 type SearchParams = {
   [key: string]: string | string[] | undefined
 }
