@@ -20,6 +20,31 @@ import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
 
+
+// Tipos locais simples para evitar conflitos de types
+type QuickIdeasLocation = 'casa' | 'parque' | 'escola' | 'area_externa'
+type QuickIdeasEnergy = 'exausta' | 'normal' | 'animada'
+type QuickIdeasTimeWindow = 2 | 5 | 10
+type QuickIdeasAgeBucket = '0-1' | '2-3' | '4-5' | '6-7' | '8+'
+
+type QuickIdea = {
+  id: string
+  title: string
+  summary?: string
+  time_total_min: number
+  location: QuickIdeasLocation
+  materials?: string[]
+  steps?: string[]
+  age_adaptations?: any
+  safety_notes?: string[]
+  badges?: string[]
+  planner_payload?: any
+  rationale?: string
+}
+
+type ProfileChildSummary = { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
+type ProfileMode = 'single' | 'all'
+
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -28,6 +53,7 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -103,7 +129,11 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
+
+  // Desativa cache (compatível com variações do Next)
+
   // desativa cache no servidor (fallback para variações da API)
+
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -285,10 +315,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
   } catch (error) {
     trackTelemetry(
-      'discover_section_error',
-      { section: 'ideas', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
-      telemetryCtx
-    )
+        'discover_section_error',
+        { section: 'ideas', reason: error instanceof Error ? error.message : 'unknown', fatal: false },
+        telemetryCtx
+      )
     suggestions = []
   }
 
