@@ -58,7 +58,9 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
   const numeric = Number(value)
 
+
   // usa o helper oficial para “encaixar” no slot mais próximo
+
 
   return nearestQuickIdeasWindow(numeric)
 }
@@ -87,8 +89,10 @@ type SuggestionView = QuickIdea & {
   }
 }
 
+/** Garante que age_adaptations seja Record<string, string[]> */
 
 /** Garante que age_adaptations sempre seja Record<string, string[]> */
+
 const normalizeAgeAdaptations = (
   v?: Record<string, string | string[]>
 ): Record<string, string[]> | undefined => {
@@ -96,6 +100,7 @@ const normalizeAgeAdaptations = (
   const out: Record<string, string[]> = {}
   for (const [k, val] of Object.entries(v)) {
     out[k] = Array.isArray(val) ? val : [String(val)]
+
 
 /** Converte age_adaptations para Partial<Record<QuickIdeasAgeBucket, string>> */
 const toAgeAdaptations = (
@@ -106,6 +111,7 @@ const toAgeAdaptations = (
   for (const [k, val] of Object.entries(v)) {
     const key = k as QuickIdeasAgeBucket
     out[key] = Array.isArray(val) ? val.join(' | ') : String(val)
+
 
   }
   return out
@@ -197,9 +203,13 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   } = serverFlags
 
 
+  // catálogos (sem zod aqui para evitar ruído de tipos)
+
+
   // catálogos (sem validação zod aqui para evitar ruído de tipos)
 
   // catálogos (sem zod aqui para evitar ruído de tipos)
+
 
   const ideasCatalog = FLASH_IDEAS_CATALOG
   const routinesCatalog = FLASH_ROUTINES_CMS
@@ -222,9 +232,14 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
+
+  // ✅ CORREÇÃO AQUI: uso de Record<AgeBucket, number>
+  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
+
   const BUCKET_ORDER: Record[AgeBucket, number] = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
 
   const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
+
 
   const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
@@ -340,7 +355,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
     age_adaptations: normalizeAgeAdaptations(idea.age_adaptations as any),
 
+
+    age_adaptations: normalizeAgeAdaptations(idea.age_adaptations as any),
+
     age_adaptations: toAgeAdaptations(idea.age_adaptations as any),
+
 
     safety_notes: idea.safety_notes,
     badges: idea.badges,
