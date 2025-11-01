@@ -65,7 +65,7 @@ const books = [
   { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
   { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
   { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
-  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
+  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exup��ry' },
 ]
 
 const toys = [
@@ -306,6 +306,40 @@ export default function DescobrirClient({
           </GridRhythm>
         </SectionWrapper>
       </SectionBoundary>
+
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
+        <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+          {books.map((book, idx) => (
+            <Reveal key={book.title} delay={idx * 70} className="h-full">
+              <Card className="h-full">
+                <div className="text-3xl">{book.emoji}</div>
+                <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
+                <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
+                <Button variant="primary" size="sm" className="mt-6 w-full">
+                  Ver Detalhes
+                </Button>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
+
+      <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
+        <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+          {toys.map((toy, idx) => (
+            <Reveal key={toy.title} delay={idx * 70} className="h-full">
+              <Card className="h-full">
+                <div className="text-3xl">{toy.emoji}</div>
+                <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
+                <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
+                <Button variant="primary" size="sm" className="mt-6 w-full">
+                  Ver Mais
+                </Button>
+              </Card>
+            </Reveal>
+          ))}
+        </GridRhythm>
+      </SectionWrapper>
 
       {flashRoutineEnabled && flashRoutine.routine && (
         <SectionBoundary title="Rotina Flash">
