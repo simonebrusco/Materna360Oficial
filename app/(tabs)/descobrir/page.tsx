@@ -349,7 +349,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       }}
       selfCare={{
         enabled: selfCareEnabled,
-        aiEnabled: selfCareAIEnabled,
+        aiEnabled: selfCareAI: selfCareAIEnabled,
         items: selfCareSelection.items,
         energy: filters.energy,
         minutes: filters.time_window_min as 2 | 5 | 10,
