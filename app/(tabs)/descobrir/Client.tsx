@@ -526,7 +526,7 @@ export default function DescobrirClient({
       </Reveal>
 
       {/* Filtros Inteligentes */}
-      <Reveal delay={80} suppressHydrationWarning>
+      <Reveal delay={80}>
         <SectionWrapper
           title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
           description="Combine idade e local para criar experiências personalizadas em segundos."
