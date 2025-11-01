@@ -21,7 +21,6 @@ import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
 
 import type {
-  QuickIdea,
   QuickIdeasAgeBucket,
   QuickIdeasEnergy,
   QuickIdeasLocation,
@@ -40,7 +39,7 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   casa: 'Casa',
   parque: 'Parque',
   escola: 'Escola',
-  area_externa: 'Área Externa',
+  area_externa: 'Area Externa',
 }
 
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
@@ -57,11 +56,6 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
   const numeric = Number(value)
-
-
-  // usa o helper oficial para “encaixar” no slot mais próximo
-
-
   return nearestQuickIdeasWindow(numeric)
 }
 
@@ -81,40 +75,25 @@ type SearchParams = {
   [key: string]: string | string[] | undefined
 }
 
-type SuggestionView = QuickIdea & {
+type SuggestionView = {
+  id: string
+  title: string
+  summary: string
+  time_total_min: number
+  location: QuickIdeasLocation
+  materials: string[]
+  steps: string[]
+  // alguns catálogos trazem arrays; normalizamos para string simples por faixa etária
+  age_adaptations?: Partial<Record<QuickIdeasAgeBucket, string>>
+  safety_notes?: string[]
+  badges?: string[]
+  planner_payload?: unknown
+  rationale?: string
   child?: {
     id: string
     name?: string
     age_bucket: QuickIdeasAgeBucket
   }
-}
-
-/** Garante que age_adaptations seja Record<string, string[]> */
-
-/** Garante que age_adaptations sempre seja Record<string, string[]> */
-
-const normalizeAgeAdaptations = (
-  v?: Record<string, string | string[]>
-): Record<string, string[]> | undefined => {
-  if (!v) return undefined
-  const out: Record<string, string[]> = {}
-  for (const [k, val] of Object.entries(v)) {
-    out[k] = Array.isArray(val) ? val : [String(val)]
-
-
-/** Converte age_adaptations para Partial<Record<QuickIdeasAgeBucket, string>> */
-const toAgeAdaptations = (
-  v?: Record<string, string | string[]>
-): Partial<Record<QuickIdeasAgeBucket, string>> => {
-  const out: Partial<Record<QuickIdeasAgeBucket, string>> = {}
-  if (!v) return out
-  for (const [k, val] of Object.entries(v)) {
-    const key = k as QuickIdeasAgeBucket
-    out[key] = Array.isArray(val) ? val.join(' | ') : String(val)
-
-
-  }
-  return out
 }
 
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
@@ -133,19 +112,17 @@ const buildProfileChildren = (
   children: Array<{ id?: string; name?: string | null; ageRange?: string | null }>
 ): ProfileChildSummary[] => {
   if (!children || children.length === 0) return []
-
   const mapped = children.map<ProfileChildSummary>((child, index) => {
     const id = child.id && child.id.trim() ? child.id.trim() : `child-${index + 1}`
     const name = child.name && child.name.trim() ? child.name.trim() : undefined
     const age_bucket = sanitizeAgeBucket(child.ageRange ?? undefined)
     return { id, name, age_bucket }
   })
-
   return dedupeChildren(mapped)
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // desabilita cache (compatível entre versões do Next)
+  // desabilita cache de forma universal
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -178,7 +155,9 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     energy: sanitizeEnergy(
       typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
     ),
-    time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
+    time_window_min: nearestQuickIdeasWindow(
+      sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined)
+    ),
   } satisfies {
     location: QuickIdeasLocation
     energy: QuickIdeasEnergy
@@ -202,15 +181,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
-
-  // catálogos (sem zod aqui para evitar ruído de tipos)
-
-
-  // catálogos (sem validação zod aqui para evitar ruído de tipos)
-
-  // catálogos (sem zod aqui para evitar ruído de tipos)
-
-
   const ideasCatalog = FLASH_IDEAS_CATALOG
   const routinesCatalog = FLASH_ROUTINES_CMS
   const recProductsCatalog = REC_PRODUCTS
@@ -232,15 +202,13 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
-
-  // ✅ CORREÇÃO AQUI: uso de Record<AgeBucket, number>
-  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-
-  const BUCKET_ORDER: Record[AgeBucket, number] = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-
-  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-
-
+  const BUCKET_ORDER: Record<AgeBucket, number> = {
+    '0-1': 0,
+    '2-3': 1,
+    '4-5': 2,
+    '6-7': 3,
+    '8+': 4,
+  }
   const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
   const computedBuckets: AgeBucket[] =
@@ -256,8 +224,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
           return active ? [active.age_bucket] : []
         })()
 
-  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
+  const targetBuckets: AgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
+  // ---------- Rec shelf ----------
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
     try {
@@ -277,6 +247,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
+  // ---------- Flash routine ----------
   const flashFilters = toFlashFilters(filters)
   let flashRoutineResult: ReturnType<typeof selectFlashRoutine> | null = null
   let flashRoutineRoutine: any = null
@@ -309,6 +280,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       ? { routine: flashRoutineRoutine, strategy: flashRoutineResult.source, analyticsSource: 'local' as const }
       : null
 
+  // ---------- Self care ----------
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
     items: [],
     rotationKey: '',
@@ -332,6 +304,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
+  // ---------- Ideias do dia ----------
   let suggestions: ReturnType<typeof buildDailySuggestions> = []
   try {
     suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
@@ -344,33 +317,38 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     suggestions = []
   }
 
+  const normalizeAgeAdaptations = (
+    input: unknown
+  ): Partial<Record<QuickIdeasAgeBucket, string>> | undefined => {
+    if (!input || typeof input !== 'object') return undefined
+    const obj = input as Record<string, unknown>
+    const out: Partial<Record<QuickIdeasAgeBucket, string>> = {}
+    for (const [k, v] of Object.entries(obj)) {
+      const key = k as QuickIdeasAgeBucket
+      if (['0-1', '2-3', '4-5', '6-7', '8+'].includes(key)) {
+        if (Array.isArray(v)) out[key] = v.join(', ')
+        else if (typeof v === 'string') out[key] = v
+        else out[key] = String(v)
+      }
+    }
+    return Object.keys(out).length ? out : undefined
+  }
+
   const suggestionViews: SuggestionView[] = suggestions.map(({ idea, child }) => ({
     id: idea.id,
     title: idea.title,
     summary: idea.summary,
     time_total_min: idea.time_total_min,
     location: idea.location,
-    materials: idea.materials,
-    steps: idea.steps,
-
-    age_adaptations: normalizeAgeAdaptations(idea.age_adaptations as any),
-
-
-    age_adaptations: normalizeAgeAdaptations(idea.age_adaptations as any),
-
-    age_adaptations: toAgeAdaptations(idea.age_adaptations as any),
-
-
-    safety_notes: idea.safety_notes,
-    badges: idea.badges,
-    planner_payload: idea.planner_payload,
-    rationale: idea.rationale,
+    materials: idea.materials ?? [],
+    steps: idea.steps ?? [],
+    age_adaptations: normalizeAgeAdaptations((idea as any).age_adaptations),
+    safety_notes: (idea as any).safety_notes ?? [],
+    badges: (idea as any).badges ?? [],
+    planner_payload: (idea as any).planner_payload,
+    rationale: (idea as any).rationale,
     child: child
-      ? {
-          id: child.id,
-          name: child.name,
-          age_bucket: child.age_bucket,
-        }
+      ? { id: child.id, name: child.name, age_bucket: child.age_bucket as QuickIdeasAgeBucket }
       : undefined,
   }))
 
@@ -395,7 +373,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       }}
       selfCare={{
         enabled: selfCareEnabled,
-        aiEnabled: selfCareAI: selfCareAIEnabled,
+        aiEnabled: selfCareAIEnabled,
         items: selfCareSelection.items,
         energy: filters.energy,
         minutes: filters.time_window_min as 2 | 5 | 10,
