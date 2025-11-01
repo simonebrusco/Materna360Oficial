@@ -61,6 +61,20 @@ type SelfCareState = {
   minutes: 2 | 5 | 10
 }
 
+const books = [
+  { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
+  { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
+  { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
+  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
+]
+
+const toys = [
+  { emoji: '🧩', title: 'Quebra-Cabeças', age: '2+' },
+  { emoji: '🪀', title: 'Brinquedos de Corda', age: '3+' },
+  { emoji: '🧸', title: 'Pelúcias Educativas', age: '0+' },
+  { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
+]
+
 type DescobrirClientProps = {
   suggestions: SuggestionCard[]
   filters: {
