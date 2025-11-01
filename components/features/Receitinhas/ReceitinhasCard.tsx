@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { ChevronDown } from 'lucide-react'
-import type { CmsRecShelfItem } from '@/app/types/recProducts'
-import { toast } from '@/lib/toast'
+import type { RecProductT } from '@/app/lib/discoverSchemas'
 
 export const PLANNER_CATEGORIES = [
   'Descobrir',
@@ -12,7 +10,7 @@ export const PLANNER_CATEGORIES = [
   'Eu360',
 ] as const
 
-const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
+const generatePlannerId = (prefix: string, item?: RecProductT): string => {
   if (!item?.title) return `${prefix}-unknown`
   return `${prefix}-${item.title
     .toLowerCase()
@@ -22,16 +20,16 @@ const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
 }
 
 interface ReceitinhasCardProps {
-  item?: CmsRecShelfItem
-  onSave?: (item: CmsRecShelfItem) => void
+  item?: RecProductT
+  onSave?: (item: RecProductT) => void
 }
 
 export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
+  const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
+
   if (!item) {
     return null
   }
-
-  const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
 
   return (
     <Card className="flex flex-col gap-3">
