@@ -30,13 +30,40 @@ import type { ProfileChildSummary } from '@/app/lib/profileTypes'
 import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
+const activities = [
+  { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
+  { id: 2, emoji: '🌳', title: 'Caça ao Tesouro no Parque', age: '4+', place: 'Parque' },
+  { id: 3, emoji: '📚', title: 'Leitura em Ciranda', age: '0-7', place: 'Casa' },
+  { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
+  { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
+  { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
+  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
+]
+
+const books = [
+  { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
+  { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
+  { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
+  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
+]
+
+const toys = [
+  { emoji: '🧩', title: 'Quebra-Cabeças', age: '2+' },
+  { emoji: '🪀', title: 'Brinquedos de Corda', age: '3+' },
+  { emoji: '🧸', title: 'Pelúcias Educativas', age: '0+' },
+  { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
+]
+
 type ToastState = {
   message: string
   type: 'success' | 'error' | 'info'
 }
 
+type SuggestionChild = ProfileChildSummary
+
 type SuggestionCard = QuickIdea & {
-  child?: ProfileChildSummary
+  child?: SuggestionChild
 }
 
 type RecShelfState = {
@@ -60,17 +87,27 @@ type SelfCareState = {
   minutes: 2 | 5 | 10
 }
 
+type RecShelfCardProps = {
+  item: RecShelfItem
+  profileMode: 'single' | 'all'
+  onSave: (item: RecShelfItem) => Promise<void>
+  onBuy: (item: RecShelfItem) => void
+  savingProductId: string | null
+}
+
+type QuickIdeaFiltersSummary = {
+  location: QuickIdeasLocation
+  time_window_min: QuickIdeasTimeWindow
+  energy: QuickIdeasEnergy
+}
+
 type DescobrirClientProps = {
   suggestions: SuggestionCard[]
-  filters: {
-    location: QuickIdeasLocation
-    energy: QuickIdeasEnergy
-    time_window_min: QuickIdeasTimeWindow
-  }
+  filters: QuickIdeaFiltersSummary
   dateKey: string
   profile: ProfileSummaryT
-  initialAgeFilter: QuickIdeasAgeBucket
-  initialPlaceFilter: string
+  initialAgeFilter?: string | null
+  initialPlaceFilter?: string | null
   recShelf: RecShelfState
   flashRoutine: FlashRoutineState
   selfCare: SelfCareState
@@ -102,7 +139,7 @@ const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
   book: { icon: '📚', title: 'Livros que Inspiram' },
   toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
   course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '🖨️', title: 'Printables para Brincar' },
+  printable: { icon: '🖨��', title: 'Printables para Brincar' },
 }
 
 const sanitizeStringList = (values: unknown): string[] => {
@@ -135,14 +172,6 @@ const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: nu
     return Math.max(min, rounded)
   }
   return Math.min(Math.max(min, rounded), max)
-}
-
-type RecShelfCardProps = {
-  item: RecShelfItem
-  profileMode: 'one' | 'all'
-  onSave: (product: RecShelfItem) => Promise<void>
-  onBuy: (product: RecShelfItem) => void
-  savingProductId: string | null
 }
 
 function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
@@ -248,26 +277,23 @@ export default function DescobrirClient({
   filters,
   dateKey,
   profile,
-  initialAgeFilter,
-  initialPlaceFilter,
+  initialAgeFilter = null,
+  initialPlaceFilter = null,
   recShelf,
   flashRoutine,
   selfCare,
   flags,
 }: DescobrirClientProps) {
-  const [toast, setToast] = useState<ToastState | null>(null)
+  const [ageFilter, setAgeFilter] = useState<string | null>(initialAgeFilter)
+  const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
+  const [showActivities, setShowActivities] = useState(false)
   const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [savingRoutine, setSavingRoutine] = useState(false)
   const [savingSelfCareId, setSavingSelfCareId] = useState<string | null>(null)
   const [completingSelfCareId, setCompletingSelfCareId] = useState<string | null>(null)
-  const [ageFilter, setAgeFilter] = useState<QuickIdeasAgeBucket>(initialAgeFilter)
-  const [placeFilter, setPlaceFilter] = useState<string>(initialPlaceFilter)
-
-  const recShelfEnabled = recShelf.enabled && recShelf.groups.length > 0
-  const flashRoutineEnabled = flashRoutine.enabled && flashRoutine.routine !== null
-  const selfCareEnabled = selfCare.enabled && selfCare.items.length > 0
+  const [toast, setToast] = useState<ToastState | null>(null)
 
   const discoverFlags = useMemo(() => getClientFlags(flags), [flags])
 
@@ -277,7 +303,8 @@ export default function DescobrirClient({
       const buckets = Array.from(new Set(children.map((child) => child.age_bucket))) as QuickIdeasAgeBucket[]
       return buckets.length > 0 ? buckets : (['2-3'] as QuickIdeasAgeBucket[])
     }
-    const activeChild = children.find((child) => child.id === profile.activeChildId) ?? children[0]
+    const activeChild =
+      children.find((child) => child.id === profile.activeChildId) ?? children[0]
     return activeChild ? [activeChild.age_bucket] : (['2-3'] as QuickIdeasAgeBucket[])
   }, [profile])
 
@@ -305,26 +332,59 @@ export default function DescobrirClient({
   }, [appVersion, dateKey, telemetryFlags])
 
   const profileMode = profile.mode
+  const impressionsKeyRef = useRef<string | null>(null)
+  const flashRoutineImpressionRef = useRef<string | null>(null)
+  const selfCareImpressionRef = useRef<string | null>(null)
+
+  const recShelfEnabled = discoverFlags.recShelf && recShelf.enabled
+  const flashRoutineEnabled = discoverFlags.flashRoutine && flashRoutine.enabled
+  const selfCareEnabled = discoverFlags.selfCare && selfCare.enabled
+
+  const filteredActivities = useMemo(() => {
+    return activities.filter((activity) => {
+      const matchesAge = !ageFilter || activity.age.includes(ageFilter.replace('+', ''))
+      const matchesPlace = !placeFilter || activity.place === placeFilter
+      return matchesAge && matchesPlace
+    })
+  }, [ageFilter, placeFilter])
+
+  const friendlyFilters = useMemo(() => {
+    const parts = [
+      friendlyLocationLabel(filters.location),
+      `${filters.time_window_min} min`,
+      friendlyEnergyLabel(filters.energy),
+    ]
+    return parts.join(' • ')
+  }, [filters])
 
   const recShelfImpressionKey = useMemo(() => {
-    return recShelf.groups.map((g) => `${g.kind}:${g.items.length}`).join('|')
-  }, [recShelf.groups])
-
-  const impressionsKeyRef = useRef<string>('')
+    if (!recShelfEnabled || recShelf.groups.length === 0) {
+      return ''
+    }
+    return recShelf.groups.map((group) => `${group.kind}:${group.items.length}`).join('|')
+  }, [recShelfEnabled, recShelf.groups])
 
   useEffect(() => {
-    if (!recShelfEnabled) {
+    if (!recShelfEnabled || recShelf.groups.length === 0) {
       return
     }
-
-    const currentKey = recShelfImpressionKey
-    if (currentKey === impressionsKeyRef.current) {
+    if (impressionsKeyRef.current === recShelfImpressionKey) {
       return
     }
-
     impressionsKeyRef.current = recShelfImpressionKey
-
-    trackTelemetry('discover_rec_impression', { groups: recShelf.groups.length }, telemetryCtx)
+    if (!sample(0.2)) {
+      return
+    }
+    const kinds = recShelf.groups.map((group) => group.kind).slice(0, 4)
+    trackTelemetry(
+      'discover_rec_impression',
+      {
+        shelves: recShelf.groups.length,
+        ageBuckets: targetBuckets,
+        kinds,
+      },
+      telemetryCtx
+    )
   }, [recShelfEnabled, recShelf.groups, recShelfImpressionKey, targetBuckets, telemetryCtx])
 
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
@@ -348,50 +408,128 @@ export default function DescobrirClient({
     </div>
   )
 
-  const flashRoutineImpressionRef = useRef<string | null>(null)
-
   useEffect(() => {
     if (!flashRoutineImpressionKey || !routine) {
       return
     }
 
-    const key = flashRoutineImpressionKey
-
-    if (key === flashRoutineImpressionRef.current) {
+    if (flashRoutineImpressionRef.current === flashRoutineImpressionKey) {
       return
     }
 
     flashRoutineImpressionRef.current = flashRoutineImpressionKey
+    if (!sample(0.2)) {
+      return
+    }
 
-    trackTelemetry('discover_flash_impression', { routineId: routine.id }, { ...telemetryCtx, source: analyticsSource })
+    trackTelemetry(
+      'discover_flash_impression',
+      {
+        routineId: routine.id,
+        source: analyticsSource,
+      },
+      { ...telemetryCtx, source: analyticsSource }
+    )
   }, [flashRoutineImpressionKey, routine, analyticsSource, telemetryCtx])
-
-  const selfCareImpressionRef = useRef<string>('')
 
   useEffect(() => {
     if (!showSelfCare) {
       return
     }
-
-    const key = selfCare.items.map((i) => i.id).join(',')
-
-    if (key === selfCareImpressionRef.current) {
+    const key = selfCare.items.map((item) => item.id).join('|')
+    if (selfCareImpressionRef.current === key) {
       return
     }
-
     selfCareImpressionRef.current = key
-
-    trackTelemetry('discover_selfcare_impression', { count: selfCare.items.length }, telemetryCtx)
+    if (!sample(0.2)) {
+      return
+    }
+    trackTelemetry(
+      'discover_selfcare_impression',
+      {
+        count: selfCare.items.length,
+        minutes: selfCare.minutes,
+        energy: selfCare.energy,
+      },
+      telemetryCtx
+    )
   }, [showSelfCare, selfCare, telemetryCtx])
 
-  const handleStart = (ideaId: string) => {
-    setExpandedIdeaId((prev) => (prev === ideaId ? null : ideaId))
+  const handleStart = (id: string) => {
+    setExpandedIdeaId((current) => (current === id ? null : id))
+  }
+
+  const handleSaveToPlanner = async (suggestion: SuggestionCard) => {
+    setSavingIdeaId(suggestion.id)
+    try {
+      const ideaDuration = coerceIntWithin(
+        suggestion.planner_payload?.duration_min ?? suggestion.time_total_min ?? 5,
+        suggestion.time_total_min ?? 5,
+        1
+      )
+      const ideaPayload = {
+        type: 'idea' as const,
+        id: suggestion.id,
+        title: suggestion.title,
+        duration_min: ideaDuration,
+        materials: sanitizeStringList(suggestion.planner_payload?.materials),
+      }
+
+      const response = await fetch('/api/planner/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Ideia: ${suggestion.title}`,
+          dateISO: dateKey,
+          timeISO: '15:00',
+          category: 'Lanche',
+          link: '/descobrir',
+          payload: ideaPayload,
+          tags: ['atividade', 'quick-idea', suggestion.location],
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
+      }
+
+      trackTelemetry('planner_save_ok', { type: 'idea', id: suggestion.id }, telemetryCtx)
+      setToast({ message: 'Sugestão salva no Planner!', type: 'success' })
+    } catch (error) {
+      console.error('[QuickIdeas] Planner save failed:', error)
+      trackTelemetry(
+        'discover_section_error',
+        {
+          section: 'ideas',
+          reason: error instanceof Error ? error.message : 'unknown',
+        },
+        telemetryCtx
+      )
+      setToast({
+        message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
+        type: 'error',
+      })
+    } finally {
+      setSavingIdeaId(null)
+    }
   }
 
   const handleShare = async (suggestion: SuggestionCard) => {
-    const baseText = `${suggestion.title}\n\n${suggestion.summary}\n\nMateriais: ${suggestion.materials.join(', ')}`
+    const baseText = `${suggestion.title}\n${suggestion.summary}\n\nPassos rápidos:\n${suggestion.steps
+      .slice(0, 3)
+      .map((step, index) => `${index + 1}. ${step}`)
+      .join('\n')}`
 
     try {
+      if (navigator.share) {
+        await navigator.share({
+          title: suggestion.title,
+          text: baseText,
+        })
+        return
+      }
+
       await navigator.clipboard.writeText(baseText)
       setToast({ message: 'Detalhes copiados para compartilhar!', type: 'info' })
     } catch (error) {
@@ -697,94 +835,151 @@ export default function DescobrirClient({
     }
   }
 
-  const handleSaveToPlanner = async (suggestion: SuggestionCard) => {
-    setSavingIdeaId(suggestion.id)
-    trackTelemetry(
-      'discover_idea_save_planner',
-      { id: suggestion.id },
-      telemetryCtx
-    )
-
-    try {
-      const ideaDuration = coerceIntWithin(
-        suggestion.planner_payload?.duration_min ?? suggestion.time_total_min ?? 5,
-        suggestion.time_total_min ?? 5,
-        1
-      )
-      const ideaPayload = {
-        type: 'idea' as const,
-        id: suggestion.id,
-        title: suggestion.title,
-        duration_min: ideaDuration,
-        materials: sanitizeStringList(suggestion.planner_payload?.materials),
-      }
-
-      const response = await fetch('/api/planner/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: suggestion.title,
-          dateISO: dateKey,
-          timeISO: '10:00',
-          category: 'Descobrir',
-          link: '/descobrir',
-          payload: ideaPayload,
-          tags: ['ideia', `${ideaDuration}min`],
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Não foi possível salvar no Planner.')
-      }
-
-      trackTelemetry('planner_save_ok', { type: 'idea', id: suggestion.id }, telemetryCtx)
-      setToast({ message: 'Ideia salva no Planner!', type: 'success' })
-    } catch (error) {
-      console.error('[QuickIdeas] Planner save failed:', error)
-      setToast({
-        message: error instanceof Error ? error.message : 'Erro ao salvar no Planner.',
-        type: 'error',
-      })
-    } finally {
-      setSavingIdeaId(null)
-    }
-  }
-
-  const filteredSuggestions = useMemo(() => {
-    return suggestions.filter((suggestion) => {
-      if (ageFilter && suggestion.age_bucket !== ageFilter) {
-        return false
-      }
-      if (placeFilter && suggestion.location !== placeFilter) {
-        return false
-      }
-      return true
-    })
-  }, [suggestions, ageFilter, placeFilter])
-
-  const friendlyFilters = useMemo(() => {
-    const parts: string[] = []
-    if (ageFilter) parts.push(bucketLabels[ageFilter])
-    if (placeFilter) parts.push(friendlyLocationLabel(placeFilter as QuickIdeasLocation))
-    return parts.length > 0 ? parts.join(' • ') : 'nenhum'
-  }, [ageFilter, placeFilter])
-
   return (
-    <main className="flex flex-col gap-8 pb-24 pt-6 md:gap-12 md:pb-32">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(62%_62%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
+      />
+
+      <Reveal>
+        <SectionWrapper
+          className="relative"
+          header={
+            <header className="SectionWrapper-header">
+              <span className="SectionWrapper-eyebrow">Inspirações</span>
+              <h1 className="SectionWrapper-title inline-flex items-center gap-2">
+                <span aria-hidden>🎨</span>
+                <span>Descobrir</span>
+              </h1>
+              <p className="SectionWrapper-description max-w-2xl">
+                Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
+              </p>
+            </header>
+          }
+        >
+          {null}
+        </SectionWrapper>
+      </Reveal>
+
+      <Reveal delay={80}>
+        <SectionWrapper
+          title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
+          description="Combine idade e local para criar experiências personalizadas em segundos."
+        >
+          <Card className="p-7">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Idade</label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {['0-1', '2-3', '4-5', '6-7', '8+'].map((age) => {
+                    const isActive = ageFilter === age
+                    return (
+                      <button
+                        key={age}
+                        onClick={() => setAgeFilter(isActive ? null : age)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
+                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
+                          }`}
+                      >
+                        {age} anos
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Local</label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {['Casa', 'Parque', 'Escola', 'Área Externa'].map((place) => {
+                    const isActive = placeFilter === place
+                    return (
+                      <button
+                        key={place}
+                        onClick={() => setPlaceFilter(isActive ? null : place)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
+                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
+                          }`}
+                      >
+                        {place}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
+                ✨ Gerar Ideias
+              </Button>
+              {(ageFilter || placeFilter || showActivities) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAgeFilter(null)
+                    setPlaceFilter(null)
+                    setShowActivities(false)
+                  }}
+                  className="sm:w-auto"
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+          </Card>
+        </SectionWrapper>
+      </Reveal>
+
+      {showActivities && (
+        <Reveal delay={140}>
+          <SectionWrapper title={`Atividades ${filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}`}>
+            {filteredActivities.length > 0 ? (
+              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+                {filteredActivities.map((activity, idx) => (
+                  <Reveal key={activity.id} delay={idx * 70} className="h-full">
+                    <Card className="h-full">
+                      <div className="text-4xl">{activity.emoji}</div>
+                      <h3 className="mt-3 text-lg font-semibold text-support-1">{activity.title}</h3>
+                      <div className="mt-3 flex gap-3 text-xs text-support-2">
+                        <span>👧 {activity.age} anos</span>
+                        <span>📍 {activity.place}</span>
+                      </div>
+                      <Button variant="primary" size="sm" className="mt-6 w-full">
+                        Salvar no Planejador
+                      </Button>
+                    </Card>
+                  </Reveal>
+                ))}
+              </GridRhythm>
+            ) : (
+              <Card className="py-12 text-center">
+                <p className="text-sm text-support-2">
+                  Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.
+                </p>
+              </Card>
+            )}
+          </SectionWrapper>
+        </Reveal>
+      )}
+
       <Reveal delay={200}>
         <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Filtros ativos: {friendlyFilters}
           </div>
           <div className="flex flex-col gap-4">
-            {filteredSuggestions.length === 0 ? (
+            {suggestions.length === 0 ? (
               <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
                 <p className="text-sm text-support-2 md:text-base">
                   Ainda não temos sugestões para estes filtros. Ajuste as preferências para descobrir novas ideias.
                 </p>
               </Card>
             ) : (
-              filteredSuggestions.map((suggestion, index) => (
+              suggestions.map((suggestion, index) => (
                 <Reveal key={suggestion.id} delay={index * 60}>
                   <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
                     <div className="text-5xl" aria-hidden>
@@ -909,102 +1104,253 @@ export default function DescobrirClient({
           >
             <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                {routine ? (
-                  <>
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-support-1">{routine.title}</h3>
-                      <p className="text-sm text-support-2/90">{routine.totalMin} minutos</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="primary" onClick={handleStartFlashRoutine}>
-                        <Play className="h-4 w-4" aria-hidden />
-                        Iniciar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => void handleSaveFlashRoutine()}
-                        disabled={savingRoutine}
+                <div>
+                  <h3 className="text-lg font-semibold text-support-1 md:text-xl">
+                    {routine?.title ?? 'Rotina sugerida'}
+                  </h3>
+                  <p className="text-sm text-support-2/90">
+                    {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {routine && (
+                    <span className="rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-support-2 shadow-soft">
+                      {bucketLabels[routine.ageBucket]}
+                    </span>
+                  )}
+                  <span className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">
+                    Parceria
+                  </span>
+                </div>
+              </div>
+
+              {!routine || !Array.isArray(routine.steps) || routine.steps.length === 0 ? (
+                <RoutineEmptyState />
+              ) : (
+                <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
+                  <ol className="space-y-3 text-sm text-support-1">
+                    {routine.steps.map((step, index) => (
+                      <li key={`${routine.id ?? 'routine'}-step-${index}`} className="flex gap-3">
+                        <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-semibold">{step.title}</p>
+                          {typeof step.minutes === 'number' && (
+                            <p className="text-xs text-support-2/80">≈ {step.minutes} minutos</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {routine?.materials?.length ? (
+                <div>
+                  <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {routine.materials.map((material, index) => (
+                      <span
+                        key={`${routine.id ?? 'routine'}-material-${index}`}
+                        className="rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft"
                       >
-                        {savingRoutine ? 'Salvando…' : 'Salvar'}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <RoutineEmptyState />
-                )}
+                        {material}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {routine?.safetyNotes?.length ? (
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <AlertTriangle className="h-4 w-4" aria-hidden /> Cuidados
+                  </h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-support-2/90">
+                    {routine.safetyNotes.map((note, idx) => (
+                      <li key={`${routine.id ?? 'routine'}-safety-${idx}`}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="primary" size="sm" onClick={handleStartFlashRoutine} disabled={!routine} aria-disabled={!routine}>
+                  {routine ? `Começar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleSaveFlashRoutine()}
+                  disabled={!routine || savingRoutine}
+                  aria-disabled={!routine || savingRoutine}
+                >
+                  {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
+                </Button>
               </div>
             </Card>
           </SectionWrapper>
         </Reveal>
       )}
 
-      {showRecShelf && (
+      {showSelfCare && (
         <Reveal delay={240}>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Recomendações Especiais</span></span>}>
-            <div className="space-y-6">
-              {recShelf.groups.map((group) => (
-                <div key={group.kind}>
-                  <h3 className="mb-4 text-base font-semibold text-support-1">
-                    {shelfLabels[group.kind]?.icon} {shelfLabels[group.kind]?.title}
-                  </h3>
-                  <div className="flex snap-x gap-4 overflow-x-auto pb-2">
-                    {group.items.map((item) => (
-                      <RecShelfCarouselCard
-                        key={item.id}
-                        item={item}
-                        profileMode={profileMode}
-                        onSave={handleSaveProduct}
-                        onBuy={handleBuyProduct}
-                        savingProductId={savingProductId}
-                      />
-                    ))}
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden>💛</span>
+                <span>Cuide-se rápido</span>
+              </span>
+            }
+            description={`Sugestões de ${selfCare.minutes} minutos para energia ${selfCare.energy}.`}
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              {selfCare.items.map((item) => (
+                <Card key={item.id} className="flex flex-col gap-4 bg-white/92 p-6 shadow-soft">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-support-1">{item.title}</h3>
+                      <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {item.minutes} minutos
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void handleSelfCareDone(item)}
+                      disabled={completingSelfCareId === item.id}
+                    >
+                      {completingSelfCareId === item.id ? 'Registrando…' : 'Fiz agora'}
+                    </Button>
                   </div>
-                </div>
+
+                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
+                    <ul className="space-y-2 text-sm text-support-1">
+                      {item.steps.slice(0, 2).map((step, idx) => (
+                        <li key={`${item.id}-step-${idx}`} className="flex gap-2">
+                          <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
+                            {idx + 1}
+                          </span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                      {item.steps.length > 2 && (
+                        <li className="text-xs text-support-2/80">+ {item.steps.length - 2} passo(s) extras no Planner</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {item.tip && (
+                    <p className="text-xs font-semibold text-primary/80">{item.tip}</p>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleSelfCareSave(item)}
+                      disabled={savingSelfCareId === item.id}
+                    >
+                      {savingSelfCareId === item.id ? 'Salvando…' : 'Salvar no Planner'}
+                    </Button>
+                  </div>
+                </Card>
               ))}
             </div>
           </SectionWrapper>
         </Reveal>
       )}
 
-      {showSelfCare && (
-        <Reveal delay={260}>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
-            <Card className="p-7">
-              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-                {selfCare.items.map((item) => (
-                  <div key={item.id} className="flex flex-col gap-3 rounded-xl bg-white/80 p-4 shadow-soft">
-                    <div>
-                      <h4 className="text-sm font-semibold text-support-1">{item.title}</h4>
-                      <p className="text-xs text-support-2/80">{item.minutes} minutos</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        className="flex-1"
-                        onClick={() => void handleSelfCareDone(item)}
-                        disabled={completingSelfCareId === item.id}
-                      >
-                        {completingSelfCareId === item.id ? 'Marcando…' : 'Feito!'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => void handleSelfCareSave(item)}
-                        disabled={savingSelfCareId === item.id}
-                      >
-                        {savingSelfCareId === item.id ? 'Salvando…' : 'Salvar'}
-                      </Button>
-                    </div>
+      {showRecShelf ? (
+        recShelf.groups.map((group, shelfIndex) => {
+          const shelfMeta = shelfLabels[group.kind]
+          return (
+            <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
+              <SectionWrapper
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <span aria-hidden>{shelfMeta.icon}</span>
+                    <span>{shelfMeta.title}</span>
+                  </span>
+                }
+              >
+                <div className="-mx-4 overflow-hidden sm:mx-0">
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0"
+                    role="list"
+                    aria-label={`Recomendações de ${shelfMeta.title}`}
+                  >
+                    {group.items.map((item, idx) => (
+                      <Reveal key={item.id} delay={idx * 40} className="h-full">
+                        <RecShelfCarouselCard
+                          item={item}
+                          profileMode={profileMode}
+                          onBuy={handleBuyProduct}
+                          onSave={handleSaveProduct}
+                          savingProductId={savingProductId}
+                        />
+                      </Reveal>
+                    ))}
                   </div>
-                ))}
-              </GridRhythm>
-            </Card>
+                </div>
+              </SectionWrapper>
+            </Reveal>
+          )
+        })
+      ) : (
+        <>
+          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+              {books.map((book, idx) => (
+                <Reveal key={book.title} delay={idx * 70} className="h-full">
+                  <Card className="h-full">
+                    <div className="text-3xl">{book.emoji}</div>
+                    <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
+                    <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
+                    <Button variant="primary" size="sm" className="mt-6 w-full">
+                      Ver Detalhes
+                    </Button>
+                  </Card>
+                </Reveal>
+              ))}
+            </GridRhythm>
           </SectionWrapper>
-        </Reveal>
+
+          <SectionWrapper title={<span className="inline-flex items-center gap-2">��<span>Brinquedos Sugeridos</span></span>}>
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+              {toys.map((toy, idx) => (
+                <Reveal key={toy.title} delay={idx * 70} className="h-full">
+                  <Card className="h-full">
+                    <div className="text-3xl">{toy.emoji}</div>
+                    <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
+                    <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
+                    <Button variant="primary" size="sm" className="mt-6 w-full">
+                      Ver Mais
+                    </Button>
+                  </Card>
+                </Reveal>
+              ))}
+            </GridRhythm>
+          </SectionWrapper>
+        </>
       )}
+
+      <Reveal delay={260}>
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
+          <Card className="p-7">
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+              {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
+                <div key={item}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    {item}
+                  </Button>
+                </div>
+              ))}
+            </GridRhythm>
+          </Card>
+        </SectionWrapper>
+      </Reveal>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </main>
