@@ -29,7 +29,6 @@ export function Reveal({ children, className = '', delay = 0 }: RevealProps) {
     )
 
     observer.observe(element)
-
     return () => observer.disconnect()
   }, [])
 
