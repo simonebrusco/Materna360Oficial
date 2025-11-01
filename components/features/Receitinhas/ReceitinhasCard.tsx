@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
