@@ -3,7 +3,6 @@
 const nextConfig = {
   reactStrictMode: true,
 
-
   // (opcional) não travar o build por lint/TS enquanto ajustamos o projeto
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
@@ -29,6 +28,7 @@ const nextConfig = {
       { source: '/', destination: '/meu-dia', permanent: false },
     ];
   },
+
 
   // Experimentos opcionais – mantenha leve
   experimental: {
