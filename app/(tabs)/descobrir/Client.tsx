@@ -65,7 +65,7 @@ const books = [
   { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
   { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
   { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
-  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exup��ry' },
+  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
 ]
 
 const toys = [
@@ -367,32 +367,21 @@ export default function DescobrirClient({
         </SectionBoundary>
       )}
 
-      {selfCareEnabled && selfCare.items.length > 0 && (
-        <SectionBoundary title="Para Você">
-          <Reveal>
-            <SectionWrapper>
-              <div className="grid gap-4 md:grid-cols-2">
-                {selfCare.items.map((item) => (
-                  <Card key={item.id} className="flex flex-col gap-4 p-4">
-                    <div>
-                      <h3 className="font-semibold text-support-1">{item.title}</h3>
-                      <p className="text-xs text-support-2">{selfCare.minutes} minutos</p>
-                    </div>
-                    {item.steps && item.steps.length > 0 && (
-                      <ul className="space-y-1 text-xs text-support-2">
-                        {item.steps.slice(0, 2).map((step, idx) => (
-                          <li key={idx}>• {step}</li>
-                        ))}
-                      </ul>
-                    )}
-                    <Button size="sm" variant="outline">Fiz agora</Button>
-                  </Card>
-                ))}
-              </div>
-            </SectionWrapper>
-          </Reveal>
-        </SectionBoundary>
-      )}
+      <Reveal delay={260}>
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
+          <Card className="p-7">
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+              {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
+                <div key={item}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    {item}
+                  </Button>
+                </div>
+              ))}
+            </GridRhythm>
+          </Card>
+        </SectionWrapper>
+      </Reveal>
     </div>
   )
 }
