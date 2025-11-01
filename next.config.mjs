@@ -4,6 +4,32 @@ const nextConfig = {
   reactStrictMode: true,
 
 
+  images: {
+    remotePatterns: [
+      // Builder.io CDN
+      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' },
+      // Outros hosts comuns usados no app (ajuste se necessário)
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'files.stripe.com' },
+    ],
+  },
+
+  async rewrites() {
+    return [
+      { source: '/', destination: '/meu-dia' },
+      { source: '/descobrir', destination: '/(tabs)/descobrir' },
+      { source: '/cuidar', destination: '/(tabs)/cuidar' },
+      { source: '/eu360', destination: '/eu360' },
+      { source: '/meu-dia', destination: '/meu-dia' },
+    ]
+  },
+}
+
+export default nextConfig
+
+
+
   // Se quiser acelerar o build enquanto ajustamos lint/TS:
 
   // (opcional) não travar o build por lint/TS enquanto ajustamos o projeto
@@ -60,3 +86,4 @@ export default nextConfig;
 async redirects() {
   return [{ source: '/', destination: '/meu-dia', permanent: false }];
 }
+
