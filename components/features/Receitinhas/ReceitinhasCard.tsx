@@ -22,7 +22,11 @@ const generatePlannerId = (prefix: string, item?: RecipeLike): string => {
 interface ReceitinhasCardProps {
   item?: RecipeLike
   onSave?: (item: RecipeLike) => void
+
   /** Extras opcionais aceitos porque o bloco ReceitinhasIA envia esses campos */
+
+  /** extras opcionais aceitos porque o bloco ReceitinhasIA envia esses campos */
+
   childAgeMonths?: number | null
   initialPlan?: string
 }
@@ -46,7 +50,11 @@ export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
           size="sm"
           variant="primary"
           onClick={() => {
+
             if (onSave) onSave(item)
+
+            if (onSave && item) onSave(item)
+
           }}
         >
           Salvar
