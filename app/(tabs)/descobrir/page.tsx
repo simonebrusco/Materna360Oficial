@@ -28,6 +28,7 @@ import type {
   QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
+import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -55,8 +56,8 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 }
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
-  // garante compatibilidade de tipo com a função utilitária
-  return nearestQuickIdeasWindow(Number(value)) as QuickIdeasTimeWindow
+  const numeric = Number(value)
+  return nearestQuickIdeasWindow(numeric)
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
@@ -71,10 +72,29 @@ const normalizeChildId = (value?: string | null): string | null => {
   return trimmed.length > 0 ? trimmed : null
 }
 
-type SearchParams = { [key: string]: string | string[] | undefined }
+type SearchParams = {
+  [key: string]: string | string[] | undefined
+}
 
 type SuggestionView = QuickIdea & {
-  child?: { id: string; name?: string; age_bucket: QuickIdeasAgeBucket }
+  child?: {
+    id: string
+    name?: string
+    age_bucket: QuickIdeasAgeBucket
+  }
+}
+
+/** Converte age_adaptations para Partial<Record<QuickIdeasAgeBucket, string>> */
+const toAgeAdaptations = (
+  v?: Record<string, string | string[]>
+): Partial<Record<QuickIdeasAgeBucket, string>> => {
+  const out: Partial<Record<QuickIdeasAgeBucket, string>> = {}
+  if (!v) return out
+  for (const [k, val] of Object.entries(v)) {
+    const key = k as QuickIdeasAgeBucket
+    out[key] = Array.isArray(val) ? val.join(' | ') : String(val)
+  }
+  return out
 }
 
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
@@ -103,7 +123,7 @@ const buildProfileChildren = (
 }
 
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // desativa cache no servidor (fallback para variações da API)
+  // desabilita cache (compatível entre versões do Next)
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -160,6 +180,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
+  // catálogos (sem zod aqui para evitar ruído de tipos)
   const ideasCatalog = FLASH_IDEAS_CATALOG
   const routinesCatalog = FLASH_ROUTINES_CMS
   const recProductsCatalog = REC_PRODUCTS
@@ -181,16 +202,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     children: fallbackChildren,
   }
 
-  const BUCKET_ORDER: Record<QuickIdeasAgeBucket, number> = {
-    '0-1': 0,
-    '2-3': 1,
-    '4-5': 2,
-    '6-7': 3,
-    '8+': 4,
-  }
+  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
   const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
 
-  const computedBuckets: QuickIdeasAgeBucket[] =
+  const computedBuckets: AgeBucket[] =
     profileSummary.mode === 'all'
       ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
           (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
@@ -203,8 +218,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
           return active ? [active.age_bucket] : []
         })()
 
-  const targetBuckets: QuickIdeasAgeBucket[] =
-    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as QuickIdeasAgeBucket[])
+  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
 
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
@@ -300,7 +314,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     location: idea.location,
     materials: idea.materials,
     steps: idea.steps,
-    age_adaptations: idea.age_adaptations,
+    age_adaptations: toAgeAdaptations(idea.age_adaptations as any),
     safety_notes: idea.safety_notes,
     badges: idea.badges,
     planner_payload: idea.planner_payload,
