@@ -1,19 +1,7 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'cdn.builder.io',
-        pathname: '/api/v1/image/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.builder.io',
-        pathname: '/api/v1/**',
-      },
-    ],
-  },
-}
+  experimental: {},
+};
 
-export default nextConfig
+export default nextConfig;
