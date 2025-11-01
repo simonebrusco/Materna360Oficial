@@ -10,6 +10,7 @@ import { FLASH_IDEAS_CATALOG } from '@/app/data/flashIdeas'
 import { FLASH_ROUTINES_CMS } from '@/app/data/flashRoutines'
 import { REC_PRODUCTS } from '@/app/data/recProducts'
 import { SELF_CARE_CMS } from '@/app/data/selfCare'
+
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { buildDailySuggestions } from '@/app/lib/quickIdeasCatalog'
 import { buildRecShelves } from '@/app/lib/recShelf'
@@ -20,19 +21,13 @@ import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
 
-import type {
-  QuickIdea,
-  QuickIdeasAgeBucket,
-  QuickIdeasEnergy,
-  QuickIdeasLocation,
-  QuickIdeasTimeWindow,
-} from '@/app/types/quickIdeas'
-import type { ProfileChildSummary, ProfileMode } from '@/app/lib/profileTypes'
-import type { AgeBucketT as AgeBucket } from '@/app/lib/discoverSchemas'
+// --------- Tipos simples locais (evita conflitos de tipos entre módulos) ----------
+type QuickIdeasLocation = 'casa' | 'parque' | 'escola' | 'area_externa'
+type QuickIdeasEnergy = 'exausta' | 'normal' | 'animada'
+type QuickIdeasAgeBucket = '0-1' | '2-3' | '4-5' | '6-7' | '8+'
+type QuickIdeasTimeWindow = 2 | 5 | 10
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
+type SearchParams = { [key: string]: string | string[] | undefined }
 
 const LOCATION_KEYS: QuickIdeasLocation[] = ['casa', 'parque', 'escola', 'area_externa']
 const ENERGY_KEYS: QuickIdeasEnergy[] = ['exausta', 'normal', 'animada']
@@ -43,6 +38,7 @@ const LOCATION_LABEL: Record<QuickIdeasLocation, string> = {
   area_externa: 'Área Externa',
 }
 
+// ---------- Sanitizers ----------
 const sanitizeLocation = (value?: string | null): QuickIdeasLocation => {
   if (!value) return 'casa'
   const normalized = value.trim().toLowerCase() as QuickIdeasLocation
@@ -56,13 +52,8 @@ const sanitizeEnergy = (value?: string | null): QuickIdeasEnergy => {
 }
 
 const sanitizeTime = (value?: string | null): QuickIdeasTimeWindow => {
-  const numeric = Number(value)
-
-
-  // usa o helper oficial para “encaixar” no slot mais próximo
-
-
-  return nearestQuickIdeasWindow(numeric)
+  const n = Number(value)
+  return nearestQuickIdeasWindow(n) as QuickIdeasTimeWindow
 }
 
 const sanitizeAgeBucket = (value?: string | null): QuickIdeasAgeBucket => {
@@ -75,46 +66,6 @@ const normalizeChildId = (value?: string | null): string | null => {
   if (!value) return null
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
-}
-
-type SearchParams = {
-  [key: string]: string | string[] | undefined
-}
-
-type SuggestionView = QuickIdea & {
-  child?: {
-    id: string
-    name?: string
-    age_bucket: QuickIdeasAgeBucket
-  }
-}
-
-/** Garante que age_adaptations seja Record<string, string[]> */
-
-/** Garante que age_adaptations sempre seja Record<string, string[]> */
-
-const normalizeAgeAdaptations = (
-  v?: Record<string, string | string[]>
-): Record<string, string[]> | undefined => {
-  if (!v) return undefined
-  const out: Record<string, string[]> = {}
-  for (const [k, val] of Object.entries(v)) {
-    out[k] = Array.isArray(val) ? val : [String(val)]
-
-
-/** Converte age_adaptations para Partial<Record<QuickIdeasAgeBucket, string>> */
-const toAgeAdaptations = (
-  v?: Record<string, string | string[]>
-): Partial<Record<QuickIdeasAgeBucket, string>> => {
-  const out: Partial<Record<QuickIdeasAgeBucket, string>> = {}
-  if (!v) return out
-  for (const [k, val] of Object.entries(v)) {
-    const key = k as QuickIdeasAgeBucket
-    out[key] = Array.isArray(val) ? val.join(' | ') : String(val)
-
-
-  }
-  return out
 }
 
 const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
@@ -131,21 +82,21 @@ const dedupeChildren = <T extends { id: string }>(items: T[]): T[] => {
 
 const buildProfileChildren = (
   children: Array<{ id?: string; name?: string | null; ageRange?: string | null }>
-): ProfileChildSummary[] => {
+) => {
   if (!children || children.length === 0) return []
-
-  const mapped = children.map<ProfileChildSummary>((child, index) => {
+  const mapped = children.map((child, index) => {
     const id = child.id && child.id.trim() ? child.id.trim() : `child-${index + 1}`
     const name = child.name && child.name.trim() ? child.name.trim() : undefined
     const age_bucket = sanitizeAgeBucket(child.ageRange ?? undefined)
     return { id, name, age_bucket }
   })
-
   return dedupeChildren(mapped)
 }
 
+// -----------------------------------------------------------------------------------
+
 export default async function DescobrirPage({ searchParams }: { searchParams?: SearchParams }) {
-  // desabilita cache (compatível entre versões do Next)
+  // Desabilita cache do lado do servidor (compatível entre versões)
   if (typeof (noStore as any) === 'function') {
     ;(noStore as any)()
   }
@@ -153,17 +104,19 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const jar = cookies()
   const { profile, metadata } = readProfileCookie(jar)
 
+  // crianças do perfil ou fallback
   const profileChildren = buildProfileChildren(profile.children ?? [])
   const fallbackChildren =
     profileChildren.length > 0
       ? profileChildren
       : [{ id: 'demo-child', name: 'Luna', age_bucket: '2-3' as QuickIdeasAgeBucket }]
 
+  // modo de visualização
   const rawModeValue = typeof searchParams?.mode === 'string' ? searchParams.mode : metadata.mode
   const normalizedMode = typeof rawModeValue === 'string' ? rawModeValue.trim().toLowerCase() : ''
-  const requestedMode: ProfileMode =
-    normalizedMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
+  const requestedMode = normalizedMode === 'all' && fallbackChildren.length > 1 ? 'all' : 'single'
 
+  // active child
   const searchParamChildId = normalizeChildId(
     typeof searchParams?.child === 'string' ? searchParams.child : undefined
   )
@@ -171,13 +124,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const fallbackActiveChildId = normalizeChildId(fallbackChildren[0]?.id ?? null)
   const activeChildId: string | null = searchParamChildId ?? metadataChildId ?? fallbackActiveChildId
 
+  // filtros (sanitizados)
   const filters = {
-    location: sanitizeLocation(
-      typeof searchParams?.location === 'string' ? searchParams.location : undefined
-    ),
-    energy: sanitizeEnergy(
-      typeof searchParams?.energia === 'string' ? searchParams.energia : undefined
-    ),
+    location: sanitizeLocation(typeof searchParams?.location === 'string' ? searchParams.location : undefined),
+    energy: sanitizeEnergy(typeof searchParams?.energia === 'string' ? searchParams.energia : undefined),
     time_window_min: sanitizeTime(typeof searchParams?.tempo === 'string' ? searchParams.tempo : undefined),
   } satisfies {
     location: QuickIdeasLocation
@@ -185,14 +135,11 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     time_window_min: QuickIdeasTimeWindow
   }
 
+  // flags de servidor
   const serverFlags = getServerFlags({
     cookies: (name) => jar.get(name)?.value,
     searchParams,
   })
-
-  const telemetryFlags = Object.fromEntries(
-    Object.entries(serverFlags).map(([key, value]) => [key, Boolean(value)])
-  ) as Record<string, boolean>
 
   const {
     recShelf: recShelfEnabled,
@@ -202,15 +149,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     selfCareAI: selfCareAIEnabled,
   } = serverFlags
 
-
-  // catálogos (sem zod aqui para evitar ruído de tipos)
-
-
-  // catálogos (sem validação zod aqui para evitar ruído de tipos)
-
-  // catálogos (sem zod aqui para evitar ruído de tipos)
-
-
+  // catálogos (usamos diretamente para evitar conflitos de tipo)
   const ideasCatalog = FLASH_IDEAS_CATALOG
   const routinesCatalog = FLASH_ROUTINES_CMS
   const recProductsCatalog = REC_PRODUCTS
@@ -223,41 +162,39 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     route: '/descobrir',
     tz: 'America/Sao_Paulo',
     dateKey,
-    flags: telemetryFlags,
+    flags: Object.fromEntries(Object.entries(serverFlags).map(([k, v]) => [k, Boolean(v)])) as Record<string, boolean>,
   }
 
+  // profile summary mínimo (sem tipos compartilhados)
   const profileSummary = {
     mode: requestedMode,
     activeChildId,
     children: fallbackChildren,
   }
 
-
-  // ✅ CORREÇÃO AQUI: uso de Record<AgeBucket, number>
-  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-
-  const BUCKET_ORDER: Record[AgeBucket, number] = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-
-  const BUCKET_ORDER: Record<AgeBucket, number> = { '0-1': 0, '2-3': 1, '4-5': 2, '6-7': 3, '8+': 4 }
-
-
-  const children = Array.isArray(profileSummary.children) ? profileSummary.children : []
-
-  const computedBuckets: AgeBucket[] =
+  // buckets alvo
+  const BUCKET_ORDER: Record<QuickIdeasAgeBucket, number> = {
+    '0-1': 0,
+    '2-3': 1,
+    '4-5': 2,
+    '6-7': 3,
+    '8+': 4,
+  }
+  const childrenArr = Array.isArray(profileSummary.children) ? profileSummary.children : []
+  const computedBuckets: QuickIdeasAgeBucket[] =
     profileSummary.mode === 'all'
-      ? Array.from(new Set(children.map((c) => c.age_bucket))).sort(
-          (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
-        )
+      ? Array.from(new Set(childrenArr.map((c) => c.age_bucket))).sort((a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b])
       : (() => {
           const active =
             (profileSummary.activeChildId
-              ? children.find((c) => c.id === profileSummary.activeChildId)
-              : undefined) ?? children[0]
+              ? childrenArr.find((c) => c.id === profileSummary.activeChildId)
+              : undefined) ?? childrenArr[0]
           return active ? [active.age_bucket] : []
         })()
+  const targetBuckets: QuickIdeasAgeBucket[] =
+    computedBuckets.length > 0 ? computedBuckets : (['2-3'] as QuickIdeasAgeBucket[])
 
-  const targetBuckets: AgeBucket[] = computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
-
+  // rec shelf
   let recShelfGroups: ReturnType<typeof buildRecShelves> = []
   if (recShelfEnabled) {
     try {
@@ -277,16 +214,17 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
+  // flash routine
   const flashFilters = toFlashFilters(filters)
   let flashRoutineResult: ReturnType<typeof selectFlashRoutine> | null = null
   let flashRoutineRoutine: any = null
   if (flashRoutineEnabled) {
     try {
       const result = selectFlashRoutine({
-        ideas: ideasCatalog,
-        routines: routinesCatalog,
-        profile: { mode: profileSummary.mode, children: profileSummary.children },
-        filters: flashFilters,
+        ideas: ideasCatalog as any,
+        routines: routinesCatalog as any,
+        profile: { mode: profileSummary.mode as any, children: profileSummary.children as any },
+        filters: flashFilters as any,
         dateKey,
       })
       if (result) {
@@ -309,6 +247,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       ? { routine: flashRoutineRoutine, strategy: flashRoutineResult.source, analyticsSource: 'local' as const }
       : null
 
+  // self-care
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
     items: [],
     rotationKey: '',
@@ -317,7 +256,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   if (selfCareEnabled) {
     try {
       selfCareSelection = selectSelfCareItems({
-        items: selfCareCatalog,
+        items: selfCareCatalog as any,
         energy: filters.energy,
         minutes: filters.time_window_min as 2 | 5 | 10,
         dateKey,
@@ -332,9 +271,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     }
   }
 
+  // sugestões do dia
   let suggestions: ReturnType<typeof buildDailySuggestions> = []
   try {
-    suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG)
+    suggestions = buildDailySuggestions(profileSummary as any, filters as any, dateKey, QUICK_IDEAS_CATALOG as any)
   } catch (error) {
     trackTelemetry(
       'discover_section_error',
@@ -344,7 +284,8 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     suggestions = []
   }
 
-  const suggestionViews: SuggestionView[] = suggestions.map(({ idea, child }) => ({
+  // mapeia para a view esperada pelo client (sem brigar com tipos)
+  const suggestionViews = suggestions.map(({ idea, child }: any) => ({
     id: idea.id,
     title: idea.title,
     summary: idea.summary,
@@ -352,15 +293,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     location: idea.location,
     materials: idea.materials,
     steps: idea.steps,
-
-    age_adaptations: normalizeAgeAdaptations(idea.age_adaptations as any),
-
-
-    age_adaptations: normalizeAgeAdaptations(idea.age_adaptations as any),
-
-    age_adaptations: toAgeAdaptations(idea.age_adaptations as any),
-
-
+    age_adaptations: idea.age_adaptations,
     safety_notes: idea.safety_notes,
     badges: idea.badges,
     planner_payload: idea.planner_payload,
@@ -374,33 +307,33 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       : undefined,
   }))
 
-  const initialAgeFilter = children[0]?.age_bucket ?? '2-3'
+  const initialAgeFilter = childrenArr[0]?.age_bucket ?? '2-3'
   const initialPlaceFilter = LOCATION_LABEL[filters.location]
 
   return (
     <DescobrirClient
-      suggestions={suggestionViews}
-      filters={filters}
+      suggestions={suggestionViews as any}
+      filters={filters as any}
       dateKey={dateKey}
       profile={profileSummary as any}
       initialAgeFilter={initialAgeFilter}
       initialPlaceFilter={initialPlaceFilter}
-      recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups }}
+      recShelf={{ enabled: recShelfEnabled, groups: recShelfGroups } as any}
       flashRoutine={{
         enabled: flashRoutineEnabled,
         aiEnabled: flashRoutineAIEnabled,
         routine: flashRoutine?.routine ?? null,
         strategy: flashRoutine?.strategy ?? null,
         analyticsSource: flashRoutine?.analyticsSource ?? 'local',
-      }}
+      } as any}
       selfCare={{
         enabled: selfCareEnabled,
         aiEnabled: selfCareAI: selfCareAIEnabled,
         items: selfCareSelection.items,
         energy: filters.energy,
         minutes: filters.time_window_min as 2 | 5 | 10,
-      }}
-      flags={serverFlags}
+      } as any}
+      flags={serverFlags as any}
     />
   )
 }
