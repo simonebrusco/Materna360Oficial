@@ -878,11 +878,10 @@ export default function DescobrirClient({
                       <button
                         key={age}
                         onClick={() => setAgeFilter(isActive ? null : age)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
-                          isActive
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
                             ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
                             : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-                        }`}
+                          }`}
                       >
                         {age} anos
                       </button>
@@ -900,11 +899,10 @@ export default function DescobrirClient({
                       <button
                         key={place}
                         onClick={() => setPlaceFilter(isActive ? null : place)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
-                          isActive
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
                             ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
                             : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-                        }`}
+                          }`}
                       >
                         {place}
                       </button>
