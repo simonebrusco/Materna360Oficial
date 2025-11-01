@@ -3,7 +3,11 @@
 const nextConfig = {
   reactStrictMode: true,
 
+
+  // Se quiser acelerar o build enquanto ajustamos lint/TS:
+
   // (opcional) não travar o build por lint/TS enquanto ajustamos o projeto
+
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
@@ -15,6 +19,12 @@ const nextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: '*.googleusercontent.com' },
     ],
+  },
+
+
+  // Removemos rewrites inválidos. Se precisar, adicionamos depois com o formato correto.
+  async rewrites() {
+    return [];
   },
 
   // Sem rewrites por enquanto (evita "Invalid rewrites found")
@@ -47,3 +57,6 @@ const nextConfig = {
 };
 
 export default nextConfig;
+async redirects() {
+  return [{ source: '/', destination: '/meu-dia', permanent: false }];
+}
