@@ -75,6 +75,18 @@ const toys = [
   { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
 ]
 
+const badgeLabels: Record<string, string> = {
+  curta: 'Curta',
+  sem_bagunça: 'Sem bagunça',
+  ao_ar_livre: 'Ao ar livre',
+  motor_fino: 'Motor fino',
+  motor_grosso: 'Motor grosso',
+  linguagem: 'Linguagem',
+  sensorial: 'Sensorial',
+}
+
+const badgeClassName = 'inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary'
+
 type DescobrirClientProps = {
   suggestions: SuggestionCard[]
   filters: {
@@ -107,8 +119,9 @@ export default function DescobrirClient({
   const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
-  const [ageFilter, setAgeFilter] = useState<string>(initialAgeFilter)
-  const [placeFilter, setPlaceFilter] = useState<string>(initialPlaceFilter)
+  const [ageFilter, setAgeFilter] = useState<QuickIdeasAgeBucket | null>(initialAgeFilter)
+  const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
+  const [showActivities, setShowActivities] = useState(false)
 
   const impressionsKeyRef = useRef<string | null>(null)
   const flashRoutineImpressionRef = useRef<string | null>(null)
@@ -122,6 +135,13 @@ export default function DescobrirClient({
 
   const profileMode = profile.mode
   const targetBuckets = profile.children.map((c) => c.age_bucket)
+
+  const friendlyFilters = useMemo(() => {
+    const parts: string[] = []
+    if (ageFilter) parts.push(`${ageFilter} anos`)
+    if (placeFilter) parts.push(placeFilter)
+    return parts.length > 0 ? parts.join(' • ') : 'nenhum'
+  }, [ageFilter, placeFilter])
 
   // Track rec shelf impressions
   useEffect(() => {
@@ -255,7 +275,7 @@ export default function DescobrirClient({
       if (ageFilter && suggestion.child?.age_bucket !== ageFilter) {
         return false
       }
-      if (placeFilter && suggestion.location !== placeFilter) {
+      if (placeFilter && suggestion.location !== placeFilter.toLowerCase().replace(' ', '_').replace('á', 'a')) {
         return false
       }
       return true
@@ -263,7 +283,7 @@ export default function DescobrirClient({
   }, [suggestions, ageFilter, placeFilter])
 
   return (
-    <div className="w-full space-y-6 py-6">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-28 sm:px-6 md:px-8 md:pb-32">
       {toast && (
         <Toast
           message={toast.message}
@@ -272,40 +292,178 @@ export default function DescobrirClient({
         />
       )}
 
-      <SectionBoundary title="Ideias Rápidas">
-        <SectionWrapper>
-          <GridRhythm>
-            {filteredSuggestions.map((suggestion) => (
-              <Reveal key={suggestion.id}>
-                <Card className="flex flex-col gap-4 p-4">
-                  <div>
-                    <h3 className="font-semibold text-support-1">{suggestion.title}</h3>
-                    <p className="text-sm text-support-2/80">{suggestion.summary}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => handleStart(suggestion.id)}
-                    >
-                      <Play className="h-4 w-4" />
-                      Começar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleSaveToPlanner(suggestion)}
-                      disabled={savingIdeaId === suggestion.id}
-                    >
-                      {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar'}
-                    </Button>
-                  </div>
-                </Card>
-              </Reveal>
-            ))}
-          </GridRhythm>
+      <Reveal>
+        <SectionWrapper
+          title={<span className="inline-flex items-center gap-2">🎨<span>Descobrir</span></span>}
+        >
+          <p className="text-sm text-support-2 md:text-base">
+            Explorando ideias personalizadas para cada momento do dia.
+          </p>
         </SectionWrapper>
-      </SectionBoundary>
+      </Reveal>
+
+      <Reveal delay={80}>
+        <SectionWrapper
+          title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
+          description="Combine idade e local para criar experiências personalizadas em segundos."
+        >
+          <Card className="p-7">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Idade</label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(['0-1', '2-3', '4-5', '6-7', '8+'] as QuickIdeasAgeBucket[]).map((age) => {
+                    const isActive = ageFilter === age
+                    return (
+                      <button
+                        key={age}
+                        onClick={() => setAgeFilter(isActive ? null : age)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
+                          isActive
+                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
+                        }`}
+                      >
+                        {age} anos
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Local</label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {['Casa', 'Parque', 'Escola', 'Área Externa'].map((place) => {
+                    const isActive = placeFilter === place
+                    return (
+                      <button
+                        key={place}
+                        onClick={() => setPlaceFilter(isActive ? null : place)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${
+                          isActive
+                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
+                        }`}
+                      >
+                        {place}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
+                ✨ Gerar Ideias
+              </Button>
+              {(ageFilter || placeFilter || showActivities) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAgeFilter(null)
+                    setPlaceFilter(null)
+                    setShowActivities(false)
+                  }}
+                  className="sm:w-auto"
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+          </Card>
+        </SectionWrapper>
+      </Reveal>
+
+      <Reveal delay={200}>
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
+          <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
+            Filtros ativos: {friendlyFilters}
+          </div>
+          <div className="flex flex-col gap-4">
+            {filteredSuggestions.length === 0 ? (
+              <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
+                <p className="text-sm text-support-2 md:text-base">
+                  Ainda não temos sugestões para estes filtros. Ajuste as preferências para descobrir novas ideias.
+                </p>
+              </Card>
+            ) : (
+              filteredSuggestions.map((suggestion, index) => (
+                <Reveal key={suggestion.id} delay={index * 60}>
+                  <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
+                    <div className="text-5xl" aria-hidden>
+                      🌟
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
+                          Sugestão personalizada
+                          {profileMode === 'all' && suggestion.child
+                            ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
+                            : ''}
+                        </span>
+                        <span className="text-xs text-support-2/80">
+                          ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-support-1 md:text-xl">{suggestion.title}</h3>
+                        <p className="text-sm text-support-2 md:text-base">{suggestion.summary}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
+                        {suggestion.badges.slice(0, 2).map((badge) => (
+                          <span key={badge} className={badgeClassName}>
+                            {badgeLabels[badge] || badge}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="primary" size="sm" className="sm:w-auto" onClick={() => handleStart(suggestion.id)}>
+                          Começar agora
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="sm:w-auto"
+                          onClick={() => void handleSaveToPlanner(suggestion)}
+                          disabled={savingIdeaId === suggestion.id}
+                        >
+                          {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
+                        </Button>
+                      </div>
+
+                      {expandedIdeaId === suggestion.id && (
+                        <div className="space-y-4 rounded-2xl border border-white/60 bg-white/92 p-4 shadow-soft">
+                          <div>
+                            <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
+                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
+                              {suggestion.materials.map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-support-1">Passo a passo</h4>
+                            <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-support-2/90">
+                              {suggestion.steps.map((step, idx) => (
+                                <li key={idx}>{step}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                </Reveal>
+              ))
+            )}
+          </div>
+        </SectionWrapper>
+      </Reveal>
 
       <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
         <GridRhythm className="grid-cols-1 sm:grid-cols-2">
@@ -382,6 +540,6 @@ export default function DescobrirClient({
           </Card>
         </SectionWrapper>
       </Reveal>
-    </div>
+    </main>
   )
 }
