@@ -3,6 +3,7 @@
 const nextConfig = {
   reactStrictMode: true,
 
+
   // (opcional) não travar o build por lint/TS enquanto ajustamos o projeto
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
@@ -28,6 +29,21 @@ const nextConfig = {
       { source: '/', destination: '/meu-dia', permanent: false },
     ];
   },
+
+  // Experimentos opcionais – mantenha leve
+  experimental: {
+    typedRoutes: true,
+  },
+
+  images: {
+    remotePatterns: [
+      // adicione os domínios de imagens que você usa
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'cdn.pixabay.com' },
+      { protocol: 'https', hostname: '*.vercel-storage.com' },
+    ],
+  },
+
 };
 
 export default nextConfig;
