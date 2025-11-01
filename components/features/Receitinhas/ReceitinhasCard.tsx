@@ -17,16 +17,17 @@ const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
 interface ReceitinhasCardProps {
   item?: CmsRecShelfItem
   onSave?: (item: CmsRecShelfItem) => void
+  /** extras aceitos porque ReceitinhasIA envia esses campos */
+  childAgeMonths?: number | null
+  initialPlan?: string // ex.: 'premium' | outras variantes
 }
 
 export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
-  // ✅ Hooks devem ser chamados sempre, independentemente de condições
+  // Hooks sempre no topo (sem condicional)
   const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
 
-  // Early return só DEPOIS dos hooks
-  if (!item) {
-    return null
-  }
+  // Early return após os hooks
+  if (!item) return null
 
   return (
     <Card className="flex flex-col gap-3" data-computed-id={computedId}>
@@ -34,14 +35,13 @@ export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
         <h3 className="font-semibold text-support-1">{item.title}</h3>
         <p className="text-sm text-support-2/80">{item.description}</p>
       </div>
+
       <div className="flex gap-2">
         <Button
           size="sm"
           variant="primary"
           onClick={() => {
-            if (onSave) {
-              onSave(item)
-            }
+            if (onSave) onSave(item)
           }}
         >
           Salvar
