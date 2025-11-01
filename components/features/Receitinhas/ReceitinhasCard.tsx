@@ -3,9 +3,14 @@
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import type { CmsRecShelfItem } from '@/app/types/recProducts'
 
-const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
+/** Tipo mínimo local, suficiente para este card (evita dependência de tipos não exportados) */
+type RecipeLike = {
+  title?: string
+  description?: string
+}
+
+const generatePlannerId = (prefix: string, item?: RecipeLike): string => {
   if (!item?.title) return `${prefix}-unknown`
   return `${prefix}-${item.title
     .toLowerCase()
@@ -15,18 +20,18 @@ const generatePlannerId = (prefix: string, item?: CmsRecShelfItem): string => {
 }
 
 interface ReceitinhasCardProps {
-  item?: CmsRecShelfItem
-  onSave?: (item: CmsRecShelfItem) => void
-  /** extras aceitos porque ReceitinhasIA envia esses campos */
+  item?: RecipeLike
+  onSave?: (item: RecipeLike) => void
+  /** extras opcionais aceitos porque o bloco ReceitinhasIA envia esses campos */
   childAgeMonths?: number | null
-  initialPlan?: string // ex.: 'premium' | outras variantes
+  initialPlan?: string
 }
 
 export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
-  // Hooks sempre no topo (sem condicional)
+  // Hooks sempre no topo
   const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
 
-  // Early return após os hooks
+  // Early return após hooks
   if (!item) return null
 
   return (
@@ -41,7 +46,7 @@ export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
           size="sm"
           variant="primary"
           onClick={() => {
-            if (onSave) onSave(item)
+            if (onSave && item) onSave(item)
           }}
         >
           Salvar
