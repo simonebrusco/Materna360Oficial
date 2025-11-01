@@ -1,89 +1,34 @@
-// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Segurança: não mude nada aqui sem necessidade
   reactStrictMode: true,
 
+  // Mantém o build estrito (ajuda a evitar regressões silenciosas)
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
 
-  images: {
-    remotePatterns: [
-      // Builder.io CDN
-      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' },
-      // Outros hosts comuns usados no app (ajuste se necessário)
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'files.stripe.com' },
-    ],
-  },
-
-  async rewrites() {
-    return [
-      { source: '/', destination: '/meu-dia' },
-      { source: '/descobrir', destination: '/(tabs)/descobrir' },
-      { source: '/cuidar', destination: '/(tabs)/cuidar' },
-      { source: '/eu360', destination: '/eu360' },
-      { source: '/meu-dia', destination: '/meu-dia' },
-    ]
-  },
-}
-
-export default nextConfig
-
-
-
-  // Se quiser acelerar o build enquanto ajustamos lint/TS:
-
-  // (opcional) não travar o build por lint/TS enquanto ajustamos o projeto
-
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
-
+  // Domínios de imagens remotas usados no app
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'cdn.pixabay.com' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
-      { protocol: 'https', hostname: '*.googleusercontent.com' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
     ],
   },
 
-
-  // Removemos rewrites inválidos. Se precisar, adicionamos depois com o formato correto.
+  // Se você não precisa de nenhuma reescrita, retorne array vazio.
+  // Estrutura VÁLIDA: uma função async que retorna um array OU
+  // um objeto { beforeFiles, afterFiles, fallback } com arrays.
   async rewrites() {
     return [];
   },
 
-  // Sem rewrites por enquanto (evita "Invalid rewrites found")
-  async rewrites() {
-    return [];
-  },
-
-  // (opcional) redirecionar "/" para "/meu-dia"
-  async redirects() {
-    return [
-      { source: '/', destination: '/meu-dia', permanent: false },
-    ];
-  },
-
-
-  // Experimentos opcionais – mantenha leve
-  experimental: {
-    typedRoutes: true,
-  },
-
-  images: {
-    remotePatterns: [
-      // adicione os domínios de imagens que você usa
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'cdn.pixabay.com' },
-      { protocol: 'https', hostname: '*.vercel-storage.com' },
-    ],
-  },
-
+  // Se um dia precisar de redirects, siga este formato:
+  // async redirects() {
+  //   return [
+  //     { source: '/old', destination: '/new', permanent: true },
+  //   ];
+  // },
 };
 
 export default nextConfig;
-async redirects() {
-  return [{ source: '/', destination: '/meu-dia', permanent: false }];
-}
-
