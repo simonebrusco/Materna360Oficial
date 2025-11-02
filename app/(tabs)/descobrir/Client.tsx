@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { AlertTriangle, ShoppingBag } from 'lucide-react'
 
 import SectionBoundary from '@/components/common/SectionBoundary'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
+import SectionWrapper from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
@@ -844,7 +844,7 @@ export default function DescobrirClient({
       )}
 
       {/* Self Care (se disponível) */}
-      {showSelfCare && (
+      {selfCareEnabled && selfCare.items.length > 0 && (
         <Reveal delay={240}>
           <SectionWrapper
             title={

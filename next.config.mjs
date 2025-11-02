@@ -1,16 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  experimental: {},
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'cdn.builder.io',
-        pathname: '/api/v1/image/**',
-      },
-    ],
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
+  experimental: {
+    typedRoutes: true,
   },
-};
+  // 🔹 sem aliases de compatibilidade aqui
+}
 
-export default nextConfig;
+export default nextConfig
