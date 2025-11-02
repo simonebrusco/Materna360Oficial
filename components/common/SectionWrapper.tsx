@@ -13,9 +13,11 @@ type SectionElementTag =
   | 'footer'
   | 'article'
 
-export type SectionWrapperProps = React.HTMLAttributes<HTMLElement> & {
+// ⚠️ Removemos 'title' dos HTMLAttributes para evitar conflito com o tooltip.
+export type SectionWrapperProps = Omit<React.HTMLAttributes<HTMLElement>, 'title'> & {
   as?: SectionElementTag
   eyebrow?: React.ReactNode
+  /** Conteúdo do título (não é o tooltip HTML) */
   title?: React.ReactNode
   description?: React.ReactNode
   header?: React.ReactNode
@@ -38,10 +40,7 @@ export default function SectionWrapper({
   ...rest
 }: SectionWrapperProps) {
   const uid = React.useId()
-
-  // ids acessíveis – calculados sem novos hooks
-  const headingId =
-    titleId ?? (title ? uid : undefined)
+  const headingId = titleId ?? (title ? uid : undefined)
   const descId = description && headingId ? `${headingId}-desc` : undefined
 
   const ElementTag = (as ?? 'section') as any
