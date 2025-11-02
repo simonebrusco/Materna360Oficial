@@ -1,58 +1,74 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+'use client'
 
-type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>
+import React, { useId, type HTMLAttributes, type ReactNode } from 'react'
+import clsx from 'clsx'
 
-type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside'
+type SectionTag = 'section' | 'div' | 'article' | 'main' | 'aside'
+type BaseAttrs = Omit<HTMLAttributes<HTMLElement>, 'title'>
 
-interface SectionWrapperProps extends BaseAttributes {
-  as?: SectionElementTag
+export interface SectionWrapperProps extends BaseAttrs {
+  as?: SectionTag
   eyebrow?: ReactNode
   title?: ReactNode
   description?: ReactNode
   header?: ReactNode
-  headerClassName?: string
   contentClassName?: string
-  children: ReactNode
+  children?: ReactNode
 }
 
-export function SectionWrapper({
+export default function SectionWrapper({
   as = 'section',
   eyebrow,
   title,
   description,
   header,
-  className = '',
-  headerClassName = '',
+  className,
   contentClassName,
   children,
   ...rest
 }: SectionWrapperProps) {
-  const ElementTag = as
-  const mergedClassName = [
-    'SectionWrapper',
-    className
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const tag: SectionTag = as
+  const autoId = useId()
+  const headingId = title ? `sw-${autoId}` : undefined
+  const regionRole = tag !== 'section' && headingId ? 'region' : undefined
+  const hasHeader = Boolean(header || title || description || eyebrow)
 
-  const renderedHeader =
-    header ??
-    (eyebrow || title || description ? (
-      <div className={['SectionWrapper-header', headerClassName].filter(Boolean).join(' ')}>
-        {eyebrow ? <span className="SectionWrapper-eyebrow">{eyebrow}</span> : null}
-        {title ? <h2 className="SectionWrapper-title">{title}</h2> : null}
-        {description ? (
-          <p className="SectionWrapper-description">{description}</p>
-        ) : null}
-      </div>
-    ) : null)
+  const headerNode = hasHeader ? (
+    <header className="SectionWrapper-header space-y-2">
+      {eyebrow ? (
+        <span className="SectionWrapper-eyebrow text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">
+          {eyebrow}
+        </span>
+      ) : null}
 
-  const content = contentClassName ? <div className={contentClassName}>{children}</div> : children
+      {title ? (
+        <h2 id={headingId} className="SectionWrapper-title text-xl font-semibold text-support-1">
+          {title}
+        </h2>
+      ) : null}
 
-  return (
-    <ElementTag className={mergedClassName} {...rest}>
-      {renderedHeader}
-      {content}
-    </ElementTag>
+      {description ? (
+        <p className="SectionWrapper-description text-support-2/90">
+          {description}
+        </p>
+      ) : null}
+
+      {header ?? null}
+    </header>
+  ) : null
+
+  const contentNode = (
+    <div className={clsx('SectionWrapper-content space-y-4', contentClassName)}>
+      {children}
+    </div>
   )
+
+  const containerProps: React.HTMLAttributes<HTMLElement> = {
+    className: clsx('SectionWrapper space-y-6', className),
+    ...(headingId ? { 'aria-labelledby': headingId } : {}),
+    ...(regionRole ? { role: regionRole } : {}),
+    ...rest,
+  }
+
+  return React.createElement(tag, containerProps, headerNode, contentNode)
 }
