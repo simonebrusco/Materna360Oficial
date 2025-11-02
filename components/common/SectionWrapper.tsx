@@ -1,3 +1,7 @@
+
+
+cat > components/common/SectionWrapper.tsx <<'TSX'
+
 'use client'
 
 import React, { useId, type HTMLAttributes, type ReactNode } from 'react'
@@ -85,3 +89,4 @@ export default function SectionWrapper({
 
   return React.createElement(as, containerProps, header ?? defaultHeader, contentNode)
 }
+TSX
