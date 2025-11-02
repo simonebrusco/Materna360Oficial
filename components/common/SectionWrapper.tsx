@@ -18,8 +18,10 @@ export interface SectionWrapperProps extends BaseAttributes {
 }
 
 /**
- * Wrapper semântico de seção com cabeçalho opcional.
- * Usa React.createElement para evitar o erro “Unexpected token ElementTag” em prod.
+ * SectionWrapper — contêiner semântico com cabeçalho opcional.
+ * - Tag dinâmica via `as` (section/div/article/main/aside)
+ * - A11y: se houver título, usa aria-labelledby
+ * - Usa React.createElement para evitar o erro “Unexpected token ElementTag” no build
  */
 export function SectionWrapper({
   as = 'section',
@@ -35,7 +37,7 @@ export function SectionWrapper({
 }: SectionWrapperProps) {
   const ElementTag = as;
 
-  // A11y: liga o container ao título, se existir
+  // A11y: associa container ao título, se existir
   const autoId = React.useId();
   const headingId = title ? `section-heading-${autoId}` : undefined;
 
@@ -51,14 +53,17 @@ export function SectionWrapper({
             {title}
           </h2>
         ) : null}
-        {description ? (
-          <p className="SectionWrapper-description">{description}</p>
-        ) : null}
+        {description ? <p className="SectionWrapper-description">{description}</p> : null}
       </div>
     ) : null);
 
-  const content = contentClassName ? <div className={contentClassName}>{children}</div> : children;
+  const content = contentClassName ? (
+    <div className={contentClassName}>{children}</div>
+  ) : (
+    children
+  );
 
+  // Evita erro de parser com JSX dinâmico
   const ariaProps = headingId ? { 'aria-labelledby': headingId } : {};
 
   return React.createElement(
@@ -69,6 +74,6 @@ export function SectionWrapper({
   );
 }
 
-// ✅ Exporta dos dois jeitos para compatibilizar todos os imports do projeto
+// Compatibilidade: export default + nomeado
 export default SectionWrapper;
 export { SectionWrapper };
