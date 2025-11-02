@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { AlertTriangle, ShoppingBag } from 'lucide-react'
 
 import SectionBoundary from '@/components/common/SectionBoundary'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
+import SectionWrapper from '@/components/common/SectionWrapper' // <- default import (corrigido)
 import GridRhythm from '@/components/common/GridRhythm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
