@@ -1,23 +1,31 @@
-// components/common/SectionWrapper.tsx
-import * as React from 'react'
+'use client'
+
+import React, { useId, type HTMLAttributes, type ReactNode } from 'react'
 import clsx from 'clsx'
 
 type SectionElementTag =
   | 'section' | 'div' | 'main' | 'aside' | 'header' | 'footer' | 'article' | 'nav'
 
-export type SectionWrapperProps = React.HTMLAttributes<HTMLElement> & {
+type BaseAttrs = Omit<HTMLAttributes<HTMLElement>, 'title'>
+
+export interface SectionWrapperProps extends BaseAttrs {
   as?: SectionElementTag
   id?: string
-  header?: React.ReactNode
-  eyebrow?: React.ReactNode
+  header?: ReactNode
+  eyebrow?: ReactNode
   /** Aceita string OU ReactNode (ex.: <span>…</span>) */
-  title?: React.ReactNode
+  title?: ReactNode
   /** Aceita string OU ReactNode */
-  description?: React.ReactNode
+  description?: ReactNode
   contentClassName?: string
   role?: string
+  children?: ReactNode
 }
 
+/**
+ * Wrapper semântico de seção com cabeçalho opcional.
+ * Usa React.createElement para evitar problemas com JSX dinâmico (<Tag>).
+ */
 export default function SectionWrapper({
   as = 'section',
   id,
@@ -31,11 +39,11 @@ export default function SectionWrapper({
   children,
   ...rest
 }: SectionWrapperProps) {
-  // useId sempre no topo (nunca condicional)
-  const autoId = React.useId()
-  const headingId = id ?? `sec-${autoId}`
-
-  const ElementTag = as
+  // id estável para heading (nunca condicional)
+  const autoId = useId()
+  const headingId = title ? (id ?? `sec-${autoId}`) : undefined
+  // role=region quando não for <section> e existir heading
+  const regionRole = role ?? ((as !== 'section' && headingId) ? 'region' : undefined)
 
   const mergedClassName = clsx(
     'SectionWrapper relative rounded-soft-3xl border border-white/60 bg-white/90 p-6 shadow-soft sm:p-7',
@@ -63,17 +71,19 @@ export default function SectionWrapper({
       </header>
     ) : null
 
-  return (
-    <ElementTag
-      className={mergedClassName}
-      role={role}
-      aria-labelledby={title ? headingId : undefined}
-      {...rest}
-    >
-      {header ?? defaultHeader}
-      <div className={clsx('SectionWrapper-content space-y-4', contentClassName)}>
-        {children}
-      </div>
-    </ElementTag>
+  const containerProps: HTMLAttributes<HTMLElement> = {
+    className: mergedClassName,
+    ...(headingId ? { 'aria-labelledby': headingId } : {}),
+    ...(regionRole ? { role: regionRole } : {}),
+    ...rest,
+  }
+
+  const contentNode = (
+    <div className={clsx('SectionWrapper-content space-y-4', contentClassName)}>
+      {children}
+    </div>
   )
+
+  // evita JSX dinâmico <Tag>
+  return React.createElement(as, containerProps, header ?? defaultHeader, contentNode)
 }
