@@ -16,6 +16,13 @@ export interface SectionWrapperProps extends BaseAttributes {
   children: ReactNode
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Wrapper semântico de seção com cabeçalho opcional.
+ * Usa createElement para tag dinâmica de forma segura no App Router.
+ */
+>>>>>>> 2facc42 (fix(SectionWrapper): resolve merge markers; switch to default import across app)
 export default function SectionWrapper({
   as = 'section',
   eyebrow,
@@ -28,25 +35,44 @@ export default function SectionWrapper({
   children,
   ...rest
 }: SectionWrapperProps) {
+<<<<<<< HEAD
   const ElementTag = as as unknown as keyof JSX.IntrinsicElements
 
   // A11y
   const autoId = React.useId()
   const headingId = title ? `section-heading-${autoId}` : undefined
+=======
+  const ElementTag = as
+  const autoId = React.useId()
+  const headingId = title ? `section-heading-${autoId}` : undefined
+
+  const mergedClassName = ['SectionWrapper', className.trim()]
+    .filter(Boolean)
+    .join(' ')
+
+  // A11y: se houver título e a tag não for <section>, usamos role=region
+>>>>>>> 2facc42 (fix(SectionWrapper): resolve merge markers; switch to default import across app)
   const role =
     (as === 'div' || as === 'article' || as === 'aside' || as === 'main') && headingId
       ? 'region'
       : undefined
+<<<<<<< HEAD
 
   const mergedClassName = ['SectionWrapper', (className || '').trim()]
     .filter(Boolean)
     .join(' ')
+=======
+>>>>>>> 2facc42 (fix(SectionWrapper): resolve merge markers; switch to default import across app)
 
   const renderedHeader =
     header ??
     (eyebrow || title || description ? (
       <div
+<<<<<<< HEAD
         className={['SectionWrapper-header', (headerClassName || '').trim()]
+=======
+        className={['SectionWrapper-header', headerClassName.trim()]
+>>>>>>> 2facc42 (fix(SectionWrapper): resolve merge markers; switch to default import across app)
           .filter(Boolean)
           .join(' ')}
       >
@@ -63,11 +89,17 @@ export default function SectionWrapper({
     ) : null)
 
   const content =
+<<<<<<< HEAD
     contentClassName && contentClassName.trim() ? (
       <div className={contentClassName}>{children}</div>
     ) : (
       children
     )
+=======
+    contentClassName && contentClassName.trim()
+      ? <div className={contentClassName}>{children}</div>
+      : children
+>>>>>>> 2facc42 (fix(SectionWrapper): resolve merge markers; switch to default import across app)
 
   const ariaProps = headingId ? { 'aria-labelledby': headingId } : {}
 
