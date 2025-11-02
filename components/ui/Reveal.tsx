@@ -1,47 +1,54 @@
-'use client'
+'use client';
 
-import * as React from 'react'
+import * as React from 'react';
 
-type RevealProps = {
-  children: React.ReactNode
-  className?: string
-  delay?: number
-}
+export type RevealProps = React.HTMLAttributes<HTMLDivElement> & {
+  delay?: number;
+};
 
-export function Reveal({ children, className = '', delay = 0 }: RevealProps) {
-  const elementRef = React.useRef<HTMLDivElement | null>(null)
-  const [isVisible, setIsVisible] = React.useState(false)
+export function Reveal({
+  children,
+  className = '',
+  delay = 0,
+  style,
+  ...rest
+}: RevealProps) {
+  const elementRef = React.useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = React.useState(false);
 
   React.useEffect(() => {
-    const element = elementRef.current
-    if (!element) return
+    const element = elementRef.current;
+    if (!element) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
+        for (const entry of entries) {
           if (entry.isIntersecting) {
-            setIsVisible(true)
-            observer.disconnect()
+            setIsVisible(true);
+            observer.disconnect();
+            break;
           }
-        })
+        }
       },
       { threshold: 0.12 }
-    )
+    );
 
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
       ref={elementRef}
-      suppressHydrationWarning
       className={`transition-all duration-700 ease-gentle will-change-transform ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
       } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ transitionDelay: `${delay}ms`, ...style }}
+      {...rest} // <- agora aceita e repassa suppressHydrationWarning (e qualquer prop de <div>)
     >
       {children}
     </div>
-  )
+  );
 }
+
+export default Reveal;
