@@ -6,7 +6,7 @@ import type { Route } from 'next'
 // Wrappers/componentes base já padronizados
 import SectionWrapper from '@/components/common/SectionWrapper'
 import SectionBoundary from '@/components/common/SectionBoundary'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { Home, Heart, Compass, User } from 'lucide-react'
 
