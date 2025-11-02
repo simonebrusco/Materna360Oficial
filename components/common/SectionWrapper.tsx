@@ -1,7 +1,6 @@
 'use client';
 
-import * as React from 'react';
-import type { HTMLAttributes, ReactNode } from 'react';
+import React, { type HTMLAttributes, type ReactNode } from 'react';
 
 type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>;
 type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside';
@@ -27,14 +26,9 @@ export interface SectionWrapperProps extends BaseAttributes {
 
 /**
  * Wrapper semântico de seção com cabeçalho opcional.
-
- * Usa React.createElement para evitar erro com tag dinâmica em produção.
-
- * Usa React.createElement para evitar o erro “Unexpected token ElementTag” em produção
- * quando se usa JSX com tag dinâmica.
-
+ * Usa React.createElement para compatibilidade total com App Router.
  */
-export function SectionWrapper({
+export default function SectionWrapper({
   as = 'section',
   eyebrow,
   title,
@@ -48,12 +42,11 @@ export function SectionWrapper({
 }: SectionWrapperProps) {
   const ElementTag = as;
 
+  // A11y: liga o container ao título, se existir
   const autoId = React.useId();
   const headingId = title ? `section-heading-${autoId}` : undefined;
 
-
-  // A11y: se houver título, tratamos como "region" para navegação por leitores de tela
-
+  // A11y extra: quando a tag não é <section>, podemos marcar como "region"
   const role =
     as === 'div' || as === 'article' || as === 'aside' || as === 'main'
       ? (headingId ? 'region' : undefined)
@@ -79,16 +72,8 @@ export function SectionWrapper({
       </div>
     ) : null);
 
-
-  const content = contentClassName.trim()
-    ? <div className={contentClassName}>{children}</div>
-    : children;
-
   const content =
-    contentClassName.trim()
-      ? <div className={contentClassName}>{children}</div>
-      : children;
-
+    contentClassName.trim() ? <div className={contentClassName}>{children}</div> : children;
 
   const ariaProps = headingId ? { 'aria-labelledby': headingId } : {};
 
@@ -99,11 +84,3 @@ export function SectionWrapper({
     content
   );
 }
-
-
-// ⚠️ Não reexporte nomeado, para evitar Duplicate export.
-// Mantenha apenas o default.
-
-// ✅ Mantém compatibilidade: default export + named export (a própria função já é named)
-
-export default SectionWrapper;
