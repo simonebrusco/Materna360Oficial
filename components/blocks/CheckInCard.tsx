@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
