@@ -12,28 +12,6 @@ export interface SectionWrapperProps extends BaseAttrs {
   title?: ReactNode
   description?: ReactNode
   header?: ReactNode
-  contentClassName?:
-
-# garantir que estamos na branch de fix
-git fetch --all --prune
-git switch fix/sectionwrapper-build
-
-# 1) Substituir SectionWrapper por versão sem JSX de Tag dinâmico
-cat > components/common/SectionWrapper.tsx <<'TSX'
-'use client'
-
-import React, { useId, type HTMLAttributes, type ReactNode } from 'react'
-import clsx from 'clsx'
-
-type SectionTag = 'section' | 'div' | 'article' | 'main' | 'aside'
-type BaseAttrs = Omit<HTMLAttributes<HTMLElement>, 'title'>
-
-export interface SectionWrapperProps extends BaseAttrs {
-  as?: SectionTag
-  eyebrow?: ReactNode
-  title?: ReactNode
-  description?: ReactNode
-  header?: ReactNode
   contentClassName?: string
   children?: ReactNode
 }
