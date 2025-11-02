@@ -3,7 +3,6 @@
 import clsx from 'clsx'
 import * as React from 'react'
 
-/** Tags semânticas suportadas para o container */
 type SectionElementTag =
   | 'section'
   | 'div'
@@ -15,21 +14,13 @@ type SectionElementTag =
   | 'article'
 
 export type SectionWrapperProps = React.HTMLAttributes<HTMLElement> & {
-  /** Troca a tag semântica do container (padrão: section) */
   as?: SectionElementTag
-  /** Eyebrow opcional acima do título */
   eyebrow?: React.ReactNode
-  /** Título da seção – pode ser string ou JSX (com ícones, spans, etc.) */
   title?: React.ReactNode
-  /** Descrição curta abaixo do título */
   description?: React.ReactNode
-  /** Header totalmente customizado (substitui eyebrow/title/description/actions) */
   header?: React.ReactNode
-  /** Ações à direita do título (botões, links, etc.) */
   actions?: React.ReactNode
-  /** Classe aplicada na área interna (onde ficam os children) */
   contentClassName?: string
-  /** Força um id para o título (aria-labelledby) */
   titleId?: string
 }
 
@@ -46,12 +37,12 @@ export default function SectionWrapper({
   titleId,
   ...rest
 }: SectionWrapperProps) {
-  // ID acessível para aria-labelledby/aria-describedby quando possível
-  const autoTitleId = React.useId()
+  const uid = React.useId()
+
+  // ids acessíveis – calculados sem novos hooks
   const headingId =
-    titleId ??
-    (typeof title === 'string' || React.isValidElement(title) ? autoTitleId : undefined)
-  const descId = description ? `${headingId ?? React.useId()}-desc` : undefined
+    titleId ?? (title ? uid : undefined)
+  const descId = description && headingId ? `${headingId}-desc` : undefined
 
   const ElementTag = (as ?? 'section') as any
 
