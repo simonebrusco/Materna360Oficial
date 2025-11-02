@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import GridRhythm from '@/components/common/GridRhythm'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
+import SectionWrapper from '@/components/common/SectionWrapper'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
