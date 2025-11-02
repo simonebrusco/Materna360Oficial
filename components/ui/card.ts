@@ -7,4 +7,4 @@ export {
   CardTitle,
   CardContent,
   CardFooter,
-} from './Card'
+} from './card'
