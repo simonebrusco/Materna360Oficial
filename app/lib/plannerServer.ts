@@ -1,104 +1,139 @@
-export const PLANNER_COOKIE_NAME = 'planner:v1'
-export const VALID_PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
+import { trackTelemetry } from '@/app/lib/telemetry'
 
-export type PlannerItem = {
-  id: string
-  category?: (typeof VALID_PLANNER_CATEGORIES)[number] | string
-  title?: string
-  notes?: string
-  dateKey?: string
-  createdAt?: string
-}
+import { validatePlannerItem, type PlannerItemT } from './plannerGuard'
+
+export const PLANNER_COOKIE_NAME = 'materna360-planner'
+export const MAX_PLANNER_ITEMS_PER_DAY = 20
+
+export const VALID_PLANNER_CATEGORIES = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche'] as const
+export type PlannerCategory = (typeof VALID_PLANNER_CATEGORIES)[number]
 
 export type PlannerPayload = {
   id: string
-  category?: (typeof VALID_PLANNER_CATEGORIES)[number] | string
-  title?: string
-  notes?: string
-  dateKey?: string
+  title: string
+  dateISO: string
+  timeISO: string
+  category: PlannerCategory
+  link?: string
+  payload?: PlannerItemT
+  tags?: string[]
+  createdAt: string
 }
 
-/** Fabrica de ID default */
-function defaultIdFactory(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+export type PlannerCookieShape = Record<string, PlannerPayload[]>
+
+export const isValidDateISO = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+export const isValidTimeISO = (value: string) => /^\d{2}:\d{2}$/.test(value)
+
+const sanitizeTags = (raw: unknown): string[] => {
+  if (!Array.isArray(raw)) {
+    return []
+  }
+  const seen = new Set<string>()
+  return raw
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => {
+      if (!entry) {
+        return false
+      }
+      const key = entry.toLocaleLowerCase('pt-BR')
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
 }
 
-/** "Agora" default */
-function defaultNowFactory(): Date {
-  return new Date()
+const defaultIdFactory = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return Math.random().toString(36).slice(2, 11)
 }
 
-/** Valida e normaliza um item vindo do cliente */
-export async function saveToPlannerSafe(
-  payload: unknown,
-  options?: { idFactory?: () => string; nowFactory?: () => Date }
-): Promise<{ ok: true; item: PlannerItem } | { ok: false; reason: string }> {
+const defaultNowFactory = () => new Date()
+
+export function buildPlannerPayload(
+  raw: any,
+  options?: { idFactory?: () => string; nowFactory?: () => Date; plannerItem?: PlannerItemT }
+): PlannerPayload {
   const idFactory = options?.idFactory ?? defaultIdFactory
   const nowFactory = options?.nowFactory ?? defaultNowFactory
 
-  if (payload == null || typeof payload !== 'object') {
-    return { ok: false, reason: 'Payload ausente ou inválido.' }
+  const title = typeof raw?.title === 'string' ? raw.title.trim() : ''
+  const dateISO = typeof raw?.dateISO === 'string' ? raw.dateISO : ''
+  const timeISO = typeof raw?.timeISO === 'string' ? raw.timeISO : ''
+  const category = raw?.category
+
+  if (!title) {
+    throw new Error('Informe um título.')
+  }
+  if (!isValidDateISO(dateISO)) {
+    throw new Error('Data inválida.')
+  }
+  if (!isValidTimeISO(timeISO)) {
+    throw new Error('Horário inválido.')
+  }
+  if (!VALID_PLANNER_CATEGORIES.includes(category)) {
+    throw new Error('Categoria inválida.')
   }
 
-  const src = payload as Record<string, unknown>
-  const rawTitle = typeof src.title === 'string' ? src.title.trim() : ''
-  if (!rawTitle) {
-    return { ok: false, reason: 'Título é obrigatório.' }
-  }
+  const normalizedPlannerItem =
+    options?.plannerItem ?? (raw?.payload !== undefined ? validatePlannerItem(raw.payload) : undefined)
 
-  const category = typeof src.category === 'string' ? src.category.trim() : undefined
-  const notes = typeof src.notes === 'string' ? src.notes : undefined
-  const dateKey =
-    typeof src.dateKey === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(src.dateKey)
-      ? src.dateKey
-      : undefined
-
-  const item: PlannerItem = {
+  const payload: PlannerPayload = {
     id: idFactory(),
-    title: rawTitle,
+    title,
+    dateISO,
+    timeISO,
     category,
-    notes,
-    dateKey,
+    link: typeof raw?.link === 'string' ? raw.link.trim() || undefined : undefined,
+    payload: normalizedPlannerItem,
+    tags: sanitizeTags(raw?.tags),
     createdAt: nowFactory().toISOString(),
   }
 
-  return { ok: true, item }
+  return payload
 }
 
-/** Constrói o payload final que será persistido no cookie */
-export function buildPlannerPayload(
-  body: unknown,
-  options: { plannerItem: PlannerItem }
-): PlannerPayload {
-  const item = options.plannerItem
-  return {
-    id: item.id,
-    category: item.category,
-    title: item.title,
-    notes: item.notes,
-    dateKey: item.dateKey,
-  }
-}
-
-/** Parse seguro do cookie existente (retorna mapa id->payload) */
-export function parsePlannerCookie(raw: string | undefined): Record<string, PlannerPayload> {
-  if (!raw) return {}
-  try {
-    const obj = JSON.parse(raw)
-    return obj && typeof obj === 'object' ? (obj as Record<string, PlannerPayload>) : {}
-  } catch {
+export const parsePlannerCookie = (value?: string | null): PlannerCookieShape => {
+  if (!value) {
     return {}
   }
+  try {
+    const parsed = JSON.parse(value) as PlannerCookieShape
+    if (parsed && typeof parsed === 'object') {
+      return parsed
+    }
+  } catch (error) {
+    console.error('Falha ao ler cookie do planner:', error)
+  }
+  return {}
 }
 
-/** Mescla o novo payload no mapa existente e retorna um novo mapa */
-export function mergePlannerPayload(
-  current: Record<string, PlannerPayload>,
-  payload: PlannerPayload
-): Record<string, PlannerPayload> {
-  const next = { ...(current ?? {}) }
-  if (payload?.id) {
-    next[payload.id] = payload
-  }
+export const mergePlannerPayload = (
+  existing: PlannerCookieShape,
+  payload: PlannerPayload,
+  limit = MAX_PLANNER_ITEMS_PER_DAY
+): PlannerCookieShape => {
+  const next: PlannerCookieShape = { ...existing }
+  const list = next[payload.dateISO] ? [...next[payload.dateISO]] : []
+  const filtered = list.filter((item) => item.id !== payload.id)
+  next[payload.dateISO] = [payload, ...filtered].slice(0, limit)
   return next
+}
+
+export async function saveToPlannerSafe(
+  raw: unknown
+): Promise<{ ok: true; item: PlannerItemT } | { ok: false; reason: string }> {
+  try {
+    const item = validatePlannerItem(raw)
+    trackTelemetry('planner_save_ok', { type: item.type, id: item.id })
+    return { ok: true, item }
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    trackTelemetry('planner_payload_invalid', { reason })
+    return { ok: false, reason: 'Invalid planner item' }
+  }
 }

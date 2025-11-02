@@ -1,12 +1,22 @@
-'use client'
-import * as React from 'react'
+import React from 'react'
+import clsx from 'clsx'
 
-type Props = React.HTMLAttributes<HTMLDivElement>
+type Props = React.HTMLAttributes<HTMLDivElement> & {
+  /** Grid/layout wrapper for standardized gaps and card paddings.
+   *  IMPORTANT: intentionally NOT polymorphic to avoid SVGProps inference.
+   */
+}
 
-export default function GridRhythm({ className = '', children, ...rest }: Props) {
-  const merged = ['grid gap-6 sm:gap-6', className.trim()].filter(Boolean).join(' ')
+export default function GridRhythm({ className, children, ...rest }: Props) {
+  const mergedClassName = clsx(
+    // Keep/merge any classes passed by callers.
+    // (Project’s gap tokens/utilities are applied by callers or via className.)
+    'grid',
+    className
+  )
+
   return (
-    <div className={merged} {...rest}>
+    <div className={mergedClassName} {...rest}>
       {children}
     </div>
   )

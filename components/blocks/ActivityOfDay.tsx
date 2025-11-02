@@ -458,7 +458,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
                   {headlineActivity.refId && (
                     <div>
                       <Link
-                        href={{ pathname: '/descobrir/[id]', query: { id: headlineActivity.refId } }}
+                        href={`/descobrir/${headlineActivity.refId}`}
                         className="text-sm font-semibold text-primary transition hover:underline"
                       >
                         Ver página completa

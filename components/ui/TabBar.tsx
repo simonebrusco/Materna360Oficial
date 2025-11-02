@@ -1,4 +1,3 @@
-import type { Route } from 'next'
 'use client'
 
 'use client'
@@ -27,7 +26,7 @@ export function TabBar() {
           return (
             <Link
               key={tab.href}
-              href={(tab.href as Route)}
+              href={tab.href}
               aria-label={tab.label}
               aria-current={active ? 'page' : undefined}
               className={`group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-full px-3 py-2 text-[11px] font-semibold transition-all duration-300 ease-gentle ${

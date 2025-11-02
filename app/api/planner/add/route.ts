@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { cookies as getCookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { trackTelemetry } from '@/app/lib/telemetry'
@@ -13,25 +13,20 @@ import {
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-type PlannerBody = { payload?: unknown }
-
 export async function POST(request: Request) {
-  // 1) JSON do corpo
-  let body: PlannerBody = {}
+  let body: any
   try {
-    body = (await request.json()) as PlannerBody
-  } catch {
+    body = await request.json()
+  } catch (error) {
     return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
   }
 
-  // 2) Validar e normalizar item
   const plannerValidation = await saveToPlannerSafe(body?.payload)
   if (!plannerValidation.ok) {
     return NextResponse.json({ error: plannerValidation.reason }, { status: 400 })
   }
 
-  // 3) Montar payload final
-  let payload: any
+  let payload
   try {
     payload = buildPlannerPayload(body, { plannerItem: plannerValidation.item })
   } catch (error) {
@@ -39,27 +34,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  // 4) Mesclar cookie (não derruba a request se falhar)
-  try {
-    const cookieStore = cookies()
-    const existingRaw = cookieStore.get(PLANNER_COOKIE_NAME)?.value
-    const plannerMap = parsePlannerCookie(existingRaw)
-    const nextMap = mergePlannerPayload(plannerMap, payload)
-    cookieStore.set({
-      name: PLANNER_COOKIE_NAME,
-      value: JSON.stringify(nextMap),
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365,
-      path: '/',
-    })
-  } catch {
-    // silencioso
-  }
+  const cookieStore = getCookies()
+  const existingRaw = cookieStore.get(PLANNER_COOKIE_NAME)?.value
+  const plannerMap = parsePlannerCookie(existingRaw)
+  const nextMap = mergePlannerPayload(plannerMap, payload)
 
-  // 5) Telemetria
-  trackTelemetry('planner.add', { category: payload?.category })
+  cookieStore.set({
+    name: PLANNER_COOKIE_NAME,
+    value: JSON.stringify(nextMap),
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365,
+    path: '/',
+  })
 
-  // 6) OK
-  return NextResponse.json({ id: payload?.id }, { status: 200 })
+  trackTelemetry('planner.save', { category: payload.category })
+
+  return NextResponse.json({ id: payload.id })
 }

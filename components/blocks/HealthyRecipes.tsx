@@ -49,16 +49,13 @@ const TIME_OPTIONS: { value: RecipeTimeOption; label: string }[] = [
 const AGE_BAND_LABEL: Record<string, string> = {
   '6-8m': '6–8 meses',
   '9-12m': '9–12 meses',
-
   '1-2y': '1��2 anos',
-
-
   '2-6y': '2–6 anos',
 }
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: '�',
+    emoji: '🍠',
     title: 'Purê cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
@@ -84,7 +81,6 @@ const QUICK_SUGGESTIONS = [
 ]
 
 const CATEGORY_OPTIONS = VALID_PLANNER_CATEGORIES
-
 
 const sanitizeStringList = (values: unknown): string[] => {
   if (!Array.isArray(values)) {
@@ -139,7 +135,6 @@ const resolveRecipeId = (candidate: unknown, title: string, prefix: string): str
   }
   return generatePlannerId(prefix, title)
 }
-
 
 type PlannerCategory = (typeof CATEGORY_OPTIONS)[number]
 
@@ -255,11 +250,8 @@ export function HealthyRecipesSection() {
 
   const childAllergies = selectedChild?.alergias ?? []
   const childMonths = selectedChild ? selectedChild.idadeMeses : null
+  const childAgeBand = childMonths === null ? '1-2y' : mapMonthsToRecipeBand(childMonths)
   const underSix = childMonths !== null && isUnderSixMonths(childMonths)
-const childAgeBand = useMemo(
-  () => (childMonths !== null ? mapMonthsToRecipeBand(childMonths) : undefined),
-  [childMonths]
-)
 
   useEffect(() => {
     if (!plannerModal.open) {
@@ -393,7 +385,6 @@ const childAgeBand = useMemo(
     }
 
     try {
-
       const readyInMinutes = coerceIntWithin(plannerModal.recipe.readyInMinutes, 20, 1, 240)
       const servings = coerceIntWithin(plannerModal.recipe.servings, 2, 1, 20)
       const note = typeof plannerNote === 'string' ? plannerNote.trim() : ''
@@ -409,7 +400,6 @@ const childAgeBand = useMemo(
         note: note || undefined,
       }
 
-
       const response = await fetch('/api/planner/add', {
         method: 'POST',
         headers: {
@@ -421,10 +411,7 @@ const childAgeBand = useMemo(
           timeISO: plannerTime,
           category: plannerCategory,
           link: '#receitas-saudaveis',
-
           payload: recipePayload,
-
-
           tags: Array.from(
             new Set(['receita', 'alimentação', 'saudável', ...(plannerModal.recipe.planner.tags ?? [])])
           ),
@@ -463,7 +450,7 @@ const childAgeBand = useMemo(
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
       setToast({
-        message: `Receita salva no Planner para ${weekday} �s ${time}.`,
+        message: `Receita salva no Planner para ${weekday} às ${time}.`,
         type: 'success',
       })
       closePlannerModal()
@@ -570,7 +557,7 @@ const childAgeBand = useMemo(
                     onChange={(event) => setServings(Math.min(Math.max(Number(event.target.value) || 1, 1), 6))}
                     className="w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
-                  <p className="text-xs text-support-2">Faixa etária sugerida: {childAgeBand ? AGE_BAND_LABEL[childAgeBand] : '—'}</p>
+                  <p className="text-xs text-support-2">Faixa etária sugerida: {AGE_BAND_LABEL[childAgeBand]}</p>
                 </div>
               </div>
             ) : (
@@ -684,7 +671,7 @@ const childAgeBand = useMemo(
                 {isLoading ? 'Gerando receitas...' : 'Gerar receitas' }
               </Button>
               <p className="text-xs text-support-2">
-                Máximo de 3 receitas por vez • Resultados personalizados para {childAgeBand ? AGE_BAND_LABEL[childAgeBand] : 'sua faixa'}
+                Máximo de 3 receitas por vez • Resultados personalizados para {AGE_BAND_LABEL[childAgeBand]}
               </p>
             </div>
           </div>
@@ -873,7 +860,7 @@ const childAgeBand = useMemo(
                   Categoria
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORY_OPTIONS.map((option: any) => (
+                  {CATEGORY_OPTIONS.map((option) => (
                     <button
                       key={option}
                       type="button"
