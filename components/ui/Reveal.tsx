@@ -47,7 +47,10 @@ export function Reveal({
               observer.disconnect();
             }
           } else if (!once) {
+
+
             // Se não for "once", pode ocultar novamente ao sair da viewport
+
             setIsVisible(false);
           }
         }

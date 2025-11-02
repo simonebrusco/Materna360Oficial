@@ -5,7 +5,11 @@ import Image from 'next/image'
 import { AlertTriangle, ShoppingBag } from 'lucide-react'
 
 import SectionBoundary from '@/components/common/SectionBoundary'
+
+import SectionWrapper from '@/components/common/SectionWrapper'
+
 import SectionWrapper from '@/components/common/SectionWrapper' // <- default import (corrigido)
+
 import GridRhythm from '@/components/common/GridRhythm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
@@ -526,7 +530,11 @@ export default function DescobrirClient({
       </Reveal>
 
       {/* Filtros Inteligentes */}
+
+      <Reveal delay={80}>
+
       <Reveal delay={80} suppressHydrationWarning>
+
         <SectionWrapper
           title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
           description="Combine idade e local para criar experiências personalizadas em segundos."
@@ -844,7 +852,11 @@ export default function DescobrirClient({
       )}
 
       {/* Self Care (se disponível) */}
+
+      {selfCareEnabled && selfCare.items.length > 0 && (
+
       {showSelfCare && (
+
         <Reveal delay={240}>
           <SectionWrapper
             title={
