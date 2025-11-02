@@ -1,3 +1,4 @@
+cat > components/common/SectionWrapper.tsx <<'TSX'
 'use client'
 
 import React, { useId, type HTMLAttributes, type ReactNode } from 'react'
@@ -24,7 +25,7 @@ export interface SectionWrapperProps extends BaseAttrs {
 
 /**
  * Wrapper semântico de seção com cabeçalho opcional.
- * Usa React.createElement para evitar problemas com JSX dinâmico (<Tag>).
+ * Implementado com React.createElement para evitar problemas de parsing com JSX dinâmico.
  */
 export default function SectionWrapper({
   as = 'section',
@@ -39,10 +40,9 @@ export default function SectionWrapper({
   children,
   ...rest
 }: SectionWrapperProps) {
-  // id estável para heading (nunca condicional)
+  // id estável para heading e role=region quando não for <section>
   const autoId = useId()
   const headingId = title ? (id ?? `sec-${autoId}`) : undefined
-  // role=region quando não for <section> e existir heading
   const regionRole = role ?? ((as !== 'section' && headingId) ? 'region' : undefined)
 
   const mergedClassName = clsx(
@@ -84,6 +84,6 @@ export default function SectionWrapper({
     </div>
   )
 
-  // evita JSX dinâmico <Tag>
   return React.createElement(as, containerProps, header ?? defaultHeader, contentNode)
 }
+TSX
