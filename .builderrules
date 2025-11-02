@@ -1,139 +1,43 @@
-Tech & Tooling
+PROJECT RULES — Materna360Oficial
 
-Framework: Next.js 14 (App Router em app/).
+Tech & tooling
+- Framework: Next.js 14 (App Router, src/app).
+- Language: TypeScript.
+- Styling: Tailwind CSS (+ tailwind.config).
+- Icons: lucide-react.
+- Animations: Framer Motion (subtle, premium feel).
+- Package manager: npm (use `npm ci` in CI/Builder).
+- Node: 20.x (match Vercel setting).
 
-Linguagem: TypeScript.
+Structure & paths
+- Keep the App Router in `src/app`.
+- Shared components live in `components/` (subfolders: `components/ui`, `components/features`).
+- Path alias is `@/*` (do NOT switch to `src/*`).
+- Do not duplicate pages or move files out of `src/app` without strong reason.
 
-Estilo: Tailwind CSS (tailwind.config).
-
-Ícones: lucide-react.
-
-Animações: Framer Motion (sutil, premium).
-
-Gerenciador de pacotes: pnpm.
-
-Node: 20.x (igual na Vercel e Builder).
-
-Estrutura & Paths
-
-App Router em app/ (não mover para src/app neste momento).
-
-Componentes compartilhados em components/
-(subpastas: components/ui e components/features).
-
-Alias de importação: @/* (não alterar).
-
-Não duplicar páginas nem mover arquivos de rota sem forte justificativa.
-
-Scripts & Dev Server
-
-Porta do dev server: http://localhost:3000
-
-package.json:
-
-{
-  "scripts": {
-    "dev": "next dev -p 3000",
-    "build": "next build",
-    "start": "next start"
-  }
-}
-
-
-CI/Vercel/Builder: usar pnpm install --frozen-lockfile (mantém versões idênticas ao lockfile).
-
-Configuração do Builder (obrigatório alinhar)
-
-Setup Script:
-
-pnpm install --frozen-lockfile
-
-
-Development Server Command:
-
-NEXT_TELEMETRY_DISABLED=1 pnpm exec next dev -p 3000
-
-
-Auto-detect dev server URL: ligado.
-
-Variáveis principais:
-
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-
-Demais variáveis públicas/secretas iguais às da Vercel.
+Dev server & scripts
+- Dev server runs on http://localhost:3000.
+- `scripts.dev` must be `next dev -p 3000`.
+- When the Builder needs deps, run `npm ci` (not `npm install`) unless `ci` fails.
 
 Branching & PRs
+- Default working branch: `stellar-den`. Open PRs **from `stellar-den` into `main`**.
+- Mark PRs as **Draft** by default.
+- Use Conventional Commits (e.g., `feat:`, `fix:`, `chore:`).
+- Do not change repository or create new ones.
 
-Produção: main.
+Design guidelines
+- Keep a “premium” look: soft shadows, rounded corners, smooth micro-interactions.
+- Respect the brand palette (Primary: #ff005e; Secondary: #ffd8e6).
+- Ensure mobile-first responsiveness and a11y (focus states, readable contrast).
 
-Trabalho diário: branches de feature/hotfix:
+What NOT to change
+- Do not rename the project or packages arbitrarily.
+- Do not alter `@/*` alias, `tsconfig.json` baseUrl/paths, or the port 3000.
+- Do not hardcode secrets; use `.env` with existing var names.
+- Do not introduce breaking changes to API routes or Next config.
 
-feat/<nome>, fix/<nome>, chore/<nome>.
-
-Fluxo: abrir PR em modo Draft de feat/* → main.
-Usar Conventional Commits no título do PR (feat:, fix:, chore:…).
-
-Não criar novos repositórios. Não renomear o projeto.
-
-Diretrizes de Design
-
-Visual “premium”: cantos arredondados, sombras suaves, micro-interações discretas.
-
-Paleta de marca: Primária #ff005e, Secundária #ffd8e6 (apoio: #2f3a56, #545454, #000000, #ffffff).
-
-Mobile-first e acessibilidade (foco visível, contraste legível).
-
-O que NÃO mudar
-
-Gerenciador de pacotes: manter pnpm.
-
-Alias e tsconfig: não alterar @/*, baseUrl e paths.
-
-Porta: manter 3000 no dev.
-
-Segredos: não hardcode; usar .env/variáveis do Builder/Vercel.
-
-Next config & APIs: não introduzir breaking changes em next.config.mjs ou rotas.
-
-Entregáveis & UX
-
-Telas (“Meu Dia”, “Cuidar”, “Descobrir”, “Eu360”): manter tab bar inferior consistente.
-
-Reutilizar átomos de components/ui e compor features em components/features.
-
-Aplicar animações sutis (opacity/translate/scale) e tokens de sombra previstos no Tailwind.
-
-Observações operacionais
-
-Imagens do Builder.io: garantir next.config.mjs com domínio do CDN do Builder:
-
-const nextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' },
-    ],
-  },
-};
-export default nextConfig;
-
-
-Cache em páginas dinâmicas (server): quando necessário, preferir:
-
-import { unstable_noStore as noStore } from 'next/cache';
-if (typeof (noStore as any) === 'function') (noStore as any)();
-
-Troubleshooting rápido
-
-“Builder não reflete o GitHub”:
-
-Confirme que o branch aberto no Code do Builder é origin/main (Switch Branch → origin/main → Checkout).
-
-Clique Refresh Preview.
-
-Verifique console do “Dev Server Status” e se a porta é 3000.
-
-Diferença Vercel x Builder: quase sempre é lockfile ou porta. Confira:
-
-Builder usando pnpm install --frozen-lockfile e next dev -p 3000.
-
-NEXT_PUBLIC_SITE_URL=http://localhost:3000.
+Deliverables expectations
+- When adding screens (e.g., “Meu Dia”, “Cuidar”, “Descobrir”, “Eu360”), keep the bottom tab bar consistent.
+- Use reusable UI atoms from `components/ui` and compose features in `components/features`.
+- Add subtle motion (opacity/translate/scale) and consistent shadow tokens per Tailwind config.

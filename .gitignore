@@ -13,8 +13,3 @@ build/
 .idea/
 *.tsbuildinfo
 
-
-# dev backups
-*.bak
-backups/
-tsconfig.tsbuildinfo
