@@ -4,10 +4,9 @@ import * as React from 'react';
 import type { HTMLAttributes, ReactNode } from 'react';
 
 type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>;
-
 type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside';
 
-interface SectionWrapperProps extends BaseAttributes {
+export interface SectionProps extends BaseAttributes {
   as?: SectionElementTag;
   eyebrow?: ReactNode;
   title?: ReactNode;
@@ -18,7 +17,13 @@ interface SectionWrapperProps extends BaseAttributes {
   children: ReactNode;
 }
 
-export function SectionWrapper({
+/**
+ * Section — contêiner semântico com cabeçalho opcional.
+ * - Tag dinâmica via `as` (section/div/article/main/aside)
+ * - A11y: se houver título, usa aria-labelledby
+ * - Repassa todos os props de HTMLElement (...rest)
+ */
+export function Section({
   as = 'section',
   eyebrow,
   title,
@@ -29,10 +34,10 @@ export function SectionWrapper({
   contentClassName,
   children,
   ...rest
-}: SectionWrapperProps) {
+}: SectionProps) {
   const ElementTag = as;
 
-  // A11y: liga o container ao título, se existir
+  // A11y: associa container ao título, se existir
   const autoId = React.useId();
   const headingId = title ? `section-heading-${autoId}` : undefined;
 
@@ -56,7 +61,7 @@ export function SectionWrapper({
 
   const content = contentClassName ? <div className={contentClassName}>{children}</div> : children;
 
-  // 👉 Evita erro “Unexpected token ElementTag” usando createElement para tag dinâmica
+  // Usa createElement para evitar erro “Unexpected token ElementTag” no parser
   const ariaProps = headingId ? { 'aria-labelledby': headingId } : {};
 
   return React.createElement(
@@ -67,4 +72,4 @@ export function SectionWrapper({
   );
 }
 
-export default SectionWrapper;
+export default Section;
