@@ -17,6 +17,10 @@ export interface SectionWrapperProps extends BaseAttributes {
   children: ReactNode;
 }
 
+/**
+ * Wrapper semântico de seção com cabeçalho opcional.
+ * Usa React.createElement para evitar erro com tag dinâmica em produção.
+ */
 export function SectionWrapper({
   as = 'section',
   eyebrow,
@@ -44,7 +48,11 @@ export function SectionWrapper({
   const renderedHeader =
     header ??
     (eyebrow || title || description ? (
-      <div className={['SectionWrapper-header', headerClassName.trim()].filter(Boolean).join(' ')}>
+      <div
+        className={['SectionWrapper-header', headerClassName.trim()]
+          .filter(Boolean)
+          .join(' ')}
+      >
         {eyebrow ? <span className="SectionWrapper-eyebrow">{eyebrow}</span> : null}
         {title ? (
           <h2 id={headingId} className="SectionWrapper-title">
@@ -55,10 +63,9 @@ export function SectionWrapper({
       </div>
     ) : null);
 
-  const content =
-    contentClassName.trim()
-      ? <div className={contentClassName}>{children}</div>
-      : children;
+  const content = contentClassName.trim()
+    ? <div className={contentClassName}>{children}</div>
+    : children;
 
   const ariaProps = headingId ? { 'aria-labelledby': headingId } : {};
 
@@ -70,5 +77,6 @@ export function SectionWrapper({
   );
 }
 
+// ⚠️ Não reexporte nomeado, para evitar Duplicate export.
+// Mantenha apenas o default.
 export default SectionWrapper;
-export { SectionWrapper };
