@@ -6,7 +6,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>;
 type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside';
 
-export interface SectionProps extends BaseAttributes {
+export interface SectionWrapperProps extends BaseAttributes {
   as?: SectionElementTag;
   eyebrow?: ReactNode;
   title?: ReactNode;
@@ -18,12 +18,10 @@ export interface SectionProps extends BaseAttributes {
 }
 
 /**
- * Section — contêiner semântico com cabeçalho opcional.
- * - Tag dinâmica via `as` (section/div/article/main/aside)
- * - A11y: se houver título, usa aria-labelledby
- * - Repassa todos os props de HTMLElement (...rest)
+ * Wrapper semântico de seção com cabeçalho opcional.
+ * Usa React.createElement para evitar o erro “Unexpected token ElementTag” em prod.
  */
-export function Section({
+export function SectionWrapper({
   as = 'section',
   eyebrow,
   title,
@@ -34,10 +32,10 @@ export function Section({
   contentClassName,
   children,
   ...rest
-}: SectionProps) {
+}: SectionWrapperProps) {
   const ElementTag = as;
 
-  // A11y: associa container ao título, se existir
+  // A11y: liga o container ao título, se existir
   const autoId = React.useId();
   const headingId = title ? `section-heading-${autoId}` : undefined;
 
@@ -61,7 +59,6 @@ export function Section({
 
   const content = contentClassName ? <div className={contentClassName}>{children}</div> : children;
 
-  // Usa createElement para evitar erro “Unexpected token ElementTag” no parser
   const ariaProps = headingId ? { 'aria-labelledby': headingId } : {};
 
   return React.createElement(
@@ -72,4 +69,6 @@ export function Section({
   );
 }
 
-export default Section;
+// ✅ Exporta dos dois jeitos para compatibilizar todos os imports do projeto
+export default SectionWrapper;
+export { SectionWrapper };
