@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
 
 import { Reveal } from '@/components/ui/Reveal'
