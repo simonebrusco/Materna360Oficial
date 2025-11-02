@@ -1,24 +1,24 @@
-'use client'
+'use client';
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react';
 
-import GridRhythm from '@/components/common/GridRhythm'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import { ProfileForm } from '@/components/blocks/ProfileForm'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/card'
-import { Progress } from '@/components/ui/Progress'
-import { Reveal } from '@/components/ui/Reveal'
+import GridRhythm from '@/components/common/GridRhythm';
+import SectionWrapper from '@/components/common/SectionWrapper';
+import { ProfileForm } from '@/components/blocks/ProfileForm';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/Progress';
+import { Reveal } from '@/components/ui/Reveal';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 type MoodHistory = {
-  day: string
-  emoji: string
-}
+  day: string;
+  emoji: string;
+};
 
-const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
-const MOODS = ['😔', '😐', '🙂', '😊', '😄'] as const
+const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+const MOODS = ['😔', '😐', '🙂', '😊', '😄'] as const;
 const ACHIEVEMENTS = [
   { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
   { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
@@ -26,33 +26,33 @@ const ACHIEVEMENTS = [
   { emoji: '💛', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
   { emoji: '🎨', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
   { emoji: '📚', title: 'Leitora Dedicada', desc: '5 livros lidos' },
-] as const
+] as const;
 const WEEKLY_SUMMARY = [
   { label: 'Autocuidado', value: 75 },
   { label: 'Atividades Filhos', value: 60 },
   { label: 'Rotina Casa', value: 85 },
   { label: 'Conexão Familiar', value: 70 },
-] as const
+] as const;
 
 export default function Eu360Page() {
-  const [gratitude, setGratitude] = useState('')
+  const [gratitude, setGratitude] = useState('');
   const [gratitudes, setGratitudes] = useState<string[]>([
     'Meus filhos saudáveis e felizes',
     'Uma xícara de café tranquilo pela manhã',
     'Apoio da minha família',
-  ])
+  ]);
 
   const handleAddGratitude = () => {
     if (gratitude.trim()) {
-      setGratitudes([gratitude, ...gratitudes])
-      setGratitude('')
+      setGratitudes([gratitude, ...gratitudes]);
+      setGratitude('');
     }
-  }
+  };
 
   const moodHistory: MoodHistory[] = useMemo(
     () => daysOfWeek.map((day, index) => ({ day, emoji: MOODS[(index + 2) % MOODS.length] })),
     []
-  )
+  );
 
   return (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
@@ -147,7 +147,7 @@ export default function Eu360Page() {
       >
         <Reveal delay={220}>
           <Card className="p-7">
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex-f1 flex flex-col gap-3 sm:flex-row">
               <input
                 type="text"
                 value={gratitude}
@@ -196,5 +196,5 @@ export default function Eu360Page() {
         </Reveal>
       </SectionWrapper>
     </main>
-  )
+  );
 }
