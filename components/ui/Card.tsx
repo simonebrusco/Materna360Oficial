@@ -1,61 +1,63 @@
-'use client';
+'use client'
+import * as React from 'react'
 
-import * as React from 'react';
-import clsx from 'clsx';
-
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+export type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+  highlight?: boolean
+  compact?: boolean
 }
 
-/**
- * Card — contêiner com efeito “glass” e hover elevando.
- * - Repassa props padrão de <div> (aria-*, data-*, suppressHydrationWarning, etc.)
- * - Acessível: se tiver onClick e não vier role, aplica role="button" + tabIndex
- * - Suporta foco por teclado (Enter/Espaço acionam onClick)
- */
-export const Card = React.forwardRef<HTMLDivElement, CardProps>(function Card(
-  { children, className = '', onClick, role, tabIndex, onKeyDown, ...rest },
-  ref
-) {
-  const isClickable = typeof onClick === 'function';
-
-  // A11y: se é clicável e não definiram role/tabIndex, ajusta automaticamente
-  const computedRole = role ?? (isClickable ? 'button' : undefined);
-  const computedTabIndex = tabIndex ?? (isClickable ? 0 : undefined);
-
-  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
-    if (onKeyDown) onKeyDown(e);
-    if (!isClickable) return;
-    // Aciona onClick com Enter ou Espaço
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick?.(e as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>);
-    }
-  };
-
-  const base = clsx(
-    'relative group/card glass-panel blurred-border p-6 transition-all duration-500 ease-gentle',
-    isClickable && 'cursor-pointer hover:-translate-y-1 hover:shadow-elevated',
-    className
-  );
+export function Card({
+  className = '',
+  children,
+  highlight = false,
+  compact = false,
+  ...rest
+}: CardProps) {
+  const merged = [
+    'rounded-[12px] md:rounded-[16px]',
+    'bg-white shadow-card border border-[rgba(47,58,86,0.08)]',
+    compact ? 'p-4 md:p-5' : 'p-5 md:p-6',
+    highlight && 'shadow-glow',
+    className?.trim(),
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <div
-      ref={ref}
-      className={base}
-      onClick={onClick}
-      role={computedRole}
-      tabIndex={computedTabIndex}
-      onKeyDown={handleKeyDown}
-      {...rest}
-    >
-      {/* Glow e highlight (usam posicionamento absoluto, por isso o container é relative) */}
-      <span className="pointer-events-none absolute inset-0 -z-10 bg-materna-card opacity-0 transition-opacity duration-700 group-hover/card:opacity-80" />
-      <span className="pointer-events-none absolute inset-x-6 top-2 -z-0 h-1 rounded-full bg-white/70 opacity-0 blur-lg transition-opacity duration-700 group-hover/card:opacity-100" />
-
-      <div className="relative z-10">{children}</div>
+    <div className={merged} role="group" {...rest}>
+      {children}
     </div>
-  );
-});
+  )
+}
 
-export default Card;
+export function CardHeader(props: React.HTMLAttributes<HTMLDivElement>) {
+  const merged = ['mb-2', props.className?.trim()].filter(Boolean).join(' ')
+  return <div {...props} className={merged} />
+}
+
+export function CardTitle(props: React.HTMLAttributes<HTMLHeadingElement>) {
+  const merged = [
+    'text-[18px]/[24px] font-semibold text-ink md:text-[20px]/[28px]',
+    props.className?.trim(),
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return <h3 {...props} className={merged} />
+}
+
+export function CardContent(props: React.HTMLAttributes<HTMLDivElement>) {
+  const merged = ['text-ash text-[14px]/[20px]', props.className?.trim()]
+    .filter(Boolean)
+    .join(' ')
+  return <div {...props} className={merged} />
+}
+
+export function CardFooter(props: React.HTMLAttributes<HTMLDivElement>) {
+  const merged = ['mt-4 flex items-center gap-3', props.className?.trim()]
+    .filter(Boolean)
+    .join(' ')
+  return <div {...props} className={merged} />
+}
+
+// Mantém compatibilidade com `import Card from ...`
+export default Card
