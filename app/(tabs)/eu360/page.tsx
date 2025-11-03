@@ -56,7 +56,7 @@ export default function Eu360Page() {
     []
   )
 
-  return (
+  const content = (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
