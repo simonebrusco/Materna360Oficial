@@ -2,6 +2,8 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
 
 import DescobrirClient from './Client'
+import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 import { toFlashFilters } from './utils/filters'
 import { nearestQuickIdeasWindow } from './utils/timeWindows'
 
