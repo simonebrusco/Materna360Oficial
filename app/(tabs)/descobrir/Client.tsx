@@ -905,13 +905,13 @@ export default function DescobrirClient({
       <Reveal delay={260}>
         <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
           <Card className="p-7">
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+            <GridStable>
               {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
                 <div key={item}>
                   <Button variant="outline" size="sm" className="w-full">{item}</Button>
                 </div>
               ))}
-            </GridRhythm>
+            </GridStable>
           </Card>
         </SectionWrapper>
       </Reveal>
