@@ -895,7 +895,16 @@ export function FamilyPlanner({
       )}
 
       {isLoading ? (
-        <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
+        isEnabled('FF_FEEDBACK_KIT') ? (
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
+        )
       ) : (
         <div className="space-y-6 md:space-y-8">
           <div className="flex flex-wrap gap-3">
