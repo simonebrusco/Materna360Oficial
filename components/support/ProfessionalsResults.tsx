@@ -1,11 +1,13 @@
 'use client'
 
-'use client'
-
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import ProfessionalCard, { type ProfessionalCardData } from './ProfessionalCard'
 import type { ProfessionalsSearchFilters } from './ProfessionalsSearchForm'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
+import { Empty } from '@/components/ui/feedback/Empty'
+import { ErrorBlock } from '@/components/ui/feedback/Error'
 
 type ApiResponse = {
   items: ProfessionalCardData[]
