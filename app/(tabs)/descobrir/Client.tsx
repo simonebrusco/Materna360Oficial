@@ -211,9 +211,14 @@ function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductI
             <ShoppingBag className="h-4 w-4" aria-hidden />
             Comprar
           </Button>
-          <Button variant="outline" size="sm" className="w-full" onClick={() => void onSave(item)} disabled={isSaving}>
+          <button
+            type="button"
+            onClick={() => void onSave(item)}
+            disabled={isSaving}
+            className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
+          >
             {isSaving ? 'Salvando…' : 'Salvar no Planner'}
-          </Button>
+          </button>
         </div>
       </div>
     </Card>
