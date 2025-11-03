@@ -115,6 +115,8 @@ globals.css
    ```bash
    git clone https://github.com/<seu-usuario>/materna360.git
    cd materna360
+   
+<!-- noop: enable Update PR -->
 
 
 Instale as dependências:
