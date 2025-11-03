@@ -103,7 +103,7 @@ export function MeuDiaClient({
       </SectionWrapper>
 
       <SectionWrapper>
-        <GridRhythm className="GridRhythm grid-cols-1 sm:grid-cols-2">
+        <GridStable>
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
               <Card className="h-full">
@@ -116,7 +116,7 @@ export function MeuDiaClient({
               </Card>
             </Reveal>
           ))}
-        </GridRhythm>
+        </GridStable>
       </SectionWrapper>
 
       <SectionWrapper>
