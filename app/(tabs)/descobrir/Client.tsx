@@ -7,14 +7,12 @@ import { AlertTriangle, ShoppingBag } from 'lucide-react'
 import SectionBoundary from '@/components/common/SectionBoundary'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
-import GridStable from '@/components/common/GridStable'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
 
 import { trackTelemetry, sample } from '@/app/lib/telemetry'
-import { PrimaryLinkCTA, PrimaryButtonCTA } from '@/components/ui/PrimaryCTA'
 import {
   friendlyEnergyLabel,
   friendlyLocationLabel,
@@ -50,7 +48,7 @@ const activities = [
 
 const books = [
   { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
-  { emoji: '����', title: "Charlotte's Web", author: 'E.B. White' },
+  { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
   { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
   { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
 ]
@@ -212,14 +210,9 @@ function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductI
             <ShoppingBag className="h-4 w-4" aria-hidden />
             Comprar
           </Button>
-          <button
-            type="button"
-            onClick={() => void onSave(item)}
-            disabled={isSaving}
-            className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
-          >
+          <Button variant="outline" size="sm" className="w-full" onClick={() => void onSave(item)} disabled={isSaving}>
             {isSaving ? 'Salvando…' : 'Salvar no Planner'}
-          </button>
+          </Button>
         </div>
       </div>
     </Card>
@@ -610,7 +603,7 @@ export default function DescobrirClient({
         <Reveal delay={140}>
           <SectionWrapper title={`Atividades ${filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}`}>
             {filteredActivities.length > 0 ? (
-              <GridStable>
+              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
                 {filteredActivities.map((activity, idx) => (
                   <Reveal key={activity.id} delay={idx * 70} className="h-full">
                     <Card className="h-full">
@@ -626,7 +619,7 @@ export default function DescobrirClient({
                     </Card>
                   </Reveal>
                 ))}
-              </GridStable>
+              </GridRhythm>
             ) : (
               <Card className="py-12 text-center">
                 <p className="text-sm text-support-2">Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.</p>
@@ -678,18 +671,19 @@ export default function DescobrirClient({
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap gap-2">
                         <Button variant="primary" size="sm" className="sm:w-auto" onClick={() => handleStart(suggestion.id)}>
                           Começar agora
                         </Button>
-                        <button
-                          type="button"
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="sm:w-auto"
                           onClick={() => void handleSaveToPlanner(suggestion)}
                           disabled={savingIdeaId === suggestion.id}
-                          className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
                         >
                           {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
-                        </button>
+                        </Button>
                       </div>
 
                       {expandedIdeaId === suggestion.id && (
@@ -753,7 +747,7 @@ export default function DescobrirClient({
       ) : (
         <>
           <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
-            <GridStable>
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
                 <Reveal key={book.title} delay={idx * 70} className="h-full">
                   <Card className="h-full">
@@ -764,11 +758,11 @@ export default function DescobrirClient({
                   </Card>
                 </Reveal>
               ))}
-            </GridStable>
+            </GridRhythm>
           </SectionWrapper>
 
           <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
-            <GridStable>
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {toys.map((toy, idx) => (
                 <Reveal key={toy.title} delay={idx * 70} className="h-full">
                   <Card className="h-full">
@@ -779,7 +773,7 @@ export default function DescobrirClient({
                   </Card>
                 </Reveal>
               ))}
-            </GridStable>
+            </GridRhythm>
           </SectionWrapper>
         </>
       )}
@@ -910,13 +904,13 @@ export default function DescobrirClient({
       <Reveal delay={260}>
         <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
           <Card className="p-7">
-            <GridStable>
+            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
                 <div key={item}>
                   <Button variant="outline" size="sm" className="w-full">{item}</Button>
                 </div>
               ))}
-            </GridStable>
+            </GridRhythm>
           </Card>
         </SectionWrapper>
       </Reveal>

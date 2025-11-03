@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 
 import GridRhythm from '@/components/common/GridRhythm'
-import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { isEnabled } from '@/app/lib/flags'
@@ -131,7 +130,7 @@ export default function Eu360Page() {
       </SectionWrapper>
 
       <SectionWrapper title={<span className="inline-flex items-center gap-2">🏅<span>Conquistas</span></span>}>
-        <GridStable>
+        <GridRhythm className="grid-cols-2 sm:grid-cols-3">
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
               <Card className="h-full text-center">
@@ -141,7 +140,7 @@ export default function Eu360Page() {
               </Card>
             </Reveal>
           ))}
-        </GridStable>
+        </GridRhythm>
       </SectionWrapper>
 
       <SectionWrapper
