@@ -78,7 +78,10 @@ export function getClientFlags(hydrated: Partial<DiscoverFlags> | null | undefin
 
 export function isEnabled(name: string): boolean {
   if (typeof process === 'undefined') return false
-  if (name === 'FF_LAYOUT_V1') return process.env.NEXT_PUBLIC_FF_LAYOUT_V1 === 'true'
-  if (name === 'FF_FEEDBACK_KIT') return process.env.NEXT_PUBLIC_FF_FEEDBACK_KIT === 'true'
+  const on = (k: string) => process.env[k] === 'true'
+
+  if (name === 'FF_LAYOUT_V1')    return on('NEXT_PUBLIC_FF_LAYOUT_V1')
+  if (name === 'FF_FEEDBACK_KIT') return on('NEXT_PUBLIC_FF_FEEDBACK_KIT')
+  if (name === 'FF_HOME_V1')      return on('NEXT_PUBLIC_FF_HOME_V1') // safe to keep, even if unused yet
   return false
 }

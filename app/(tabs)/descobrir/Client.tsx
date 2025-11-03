@@ -14,6 +14,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
 
 import { trackTelemetry, sample } from '@/app/lib/telemetry'
+import { PrimaryLinkCTA, PrimaryButtonCTA } from '@/components/ui/PrimaryCTA'
 import {
   friendlyEnergyLabel,
   friendlyLocationLabel,
