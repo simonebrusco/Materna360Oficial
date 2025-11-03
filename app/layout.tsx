@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import Script from 'next/script'
 
 import '@/app/lib/telemetryServer'
-import { inter, poppins, quicksand } from './fonts'
+import { inter } from './fonts'
 import FetchPolyfill from '@/app/lib/FetchPolyfill'
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${poppins.variable} ${quicksand.variable}`}>
+    <html lang="pt-BR" className={inter.variable}>
       <head>
         <Script
           id="safe-fetch-init"
