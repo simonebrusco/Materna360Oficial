@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import {
@@ -21,6 +19,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
+import { Empty } from '@/components/ui/feedback/Empty'
 
 const COURSE_OPTIONS: { value: RecipeCourseOption; label: string }[] = [
   { value: 'prato_quente', label: 'Pratos quentes' },
@@ -58,7 +59,7 @@ const AGE_BAND_LABEL: Record<string, string> = {
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: 'üç',
+    emoji: 'ÔøΩ',
     title: 'Pur√™ cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
@@ -463,7 +464,7 @@ const childAgeBand = useMemo(
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
       setToast({
-        message: `Receita salva no Planner para ${weekday} √s ${time}.`,
+        message: `Receita salva no Planner para ${weekday} ÔøΩs ${time}.`,
         type: 'success',
       })
       closePlannerModal()
