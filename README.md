@@ -3,6 +3,7 @@
 > Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil — feito para mães que buscam equilíbrio, leveza e conexão.
 
 <!-- PR #120: cosmos-verse → stabilize/layout-v1 (Feedback Kit + Layout V1) -->
+<!-- PR #130: cosmos-verse → stabilize/layout-v1 (tracking) -->
 
 ---
 
@@ -115,8 +116,6 @@ globals.css
    ```bash
    git clone https://github.com/<seu-usuario>/materna360.git
    cd materna360
-   
-<!-- noop: enable Update PR -->
 
 
 Instale as dependências:
