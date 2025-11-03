@@ -1014,7 +1014,7 @@ export function FamilyPlanner({
                             <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                        <div className="flex items-center gap-3 text-xs font-semibold text-primary">
                           <button
                             type="button"
                             onClick={handleEditSave}
@@ -1025,7 +1025,7 @@ export function FamilyPlanner({
                           <button
                             type="button"
                             onClick={handleEditCancel}
-                            className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                            className="text-xs font-medium text-primary underline hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                           >
                             Cancelar
                           </button>
