@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import GridRhythm from '@/components/common/GridRhythm'
+import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { isEnabled } from '@/app/lib/flags'
