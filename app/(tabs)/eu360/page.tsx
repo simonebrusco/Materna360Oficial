@@ -199,4 +199,6 @@ export default function Eu360Page() {
       </SectionWrapper>
     </main>
   )
+
+  return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
 }
