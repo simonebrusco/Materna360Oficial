@@ -4,6 +4,8 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { MeuDiaClient } from './Client'
 
 import { SectionWrapper } from '@/components/common/SectionWrapper'
+import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/app/data/childContent'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
