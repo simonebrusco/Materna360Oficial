@@ -376,16 +376,14 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
                       ) : null}
                     </div>
 
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full rounded-full sm:w-auto"
                       onClick={() => void handleSaveActivity(activity, saveKey)}
                       disabled={Boolean(savingKey)}
+                      className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50 sm:w-auto"
                     >
-                      Salvar no Planner
-                    </Button>
+                      {savingKey === saveKey ? 'Salvando…' : 'Salvar no Planner'}
+                    </button>
                   </div>
                 </div>
               )
