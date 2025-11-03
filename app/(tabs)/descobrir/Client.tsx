@@ -763,7 +763,7 @@ export default function DescobrirClient({
           </SectionWrapper>
 
           <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+            <GridStable>
               {toys.map((toy, idx) => (
                 <Reveal key={toy.title} delay={idx * 70} className="h-full">
                   <Card className="h-full">
@@ -774,7 +774,7 @@ export default function DescobrirClient({
                   </Card>
                 </Reveal>
               ))}
-            </GridRhythm>
+            </GridStable>
           </SectionWrapper>
         </>
       )}
