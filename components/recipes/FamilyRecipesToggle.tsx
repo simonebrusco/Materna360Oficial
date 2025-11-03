@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useEffect, useId, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 

@@ -142,12 +142,12 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     profileChildren.length > 0
       ? profileChildren
       : [
-          {
-            id: 'demo-child',
-            name: 'Luna',
-            age_bucket: '2-3' as QuickIdeasAgeBucket,
-          },
-        ]
+        {
+          id: 'demo-child',
+          name: 'Luna',
+          age_bucket: '2-3' as QuickIdeasAgeBucket,
+        },
+      ]
 
   const rawModeValue =
     typeof searchParams?.mode === 'string' ? searchParams.mode : metadata.mode
@@ -240,15 +240,15 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const computedBuckets: AgeBucket[] =
     validatedProfile.mode === 'all'
       ? Array.from(new Set(children.map((child) => child.age_bucket))).sort(
-          (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
-        )
+        (a, b) => BUCKET_ORDER[a] - BUCKET_ORDER[b]
+      )
       : (() => {
-          const active =
-            (validatedProfile.activeChildId
-              ? children.find((child) => child.id === validatedProfile.activeChildId)
-              : undefined) ?? children[0]
-          return active ? [active.age_bucket] : []
-        })()
+        const active =
+          (validatedProfile.activeChildId
+            ? children.find((child) => child.id === validatedProfile.activeChildId)
+            : undefined) ?? children[0]
+        return active ? [active.age_bucket] : []
+      })()
 
   const targetBuckets: AgeBucket[] =
     computedBuckets.length > 0 ? computedBuckets : (['2-3'] as AgeBucket[])
@@ -310,10 +310,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
 
   const flashRoutine = flashRoutineEnabled && flashRoutineResult && flashRoutineRoutine
     ? {
-        routine: flashRoutineRoutine,
-        strategy: flashRoutineResult.source,
-        analyticsSource: 'local' as const,
-      }
+      routine: flashRoutineRoutine,
+      strategy: flashRoutineResult.source,
+      analyticsSource: 'local' as const,
+    }
     : null
 
   let selfCareSelection: ReturnType<typeof selectSelfCareItems> = {
@@ -383,10 +383,10 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     rationale: idea.rationale,
     child: child
       ? {
-          id: child.id,
-          name: child.name,
-          age_bucket: child.age_bucket,
-        }
+        id: child.id,
+        name: child.name,
+        age_bucket: child.age_bucket,
+      }
       : undefined,
   }))
 
@@ -420,5 +420,9 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
     />
   )
 
+
   return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
 }
+
+}
+
