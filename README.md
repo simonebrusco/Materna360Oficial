@@ -1,47 +1,127 @@
-You are updating the project’s “Custom information” reference. 
-Do NOT modify source code, configs, routes, envs or repository settings. 
-Only replace the Custom information text with the block below, exactly as provided.
+# 🌸 Materna360
+
+> Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil — feito para mães que buscam equilíbrio, leveza e conexão.
 
 ---
-Tech & tooling
-- Framework: Next.js 14 (App Router, `app/`).
-- Language: TypeScript.
-- Styling: Tailwind CSS.
-- Icons: lucide-react.
-- Animations: (opcional) Framer Motion sutil.
-- Package manager: pnpm (10.19.0). In CI/Builder use: `pnpm install --frozen-lockfile` (ou, se preciso, `--no-frozen-lockfile`).
-- Node: 20.x (igual à Vercel).
 
-Structure & paths
-- App Router em `app/`.
-- Páginas: `app/(tabs)/{meu-dia,cuidar,descobrir,eu360}`.
-- Componentes compartilhados em `components/` (UI em `components/ui`).
-- Alias de import: `@/*` (NÃO alterar). Não mover páginas para fora de `app/`.
+## 🏡 Visão Geral
 
-Dev server & scripts
-- Dev: http://localhost:3001.
-- Script de dev: `next dev -p 3001`.
-- Para instalar deps no Builder: `pnpm install --frozen-lockfile` (se o lock divergir, permitir `--no-frozen-lockfile` e commitar o lock atualizado).
+O **Materna360** é um aplicativo web e mobile que combina **tecnologia, autocuidado e parentalidade consciente** em uma experiência integrada e acolhedora.  
+Ele auxilia mães a organizarem sua rotina, cuidarem de si mesmas e acompanharem o crescimento de seus filhos com propósito.
 
-Branching & PRs
-- Branch padrão de trabalho: `main`.
-- Abrir PRs de `main` (ou `builder/*`) para `main`.
-- Marcar PRs como Draft por padrão.
-- Usar Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`).
-- Não criar ou renomear repositórios.
-
-Design guidelines
-- Premium/soft: sombras suaves, cantos arredondados, micro-interações.
-- Paleta: Primária #ff005e; Secundária #ffd8e6.
-- Mobile-first + A11y: foco visível, contraste legível.
-
-What NOT to change
-- Não renomear pacotes arbitrariamente.
-- Não alterar o alias `@/*` nem portas (manter 3001).
-- Não hardcodear secrets; use env `NEXT_PUBLIC_*` quando necessário.
-- Não introduzir breaking changes em rotas de API ou `next.config.mjs`.
-
-Current production
-- Production branch: `main` (Vercel apontando para `main`).
 ---
-Apenas substituir o texto do Custom information. Quando terminar, responda “Custom information updated. No code changes.” 
+
+## 🧩 Estrutura do Produto
+
+### 🏡 **Meu Dia** (`/meu-dia`)
+- Saudação dinâmica e mensagem de hoje  
+- Planner da família (abas Casa | Filhos | Eu)  
+- Rotina, checklist e notas rápidas  
+- Registro de momentos com os filhos  
+- Toasts e selos de conquistas  
+
+### 🌿 **Cuidar** (`/cuidar`)
+- Meditações, respiração guiada e pílulas positivas  
+- Dicas de organização e autocuidado  
+- Profissionais de apoio e mentoria via WhatsApp  
+
+### 🧸 **Descobrir** (`/descobrir`)
+- Sugestões de atividades e brincadeiras por idade/local  
+- Filtros inteligentes e IA de ideias  
+- Recomendações de livros e produtos afiliados  
+
+### 💛 **Eu360** (`/eu360`)
+- Check-in emocional e humor da semana  
+- Gratidão e conquistas (gamificação)  
+- Resumo de autocuidado e progresso  
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada | Tecnologia |
+|--------|-------------|
+| **Frontend** | Next.js 14 · React 18 · TypeScript |
+| **Estilo** | Tailwind CSS · Design System Soft Luxury |
+| **CMS & UI** | Builder.io (Fusion Space) |
+| **Backend / Banco** | Supabase (Auth, Tables, Policies, RLS) |
+| **Infra / Deploy** | Vercel (Preview + Production) |
+| **Ícones** | Lucide React |
+| **Fonte** | Poppins · Quicksand |
+
+---
+
+## 🎨 Identidade Visual
+
+| Elemento | Cor |
+|-----------|------|
+| Primária | `#ff005e` |
+| Secundária | `#ffd8e6` |
+| Apoio 1 | `#2f3a56` |
+| Apoio 2 | `#545454` |
+| Preto | `#000000` |
+| Branco | `#ffffff` |
+
+> Estilo **Soft Luxury** — cartões brancos, sombras suaves e tipografia fluida.
+
+---
+
+## 📁 Estrutura de Pastas
+app/
+meu-dia/
+rotina/
+momentos/
+atividade/
+planner/
+checklist/
+cuidar/
+meditar/
+respirar/
+alegrar/
+mentoria/
+descobrir/
+eu360/
+components/
+ui/ (Card, Button, Toast, Progress, Avatar...)
+blocks/ (MensagemDoDia, Planner, CheckIn, AudioCard...)
+lib/
+supabase.ts
+storage.ts
+gamification.ts
+flags.ts
+styles/
+globals.css
+
+
+---
+
+## ⚙️ Variáveis de Ambiente
+
+| Nome | Descrição |
+|------|------------|
+| `NEXT_PUBLIC_BUILDER_API_KEY` | Chave pública do Builder.io (Fusion Space) |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave pública do Supabase |
+| `SUPABASE_SERVICE_ROLE` | Chave privada (opcional, server-side) |
+| `NEXT_PUBLIC_APP_ENV` | Ambiente (`development` | `preview` | `production`) |
+
+---
+
+## 🚀 Deploy
+
+1. **Clone o projeto:**
+   ```bash
+   git clone https://github.com/<seu-usuario>/materna360.git
+   cd materna360
+
+
+Instale as dependências:
+
+> Dica: execute `nvm use` (ou `volta pin node@20.19.0`) para garantir Node 20.19.0 antes de instalar.
+
+npm install
+
+
+Rode o ambiente local:
+
+npm run dev

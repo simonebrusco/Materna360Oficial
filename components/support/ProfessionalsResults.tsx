@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import ProfessionalCard, { type ProfessionalCardData } from './ProfessionalCard'

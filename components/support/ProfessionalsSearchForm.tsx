@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import React, { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { Button } from '@/components/ui/Button'

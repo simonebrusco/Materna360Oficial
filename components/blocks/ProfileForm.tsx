@@ -80,7 +80,7 @@ export function ProfileForm() {
           cache: 'no-store',
         })
 
-        if (response.ok) {
+        if (response.ok && isMounted) {
           const data = await response.json()
           const savedName =
             typeof data?.motherName === 'string'
@@ -89,16 +89,15 @@ export function ProfileForm() {
                 ? data.nomeMae
                 : ''
 
-          if (isMounted) {
-            setForm((previous) => ({
-              ...previous,
-              nomeMae: savedName,
-            }))
-          }
+          setForm((previous) => ({
+            ...previous,
+            nomeMae: savedName,
+          }))
         }
       } catch (error) {
-        console.error('Falha ao carregar nome do perfil:', error)
         if (isMounted) {
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.error('Falha ao carregar nome do perfil:', errorMsg)
           setForm((previous) => ({ ...previous, nomeMae: '' }))
         }
       }
@@ -109,18 +108,19 @@ export function ProfileForm() {
           cache: 'no-store',
         })
 
-        if (eu360Response.ok) {
+        if (eu360Response.ok && isMounted) {
           const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
-          if (isMounted) {
-            setForm((previous) => ({
-              ...previous,
-              nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
-            }))
-            setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
-          }
+          setForm((previous) => ({
+            ...previous,
+            nomeMae: eu360Data?.name ? eu360Data.name : previous.nomeMae,
+          }))
+          setBabyBirthdate(typeof eu360Data?.birthdate === 'string' ? eu360Data.birthdate : '')
         }
       } catch (error) {
-        console.error(error)
+        if (isMounted) {
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.error('Falha ao carregar perfil eu360:', errorMsg)
+        }
       }
 
       if (isMounted) {
