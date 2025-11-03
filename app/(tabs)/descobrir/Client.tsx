@@ -677,19 +677,18 @@ export default function DescobrirClient({
                         ))}
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
                         <Button variant="primary" size="sm" className="sm:w-auto" onClick={() => handleStart(suggestion.id)}>
                           Começar agora
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="sm:w-auto"
+                        <button
+                          type="button"
                           onClick={() => void handleSaveToPlanner(suggestion)}
                           disabled={savingIdeaId === suggestion.id}
+                          className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
                         >
                           {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
-                        </Button>
+                        </button>
                       </div>
 
                       {expandedIdeaId === suggestion.id && (
