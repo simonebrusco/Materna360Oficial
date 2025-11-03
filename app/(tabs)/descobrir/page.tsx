@@ -16,9 +16,10 @@ import { buildRecShelves } from '@/app/lib/recShelf'
 import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
-import { getServerFlags } from '@/app/lib/flags'
+import { getServerFlags, isEnabled } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
+import AppShell from '@/components/common/AppShell'
 import {
   FlashRoutine as FlashRoutineSchema,
   FlashRoutineFilters as FlashRoutineFiltersSchema,
@@ -392,7 +393,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
   const initialAgeFilter = children[0]?.age_bucket ?? '2-3'
   const initialPlaceFilter = LOCATION_LABEL[filters.location]
 
-  return (
+  const content = (
     <DescobrirClient
       suggestions={suggestionViews}
       filters={filters}
@@ -418,4 +419,7 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       flags={serverFlags}
     />
   )
+
+
+  return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
 }

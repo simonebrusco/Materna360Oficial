@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
+import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,7 +56,7 @@ export default function Eu360Page() {
     []
   )
 
-  return (
+  const content = (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
       <span
         aria-hidden
@@ -197,4 +199,6 @@ export default function Eu360Page() {
       </SectionWrapper>
     </main>
   )
+
+  return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
 }
