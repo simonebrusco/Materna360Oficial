@@ -16,9 +16,10 @@ import { buildRecShelves } from '@/app/lib/recShelf'
 import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
-import { getServerFlags } from '@/app/lib/flags'
+import { getServerFlags, isEnabled } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
+import AppShell from '@/components/common/AppShell'
 import {
   FlashRoutine as FlashRoutineSchema,
   FlashRoutineFilters as FlashRoutineFiltersSchema,
