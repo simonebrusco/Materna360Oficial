@@ -191,13 +191,17 @@ export function MeuDiaClient({
                 className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 rows={4}
               />
-              <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowNoteModal(false)} className="flex-1">
-                  Cancelar
-                </Button>
+              <div className="mt-4 flex items-center gap-3">
                 <Button variant="primary" size="sm" onClick={handleAddNote} className="flex-1">
                   Salvar
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(false)}
+                  className="text-sm font-medium text-primary underline hover:opacity-70"
+                >
+                  Cancelar
+                </button>
               </div>
             </Card>
           </div>
