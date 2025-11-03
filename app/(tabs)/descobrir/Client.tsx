@@ -7,6 +7,7 @@ import { AlertTriangle, ShoppingBag } from 'lucide-react'
 import SectionBoundary from '@/components/common/SectionBoundary'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
+import GridStable from '@/components/common/GridStable'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -48,7 +49,7 @@ const activities = [
 
 const books = [
   { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
-  { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
+  { emoji: '����', title: "Charlotte's Web", author: 'E.B. White' },
   { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
   { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
 ]
