@@ -75,3 +75,9 @@ export function getClientFlags(hydrated: Partial<DiscoverFlags> | null | undefin
     ...(hydrated ?? {}),
   }
 }
+
+export function isEnabled(name: string): boolean {
+  if (typeof process === 'undefined') return false
+  if (name === 'FF_LAYOUT_V1') return process.env.NEXT_PUBLIC_FF_LAYOUT_V1 === 'true'
+  return false
+}
