@@ -604,7 +604,7 @@ export default function DescobrirClient({
         <Reveal delay={140}>
           <SectionWrapper title={`Atividades ${filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}`}>
             {filteredActivities.length > 0 ? (
-              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
+              <GridStable>
                 {filteredActivities.map((activity, idx) => (
                   <Reveal key={activity.id} delay={idx * 70} className="h-full">
                     <Card className="h-full">
@@ -620,7 +620,7 @@ export default function DescobrirClient({
                     </Card>
                   </Reveal>
                 ))}
-              </GridRhythm>
+              </GridStable>
             ) : (
               <Card className="py-12 text-center">
                 <p className="text-sm text-support-2">Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.</p>
