@@ -3,6 +3,8 @@ import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import nextDynamic from 'next/dynamic'
 import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
+import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 
 const BreathCard = nextDynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
