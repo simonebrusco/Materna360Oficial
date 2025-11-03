@@ -798,21 +798,25 @@ const childAgeBand = useMemo(
                   )}
                 </div>
 
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-6 flex items-center gap-3">
                   <Button size="sm" onClick={() => openPlannerModal(recipe)}>
                     Salvar no Planner
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                  <button
+                    type="button"
                     onClick={() => handleGenerate(recipe.title)}
                     disabled={isLoading}
+                    className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
                   >
                     Gerar variação
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleShare(recipe)}>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleShare(recipe)}
+                    className="text-sm font-medium text-primary underline hover:opacity-70"
+                  >
                     Compartilhar
-                  </Button>
+                  </button>
                 </div>
               </Card>
             </Reveal>
