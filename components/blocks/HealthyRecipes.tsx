@@ -708,6 +708,18 @@ const childAgeBand = useMemo(
         </Reveal>
       )}
 
+      {isLoading && recipes.length === 0 && isEnabled('FF_FEEDBACK_KIT') && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-96 rounded-2xl" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && recipes.length === 0 && educationalMessage == null && noResultMessage == null && isEnabled('FF_FEEDBACK_KIT') && (
+        <Empty title="Nenhuma receita gerada" hint="Preencha os filtros e clique em 'Gerar receitas'." />
+      )}
+
       {recipes.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {recipes.map((recipe) => (
