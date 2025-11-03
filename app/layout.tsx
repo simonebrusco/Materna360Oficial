@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import Script from 'next/script'
 
 import '@/app/lib/telemetryServer'
-import { inter } from './fonts'
+import { inter, poppins, quicksand } from './fonts'
 import FetchPolyfill from '@/app/lib/FetchPolyfill'
 
 export const metadata: Metadata = {
