@@ -3,7 +3,9 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Script from 'next/script'
 
+import '@/app/lib/telemetryServer'
 import { inter } from './fonts'
+import FetchPolyfill from '@/app/lib/FetchPolyfill'
 
 export const metadata: Metadata = {
   title: 'Materna360',
@@ -15,108 +17,86 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-BR" className={inter.variable}>
       <head>
         <Script
-          id="safe-fetch-polyfill"
+          id="safe-fetch-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              // SafeFetch polyfill - bypass FullStory for internal RSC requests
               (function() {
-                const nativeFetch = window.fetch;
-                let isInitialized = false;
-
-                function isInternalRSCRequest(url) {
-                  try {
-                    const urlObj = new URL(url, window.location.href);
-                    const isInternal = !url.startsWith('http') || urlObj.origin === window.location.origin;
-                    if (!isInternal) return false;
-                    const pathname = urlObj.pathname;
-                    // RSC requests have no extension or .rsc extension
-                    return !pathname.match(/\\.(js|css|png|jpg|gif|svg|ico|woff|woff2|ttf|eot)$/i);
-                  } catch {
-                    return false;
-                  }
+                if (typeof window === 'undefined') return;
+                let originalFetch = window.fetch;
+                let isSafeFetchInitialized = false;
+                
+                function isFullStoryPresent() {
+                  return !!(window.FS);
                 }
-
-                function fetchViaXHR(url, init) {
+                
+                function fetchViaXHR(input, init) {
                   return new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-
-                    xhr.onload = () => {
-                      const headers = {};
-                      const headerStr = xhr.getAllResponseHeaders();
-                      if (headerStr) {
-                        const lines = headerStr.trim().split(/[\\r\\n]+/);
-                        lines.forEach(line => {
-                          const parts = line.split(': ');
-                          if (parts.length === 2) {
-                            headers[parts[0].trim()] = parts[1].trim();
-                          }
+                    try {
+                      const xhr = new XMLHttpRequest();
+                      const url = input instanceof Request ? input.url : String(input);
+                      const method = (init?.method || 'GET').toUpperCase();
+                      
+                      xhr.open(method, url, true);
+                      
+                      if (init?.headers) {
+                        const headers = init.headers instanceof Headers
+                          ? Object.fromEntries(init.headers.entries())
+                          : (init.headers || {});
+                        Object.entries(headers).forEach(([key, val]) => {
+                          xhr.setRequestHeader(key, val);
                         });
                       }
-                      try {
-                        resolve(new Response(xhr.responseText || xhr.response, {
+                      
+                      xhr.onload = () => {
+                        const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream';
+                        const response = new Response(xhr.responseText || xhr.response, {
                           status: xhr.status,
                           statusText: xhr.statusText,
-                          headers: headers
-                        }));
-                      } catch (e) {
-                        reject(e);
-                      }
-                    };
-
-                    xhr.onerror = () => reject(new TypeError('Failed to fetch'));
-                    xhr.ontimeout = () => reject(new TypeError('Request timeout'));
-
-                    try {
-                      xhr.open(init?.method || 'GET', url, true);
-                      xhr.timeout = 30000;
-
-                      if (init?.headers && typeof init.headers === 'object') {
-                        Object.entries(init.headers).forEach(([key, val]) => {
-                          xhr.setRequestHeader(key, String(val));
+                          headers: new Headers({
+                            'content-type': contentType,
+                          }),
                         });
-                      }
-
-                      const body = init?.body;
-                      xhr.send(body || undefined);
+                        resolve(response);
+                      };
+                      
+                      xhr.onerror = () => reject(new TypeError('XMLHttpRequest failed'));
+                      xhr.ontimeout = () => reject(new TypeError('XMLHttpRequest timeout'));
+                      xhr.withCredentials = init?.credentials === 'include';
+                      
+                      xhr.send(init?.body ? String(init.body) : null);
                     } catch (error) {
                       reject(error);
                     }
                   });
                 }
-
-                function initSafeFetch() {
-                  if (isInitialized) return;
-                  isInitialized = true;
-
-                  window.fetch = function safeFetch(input, init) {
-                    const url = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : input.url);
-
-                    // Use XHR for internal RSC requests to bypass FullStory
-                    if (isInternalRSCRequest(url)) {
-                      return fetchViaXHR(url, init);
-                    }
-
-                    // Use native fetch for everything else
-                    return nativeFetch.call(this, input, init);
-                  };
-                }
-
-                // Initialize immediately
-                initSafeFetch();
-
-                // Also initialize if page becomes interactive
-                if (document.readyState === 'interactive' || document.readyState === 'complete') {
-                  initSafeFetch();
-                } else {
-                  document.addEventListener('DOMContentLoaded', initSafeFetch);
-                }
+                
+                window.fetch = function safeFetch(input, init) {
+                  if (isFullStoryPresent()) {
+                    return fetchViaXHR(input, init);
+                  }
+                  
+                  return new Promise((resolve, reject) => {
+                    originalFetch.call(window, input, init)
+                      .then(resolve)
+                      .catch((error) => {
+                        if (error?.message?.includes('Failed to fetch')) {
+                          fetchViaXHR(input, init).then(resolve).catch(reject);
+                        } else {
+                          reject(error);
+                        }
+                      });
+                  });
+                };
               })();
             `,
           }}
         />
       </head>
-      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>{children}</body>
+      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>
+        <FetchPolyfill />
+        {children}
+      </body>
     </html>
   )
 }

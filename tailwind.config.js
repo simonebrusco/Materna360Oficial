@@ -1,18 +1,27 @@
 /** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
+
+    './app/**/*.{ts,tsx,js,jsx}',
+    './app/(tabs)/**/*.{ts,tsx,js,jsx}',
+    './components/**/*.{ts,tsx,js,jsx}',
+
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './components/features/**/*.{js,ts,jsx,tsx,mdx}',
+
   ],
   theme: {
     extend: {
       colors: {
-        primary: '#ff005e',
+        primary: 'rgb(var(--primary) / <alpha-value>)',
         secondary: '#ffd8e6',
-        'support-1': '#2f3a56',
-        'support-2': '#545454',
+        'support-1': 'rgb(var(--support-1) / <alpha-value>)',
+        'support-2': 'rgb(var(--support-2) / <alpha-value>)',
         'support-3': 'rgba(255, 255, 255, 0.65)',
+        'neutral-1': 'rgb(var(--neutral-1) / <alpha-value>)',
+        'neutral-2': 'rgb(var(--neutral-2) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
@@ -20,11 +29,13 @@ module.exports = {
         quicksand: ['Quicksand', 'sans-serif'],
       },
       boxShadow: {
+        card: '0 8px 24px rgba(0,0,0,0.06)',
         soft: '0 22px 45px -26px rgba(47, 58, 86, 0.55)',
         elevated: '0 35px 60px -25px rgba(255, 0, 94, 0.45)',
         glow: '0 20px 45px -20px rgba(255, 0, 94, 0.48)',
       },
       borderRadius: {
+        xl2: '1rem',
         'soft-3xl': '1.75rem',
       },
       backgroundImage: {
@@ -65,5 +76,9 @@ module.exports = {
       },
     },
   },
+  safelist: [
+    { pattern: /^(bg|text|from|via|to|shadow|rounded|border|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|grid-cols|col-span|gap)-/ },
+    { pattern: /(bg|text)-[a-zA-Z0-9-]+\/[0-9]{1,3}/ },
+  ],
   plugins: [],
 }
