@@ -131,7 +131,7 @@ export default function Eu360Page() {
       </SectionWrapper>
 
       <SectionWrapper title={<span className="inline-flex items-center gap-2">🏅<span>Conquistas</span></span>}>
-        <GridRhythm className="grid-cols-2 sm:grid-cols-3">
+        <GridStable>
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
               <Card className="h-full text-center">
@@ -141,7 +141,7 @@ export default function Eu360Page() {
               </Card>
             </Reveal>
           ))}
-        </GridRhythm>
+        </GridStable>
       </SectionWrapper>
 
       <SectionWrapper
