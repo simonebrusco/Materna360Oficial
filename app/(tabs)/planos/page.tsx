@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { isEnabled } from '@/app/lib/flags'
+import AppIcon from '@/components/ui/AppIcon'
 import AppShell from '@/components/common/AppShell'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
