@@ -330,5 +330,18 @@ export default function Eu360Page() {
     </main>
   )
 
-  return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
+  return (
+    <>
+      {isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content}
+      {upsellSheet.isOpen && currentUpsellConfig && (
+        <UpsellSheet
+          {...currentUpsellConfig}
+          onClose={() => setUpsellSheet({ isOpen: false })}
+          onUpgrade={() => {
+            window.location.href = '/planos'
+          }}
+        />
+      )}
+    </>
+  )
 }
