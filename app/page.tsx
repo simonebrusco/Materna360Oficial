@@ -34,7 +34,7 @@ const featureCards = [
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen pb-20">
+    <main className="relative min-h-screen pb-24 bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)]">
       <section className="relative overflow-hidden pb-20 pt-16">
         <div className="hero-gradient">
           <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 text-center sm:px-6 md:py-24 animate-fade-up">
