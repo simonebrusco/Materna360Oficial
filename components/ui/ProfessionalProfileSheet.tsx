@@ -95,6 +95,15 @@ export function ProfessionalProfileSheet({
     return () => document.removeEventListener('keydown', handleTabKey)
   }, [open])
 
+  // Focus close button on mount
+  useEffect(() => {
+    if (!open) return
+    const el = document.getElementById('pps-close')
+    if (el instanceof HTMLButtonElement) {
+      setTimeout(() => el.focus(), 100)
+    }
+  }, [open])
+
   if (!open || !professional) return null
 
   const handleAgendar = () => {
