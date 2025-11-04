@@ -942,6 +942,86 @@ export default function DescobrirClient({
           </Card>
         </SectionWrapper>
       </Reveal>
+
+      {/* IA Modal (under FF_LAYOUT_V1) */}
+      {isEnabled('FF_LAYOUT_V1') && showIAModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+          <div className="w-full max-w-2xl px-4 pb-12 pt-6 sm:px-0">
+            <Card className="w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-white/40 pb-4 mb-4">
+                <h2 className="text-xl font-semibold text-support-1 flex items-center gap-2">
+                  <span aria-hidden>🤖</span> IA (Beta)
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowIAModal(false)}
+                  className="text-support-2 hover:text-support-1 text-lg font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p className="text-sm text-support-2 mb-6">
+                Com base nos filtros que você selecionou, aqui estão as melhores sugestões personalizadas para sua criança:
+              </p>
+
+              {filteredSuggestions.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredSuggestions.slice(0, 5).map((suggestion) => (
+                    <div key={suggestion.id} className="rounded-lg border border-white/40 bg-white/50 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-support-1">{suggestion.title}</h3>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-support-2">
+                            <span>👧 {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
+                            <span>⏱️ {suggestion.time_total_min ?? 5} min</span>
+                            {suggestion.materials && suggestion.materials.length > 0 && (
+                              <span>📦 {suggestion.materials[0]}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setToast({ message: 'Favoritado!', type: 'success' })
+                            setShowIAModal(false)
+                          }}
+                        >
+                          ❤️ Favoritar
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            setToast({
+                              message: 'Salvo no Planner · Ver Planner',
+                              type: 'success'
+                            })
+                            setShowIAModal(false)
+                            setTimeout(() => {
+                              window.location.hash = '#planner'
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }, 500)
+                          }}
+                        >
+                          💾 Salvar no Planner
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/40 bg-white/50 p-6 text-center">
+                  <p className="text-sm text-support-2">Nenhuma ideia encontrada com os filtros selecionados. Tente ajustar para explorar mais opções!</p>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
