@@ -514,7 +514,11 @@ export default function DescobrirClient({
             <header className="SectionWrapper-header">
               <span className="SectionWrapper-eyebrow">Inspirações</span>
               <h1 className="SectionWrapper-title inline-flex items-center gap-2">
-                <span aria-hidden>🎨</span>
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="search" size={24} />
+                ) : (
+                  <span aria-hidden>🎨</span>
+                )}
                 <span>Descobrir</span>
               </h1>
               <p className="SectionWrapper-description max-w-2xl">
