@@ -597,8 +597,9 @@ export default function DescobrirClient({
                   ✨ Gerar Ideias
                 </Button>
                 {isEnabled('FF_LAYOUT_V1') && (
-                  <Button variant="secondary" onClick={() => setShowIAModal(true)} className="flex-1 sm:flex-none">
-                    🤖 IA (Beta)
+                  <Button variant="secondary" onClick={() => setShowIAModal(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
+                    <AppIcon name="idea" variant="brand" size={18} />
+                    <span>IA (Beta)</span>
                   </Button>
                 )}
               </div>
