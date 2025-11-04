@@ -16,6 +16,7 @@ const PLANS = [
     price: '0',
     period: 'para sempre',
     emoji: '🌱',
+    iconName: 'place',
     description: 'Perfeito para começar sua jornada',
     features: [
       'Registrar humor e atividades',
