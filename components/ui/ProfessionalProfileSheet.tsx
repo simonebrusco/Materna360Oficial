@@ -120,11 +120,13 @@ export function ProfessionalProfileSheet({
   }
 
   const avatarSrc = professional.avatarUrl || FALLBACK_AVATAR
-  const badges = [
-    professional.verificado && 'Verificado Materna360',
-    'Online',
-    professional.primeiraAvaliacaoGratuita && 'Primeira avaliação gratuita',
-  ].filter(Boolean)
+  const safeBadges = (
+    [
+      professional.verificado && 'Verificado Materna360',
+      'Online',
+      professional.primeiraAvaliacaoGratuita && 'Primeira avaliação gratuita',
+    ] ?? []
+  ).filter((b): b is string => typeof b === 'string' && b.trim().length > 0)
 
   const chips = (professional.temas ?? []).slice(0, 6)
 
