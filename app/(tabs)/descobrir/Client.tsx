@@ -109,10 +109,10 @@ const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
 }
 
 const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
-  book: { icon: '📚', title: 'Livros que Inspiram' },
-  toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
-  course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '🖨️', title: 'Printables para Brincar' },
+  book: { icon: 'books', title: 'Livros que Inspiram' },
+  toy: { icon: 'play', title: 'Brinquedos Inteligentes' },
+  course: { icon: 'books', title: 'Cursos para Aprender Juntos' },
+  printable: { icon: 'books', title: 'Printables para Brincar' },
 }
 
 const sanitizeStringList = (values: unknown): string[] => {
