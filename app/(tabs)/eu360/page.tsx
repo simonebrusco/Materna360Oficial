@@ -45,6 +45,12 @@ export default function Eu360Page() {
     'Uma xícara de café tranquilo pela manhã',
     'Apoio da minha família',
   ])
+  const [upsellSheet, setUpsellSheet] = useState<{
+    isOpen: boolean
+    type?: 'export' | 'advanced' | 'mentorship'
+  }>({ isOpen: false })
+
+  const gamification = useGamification()
 
   const handleAddGratitude = () => {
     if (gratitude.trim()) {
