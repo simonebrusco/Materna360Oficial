@@ -200,6 +200,14 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
           </button>
         </div>
       ) : null}
+
+      {isEnabled('FF_LAYOUT_V1') && (
+        <ProfessionalProfileSheet
+          open={openProfile}
+          onOpenChange={setOpenProfile}
+          professional={selectedProfile}
+        />
+      )}
     </div>
   )
 }
