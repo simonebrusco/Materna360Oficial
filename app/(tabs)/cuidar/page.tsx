@@ -5,6 +5,7 @@ import nextDynamic from 'next/dynamic'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { isEnabled } from '@/app/lib/flags'
+import { MentorshipBlock } from '@/components/blocks/MentorshipBlock'
 
 const BreathCard = nextDynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
