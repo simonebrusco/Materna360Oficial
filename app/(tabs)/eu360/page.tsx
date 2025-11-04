@@ -64,6 +64,44 @@ export default function Eu360Page() {
     []
   )
 
+  const upsellSheetConfig = {
+    export: {
+      title: 'Exportar Semana em PDF',
+      description: 'Gere relatórios em PDF do seu progresso semanal para compartilhar com profissionais de saúde.',
+      planName: 'Plus ou Premium',
+      features: [
+        'Relatórios formatados em PDF',
+        'Gráficos de progresso e humor',
+        'Resumo de atividades realizadas',
+        'Histórico de notas e reflexões',
+      ],
+    },
+    advanced: {
+      title: 'Análises Avançadas',
+      description: 'Desbloqueie insights profundos sobre o desenvolvimento infantil e bem-estar familiar.',
+      planName: 'Plus ou Premium',
+      features: [
+        'Análises detalhadas de desenvolvimento',
+        'Previsões baseadas em IA',
+        'Relatórios comparativos com benchmarks',
+        'Consultoria personalizada mensal',
+      ],
+    },
+    mentorship: {
+      title: 'Mentorias com Profissionais',
+      description: 'Acesse sessões de mentoria com pediatras, psicólogos e especialistas em desenvolvimento infantil.',
+      planName: 'Premium',
+      features: [
+        '1 mentoria mensal com especialista',
+        'Consultoria familiar personalizada',
+        'Acesso a biblioteca de recursos exclusivos',
+        'Suporte prioritário 24/7',
+      ],
+    },
+  }
+
+  const currentUpsellConfig = upsellSheet.type ? upsellSheetConfig[upsellSheet.type] : null
+
   const content = (
     <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
       <span
