@@ -33,7 +33,7 @@ import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
 /* ------------------------------------------------------------------ */
-/* Mock blocks (exibem quando n��o há rec shelf do CMS)                */
+/* Mock blocks (exibem quando não há rec shelf do CMS)                */
 /* ------------------------------------------------------------------ */
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
@@ -42,7 +42,7 @@ const activities = [
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 7, emoji: '���', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
   { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
@@ -263,6 +263,7 @@ export default function DescobrirClient({
   const [ageFilter, setAgeFilter] = useState<QuickIdeasAgeBucket | null>(initialAgeFilter)
   const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
   const [showActivities, setShowActivities] = useState(false)
+  const [showIAModal, setShowIAModal] = useState(false)
 
   // Optional sections state
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
@@ -577,9 +578,16 @@ export default function DescobrirClient({
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
-                ✨ Gerar Ideias
-              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
+                  ✨ Gerar Ideias
+                </Button>
+                {isEnabled('FF_LAYOUT_V1') && (
+                  <Button variant="secondary" onClick={() => setShowIAModal(true)} className="flex-1 sm:flex-none">
+                    🤖 IA (Beta)
+                  </Button>
+                )}
+              </div>
               {(ageFilter || placeFilter || showActivities) && (
                 <Button
                   variant="outline"
@@ -594,6 +602,26 @@ export default function DescobrirClient({
                 </Button>
               )}
             </div>
+            {isEnabled('FF_LAYOUT_V1') && (
+              <div className="mt-8 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Tempo Rápido</p>
+                <div className="flex flex-wrap gap-2">
+                  {[5, 10, 20].map((mins) => (
+                    <Button
+                      key={mins}
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setShowActivities(true)
+                      }}
+                      className="rounded-full"
+                    >
+                      {mins} min
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </Card>
         </SectionWrapper>
       </Reveal>
