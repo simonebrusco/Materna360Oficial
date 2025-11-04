@@ -98,7 +98,7 @@ export default async function Page() {
   const initialBuckets = profilePreferredBuckets(profileForClient)
 
   const content = (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
       {/* m360-debug: {JSON.stringify(profile)} */}
       <SectionWrapper className="relative" contentClassName="relative space-y-2">
         <span
