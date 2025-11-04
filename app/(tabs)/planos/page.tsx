@@ -61,6 +61,7 @@ const PLANS = [
     price: '49',
     period: 'ao mês',
     emoji: '👑',
+    iconName: 'crown',
     description: 'Suporte completo e máximo de funcionalidades',
     features: [
       'Tudo do Plus, mais:',
