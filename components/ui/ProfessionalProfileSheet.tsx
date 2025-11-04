@@ -163,7 +163,9 @@ export function ProfessionalProfileSheet({
                 />
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-support-1">{professional.nome}</h2>
+                <h2 id="professional-modal-title" className="text-lg font-bold text-support-1">
+                  {professional.nome}
+                </h2>
                 <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-primary/80">
                   {professional.especialidade}
                 </p>
