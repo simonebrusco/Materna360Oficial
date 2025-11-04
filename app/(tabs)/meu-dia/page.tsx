@@ -115,18 +115,20 @@ export default async function Page() {
         </div>
       </SectionWrapper>
 
-      <MeuDiaClient
-        dailyGreeting={dailyGreeting}
-        currentDateKey={currentDateKey}
-        weekStartKey={weekStartKey}
-        weekLabels={weekLabels}
-        plannerTitle={plannerTitle}
-        profile={profileForClient}
-        dateKey={currentDateKey}
-        allActivities={CHILD_ACTIVITIES}
-        recommendations={CHILD_RECOMMENDATIONS}
-        initialBuckets={initialBuckets}
-      />
+      <section id="planner" style={{ scrollMarginTop: '120px' }}>
+        <MeuDiaClient
+          dailyGreeting={dailyGreeting}
+          currentDateKey={currentDateKey}
+          weekStartKey={weekStartKey}
+          weekLabels={weekLabels}
+          plannerTitle={plannerTitle}
+          profile={profileForClient}
+          dateKey={currentDateKey}
+          allActivities={CHILD_ACTIVITIES}
+          recommendations={CHILD_RECOMMENDATIONS}
+          initialBuckets={initialBuckets}
+        />
+      </section>
     </main>
   )
 
