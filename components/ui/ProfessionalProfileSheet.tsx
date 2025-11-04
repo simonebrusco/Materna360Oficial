@@ -185,7 +185,7 @@ export function ProfessionalProfileSheet({
       {/* Upsell Sheet for missing URLs */}
       {showUpsell && (
         <UpsellSheet
-          title="Agendar com {professional.nome}"
+          title={`Agendar com ${professional.nome}`}
           description="Entre em contato direto com este profissional via WhatsApp ou Calendly para marcar sua consultoria."
           planName="Plus ou Premium"
           features={[
