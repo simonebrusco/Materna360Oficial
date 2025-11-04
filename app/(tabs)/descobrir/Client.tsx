@@ -629,9 +629,10 @@ export default function DescobrirClient({
                       onClick={() => {
                         setShowActivities(true)
                       }}
-                      className="rounded-full"
+                      className="rounded-full flex items-center gap-2"
                     >
-                      {mins} min
+                      <AppIcon name="time" size={16} />
+                      <span>{mins} min</span>
                     </Button>
                   ))}
                 </div>
