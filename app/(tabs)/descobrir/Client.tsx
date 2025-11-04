@@ -56,7 +56,7 @@ const books = [
 
 const toys = [
   { emoji: '🧩', title: 'Quebra-Cabeças', age: '2+' },
-  { emoji: '🪀', title: 'Brinquedos de Corda', age: '3+' },
+  { emoji: '����', title: 'Brinquedos de Corda', age: '3+' },
   { emoji: '🧸', title: 'Pelúcias Educativas', age: '0+' },
   { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
 ]
@@ -108,11 +108,11 @@ const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
   '8+': '8+ anos',
 }
 
-const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
-  book: { icon: 'books', title: 'Livros que Inspiram' },
-  toy: { icon: 'play', title: 'Brinquedos Inteligentes' },
-  course: { icon: 'books', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: 'books', title: 'Printables para Brincar' },
+const shelfLabels: Record<RecProductKind, { icon: string; iconName?: string; title: string }> = {
+  book: { icon: '📚', iconName: 'books', title: 'Livros que Inspiram' },
+  toy: { icon: '🧸', iconName: 'play', title: 'Brinquedos Inteligentes' },
+  course: { icon: '💻', iconName: 'books', title: 'Cursos para Aprender Juntos' },
+  printable: { icon: '🖨️', iconName: 'books', title: 'Printables para Brincar' },
 }
 
 const sanitizeStringList = (values: unknown): string[] => {
