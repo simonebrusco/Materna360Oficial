@@ -178,11 +178,11 @@ export function ProfessionalProfileSheet({
             </div>
 
             {/* Badges */}
-            {badges.length > 0 && (
+            {safeBadges.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {badges.map((badge) => (
+                {safeBadges.map((badge, idx) => (
                   <span
-                    key={badge}
+                    key={`badge-${badge}-${idx}`}
                     className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary"
                   >
                     ✓ {badge}
