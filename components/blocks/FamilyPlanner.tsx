@@ -844,7 +844,7 @@ export function FamilyPlanner({
         </div>
 
       {weekDays.length > 0 ? (
-        <div className="flex items-center gap-3">
+        <div className="sticky top-[64px] z-30 flex items-center gap-3 -mx-7 px-7 md:-mx-8 md:px-8 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => handleChangeWeek('prev')}
