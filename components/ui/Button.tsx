@@ -19,7 +19,7 @@ export function Button({
 }: ButtonProps) {
   const variantStyles: Record<ButtonVariant, string> = {
     primary:
-      'text-white bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-glow hover:shadow-elevated',
+      'text-white bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
     secondary:
       'bg-secondary/80 text-support-1 shadow-soft hover:bg-secondary hover:shadow-elevated',
     outline:

@@ -9,6 +9,9 @@ import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Empty } from '@/components/ui/feedback/Empty'
 import { ErrorBlock } from '@/components/ui/feedback/Error'
 
+import { ProfessionalProfileSheet, type Professional } from '@/components/ui/ProfessionalProfileSheet'
+
+
 type ApiResponse = {
   items: ProfessionalCardData[]
   hasMore: boolean
@@ -27,6 +30,8 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
+  const [selectedProfile, setSelectedProfile] = useState<Professional | undefined>()
+  const [openProfile, setOpenProfile] = useState(false)
 
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -104,6 +109,25 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
     }
   }
 
+  const handleProfileOpen = useCallback((pro: ProfessionalCardData) => {
+    const professional: Professional = {
+      id: pro.id,
+      nome: pro.nome,
+      especialidade: pro.especialidade,
+      bioCurta: pro.bioCurta,
+      avatarUrl: pro.avatarUrl,
+      cidade: pro.cidade,
+      whatsUrl: pro.whatsUrl,
+      calendlyUrl: pro.calendlyUrl,
+      verificado: pro.verificado,
+      primeiraAvaliacaoGratuita: pro.primeiraAvaliacaoGratuita,
+      temas: pro.temas,
+      precoHint: pro.precoHint,
+    }
+    setSelectedProfile(professional)
+    setOpenProfile(true)
+  }, [])
+
   if (!filters) {
     return (
       <div className="rounded-2xl border border-white/60 bg-white/80 p-8 text-center text-support-2">
@@ -137,7 +161,11 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       {data.length > 0 ? (
         <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
           {data.map((pro) => (
-            <ProfessionalCard key={pro.id} pro={pro} />
+            <ProfessionalCard
+              key={pro.id}
+              pro={pro}
+              onProfileOpen={isEnabled('FF_LAYOUT_V1') ? handleProfileOpen : undefined}
+            />
           ))}
         </div>
       ) : null}
@@ -174,6 +202,14 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
           </button>
         </div>
       ) : null}
+
+      {isEnabled('FF_LAYOUT_V1') && (
+        <ProfessionalProfileSheet
+          open={openProfile}
+          onOpenChange={setOpenProfile}
+          professional={selectedProfile}
+        />
+      )}
     </div>
   )
 }

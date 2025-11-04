@@ -844,7 +844,7 @@ export function FamilyPlanner({
         </div>
 
       {weekDays.length > 0 ? (
-        <div className="flex items-center gap-3">
+        <div className="sticky top-[64px] z-30 flex items-center gap-3 -mx-7 px-7 md:-mx-8 md:px-8 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => handleChangeWeek('prev')}
@@ -1228,7 +1228,7 @@ export function FamilyPlanner({
                           {group.subtitle ? <span className="text-xs text-support-2">{group.subtitle}</span> : null}
                         </div>
                       ) : null}
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+                      <div className={isEnabled('FF_LAYOUT_V1') ? "overflow-x-auto snap-x snap-mandatory -mx-6 px-6 flex gap-4" : "grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3"}>
                         {group.items.map((suggestion, index) => {
                           const keyBase = buildRecommendationKey(suggestion.title, suggestion.refId ?? null)
                           const savedKey = `${group.id}:${keyBase}:${index}`
@@ -1237,7 +1237,7 @@ export function FamilyPlanner({
                           return (
                             <div
                               key={savedKey}
-                              className="rounded-2xl border border-white/60 bg-white/85 p-5 shadow-soft transition hover:shadow-md"
+                              className={isEnabled('FF_LAYOUT_V1') ? "snap-center min-w-[280px] flex-shrink-0 rounded-2xl border border-white/60 bg-white/85 p-5 shadow-soft transition hover:shadow-md" : "rounded-2xl border border-white/60 bg-white/85 p-5 shadow-soft transition hover:shadow-md"}
                             >
                               <div className="mb-4 flex flex-wrap items-center gap-2">
                                 <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">

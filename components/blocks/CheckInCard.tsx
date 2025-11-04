@@ -140,7 +140,7 @@ export function CheckInCard() {
         </div>
 
         <Button variant="primary" size="sm" onClick={handleSubmit} disabled={!selectedMood} className="mt-6 w-full">
-          Registrar Mood
+          Registrar humor
         </Button>
       </Card>
     </section>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AlertTriangle, ShoppingBag } from 'lucide-react'
 
+import AppIcon from '@/components/ui/AppIcon'
 import SectionBoundary from '@/components/common/SectionBoundary'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
@@ -29,7 +30,7 @@ import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
 import type { RecProductKind } from '@/app/types/recProducts'
 import type { SelfCareEnergy } from '@/app/types/selfCare'
 import type { ProfileChildSummary } from '@/app/lib/profileTypes'
-import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
+import { getClientFlags, isEnabled, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
 /* ------------------------------------------------------------------ */
@@ -42,7 +43,7 @@ const activities = [
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
+  { id: 7, emoji: '���', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
   { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
 ]
 
@@ -107,11 +108,11 @@ const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
   '8+': '8+ anos',
 }
 
-const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
-  book: { icon: '📚', title: 'Livros que Inspiram' },
-  toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
-  course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '🖨️', title: 'Printables para Brincar' },
+const shelfLabels: Record<RecProductKind, { icon: string; iconName?: string; title: string }> = {
+  book: { icon: '📚', iconName: 'books', title: 'Livros que Inspiram' },
+  toy: { icon: '🧸', iconName: 'play', title: 'Brinquedos Inteligentes' },
+  course: { icon: '💻', iconName: 'books', title: 'Cursos para Aprender Juntos' },
+  printable: { icon: '🖨️', iconName: 'books', title: 'Printables para Brincar' },
 }
 
 const sanitizeStringList = (values: unknown): string[] => {
@@ -263,6 +264,7 @@ export default function DescobrirClient({
   const [ageFilter, setAgeFilter] = useState<QuickIdeasAgeBucket | null>(initialAgeFilter)
   const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
   const [showActivities, setShowActivities] = useState(false)
+  const [showIAModal, setShowIAModal] = useState(false)
 
   // Optional sections state
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
@@ -502,17 +504,21 @@ export default function DescobrirClient({
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
 
   return (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-28 sm:px-6 md:px-8 md:pb-32">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_72%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <Reveal>
         <SectionWrapper
-          className="relative"
+          className="relative bg-transparent"
           header={
             <header className="SectionWrapper-header">
               <span className="SectionWrapper-eyebrow">Inspirações</span>
               <h1 className="SectionWrapper-title inline-flex items-center gap-2">
-                <span aria-hidden>🎨</span>
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="search" size={24} />
+                ) : (
+                  <span aria-hidden>🎨</span>
+                )}
                 <span>Descobrir</span>
               </h1>
               <p className="SectionWrapper-description max-w-2xl">
@@ -528,7 +534,16 @@ export default function DescobrirClient({
       {/* Filtros Inteligentes */}
       <Reveal delay={80}>
         <SectionWrapper
-          title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="filters" size={20} />
+              ) : (
+                <span>🔍</span>
+              )}
+              <span>Filtros Inteligentes</span>
+            </span>
+          }
           description="Combine idade e local para criar experiências personalizadas em segundos."
         >
           <Card className="p-7">
@@ -543,7 +558,7 @@ export default function DescobrirClient({
                         key={age}
                         onClick={() => setAgeFilter(isActive ? null : age)}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
-                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
                           }`}
                       >
@@ -564,7 +579,7 @@ export default function DescobrirClient({
                         key={place}
                         onClick={() => setPlaceFilter(isActive ? null : place)}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
-                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
+                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
                           }`}
                       >
@@ -577,9 +592,22 @@ export default function DescobrirClient({
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
-                ✨ Gerar Ideias
-              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
+                  {isEnabled('FF_LAYOUT_V1') ? (
+                    <AppIcon name="idea" variant="brand" size={18} />
+                  ) : (
+                    <span>✨</span>
+                  )}
+                  <span>Gerar Ideias</span>
+                </Button>
+                {isEnabled('FF_LAYOUT_V1') && (
+                  <Button variant="secondary" onClick={() => setShowIAModal(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
+                    <AppIcon name="idea" variant="brand" size={18} />
+                    <span>IA (Beta)</span>
+                  </Button>
+                )}
+              </div>
               {(ageFilter || placeFilter || showActivities) && (
                 <Button
                   variant="outline"
@@ -594,6 +622,27 @@ export default function DescobrirClient({
                 </Button>
               )}
             </div>
+            {isEnabled('FF_LAYOUT_V1') && (
+              <div className="mt-8 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Tempo Rápido</p>
+                <div className="flex flex-wrap gap-2">
+                  {[5, 10, 20].map((mins) => (
+                    <Button
+                      key={mins}
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setShowActivities(true)
+                      }}
+                      className="rounded-full flex items-center gap-2"
+                    >
+                      <AppIcon name="time" size={16} />
+                      <span>{mins} min</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </Card>
         </SectionWrapper>
       </Reveal>
@@ -631,7 +680,18 @@ export default function DescobrirClient({
 
       {/* Sugestão do Dia */}
       <Reveal delay={200}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
+        <SectionWrapper
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="star" size={20} variant="brand" />
+              ) : (
+                <span>🌟</span>
+              )}
+              <span>Sugestão do Dia</span>
+            </span>
+          }
+        >
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Filtros ativos: {friendlyFilters}
           </div>
@@ -646,7 +706,13 @@ export default function DescobrirClient({
               filteredSuggestions.map((suggestion, index) => (
                 <Reveal key={suggestion.id} delay={index * 60}>
                   <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
-                    <div className="text-5xl" aria-hidden>🌟</div>
+                    {isEnabled('FF_LAYOUT_V1') ? (
+                      <div className="flex items-start pt-1">
+                        <AppIcon name="star" size={32} variant="brand" />
+                      </div>
+                    ) : (
+                      <div className="text-5xl" aria-hidden>🌟</div>
+                    )}
                     <div className="flex-1 space-y-4">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
@@ -655,8 +721,13 @@ export default function DescobrirClient({
                             ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
                             : ''}
                         </span>
-                        <span className="text-xs text-support-2/80">
-                          ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
+                        <span className="text-xs text-support-2/80 inline-flex items-center gap-1">
+                          {isEnabled('FF_LAYOUT_V1') ? (
+                            <AppIcon name="time" size={14} />
+                          ) : (
+                            <span>⏱</span>
+                          )}
+                          <span>{suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}</span>
                         </span>
                       </div>
 
@@ -720,7 +791,11 @@ export default function DescobrirClient({
               <SectionWrapper
                 title={
                   <span className="inline-flex items-center gap-2">
-                    <span aria-hidden>{shelfMeta.icon}</span>
+                    {isEnabled('FF_LAYOUT_V1') && shelfMeta.iconName ? (
+                      <AppIcon name={shelfMeta.iconName as any} size={20} />
+                    ) : (
+                      <span aria-hidden>{shelfMeta.icon}</span>
+                    )}
                     <span>{shelfMeta.title}</span>
                   </span>
                 }
@@ -746,7 +821,18 @@ export default function DescobrirClient({
         })
       ) : (
         <>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="books" size={20} />
+                ) : (
+                  <span>📚</span>
+                )}
+                <span>Livros Recomendados</span>
+              </span>
+            }
+          >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
                 <Reveal key={book.title} delay={idx * 70} className="h-full">
@@ -761,7 +847,18 @@ export default function DescobrirClient({
             </GridRhythm>
           </SectionWrapper>
 
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="play" size={20} />
+                ) : (
+                  <span>🧸</span>
+                )}
+                <span>Brinquedos Sugeridos</span>
+              </span>
+            }
+          >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {toys.map((toy, idx) => (
                 <Reveal key={toy.title} delay={idx * 70} className="h-full">
@@ -902,7 +999,18 @@ export default function DescobrirClient({
 
       {/* Para Você */}
       <Reveal delay={260}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
+        <SectionWrapper
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="care" size={20} />
+              ) : (
+                <span>💚</span>
+              )}
+              <span>Para Você</span>
+            </span>
+          }
+        >
           <Card className="p-7">
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
@@ -914,6 +1022,107 @@ export default function DescobrirClient({
           </Card>
         </SectionWrapper>
       </Reveal>
+
+      {/* IA Modal (under FF_LAYOUT_V1) */}
+      {isEnabled('FF_LAYOUT_V1') && showIAModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+          <div className="w-full max-w-2xl px-4 pb-12 pt-6 sm:px-0">
+            <Card className="w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-white/40 pb-4 mb-4">
+                <h2 className="text-xl font-semibold text-support-1 flex items-center gap-2">
+                  <AppIcon name="idea" variant="brand" size={20} />
+                  <span>IA (Beta)</span>
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowIAModal(false)}
+                  className="text-support-2 hover:text-support-1 text-lg font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p className="text-sm text-support-2 mb-6">
+                Com base nos filtros que você selecionou, aqui estão as melhores sugestões personalizadas para sua criança:
+              </p>
+
+              {filteredSuggestions.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredSuggestions.slice(0, 5).map((suggestion) => (
+                    <div key={suggestion.id} className="rounded-lg border border-white/40 bg-white/50 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-support-1">{suggestion.title}</h3>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-support-2">
+                            <span>👧 {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
+                            <span className="inline-flex items-center gap-1">
+                              {isEnabled('FF_LAYOUT_V1') ? (
+                                <AppIcon name="time" size={14} />
+                              ) : (
+                                <span>⏱️</span>
+                              )}
+                              <span>{suggestion.time_total_min ?? 5} min</span>
+                            </span>
+                            {suggestion.materials && suggestion.materials.length > 0 && (
+                              <span>📦 {suggestion.materials[0]}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setToast({ message: 'Favoritado!', type: 'success' })
+                            setShowIAModal(false)
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          {isEnabled('FF_LAYOUT_V1') ? (
+                            <AppIcon name="star" size={16} />
+                          ) : (
+                            <span>❤️</span>
+                          )}
+                          <span>Favoritar</span>
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            setToast({
+                              message: 'Salvo no Planner · Ver Planner',
+                              type: 'success'
+                            })
+                            setShowIAModal(false)
+                            setTimeout(() => {
+                              window.location.hash = '#planner'
+                              const el = document.getElementById('planner')
+                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }, 500)
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          {isEnabled('FF_LAYOUT_V1') ? (
+                            <AppIcon name="crown" variant="brand" size={16} />
+                          ) : (
+                            <span>💾</span>
+                          )}
+                          <span>Salvar no Planner</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/40 bg-white/50 p-6 text-center">
+                  <p className="text-sm text-support-2">Nenhuma ideia encontrada com os filtros selecionados. Tente ajustar para explorar mais opções!</p>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
