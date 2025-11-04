@@ -106,11 +106,11 @@ export default async function Page() {
         />
         <div>
           <span className="eyebrow-capsule">Hoje</span>
-          <h1 data-testid="greeting-text" className="mt-2 text-3xl font-semibold text-support-1 md:text-4xl">
+          <h1 data-testid="greeting-text" className="mt-2 text-3xl font-semibold text-support-1 md:text-4xl" suppressHydrationWarning>
             {greeting}
           </h1>
           <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
-          <p className="text-sm text-support-2 md:text-base">{formattedDate}</p>
+          <p className="text-sm text-support-2 md:text-base" suppressHydrationWarning>{formattedDate}</p>
         </div>
       </SectionWrapper>
 
