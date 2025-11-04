@@ -78,12 +78,23 @@ export default function ProfessionalCard({ pro, onProfileOpen }: ProfessionalCar
       ) : null}
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
-        <a
-          href={`/profissionais/${pro.id}`}
-          className="rounded-xl border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-support-1 transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          Ver perfil
-        </a>
+        {isEnabled('FF_LAYOUT_V1') && onProfileOpen ? (
+          <button
+            type="button"
+            onClick={() => onProfileOpen(pro)}
+            aria-label={`Ver perfil de ${pro.nome}`}
+            className="rounded-xl border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-support-1 transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            Ver perfil
+          </button>
+        ) : (
+          <a
+            href={`/profissionais/${pro.id}`}
+            className="rounded-xl border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-support-1 transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            Ver perfil
+          </a>
+        )}
         {pro.whatsUrl ? (
           <a
             href={pro.whatsUrl}
