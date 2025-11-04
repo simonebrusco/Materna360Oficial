@@ -27,7 +27,7 @@ type ProfessionalCardProps = {
 const MAX_CHIPS = 4
 const FALLBACK_AVATAR = '/stickers/default.svg'
 
-export default function ProfessionalCard({ pro }: ProfessionalCardProps) {
+export default function ProfessionalCard({ pro, onProfileOpen }: ProfessionalCardProps) {
   const chips = (pro.temas ?? []).slice(0, MAX_CHIPS)
   const avatarSrc = pro.avatarUrl || FALLBACK_AVATAR
 
