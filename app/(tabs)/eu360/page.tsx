@@ -57,13 +57,13 @@ export default function Eu360Page() {
   )
 
   const content = (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 sm:px-6 md:px-8">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(58%_58%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
       />
 
-      <SectionWrapper>
+      <SectionWrapper className="bg-transparent">
         <ProfileForm />
       </SectionWrapper>
 
