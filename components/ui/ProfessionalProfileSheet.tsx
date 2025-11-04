@@ -36,8 +36,6 @@ export function ProfessionalProfileSheet({
 }: ProfessionalProfileSheetProps) {
   const [showUpsell, setShowUpsell] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
-  const firstFocusableRef = useRef<HTMLButtonElement>(null)
-  const lastFocusableRef = useRef<HTMLButtonElement>(null)
 
   // Handle Esc key close + body scroll prevention
   useEffect(() => {
