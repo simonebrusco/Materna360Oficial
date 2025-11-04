@@ -36,6 +36,7 @@ const PLANS = [
     price: '29',
     period: 'ao mês',
     emoji: '✨',
+    iconName: 'star',
     description: 'Para mães que querem mais insights',
     features: [
       'Tudo do Free, mais:',
