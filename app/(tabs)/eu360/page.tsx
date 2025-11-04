@@ -6,6 +6,7 @@ import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { isEnabled } from '@/app/lib/flags'
+
 import { useGamification } from '@/app/lib/useGamification'
 import AppIcon from '@/components/ui/AppIcon'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
@@ -13,7 +14,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
+
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
+
 
 export const dynamic = 'force-dynamic'
 
