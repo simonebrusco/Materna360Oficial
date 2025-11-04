@@ -139,10 +139,14 @@ export function ProfessionalProfileSheet({
       />
 
       <div
+        ref={modalRef}
         className={`fixed inset-x-0 bottom-0 z-50 flex items-end transition-transform duration-300 sm:inset-0 sm:items-center sm:justify-center ${
           open ? 'translate-y-0' : 'translate-y-full sm:translate-y-0 sm:scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="professional-modal-title"
       >
         <Card className="w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-screen bg-white animate-in slide-in-from-bottom-10">
           {/* Header with subtle gradient */}
