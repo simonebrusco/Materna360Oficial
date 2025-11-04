@@ -1003,7 +1003,8 @@ export default function DescobrirClient({
                             setShowIAModal(false)
                             setTimeout(() => {
                               window.location.hash = '#planner'
-                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                              const el = document.getElementById('planner')
+                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             }, 500)
                           }}
                         >
