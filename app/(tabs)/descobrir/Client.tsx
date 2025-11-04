@@ -56,7 +56,7 @@ const books = [
 
 const toys = [
   { emoji: '🧩', title: 'Quebra-Cabeças', age: '2+' },
-  { emoji: '����', title: 'Brinquedos de Corda', age: '3+' },
+  { emoji: '🪀', title: 'Brinquedos de Corda', age: '3+' },
   { emoji: '🧸', title: 'Pelúcias Educativas', age: '0+' },
   { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
 ]
@@ -785,7 +785,11 @@ export default function DescobrirClient({
               <SectionWrapper
                 title={
                   <span className="inline-flex items-center gap-2">
-                    <span aria-hidden>{shelfMeta.icon}</span>
+                    {isEnabled('FF_LAYOUT_V1') && shelfMeta.iconName ? (
+                      <AppIcon name={shelfMeta.iconName as any} size={20} />
+                    ) : (
+                      <span aria-hidden>{shelfMeta.icon}</span>
+                    )}
                     <span>{shelfMeta.title}</span>
                   </span>
                 }
