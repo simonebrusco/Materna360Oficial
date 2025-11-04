@@ -118,7 +118,11 @@ export default function Eu360Page() {
         <Reveal>
           <Card className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white">
             <div className="text-center">
-              <p className="text-4xl">💛</p>
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="care" variant="brand" size={48} className="mx-auto mb-2" />
+              ) : (
+                <p className="text-4xl">💛</p>
+              )}
               <h1 className="mt-3 text-2xl font-semibold md:text-3xl">Você é Importante</h1>
               <p className="mt-2 text-sm text-white/90 md:text-base">
                 Vá no seu próprio ritmo. Cada passo conta e você está no caminho certo.
