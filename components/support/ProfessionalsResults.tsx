@@ -107,6 +107,25 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
     }
   }
 
+  const handleProfileOpen = useCallback((pro: ProfessionalCardData) => {
+    const professional: Professional = {
+      id: pro.id,
+      nome: pro.nome,
+      especialidade: pro.especialidade,
+      bioCurta: pro.bioCurta,
+      avatarUrl: pro.avatarUrl,
+      cidade: pro.cidade,
+      whatsUrl: pro.whatsUrl,
+      calendlyUrl: pro.calendlyUrl,
+      verificado: pro.verificado,
+      primeiraAvaliacaoGratuita: pro.primeiraAvaliacaoGratuita,
+      temas: pro.temas,
+      precoHint: pro.precoHint,
+    }
+    setSelectedProfile(professional)
+    setOpenProfile(true)
+  }, [])
+
   if (!filters) {
     return (
       <div className="rounded-2xl border border-white/60 bg-white/80 p-8 text-center text-support-2">
