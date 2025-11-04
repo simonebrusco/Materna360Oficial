@@ -53,11 +53,6 @@ export function ProfessionalProfileSheet({
 
     document.addEventListener('keydown', handleEscapeKey)
 
-    // Focus first interactive element on modal open
-    if (firstFocusableRef.current) {
-      setTimeout(() => firstFocusableRef.current?.focus(), 100)
-    }
-
     return () => {
       document.removeEventListener('keydown', handleEscapeKey)
       document.body.style.overflow = originalStyle
