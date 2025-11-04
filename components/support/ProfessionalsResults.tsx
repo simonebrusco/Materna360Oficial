@@ -159,7 +159,11 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       {data.length > 0 ? (
         <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
           {data.map((pro) => (
-            <ProfessionalCard key={pro.id} pro={pro} />
+            <ProfessionalCard
+              key={pro.id}
+              pro={pro}
+              onProfileOpen={isEnabled('FF_LAYOUT_V1') ? handleProfileOpen : undefined}
+            />
           ))}
         </div>
       ) : null}
