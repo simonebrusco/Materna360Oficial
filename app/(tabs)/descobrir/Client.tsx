@@ -593,8 +593,13 @@ export default function DescobrirClient({
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
-                  ✨ Gerar Ideias
+                <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
+                  {isEnabled('FF_LAYOUT_V1') ? (
+                    <AppIcon name="idea" variant="brand" size={18} />
+                  ) : (
+                    <span>✨</span>
+                  )}
+                  <span>Gerar Ideias</span>
                 </Button>
                 {isEnabled('FF_LAYOUT_V1') && (
                   <Button variant="secondary" onClick={() => setShowIAModal(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
