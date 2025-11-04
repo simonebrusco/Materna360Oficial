@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AlertTriangle, ShoppingBag } from 'lucide-react'
 
+import AppIcon from '@/components/ui/AppIcon'
 import SectionBoundary from '@/components/common/SectionBoundary'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
