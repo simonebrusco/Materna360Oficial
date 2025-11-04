@@ -130,7 +130,13 @@ export default function PlanosPage() {
                 <div className="mb-6">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-4xl">{plan.emoji}</p>
+                      <div className="mb-2">
+                        {isEnabled('FF_LAYOUT_V1') && plan.iconName ? (
+                          <AppIcon name={plan.iconName as any} size={40} variant={plan.isPrimary ? 'brand' : 'neutral'} />
+                        ) : (
+                          <p className="text-4xl">{plan.emoji}</p>
+                        )}
+                      </div>
                       <h3 className="mt-2 text-2xl font-bold text-support-1">{plan.name}</h3>
                       <p className="mt-1 text-xs text-support-2">{plan.description}</p>
                     </div>
@@ -188,7 +194,7 @@ export default function PlanosPage() {
         <Card className="p-6 text-center md:p-8">
           <p className="text-sm text-support-2">
             Todas as assinaturas incluem{' '}
-            <span className="font-semibold text-primary">acesso à comunidade premium</span>, dúvidas respondidas em
+            <span className="font-semibold text-primary">acesso �� comunidade premium</span>, dúvidas respondidas em
             até 24h, e atualizações contínuas. Não há contratos, você pode cancelar a qualquer momento.
           </p>
         </Card>
