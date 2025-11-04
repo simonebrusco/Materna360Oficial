@@ -129,6 +129,53 @@ export default function Eu360Page() {
         </Reveal>
       </SectionWrapper>
 
+      {isEnabled('FF_LAYOUT_V1') && (
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">⭐<span>Seu Plano</span></span>}>
+          <Reveal delay={180}>
+            <Card className="p-7 bg-gradient-to-br from-primary/5 to-secondary/5">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2">Plano Atual</p>
+                  <p className="mt-2 text-2xl font-bold text-support-1">Free</p>
+                  <p className="text-sm text-support-2">Você está no plano básico com acesso completo a recursos essenciais.</p>
+                </div>
+
+                <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-primary">Desfrute de benefícios do Plus:</p>
+                  <ul className="space-y-2 text-sm text-support-1">
+                    <li className="flex gap-2">
+                      <span className="mt-0.5 text-xs">✨</span>
+                      <span>Análises avançadas sobre o desenvolvimento infantil</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="mt-0.5 text-xs">🎯</span>
+                      <span>Planos personalizados baseados em IA</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="mt-0.5 text-xs">📱</span>
+                      <span>Suporte prioritário via chat</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="primary" className="flex-1 sm:flex-none">
+                    💳 Gerenciar Plano
+                  </Button>
+                  <Button variant="secondary" className="flex-1 sm:flex-none" onClick={() => {
+                    if (isEnabled('FF_LAYOUT_V1')) {
+                      alert('Upgrade para Plus ou Premium para exportar em PDF')
+                    }
+                  }}>
+                    📥 Exportar Semana (PDF)
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </Reveal>
+        </SectionWrapper>
+      )}
+
       <SectionWrapper title={<span className="inline-flex items-center gap-2">🏅<span>Conquistas</span></span>}>
         <GridRhythm className="grid-cols-2 sm:grid-cols-3">
           {ACHIEVEMENTS.map((achievement, index) => (
