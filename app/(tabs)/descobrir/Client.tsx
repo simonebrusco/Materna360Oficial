@@ -33,7 +33,7 @@ import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
 /* ------------------------------------------------------------------ */
-/* Mock blocks (exibem quando não há rec shelf do CMS)                */
+/* Mock blocks (exibem quando n��o há rec shelf do CMS)                */
 /* ------------------------------------------------------------------ */
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
@@ -507,7 +507,7 @@ export default function DescobrirClient({
 
       <Reveal>
         <SectionWrapper
-          className="relative"
+          className="relative bg-transparent"
           header={
             <header className="SectionWrapper-header">
               <span className="SectionWrapper-eyebrow">Inspirações</span>
