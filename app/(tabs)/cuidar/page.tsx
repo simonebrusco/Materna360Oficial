@@ -88,12 +88,6 @@ export default async function Page() {
         <CareJourneys />
       </SectionWrapper>
 
-      {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>🎓<span>Mentoria &amp; Profissionais de Apoio</span></span>}>
-          <MentorshipBlock />
-        </SectionWrapper>
-      )}
-
       <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>👩‍⚕️<span>Profissionais de Confiança</span></span>}>
         <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
           <ProfessionalsSection />
