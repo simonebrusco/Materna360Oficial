@@ -239,22 +239,22 @@ export function ProfessionalProfileSheet({
           {/* Footer - sticky */}
           <div className="border-t border-white/60 bg-white/95 px-6 py-4 backdrop-blur-sm flex flex-col gap-3 sm:flex-row">
             <Button
-              ref={firstFocusableRef}
+              id="pps-close"
               variant="secondary"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="flex-1 sm:flex-1"
-              aria-label="Fechar modal de perfil do profissional"
+              className="w-full sm:w-auto"
+              aria-label="Fechar perfil"
+              autoFocus
             >
               ← Voltar
             </Button>
             <Button
-              ref={lastFocusableRef}
               variant="primary"
               size="sm"
               onClick={handleAgendar}
-              className="flex-1 sm:flex-1"
-              aria-label={`Agendar consultoria com ${professional.nome}`}
+              className="w-full sm:w-auto"
+              aria-label="Agendar atendimento"
             >
               📞 Agendar
             </Button>
