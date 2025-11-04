@@ -1049,7 +1049,14 @@ export default function DescobrirClient({
                           <h3 className="font-semibold text-support-1">{suggestion.title}</h3>
                           <div className="mt-2 flex flex-wrap gap-2 text-xs text-support-2">
                             <span>👧 {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
-                            <span>⏱️ {suggestion.time_total_min ?? 5} min</span>
+                            <span className="inline-flex items-center gap-1">
+                              {isEnabled('FF_LAYOUT_V1') ? (
+                                <AppIcon name="time" size={14} />
+                              ) : (
+                                <span>⏱️</span>
+                              )}
+                              <span>{suggestion.time_total_min ?? 5} min</span>
+                            </span>
                             {suggestion.materials && suggestion.materials.length > 0 && (
                               <span>📦 {suggestion.materials[0]}</span>
                             )}
