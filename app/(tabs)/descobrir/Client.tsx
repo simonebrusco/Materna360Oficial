@@ -700,7 +700,13 @@ export default function DescobrirClient({
               filteredSuggestions.map((suggestion, index) => (
                 <Reveal key={suggestion.id} delay={index * 60}>
                   <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
-                    <div className="text-5xl" aria-hidden>🌟</div>
+                    {isEnabled('FF_LAYOUT_V1') ? (
+                      <div className="flex items-start pt-1">
+                        <AppIcon name="star" size={32} variant="brand" />
+                      </div>
+                    ) : (
+                      <div className="text-5xl" aria-hidden>🌟</div>
+                    )}
                     <div className="flex-1 space-y-4">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
