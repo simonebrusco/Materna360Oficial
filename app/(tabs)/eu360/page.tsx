@@ -201,11 +201,17 @@ export default function Eu360Page() {
                   <Button variant="primary" className="flex-1 sm:flex-none">
                     💳 Gerenciar Plano
                   </Button>
-                  <Button variant="secondary" className="flex-1 sm:flex-none" onClick={() => {
-                    if (isEnabled('FF_LAYOUT_V1')) {
-                      alert('Upgrade para Plus ou Premium para exportar em PDF')
-                    }
-                  }}>
+                  <Button
+                    variant="secondary"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => {
+                      if (isEnabled('FF_LAYOUT_V1')) {
+                        setUpsellSheet({ isOpen: true, type: 'export' })
+                      } else {
+                        alert('Upgrade para Plus ou Premium para exportar em PDF')
+                      }
+                    }}
+                  >
                     📥 Exportar Semana (PDF)
                   </Button>
                 </div>
