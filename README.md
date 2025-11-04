@@ -2,6 +2,9 @@
 
 > Um ecossistema digital de bem-estar, organização familiar e desenvolvimento infantil — feito para mães que buscam equilíbrio, leveza e conexão.
 
+<!-- PR #120: cosmos-verse → stabilize/layout-v1 (Feedback Kit + Layout V1) -->
+<!-- PR #130: cosmos-verse → stabilize/layout-v1 (tracking) -->
+
 ---
 
 ## 🏡 Visão Geral

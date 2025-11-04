@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react'
 
 import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
+import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
-import AppShell from '@/components/common/AppShell'
-import { isEnabled } from '@/app/lib/flags'
 
 export const dynamic = 'force-dynamic'
 

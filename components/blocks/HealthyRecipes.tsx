@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import {
@@ -21,6 +19,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
+import { Empty } from '@/components/ui/feedback/Empty'
 
 const COURSE_OPTIONS: { value: RecipeCourseOption; label: string }[] = [
   { value: 'prato_quente', label: 'Pratos quentes' },
@@ -58,7 +59,7 @@ const AGE_BAND_LABEL: Record<string, string> = {
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: 'üç',
+    emoji: 'ÔøΩ',
     title: 'Pur√™ cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
@@ -463,7 +464,7 @@ const childAgeBand = useMemo(
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
       setToast({
-        message: `Receita salva no Planner para ${weekday} √s ${time}.`,
+        message: `Receita salva no Planner para ${weekday} ÔøΩs ${time}.`,
         type: 'success',
       })
       closePlannerModal()
@@ -707,6 +708,18 @@ const childAgeBand = useMemo(
         </Reveal>
       )}
 
+      {isLoading && recipes.length === 0 && isEnabled('FF_FEEDBACK_KIT') && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-96 rounded-2xl" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && recipes.length === 0 && educationalMessage == null && noResultMessage == null && isEnabled('FF_FEEDBACK_KIT') && (
+        <Empty title="Nenhuma receita gerada" hint="Preencha os filtros e clique em 'Gerar receitas'." />
+      )}
+
       {recipes.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {recipes.map((recipe) => (
@@ -785,21 +798,25 @@ const childAgeBand = useMemo(
                   )}
                 </div>
 
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-6 flex items-center gap-3">
                   <Button size="sm" onClick={() => openPlannerModal(recipe)}>
                     Salvar no Planner
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                  <button
+                    type="button"
                     onClick={() => handleGenerate(recipe.title)}
                     disabled={isLoading}
+                    className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
                   >
                     Gerar varia√ß√£o
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleShare(recipe)}>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleShare(recipe)}
+                    className="text-sm font-medium text-primary underline hover:opacity-70"
+                  >
                     Compartilhar
-                  </Button>
+                  </button>
                 </div>
               </Card>
             </Reveal>

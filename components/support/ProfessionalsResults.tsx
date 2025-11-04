@@ -1,11 +1,13 @@
 'use client'
 
-'use client'
-
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import ProfessionalCard, { type ProfessionalCardData } from './ProfessionalCard'
 import type { ProfessionalsSearchFilters } from './ProfessionalsSearchForm'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
+import { Empty } from '@/components/ui/feedback/Empty'
+import { ErrorBlock } from '@/components/ui/feedback/Error'
 
 type ApiResponse = {
   items: ProfessionalCardData[]
@@ -112,19 +114,28 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
 
   const showSkeletonGrid = loading && data.length === 0
   const showEmptyState = !loading && data.length === 0 && !error
+  const FF = isEnabled('FF_FEEDBACK_KIT')
 
   return (
     <div className="space-y-6">
       {showSkeletonGrid ? (
-        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
-            <div key={index} className="h-56 rounded-2xl border border-white/60 bg-white/60 animate-pulse" />
-          ))}
-        </div>
+        FF ? (
+          <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+            {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+              <Skeleton key={index} className="h-56 rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+            {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+              <div key={index} className="h-56 rounded-2xl border border-white/60 bg-white/60 animate-pulse" />
+            ))}
+          </div>
+        )
       ) : null}
 
       {data.length > 0 ? (
-        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
           {data.map((pro) => (
             <ProfessionalCard key={pro.id} pro={pro} />
           ))}
@@ -132,15 +143,23 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       ) : null}
 
       {showEmptyState ? (
-        <div className="rounded-2xl border border-white/60 bg-white/80 p-8 text-center text-support-2">
-          Nenhum profissional encontrado para os filtros escolhidos.
-        </div>
+        FF ? (
+          <Empty title="Nenhum profissional encontrado" hint="Tente ajustar os filtros." />
+        ) : (
+          <div className="rounded-2xl border border-white/60 bg-white/80 p-8 text-center text-support-2">
+            Nenhum profissional encontrado para os filtros escolhidos.
+          </div>
+        )
       ) : null}
 
       {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">
-          {error}
-        </div>
+        FF ? (
+          <ErrorBlock message={error} onRetry={() => setPage(1)} />
+        ) : (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">
+            {error}
+          </div>
+        )
       ) : null}
 
       {hasMore ? (

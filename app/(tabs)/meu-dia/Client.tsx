@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useState } from 'react'
 
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
@@ -12,6 +10,7 @@ import { Checklist } from '@/components/blocks/Checklist'
 import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
 import GridRhythm from '@/components/common/GridRhythm'
+import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
@@ -102,7 +101,7 @@ export function MeuDiaClient({
       </SectionWrapper>
 
       <SectionWrapper>
-        <GridRhythm className="GridRhythm grid-cols-1 sm:grid-cols-2">
+        <GridStable>
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
               <Card className="h-full">
@@ -115,7 +114,7 @@ export function MeuDiaClient({
               </Card>
             </Reveal>
           ))}
-        </GridRhythm>
+        </GridStable>
       </SectionWrapper>
 
       <SectionWrapper>
@@ -190,13 +189,17 @@ export function MeuDiaClient({
                 className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 rows={4}
               />
-              <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowNoteModal(false)} className="flex-1">
-                  Cancelar
-                </Button>
+              <div className="mt-4 flex items-center gap-3">
                 <Button variant="primary" size="sm" onClick={handleAddNote} className="flex-1">
                   Salvar
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(false)}
+                  className="text-sm font-medium text-primary underline hover:opacity-70"
+                >
+                  Cancelar
+                </button>
               </div>
             </Card>
           </div>

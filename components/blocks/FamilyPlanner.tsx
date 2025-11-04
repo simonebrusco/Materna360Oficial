@@ -1,11 +1,10 @@
 'use client'
 
-
-'use client'
-
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import type { ChildRecommendation, RecommendationType } from '@/app/data/childContent'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
@@ -896,7 +895,16 @@ export function FamilyPlanner({
       )}
 
       {isLoading ? (
-        <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
+        isEnabled('FF_FEEDBACK_KIT') ? (
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-support-2">Carregando planner...</div>
+        )
       ) : (
         <div className="space-y-6 md:space-y-8">
           <div className="flex flex-wrap gap-3">
@@ -1006,7 +1014,7 @@ export function FamilyPlanner({
                             <p className="text-[11px] text-support-2">Use para lembrar materiais ou ajustes.</p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                        <div className="flex items-center gap-3 text-xs font-semibold text-primary">
                           <button
                             type="button"
                             onClick={handleEditSave}
@@ -1017,7 +1025,7 @@ export function FamilyPlanner({
                           <button
                             type="button"
                             onClick={handleEditCancel}
-                            className="rounded-full border border-white/60 px-3 py-1 text-support-2 transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                            className="text-xs font-medium text-primary underline hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                           >
                             Cancelar
                           </button>

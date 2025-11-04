@@ -5,6 +5,7 @@ import { MeuDiaClient } from './Client'
 
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/app/data/childContent'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
@@ -12,7 +13,6 @@ import { getDayIndex } from '@/app/lib/dailyMessage'
 import { profilePreferredBuckets, type Profile } from '@/app/lib/ageRange'
 import { readProfileCookie } from '@/app/lib/profileCookie'
 import { buildWeekLabels, getWeekStartKey } from '@/app/lib/weekLabels'
-import { isEnabled } from '@/app/lib/flags'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

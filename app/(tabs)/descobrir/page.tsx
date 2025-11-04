@@ -2,6 +2,8 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
 
 import DescobrirClient from './Client'
+import AppShell from '@/components/common/AppShell'
+import { isEnabled } from '@/app/lib/flags'
 import { toFlashFilters } from './utils/filters'
 import { nearestQuickIdeasWindow } from './utils/timeWindows'
 
@@ -16,10 +18,9 @@ import { buildRecShelves } from '@/app/lib/recShelf'
 import { selectFlashRoutine } from '@/app/lib/flashRoutine'
 import { selectSelfCareItems } from '@/app/lib/selfCare'
 import { readProfileCookie } from '@/app/lib/profileCookie'
-import { getServerFlags, isEnabled } from '@/app/lib/flags'
+import { getServerFlags } from '@/app/lib/flags'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import '@/app/lib/telemetryServer'
-import AppShell from '@/components/common/AppShell'
 import {
   FlashRoutine as FlashRoutineSchema,
   FlashRoutineFilters as FlashRoutineFiltersSchema,
@@ -419,7 +420,6 @@ export default async function DescobrirPage({ searchParams }: { searchParams?: S
       flags={serverFlags}
     />
   )
-
 
   return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
 }
