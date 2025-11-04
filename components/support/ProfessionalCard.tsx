@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
+import { isEnabled } from '@/app/lib/flags'
 
 export type ProfessionalCardData = {
   id: string
@@ -11,13 +12,16 @@ export type ProfessionalCardData = {
   avatarUrl?: string
   cidade?: string
   whatsUrl?: string
+  calendlyUrl?: string
   verificado?: boolean
   primeiraAvaliacaoGratuita?: boolean
   temas?: string[]
+  precoHint?: string
 }
 
 type ProfessionalCardProps = {
   pro: ProfessionalCardData
+  onProfileOpen?: (pro: ProfessionalCardData) => void
 }
 
 const MAX_CHIPS = 4
