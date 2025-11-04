@@ -715,8 +715,13 @@ export default function DescobrirClient({
                             ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
                             : ''}
                         </span>
-                        <span className="text-xs text-support-2/80">
-                          ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
+                        <span className="text-xs text-support-2/80 inline-flex items-center gap-1">
+                          {isEnabled('FF_LAYOUT_V1') ? (
+                            <AppIcon name="time" size={14} />
+                          ) : (
+                            <span>⏱</span>
+                          )}
+                          <span>{suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}</span>
                         </span>
                       </div>
 
