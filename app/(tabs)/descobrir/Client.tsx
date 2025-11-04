@@ -29,7 +29,7 @@ import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
 import type { RecProductKind } from '@/app/types/recProducts'
 import type { SelfCareEnergy } from '@/app/types/selfCare'
 import type { ProfileChildSummary } from '@/app/lib/profileTypes'
-import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
+import { getClientFlags, isEnabled, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
 /* ------------------------------------------------------------------ */
