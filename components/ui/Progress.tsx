@@ -20,7 +20,7 @@ export const Progress: React.FC<ProgressProps> = ({
       <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary/60">
         <div className="absolute inset-0 bg-white/40 blur-md" aria-hidden />
         <div
-          className="relative h-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-[0_8px_30px_rgba(255,0,94,0.28)] transition-all duration-500 ease-gentle"
+          className="relative h-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-500 ease-gentle"
           style={{ width: `${percentage}%` }}
         />
       </div>
