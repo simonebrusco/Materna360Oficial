@@ -1064,8 +1064,14 @@ export default function DescobrirClient({
                             setToast({ message: 'Favoritado!', type: 'success' })
                             setShowIAModal(false)
                           }}
+                          className="flex items-center gap-2"
                         >
-                          ❤️ Favoritar
+                          {isEnabled('FF_LAYOUT_V1') ? (
+                            <AppIcon name="star" size={16} />
+                          ) : (
+                            <span>❤️</span>
+                          )}
+                          <span>Favoritar</span>
                         </Button>
                         <Button
                           variant="primary"
@@ -1082,8 +1088,14 @@ export default function DescobrirClient({
                               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             }, 500)
                           }}
+                          className="flex items-center gap-2"
                         >
-                          💾 Salvar no Planner
+                          {isEnabled('FF_LAYOUT_V1') ? (
+                            <AppIcon name="crown" variant="brand" size={16} />
+                          ) : (
+                            <span>💾</span>
+                          )}
+                          <span>Salvar no Planner</span>
                         </Button>
                       </div>
                     </div>
