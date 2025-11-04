@@ -89,6 +89,37 @@ export default function Eu360Page() {
         </Reveal>
       </SectionWrapper>
 
+      {isEnabled('FF_LAYOUT_V1') && (
+        <SectionWrapper title={<span className="inline-flex items-center gap-2">🎮<span>Sua Jornada Gamificada</span></span>}>
+          <Reveal delay={80}>
+            <Card className="p-7">
+              <div className="space-y-5">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-support-1">Nível {gamification.level}</span>
+                    <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
+                  </div>
+                  <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
+                  <p className="mt-2 text-xs text-support-2">Total de pontos: {gamification.totalPoints} 🎯</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+                    <p className="text-2xl">🔥</p>
+                    <p className="mt-2 text-xs text-support-2">Sequência</p>
+                    <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+                    <p className="text-2xl">⭐</p>
+                    <p className="mt-2 text-xs text-support-2">Selos</p>
+                    <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Reveal>
+        </SectionWrapper>
+      )}
+
       <SectionWrapper title={<span className="inline-flex items-center gap-2">🎯<span>Seu Progresso</span></span>}>
         <Reveal delay={80}>
           <Card className="p-7">
