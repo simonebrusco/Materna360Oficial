@@ -993,7 +993,18 @@ export default function DescobrirClient({
 
       {/* Para Você */}
       <Reveal delay={260}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
+        <SectionWrapper
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="care" size={20} />
+              ) : (
+                <span>💚</span>
+              )}
+              <span>Para Você</span>
+            </span>
+          }
+        >
           <Card className="p-7">
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
