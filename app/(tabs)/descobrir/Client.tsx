@@ -841,7 +841,18 @@ export default function DescobrirClient({
             </GridRhythm>
           </SectionWrapper>
 
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="play" size={20} />
+                ) : (
+                  <span>🧸</span>
+                )}
+                <span>Brinquedos Sugeridos</span>
+              </span>
+            }
+          >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {toys.map((toy, idx) => (
                 <Reveal key={toy.title} delay={idx * 70} className="h-full">
