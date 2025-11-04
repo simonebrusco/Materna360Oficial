@@ -35,6 +35,72 @@ export function ProfessionalProfileSheet({
   professional,
 }: ProfessionalProfileSheetProps) {
   const [showUpsell, setShowUpsell] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const firstFocusableRef = useRef<HTMLButtonElement>(null)
+  const lastFocusableRef = useRef<HTMLButtonElement>(null)
+
+  // Handle Esc key close + body scroll prevention
+  useEffect(() => {
+    if (!open) return
+
+    // Prevent body scroll when modal is open
+    const originalStyle = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'Esc') {
+        onOpenChange(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscapeKey)
+
+    // Focus first interactive element on modal open
+    if (firstFocusableRef.current) {
+      setTimeout(() => firstFocusableRef.current?.focus(), 100)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+      document.body.style.overflow = originalStyle
+    }
+  }, [open, onOpenChange])
+
+  // Focus trap: keep focus within modal
+  useEffect(() => {
+    if (!open) return
+
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return
+
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as NodeListOf<HTMLElement>
+
+      if (!focusableElements || focusableElements.length === 0) return
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+      const activeElement = document.activeElement
+
+      if (event.shiftKey) {
+        // Shift + Tab (going backwards)
+        if (activeElement === firstElement) {
+          event.preventDefault()
+          lastElement.focus()
+        }
+      } else {
+        // Tab (going forwards)
+        if (activeElement === lastElement) {
+          event.preventDefault()
+          firstElement.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleTabKey)
+    return () => document.removeEventListener('keydown', handleTabKey)
+  }, [open])
 
   if (!open || !professional) return null
 
