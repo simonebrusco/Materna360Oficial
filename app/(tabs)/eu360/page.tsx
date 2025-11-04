@@ -133,7 +133,7 @@ export default function Eu360Page() {
       </SectionWrapper>
 
       {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">🎮<span>Sua Jornada Gamificada</span></span>}>
+        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="crown" variant="brand" size={20} /><span>Sua Jornada Gamificada</span></span>}>
           <Reveal delay={80}>
             <Card className="p-7">
               <div className="space-y-5">
