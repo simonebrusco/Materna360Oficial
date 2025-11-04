@@ -674,7 +674,18 @@ export default function DescobrirClient({
 
       {/* Sugestão do Dia */}
       <Reveal delay={200}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
+        <SectionWrapper
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="star" size={20} variant="brand" />
+              ) : (
+                <span>🌟</span>
+              )}
+              <span>Sugestão do Dia</span>
+            </span>
+          }
+        >
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Filtros ativos: {friendlyFilters}
           </div>
