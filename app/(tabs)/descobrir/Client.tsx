@@ -815,7 +815,18 @@ export default function DescobrirClient({
         })
       ) : (
         <>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
+          <SectionWrapper
+            title={
+              <span className="inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="books" size={20} />
+                ) : (
+                  <span>📚</span>
+                )}
+                <span>Livros Recomendados</span>
+              </span>
+            }
+          >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
                 <Reveal key={book.title} delay={idx * 70} className="h-full">
