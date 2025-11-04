@@ -1024,7 +1024,8 @@ export default function DescobrirClient({
             <Card className="w-full max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-white/40 pb-4 mb-4">
                 <h2 className="text-xl font-semibold text-support-1 flex items-center gap-2">
-                  <span aria-hidden>🤖</span> IA (Beta)
+                  <AppIcon name="idea" variant="brand" size={20} />
+                  <span>IA (Beta)</span>
                 </h2>
                 <button
                   type="button"
