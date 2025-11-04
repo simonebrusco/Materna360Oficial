@@ -28,6 +28,8 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
+  const [selectedProfile, setSelectedProfile] = useState<Professional | undefined>()
+  const [openProfile, setOpenProfile] = useState(false)
 
   const abortControllerRef = useRef<AbortController | null>(null)
 
