@@ -33,10 +33,10 @@ type MeuDiaClientProps = {
 }
 
 const quickActions = [
-  { emoji: '🏡', iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
-  { emoji: '📸', iconName: 'camera', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
-  { emoji: '🎯', iconName: 'star', title: 'Atividade do Dia', description: 'Faça com as crianças' },
-  { emoji: '☕', iconName: 'coffee', title: 'Pausa para Mim', description: 'Seu momento especial' },
+  { iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
+  { iconName: 'camera', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
+  { iconName: 'target', title: 'Atividade do Dia', description: 'Faça com as crianças' },
+  { iconName: 'coffee', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
 const NOTES_LABEL = 'Notas R\u00E1pidas'
