@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import AppIcon from '@/components/ui/AppIcon'
 import Emoji from '@/components/ui/Emoji'
 import MindfulnessModal from '@/components/features/Mindfulness/MindfulnessModal'
 import {
@@ -21,21 +22,21 @@ const FEATURED_COLLECTION_IDS = new Set(['acolhimento', 'clareza'])
 const COLLECTIONS = [
   {
     id: 'reconectar',
-    icon: '🌸',
+    iconName: 'sparkles' as const,
     titulo: 'Reconecte-se',
     descricao:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
   },
   {
     id: 'energia',
-    icon: '☀️',
+    iconName: 'sun' as const,
     titulo: 'Renove sua Energia',
     descricao:
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
   },
   {
     id: 'descanso',
-    icon: '🌙',
+    iconName: 'moon' as const,
     titulo: 'Encontre Calma',
     descricao:
       'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
@@ -67,8 +68,7 @@ export default function MindfulnessForMoms() {
     <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-10 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-12">
       <header className="space-y-2 md:space-y-3">
         <span className="eyebrow-capsule">Bem-estar emocional</span>
-        <h2 className="flex items-center gap-3 text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
-          <Emoji char="🎧" size={24} />
+        <h2 className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
           Mindfulness para Mães
         </h2>
         <p className="max-w-3xl text-sm leading-[1.45] text-support-2/85 md:text-base">
@@ -84,12 +84,12 @@ export default function MindfulnessForMoms() {
             className="CardElevate relative flex h-full min-h-[172px] flex-col rounded-[28px] border border-support-2/20 bg-gradient-to-b from-white/98 to-white/90 p-4 ring-1 ring-white/60 backdrop-blur-sm md:p-5 lg:p-6"
           >
             <div className="space-y-2.5">
-              <span
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-2xl shadow-sm"
+              <div
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-sm"
                 aria-hidden="true"
               >
-                {collection.icon}
-              </span>
+                <AppIcon name={collection.iconName} size={18} variant="brand" />
+              </div>
               <h3 className="text-lg font-semibold leading-tight text-support-1 md:text-xl">{collection.titulo}</h3>
               <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
                 {collection.descricao}
@@ -105,9 +105,7 @@ export default function MindfulnessForMoms() {
                   aria-label={`Ouvir ${collection.titulo}`}
                   className="inline-flex items-center gap-2 rounded-full px-5"
                 >
-                  <span aria-hidden="true" className="text-base leading-none">
-                    ▶︎
-                  </span>
+                  <AppIcon name="play" size={16} aria-hidden />
                   <span>Ouvir</span>
                 </Button>
               ) : collection.id === 'energia' ? (
@@ -118,9 +116,7 @@ export default function MindfulnessForMoms() {
                   aria-label={`Ouvir ${collection.titulo}`}
                   className="inline-flex items-center gap-2 rounded-full px-5"
                 >
-                  <span aria-hidden="true" className="text-base leading-none">
-                    ▶︎
-                  </span>
+                  <AppIcon name="play" size={16} aria-hidden />
                   <span>Ouvir</span>
                 </Button>
               ) : collection.id === 'descanso' ? (
@@ -131,9 +127,7 @@ export default function MindfulnessForMoms() {
                   aria-label={`Ouvir ${collection.titulo}`}
                   className="inline-flex items-center gap-2 rounded-full px-5"
                 >
-                  <span aria-hidden="true" className="text-base leading-none">
-                    ▶︎
-                  </span>
+                  <AppIcon name="play" size={16} aria-hidden />
                   <span>Ouvir</span>
                 </Button>
               ) : (
@@ -142,9 +136,7 @@ export default function MindfulnessForMoms() {
                   aria-label={`Ouvir ${collection.titulo}`}
                   className={`${SECONDARY_TRIGGER_CLASS} inline-flex items-center justify-center gap-2 rounded-full text-base`}
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
-                    ▶︎
-                  </span>
+                  <AppIcon name="play" size={16} aria-hidden />
                   <span>Ouvir</span>
                 </a>
               )}
