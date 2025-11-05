@@ -563,7 +563,7 @@ export default function DescobrirClient({
               {isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="filters" size={20} />
               ) : (
-                <span>🔍</span>
+                <Emoji char="🔍" />
               )}
               <span>Filtros Inteligentes</span>
             </span>
@@ -1083,7 +1083,7 @@ export default function DescobrirClient({
                               {isEnabled('FF_LAYOUT_V1') ? (
                                 <AppIcon name="time" size={14} />
                               ) : (
-                                <span>⏱️</span>
+                                <Emoji char="⏱️" size={14} />
                               )}
                               <span>{suggestion.time_total_min ?? 5} min</span>
                             </span>
