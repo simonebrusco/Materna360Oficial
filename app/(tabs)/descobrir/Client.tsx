@@ -556,17 +556,10 @@ export default function DescobrirClient({
       {/* Filtros Inteligentes */}
       <Reveal delay={80}>
         <SectionWrapper
-          title={
-            <span className="inline-flex items-center gap-2">
-              {/* OLD BROKEN - REMOVED */}
-              {false && isEnabled('FF_LAYOUT_V1') ? (
-                <AppIcon name="filters" size={20} />
-              ) : (
-                <Emoji char="��" />
-              )}
-              <span>Filtros Inteligentes</span>
-            </span>
-          }
+        <SectionWrapper
+          title="Filtros Inteligentes"
+          description="Combine idade e local para criar experiências personalizadas em segundos."
+        >
           description="Combine idade e local para criar experiências personalizadas em segundos."
         >
           <Card className="p-7">
