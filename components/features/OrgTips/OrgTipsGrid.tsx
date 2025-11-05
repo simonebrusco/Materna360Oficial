@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import Emoji from '@/components/ui/Emoji'
 import { Toast } from '@/components/ui/Toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
