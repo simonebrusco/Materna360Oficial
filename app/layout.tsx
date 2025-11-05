@@ -1,4 +1,5 @@
-import './globals.css'
+// CSS import temporarily disabled due to Tailwind processing issues
+// import './globals.css'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Script from 'next/script'
