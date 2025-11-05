@@ -145,7 +145,7 @@ export default function Eu360Client() {
                     <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
                   </div>
                   <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
-                  <p className="mt-2 text-xs text-support-2">Total de pontos: {gamification.totalPoints} 🎯</p>
+                  <p className="mt-2 text-xs text-support-2">Total de pontos: {gamification.totalPoints} <Emoji char="🎯" size={12} /></p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">

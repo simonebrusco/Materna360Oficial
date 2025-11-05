@@ -1089,7 +1089,7 @@ export default function DescobrirClient({
                               <span>{suggestion.time_total_min ?? 5} min</span>
                             </span>
                             {suggestion.materials && suggestion.materials.length > 0 && (
-                              <span>📦 {suggestion.materials[0]}</span>
+                              <span><Emoji char="📦" size={12} /> {suggestion.materials[0]}</span>
                             )}
                           </div>
                         </div>
