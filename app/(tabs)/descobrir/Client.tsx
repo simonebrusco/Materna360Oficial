@@ -233,32 +233,32 @@ type QuickIdeaFiltersSummary = {
 }
 
 type DescobrirClientProps = {
-  suggestions: SuggestionCard[]
-  filters: QuickIdeaFiltersSummary
-  dateKey: string
-  profile: ProfileSummaryT
+  suggestions?: SuggestionCard[]
+  filters?: QuickIdeaFiltersSummary
+  dateKey?: string
+  profile?: ProfileSummaryT
   initialAgeFilter?: QuickIdeasAgeBucket | null
   initialPlaceFilter?: string | null
-  recShelf: RecShelfState
-  flashRoutine: FlashRoutineState
-  selfCare: SelfCareState
-  flags: DiscoverFlags
+  recShelf?: RecShelfState
+  flashRoutine?: FlashRoutineState
+  selfCare?: SelfCareState
+  flags?: DiscoverFlags
 }
 
 /* ------------------------------------------------------------------ */
 /* Componente                                                          */
 /* ------------------------------------------------------------------ */
 export default function DescobrirClient({
-  suggestions,
-  filters,
-  dateKey,
-  profile,
+  suggestions = [],
+  filters = { location: 'Casa', time_window_min: 'short', energy: 'low' },
+  dateKey = new Date().toISOString().split('T')[0],
+  profile = { babyAgeMonths: 0, babyName: 'Bebê' },
   initialAgeFilter = null,
   initialPlaceFilter = null,
-  recShelf,
-  flashRoutine,
-  selfCare,
-  flags,
+  recShelf = { enabled: false, shelves: [] },
+  flashRoutine = { enabled: false, routine: null },
+  selfCare = { enabled: false, activities: [] },
+  flags = getClientFlags(),
 }: DescobrirClientProps) {
   // UI state
   const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
