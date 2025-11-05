@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
 
-type Item = { href: string; label: string; icon: 'place' | 'star' | 'books' | 'crown' };
+type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' };
 
 const ITEMS: Item[] = [
-  { href: '/',          label: 'Home',      icon: 'place' },
-  { href: '/meu-dia',   label: 'Meu Dia',   icon: 'star'  },
-  { href: '/descobrir', label: 'Descobrir', icon: 'books' },
-  { href: '/eu360',     label: 'Eu360',     icon: 'crown' },
+  { href: '/meu-dia',    label: 'Meu Dia',   icon: 'star'  },
+  { href: '/cuidar',     label: 'Cuidar',    icon: 'care'  },
+  { href: '/descobrir',  label: 'Descobrir', icon: 'books' },
+  { href: '/eu360',      label: 'Eu360',     icon: 'crown' },
 ];
 
 export default function BottomNav() {
@@ -27,7 +27,9 @@ export default function BottomNav() {
     >
       <ul className="mx-auto grid max-w-screen-md grid-cols-4">
         {ITEMS.map((it) => {
-          const active = pathname === it.href || (it.href !== '/' && pathname?.startsWith(it.href));
+          const active =
+            pathname === it.href ||
+            (it.href !== '/' && pathname?.startsWith(it.href));
           return (
             <li key={it.href}>
               <Link
