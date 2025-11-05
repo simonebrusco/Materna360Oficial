@@ -257,7 +257,7 @@ export function ProfessionalProfileSheet({
               className="w-full sm:w-auto"
               aria-label="Agendar atendimento"
             >
-              📞 Agendar
+              <Emoji char="📞" size={14} /> Agendar
             </Button>
           </div>
         </Card>

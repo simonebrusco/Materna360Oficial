@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import Emoji from '@/components/ui/Emoji'
 import MindfulnessModal from '@/components/features/Mindfulness/MindfulnessModal'
 import {
   TRACKS_ENCONTRE_CALMA,

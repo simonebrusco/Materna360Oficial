@@ -34,7 +34,7 @@ export function UpsellSheet({
               ✕
             </button>
             <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary">
-              🔓 Desbloquear recurso
+              <Emoji char="🔓" size={14} /> Desbloquear recurso
             </p>
             <h2 className="mt-2 text-2xl font-bold text-support-1">{title}</h2>
             <p className="mt-2 text-sm text-support-2">{description}</p>
