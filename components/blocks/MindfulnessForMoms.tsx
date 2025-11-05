@@ -67,9 +67,7 @@ export default function MindfulnessForMoms() {
       <header className="space-y-2 md:space-y-3">
         <span className="eyebrow-capsule">Bem-estar emocional</span>
         <h2 className="flex items-center gap-3 text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
-          <span aria-hidden="true" className="text-2xl md:text-3xl">
-            🎧
-          </span>
+          <Emoji char="🎧" size={24} />
           Mindfulness para Mães
         </h2>
         <p className="max-w-3xl text-sm leading-[1.45] text-support-2/85 md:text-base">
