@@ -19,24 +19,32 @@ const SECONDARY_TRIGGER_CLASS =
 
 const FEATURED_COLLECTION_IDS = new Set(['acolhimento', 'clareza'])
 
-const COLLECTIONS = [
+type Collection = {
+  id: string
+  iconName?: AppIconName
+  icon?: string
+  titulo: string
+  descricao: string
+}
+
+const COLLECTIONS: Collection[] = [
   {
     id: 'reconectar',
-    iconName: 'sparkles' as const,
+    iconName: 'sparkles',
     titulo: 'Reconecte-se',
     descricao:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
   },
   {
     id: 'energia',
-    iconName: 'sun' as const,
+    iconName: 'sun',
     titulo: 'Renove sua Energia',
     descricao:
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
   },
   {
     id: 'descanso',
-    iconName: 'moon' as const,
+    iconName: 'moon',
     titulo: 'Encontre Calma',
     descricao:
       'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
