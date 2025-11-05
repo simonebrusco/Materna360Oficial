@@ -38,6 +38,11 @@ export function Header({ title, showNotification = false }: HeaderProps) {
       return undefined
     }
 
+    // Skip profile fetch if FullStory is detected (avoids fetch interception issues)
+    if (typeof window !== 'undefined' && (window as any).FS) {
+      return undefined
+    }
+
     let isMounted = true
 
     const loadProfile = async () => {
