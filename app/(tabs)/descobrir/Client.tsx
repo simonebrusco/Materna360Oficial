@@ -250,14 +250,14 @@ type DescobrirClientProps = {
 /* ------------------------------------------------------------------ */
 export default function DescobrirClient({
   suggestions = [],
-  filters = { location: 'Casa', time_window_min: 'short', energy: 'low' },
+  filters = { location: 'Casa' as QuickIdeasLocation, time_window_min: 'short' as QuickIdeasTimeWindow, energy: 'low' as QuickIdeasEnergy },
   dateKey = new Date().toISOString().split('T')[0],
   profile = { babyAgeMonths: 0, babyName: 'Bebê' },
   initialAgeFilter = null,
   initialPlaceFilter = null,
-  recShelf = { enabled: false, shelves: [] },
-  flashRoutine = { enabled: false, routine: null },
-  selfCare = { enabled: false, activities: [] },
+  recShelf = { enabled: false, groups: [] },
+  flashRoutine = { enabled: false, aiEnabled: false, routine: null, strategy: null, analyticsSource: 'local' as const },
+  selfCare = { enabled: false, aiEnabled: false, items: [], energy: 'medium' as SelfCareEnergy, minutes: 5 as const },
   flags = getClientFlags(),
 }: DescobrirClientProps) {
   // UI state
