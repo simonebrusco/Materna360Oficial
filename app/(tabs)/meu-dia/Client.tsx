@@ -154,7 +154,11 @@ export function MeuDiaClient({
               <div className="notesCard-text">
                 <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
                   <span className="mr-1">
-                    <Emoji char="📝" size={14} />
+                    {isEnabled('FF_LAYOUT_V1') ? (
+                      <AppIcon name="edit" size={16} aria-hidden />
+                    ) : (
+                      <Emoji char="📝" size={14} />
+                    )}
                   </span>
                   {notesLabel}
                 </h2>
