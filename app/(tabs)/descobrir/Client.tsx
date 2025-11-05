@@ -36,6 +36,12 @@ import { getClientFlags, isEnabled, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
 /* ------------------------------------------------------------------ */
+/* Hero constants (plain text, no emoji)                              */
+/* ------------------------------------------------------------------ */
+const HERO_TITLE = 'Descobrir' as const
+const HERO_DESC = 'Use os filtros para encontrar ideias rápidas por tempo, energia e local.' as const
+
+/* ------------------------------------------------------------------ */
 /* Emoji/garbled sanitization (headings only)                          */
 /* ------------------------------------------------------------------ */
 const STRIP_EMOJI = /([\u2700-\u27BF]|\u24C2|[\uE000-\uF8FF]|[\uFE00-\uFE0F]|[\u2600-\u26FF]|[\uD83C-\uDBFF][\uDC00-\uDFFF]|\u200D)/g
