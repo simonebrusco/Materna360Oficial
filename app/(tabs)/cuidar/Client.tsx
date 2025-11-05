@@ -103,10 +103,7 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
           <section className="space-y-4">
             <Reveal>
               <div className="space-y-2">
-                <h2 className="section-title flex items-center gap-2">
-                  <Emoji char="🎧" />
-                  <span>Mindfulness para Mães</span>
-                </h2>
+                <h2 className="section-title">Mindfulness para Mães</h2>
                 <p className="section-subtitle max-w-2xl">
                   Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
                 </p>
