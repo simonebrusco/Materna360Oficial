@@ -207,11 +207,11 @@ export function ProfessionalProfileSheet({
               <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
                 <div className="space-y-2 text-sm text-support-2">
                   <p>
-                    <span className="font-semibold text-support-1">📍 Local:</span> Atendimento online
+                    <span className="font-semibold text-support-1"><Emoji char="📍" size={14} /> Local:</span> Atendimento online
                   </p>
                   {professional.cidade && (
                     <p>
-                      <span className="font-semibold text-support-1">🏙️ Baseado em:</span> {professional.cidade}
+                      <span className="font-semibold text-support-1"><Emoji char="🏙️" size={14} /> Baseado em:</span> {professional.cidade}
                     </p>
                   )}
                 </div>
