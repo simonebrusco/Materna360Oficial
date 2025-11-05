@@ -91,6 +91,11 @@ const ICONS = {
   idea: Lucide.Lightbulb,
   time: Lucide.Clock,
   coffee: Lucide.Coffee,
+  camera: Lucide.Camera,
+  target: Lucide.Target,
+  calendar: Lucide.Calendar,
+  edit: Lucide.Pencil,
+  smile: Lucide.Smile,
 } as const;
 
 export type AppIconName =
