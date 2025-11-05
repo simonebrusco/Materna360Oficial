@@ -109,11 +109,3 @@ export function isEnabled(flag: 'FF_LAYOUT_V1' | 'FF_FEEDBACK_KIT' | 'FF_HOME_V1
 
   return false
 }
-
-// Debug: expose flag state to window for console inspection (server-side only)
-if (typeof globalThis !== 'undefined' && typeof window === 'undefined') {
-  // This runs during SSR, expose the flag for debugging
-  const flagValue = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_FF_LAYOUT_V1 : 'undefined'
-  // @ts-ignore
-  if (typeof globalThis !== 'undefined') globalThis.__FF_LAYOUT_V1_DEBUG__ = flagValue
-}
