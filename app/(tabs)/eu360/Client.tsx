@@ -153,7 +153,7 @@ export default function Eu360Client() {
                     <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
                   </div>
                   <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <p className="text-2xl">⭐</p>
+                    <p className="text-2xl"><Emoji char="⭐" /></p>
                     <p className="mt-2 text-xs text-support-2">Selos</p>
                     <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
                   </div>
@@ -182,7 +182,7 @@ export default function Eu360Client() {
                   <p className="mt-1 text-sm font-semibold text-primary">7 dias</p>
                 </div>
                 <div className="rounded-2xl border border-white/50 bg-white/80 p-4 text-center shadow-soft">
-                  <p className="text-2xl">⭐</p>
+                  <p className="text-2xl"><Emoji char="⭐" /></p>
                   <p className="mt-2 text-xs text-support-2">Selos</p>
                   <p className="mt-1 text-sm font-semibold text-primary">12 conquistas</p>
                 </div>
