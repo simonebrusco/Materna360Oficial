@@ -6,6 +6,9 @@ import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { isEnabled } from '@/app/lib/flags'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const BreathCard = nextDynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
   {
