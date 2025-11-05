@@ -168,38 +168,41 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 })
 
 const fetchMotherName = async (): Promise<string> => {
+  let timeoutId: NodeJS.Timeout | null = null
+  const controller = new AbortController()
+
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+    timeoutId = setTimeout(() => {
+      controller.abort()
+    }, 3000)
 
-    try {
-      const response = await fetch('/api/profile', {
-        credentials: 'include',
-        cache: 'no-store',
-        signal: controller.signal,
-      })
+    const response = await fetch('/api/profile', {
+      credentials: 'include',
+      cache: 'no-store',
+      signal: controller.signal,
+    })
 
-      clearTimeout(timeoutId)
+    if (timeoutId) clearTimeout(timeoutId)
 
-      if (!response.ok) {
-        console.debug(`Perfil não disponível (${response.status}). Usando nome padrão.`)
-        return FALLBACK_NAME
-      }
-
-      const data = await response.json()
-      const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
-      return rawName || FALLBACK_NAME
-    } catch (fetchError) {
-      clearTimeout(timeoutId)
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.debug('Requisição de perfil expirou. Usando nome padrão.')
-      } else {
-        console.debug('Erro ao carregar perfil. Usando nome padrão:', fetchError)
-      }
+    if (!response.ok) {
+      console.debug(`Perfil não disponível (${response.status}). Usando nome padrão.`)
       return FALLBACK_NAME
     }
+
+    const data = await response.json()
+    const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
+    return rawName || FALLBACK_NAME
   } catch (error) {
-    console.debug('Erro ao buscar nome da mãe:', error)
+    if (timeoutId) clearTimeout(timeoutId)
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        // Timeout occurred - silently use fallback
+        return FALLBACK_NAME
+      }
+      console.debug('Erro ao carregar perfil. Usando nome padrão:', error.message)
+    }
+
     return FALLBACK_NAME
   }
 }
