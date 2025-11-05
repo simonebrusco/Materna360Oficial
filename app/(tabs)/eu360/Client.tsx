@@ -149,7 +149,7 @@ export default function Eu360Client() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <p className="text-2xl">🔥</p>
+                    <p className="text-2xl"><Emoji char="🔥" /></p>
                     <p className="mt-2 text-xs text-support-2">Sequência</p>
                     <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
                   </div>
@@ -178,7 +178,7 @@ export default function Eu360Client() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl border border-white/50 bg-white/80 p-4 text-center shadow-soft">
-                  <p className="text-2xl">🔥</p>
+                  <p className="text-2xl"><Emoji char="🔥" /></p>
                   <p className="mt-2 text-xs text-support-2">Sequência</p>
                   <p className="mt-1 text-sm font-semibold text-primary">7 dias</p>
                 </div>
@@ -232,7 +232,7 @@ export default function Eu360Client() {
                       <span>Análises avançadas sobre o desenvolvimento infantil</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="mt-0.5 text-xs">🎯</span>
+                      <span className="mt-0.5"><Emoji char="🎯" size={12} /></span>
                       <span>Planos personalizados baseados em IA</span>
                     </li>
                     <li className="flex gap-2">
