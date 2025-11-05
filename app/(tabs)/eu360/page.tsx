@@ -19,6 +19,7 @@ import { UpsellSheet } from '@/components/ui/UpsellSheet'
 
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 type MoodHistory = {
   day: string
