@@ -236,11 +236,18 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
   useEffect(() => {
     let isMounted = true
 
-    void fetchMotherName().then((name) => {
-      if (isMounted) {
-        setProfileName(name)
-      }
-    })
+    fetchMotherName()
+      .then((name) => {
+        if (isMounted) {
+          setProfileName(name)
+        }
+      })
+      .catch(() => {
+        // Silently handle any errors (timeouts, network, etc.)
+        if (isMounted) {
+          setProfileName(FALLBACK_NAME)
+        }
+      })
 
     return () => {
       isMounted = false
