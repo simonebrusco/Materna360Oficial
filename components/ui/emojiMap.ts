@@ -1,4 +1,6 @@
-export const EMOJI_TO_ICON: Record<string, import('./AppIcon').AppIconName> = {
+import type { AppIconName } from '@/components/ui/AppIcon';
+
+export const EMOJI_TO_ICON: Record<string, AppIconName> = {
   '🏠': 'place',
   '📚': 'books',
   '⭐': 'star',
@@ -10,7 +12,7 @@ export const EMOJI_TO_ICON: Record<string, import('./AppIcon').AppIconName> = {
   '🎛️': 'filters',
   '🎚️': 'filters',
   '💡': 'idea',
-  '⏱️': 'timer',
+  '⏱️': 'time',
   '🕒': 'time',
   '⏰': 'time',
   '📷': 'camera',
