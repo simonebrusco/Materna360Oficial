@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom'
 
 import TrailHeader, { type JourneySummary } from '@/components/blocks/MindfulnessJourneysTrail/TrailHeader'
 import { CompleteButton } from '@/components/features/Journeys/CompleteButton'
-import AppIcon from '@/components/ui/AppIcon'
+import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 
@@ -17,7 +17,7 @@ type Journey = {
   id: JourneyId
   title: string
   emoji: string
-  iconName: 'heart' | 'leaf' | 'sun' | 'sparkles' | 'moon' | 'shieldCheck'
+  iconName: AppIconName
   description: string
   challenges: string[]
   finalMessage: string

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import AppIcon from '@/components/ui/AppIcon'
+import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 import Emoji from '@/components/ui/Emoji'
 import MindfulnessModal from '@/components/features/Mindfulness/MindfulnessModal'
 import {
