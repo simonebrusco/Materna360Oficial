@@ -9,6 +9,7 @@ import TrailHeader, { type JourneySummary } from '@/components/blocks/Mindfulnes
 import { CompleteButton } from '@/components/features/Journeys/CompleteButton'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
 
 type JourneyId = 'amor-proprio' | 'calma' | 'energia-positiva' | 'gratidao' | 'descanso' | 'confianca'
 
