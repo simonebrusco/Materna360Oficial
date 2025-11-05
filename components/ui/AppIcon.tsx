@@ -104,17 +104,16 @@ const ICONS = {
   shieldCheck: Lucide.ShieldCheck,
 } as const;
 
-export type AppIconName =
-  | keyof typeof ICONS
-  | keyof typeof ALIASES
-  | keyof typeof Lucide
-  | Lowercase<keyof typeof Lucide>
-  | string;
+/** Export the core icon name type */
+export type AppIconName = keyof typeof ICONS;
 
 /** Narrow lucide namespace to only component-like exports */
 const LucideMap = Lucide as unknown as Record<string, IconComponent>;
 
-function resolveIconComponent(name: string): IconComponent {
+function resolveIconComponent(name?: AppIconName | string): IconComponent {
+  // Handle undefined or empty
+  if (!name) return Lucide.HelpCircle as IconComponent;
+
   // 1) direct match in our ICONS map (already typed)
   if (name in ICONS) return (ICONS as Record<string, IconComponent>)[name];
 
@@ -133,6 +132,16 @@ function resolveIconComponent(name: string): IconComponent {
   return Lucide.HelpCircle as IconComponent;
 }
 
+type AppIconProps = {
+  name?: AppIconName;
+  size?: number;
+  variant?: Variant;
+  strokeWidth?: number;
+  className?: string;
+  'aria-hidden'?: boolean;
+  'aria-label'?: string;
+} & Omit<LucideProps, 'width' | 'height' | 'stroke' | 'strokeWidth'>;
+
 export default function AppIcon({
   name,
   size = 20,
@@ -140,13 +149,8 @@ export default function AppIcon({
   strokeWidth = 1.75,
   className,
   ...rest
-}: {
-  name: AppIconName;
-  size?: number;
-  variant?: Variant;
-  strokeWidth?: number;
-} & Omit<LucideProps, 'width' | 'height' | 'stroke' | 'strokeWidth'>) {
-  const Icon = resolveIconComponent(String(name));
+}: AppIconProps) {
+  const Icon = resolveIconComponent(name);
   const color = variant === 'brand' ? '#ff005e' : '#2f3a56';
   return (
     <Icon
@@ -154,7 +158,6 @@ export default function AppIcon({
       height={size}
       stroke={color}
       strokeWidth={strokeWidth}
-      aria-hidden
       className={className}
       {...rest}
     />
