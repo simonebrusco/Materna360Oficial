@@ -261,7 +261,7 @@ type DescobrirClientProps = {
 /* ------------------------------------------------------------------ */
 export default function DescobrirClient({
   suggestions = [],
-  filters = { location: 'Casa' as QuickIdeasLocation, time_window_min: 'short' as QuickIdeasTimeWindow, energy: 'low' as QuickIdeasEnergy },
+  filters = DEFAULT_FILTERS,
   dateKey = new Date().toISOString().split('T')[0],
   profile = { babyAgeMonths: 0, babyName: 'Bebê' },
   initialAgeFilter = null,
