@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
+import SimpleErrorBoundary from '@/components/dev/SimpleErrorBoundary'
 
 import { trackTelemetry, sample } from '@/app/lib/telemetry'
 import {
