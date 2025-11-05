@@ -34,8 +34,8 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   const [selectedProfile, setSelectedProfile] = useState<Professional | undefined>()
   const [openProfile, setOpenProfile] = useState(false)
 
+  const mounted = useMountedRef()
   const abortControllerRef = useRef<AbortController | null>(null)
-  const isMountedRef = useRef(true)
 
   const handleSearchEvent = useCallback((event: CustomEvent<ProfessionalsSearchFilters>) => {
     setData([])
@@ -59,12 +59,6 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   }, [handleSearchEvent])
 
   useEffect(() => {
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-
-  useEffect(() => {
     if (!filters) {
       return
     }
@@ -73,7 +67,6 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
     const controller = new AbortController()
     abortControllerRef.current = controller
 
-    isMountedRef.current = true
     setLoading(true)
     setError(null)
 
@@ -85,28 +78,28 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       page: String(page),
     })
 
-    fetch(`/api/support/pros?${params.toString()}`, { signal: controller.signal })
+    safeFetch(`/api/support/pros?${params.toString()}`, { signal: controller.signal }, 8000)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error('Não foi possível carregar os profissionais.')
         }
         const json = (await response.json()) as ApiResponse
-        if (isMountedRef.current && !controller.signal.aborted) {
+        if (mounted.current && !controller.signal.aborted) {
           setData((previous) => (page === 1 ? json.items : [...previous, ...json.items]))
           setHasMore(Boolean(json.hasMore))
         }
       })
-      .catch((error_) => {
-        if (error_.name === 'AbortError') {
+      .catch((error_: any) => {
+        if (error_?.name === 'AbortError') {
           return
         }
-        console.error('[ProfessionalsResults] Falha ao carregar profissionais', error_)
-        if (isMountedRef.current) {
+        if (mounted.current) {
+          console.error('[ProfessionalsResults] Falha ao carregar profissionais', error_)
           setError('Não foi possível carregar os profissionais agora. Tente novamente em instantes.')
         }
       })
       .finally(() => {
-        if (isMountedRef.current && !controller.signal.aborted) {
+        if (mounted.current && !controller.signal.aborted) {
           setLoading(false)
         }
       })
@@ -114,7 +107,7 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
     return () => {
       controller.abort()
     }
-  }, [filters, page])
+  }, [filters, page, mounted])
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
