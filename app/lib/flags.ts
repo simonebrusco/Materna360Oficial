@@ -78,25 +78,15 @@ export function getClientFlags(hydrated: Partial<DiscoverFlags> | null | undefin
 
 export function isEnabled(name: string): boolean {
   if (typeof process === 'undefined') return false
-  
-  const isProd = process.env.NODE_ENV === 'production'
 
   if (name === 'FF_LAYOUT_V1') {
-    const val = process.env.NEXT_PUBLIC_FF_LAYOUT_V1
-    // In prod, default to true if missing; in dev, default to false
-    if (isProd) {
-      return val !== 'false'
-    }
-    return val === 'true'
+    return process.env.NEXT_PUBLIC_FF_LAYOUT_V1 === 'true'
   }
-
   if (name === 'FF_FEEDBACK_KIT') {
     return process.env.NEXT_PUBLIC_FF_FEEDBACK_KIT === 'true'
   }
-
   if (name === 'FF_HOME_V1') {
     return process.env.NEXT_PUBLIC_FF_HOME_V1 === 'true'
   }
-
   return false
 }
