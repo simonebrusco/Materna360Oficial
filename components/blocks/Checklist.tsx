@@ -172,6 +172,7 @@ const fetchMotherName = async (): Promise<string> => {
   const controller = new AbortController()
 
   try {
+    // Set timeout to abort fetch after 3 seconds
     timeoutId = setTimeout(() => {
       controller.abort()
     }, 3000)
@@ -185,7 +186,6 @@ const fetchMotherName = async (): Promise<string> => {
     if (timeoutId) clearTimeout(timeoutId)
 
     if (!response.ok) {
-      console.debug(`Perfil não disponível (${response.status}). Usando nome padrão.`)
       return FALLBACK_NAME
     }
 
@@ -193,16 +193,15 @@ const fetchMotherName = async (): Promise<string> => {
     const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
     return rawName || FALLBACK_NAME
   } catch (error) {
+    // Always clear timeout on error
     if (timeoutId) clearTimeout(timeoutId)
 
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        // Timeout occurred - silently use fallback
-        return FALLBACK_NAME
-      }
-      console.debug('Erro ao carregar perfil. Usando nome padrão:', error.message)
+    // Handle AbortError silently (timeout case)
+    if (error instanceof Error && error.name === 'AbortError') {
+      return FALLBACK_NAME
     }
 
+    // Any other error also uses fallback
     return FALLBACK_NAME
   }
 }
