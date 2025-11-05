@@ -684,8 +684,8 @@ export default function DescobrirClient({
                       <div className="text-4xl">{activity.emoji}</div>
                       <h3 className="mt-3 text-lg font-semibold text-support-1">{activity.title}</h3>
                       <div className="mt-3 flex gap-3 text-xs text-support-2">
-                        <span>👧 {activity.age} anos</span>
-                        <span>📍 {activity.place}</span>
+                        <span><Emoji char="👧" size={12} /> {activity.age} anos</span>
+                        <span><Emoji char="📍" size={12} /> {activity.place}</span>
                       </div>
                       <Button variant="primary" size="sm" className="mt-6 w-full">
                         Salvar no Planejador
@@ -1079,7 +1079,7 @@ export default function DescobrirClient({
                         <div className="flex-1">
                           <h3 className="font-semibold text-support-1">{suggestion.title}</h3>
                           <div className="mt-2 flex flex-wrap gap-2 text-xs text-support-2">
-                            <span>👧 {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
+                            <span><Emoji char="👧" size={12} /> {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
                             <span className="inline-flex items-center gap-1">
                               {isEnabled('FF_LAYOUT_V1') ? (
                                 <AppIcon name="time" size={14} />
