@@ -15,7 +15,7 @@ export default function AppIcon({
 }: {
   name:
     | 'place' | 'books' | 'star' | 'care' | 'crown'
-    | 'sparkles';
+    | 'sparkles' | 'search';
   size?: number;
   variant?: Variant;
   strokeWidth?: number;
@@ -27,6 +27,7 @@ export default function AppIcon({
     care: Lucide.Heart,
     crown: Lucide.Crown,
     sparkles: Lucide.Sparkles,
+    search: Lucide.Search,
   };
   const Icon = map[name] ?? Lucide.HelpCircle;
   const color = variant === 'brand' ? '#ff005e' : '#2f3a56';
