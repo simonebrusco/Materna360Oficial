@@ -193,7 +193,7 @@ export function CareJourneys() {
       <header className="space-y-2 md:space-y-3">
         <span className="eyebrow-capsule">Autocuidado guiado</span>
         <h2 className="flex items-center gap-2 text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
-          <span aria-hidden="true">🌼</span>
+          <Emoji char="🌼" />
           <span>Jornadas do Cuidar</span>
         </h2>
         <p className="max-w-2xl text-sm leading-[1.45] text-support-2/85 md:text-base">
