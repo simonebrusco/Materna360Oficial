@@ -541,13 +541,8 @@ export default function DescobrirClient({
       <Reveal>
         <SectionWrapper
           className="relative bg-transparent"
-          header={
-            <header className="SectionWrapper-header">
-              <span className="SectionWrapper-eyebrow">Inspirações</span>
-              <h2 className="SectionWrapper-title">Descobrir</h2>
-              <p className="text-support-2">Use os filtros para encontrar ideias rápidas por tempo, energia e local.</p>
-            </header>
-          }
+          title="Descobrir"
+          description="Use os filtros para encontrar ideias rápidas por tempo, energia e local."
         >
           {null}
         </SectionWrapper>
