@@ -833,7 +833,7 @@ const childAgeBand = useMemo(
                 <div key={item.title} className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-soft">
                   <div className="text-3xl">{item.emoji}</div>
                   <h4 className="mt-2 text-sm font-semibold text-support-1">{item.title}</h4>
-                  <p className="mt-1 text-xs text-support-2">⏱️ {item.prep}</p>
+                  <p className="mt-1 text-xs text-support-2"><Emoji char="⏱️" size={12} /> {item.prep}</p>
                   <p className="mt-2 text-xs text-support-2">{item.description}</p>
                 </div>
               ))}
