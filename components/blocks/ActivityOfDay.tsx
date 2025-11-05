@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'rea
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildActivity } from '@/app/data/childContent'
+import AppIcon from '@/components/ui/AppIcon'
+import { isEnabled } from '@/app/lib/flags'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import Emoji from '@/components/ui/Emoji'
