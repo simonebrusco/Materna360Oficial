@@ -55,7 +55,7 @@ const QUICK_PICKS: Readonly<QuickIdeasTimeWindow[]> = [5, 10, 20] as const;
 const activities = [
   { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
   { id: 2, emoji: '🌳', title: 'Caça ao Tesouro no Parque', age: '4+', place: 'Parque' },
-  { id: 3, emoji: '📚', title: 'Leitura em Ciranda', age: '0-7', place: 'Casa' },
+  { id: 3, emoji: '���', title: 'Leitura em Ciranda', age: '0-7', place: 'Casa' },
   { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
   { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
   { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
@@ -646,7 +646,7 @@ export default function DescobrirClient({
               <div className="mt-8 space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Tempo Rápido</p>
                 <div className="flex flex-wrap gap-2">
-                  {[5, 10, 20].map((mins) => (
+                  {QUICK_PICKS.map((mins) => (
                     <Button
                       key={mins}
                       variant="secondary"
