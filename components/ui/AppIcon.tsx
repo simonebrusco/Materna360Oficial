@@ -90,6 +90,7 @@ const ICONS = {
   filter: Lucide.SlidersHorizontal,
   idea: Lucide.Lightbulb,
   time: Lucide.Clock,
+  coffee: Lucide.Coffee,
 } as const;
 
 export type AppIconName =
