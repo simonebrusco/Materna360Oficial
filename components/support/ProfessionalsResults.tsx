@@ -8,8 +8,9 @@ import { isEnabled } from '@/app/lib/flags'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Empty } from '@/components/ui/feedback/Empty'
 import { ErrorBlock } from '@/components/ui/feedback/Error'
-
 import { ProfessionalProfileSheet, type Professional } from '@/components/ui/ProfessionalProfileSheet'
+import { useMountedRef } from '@/components/hooks/useMountedRef'
+import { safeFetch } from '@/app/lib/safeFetch'
 
 
 type ApiResponse = {
