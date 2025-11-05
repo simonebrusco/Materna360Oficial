@@ -55,7 +55,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-dvh bg-[linear-gradient(180deg,#ffe9f0_0%,#ffffff_80%)] text-slate-800 antialiased">
-        <div className="mx-auto max-w-screen-md px-3 pt-4 pb-24">
+        {/* Top App Bar */}
+        <SiteHeader />
+        {/* Page container (offset for the sticky header) */}
+        <div className="mx-auto max-w-screen-md px-3 pt-16 pb-24">
           {children}
         </div>
       </body>
