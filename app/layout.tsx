@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="h-full">
       <head>
         <Script
           id="fullstory-fetch-fix"
@@ -54,11 +54,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-dvh bg-[linear-gradient(180deg,#ffe9f0_0%,#ffffff_80%)] text-slate-800 antialiased">
+      <body className="min-h-screen text-slate-800 antialiased">
         {/* Top App Bar */}
         <SiteHeader />
         {/* Page container (offset for the sticky header) */}
-        <div className="mx-auto max-w-screen-md px-3 pt-16 pb-24">
+        <div className="__app-surface-reset mx-auto max-w-screen-md px-3 pt-16 pb-24">
           {children}
         </div>
       </body>
