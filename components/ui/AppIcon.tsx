@@ -2,8 +2,10 @@
 
 import * as React from 'react';
 import * as Lucide from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 
 type Variant = 'neutral' | 'brand';
+type IconComponent = React.ComponentType<LucideProps>;
 
 /** Normalize "search" | "sliders-horizontal" -> "Search" | "SlidersHorizontal" */
 function toPascalCase(input: string): string {
@@ -74,7 +76,7 @@ const ALIASES: Record<string, keyof typeof Lucide> = {
   map: 'Map',
 } as const;
 
-/** First-class friendly map (optional shortcut to avoid resolving at runtime) */
+/** Known-friendly icons (shortcut map) */
 const ICONS = {
   place: Lucide.Home,
   books: Lucide.BookOpen,
@@ -94,25 +96,28 @@ export type AppIconName =
   | keyof typeof ALIASES
   | keyof typeof Lucide
   | Lowercase<keyof typeof Lucide>
-  | string; // last-resort: we normalize and fallback
+  | string;
 
-function resolveIconComponent(name: string): React.ComponentType<any> {
-  // 1) direct match in our ICONS map
-  if (name in ICONS) return (ICONS as any)[name];
+/** Narrow lucide namespace to only component-like exports */
+const LucideMap = Lucide as unknown as Record<string, IconComponent>;
+
+function resolveIconComponent(name: string): IconComponent {
+  // 1) direct match in our ICONS map (already typed)
+  if (name in ICONS) return (ICONS as Record<string, IconComponent>)[name];
 
   // 2) alias to a Lucide export (PascalCase key)
   const alias = ALIASES[name as keyof typeof ALIASES];
-  if (alias && Lucide[alias]) return Lucide[alias];
+  if (alias && LucideMap[String(alias)]) return LucideMap[String(alias)];
 
   // 3) direct Lucide export (PascalCase)
-  if ((Lucide as any)[name]) return (Lucide as any)[name];
+  if (LucideMap[name]) return LucideMap[name];
 
   // 4) try normalized PascalCase from kebab/lowercase
   const pascal = toPascalCase(name);
-  if ((Lucide as any)[pascal]) return (Lucide as any)[pascal];
+  if (LucideMap[pascal]) return LucideMap[pascal];
 
   // 5) fallback
-  return Lucide.HelpCircle;
+  return Lucide.HelpCircle as IconComponent;
 }
 
 export default function AppIcon({
@@ -127,7 +132,7 @@ export default function AppIcon({
   size?: number;
   variant?: Variant;
   strokeWidth?: number;
-} & React.SVGProps<SVGSVGElement>) {
+} & Omit<LucideProps, 'width' | 'height' | 'stroke' | 'strokeWidth'>) {
   const Icon = resolveIconComponent(String(name));
   const color = variant === 'brand' ? '#ff005e' : '#2f3a56';
   return (
