@@ -542,7 +542,7 @@ export default function DescobrirClient({
                 {isEnabled('FF_LAYOUT_V1') ? (
                   <AppIcon name="search" size={24} />
                 ) : (
-                  <span aria-hidden>🎨</span>
+                  <Emoji char="🎨" />
                 )}
                 <span>Descobrir</span>
               </h1>
@@ -711,7 +711,7 @@ export default function DescobrirClient({
               {isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="star" size={20} variant="brand" />
               ) : (
-                <span>🌟</span>
+                <Emoji char="🌟" />
               )}
               <span>Sugestão do Dia</span>
             </span>
@@ -878,7 +878,7 @@ export default function DescobrirClient({
                 {isEnabled('FF_LAYOUT_V1') ? (
                   <AppIcon name="play" size={20} />
                 ) : (
-                  <span>🧸</span>
+                  <Emoji char="🧸" />
                 )}
                 <span>Brinquedos Sugeridos</span>
               </span>
@@ -1030,7 +1030,7 @@ export default function DescobrirClient({
               {isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="care" size={20} />
               ) : (
-                <span>💚</span>
+                <Emoji char="💚" />
               )}
               <span>Para Você</span>
             </span>
@@ -1131,7 +1131,7 @@ export default function DescobrirClient({
                           {isEnabled('FF_LAYOUT_V1') ? (
                             <AppIcon name="crown" variant="brand" size={16} />
                           ) : (
-                            <span>💾</span>
+                            <Emoji char="💾" />
                           )}
                           <span>Salvar no Planner</span>
                         </Button>
