@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
+import Emoji from '@/components/ui/Emoji'
 
 interface UpsellSheetProps {
   title: string
