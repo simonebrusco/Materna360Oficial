@@ -59,6 +59,7 @@ const ALIASES: Record<string, keyof typeof Lucide> = {
   upload: 'Upload',
   edit: 'Pencil',
   trash: 'Trash2',
+  coffee: 'Coffee',
 
   // Navigation
   'arrow-right': 'ArrowRight',
