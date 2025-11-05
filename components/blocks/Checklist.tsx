@@ -168,14 +168,12 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 })
 
 const fetchMotherName = async (): Promise<string> => {
-  let timeoutId: NodeJS.Timeout | null = null
   const controller = new AbortController()
-  let isAborted = false
+  let timeoutId: NodeJS.Timeout | null = null
 
   try {
     // Set timeout to abort fetch after 3 seconds
     timeoutId = setTimeout(() => {
-      isAborted = true
       controller.abort()
     }, 3000)
 
@@ -183,39 +181,25 @@ const fetchMotherName = async (): Promise<string> => {
       credentials: 'include',
       cache: 'no-store',
       signal: controller.signal,
+    }).catch((err) => {
+      // Catch all fetch errors including AbortError
+      if (timeoutId) clearTimeout(timeoutId)
+      // Return a fallback response-like object or throw a safe error
+      return null
     })
 
-    // Clear timeout only if fetch succeeded
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-      timeoutId = null
-    }
+    if (timeoutId) clearTimeout(timeoutId)
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       return FALLBACK_NAME
     }
 
-    const data = await response.json()
+    const data = await response.json().catch(() => ({}))
     const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
     return rawName || FALLBACK_NAME
   } catch (error) {
-    // Always clear timeout on error
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-      timeoutId = null
-    }
-
-    // Handle AbortError silently (timeout case or abort signal)
-    if (error instanceof Error && (error.name === 'AbortError' || isAborted)) {
-      return FALLBACK_NAME
-    }
-
-    // Handle DOMException in case AbortError is thrown as DOMException
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError') {
-      return FALLBACK_NAME
-    }
-
-    // Any other error also uses fallback
+    // Final safety net - always return fallback
+    if (timeoutId) clearTimeout(timeoutId)
     return FALLBACK_NAME
   }
 }
