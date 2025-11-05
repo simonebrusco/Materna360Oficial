@@ -538,17 +538,8 @@ export default function DescobrirClient({
           header={
             <header className="SectionWrapper-header">
               <span className="SectionWrapper-eyebrow">Inspirações</span>
-              <h1 className="SectionWrapper-title inline-flex items-center gap-2">
-                {isEnabled('FF_LAYOUT_V1') ? (
-                  <AppIcon name="search" size={24} />
-                ) : (
-                  <Emoji char="🎨" />
-                )}
-                <span>Descobrir</span>
-              </h1>
-              <p className="SectionWrapper-description max-w-2xl">
-                Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
-              </p>
+              <h2 className="SectionWrapper-title">Descobrir</h2>
+              <p className="text-support-2">Use os filtros para encontrar ideias rápidas por tempo, energia e local.</p>
             </header>
           }
         >
@@ -564,7 +555,7 @@ export default function DescobrirClient({
               {isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="filters" size={20} />
               ) : (
-                <Emoji char="🔍" />
+                <Emoji char="��" />
               )}
               <span>Filtros Inteligentes</span>
             </span>
@@ -706,16 +697,7 @@ export default function DescobrirClient({
       {/* Sugestão do Dia */}
       <Reveal delay={200}>
         <SectionWrapper
-          title={
-            <span className="inline-flex items-center gap-2">
-              {isEnabled('FF_LAYOUT_V1') ? (
-                <AppIcon name="star" size={20} variant="brand" />
-              ) : (
-                <Emoji char="🌟" />
-              )}
-              <span>Sugestão do Dia</span>
-            </span>
-          }
+          title="Sugestão do Dia"
         >
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Filtros ativos: {friendlyFilters}
@@ -814,16 +796,7 @@ export default function DescobrirClient({
           return (
             <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
               <SectionWrapper
-                title={
-                  <span className="inline-flex items-center gap-2">
-                    {isEnabled('FF_LAYOUT_V1') && shelfMeta.iconName ? (
-                      <AppIcon name={shelfMeta.iconName as any} size={20} />
-                    ) : (
-                      <span aria-hidden>{shelfMeta.icon}</span>
-                    )}
-                    <span>{shelfMeta.title}</span>
-                  </span>
-                }
+                title={shelfMeta.title}
               >
                 <div className="-mx-4 overflow-hidden sm:mx-0">
                   <div className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0" role="list" aria-label={`Recomendações de ${shelfMeta.title}`}>
@@ -847,22 +820,12 @@ export default function DescobrirClient({
       ) : (
         <>
           <SectionWrapper
-            title={
-              <span className="inline-flex items-center gap-2">
-                {isEnabled('FF_LAYOUT_V1') ? (
-                  <AppIcon name="books" size={20} />
-                ) : (
-                  <Emoji char="📚" />
-                )}
-                <span>Livros Recomendados</span>
-              </span>
-            }
+            title="Livros Recomendados"
           >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
                 <Reveal key={book.title} delay={idx * 70} className="h-full">
                   <Card className="h-full">
-                    <div className="text-3xl">{book.emoji}</div>
                     <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
                     <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
                     <Button variant="primary" size="sm" className="mt-6 w-full">Ver Detalhes</Button>
@@ -873,22 +836,12 @@ export default function DescobrirClient({
           </SectionWrapper>
 
           <SectionWrapper
-            title={
-              <span className="inline-flex items-center gap-2">
-                {isEnabled('FF_LAYOUT_V1') ? (
-                  <AppIcon name="play" size={20} />
-                ) : (
-                  <Emoji char="🧸" />
-                )}
-                <span>Brinquedos Sugeridos</span>
-              </span>
-            }
+            title="Brinquedos Sugeridos"
           >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {toys.map((toy, idx) => (
                 <Reveal key={toy.title} delay={idx * 70} className="h-full">
                   <Card className="h-full">
-                    <div className="text-3xl">{toy.emoji}</div>
                     <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
                     <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
                     <Button variant="primary" size="sm" className="mt-6 w-full">Ver Mais</Button>
@@ -954,7 +907,7 @@ export default function DescobrirClient({
 
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button variant="primary" size="sm" onClick={handleStartFlashRoutine} disabled={!routine} aria-disabled={!routine}>
-                  {routine ? `Começar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
+                  {routine ? `Come��ar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => void handleSaveFlashRoutine()} disabled={!routine || savingRoutine} aria-disabled={!routine || savingRoutine}>
                   {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
@@ -1025,16 +978,7 @@ export default function DescobrirClient({
       {/* Para Você */}
       <Reveal delay={260}>
         <SectionWrapper
-          title={
-            <span className="inline-flex items-center gap-2">
-              {isEnabled('FF_LAYOUT_V1') ? (
-                <AppIcon name="care" size={20} />
-              ) : (
-                <Emoji char="💚" />
-              )}
-              <span>Para Você</span>
-            </span>
-          }
+          title="Para Você"
         >
           <Card className="p-7">
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
