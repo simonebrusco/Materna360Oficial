@@ -34,6 +34,8 @@ import type { ProfileChildSummary } from '@/app/lib/profileTypes'
 import { getClientFlags, isEnabled, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
+console.info('[Discover] Client mounted');
+
 /* ------------------------------------------------------------------ */
 /* Mock blocks (exibem quando não há rec shelf do CMS)                */
 /* ------------------------------------------------------------------ */
