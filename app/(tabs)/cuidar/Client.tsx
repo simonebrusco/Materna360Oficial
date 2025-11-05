@@ -103,7 +103,7 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
             <Reveal>
               <div className="space-y-2">
                 <h2 className="section-title flex items-center gap-2">
-                  <span aria-hidden="true">🎧</span>
+                  <Emoji char="🎧" />
                   <span>Mindfulness para Mães</span>
                 </h2>
                 <p className="section-subtitle max-w-2xl">
