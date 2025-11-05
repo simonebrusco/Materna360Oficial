@@ -39,12 +39,14 @@ export function SectionWrapper({
     .filter(Boolean)
     .join(' ')
 
+  const renderedTitle = typeof title === 'string' ? cleanTitle(title) : title
+
   const renderedHeader =
     header ??
     (eyebrow || title || description ? (
       <div className={['SectionWrapper-header', headerClassName].filter(Boolean).join(' ')}>
         {eyebrow ? <span className="SectionWrapper-eyebrow">{eyebrow}</span> : null}
-        {title ? <h2 className="SectionWrapper-title">{title}</h2> : null}
+        {renderedTitle ? <h2 className="SectionWrapper-title">{renderedTitle}</h2> : null}
         {description ? (
           <p className="SectionWrapper-description">{description}</p>
         ) : null}
