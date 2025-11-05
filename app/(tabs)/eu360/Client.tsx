@@ -123,7 +123,7 @@ export default function Eu360Client() {
               {isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="care" variant="brand" size={48} className="mx-auto mb-2" />
               ) : (
-                <p className="text-4xl">💛</p>
+                <p className="text-4xl"><Emoji char="💛" /></p>
               )}
               <h1 className="mt-3 text-2xl font-semibold md:text-3xl">Você é Importante</h1>
               <p className="mt-2 text-sm text-white/90 md:text-base">

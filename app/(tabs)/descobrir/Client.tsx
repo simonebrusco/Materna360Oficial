@@ -971,7 +971,7 @@ export default function DescobrirClient({
           <SectionWrapper
             title={
               <span className="inline-flex items-center gap-2">
-                <span aria-hidden>💛</span>
+                <Emoji char="💛" />
                 <span>Cuide-se rápido</span>
               </span>
             }
