@@ -53,7 +53,7 @@ export default async function Page() {
   noStore()
 
   const content = (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
       <SectionWrapper className="relative bg-transparent" contentClassName="relative">
         <span
           aria-hidden
