@@ -34,6 +34,18 @@ import type { ProfileChildSummary } from '@/app/lib/profileTypes'
 import { getClientFlags, isEnabled, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
+/* ------------------------------------------------------------------ */
+/* Default filters (with correct typed literals)                      */
+/* ------------------------------------------------------------------ */
+const DEFAULT_FILTERS: Readonly<{
+  location: QuickIdeasLocation;
+  time_window_min: QuickIdeasTimeWindow;
+  energy: QuickIdeasEnergy;
+}> = {
+  location: 'casa',
+  time_window_min: 10,
+  energy: 'normal',
+};
 
 /* ------------------------------------------------------------------ */
 /* Mock blocks (exibem quando não há rec shelf do CMS)                */
