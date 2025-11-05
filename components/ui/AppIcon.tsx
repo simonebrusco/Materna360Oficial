@@ -83,6 +83,7 @@ const ICONS = {
   books: Lucide.BookOpen,
   star: Lucide.Star,
   care: Lucide.Heart,
+  heart: Lucide.Heart,
   crown: Lucide.Crown,
   sparkles: Lucide.Sparkles,
   search: Lucide.Search,
@@ -96,6 +97,11 @@ const ICONS = {
   calendar: Lucide.Calendar,
   edit: Lucide.Pencil,
   smile: Lucide.Smile,
+  leaf: Lucide.Leaf,
+  sun: Lucide.Sun,
+  moon: Lucide.Moon,
+  play: Lucide.Play,
+  shieldCheck: Lucide.ShieldCheck,
 } as const;
 
 export type AppIconName =
