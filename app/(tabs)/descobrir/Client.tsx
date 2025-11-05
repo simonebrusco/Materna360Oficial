@@ -505,7 +505,8 @@ export default function DescobrirClient({
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
 
   return (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_72%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
+    <SimpleErrorBoundary>
+      <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_72%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <Reveal>
@@ -1125,5 +1126,6 @@ export default function DescobrirClient({
         </div>
       )}
     </main>
+    </SimpleErrorBoundary>
   )
 }
