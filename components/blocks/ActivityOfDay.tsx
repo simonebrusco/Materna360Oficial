@@ -330,20 +330,12 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
             </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
               <span className="inline-flex items-center gap-1">
-                {isEnabled('FF_LAYOUT_V1') ? (
-                  <AppIcon name="calendar" size={12} aria-hidden />
-                ) : (
-                  <Emoji char="👶" size={12} />
-                )}
+                <AppIcon name="calendar" size={12} aria-hidden />
                 {' '}{ageLabel}
               </span>
               {!isAllMode && hasDuration && (
                 <span className="inline-flex items-center gap-1">
-                  {isEnabled('FF_LAYOUT_V1') ? (
-                    <AppIcon name="time" size={12} aria-hidden />
-                  ) : (
-                    <Emoji char="⏱️" size={12} />
-                  )}
+                  <AppIcon name="time" size={12} aria-hidden />
                   {' '}{headlineActivity.durationMin} min
                 </span>
               )}
