@@ -795,7 +795,7 @@ export default function DescobrirClient({
           return (
             <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
               <SectionWrapper
-                title={shelfMeta.title}
+                title={sanitizeHeading(shelfMeta.title)}
               >
                 <div className="-mx-4 overflow-hidden sm:mx-0">
                   <div className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0" role="list" aria-label={`Recomendações de ${shelfMeta.title}`}>
