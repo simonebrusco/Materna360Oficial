@@ -108,10 +108,10 @@ export function MeuDiaClient({
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
               <Card className="h-full">
-                <div className="mb-3">
-                  <AppIcon name={action.iconName as any} size={28} aria-hidden />
+                <div className="mb-3 inline-flex items-center gap-2">
+                  <AppIcon name={action.iconName as any} size={18} variant="brand" aria-hidden />
+                  <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
                 </div>
-                <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
                 <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="primary" size="sm" className="w-full">
                   Acessar
