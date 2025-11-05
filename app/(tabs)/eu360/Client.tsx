@@ -228,7 +228,7 @@ export default function Eu360Client() {
                   <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-primary">Desfrute de benefícios do Plus:</p>
                   <ul className="space-y-2 text-sm text-support-1">
                     <li className="flex gap-2">
-                      <span className="mt-0.5 text-xs">✨</span>
+                      <span className="mt-0.5"><Emoji char="✨" size={12} /></span>
                       <span>Análises avançadas sobre o desenvolvimento infantil</span>
                     </li>
                     <li className="flex gap-2">
