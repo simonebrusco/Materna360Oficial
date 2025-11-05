@@ -236,7 +236,7 @@ export default function Eu360Client() {
                       <span>Planos personalizados baseados em IA</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="mt-0.5 text-xs">📱</span>
+                      <span className="mt-0.5"><Emoji char="📱" size={12} /></span>
                       <span>Suporte prioritário via chat</span>
                     </li>
                   </ul>
