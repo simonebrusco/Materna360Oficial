@@ -4,6 +4,7 @@ export const revalidate = 0;
 import './globals.css';
 import Script from 'next/script';
 import type { Metadata } from 'next';
+import SiteHeader from '@/components/common/SiteHeader';
 
 export const metadata: Metadata = {
   title: 'Materna360',
