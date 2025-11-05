@@ -36,10 +36,10 @@ import { getClientFlags, isEnabled, type DiscoverFlags } from '@/app/lib/flags'
 import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
 
 /* ------------------------------------------------------------------ */
-/* Emoji stripping utility                                             */
+/* Emoji/garbled sanitization (headings only)                          */
 /* ------------------------------------------------------------------ */
-const STRIP_EMOJI = /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uFE00-\uFE0F]|\u24C2|[\uD83C-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u26FF]|\u200D|\u23F0|\u23F3)/g
-const stripEmoji = (s: string) => s.replace(STRIP_EMOJI, '').replace(/\s{2,}/g, ' ').trim()
+const STRIP_EMOJI = /([\u2700-\u27BF]|\u24C2|[\uE000-\uF8FF]|[\uFE00-\uFE0F]|[\u2600-\u26FF]|[\uD83C-\uDBFF][\uDC00-\uDFFF]|\u200D)/g
+const sanitizeHeading = (s: string) => s.replace(STRIP_EMOJI, '').replace(/[^\S\r\n]{2,}/g, ' ').replace(/[�]+/g, '').trim()
 
 /* ------------------------------------------------------------------ */
 /* Default filters (with correct typed literals)                      */
