@@ -15,8 +15,7 @@ export default function AppIcon({
 }: {
   name:
     | 'place' | 'books' | 'star' | 'care' | 'crown'
-    | 'sparkles' // optional aliases
-    ;
+    | 'sparkles';
   size?: number;
   variant?: Variant;
   strokeWidth?: number;
@@ -27,9 +26,19 @@ export default function AppIcon({
     star: Lucide.Star,
     care: Lucide.Heart,
     crown: Lucide.Crown,
-    sparkles: Lucide.Sparkles
+    sparkles: Lucide.Sparkles,
   };
   const Icon = map[name] ?? Lucide.HelpCircle;
   const color = variant === 'brand' ? '#ff005e' : '#2f3a56';
-  return <Icon width={size} height={size} stroke={color} strokeWidth={strokeWidth} aria-hidden {...rest} className={className} />;
+  return (
+    <Icon
+      width={size}
+      height={size}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      aria-hidden
+      className={className}
+      {...rest}
+    />
+  );
 }
