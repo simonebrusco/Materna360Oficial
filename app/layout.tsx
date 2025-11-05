@@ -1,4 +1,4 @@
-import './globals.css'
+// import './globals.css' // TEMPORARILY DISABLED - causing Tailwind compilation hang
 
 export const metadata = { title: 'Materna360' }
 
