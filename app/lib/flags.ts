@@ -76,12 +76,42 @@ export function getClientFlags(hydrated: Partial<DiscoverFlags> | null | undefin
   }
 }
 
-export function isEnabled(name: string): boolean {
+export function isEnabled(flag: 'FF_LAYOUT_V1' | 'FF_FEEDBACK_KIT' | 'FF_HOME_V1'): boolean {
   if (typeof process === 'undefined') return false
-  const on = (k: string) => process.env[k] === 'true'
 
-  if (name === 'FF_LAYOUT_V1')    return on('NEXT_PUBLIC_FF_LAYOUT_V1')
-  if (name === 'FF_FEEDBACK_KIT') return on('NEXT_PUBLIC_FF_FEEDBACK_KIT')
-  if (name === 'FF_HOME_V1')      return on('NEXT_PUBLIC_FF_HOME_V1') // safe to keep, even if unused yet
+  const raw = process.env.NEXT_PUBLIC_FF_LAYOUT_V1
+    ? String(process.env.NEXT_PUBLIC_FF_LAYOUT_V1).toLowerCase()
+    : undefined
+
+  // In dev/preview: respect env exactly (default false).
+  // In production: default to true for safety.
+  const isProd = process.env.NODE_ENV === 'production'
+
+  if (flag === 'FF_LAYOUT_V1') {
+    // Fallback to true in production if undefined or unrecognized.
+    if (isProd) return raw === 'true' || raw === undefined
+    return raw === 'true'
+  }
+
+  if (flag === 'FF_FEEDBACK_KIT') {
+    const feedbackRaw = process.env.NEXT_PUBLIC_FF_FEEDBACK_KIT
+      ? String(process.env.NEXT_PUBLIC_FF_FEEDBACK_KIT).toLowerCase()
+      : undefined
+    return feedbackRaw === 'true'
+  }
+
+  if (flag === 'FF_HOME_V1') {
+    const homeRaw = process.env.NEXT_PUBLIC_FF_HOME_V1
+      ? String(process.env.NEXT_PUBLIC_FF_HOME_V1).toLowerCase()
+      : undefined
+    return homeRaw === 'true'
+  }
+
   return false
+}
+
+// Debug: expose flag state to window for console inspection
+if (typeof window !== 'undefined') {
+  // @ts-ignore
+  window.__FF_LAYOUT_V1__ = process.env.NEXT_PUBLIC_FF_LAYOUT_V1 ?? 'undefined'
 }
