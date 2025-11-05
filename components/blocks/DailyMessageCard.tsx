@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react'
 
+import AppIcon from '@/components/ui/AppIcon'
+import { isEnabled } from '@/app/lib/flags'
 import { Card } from '@/components/ui/card'
 import Emoji from '@/components/ui/Emoji'
 
