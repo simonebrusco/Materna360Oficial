@@ -231,9 +231,17 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
   }, [currentDateKey])
 
   useEffect(() => {
+    let isMounted = true
+
     void fetchMotherName().then((name) => {
-      setProfileName(name)
+      if (isMounted) {
+        setProfileName(name)
+      }
     })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const setItemsForDate = useCallback(
