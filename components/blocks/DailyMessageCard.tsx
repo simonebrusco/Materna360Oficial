@@ -25,11 +25,7 @@ export default function DailyMessageCard({ greeting }: GreetingProps) {
     <Card data-testid="message-of-day" className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
       <div className="flex flex-col gap-3 md:gap-4">
         <h2 className="text-lg font-semibold text-support-1 md:text-xl">
-          {isEnabled('FF_LAYOUT_V1') ? (
-            <AppIcon name="sparkles" size={18} aria-hidden />
-          ) : (
-            <Emoji char="✨" />
-          )}
+          <AppIcon name="sparkles" size={18} aria-hidden />
           {' '}Mensagem de Hoje
         </h2>
         <p className="text-sm italic leading-relaxed text-primary md:text-base">“{greeting}”</p>
