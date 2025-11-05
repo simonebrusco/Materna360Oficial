@@ -8,7 +8,6 @@ import type { ChildActivity } from '@/app/data/childContent'
 import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import Emoji from '@/components/ui/Emoji'
 import { Toast } from '@/components/ui/Toast'
 import {
   recommendationStorage,
