@@ -168,38 +168,34 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 })
 
 const fetchMotherName = async (): Promise<string> => {
-  const controller = new AbortController()
-  let timeoutId: NodeJS.Timeout | null = null
+  let timedOut = false
+  const timeoutId = setTimeout(() => {
+    timedOut = true
+  }, 3000)
 
   try {
-    // Set timeout to abort fetch after 3 seconds
-    timeoutId = setTimeout(() => {
-      controller.abort()
-    }, 3000)
-
     const response = await fetch('/api/profile', {
       credentials: 'include',
       cache: 'no-store',
-      signal: controller.signal,
-    }).catch((err) => {
-      // Catch all fetch errors including AbortError
-      if (timeoutId) clearTimeout(timeoutId)
-      // Return a fallback response-like object or throw a safe error
-      return null
     })
 
-    if (timeoutId) clearTimeout(timeoutId)
+    clearTimeout(timeoutId)
 
-    if (!response || !response.ok) {
+    // If we timed out, ignore the response
+    if (timedOut) {
       return FALLBACK_NAME
     }
 
-    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      return FALLBACK_NAME
+    }
+
+    const data = await response.json()
     const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
     return rawName || FALLBACK_NAME
   } catch (error) {
-    // Final safety net - always return fallback
-    if (timeoutId) clearTimeout(timeoutId)
+    clearTimeout(timeoutId)
+    // Return fallback for any error (network, timeout, parse error, etc)
     return FALLBACK_NAME
   }
 }
