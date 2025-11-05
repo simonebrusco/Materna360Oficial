@@ -76,19 +76,19 @@ export default async function Page() {
         </div>
       </SectionWrapper>
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>🧘<span>Mindfulness</span></span>}>
+      <SectionWrapper title="Mindfulness">
         <MindfulnessForMoms />
       </SectionWrapper>
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>📋<span>Dicas de Organização</span></span>}>
+      <SectionWrapper title="Dicas de Organização">
         <OrganizationTips />
       </SectionWrapper>
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>🚀<span>Jornadas de Cuidado</span></span>}>
+      <SectionWrapper title="Jornadas do Cuidar">
         <CareJourneys />
       </SectionWrapper>
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>👩‍⚕️<span>Profissionais de Confiança</span></span>}>
+      <SectionWrapper title="Profissionais de Confiança">
         <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
           <ProfessionalsSection />
         </Suspense>
