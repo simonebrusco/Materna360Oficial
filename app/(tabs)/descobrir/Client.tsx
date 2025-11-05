@@ -622,7 +622,7 @@ export default function DescobrirClient({
                   {isEnabled('FF_LAYOUT_V1') ? (
                     <AppIcon name="idea" variant="brand" size={18} />
                   ) : (
-                    <span>✨</span>
+                    <Emoji char="✨" />
                   )}
                   <span>Gerar Ideias</span>
                 </Button>
@@ -852,7 +852,7 @@ export default function DescobrirClient({
                 {isEnabled('FF_LAYOUT_V1') ? (
                   <AppIcon name="books" size={20} />
                 ) : (
-                  <span>📚</span>
+                  <Emoji char="📚" />
                 )}
                 <span>Livros Recomendados</span>
               </span>
@@ -1107,7 +1107,7 @@ export default function DescobrirClient({
                           {isEnabled('FF_LAYOUT_V1') ? (
                             <AppIcon name="star" size={16} />
                           ) : (
-                            <span>❤️</span>
+                            <Emoji char="❤️" />
                           )}
                           <span>Favoritar</span>
                         </Button>
