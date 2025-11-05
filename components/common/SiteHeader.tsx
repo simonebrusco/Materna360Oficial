@@ -17,7 +17,7 @@ export default function SiteHeader() {
         {/* Left: brand */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/logo.png"
+            src="/images/logo-principal.png"
             alt="Materna360"
             width={104}
             height={24}
