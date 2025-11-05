@@ -1,3 +1,12 @@
+export type DiscoverFlags = {
+  recShelf?: boolean;
+  recShelfAI?: boolean;
+  flashRoutine?: boolean;
+  flashRoutineAI?: boolean;
+  selfCare?: boolean;
+  selfCareAI?: boolean;
+};
+
 export function isEnabled(flag: 'FF_LAYOUT_V1'): boolean {
   if (flag !== 'FF_LAYOUT_V1') return false;
 
@@ -16,4 +25,35 @@ export function isEnabled(flag: 'FF_LAYOUT_V1'): boolean {
   }
   // Preview/Dev: literal value only
   return raw === 'true' || raw === '1';
+}
+
+/**
+ * Client-side flag resolver: takes server flags and returns client-safe flags
+ */
+export function getClientFlags(serverFlags?: DiscoverFlags): DiscoverFlags {
+  if (!serverFlags) {
+    return {
+      recShelf: false,
+      recShelfAI: false,
+      flashRoutine: false,
+      flashRoutineAI: false,
+      selfCare: false,
+      selfCareAI: false,
+    };
+  }
+  return serverFlags;
+}
+
+/**
+ * Server-side flag resolver: returns all available flags
+ */
+export function getServerFlags(): DiscoverFlags {
+  return {
+    recShelf: true,
+    recShelfAI: true,
+    flashRoutine: true,
+    flashRoutineAI: true,
+    selfCare: true,
+    selfCareAI: true,
+  };
 }
