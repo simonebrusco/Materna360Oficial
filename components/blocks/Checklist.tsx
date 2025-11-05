@@ -234,22 +234,25 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
 
   useEffect(() => {
     let isMounted = true
+    let aborted = false
 
-    fetchMotherName()
-      .then((name) => {
-        if (isMounted) {
+    ;(async () => {
+      try {
+        const name = await fetchMotherName()
+        if (isMounted && !aborted) {
           setProfileName(name)
         }
-      })
-      .catch(() => {
-        // Silently handle any errors (timeouts, network, etc.)
-        if (isMounted) {
+      } catch {
+        // Catch any errors and silently use fallback
+        if (isMounted && !aborted) {
           setProfileName(FALLBACK_NAME)
         }
-      })
+      }
+    })()
 
     return () => {
       isMounted = false
+      aborted = true
     }
   }, [])
 
