@@ -259,6 +259,9 @@ export default function DescobrirClient({
   selfCare = { enabled: false, aiEnabled: false, items: [], energy: 'medium' as SelfCareEnergy, minutes: 5 as const },
   flags = getClientFlags(),
 }: DescobrirClientProps) {
+  const clientFlags = getClientFlags();
+  console.info('[Discover] Client mounted; flags:', clientFlags);
+
   // UI state
   const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
