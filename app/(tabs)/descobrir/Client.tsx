@@ -47,6 +47,8 @@ const DEFAULT_FILTERS: Readonly<{
   energy: 'normal',
 };
 
+const QUICK_PICKS: Readonly<QuickIdeasTimeWindow[]> = [5, 10, 20] as const;
+
 /* ------------------------------------------------------------------ */
 /* Mock blocks (exibem quando não há rec shelf do CMS)                */
 /* ------------------------------------------------------------------ */
