@@ -4,15 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
 
-type Item = { href: string; label: string; icon: 'place' | 'books' | 'star' | 'care' | 'crown' | 'sparkles' };
+type Item = { href: string; label: string; icon: 'place' | 'star' | 'books' | 'crown' };
 
 const ITEMS: Item[] = [
-  { href: '/',          label: 'Home',      icon: 'place'     },
-  { href: '/meu-dia',   label: 'Meu Dia',   icon: 'star'      },
-  { href: '/cuidar',    label: 'Cuidar',    icon: 'care'      },
-  { href: '/descobrir', label: 'Descobrir', icon: 'books'     },
-  { href: '/eu360',     label: 'Eu360',     icon: 'crown'     },
-  { href: '/planos',    label: 'Planos',    icon: 'sparkles'  },
+  { href: '/',          label: 'Home',      icon: 'place' },
+  { href: '/meu-dia',   label: 'Meu Dia',   icon: 'star'  },
+  { href: '/descobrir', label: 'Descobrir', icon: 'books' },
+  { href: '/eu360',     label: 'Eu360',     icon: 'crown' },
 ];
 
 export default function BottomNav() {
@@ -27,7 +25,7 @@ export default function BottomNav() {
       "
       role="navigation" aria-label="Main"
     >
-      <ul className="mx-auto grid max-w-screen-md grid-cols-6">
+      <ul className="mx-auto grid max-w-screen-md grid-cols-4">
         {ITEMS.map((it) => {
           const active = pathname === it.href || (it.href !== '/' && pathname?.startsWith(it.href));
           return (
@@ -35,7 +33,8 @@ export default function BottomNav() {
               <Link
                 href={it.href}
                 className="
-                  flex h-14 flex-col items-center justify-center gap-1 text-[11px]
+                  flex h-14 flex-col items-center justify-center gap-1
+                  text-[11px] sm:text-xs
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60
                 "
                 aria-current={active ? 'page' : undefined}
@@ -45,7 +44,9 @@ export default function BottomNav() {
                   variant={active ? 'brand' : 'neutral'}
                   aria-hidden
                 />
-                <span className={active ? 'text-pink-600' : 'text-slate-500'}>{it.label}</span>
+                <span className={active ? 'text-pink-600' : 'text-slate-500'}>
+                  {it.label}
+                </span>
               </Link>
             </li>
           );
