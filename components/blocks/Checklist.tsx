@@ -171,20 +171,37 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 
 const fetchMotherName = async (): Promise<string> => {
   try {
-    const response = await fetch('/api/profile', {
-      credentials: 'include',
-      cache: 'no-store',
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
 
-    if (!response.ok) {
-      throw new Error(`Perfil não disponível (${response.status})`)
+    try {
+      const response = await fetch('/api/profile', {
+        credentials: 'include',
+        cache: 'no-store',
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        console.debug(`Perfil não disponível (${response.status}). Usando nome padrão.`)
+        return FALLBACK_NAME
+      }
+
+      const data = await response.json()
+      const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
+      return rawName || FALLBACK_NAME
+    } catch (fetchError) {
+      clearTimeout(timeoutId)
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.debug('Requisição de perfil expirou. Usando nome padrão.')
+      } else {
+        console.debug('Erro ao carregar perfil. Usando nome padrão:', fetchError)
+      }
+      return FALLBACK_NAME
     }
-
-    const data = await response.json()
-    const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
-    return rawName || FALLBACK_NAME
   } catch (error) {
-    console.error('Não foi possível carregar o nome para o checklist:', error)
+    console.debug('Erro ao buscar nome da mãe:', error)
     return FALLBACK_NAME
   }
 }
