@@ -1,4 +1,6 @@
-'use client'
+'use client';
+
+console.info('[Discover] Client mounted');
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
