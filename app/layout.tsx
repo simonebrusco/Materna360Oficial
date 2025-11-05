@@ -15,65 +15,94 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                const originalFetch = window.fetch;
-                let fetchInitialized = false;
+                const originalFetch = window.fetch.bind(window);
+                const state = { isFullStoryDetected: false, checkCount: 0 };
 
-                window.fetch = function wrappedFetch(input, init) {
-                  if (!fetchInitialized) {
-                    // Store original to avoid double-wrapping
-                    if (window.fetch !== wrappedFetch) {
-                      return window.fetch(input, init);
+                function isFullStoryLoaded() {
+                  // Check if FullStory is initialized
+                  if (typeof window !== 'undefined') {
+                    if (window.FS && typeof window.FS.identify === 'function') {
+                      return true;
                     }
-                    fetchInitialized = true;
                   }
+                  return false;
+                }
 
-                  // Check if FullStory is present (loads async)
-                  if (typeof window !== 'undefined' && window.FS) {
-                    return new Promise((resolve, reject) => {
-                      // Use XMLHttpRequest as fallback when FullStory is detected
-                      try {
-                        const xhr = new XMLHttpRequest();
-                        const url = input instanceof Request ? input.url : String(input);
-                        const method = (init?.method || 'GET').toUpperCase();
+                function fetchViaXHR(url, method, headers, body, credentials) {
+                  return new Promise((resolve, reject) => {
+                    try {
+                      const xhr = new XMLHttpRequest();
+                      xhr.open(method, url, true);
 
-                        xhr.open(method, url, true);
-
-                        // Set headers from init
-                        if (init?.headers) {
-                          const headerObj = init.headers instanceof Headers
-                            ? Object.fromEntries(init.headers.entries())
-                            : init.headers;
-                          Object.entries(headerObj || {}).forEach(([key, val]) => {
-                            xhr.setRequestHeader(key, String(val));
-                          });
-                        }
-
-                        xhr.onload = () => {
-                          const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream';
-                          const response = new Response(xhr.responseText || xhr.response, {
-                            status: xhr.status,
-                            statusText: xhr.statusText,
-                            headers: new Headers({ 'content-type': contentType })
-                          });
-                          resolve(response);
-                        };
-
-                        xhr.onerror = () => reject(new TypeError('Failed to fetch'));
-                        xhr.ontimeout = () => reject(new TypeError('Request timeout'));
-                        xhr.withCredentials = init?.credentials === 'include';
-
-                        xhr.send(init?.body ? String(init.body) : null);
-                      } catch (e) {
-                        reject(e);
+                      // Set headers
+                      if (headers) {
+                        Object.entries(headers).forEach(([key, val]) => {
+                          xhr.setRequestHeader(key, String(val));
+                        });
                       }
-                    });
+
+                      xhr.withCredentials = credentials === 'include';
+
+                      xhr.onload = () => {
+                        const contentType = xhr.getResponseHeader('content-type') || 'text/plain';
+                        const response = new Response(xhr.response, {
+                          status: xhr.status,
+                          statusText: xhr.statusText,
+                          headers: new Headers({ 'content-type': contentType })
+                        });
+                        resolve(response);
+                      };
+
+                      xhr.onerror = () => {
+                        reject(new TypeError('Network request failed'));
+                      };
+
+                      xhr.ontimeout = () => {
+                        reject(new TypeError('Network timeout'));
+                      };
+
+                      xhr.send(body || null);
+                    } catch (error) {
+                      reject(error);
+                    }
+                  });
+                }
+
+                window.fetch = function safeFetch(input, init) {
+                  const url = input instanceof Request ? input.url : String(input);
+                  const method = (init?.method || 'GET').toUpperCase();
+                  const headers = {};
+                  const credentials = init?.credentials || 'omit';
+
+                  // Parse headers
+                  if (init?.headers) {
+                    if (init.headers instanceof Headers) {
+                      init.headers.forEach((val, key) => {
+                        headers[key] = val;
+                      });
+                    } else if (Array.isArray(init.headers)) {
+                      init.headers.forEach(([key, val]) => {
+                        headers[key] = val;
+                      });
+                    } else {
+                      Object.assign(headers, init.headers);
+                    }
                   }
 
-                  // FullStory not detected, use original fetch
-                  if (!originalFetch) {
-                    return Promise.reject(new TypeError('Fetch not available'));
+                  // Check if FullStory is loaded
+                  if (isFullStoryLoaded()) {
+                    state.isFullStoryDetected = true;
+                    return fetchViaXHR(url, method, headers, init?.body, credentials);
                   }
-                  return originalFetch.call(window, input, init);
+
+                  // Use original fetch
+                  return originalFetch(input, init).catch(error => {
+                    // If native fetch fails with "Failed to fetch", it might be FullStory interference
+                    if (error && error.message && error.message.includes('Failed to fetch')) {
+                      return fetchViaXHR(url, method, headers, init?.body, credentials);
+                    }
+                    throw error;
+                  });
                 };
               })();
             `,
