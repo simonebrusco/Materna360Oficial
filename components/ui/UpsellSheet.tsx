@@ -53,7 +53,7 @@ export function UpsellSheet({
             <ul className="space-y-2">
               {features.map((feature) => (
                 <li key={feature} className="flex gap-2 text-sm text-support-1">
-                  <span className="mt-0.5 text-xs flex-shrink-0">✨</span>
+                  <span className="mt-0.5 flex-shrink-0"><Emoji char="✨" size={12} /></span>
                   <span>{feature}</span>
                 </li>
               ))}
