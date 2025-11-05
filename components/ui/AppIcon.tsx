@@ -101,6 +101,10 @@ const ICONS = {
   sun: Lucide.Sun,
   moon: Lucide.Moon,
   play: Lucide.Play,
+  share: Lucide.Share2,
+  download: Lucide.Download,
+  check: Lucide.Check,
+  x: Lucide.X,
   shieldCheck: Lucide.ShieldCheck,
 } as const;
 
