@@ -558,7 +558,8 @@ export default function DescobrirClient({
         <SectionWrapper
           title={
             <span className="inline-flex items-center gap-2">
-              {isEnabled('FF_LAYOUT_V1') ? (
+              {/* OLD BROKEN - REMOVED */}
+              {false && isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="filters" size={20} />
               ) : (
                 <Emoji char="��" />
