@@ -76,19 +76,19 @@ export default async function Page() {
         </div>
       </SectionWrapper>
 
-      <SectionWrapper title="Mindfulness">
+      <SectionWrapper header={<h2 id="sec-mindfulness" className="sr-only">Mindfulness</h2>} aria-labelledby="sec-mindfulness">
         <MindfulnessForMoms />
       </SectionWrapper>
 
-      <SectionWrapper title="Dicas de Organização">
+      <SectionWrapper header={<h2 id="sec-org-tips" className="sr-only">Dicas de Organização</h2>} aria-labelledby="sec-org-tips">
         <OrganizationTips />
       </SectionWrapper>
 
-      <SectionWrapper title="Jornadas do Cuidar">
+      <SectionWrapper header={<h2 id="sec-journeys" className="sr-only">Jornadas do Cuidar</h2>} aria-labelledby="sec-journeys">
         <CareJourneys />
       </SectionWrapper>
 
-      <SectionWrapper title="Profissionais de Confiança">
+      <SectionWrapper header={<h2 id="sec-pros" className="sr-only">Profissionais de Confiança</h2>} aria-labelledby="sec-pros">
         <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
           <ProfessionalsSection />
         </Suspense>

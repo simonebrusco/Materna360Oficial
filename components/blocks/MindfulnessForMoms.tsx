@@ -68,9 +68,7 @@ export default function MindfulnessForMoms() {
     <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-10 shadow-[0_18px_44px_-26px_rgba(47,58,86,0.3)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-12">
       <header className="space-y-2 md:space-y-3">
         <span className="eyebrow-capsule">Bem-estar emocional</span>
-        <h2 className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
-          Mindfulness para Mães
-        </h2>
+        <h2 id="mindfulness-moms-heading" className="sr-only">Mindfulness para Mães</h2>
         <p className="max-w-3xl text-sm leading-[1.45] text-support-2/85 md:text-base">
           Pausas guiadas, curtas e acolhedoras, para respirar com intenção e cuidar do coração enquanto a rotina acontece.
         </p>
