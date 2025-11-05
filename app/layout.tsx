@@ -1,4 +1,5 @@
-import './globals.css'
+// Temporarily disabled to diagnose compilation issue
+// import './globals.css'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Script from 'next/script'
