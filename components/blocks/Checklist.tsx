@@ -170,10 +170,12 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 const fetchMotherName = async (): Promise<string> => {
   let timeoutId: NodeJS.Timeout | null = null
   const controller = new AbortController()
+  let isAborted = false
 
   try {
     // Set timeout to abort fetch after 3 seconds
     timeoutId = setTimeout(() => {
+      isAborted = true
       controller.abort()
     }, 3000)
 
@@ -183,7 +185,11 @@ const fetchMotherName = async (): Promise<string> => {
       signal: controller.signal,
     })
 
-    if (timeoutId) clearTimeout(timeoutId)
+    // Clear timeout only if fetch succeeded
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
 
     if (!response.ok) {
       return FALLBACK_NAME
@@ -194,10 +200,18 @@ const fetchMotherName = async (): Promise<string> => {
     return rawName || FALLBACK_NAME
   } catch (error) {
     // Always clear timeout on error
-    if (timeoutId) clearTimeout(timeoutId)
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
 
-    // Handle AbortError silently (timeout case)
-    if (error instanceof Error && error.name === 'AbortError') {
+    // Handle AbortError silently (timeout case or abort signal)
+    if (error instanceof Error && (error.name === 'AbortError' || isAborted)) {
+      return FALLBACK_NAME
+    }
+
+    // Handle DOMException in case AbortError is thrown as DOMException
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError') {
       return FALLBACK_NAME
     }
 
