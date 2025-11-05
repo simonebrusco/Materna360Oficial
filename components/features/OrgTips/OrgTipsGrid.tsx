@@ -243,7 +243,7 @@ export function OrgTipsGrid() {
               {tip.duration}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-support-2/10 px-3 py-1 text-xs font-semibold text-support-2">
-              <span aria-hidden="true">🧩</span>
+              <Emoji char="🧩" />
               {tip.category}
             </span>
           </div>
