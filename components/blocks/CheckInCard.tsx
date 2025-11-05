@@ -96,10 +96,7 @@ export function CheckInCard() {
       <Card className="p-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-left">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">
-              <AppIcon name="smile" size={20} aria-hidden />
-              {' '}Como você está agora?
-            </h2>
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">Como você está agora?</h2>
             <p className="text-sm text-support-2">Escolha um mood para acompanhar seu bem-estar emocional.</p>
           </div>
         </div>

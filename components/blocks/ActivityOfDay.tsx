@@ -250,7 +250,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
       return 'Atividades personalizadas para hoje'
     }
 
-    return headlineActivity.emoji ? `${headlineActivity.emoji} ${headlineActivity.title}` : headlineActivity.title
+    return headlineActivity.title
   }, [headlineActivity, isAllMode])
 
   const ageLabel = useMemo(() => {
