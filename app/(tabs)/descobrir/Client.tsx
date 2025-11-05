@@ -556,10 +556,7 @@ export default function DescobrirClient({
       {/* Filtros Inteligentes */}
       <Reveal delay={80}>
         <SectionWrapper
-        <SectionWrapper
           title="Filtros Inteligentes"
-          description="Combine idade e local para criar experiências personalizadas em segundos."
-        >
           description="Combine idade e local para criar experiências personalizadas em segundos."
         >
           <Card className="p-7">
