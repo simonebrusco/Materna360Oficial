@@ -265,7 +265,11 @@ export default function DescobrirClient({
   suggestions = [],
   filters = DEFAULT_FILTERS,
   dateKey = new Date().toISOString().split('T')[0],
-  profile = { babyAgeMonths: 0, babyName: 'Bebê' },
+  profile = {
+    mode: 'single',
+    activeChildId: null,
+    children: [],
+  } as const,
   initialAgeFilter = null,
   initialPlaceFilter = null,
   recShelf = { enabled: false, groups: [] },
