@@ -1,3 +1,7 @@
+/** Runtime feature flags used across the app. Extend this union when you add new flags. */
+export type FlagName = 'FF_LAYOUT_V1' | 'FF_FEEDBACK_KIT' | 'FF_HOME_V1';
+
+/** Discover surface flags (UI toggles derived from FF_LAYOUT_V1 by default) */
 export type DiscoverFlags = {
   recShelf: boolean;
   recShelfAI: boolean;
@@ -7,27 +11,47 @@ export type DiscoverFlags = {
   selfCareAI: boolean;
 };
 
-export function isEnabled(flag: 'FF_LAYOUT_V1'): boolean {
-  if (flag !== 'FF_LAYOUT_V1') return false;
+/** Read a NEXT_PUBLIC_* env and coerce to boolean (true/1) */
+function coerceEnvBoolean(raw: string | undefined | null): boolean {
+  const v = (raw ?? '').trim().toLowerCase();
+  return v === 'true' || v === '1';
+}
 
-  // QA override via URL (?ff=1 or ?ff=0)
-  if (typeof window !== 'undefined') {
+/** Main helper: isEnabled(flag) with proper per-flag policy */
+export function isEnabled(flag: FlagName): boolean {
+  const vercelEnv =
+    (process.env.NEXT_PUBLIC_VERCEL_ENV ||
+      process.env.VERCEL_ENV ||
+      'local')!.toLowerCase();
+
+  // QA override only for layout flag (URL ?ff=1|0)
+  if (flag === 'FF_LAYOUT_V1' && typeof window !== 'undefined') {
     const q = new URLSearchParams(window.location.search).get('ff');
     if (q != null) return q === '1' || q.toLowerCase() === 'true';
   }
 
-  const raw = (process.env.NEXT_PUBLIC_FF_LAYOUT_V1 ?? '').toLowerCase().trim();
-  const vercelEnv = (process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.VERCEL_ENV || 'local').toLowerCase();
+  const raw = process.env[`NEXT_PUBLIC_${flag}` as keyof NodeJS.ProcessEnv] as
+    | string
+    | undefined;
 
-  // Production: fallback ON if missing/invalid
-  if (vercelEnv === 'production') {
-    return raw !== 'false' && raw !== '0';
+  if (flag === 'FF_LAYOUT_V1') {
+    // Production fallback ON if missing/invalid (safe default to new UI)
+    if (vercelEnv === 'production') {
+      const v = (raw ?? '').trim().toLowerCase();
+      return v !== 'false' && v !== '0';
+    }
+    // Preview/Dev literal only
+    return coerceEnvBoolean(raw);
   }
-  // Preview/Dev: literal only
-  return raw === 'true' || raw === '1';
+
+  // Other flags: literal in all environments (no prod fallback)
+  return coerceEnvBoolean(raw);
 }
 
-export function getClientFlags(overrides?: Partial<DiscoverFlags>): DiscoverFlags {
+/** Client-friendly pack of toggles for Descobrir (derived from layout flag by default) */
+export function getClientFlags(
+  overrides?: Partial<DiscoverFlags>
+): DiscoverFlags {
   const on = isEnabled('FF_LAYOUT_V1');
   const base: DiscoverFlags = {
     recShelf: on,
@@ -40,6 +64,7 @@ export function getClientFlags(overrides?: Partial<DiscoverFlags>): DiscoverFlag
   return { ...base, ...overrides };
 }
 
+/** Server-side equivalent (keeps same defaults) */
 export function getServerFlags(): DiscoverFlags {
   return getClientFlags();
 }
