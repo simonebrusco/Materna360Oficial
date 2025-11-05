@@ -3,13 +3,11 @@
 import * as React from 'react';
 
 type Props = React.HTMLAttributes<HTMLDivElement> & {
-  /** Optional: amount of scroll when clicking arrows (px) */
-  step?: number;
-  /** Show nav arrows? (mobile hides by default) */
-  withNav?: boolean;
+  step?: number;    // px scrolled per click
+  withNav?: boolean; // show prev/next buttons (hidden on mobile)
 };
 
-export default function HScroll({ className, children, step = 280, withNav = false, ...rest }: Props) {
+export default function HScroll({ className, children, step = 280, withNav = true, ...rest }: Props) {
   const ref = React.useRef<HTMLDivElement>(null);
 
   const scrollBy = (dx: number) => {
@@ -26,16 +24,16 @@ export default function HScroll({ className, children, step = 280, withNav = fal
             <button
               type="button"
               onClick={() => scrollBy(-step)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden sm:grid h-8 w-8 place-items-center rounded-full border bg-white/90 backdrop-blur shadow"
-              aria-label="Scroll left"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden sm:grid h-8 w-8 place-items-center rounded-full border bg-white/90 backdrop-blur shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60"
+              aria-label="Rolar para a esquerda"
             >
               ‹
             </button>
             <button
               type="button"
               onClick={() => scrollBy(step)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden sm:grid h-8 w-8 place-items-center rounded-full border bg-white/90 backdrop-blur shadow"
-              aria-label="Scroll right"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden sm:grid h-8 w-8 place-items-center rounded-full border bg-white/90 backdrop-blur shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60"
+              aria-label="Rolar para a direita"
             >
               ›
             </button>
@@ -51,9 +49,7 @@ export default function HScroll({ className, children, step = 280, withNav = fal
           {...rest}
         >
           {/* Hide scrollbar (WebKit) */}
-          <style jsx>{`
-            div::-webkit-scrollbar { display: none; }
-          `}</style>
+          <style jsx>{`div::-webkit-scrollbar{display:none}`}</style>
           {children}
         </div>
       </div>
