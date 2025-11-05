@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
 import { DAILY_MESSAGES_PT } from '@/lib/dailyMessagesPt'
 
 const STORAGE_KEY = 'materna_daily_message_v2'
