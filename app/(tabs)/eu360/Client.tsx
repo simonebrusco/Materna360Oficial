@@ -9,6 +9,7 @@ import { isEnabled } from '@/app/lib/flags'
 
 import { useGamification } from '@/app/lib/useGamification'
 import AppIcon from '@/components/ui/AppIcon'
+import Emoji from '@/components/ui/Emoji'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
