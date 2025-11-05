@@ -7,6 +7,7 @@ import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/
 import type { ChildActivity } from '@/app/data/childContent'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
 import { Toast } from '@/components/ui/Toast'
 import {
   recommendationStorage,
@@ -326,7 +327,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
               {headlineTitle}
             </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
-              <span className="inline-flex items-center gap-1"><Emoji char="👧" size={12} /> {ageLabel}</span>
+              <span className="inline-flex items-center gap-1"><Emoji char="���" size={12} /> {ageLabel}</span>
               {!isAllMode && hasDuration && (
                 <span className="inline-flex items-center gap-1"><Emoji char="⏱️" size={12} /> {headlineActivity.durationMin} min</span>
               )}
