@@ -5,16 +5,21 @@ import * as Lucide from 'lucide-react';
 
 type Variant = 'neutral' | 'brand';
 
-export type AppIconName =
-  | 'place'
-  | 'books'
-  | 'star'
-  | 'care'
-  | 'crown'
-  | 'sparkles'
-  | 'search'
-  | 'filters'
-  | 'filter';
+// Single source of truth for supported icons (extend here only)
+const ICONS = {
+  place: Lucide.Home,
+  books: Lucide.BookOpen,
+  star: Lucide.Star,
+  care: Lucide.Heart,
+  crown: Lucide.Crown,
+  sparkles: Lucide.Sparkles,
+  search: Lucide.Search,
+  filters: Lucide.SlidersHorizontal,
+  filter: Lucide.SlidersHorizontal,   // alias
+  idea: Lucide.Lightbulb,              // added
+} as const;
+
+export type AppIconName = keyof typeof ICONS;
 
 export default function AppIcon({
   name,
@@ -29,18 +34,7 @@ export default function AppIcon({
   variant?: Variant;
   strokeWidth?: number;
 } & React.SVGProps<SVGSVGElement>) {
-  const map: Record<AppIconName, React.ComponentType<any>> = {
-    place: Lucide.Home,
-    books: Lucide.BookOpen,
-    star: Lucide.Star,
-    care: Lucide.Heart,
-    crown: Lucide.Crown,
-    sparkles: Lucide.Sparkles,
-    search: Lucide.Search,
-    filters: Lucide.SlidersHorizontal,
-    filter: Lucide.SlidersHorizontal,
-  };
-  const Icon = map[name] ?? Lucide.HelpCircle;
+  const Icon = ICONS[name] ?? Lucide.HelpCircle;
   const color = variant === 'brand' ? '#ff005e' : '#2f3a56';
   return (
     <Icon
