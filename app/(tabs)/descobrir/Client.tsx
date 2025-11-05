@@ -547,8 +547,8 @@ export default function DescobrirClient({
       <Reveal>
         <SectionWrapper
           className="relative bg-transparent"
-          title="Descobrir"
-          description="Use os filtros para encontrar ideias rápidas por tempo, energia e local."
+          title={HERO_TITLE}
+          description={HERO_DESC}
         >
           {null}
         </SectionWrapper>
