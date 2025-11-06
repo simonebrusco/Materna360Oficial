@@ -18,6 +18,7 @@ const ICON_MAP = {
   calendar: Icons.Calendar,
   camera: Icons.Camera,
   place: Icons.MapPin,
+  home: Icons.Home,
   play: Icons.Play,
   share: Icons.Share2,
   download: Icons.Download,
