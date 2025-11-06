@@ -102,9 +102,18 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
         <GuardedSection>
           <section className="space-y-4" aria-label="Mindfulness para Mães">
             <Reveal>
+
               <p className="section-subtitle max-w-2xl">
                 Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
               </p>
+
+              <div className="space-y-2">
+                <h2 className="section-title">Mindfulness para Mães</h2>
+                <p className="section-subtitle max-w-2xl">
+                  Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
+                </p>
+              </div>
+
             </Reveal>
             <MindfulnessCollections />
           </section>
