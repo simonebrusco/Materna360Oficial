@@ -1,15 +1,14 @@
 'use client'
 
-'use client'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import AppIcon from './AppIcon'
 
-const tabs = [
-  { href: '/meu-dia', label: 'Meu Dia', emoji: '🏡' },
-  { href: '/cuidar', label: 'Cuide-se', emoji: '🌿' },
-  { href: '/descobrir', label: 'Descobrir', emoji: '🧸' },
-  { href: '/eu360', label: 'Eu360', emoji: '💛' },
+const TABS = [
+  { href: '/meu-dia', label: 'Meu Dia', icon: { name: 'home' as const } },
+  { href: '/cuidar', label: 'Cuidar', icon: { name: 'care' as const } },
+  { href: '/descobrir', label: 'Descobrir', icon: { name: 'search' as const } },
+  { href: '/eu360', label: 'Eu360', icon: { name: 'star' as const } },
 ]
 
 export function TabBar() {
