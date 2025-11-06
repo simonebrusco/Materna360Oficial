@@ -7,7 +7,7 @@ import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
 
-// import Emoji from '@/components/ui/Emoji'
+import Emoji from '@/components/ui/Emoji'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
