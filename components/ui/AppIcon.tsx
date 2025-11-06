@@ -34,10 +34,10 @@ const ICON_MAP = {
   // fallback helper is HelpCircle
 } as const;
 
-type IconName = keyof typeof ICON_MAP;
+export type AppIconName = keyof typeof ICON_MAP;
 
 export type AppIconProps = LucideProps & {
-  name: IconName;
+  name: AppIconName;
   /** When true (default), hide from AT. When false, requires `label`. */
   decorative?: boolean;
   /** Required when decorative=false */
