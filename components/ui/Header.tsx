@@ -104,7 +104,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-500 ease-gentle backdrop-blur-xl ${
-        isScrolled ? 'bg-white/85 shadow-soft' : 'bg-white/40'
+        isScrolled ? 'bg-white/85 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : 'bg-white/40'
       }`}
     >
       <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
