@@ -543,9 +543,6 @@ export default function DescobrirClient({
 
   return (
 
-    <SimpleErrorBoundary>
-      <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
-
     <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_72%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
