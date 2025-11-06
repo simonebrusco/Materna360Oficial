@@ -56,7 +56,7 @@ function fixFetch() {
             };
             xhr.onerror = () => reject(new TypeError('Network request failed'));
             xhr.ontimeout = () => reject(new TypeError('Request timeout'));
-            xhr.send(init?.body || null);
+            xhr.send((init?.body as any) || null);
           } catch (e) { reject(e); }
         });
       }
