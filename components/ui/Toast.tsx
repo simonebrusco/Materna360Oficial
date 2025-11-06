@@ -124,21 +124,26 @@ export function ToastDemoButton() {
 
 export type LegacyToastProps = {
   message?: string;
-  type?: 'default' | 'success' | 'warning' | 'danger';
+  type?: 'default' | 'success' | 'warning' | 'danger' | 'error';
   onClose?: () => void;
   className?: string;
 };
 
 export function Toast({ message, type = 'default', onClose, className }: LegacyToastProps) {
   if (!message) return null;
+
+  // map alias "error" to "danger"
+  const normalized =
+    type === 'error' ? 'danger' : type;
+
   return (
     <div
       className={clsx(
         'pointer-events-auto w-full max-w-sm rounded-xl shadow-lg border bg-white px-4 py-3',
         'fixed left-1/2 -translate-x-1/2 bottom-4 z-[61]',
-        type === 'success' && 'border-green-200',
-        type === 'warning' && 'border-yellow-200',
-        type === 'danger' && 'border-red-200',
+        normalized === 'success' && 'border-green-200',
+        normalized === 'warning' && 'border-yellow-200',
+        normalized === 'danger' && 'border-red-200',
         className
       )}
       role="status"
