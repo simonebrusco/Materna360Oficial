@@ -94,7 +94,7 @@ export default function MindfulnessForMoms() {
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-sm"
                 aria-hidden="true"
               >
-                <AppIcon name={collection.iconName} size={18} className="text-primary" />
+                {collection.iconName && <AppIcon name={collection.iconName} size={18} className="text-primary" />}
               </div>
               <h3 className="text-lg font-semibold leading-tight text-support-1 md:text-xl">{collection.titulo}</h3>
               <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
