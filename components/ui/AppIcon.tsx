@@ -1,169 +1,19 @@
 'use client';
-
 import * as React from 'react';
-import * as Lucide from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
-type Variant = 'neutral' | 'brand';
-type IconComponent = React.ComponentType<LucideProps>;
+export type AppIconProps = LucideProps & {
+  /** When true (default), the icon is decorative and must be hidden from AT. */
+  decorative?: boolean;
+  /** Required when decorative=false */
+  label?: string;
+};
 
-/** Normalize "search" | "sliders-horizontal" -> "Search" | "SlidersHorizontal" */
-function toPascalCase(input: string): string {
-  return input
-    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
-    .replace(/^(.)/, (m) => m.toUpperCase());
+export function AppIcon({ decorative = true, label, ...rest }: AppIconProps) {
+  const ariaProps = decorative
+    ? { 'aria-hidden': true }
+    : { role: 'img', 'aria-label': label ?? 'icon' };
+  return <svg {...ariaProps} {...rest} />;
 }
 
-/** Aliases for friendly/short names -> lucide export keys */
-const ALIASES: Record<string, keyof typeof Lucide> = {
-  // Core UI
-  place: 'Home',
-  home: 'Home',
-  house: 'Home',
-  books: 'BookOpen',
-  book: 'Book',
-  'book-open': 'BookOpen',
-  star: 'Star',
-  care: 'Heart',
-  heart: 'Heart',
-  crown: 'Crown',
-  sparkles: 'Sparkles',
-  search: 'Search',
-  filters: 'SlidersHorizontal',
-  filter: 'SlidersHorizontal',
-  settings: 'Settings',
-  gear: 'Settings',
-  info: 'Info',
-  help: 'HelpCircle',
-  question: 'HelpCircle',
-  close: 'X',
-  x: 'X',
-  check: 'Check',
-  plus: 'Plus',
-  minus: 'Minus',
-
-  // Time & date
-  time: 'Clock',
-  timer: 'Timer',
-  clock: 'Clock',
-  calendar: 'Calendar',
-  date: 'Calendar',
-
-  // Media & actions
-  camera: 'Camera',
-  play: 'Play',
-  pause: 'Pause',
-  stop: 'Square',
-  share: 'Share2',
-  download: 'Download',
-  upload: 'Upload',
-  edit: 'Pencil',
-  trash: 'Trash2',
-  coffee: 'Coffee',
-
-  // Navigation
-  'arrow-right': 'ArrowRight',
-  'arrow-left': 'ArrowLeft',
-  'chevron-right': 'ChevronRight',
-  'chevron-left': 'ChevronLeft',
-
-  // Ideas/insights
-  idea: 'Lightbulb',
-  lightbulb: 'Lightbulb',
-
-  // Location
-  location: 'MapPin',
-  pin: 'MapPin',
-  map: 'Map',
-} as const;
-
-/** Known-friendly icons (shortcut map) */
-const ICONS = {
-  place: Lucide.Home,
-  books: Lucide.BookOpen,
-  star: Lucide.Star,
-  care: Lucide.Heart,
-  heart: Lucide.Heart,
-  crown: Lucide.Crown,
-  sparkles: Lucide.Sparkles,
-  search: Lucide.Search,
-  filters: Lucide.SlidersHorizontal,
-  filter: Lucide.SlidersHorizontal,
-  idea: Lucide.Lightbulb,
-  time: Lucide.Clock,
-  coffee: Lucide.Coffee,
-  camera: Lucide.Camera,
-  target: Lucide.Target,
-  calendar: Lucide.Calendar,
-  edit: Lucide.Pencil,
-  smile: Lucide.Smile,
-  leaf: Lucide.Leaf,
-  sun: Lucide.Sun,
-  moon: Lucide.Moon,
-  play: Lucide.Play,
-  share: Lucide.Share2,
-  download: Lucide.Download,
-  check: Lucide.Check,
-  x: Lucide.X,
-  shieldCheck: Lucide.ShieldCheck,
-} as const;
-
-/** Export the core icon name type */
-export type AppIconName = keyof typeof ICONS;
-
-/** Narrow lucide namespace to only component-like exports */
-const LucideMap = Lucide as unknown as Record<string, IconComponent>;
-
-function resolveIconComponent(name?: AppIconName | string): IconComponent {
-  // Handle undefined or empty
-  if (!name) return Lucide.HelpCircle as IconComponent;
-
-  // 1) direct match in our ICONS map (already typed)
-  if (name in ICONS) return (ICONS as Record<string, IconComponent>)[name];
-
-  // 2) alias to a Lucide export (PascalCase key)
-  const alias = ALIASES[name as keyof typeof ALIASES];
-  if (alias && LucideMap[String(alias)]) return LucideMap[String(alias)];
-
-  // 3) direct Lucide export (PascalCase)
-  if (LucideMap[name]) return LucideMap[name];
-
-  // 4) try normalized PascalCase from kebab/lowercase
-  const pascal = toPascalCase(name);
-  if (LucideMap[pascal]) return LucideMap[pascal];
-
-  // 5) fallback
-  return Lucide.HelpCircle as IconComponent;
-}
-
-type AppIconProps = {
-  name?: AppIconName;
-  size?: number;
-  variant?: Variant;
-  strokeWidth?: number;
-  className?: string;
-  'aria-hidden'?: boolean;
-  'aria-label'?: string;
-} & Omit<LucideProps, 'width' | 'height' | 'stroke' | 'strokeWidth'>;
-
-export default function AppIcon({
-  name,
-  size = 20,
-  variant = 'neutral',
-  strokeWidth = 1.75,
-  className,
-  ...rest
-}: AppIconProps) {
-  const Icon = resolveIconComponent(name);
-  const color = variant === 'brand' ? '#ff005e' : '#2f3a56';
-  return (
-    <Icon
-      width={size}
-      height={size}
-      stroke={color}
-      strokeWidth={strokeWidth}
-      className={className}
-      {...rest}
-    />
-  );
-}
+export default AppIcon;
