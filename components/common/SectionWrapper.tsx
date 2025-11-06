@@ -1,8 +1,13 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 
 /* Sanitize section titles to remove emoji/garbled characters */
-const STRIP_EMOJI = /([\u2700-\u27BF]|\u24C2|[\uE000-\uF8FF]|[\uFE00-\uFE0F]|[\u2600-\u26FF]|[\uD83C-\uDBFF][\uDC00-\uDFFF]|\u200D)/g
-const cleanTitle = (s: string) => s.replace(STRIP_EMOJI, '').replace(/[^\S\r\n]{2,}/g, ' ').replace(/[�]+/g, '').trim()
+const stripEmoji = (s: string) =>
+  s
+    // remove most emoji/pictographs + VS-16/FE0F
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F]/gu, '')
+    // remove stray replacement chars often shown as "�"
+    .replace(/\uFFFD/g, '')
+    .trim()
 
 type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>
 
