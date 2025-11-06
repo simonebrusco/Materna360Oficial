@@ -386,7 +386,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
           >
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <span aria-hidden className="text-3xl">
+                <span aria-hidden className="text-3xl flex-shrink-0">
                   {tip.icon}
                 </span>
                 <div>
@@ -403,8 +403,9 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                   onClick={() => toggleExpanded(tip.id)}
                   aria-expanded={isExpanded}
                   aria-controls={`organization-tip-${tip.id}-tasks`}
+                  className="flex items-center gap-1.5"
                 >
-                  ✓ Checklist
+                  <span aria-hidden>✓</span> Checklist
                 </Button>
 
                 {timerStatus === 'running' ? (
@@ -458,7 +459,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                     <p className="font-mono text-2xl text-support-1">{formattedTime}</p>
                   </div>
                   {timerStatus === 'completed' ? (
-                    <p className="text-sm font-medium text-primary">⏰ Tempo concluído! Pequenas pausas fazem grande diferença.</p>
+                    <p className="text-sm font-medium text-primary"><span aria-hidden>⏰</span> Tempo concluído! Pequenas pausas fazem grande diferença.</p>
                   ) : (
                     <p className="text-xs text-support-2">Reserve um momento só seu. Pausas curtas trazem fôlego para o dia.</p>
                   )}
@@ -497,7 +498,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                     </ul>
 
                     {allDone && (
-                      <p className="text-sm font-semibold text-primary">✨ Você fez o seu melhor hoje!</p>
+                      <p className="text-sm font-semibold text-primary"><span aria-hidden>✨</span> Você fez o seu melhor hoje!</p>
                     )}
                   </div>
                 )}
