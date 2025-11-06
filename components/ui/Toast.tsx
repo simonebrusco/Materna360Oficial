@@ -124,7 +124,7 @@ export function ToastDemoButton() {
 
 export type LegacyToastProps = {
   message?: string;
-  type?: 'default' | 'success' | 'warning' | 'danger' | 'error';
+  type?: 'default' | 'success' | 'warning' | 'danger' | 'error' | 'info';
   onClose?: () => void;
   className?: string;
 };
@@ -132,9 +132,9 @@ export type LegacyToastProps = {
 export function Toast({ message, type = 'default', onClose, className }: LegacyToastProps) {
   if (!message) return null;
 
-  // map alias "error" to "danger"
+  // map aliases: "error" -> "danger", "info" -> "default"
   const normalized =
-    type === 'error' ? 'danger' : type;
+    type === 'error' ? 'danger' : type === 'info' ? 'default' : type;
 
   return (
     <div
