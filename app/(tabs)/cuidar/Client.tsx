@@ -3,6 +3,7 @@
 import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
 
 import Emoji from '@/components/ui/Emoji'
+import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import BreathTimer from '@/components/blocks/BreathTimer'
 import { CareJourneys } from '@/components/blocks/CareJourneys'
