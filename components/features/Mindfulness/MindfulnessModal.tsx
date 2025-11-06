@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
 
 type Track = { id: string; title: string }
 
@@ -28,21 +29,8 @@ export default function MindfulnessModal({
   const titleRef = useRef<HTMLHeadingElement>(null)
   const prevOverflow = useRef<string | null>(null)
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    if (open) {
-      document.addEventListener('keydown', onKey)
-    }
-
-    return () => {
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open, onClose])
+  // Use hook for Escape key handling
+  useEscapeToClose(open, onClose)
 
   useEffect(() => {
     if (open) {
