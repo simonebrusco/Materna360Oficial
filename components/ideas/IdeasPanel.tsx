@@ -77,7 +77,7 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
       setButtonDisabled(false);
     }, 3000);
 
-    showToast(`Ideia gerada: "${newIdea.title}"`, 'success');
+    toast({ title: `Ideia: ${newIdea.title}`, kind: 'success' });
     console.log('[telemetry] ideas.generated', { idea: newIdea.id, tier: quota.tier });
   };
 
