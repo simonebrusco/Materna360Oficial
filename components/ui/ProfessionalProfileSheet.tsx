@@ -39,7 +39,10 @@ export function ProfessionalProfileSheet({
   const [showUpsell, setShowUpsell] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // Handle Esc key close + body scroll prevention
+  // Use hook for Escape key handling
+  useEscapeToClose(open, () => onOpenChange(false))
+
+  // Handle body scroll prevention
   useEffect(() => {
     if (!open) return
 
@@ -47,19 +50,10 @@ export function ProfessionalProfileSheet({
     const originalStyle = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' || event.key === 'Esc') {
-        onOpenChange(false)
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey)
-
     return () => {
-      document.removeEventListener('keydown', handleEscapeKey)
       document.body.style.overflow = originalStyle
     }
-  }, [open, onOpenChange])
+  }, [open])
 
   // Focus trap: keep focus within modal
   useEffect(() => {
