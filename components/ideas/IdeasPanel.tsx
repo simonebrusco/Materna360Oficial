@@ -49,7 +49,7 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
   const [ideas, setIdeas] = useState<IdeaCard[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [buttonDisabled, setButtonDisabled] = useState(false);
-  const { show: showToast } = useToast();
+  const { toast } = useToast();
 
   const handleGenerateIdea = async () => {
     if (!quota.canGenerate) {
