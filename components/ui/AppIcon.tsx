@@ -20,7 +20,13 @@ export type AppIconName =
   | 'share'
   | 'download'
   | 'check'
-  | 'x';
+  | 'x'
+  | 'edit'
+  | 'heart'
+  | 'leaf'
+  | 'sun'
+  | 'moon'
+  | 'shieldCheck';
 
 const ICON_MAP: Record<AppIconName, React.ComponentType<LucideProps>> = {
   place: Icons.MapPin,
@@ -40,6 +46,12 @@ const ICON_MAP: Record<AppIconName, React.ComponentType<LucideProps>> = {
   download: Icons.Download,
   check: Icons.Check,
   x: Icons.X,
+  edit: Icons.Edit,
+  heart: Icons.Heart,
+  leaf: Icons.Leaf,
+  sun: Icons.Sun,
+  moon: Icons.Moon,
+  shieldCheck: Icons.ShieldCheck,
 };
 
 export type AppIconProps = Omit<LucideProps, 'children'> & {
@@ -68,8 +80,8 @@ export function AppIcon({
   const mergedClassName = `${colorClass} ${className || ''}`.trim();
 
   const ariaProps = decorative
-    ? { 'aria-hidden': 'true' }
-    : { role: 'img', 'aria-label': label ?? 'icon' };
+    ? { 'aria-hidden': true as const }
+    : { role: 'img' as const, 'aria-label': label ?? 'icon' };
 
   return (
     <IconComponent
