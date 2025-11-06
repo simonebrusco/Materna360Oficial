@@ -522,13 +522,13 @@ export function ProfileForm() {
                         key={sticker.id}
                         type="button"
                         onClick={() => setForm((previous) => ({ ...previous, figurinha: sticker.id }))}
-                        className={`group relative flex flex-col items-center gap-2 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 text-center shadow-soft transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60 ${
-                          isActive ? 'scale-[1.02] ring-2 ring-primary/50 shadow-glow' : 'hover:-translate-y-1'
+                        className={`group relative flex flex-col items-center gap-2 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60 ${
+                          isActive ? 'scale-[1.02] ring-2 ring-primary/50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : 'hover:-translate-y-1'
                         }`}
                         aria-pressed={isActive}
                         aria-label={`Selecionar figurinha ${sticker.label}`}
                       >
-                        <span className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-soft transition-transform duration-300 group-hover:scale-105 ${
+                        <span className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 group-hover:scale-105 ${
                           isActive ? 'ring-2 ring-primary/40' : ''
                         }`}>
                           <Image
