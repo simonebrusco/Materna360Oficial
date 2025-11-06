@@ -5,10 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import Emoji from '@/components/ui/Emoji'
 import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
-
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
 
 
 interface UpsellSheetProps {

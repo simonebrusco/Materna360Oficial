@@ -13,9 +13,6 @@ import { useMountedRef } from '@/components/hooks/useMountedRef'
 import { safeFetch } from '@/app/lib/safeFetch'
 
 
-import { ProfessionalProfileSheet, type Professional } from '@/components/ui/ProfessionalProfileSheet'
-
-
 type ApiResponse = {
   items: ProfessionalCardData[]
   hasMore: boolean
