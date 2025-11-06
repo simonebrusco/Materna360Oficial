@@ -26,6 +26,7 @@ const ICON_MAP = {
   x: Icons.X,
   books: Icons.BookOpen,
   care: Icons.Heart,
+  heart: Icons.Heart,
   star: Icons.Star,
   crown: Icons.Crown,
   lock: Icons.Lock,
