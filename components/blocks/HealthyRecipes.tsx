@@ -624,9 +624,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => toggleCourse(option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           courses.includes(option.value)
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -643,9 +643,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => toggleDietary(option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           dietary.includes(option.value)
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -665,9 +665,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => setTimeOption(timeOption === option.value ? undefined : option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           timeOption === option.value
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
