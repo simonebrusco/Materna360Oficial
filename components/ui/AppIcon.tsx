@@ -30,6 +30,7 @@ const ICON_MAP = {
   star: Icons.Star,
   crown: Icons.Crown,
   lock: Icons.Lock,
+  edit: Icons.Edit,
   chevron: Icons.ChevronRight,
   // fallback helper is HelpCircle
 } as const;
