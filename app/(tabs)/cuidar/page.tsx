@@ -54,8 +54,6 @@ export default async function Page() {
 
   const content = (
 
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
-
     <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
 
       <SectionWrapper className="relative bg-transparent" contentClassName="relative">
@@ -80,21 +78,6 @@ export default async function Page() {
         </div>
       </SectionWrapper>
 
-
-      <SectionWrapper header={<h2 id="sec-mindfulness" className="sr-only">Mindfulness</h2>} aria-labelledby="sec-mindfulness">
-        <MindfulnessForMoms />
-      </SectionWrapper>
-
-      <SectionWrapper header={<h2 id="sec-org-tips" className="sr-only">Dicas de Organização</h2>} aria-labelledby="sec-org-tips">
-        <OrganizationTips />
-      </SectionWrapper>
-
-      <SectionWrapper header={<h2 id="sec-journeys" className="sr-only">Jornadas do Cuidar</h2>} aria-labelledby="sec-journeys">
-        <CareJourneys />
-      </SectionWrapper>
-
-      <SectionWrapper header={<h2 id="sec-pros" className="sr-only">Profissionais de Confiança</h2>} aria-labelledby="sec-pros">
-
       <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>🧘<span>Mindfulness</span></span>}>
         <MindfulnessForMoms />
       </SectionWrapper>
@@ -108,7 +91,6 @@ export default async function Page() {
       </SectionWrapper>
 
       <SectionWrapper title={<span className="inline-flex items-center gap-2" suppressHydrationWarning>👩‍⚕️<span>Profissionais de Confiança</span></span>}>
-
         <Suspense fallback={<div className="animate-pulse h-40 rounded-2xl border bg-white/60" />}>
           <ProfessionalsSection />
         </Suspense>
