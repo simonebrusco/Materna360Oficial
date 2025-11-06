@@ -254,7 +254,7 @@ export default function Eu360Client() {
       </SectionWrapper>
 
       <SectionWrapper
-        title={<span className="inline-flex items-center gap-2">🙏<span>Gratidão</span></span>}
+        title={<span className="inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></span>}
         description="Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias."
       >
         <Reveal delay={220}>
