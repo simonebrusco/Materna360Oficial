@@ -67,7 +67,7 @@ export default async function Page() {
             3 minutos agora
           </h1>
           <p className="mt-2 text-sm text-support-2 md:text-base">
-            Pequeños momentos de calma para recarregar sua energia.
+            Pequenos momentos de calma para recarregar sua energia.
           </p>
         </div>
       </SectionWrapper>
