@@ -32,6 +32,7 @@ export function useToast(): { toast: ToastContextValue['toast'] } {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = React.useState<ToastItem[]>([]);
+  const [mounted, setMounted] = React.useState(false);
 
   const toast = React.useCallback((t: Omit<ToastItem, 'id'>) => {
     const id = Math.random().toString(36).slice(2);
@@ -48,10 +49,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, ms);
   }, []);
 
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <ToastCtx.Provider value={{ toast }}>
       {children}
-      {createPortal(<ToastViewport items={items} setItems={setItems} />, document.body)}
+      {mounted && createPortal(<ToastViewport items={items} setItems={setItems} />, document.body)}
     </ToastCtx.Provider>
   );
 }
