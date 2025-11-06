@@ -6,8 +6,7 @@ import * as Icons from 'lucide-react';
 
 /**
  * Centralized icon map with stable aliases.
- * Color is controlled entirely by parent via className.
- * No variant-based color classes added here.
+ * Color is controlled entirely by parent via className or variant.
  */
 const ICON_MAP = {
   search: Icons.Search,
@@ -37,30 +36,54 @@ const ICON_MAP = {
   moon: Icons.Moon,
   sparkles: Icons.Sparkles,
   shieldCheck: Icons.ShieldCheck,
-  // fallback helper is HelpCircle
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;
 
-export type AppIconProps = LucideProps & {
+/**
+ * Variant maps to semantic color classes.
+ * 'default' = no color class (inherit parent color)
+ * 'brand' = primary color (#ff005e)
+ * Others are for future use
+ */
+export type AppIconVariant = 'default' | 'brand' | 'muted' | 'success' | 'warning' | 'danger';
+
+const VARIANT_CLASS: Record<AppIconVariant, string> = {
+  default: '',
+  brand: 'text-primary',
+  muted: 'text-support-3',
+  success: 'text-green-600',
+  warning: 'text-yellow-600',
+  danger: 'text-red-600',
+};
+
+export type AppIconProps = Omit<LucideProps, 'color'> & {
   name: AppIconName;
   /** When true (default), hide from AT. When false, requires `label`. */
   decorative?: boolean;
   /** Required when decorative=false */
   label?: string;
+  /** Visual variant for color styling */
+  variant?: AppIconVariant;
 };
 
 export default function AppIcon({
   name,
   decorative = true,
   label,
+  variant = 'default',
+  className,
   ...rest
 }: AppIconProps) {
   const IconComponent = ICON_MAP[name] || Icons.HelpCircle;
+  
+  // Merge variant class with any custom className
+  const variantClass = VARIANT_CLASS[variant];
+  const mergedClassName = variantClass && className ? `${variantClass} ${className}` : (variantClass || className);
 
   const ariaProps = decorative
     ? { 'aria-hidden': true as const }
     : { role: 'img' as const, 'aria-label': label ?? 'icon' };
 
-  return <IconComponent {...ariaProps} {...rest} />;
+  return <IconComponent {...ariaProps} className={mergedClassName} {...rest} />;
 }
