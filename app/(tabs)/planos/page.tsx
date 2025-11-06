@@ -138,7 +138,7 @@ export default function PlanosPage() {
                     <div>
                       <div className="mb-2">
                         {isEnabled('FF_LAYOUT_V1') && plan.iconName ? (
-                          <AppIcon name={plan.iconName as any} size={40} variant={plan.isPrimary ? 'brand' : 'neutral'} />
+                          <AppIcon name={plan.iconName as any} size={40} decorative className={plan.isPrimary ? 'text-primary' : 'text-support-2'} />
                         ) : (
                           <p className="text-4xl">{plan.emoji}</p>
                         )}
