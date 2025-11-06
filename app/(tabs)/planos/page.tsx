@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -97,7 +98,11 @@ export default function PlanosPage() {
   }
 
   const content = (
+
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
+
+    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
+
       <SectionWrapper className="bg-transparent">
         <span
           aria-hidden

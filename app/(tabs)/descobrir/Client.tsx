@@ -5,7 +5,9 @@ import Image from 'next/image'
 import { AlertTriangle, ShoppingBag } from 'lucide-react'
 
 import AppIcon from '@/components/ui/AppIcon'
+
 import Emoji from '@/components/ui/Emoji'
+
 import SectionBoundary from '@/components/common/SectionBoundary'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import GridRhythm from '@/components/common/GridRhythm'
@@ -540,15 +542,37 @@ export default function DescobrirClient({
   const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
 
   return (
+
     <SimpleErrorBoundary>
       <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
+
+    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_72%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
+
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <Reveal>
         <SectionWrapper
           className="relative bg-transparent"
+
           title={HERO_TITLE}
           description={HERO_DESC}
+
+          header={
+            <header className="SectionWrapper-header">
+              <span className="SectionWrapper-eyebrow">Inspirações</span>
+              <h1 className="SectionWrapper-title inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="search" size={24} />
+                ) : (
+                  <span aria-hidden>🎨</span>
+                )}
+                <span>Descobrir</span>
+              </h1>
+              <p className="SectionWrapper-description max-w-2xl">
+                Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
+              </p>
+            </header>
+          }
         >
           {null}
         </SectionWrapper>
@@ -557,7 +581,20 @@ export default function DescobrirClient({
       {/* Filtros Inteligentes */}
       <Reveal delay={80}>
         <SectionWrapper
+
           title="Filtros Inteligentes"
+
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="filters" size={20} />
+              ) : (
+                <span>🔍</span>
+              )}
+              <span>Filtros Inteligentes</span>
+            </span>
+          }
+
           description="Combine idade e local para criar experiências personalizadas em segundos."
         >
           <Card className="p-7">
@@ -573,7 +610,11 @@ export default function DescobrirClient({
                         onClick={() => setAgeFilter(isActive ? null : age)}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
                             ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
+
                             : 'bg-white/80 text-support-1 shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]'
+
+                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
+
                           }`}
                       >
                         {age} anos
@@ -594,7 +635,11 @@ export default function DescobrirClient({
                         onClick={() => setPlaceFilter(isActive ? null : place)}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
                             ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
+
                             : 'bg-white/80 text-support-1 shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]'
+
+                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
+
                           }`}
                       >
                         {place}
@@ -611,7 +656,11 @@ export default function DescobrirClient({
                   {isEnabled('FF_LAYOUT_V1') ? (
                     <AppIcon name="idea" variant="brand" size={18} />
                   ) : (
+
                     <Emoji char="✨" />
+
+                    <span>✨</span>
+
                   )}
                   <span>Gerar Ideias</span>
                 </Button>
@@ -640,7 +689,11 @@ export default function DescobrirClient({
               <div className="mt-8 space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Tempo Rápido</p>
                 <div className="flex flex-wrap gap-2">
+
                   {QUICK_PICKS.map((mins) => (
+
+                  {[5, 10, 20].map((mins) => (
+
                     <Button
                       key={mins}
                       variant="secondary"
@@ -695,7 +748,20 @@ export default function DescobrirClient({
       {/* Sugestão do Dia */}
       <Reveal delay={200}>
         <SectionWrapper
+
           title="Sugestão do Dia"
+
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="star" size={20} variant="brand" />
+              ) : (
+                <span>🌟</span>
+              )}
+              <span>Sugestão do Dia</span>
+            </span>
+          }
+
         >
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Filtros ativos: {friendlyFilters}
@@ -711,6 +777,16 @@ export default function DescobrirClient({
               filteredSuggestions.map((suggestion, index) => (
                 <Reveal key={suggestion.id} delay={index * 60}>
                   <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
+
+
+                    {isEnabled('FF_LAYOUT_V1') ? (
+                      <div className="flex items-start pt-1">
+                        <AppIcon name="star" size={32} variant="brand" />
+                      </div>
+                    ) : (
+                      <div className="text-5xl" aria-hidden>🌟</div>
+                    )}
+
                     <div className="flex-1 space-y-4">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
@@ -787,7 +863,20 @@ export default function DescobrirClient({
           return (
             <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
               <SectionWrapper
+
                 title={sanitizeHeading(shelfMeta.title)}
+
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    {isEnabled('FF_LAYOUT_V1') && shelfMeta.iconName ? (
+                      <AppIcon name={shelfMeta.iconName as any} size={20} />
+                    ) : (
+                      <span aria-hidden>{shelfMeta.icon}</span>
+                    )}
+                    <span>{shelfMeta.title}</span>
+                  </span>
+                }
+
               >
                 <div className="-mx-4 overflow-hidden sm:mx-0">
                   <div className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0" role="list" aria-label={`Recomendações de ${shelfMeta.title}`}>
@@ -811,7 +900,20 @@ export default function DescobrirClient({
       ) : (
         <>
           <SectionWrapper
+
             title="Livros Recomendados"
+
+            title={
+              <span className="inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="books" size={20} />
+                ) : (
+                  <span>📚</span>
+                )}
+                <span>Livros Recomendados</span>
+              </span>
+            }
+
           >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {books.map((book, idx) => (
@@ -827,7 +929,20 @@ export default function DescobrirClient({
           </SectionWrapper>
 
           <SectionWrapper
+
             title="Brinquedos Sugeridos"
+
+            title={
+              <span className="inline-flex items-center gap-2">
+                {isEnabled('FF_LAYOUT_V1') ? (
+                  <AppIcon name="play" size={20} />
+                ) : (
+                  <span>🧸</span>
+                )}
+                <span>Brinquedos Sugeridos</span>
+              </span>
+            }
+
           >
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
               {toys.map((toy, idx) => (
@@ -969,7 +1084,20 @@ export default function DescobrirClient({
       {/* Para Você */}
       <Reveal delay={260}>
         <SectionWrapper
+
           title="Para Você"
+
+          title={
+            <span className="inline-flex items-center gap-2">
+              {isEnabled('FF_LAYOUT_V1') ? (
+                <AppIcon name="care" size={20} />
+              ) : (
+                <span>💚</span>
+              )}
+              <span>Para Você</span>
+            </span>
+          }
+
         >
           <Card className="p-7">
             <GridRhythm className="grid-cols-1 sm:grid-cols-2">
@@ -1014,17 +1142,29 @@ export default function DescobrirClient({
                         <div className="flex-1">
                           <h3 className="font-semibold text-support-1">{suggestion.title}</h3>
                           <div className="mt-2 flex flex-wrap gap-2 text-xs text-support-2">
+
                             <span><Emoji char="👧" size={12} /> {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
+
+                            <span>👧 {suggestion.child?.age_bucket ?? 'Sem idade'}</span>
+
                             <span className="inline-flex items-center gap-1">
                               {isEnabled('FF_LAYOUT_V1') ? (
                                 <AppIcon name="time" size={14} />
                               ) : (
+
                                 <Emoji char="⏱️" size={14} />
+
+                                <span>⏱️</span>
+
                               )}
                               <span>{suggestion.time_total_min ?? 5} min</span>
                             </span>
                             {suggestion.materials && suggestion.materials.length > 0 && (
+
                               <span><Emoji char="📦" size={12} /> {suggestion.materials[0]}</span>
+
+                              <span>📦 {suggestion.materials[0]}</span>
+
                             )}
                           </div>
                         </div>
@@ -1042,7 +1182,11 @@ export default function DescobrirClient({
                           {isEnabled('FF_LAYOUT_V1') ? (
                             <AppIcon name="star" size={16} />
                           ) : (
+
                             <Emoji char="❤️" />
+
+                            <span>❤️</span>
+>
                           )}
                           <span>Favoritar</span>
                         </Button>
@@ -1066,7 +1210,11 @@ export default function DescobrirClient({
                           {isEnabled('FF_LAYOUT_V1') ? (
                             <AppIcon name="crown" variant="brand" size={16} />
                           ) : (
+
                             <Emoji char="💾" />
+
+                            <span>💾</span>
+
                           )}
                           <span>Salvar no Planner</span>
                         </Button>
