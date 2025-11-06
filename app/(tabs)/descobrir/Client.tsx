@@ -654,7 +654,7 @@ export default function DescobrirClient({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
                   {isEnabled('FF_LAYOUT_V1') ? (
-                    <AppIcon name="idea" variant="brand" size={18} />
+                    <AppIcon name="idea" className="text-primary" size={18} />
                   ) : (
 
                     <Emoji char="✨" />
@@ -666,7 +666,7 @@ export default function DescobrirClient({
                 </Button>
                 {isEnabled('FF_LAYOUT_V1') && (
                   <Button variant="secondary" onClick={() => setShowIAModal(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2">
-                    <AppIcon name="idea" variant="brand" size={18} />
+                    <AppIcon name="idea" className="text-primary" size={18} />
                     <span>IA (Beta)</span>
                   </Button>
                 )}

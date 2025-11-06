@@ -221,7 +221,7 @@ export function CareJourneys() {
               >
                 <div className="space-y-2.5">
                   <div className="inline-flex h-10 w-10 items-center justify-center rounded-full" aria-hidden="true">
-                    <AppIcon name={journey.iconName} size={18} variant="brand" />
+                    <AppIcon name={journey.iconName} size={18} className="text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold text-support-1">{journey.title}</h3>
                   <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
@@ -273,7 +273,7 @@ export function CareJourneys() {
 
                 <div className="space-y-2 pr-14">
                   <div className="inline-flex h-12 w-12 items-center justify-center rounded-full" aria-hidden="true">
-                    <AppIcon name={activeJourneyState.journey.iconName} size={24} variant="brand" />
+                    <AppIcon name={activeJourneyState.journey.iconName} size={24} className="text-primary" />
                   </div>
                   <h3 className="text-2xl font-semibold text-support-1">{activeJourneyState.journey.title}</h3>
                   <p className="text-sm text-support-2">{activeJourneyState.journey.description}</p>
