@@ -115,3 +115,49 @@ export function ToastDemoButton() {
     </button>
   );
 }
+
+// --- Compatibility Inline Toast (legacy JSX API) ---------------------------
+// Some legacy components import { Toast } from '@/components/ui/Toast'
+// and render <Toast message="..." type="success" onClose={() => ...} />
+// Provide a minimal inline component so those call sites compile
+// without rewriting them right now.
+
+export type LegacyToastProps = {
+  message?: string;
+  type?: 'default' | 'success' | 'warning' | 'danger';
+  onClose?: () => void;
+  className?: string;
+};
+
+export function Toast({ message, type = 'default', onClose, className }: LegacyToastProps) {
+  if (!message) return null;
+  return (
+    <div
+      className={clsx(
+        'pointer-events-auto w-full max-w-sm rounded-xl shadow-lg border bg-white px-4 py-3',
+        'fixed left-1/2 -translate-x-1/2 bottom-4 z-[61]',
+        type === 'success' && 'border-green-200',
+        type === 'warning' && 'border-yellow-200',
+        type === 'danger' && 'border-red-200',
+        className
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-sm font-semibold">
+          {message}
+        </div>
+        {onClose && (
+          <button
+            className="text-sm font-semibold underline"
+            onClick={onClose}
+            aria-label="Fechar"
+          >
+            Fechar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
