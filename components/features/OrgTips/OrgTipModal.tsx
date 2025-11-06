@@ -109,7 +109,6 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
           aria-label="Fechar"
           onClick={onClose}
           className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-support-1 shadow transition hover:bg-white"
-          aria-label="Fechar"
         >
           ✕
         </button>
