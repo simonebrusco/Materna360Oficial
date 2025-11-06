@@ -247,6 +247,79 @@
 }
 
 @layer utilities {
+  /* ===== Typography Scale Utilities ===== */
+  .text-display {
+    font-size: clamp(28px, 6vw, 32px);
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  .text-title {
+    font-size: clamp(22px, 5vw, 24px);
+    line-height: 1.28;
+    font-weight: 600;
+  }
+
+  .text-subtitle {
+    font-size: clamp(18px, 4vw, 20px);
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  .text-base-lg {
+    font-size: clamp(16px, 2vw, 17px);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .text-base-md {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .text-base-sm {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .text-meta {
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+
+  /* ===== Spacing Utilities ===== */
+  .spacing-section-vertical {
+    @apply py-6 md:py-8;
+  }
+
+  .spacing-card-padding {
+    @apply p-4 md:p-5;
+  }
+
+  .spacing-list-dense {
+    @apply gap-3;
+  }
+
+  .spacing-list-default {
+    @apply gap-4;
+  }
+
+  /* ===== Icon utilities ===== */
+  .icon-sm {
+    @apply w-4 h-4;
+  }
+
+  .icon-md {
+    @apply w-5 h-5;
+  }
+
+  .icon-lg {
+    @apply w-6 h-6;
+  }
+
   .shadow-card {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   }
