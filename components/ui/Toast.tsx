@@ -127,6 +127,7 @@ export type LegacyToastProps = {
   type?: 'default' | 'success' | 'warning' | 'danger' | 'error' | 'info';
   onClose?: () => void;
   className?: string;
+  duration?: number;
 };
 
 export function Toast({ message, type = 'default', onClose, className }: LegacyToastProps) {
