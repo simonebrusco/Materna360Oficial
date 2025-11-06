@@ -1,67 +1,66 @@
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import './globals.css'
 
-import './globals.css';
-import Script from 'next/script';
-import type { Metadata } from 'next';
-import SiteHeader from '@/components/common/SiteHeader';
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+import Script from 'next/script'
+import type { Metadata } from 'next'
+import SiteHeader from '@/components/common/SiteHeader'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  icons: { icon: '/favicon.ico', shortcut: '/favicon.ico', apple: '/favicon.ico' }
-};
+  icons: { icon: '/favicon.ico', shortcut: '/favicon.ico', apple: '/favicon.ico' },
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full">
+    <html lang="pt-BR" className="h-full AppGradient">
       <head>
         <Script
           id="fullstory-fetch-fix"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const nativeFetch = window.fetch;
-                window.fetch = function wrappedFetch(input, init) {
-                  return nativeFetch.call(window, input, init).catch(error => {
-                    if (error && (error.message === 'Failed to fetch' || error.toString().includes('Failed to fetch'))) {
-                      return new Promise((resolve, reject) => {
-                        try {
-                          const xhr = new XMLHttpRequest();
-                          const url = input instanceof Request ? input.url : String(input);
-                          const method = (init?.method || 'GET').toUpperCase();
-                          xhr.open(method, url, true);
-                          if (init?.headers) {
-                            const headers = init.headers instanceof Headers ? Object.fromEntries(init.headers.entries()) : init.headers;
-                            Object.entries(headers || {}).forEach(([k, v]) => { try { xhr.setRequestHeader(k, String(v)); } catch (e) {} });
-                          }
-                          xhr.withCredentials = init?.credentials === 'include';
-                          xhr.onload = () => {
-                            const ct = xhr.getResponseHeader('content-type') || 'text/plain';
-                            resolve(new Response(xhr.response || xhr.responseText, { status: xhr.status, statusText: xhr.statusText, headers: new Headers({ 'content-type': ct }) }));
-                          };
-                          xhr.onerror = () => reject(new TypeError('Network request failed'));
-                          xhr.ontimeout = () => reject(new TypeError('Request timeout'));
-                          xhr.send(init?.body || null);
-                        } catch (e) { reject(e); }
-                      });
-                    }
-                    throw error;
-                  });
-                };
-              })();
-            `,
+            __html: `(${fixFetch.toString()})();`,
           }}
         />
       </head>
       <body className="min-h-screen text-slate-800 antialiased">
-        {/* Top App Bar */}
         <SiteHeader />
-        {/* Page container (offset for the sticky header) */}
-        <div className="__app-surface-reset mx-auto max-w-screen-md px-3 pt-16 pb-24">
-          {children}
-        </div>
+        {children}
       </body>
     </html>
-  );
+  )
+}
+
+/** Inline helper used by the Script above */
+function fixFetch() {
+  const nativeFetch = window.fetch;
+  // same logic you already had, shortened for brevity:
+  window.fetch = function wrappedFetch(input, init) {
+    return nativeFetch(input as any, init as any).catch((error: any) => {
+      if (error && (String(error).includes('Failed to fetch'))) {
+        return new Promise((resolve, reject) => {
+          try {
+            const xhr = new XMLHttpRequest();
+            const url = (input as any)?.url ?? String(input);
+            const method = (init?.method || 'GET').toUpperCase();
+            xhr.open(method, url, true);
+            if (init?.headers) {
+              const headers = init.headers instanceof Headers ? Object.fromEntries(init.headers.entries()) : init.headers as any;
+              Object.entries(headers).forEach(([k, v]) => { try { xhr.setRequestHeader(k, String(v)); } catch {} });
+            }
+            xhr.withCredentials = init?.credentials === 'include';
+            xhr.onload = () => {
+              const ct = xhr.getResponseHeader('content-type') || 'text/plain';
+              resolve(new Response((xhr as any).response || xhr.responseText, { status: xhr.status, statusText: xhr.statusText, headers: new Headers({ 'content-type': ct }) }));
+            };
+            xhr.onerror = () => reject(new TypeError('Network request failed'));
+            xhr.ontimeout = () => reject(new TypeError('Request timeout'));
+            xhr.send(init?.body || null);
+          } catch (e) { reject(e); }
+        });
+      }
+      throw error;
+    });
+  };
 }
