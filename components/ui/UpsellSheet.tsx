@@ -45,11 +45,7 @@ export function UpsellSheet({
               ✕
             </button>
             <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary">
-
               <Emoji char="🔓" size={14} /> Desbloquear recurso
-
-              🔓 Desbloquear recurso
-
             </p>
             <h2 className="mt-2 text-2xl font-bold text-support-1">{title}</h2>
             <p className="mt-2 text-sm text-support-2">{description}</p>
@@ -69,11 +65,7 @@ export function UpsellSheet({
             <ul className="space-y-2">
               {features.map((feature) => (
                 <li key={feature} className="flex gap-2 text-sm text-support-1">
-
                   <span className="mt-0.5 flex-shrink-0"><Emoji char="✨" size={12} /></span>
-
-                  <span className="mt-0.5 text-xs flex-shrink-0">✨</span>
-
                   <span>{feature}</span>
                 </li>
               ))}

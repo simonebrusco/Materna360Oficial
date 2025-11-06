@@ -177,7 +177,7 @@ export function ProfessionalProfileSheet({
                   {professional.especialidade}
                 </p>
                 {professional.precoHint && (
-                  <p className="mt-2 text-xs text-support-2">💰 {professional.precoHint}</p>
+                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5"><Emoji char="💰" size={12} /> {professional.precoHint}</p>
                 )}
               </div>
             </div>
@@ -188,9 +188,9 @@ export function ProfessionalProfileSheet({
                 {safeBadges.map((badge, idx) => (
                   <span
                     key={`badge-${badge}-${idx}`}
-                    className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary"
+                    className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary flex items-center gap-1.5"
                   >
-                    ✓ {badge}
+                    <Emoji char="✓" size={12} /> {badge}
                   </span>
                 ))}
               </div>
@@ -246,17 +246,17 @@ export function ProfessionalProfileSheet({
               variant="secondary"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5"
               aria-label="Fechar perfil"
               autoFocus
             >
-              ← Voltar
+              <Emoji char="←" size={14} /> Voltar
             </Button>
             <Button
               variant="primary"
               size="sm"
               onClick={handleAgendar}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5"
               aria-label="Agendar atendimento"
             >
               <Emoji char="📞" size={14} /> Agendar
