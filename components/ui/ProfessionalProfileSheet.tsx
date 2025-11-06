@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import Emoji from '@/components/ui/Emoji'
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
+import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
 
 export type Professional = {
   id: string
