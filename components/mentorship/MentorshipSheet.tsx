@@ -16,13 +16,13 @@ export function MentorshipSheet({ isOpen, onClose }: MentorshipSheetProps) {
   const [activeTab, setActiveTab] = useState<'mentoras' | 'tira-duvidas'>('mentoras');
   const [tema, setTema] = useState('');
   const [pergunta, setPergunta] = useState('');
-  const { show: showToast } = useToast();
+  const { toast } = useToast();
 
   if (!isOpen) return null;
 
   const handleEnviar = () => {
     if (tema && pergunta) {
-      showToast('Pergunta enviada com sucesso! Em breve você receberá uma resposta.', 'success');
+      toast({ title: 'Pergunta enviada com sucesso!', description: 'Em breve você receberá uma resposta.', kind: 'success' });
       setTema('');
       setPergunta('');
       setActiveTab('mentoras');
@@ -31,7 +31,7 @@ export function MentorshipSheet({ isOpen, onClose }: MentorshipSheetProps) {
   };
 
   const handleViewAvailability = (mentorName: string) => {
-    showToast(`Conectando com ${mentorName}...`, 'info');
+    toast({ title: `Conectando com ${mentorName}...`, kind: 'default' });
   };
 
   return (
