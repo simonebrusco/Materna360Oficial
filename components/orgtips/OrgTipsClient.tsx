@@ -11,7 +11,7 @@ import GridRhythm from '@/components/common/GridRhythm';
 export function OrgTipsClient() {
   const [searchText, setSearchText] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const { show: showToast } = useToast();
+  const { toast } = useToast();
 
   // Filter and sort logic
   const filteredTips = useMemo(() => {
@@ -52,7 +52,7 @@ export function OrgTipsClient() {
   }, [searchText, selectedTags]);
 
   const handleSave = (tipTitle: string) => {
-    showToast(`"${tipTitle}" salva no Planner com sucesso!`, 'success');
+    toast({ title: `"${tipTitle}" salva no Planner`, kind: 'success' });
     // Telemetry
     console.log('[telemetry] orgtips.saved_to_planner', { tip: tipTitle });
   };
