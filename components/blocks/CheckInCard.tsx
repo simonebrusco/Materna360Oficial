@@ -101,7 +101,7 @@ export function CheckInCard() {
           </div>
         </div>
 
-        <HScroll className="mt-6" withNav={false}>
+        <HScroll className="mt-6">
           {moods.map((mood) => {
             const isActive = selectedMood === mood.value
 
