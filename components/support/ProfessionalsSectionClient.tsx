@@ -18,7 +18,7 @@ export default function ProfessionalsSectionClient({ initialFilters }: Professio
   }, [])
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-label="Profissionais de Confiança">
       <ProfessionalsSearchForm onSearch={handleSearch} initial={initialFilters} />
       <ProfessionalsResults initial={initialFilters} />
     </section>

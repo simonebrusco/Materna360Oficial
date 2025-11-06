@@ -1,38 +1,54 @@
-// Fails build on production/main if any emoji is found in UI .tsx files under app/ or components/.
-// In Preview/Dev it only WARNs (exit 0). You can force strict mode anywhere by setting
-// CI_STRICT_EMOJI=1. You can bypass entirely by NEXT_PUBLIC_ALLOW_EMOJI=1 (emergency).
+/* eslint-disable no-console */
 const fs = require('fs');
 const path = require('path');
 
-const ROOTS = ['app', 'components'];
+// ----- Config -----
+const ROOTS = ['app', 'components'];        // onde procurar
+const EXTS  = new Set(['.tsx']);            // só arquivos UI TSX
+// Emoji (pictográficos). Requer flag /u.
 const EMOJI_REGEX = /[\p{Extended_Pictographic}]/u;
 
-const vercelEnv = process.env.VERCEL_ENV || '';              // 'production' | 'preview' | 'development' (on Vercel)
-const gitRef = process.env.VERCEL_GIT_COMMIT_REF || '';       // branch name (e.g., 'main', 'cosmos-verse')
-const allowAll = process.env.NEXT_PUBLIC_ALLOW_EMOJI === '1'; // emergency bypass
-const strict = process.env.CI_STRICT_EMOJI === '1'
-  || vercelEnv === 'production'
-  || gitRef === 'main';
+// ----- Env / Modo de operação -----
+const env = process.env;
+const vercelEnv = env.VERCEL_ENV || '';               // 'production' | 'preview' | 'development'
+const gitRef    = env.VERCEL_GIT_COMMIT_REF || '';    // ex.: 'main', 'cosmos-verse'
 
+// Bypass de emergência (não recomendado): ignora a checagem completamente
+const allowAll = env.NEXT_PUBLIC_ALLOW_EMOJI === '1';
+
+// Override explícito:
+//  - STRICT_EMOJI='1' força modo estrito (falha build)
+//  - STRICT_EMOJI='0' força modo não-estrito (apenas warn)
+//  - não definido => estrito se production OU branch main
+const strict =
+  env.STRICT_EMOJI === '1' ? true :
+  env.STRICT_EMOJI === '0' ? false :
+  (vercelEnv === 'production' || gitRef === 'main');
+
+// ----- Util -----
 function walk(dir, acc = []) {
+  if (!fs.existsSync(dir)) return acc;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.')) continue;
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, acc);
-    else if (entry.isFile() && full.endsWith('.tsx')) acc.push(full);
+    if (entry.isDirectory()) {
+      walk(full, acc);
+    } else if (entry.isFile() && EXTS.has(path.extname(full))) {
+      acc.push(full);
+    }
   }
   return acc;
 }
 
+// ----- Main -----
 function main() {
   if (allowAll) {
-    console.log('check-no-emoji: bypass enabled via NEXT_PUBLIC_ALLOW_EMOJI=1');
+    console.log('check-no-emoji: bypass habilitado via NEXT_PUBLIC_ALLOW_EMOJI=1');
     return;
   }
 
   const hits = [];
   for (const root of ROOTS) {
-    if (!fs.existsSync(root)) continue;
     for (const file of walk(root)) {
       const src = fs.readFileSync(file, 'utf8');
       if (EMOJI_REGEX.test(src)) hits.push(file);
@@ -44,14 +60,14 @@ function main() {
     return;
   }
 
-  const header = '\nEmoji found in UI files (.tsx):\n' + hits.map(f => ' - ' + f).join('\n') + '\n';
+  const list = hits.map(f => ` - ${f}`).join('\n');
+  const header = `\nEmoji found in UI files (.tsx):\n${list}\n`;
 
   if (strict) {
-    console.error('❌ ' + header + '\nReplace them with <AppIcon/> (or <Emoji/>) before building.\n');
+    console.error(`❌ ${header}\nReplace them with <AppIcon/> (or <Emoji/>) before building.\n`);
     process.exit(1);
   } else {
-    console.warn('⚠️  ' + header + '\nPreview/Dev: this is a warning only. Build not blocked.\n');
-    // Exit success on Preview/Dev so we can iterate safely.
+    console.warn(`⚠️  ${header}\nPreview/Dev: this is a warning only. Build not blocked.\n`);
     process.exit(0);
   }
 }

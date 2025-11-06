@@ -524,11 +524,10 @@ export function Mindfulness() {
   const renderEmptyState = !isLoading && themes.length === 0
 
   return (
-    <Card className="bg-gradient-to-br from-primary/10 via-white to-white p-7 shadow-soft">
+    <Card className="bg-gradient-to-br from-primary/10 via-white to-white p-7 shadow-soft" aria-label="Mindfulness">
       <div className="flex items-center justify-between gap-3">
         <div>
           <span className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Autocuidado guiado</span>
-          <h2 className="mt-2 text-xl font-semibold text-support-1 md:text-2xl">Mindfulness</h2>
         </div>
         {resumeTarget && (
           <Button variant="outline" size="sm" onClick={handleResume}>
