@@ -73,8 +73,8 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
             <span className="section-eyebrow eyebrow-capsule">Autocuidado</span>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <span aria-hidden="true" className="text-3xl">🌿</span>
-                <h1 className="section-title md:text-4xl" aria-label="Cuide-se">
+                <AppIcon name="leaf" size={28} className="text-primary" decorative />
+                <h1 className="section-title md:text-4xl">
                   Cuide-se
                 </h1>
               </div>
