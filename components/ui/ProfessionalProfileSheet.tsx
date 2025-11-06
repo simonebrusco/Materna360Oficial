@@ -4,12 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-
 import Emoji from '@/components/ui/Emoji'
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
 import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
-
-import { UpsellSheet } from '@/components/ui/UpsellSheet'
 
 export type Professional = {
   id: string
@@ -42,41 +39,28 @@ export function ProfessionalProfileSheet({
   const [showUpsell, setShowUpsell] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
-
   // Use hook for Escape key handling
   useEscapeToClose(open, () => onOpenChange(false))
 
-  // Handle body scroll prevention
-
-  // Handle Esc key close + body scroll prevention
-
+  // Close on Escape and lock body scroll when open
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
-    // Prevent body scroll when modal is open
-    const originalStyle = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const { body } = document;
+    const originalStyle = body.style.overflow;
 
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange?.(false);
+    };
 
-    return () => {
-      document.body.style.overflow = originalStyle
-    }
-  }, [open])
-
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' || event.key === 'Esc') {
-        onOpenChange(false)
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey)
+    body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEscapeKey);
 
     return () => {
-      document.removeEventListener('keydown', handleEscapeKey)
-      document.body.style.overflow = originalStyle
-    }
-  }, [open, onOpenChange])
-
+      document.removeEventListener('keydown', handleEscapeKey);
+      body.style.overflow = originalStyle;
+    };
+  }, [open, onOpenChange]);
 
   // Focus trap: keep focus within modal
   useEffect(() => {
@@ -226,19 +210,11 @@ export function ProfessionalProfileSheet({
               <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
                 <div className="space-y-2 text-sm text-support-2">
                   <p>
-
                     <span className="font-semibold text-support-1"><Emoji char="📍" size={14} /> Local:</span> Atendimento online
                   </p>
                   {professional.cidade && (
                     <p>
                       <span className="font-semibold text-support-1"><Emoji char="🏙️" size={14} /> Baseado em:</span> {professional.cidade}
-
-                    <span className="font-semibold text-support-1">📍 Local:</span> Atendimento online
-                  </p>
-                  {professional.cidade && (
-                    <p>
-                      <span className="font-semibold text-support-1">🏙️ Baseado em:</span> {professional.cidade}
-
                     </p>
                   )}
                 </div>
@@ -283,11 +259,7 @@ export function ProfessionalProfileSheet({
               className="w-full sm:w-auto"
               aria-label="Agendar atendimento"
             >
-
               <Emoji char="📞" size={14} /> Agendar
-
-              📞 Agendar
-
             </Button>
           </div>
         </Card>
