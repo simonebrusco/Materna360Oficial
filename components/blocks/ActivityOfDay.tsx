@@ -398,24 +398,25 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
           </div>
         ) : (
           <>
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex flex-col gap-2">
               <Button
                 variant="primary"
                 size="sm"
-                className="flex-1"
-                type="button"
-                onClick={handleToggleDetails}
-                aria-expanded={isExpanded}
-              >
-                {detailButtonLabel}
-              </Button>
-              <button
+                className="w-full"
                 type="button"
                 onClick={() => void handleSaveActivity(headlineActivity, headlineActivity.id)}
                 disabled={Boolean(savingKey)}
-                className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
               >
                 {savingKey ? 'Salvando…' : 'Salvar no Planner'}
+              </Button>
+              <button
+                type="button"
+                onClick={handleToggleDetails}
+                disabled={Boolean(savingKey)}
+                className="text-sm font-medium text-primary hover:opacity-70 disabled:opacity-50"
+                aria-expanded={isExpanded}
+              >
+                {detailButtonLabel}
               </button>
             </div>
 
