@@ -119,7 +119,7 @@ export function MeuDiaClient({
               <Card className="h-full">
 
                 <div className="mb-3 inline-flex items-center gap-2">
-                  <AppIcon name={action.iconName as any} size={18} variant="brand" aria-hidden />
+                  <AppIcon name={action.iconName as any} size={18} className="text-primary" decorative />
                   <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
                 </div>
 
