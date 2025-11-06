@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, type MouseEvent } from 'react'
 
 import type { OrgTip } from '@/data/org-tips'
 import { Button } from '@/components/ui/Button'
+import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
