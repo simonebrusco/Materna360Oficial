@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/Progress'
 import { Reveal } from '@/components/ui/Reveal'
+import { PlanCard } from '@/components/ui/PlanCard'
+import { FeatureGate } from '@/components/ui/FeatureGate'
+import { WeeklySummary } from '@/components/ui/WeeklySummary'
 
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
 
@@ -104,6 +107,7 @@ export default function Eu360Client() {
   }
 
   const currentUpsellConfig = upsellSheet.type ? upsellSheetConfig[upsellSheet.type] : null
+  const currentPlan: 'Free' | 'Plus' | 'Premium' = 'Free'
 
   const content = (
     <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
@@ -165,6 +169,22 @@ export default function Eu360Client() {
         </SectionWrapper>
       )}
 
+      {/* Plan Card Section - P2 */}
+      {isEnabled('FF_LAYOUT_V1') && (
+        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></span>}>
+          <Reveal delay={120}>
+            <PlanCard
+              currentPlan={currentPlan}
+              onManagePlan={() => {
+                window.location.href = '/planos'
+              }}
+              onExplorePlans={() => {
+                window.location.href = '/planos'
+              }}
+            />
+          </Reveal>
+        </SectionWrapper>
+      )}
 
       <SectionWrapper title={<span className="inline-flex items-center gap-2">📊<span>Humor da Semana</span></span>}>
         <Reveal delay={140}>
@@ -185,61 +205,6 @@ export default function Eu360Client() {
           </Card>
         </Reveal>
       </SectionWrapper>
-
-      {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">⭐<span>Seu Plano</span></span>}>
-          <Reveal delay={180}>
-            <Card className="p-7 bg-gradient-to-br from-primary/5 to-secondary/5">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2">Plano Atual</p>
-                  <p className="mt-2 text-2xl font-bold text-support-1">Free</p>
-                  <p className="text-sm text-support-2">Você está no plano básico com acesso completo a recursos essenciais.</p>
-                </div>
-
-                <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-primary">Desfrute de benefícios do Plus:</p>
-                  <ul className="space-y-2 text-sm text-support-1">
-                    <li className="flex gap-2">
-                      <span className="mt-0.5"><Emoji char="✨" size={12} /></span>
-                      <span>Análises avançadas sobre o desenvolvimento infantil</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="mt-0.5"><Emoji char="🎯" size={12} /></span>
-                      <span>Planos personalizados baseados em IA</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="mt-0.5"><Emoji char="📱" size={12} /></span>
-                      <span>Suporte prioritário via chat</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="primary" className="flex-1 sm:flex-none">
-                    <AppIcon name="lock" size={16} />
-                    Gerenciar Plano
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="flex-1 sm:flex-none"
-                    onClick={() => {
-                      if (isEnabled('FF_LAYOUT_V1')) {
-                        setUpsellSheet({ isOpen: true, type: 'export' })
-                      } else {
-                        alert('Upgrade para Plus ou Premium para exportar em PDF')
-                      }
-                    }}
-                  >
-                    <AppIcon name="download" size={16} />
-                    Exportar Semana (PDF)
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Reveal>
-        </SectionWrapper>
-      )}
 
       <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></span>}>
         <GridRhythm className="grid-cols-2 sm:grid-cols-3">
@@ -289,26 +254,78 @@ export default function Eu360Client() {
         </Reveal>
       </SectionWrapper>
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2">📈<span>Resumo da Semana</span></span>}>
-        <Reveal delay={260}>
-          <Card className="p-7">
-            <div className="space-y-4">
-              {WEEKLY_SUMMARY.map((item) => (
-                <div key={item.label}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-support-1">{item.label}</span>
-                    <span className="text-xs font-semibold text-primary">{item.value}%</span>
-                  </div>
-                  <Progress value={item.value} max={100} />
+      {/* Weekly Summary Section - P2 */}
+      {isEnabled('FF_LAYOUT_V1') && (
+        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></span>}>
+          <Reveal delay={260}>
+            <FeatureGate
+              featureKey="weekly.summary"
+              currentPlan={currentPlan}
+              onUpgradeClick={() => {
+                window.location.href = '/planos'
+              }}
+            >
+              <WeeklySummary
+                data={{
+                  humor: {
+                    daysLogged: 5,
+                    totalDays: 7,
+                    data: [40, 60, 50, 70, 80, 65, 75],
+                  },
+                  checklist: {
+                    completed: 18,
+                    total: 24,
+                    data: [2, 3, 2, 4, 3, 2, 2],
+                  },
+                  planner: {
+                    completed: 6,
+                    total: 7,
+                    data: [1, 1, 1, 1, 1, 1, 0],
+                  },
+                  achievements: {
+                    unlocked: 3,
+                    total: 12,
+                    data: [0, 1, 0, 0, 1, 0, 1],
+                  },
+                }}
+                onViewDetails={() => console.log('View details')}
+              />
+            </FeatureGate>
+          </Reveal>
+        </SectionWrapper>
+      )}
+
+      {/* PDF Export - P2 with FeatureGate */}
+      {isEnabled('FF_LAYOUT_V1') && (
+        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></span>}>
+          <Reveal delay={300}>
+            <FeatureGate
+              featureKey="weekly.pdf"
+              currentPlan={currentPlan}
+              onUpgradeClick={() => {
+                setUpsellSheet({ isOpen: true, type: 'export' })
+              }}
+            >
+              <Card className="p-7">
+                <div className="text-center">
+                  <p className="text-sm text-support-2 mb-4">
+                    Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
+                  </p>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setUpsellSheet({ isOpen: true, type: 'export' })
+                    }}
+                  >
+                    <AppIcon name="download" size={16} />
+                    Exportar PDF desta semana
+                  </Button>
                 </div>
-              ))}
-            </div>
-            <div className="mt-6 rounded-2xl bg-secondary/60 p-4 text-sm text-support-1/90">
-              "Você tem feito um ótimo trabalho! Continue focando em pequenos passos consistentes."
-            </div>
-          </Card>
-        </Reveal>
-      </SectionWrapper>
+              </Card>
+            </FeatureGate>
+          </Reveal>
+        </SectionWrapper>
+      )}
     </main>
   )
 
