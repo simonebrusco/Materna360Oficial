@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import Emoji from '@/components/ui/Emoji'
+import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
 
 interface UpsellSheetProps {
   title: string
@@ -22,6 +22,9 @@ export function UpsellSheet({
   onClose,
   onUpgrade,
 }: UpsellSheetProps) {
+  // Use hook for Escape key handling
+  useEscapeToClose(true, onClose)
+
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/40 sm:items-center sm:justify-center">
       <Card className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 md:p-8 animate-in slide-in-from-bottom-10">
@@ -30,6 +33,7 @@ export function UpsellSheet({
             <button
               onClick={onClose}
               className="absolute right-6 top-6 text-support-2 hover:text-support-1"
+              aria-label="Fechar"
             >
               ✕
             </button>
