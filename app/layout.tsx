@@ -6,6 +6,7 @@ export const revalidate = 0
 import Script from 'next/script'
 import type { Metadata } from 'next'
 import SiteHeader from '@/components/common/SiteHeader'
+import { ToastProvider } from '@/components/ui/Toast'
 
 export const metadata: Metadata = {
   title: 'Materna360',
@@ -26,8 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen text-slate-800 antialiased">
-        <SiteHeader />
-        {children}
+        <ToastProvider>
+          <SiteHeader />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   )
