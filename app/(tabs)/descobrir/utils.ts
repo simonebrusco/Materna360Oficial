@@ -1,153 +1,264 @@
-import type {
-  QuickIdeasAgeBucket,
-  QuickIdeasLocation,
-  QuickIdeasEnergy,
-  QuickIdea,
-} from '@/app/types/quickIdeas'
-
 /**
- * Convert age in years to the appropriate bucket.
- * Pure function with no side effects.
+ * Client-side filtering and ranking logic for Discover suggestions.
+ * All filtering is pure function based; no server calls.
  */
-export function ageToBucket(ageYears: number): QuickIdeasAgeBucket {
-  const age = Math.max(0, Math.min(ageYears, 999))
 
-  if (age < 2) return '0-1'
-  if (age < 4) return '2-3'
-  if (age < 6) return '4-5'
-  if (age < 8) return '6-7'
-  return '8+'
+export type TimeWindow = 'now-5' | 'now-15' | 'now-30' | 'later';
+export type Location = 'indoor' | 'outdoor' | 'noisy' | 'quiet';
+export type Mood = 'calm' | 'playful' | 'focused' | 'energetic';
+export type Energy = 'low' | 'medium' | 'high';
+
+export interface Suggestion {
+  id: string;
+  title: string;
+  description: string;
+  icon: 'sparkles' | 'care' | 'idea' | 'heart' | 'star' | 'place' | 'crown' | 'leaf';
+  minAgeMonths: number;
+  maxAgeMonths: number;
+  durationMin: number;
+  location: Location[];
+  energy: Energy;
+  tags: string[];
+  saveable?: boolean;
+}
+
+export interface FilterInputs {
+  childAgeMonths?: number;
+  timeWindow?: TimeWindow;
+  location?: Location;
+  mood?: Mood;
 }
 
 /**
- * Convert time preference string to minutes range.
- * Maps: 'short' ≤ 15, 'medium' 20–40, 'long' ≥ 45
+ * Curated suggestion catalog for Discover.
+ * Age in months: 0-12 months (0-1), 12-36 months (2-3), 36-60 months (4-5), 60+ months (6-7, 8+)
  */
-export function timeToMinutes(
-  time?: 'short' | 'medium' | 'long'
-): { min: number; max: number } {
-  switch (time) {
-    case 'short':
-      return { min: 0, max: 15 }
-    case 'medium':
-      return { min: 20, max: 40 }
-    case 'long':
-      return { min: 45, max: 999 }
-    default:
-      return { min: 0, max: 999 }
+export const DISCOVER_CATALOG: Suggestion[] = [
+  {
+    id: 'brincadeira-sensorial',
+    title: 'Brincadeira Sensorial: Exploração Tátil',
+    description: 'Atividade para estimular os sentidos. Use texturas diferentes (algodão, papel, plástico) para exploração segura.',
+    icon: 'sparkles',
+    minAgeMonths: 0,
+    maxAgeMonths: 24,
+    durationMin: 10,
+    location: ['indoor'],
+    energy: 'low',
+    tags: ['sensorial', 'vínculo', 'calm'],
+    saveable: false,
+  },
+  {
+    id: 'respiracao-calma',
+    title: 'Respiração em 4 Tempos',
+    description: 'Técnica simples para acalmar você e as crianças. Inspire por 4, segure por 4, expire por 4.',
+    icon: 'care',
+    minAgeMonths: 12,
+    maxAgeMonths: 120,
+    durationMin: 5,
+    location: ['indoor', 'outdoor'],
+    energy: 'low',
+    tags: ['respiração', 'calma', 'quick'],
+    saveable: false,
+  },
+  {
+    id: 'receita-rapida',
+    title: 'Receita Rápida: Papinha Caseira',
+    description: 'Prepare uma papinha nutritiva em menos de 15 minutos com ingredientes que você tem em casa.',
+    icon: 'idea',
+    minAgeMonths: 0,
+    maxAgeMonths: 36,
+    durationMin: 15,
+    location: ['indoor'],
+    energy: 'medium',
+    tags: ['receita', 'rápido', 'alimentação'],
+    saveable: false,
+  },
+  {
+    id: 'momento-conexao',
+    title: 'Momento de Conexão: 10 Minutos',
+    description: 'Um ritual simples e afetuoso para fortalecer o vínculo com seus filhos todo dia.',
+    icon: 'heart',
+    minAgeMonths: 0,
+    maxAgeMonths: 120,
+    durationMin: 10,
+    location: ['indoor', 'outdoor'],
+    energy: 'low',
+    tags: ['vínculo', 'conexão', 'calm'],
+    saveable: false,
+  },
+  {
+    id: 'danca-energia',
+    title: 'Dança Energia',
+    description: 'Escolha 2 músicas alegres, crie movimentos simples e finalize com respiração profunda.',
+    icon: 'star',
+    minAgeMonths: 12,
+    maxAgeMonths: 84,
+    durationMin: 6,
+    location: ['indoor'],
+    energy: 'high',
+    tags: ['movimento', 'música', 'energetic', 'playful'],
+    saveable: false,
+  },
+  {
+    id: 'mapa-tesouros',
+    title: 'Mapa de Tesouros do Quarto',
+    description: 'Desenhe um mini mapa do quarto e marque pontos com objetos especiais. Uma jornada guiada.',
+    icon: 'place',
+    minAgeMonths: 12,
+    maxAgeMonths: 84,
+    durationMin: 15,
+    location: ['indoor'],
+    energy: 'medium',
+    tags: ['criatividade', 'organização', 'playful'],
+    saveable: false,
+  },
+  {
+    id: 'exploracao-natureza',
+    title: 'Exploração Natureza: Missão Folhas',
+    description: 'Busque 3 folhas com cores diferentes, observe cheiros e texturas. Organize por preferência.',
+    icon: 'leaf',
+    minAgeMonths: 24,
+    maxAgeMonths: 120,
+    durationMin: 20,
+    location: ['outdoor'],
+    energy: 'medium',
+    tags: ['natureza', 'sensorial', 'curiosidade'],
+    saveable: false,
+  },
+  {
+    id: 'historia-respiracao',
+    title: 'Histórias Curtas com Respiração',
+    description: 'Respirem juntos contando até quatro. Conte uma história em 3 frases e pergunte o que acharam.',
+    icon: 'heart',
+    minAgeMonths: 12,
+    maxAgeMonths: 120,
+    durationMin: 8,
+    location: ['indoor'],
+    energy: 'low',
+    tags: ['vínculo', 'linguagem', 'calm'],
+    saveable: false,
+  },
+  {
+    id: 'circuito-movimento',
+    title: 'Circuito Mini Equilíbrio',
+    description: 'Crie um pequeno percurso com almofadas e móveis seguros para exploração motora.',
+    icon: 'crown',
+    minAgeMonths: 12,
+    maxAgeMonths: 60,
+    durationMin: 15,
+    location: ['indoor'],
+    energy: 'high',
+    tags: ['movimento', 'equilíbrio', 'playful'],
+    saveable: false,
+  },
+  {
+    id: 'pintura-dedos',
+    title: 'Pintura com Dedos Colorida',
+    description: 'Mostre como espalhar tinta com as mãos. Crie desenhos livres e converse sobre cores.',
+    icon: 'sparkles',
+    minAgeMonths: 12,
+    maxAgeMonths: 84,
+    durationMin: 20,
+    location: ['indoor'],
+    energy: 'medium',
+    tags: ['criatividade', 'sensorial', 'playful'],
+    saveable: false,
+  },
+  {
+    id: 'massagem-afetuosa',
+    title: 'Massagem Afetuosa',
+    description: 'Massageie braços e pernas com movimentos suaves. Finalize com carinho no rosto.',
+    icon: 'care',
+    minAgeMonths: 0,
+    maxAgeMonths: 48,
+    durationMin: 10,
+    location: ['indoor'],
+    energy: 'low',
+    tags: ['vínculo', 'sensorial', 'calm'],
+    saveable: false,
+  },
+];
+
+/**
+ * Filters and re-ranks suggestions based on user inputs.
+ * Returns a filtered, sorted array of suggestions.
+ */
+export function filterAndRankSuggestions(
+  suggestions: Suggestion[],
+  filters: FilterInputs
+): Suggestion[] {
+  // Start with all suggestions
+  let filtered = [...suggestions];
+
+  // 1. Age filtering: prioritize perfect age fit, then allow near-fit
+  if (filters.childAgeMonths !== undefined) {
+    const ageMonths = filters.childAgeMonths;
+    filtered = filtered.filter(
+      (s) => ageMonths >= s.minAgeMonths && ageMonths <= s.maxAgeMonths
+    );
   }
-}
 
-/**
- * Filter suggestions by location (if provided).
- */
-export function filterByLocation(
-  ideas: QuickIdea[],
-  location?: QuickIdeasLocation
-): QuickIdea[] {
-  if (!location) return ideas
-  return ideas.filter((idea) => idea.location === location)
-}
-
-/**
- * Filter suggestions by energy level (if provided).
- */
-export function filterByEnergy(
-  ideas: QuickIdea[],
-  energy?: QuickIdeasEnergy
-): QuickIdea[] {
-  if (!energy) return ideas
-  return ideas.filter((idea) => {
-    const catalogEntry = idea as any
-    const suitableEnergies = catalogEntry.suitableEnergies || []
-    return suitableEnergies.includes(energy)
-  })
-}
-
-/**
- * Filter suggestions by time window (if provided).
- */
-export function filterByTime(
-  ideas: QuickIdea[],
-  timeRange?: { min: number; max: number }
-): QuickIdea[] {
-  if (!timeRange) return ideas
-  return ideas.filter(
-    (idea) =>
-      idea.time_total_min >= timeRange.min &&
-      idea.time_total_min <= timeRange.max
-  )
-}
-
-/**
- * Prioritize suggestions that have age adaptations for the target bucket.
- */
-export function prioritizeByAgeBucket(
-  ideas: QuickIdea[],
-  bucket: QuickIdeasAgeBucket
-): QuickIdea[] {
-  const withAdaptation = ideas.filter(
-    (idea) => idea.age_adaptations && idea.age_adaptations[bucket]
-  )
-  const withoutAdaptation = ideas.filter(
-    (idea) => !idea.age_adaptations || !idea.age_adaptations[bucket]
-  )
-  return [...withAdaptation, ...withoutAdaptation]
-}
-
-/**
- * Build a view model for a single suggestion.
- */
-export type SuggestionView = {
-  id: string
-  title: string
-  summary: string
-  timeLabel: string
-  location: QuickIdeasLocation
-  energy: QuickIdeasEnergy
-  ageNote?: string
-  cover?: string
-  materials: string[]
-  steps: string[]
-}
-
-export function buildSuggestionView(
-  idea: QuickIdea,
-  ageBucket: QuickIdeasAgeBucket
-): SuggestionView {
-  const ageNote = idea.age_adaptations?.[ageBucket]
-
-  return {
-    id: idea.id,
-    title: idea.title,
-    summary: idea.summary,
-    timeLabel: `${idea.time_total_min} min`,
-    location: idea.location,
-    energy: idea.location as any, // map to energy level if available
-    ageNote,
-    materials: idea.materials,
-    steps: idea.steps,
+  // 2. Time window filtering
+  if (filters.timeWindow && filters.timeWindow !== 'later') {
+    const durationLimit: Record<string, number> = {
+      'now-5': 5,
+      'now-15': 15,
+      'now-30': 30,
+    };
+    const limit = durationLimit[filters.timeWindow];
+    if (limit) {
+      // Filter to items within time window, but keep saveable items for "Save for later" CTA
+      filtered = filtered.map((s) => ({
+        ...s,
+        saveable: s.durationMin > limit, // Mark as saveable if it's too long for this window
+      }));
+    }
   }
+
+  // 3. Location filtering: boost matching items
+  let ranked = filtered;
+  if (filters.location) {
+    ranked = ranked.sort((a, b) => {
+      const aMatch = a.location.includes(filters.location!);
+      const bMatch = b.location.includes(filters.location!);
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
+    });
+  }
+
+  // 4. Mood/energy filtering: light re-rank toward matching energy
+  if (filters.mood) {
+    const moodToEnergy: Record<Mood, Energy[]> = {
+      calm: ['low'],
+      playful: ['medium', 'high'],
+      focused: ['medium'],
+      energetic: ['high'],
+    };
+    const targetEnergies = moodToEnergy[filters.mood];
+    ranked = ranked.sort((a, b) => {
+      const aMatch = targetEnergies.includes(a.energy);
+      const bMatch = targetEnergies.includes(b.energy);
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
+    });
+  }
+
+  return ranked;
 }
 
 /**
- * Apply all filters and prioritization to a catalog.
+ * Helper to check if a suggestion should show "Save for later" vs "Começar agora".
  */
-export function applyFilters(
-  catalog: QuickIdea[],
-  options: {
-    location?: QuickIdeasLocation
-    energy?: QuickIdeasEnergy
-    timeRange?: { min: number; max: number }
-    ageBucket: QuickIdeasAgeBucket
-  }
-): QuickIdea[] {
-  let filtered = catalog
-
-  filtered = filterByLocation(filtered, options.location)
-  filtered = filterByEnergy(filtered, options.energy)
-  filtered = filterByTime(filtered, options.timeRange)
-  filtered = prioritizeByAgeBucket(filtered, options.ageBucket)
-
-  return filtered
+export function shouldShowSaveForLater(suggestion: Suggestion, filters: FilterInputs): boolean {
+  if (!filters.timeWindow || filters.timeWindow === 'later') return false;
+  const durationLimit: Record<string, number> = {
+    'now-5': 5,
+    'now-15': 15,
+    'now-30': 30,
+    'later': Infinity,
+  };
+  const limit = durationLimit[filters.timeWindow];
+  return suggestion.durationMin > limit;
 }
