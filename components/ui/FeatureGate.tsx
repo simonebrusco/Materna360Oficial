@@ -4,11 +4,12 @@ import React from 'react';
 import AppIcon from './AppIcon';
 import { Button } from './Button';
 
-export type FeatureKey = 
+export type FeatureKey =
   | 'ideas.dailyQuota'
   | 'weekly.pdf'
   | 'journeys.concurrentSlots'
-  | 'weekly.summary';
+  | 'weekly.summary'
+  | 'mentorship.access';
 
 type PlanTier = 'Free' | 'Plus' | 'Premium';
 
@@ -30,6 +31,7 @@ const FEATURE_ACCESS: Record<FeatureKey, PlanTier[]> = {
   'weekly.pdf': ['Plus', 'Premium'],
   'journeys.concurrentSlots': ['Plus', 'Premium'],
   'weekly.summary': ['Free', 'Plus', 'Premium'], // Summary visible to all, but some features locked
+  'mentorship.access': ['Plus', 'Premium'],
 };
 
 const FEATURE_LABELS: Record<FeatureKey, string> = {
@@ -37,6 +39,7 @@ const FEATURE_LABELS: Record<FeatureKey, string> = {
   'weekly.pdf': 'Exportar em PDF',
   'journeys.concurrentSlots': 'Jornadas Simultâneas',
   'weekly.summary': 'Resumo Semanal',
+  'mentorship.access': 'Acesso à Mentoria',
 };
 
 export function FeatureGate({
