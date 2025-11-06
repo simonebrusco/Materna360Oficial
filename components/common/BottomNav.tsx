@@ -43,8 +43,8 @@ export default function BottomNav() {
               >
                 <AppIcon
                   name={it.icon}
-                  variant={active ? 'brand' : 'neutral'}
-                  aria-hidden
+                  className={active ? 'text-primary' : 'text-support-2'}
+                  decorative
                 />
                 <span className={active ? 'text-pink-600' : 'text-slate-500'}>
                   {it.label}
