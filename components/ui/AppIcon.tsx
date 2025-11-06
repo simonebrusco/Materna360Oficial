@@ -1,52 +1,66 @@
-'use client'
+'use client';
 
-import { forwardRef } from 'react'
-import type { SVGProps } from 'react'
-import {
-  Search, SlidersHorizontal, Timer, Lightbulb, MapPin,
-  ToyBrick, BookOpen, Heart, Star, Crown, Lock, ChevronRight
-} from 'lucide-react'
+import * as React from 'react';
+import type { LucideProps } from 'lucide-react';
+import * as Icons from 'lucide-react';
 
-const map = {
-  search: Search,
-  filters: SlidersHorizontal,
-  time: Timer,
-  idea: Lightbulb,
-  place: MapPin,
-  play: ToyBrick,
-  books: BookOpen,
-  care: Heart,
-  star: Star,
-  crown: Crown,
-  lock: Lock,
-  chevron: ChevronRight,
-} as const
+/**
+ * Centralized icon map with stable aliases.
+ * Color is controlled entirely by parent via className.
+ * No variant-based color classes added here.
+ */
+const ICON_MAP = {
+  search: Icons.Search,
+  filters: Icons.SlidersHorizontal,
+  filter: Icons.SlidersHorizontal,
+  time: Icons.Timer,
+  idea: Icons.Lightbulb,
+  calendar: Icons.Calendar,
+  camera: Icons.Camera,
+  place: Icons.MapPin,
+  home: Icons.Home,
+  play: Icons.Play,
+  share: Icons.Share2,
+  download: Icons.Download,
+  check: Icons.Check,
+  x: Icons.X,
+  books: Icons.BookOpen,
+  care: Icons.Heart,
+  heart: Icons.Heart,
+  star: Icons.Star,
+  crown: Icons.Crown,
+  lock: Icons.Lock,
+  edit: Icons.Edit,
+  chevron: Icons.ChevronRight,
+  leaf: Icons.Leaf,
+  sun: Icons.Sun,
+  moon: Icons.Moon,
+  sparkles: Icons.Sparkles,
+  shieldCheck: Icons.ShieldCheck,
+  // fallback helper is HelpCircle
+} as const;
 
-type IconName = keyof typeof map
-type Props = Omit<SVGProps<SVGSVGElement>, 'ref'> & {
-  name: IconName
-  size?: number
-  variant?: 'neutral' | 'brand'
-  'aria-label'?: string
+export type AppIconName = keyof typeof ICON_MAP;
+
+export type AppIconProps = LucideProps & {
+  name: AppIconName;
+  /** When true (default), hide from AT. When false, requires `label`. */
+  decorative?: boolean;
+  /** Required when decorative=false */
+  label?: string;
+};
+
+export default function AppIcon({
+  name,
+  decorative = true,
+  label,
+  ...rest
+}: AppIconProps) {
+  const IconComponent = ICON_MAP[name] || Icons.HelpCircle;
+
+  const ariaProps = decorative
+    ? { 'aria-hidden': true as const }
+    : { role: 'img' as const, 'aria-label': label ?? 'icon' };
+
+  return <IconComponent {...ariaProps} {...rest} />;
 }
-
-export const AppIcon = forwardRef<SVGSVGElement, Props>(function AppIcon(
-  { name, size = 20, variant = 'neutral', className, ...rest }, ref
-) {
-  const Cmp = map[name]
-  const color = variant === 'brand' ? '#ff005e' : '#2f3a56'
-  return (
-    <Cmp
-      ref={ref}
-      width={size}
-      height={size}
-      stroke={color}
-      strokeWidth={1.75}
-      aria-hidden={rest['aria-label'] ? undefined : true}
-      className={['inline-block align-middle', className].filter(Boolean).join(' ')}
-      {...rest}
-    />
-  )
-})
-
-export default AppIcon

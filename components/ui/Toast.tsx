@@ -32,7 +32,7 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 rounded-lg border px-6 py-3 shadow-lg ${typeStyles[type]}`}>
+    <div className={`fixed bottom-4 right-4 rounded-lg border px-6 py-3 shadow-[0_4px_24px_rgba(47,58,86,0.08)] ${typeStyles[type]}`}>
       {message}
     </div>
   )

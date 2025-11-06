@@ -8,8 +8,9 @@ import { isEnabled } from '@/app/lib/flags'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Empty } from '@/components/ui/feedback/Empty'
 import { ErrorBlock } from '@/components/ui/feedback/Error'
-
 import { ProfessionalProfileSheet, type Professional } from '@/components/ui/ProfessionalProfileSheet'
+import { useMountedRef } from '@/components/hooks/useMountedRef'
+import { safeFetch } from '@/app/lib/safeFetch'
 
 
 type ApiResponse = {
@@ -33,6 +34,7 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   const [selectedProfile, setSelectedProfile] = useState<Professional | undefined>()
   const [openProfile, setOpenProfile] = useState(false)
 
+  const mounted = useMountedRef()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const handleSearchEvent = useCallback((event: CustomEvent<ProfessionalsSearchFilters>) => {
@@ -76,24 +78,28 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       page: String(page),
     })
 
-    fetch(`/api/support/pros?${params.toString()}`, { signal: controller.signal })
+    safeFetch(`/api/support/pros?${params.toString()}`, { signal: controller.signal }, 8000)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error('Não foi possível carregar os profissionais.')
         }
         const json = (await response.json()) as ApiResponse
-        setData((previous) => (page === 1 ? json.items : [...previous, ...json.items]))
-        setHasMore(Boolean(json.hasMore))
+        if (mounted.current && !controller.signal.aborted) {
+          setData((previous) => (page === 1 ? json.items : [...previous, ...json.items]))
+          setHasMore(Boolean(json.hasMore))
+        }
       })
-      .catch((error_) => {
-        if (error_.name === 'AbortError') {
+      .catch((error_: any) => {
+        if (error_?.name === 'AbortError') {
           return
         }
-        console.error('[ProfessionalsResults] Falha ao carregar profissionais', error_)
-        setError('Não foi possível carregar os profissionais agora. Tente novamente em instantes.')
+        if (mounted.current) {
+          console.error('[ProfessionalsResults] Falha ao carregar profissionais', error_)
+          setError('Não foi possível carregar os profissionais agora. Tente novamente em instantes.')
+        }
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
+        if (mounted.current && !controller.signal.aborted) {
           setLoading(false)
         }
       })
@@ -101,7 +107,7 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
     return () => {
       controller.abort()
     }
-  }, [filters, page])
+  }, [filters, page, mounted])
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {

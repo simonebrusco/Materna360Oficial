@@ -1,15 +1,14 @@
 'use client'
 
-'use client'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import AppIcon from './AppIcon'
 
-const tabs = [
-  { href: '/meu-dia', label: 'Meu Dia', emoji: '🏡' },
-  { href: '/cuidar', label: 'Cuide-se', emoji: '🌿' },
-  { href: '/descobrir', label: 'Descobrir', emoji: '🧸' },
-  { href: '/eu360', label: 'Eu360', emoji: '💛' },
+const TABS = [
+  { href: '/meu-dia', label: 'Meu Dia', icon: { name: 'home' as const } },
+  { href: '/cuidar', label: 'Cuidar', icon: { name: 'care' as const } },
+  { href: '/descobrir', label: 'Descobrir', icon: { name: 'search' as const } },
+  { href: '/eu360', label: 'Eu360', icon: { name: 'star' as const } },
 ]
 
 export function TabBar() {
@@ -20,26 +19,25 @@ export function TabBar() {
   return (
     <nav className="bottom-nav fixed bottom-4 left-1/2 z-[60] w-[calc(100%-2.5rem)] max-w-xl -translate-x-1/2">
       <div className="glass-panel flex items-center justify-between gap-1 rounded-full px-2 py-2 shadow-soft backdrop-blur-2xl">
-        {tabs.map((tab) => {
+        {TABS.map((tab) => {
           const active = isActive(tab.href)
 
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              aria-label={tab.label}
               aria-current={active ? 'page' : undefined}
               className={`group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-full px-3 py-2 text-[11px] font-semibold transition-all duration-300 ease-gentle ${
                 active ? 'text-primary' : 'text-support-2/80 hover:text-support-1'
               }`}
             >
-              <span
-                className={`text-2xl transition-transform duration-500 ease-gentle ${
+              <div
+                className={`transition-transform duration-500 ease-gentle ${
                   active ? 'animate-scale-in' : 'group-hover:-translate-y-1'
                 }`}
               >
-                {tab.emoji}
-              </span>
+                <AppIcon {...tab.icon} decorative className="h-5 w-5" />
+              </div>
               <span className="tracking-wide uppercase">{tab.label}</span>
               <span
                 className={`absolute inset-x-3 bottom-1 h-1 rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] opacity-0 transition-opacity duration-500 blur-md ${

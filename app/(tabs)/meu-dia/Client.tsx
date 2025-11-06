@@ -6,6 +6,9 @@ import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
+
+import Emoji from '@/components/ui/Emoji'
+
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -107,6 +110,12 @@ export function MeuDiaClient({
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
               <Card className="h-full">
+
+                <div className="mb-3 inline-flex items-center gap-2">
+                  <AppIcon name={action.iconName as any} size={18} className="text-primary" decorative />
+                  <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
+                </div>
+
                 <div className="mb-3">
                   {isEnabled('FF_LAYOUT_V1') && action.iconName ? (
                     <AppIcon name={action.iconName as any} size={28} />
@@ -115,6 +124,7 @@ export function MeuDiaClient({
                   )}
                 </div>
                 <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
+
                 <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="primary" size="sm" className="w-full">
                   Acessar
@@ -152,8 +162,8 @@ export function MeuDiaClient({
             <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
               <div className="notesCard-text">
                 <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
-                  <span aria-hidden="true" className="mr-1">
-                    📝
+                  <span className="mr-1">
+                    <AppIcon name="edit" size={16} aria-hidden />
                   </span>
                   {notesLabel}
                 </h2>

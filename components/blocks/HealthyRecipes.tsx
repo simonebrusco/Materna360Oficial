@@ -17,6 +17,7 @@ import { VALID_PLANNER_CATEGORIES } from '@/app/lib/plannerServer'
 import type { PlannerItem } from '@/lib/plannerData'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
 import { Reveal } from '@/components/ui/Reveal'
 import { Toast } from '@/components/ui/Toast'
 import { isEnabled } from '@/app/lib/flags'
@@ -623,9 +624,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => toggleCourse(option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           courses.includes(option.value)
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -642,9 +643,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => toggleDietary(option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           dietary.includes(option.value)
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -664,9 +665,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => setTimeOption(timeOption === option.value ? undefined : option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           timeOption === option.value
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -833,7 +834,7 @@ const childAgeBand = useMemo(
                 <div key={item.title} className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-soft">
                   <div className="text-3xl">{item.emoji}</div>
                   <h4 className="mt-2 text-sm font-semibold text-support-1">{item.title}</h4>
-                  <p className="mt-1 text-xs text-support-2">⏱️ {item.prep}</p>
+                  <p className="mt-1 text-xs text-support-2"><Emoji char="⏱️" size={12} /> {item.prep}</p>
                   <p className="mt-2 text-xs text-support-2">{item.description}</p>
                 </div>
               ))}
@@ -895,9 +896,9 @@ const childAgeBand = useMemo(
                       key={option}
                       type="button"
                       onClick={() => setPlannerCategory(option)}
-                      className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                      className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                         plannerCategory === option
-                          ? 'bg-primary text-white shadow-glow'
+                          ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                           : 'bg-white/80 text-support-1 hover:bg-primary/10'
                       }`}
                     >

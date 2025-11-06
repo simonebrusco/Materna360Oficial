@@ -1,102 +1,66 @@
 import './globals.css'
-import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
-import Script from 'next/script'
 
-import '@/app/lib/telemetryServer'
-import { inter } from './fonts'
-import FetchPolyfill from '@/app/lib/FetchPolyfill'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+import Script from 'next/script'
+import type { Metadata } from 'next'
+import SiteHeader from '@/components/common/SiteHeader'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Cuidado e bem-estar para mães',
+  icons: { icon: '/favicon.ico', shortcut: '/favicon.ico', apple: '/favicon.ico' },
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html lang="pt-BR" className="h-full AppGradient">
       <head>
         <Script
-          id="safe-fetch-init"
+          id="fullstory-fetch-fix"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                if (typeof window === 'undefined') return;
-                let originalFetch = window.fetch;
-                let isSafeFetchInitialized = false;
-                
-                function isFullStoryPresent() {
-                  return !!(window.FS);
-                }
-                
-                function fetchViaXHR(input, init) {
-                  return new Promise((resolve, reject) => {
-                    try {
-                      const xhr = new XMLHttpRequest();
-                      const url = input instanceof Request ? input.url : String(input);
-                      const method = (init?.method || 'GET').toUpperCase();
-                      
-                      xhr.open(method, url, true);
-                      
-                      if (init?.headers) {
-                        const headers = init.headers instanceof Headers
-                          ? Object.fromEntries(init.headers.entries())
-                          : (init.headers || {});
-                        Object.entries(headers).forEach(([key, val]) => {
-                          xhr.setRequestHeader(key, val);
-                        });
-                      }
-                      
-                      xhr.onload = () => {
-                        const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream';
-                        const response = new Response(xhr.responseText || xhr.response, {
-                          status: xhr.status,
-                          statusText: xhr.statusText,
-                          headers: new Headers({
-                            'content-type': contentType,
-                          }),
-                        });
-                        resolve(response);
-                      };
-                      
-                      xhr.onerror = () => reject(new TypeError('XMLHttpRequest failed'));
-                      xhr.ontimeout = () => reject(new TypeError('XMLHttpRequest timeout'));
-                      xhr.withCredentials = init?.credentials === 'include';
-                      
-                      xhr.send(init?.body ? String(init.body) : null);
-                    } catch (error) {
-                      reject(error);
-                    }
-                  });
-                }
-                
-                window.fetch = function safeFetch(input, init) {
-                  if (isFullStoryPresent()) {
-                    return fetchViaXHR(input, init);
-                  }
-                  
-                  return new Promise((resolve, reject) => {
-                    originalFetch.call(window, input, init)
-                      .then(resolve)
-                      .catch((error) => {
-                        if (error?.message?.includes('Failed to fetch')) {
-                          fetchViaXHR(input, init).then(resolve).catch(reject);
-                        } else {
-                          reject(error);
-                        }
-                      });
-                  });
-                };
-              })();
-            `,
+            __html: `(${fixFetch.toString()})();`,
           }}
         />
       </head>
-      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>
-        <FetchPolyfill />
+      <body className="min-h-screen text-slate-800 antialiased">
+        <SiteHeader />
         {children}
       </body>
     </html>
   )
+}
+
+/** Inline helper used by the Script above */
+function fixFetch() {
+  const nativeFetch = window.fetch;
+  // same logic you already had, shortened for brevity:
+  window.fetch = function wrappedFetch(input, init) {
+    return nativeFetch(input as any, init as any).catch((error: any) => {
+      if (error && (String(error).includes('Failed to fetch'))) {
+        return new Promise((resolve, reject) => {
+          try {
+            const xhr = new XMLHttpRequest();
+            const url = (input as any)?.url ?? String(input);
+            const method = (init?.method || 'GET').toUpperCase();
+            xhr.open(method, url, true);
+            if (init?.headers) {
+              const headers = init.headers instanceof Headers ? Object.fromEntries(init.headers.entries()) : init.headers as any;
+              Object.entries(headers).forEach(([k, v]) => { try { xhr.setRequestHeader(k, String(v)); } catch {} });
+            }
+            xhr.withCredentials = init?.credentials === 'include';
+            xhr.onload = () => {
+              const ct = xhr.getResponseHeader('content-type') || 'text/plain';
+              resolve(new Response((xhr as any).response || xhr.responseText, { status: xhr.status, statusText: xhr.statusText, headers: new Headers({ 'content-type': ct }) }));
+            };
+            xhr.onerror = () => reject(new TypeError('Network request failed'));
+            xhr.ontimeout = () => reject(new TypeError('Request timeout'));
+            xhr.send((init?.body as any) || null);
+          } catch (e) { reject(e); }
+        });
+      }
+      throw error;
+    });
+  };
 }

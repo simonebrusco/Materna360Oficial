@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'rea
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildActivity } from '@/app/data/childContent'
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Toast } from '@/components/ui/Toast'
@@ -249,7 +250,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
       return 'Atividades personalizadas para hoje'
     }
 
-    return headlineActivity.emoji ? `${headlineActivity.emoji} ${headlineActivity.title}` : headlineActivity.title
+    return headlineActivity.title
   }, [headlineActivity, isAllMode])
 
   const ageLabel = useMemo(() => {
@@ -326,9 +327,15 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
               {headlineTitle}
             </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
-              <span className="inline-flex items-center gap-1">👧 {ageLabel}</span>
+              <span className="inline-flex items-center gap-1">
+                <AppIcon name="calendar" size={12} aria-hidden />
+                {' '}{ageLabel}
+              </span>
               {!isAllMode && hasDuration && (
-                <span className="inline-flex items-center gap-1">⏱️ {headlineActivity.durationMin} min</span>
+                <span className="inline-flex items-center gap-1">
+                  <AppIcon name="time" size={12} aria-hidden />
+                  {' '}{headlineActivity.durationMin} min
+                </span>
               )}
             </div>
           </div>

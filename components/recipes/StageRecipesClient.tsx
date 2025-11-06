@@ -74,7 +74,7 @@ export function StageRecipesClient({ stages, initialStage }: StageRecipesClientP
               aria-label={`Filtrar receitas para ${stage.label}`}
               className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
                 isActive
-                  ? 'border-primary bg-primary text-white shadow-glow'
+                  ? 'border-primary bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                   : 'border-white/70 bg-white/80 text-support-1 hover:bg-white'
               }`}
             >
@@ -88,7 +88,7 @@ export function StageRecipesClient({ stages, initialStage }: StageRecipesClientP
         {currentStage.recipes.map((recipe) => (
           <article
             key={recipe.id}
-            className="h-full rounded-3xl border border-white/60 bg-white/90 p-5 shadow-soft transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
+            className="h-full rounded-3xl border border-white/60 bg-white/90 p-5 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]"
           >
             <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>

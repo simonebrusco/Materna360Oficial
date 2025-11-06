@@ -1,11 +1,11 @@
 'use client'
 
-'use client'
-
 import { useMemo, useRef, useState } from 'react'
 
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import HScroll from '@/components/common/HScroll'
 
 const moods = [
   { emoji: '😔', label: 'Triste', value: 'triste' },
@@ -96,37 +96,41 @@ export function CheckInCard() {
       <Card className="p-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-left">
-            <h2 className="text-lg font-semibold text-support-1 md:text-xl">😊 Como você está agora?</h2>
+            <h2 className="text-lg font-semibold text-support-1 md:text-xl">Como você está agora?</h2>
             <p className="text-sm text-support-2">Escolha um mood para acompanhar seu bem-estar emocional.</p>
           </div>
         </div>
 
-        <div className="mt-6 -mx-2 flex flex-nowrap items-center justify-start gap-6 overflow-x-auto px-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:justify-center md:gap-8 md:overflow-x-visible md:px-0">
+        <HScroll className="mt-6">
           {moods.map((mood) => {
             const isActive = selectedMood === mood.value
 
             return (
-              <button
+              <div
                 key={mood.value}
-                type="button"
-                onClick={() => void handleMoodSelect(mood.value)}
-                className={`group inline-flex h-[130px] w-[150px] min-w-[150px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 md:h-[140px] md:w-[156px] md:min-w-[156px] snap-start ${
-                  isActive ? 'scale-[1.02] ring-2 ring-primary/40 shadow-[0_18px_40px_rgba(233,46,129,0.18)]' : ''
-                }`}
-                aria-label={mood.label}
-                title={mood.label}
-                data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
+                className="snap-start shrink-0 basis-[42%] sm:basis-[32%] md:basis-[28%] lg:basis-[22%] xl:basis-[18%]"
               >
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] md:h-16 md:w-16">
-                  <span className="text-[32px] leading-none">{mood.emoji}</span>
-                </span>
-                <span className="mt-2 max-w-[11ch] text-center text-[15px] font-semibold leading-snug text-support-1 md:text-base line-clamp-2">
-                  {mood.label}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => void handleMoodSelect(mood.value)}
+                  className={`group flex h-24 sm:h-28 md:h-32 w-full flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-primary/30 ${
+                    isActive ? 'scale-[1.02] ring-2 ring-primary/40 shadow-[0_18px_40px_rgba(233,46,129,0.18)]' : ''
+                  }`}
+                  aria-label={mood.label}
+                  title={mood.label}
+                  data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
+                >
+                  <span className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+                    <span className="text-2xl sm:text-3xl leading-none">{mood.emoji}</span>
+                  </span>
+                  <span className="mt-1 sm:mt-2 max-w-[11ch] text-center text-xs sm:text-sm md:text-base font-semibold leading-snug text-support-1 line-clamp-2">
+                    {mood.label}
+                  </span>
+                </button>
+              </div>
             )
           })}
-        </div>
+        </HScroll>
 
         <div aria-live="polite">
           {isLoading ? (

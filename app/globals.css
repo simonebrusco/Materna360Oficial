@@ -42,7 +42,6 @@
   html,
   body {
     height: 100%;
-    background-color: rgb(var(--neutral-1));
     color: rgb(var(--support-1));
   }
 
@@ -51,7 +50,7 @@
   }
 
   body {
-    @apply min-h-screen bg-gradient-to-b from-pink-50/60 to-white text-support-1 antialiased font-sans;
+    @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
 
   }
@@ -588,4 +587,22 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(255, 0, 94, 0.8), rgba(255, 216, 230, 0.95));
+}
+
+/* ---- App background: gradient on the root document ---- */
+html {
+  /* same gradient as before, but anchored at the document root */
+  background: linear-gradient(180deg, #ffe9f0 0%, #ffffff 80%) fixed;
+  min-height: 100%;
+}
+
+/* The body must be transparent so the root gradient shows through */
+body {
+  background: transparent !important;
+  min-height: 100%;
+}
+
+/* Prevent accidental full-width background "paints" from utility classes on wrappers */
+.__app-surface-reset {
+  background: transparent !important;
 }

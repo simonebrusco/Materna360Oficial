@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
@@ -170,21 +168,34 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 })
 
 const fetchMotherName = async (): Promise<string> => {
+  let timedOut = false
+  const timeoutId = setTimeout(() => {
+    timedOut = true
+  }, 3000)
+
   try {
     const response = await fetch('/api/profile', {
       credentials: 'include',
       cache: 'no-store',
     })
 
+    clearTimeout(timeoutId)
+
+    // If we timed out, ignore the response
+    if (timedOut) {
+      return FALLBACK_NAME
+    }
+
     if (!response.ok) {
-      throw new Error(`Perfil não disponível (${response.status})`)
+      return FALLBACK_NAME
     }
 
     const data = await response.json()
     const rawName = typeof data?.nomeMae === 'string' ? data.nomeMae.trim() : ''
     return rawName || FALLBACK_NAME
   } catch (error) {
-    console.error('Não foi possível carregar o nome para o checklist:', error)
+    clearTimeout(timeoutId)
+    // Return fallback for any error (network, timeout, parse error, etc)
     return FALLBACK_NAME
   }
 }
@@ -216,9 +227,25 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
   }, [currentDateKey])
 
   useEffect(() => {
-    void fetchMotherName().then((name) => {
-      setProfileName(name)
-    })
+    let isMounted = true
+
+    ;(async () => {
+      try {
+        const name = await fetchMotherName()
+        if (isMounted) {
+          setProfileName(name)
+        }
+      } catch (error) {
+        // Silently catch any unexpected errors and use fallback
+        if (isMounted) {
+          setProfileName(FALLBACK_NAME)
+        }
+      }
+    })()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const setItemsForDate = useCallback(

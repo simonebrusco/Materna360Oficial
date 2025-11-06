@@ -70,7 +70,7 @@ function BreathTimer() {
         {isRunning ? (
           <>
             <div
-              className={`${circleSize[phase]} rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-glow transition-all duration-1000`}
+              className={`${circleSize[phase]} rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/20 via-white/40 to-white/60 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-1000`}
             >
               <div className="text-center">
                 <p className="mb-1 text-3xl font-bold text-primary md:text-4xl">{4 - seconds}</p>

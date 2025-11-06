@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { initSafeFetch } from './SafeFetch'
+import { initSafeFetch } from './safeFetch'
 
 /**
  * FetchPolyfill: Handles FullStory's broken fetch wrapper.

@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom'
 
 import TrailHeader, { type JourneySummary } from '@/components/blocks/MindfulnessJourneysTrail/TrailHeader'
 import { CompleteButton } from '@/components/features/Journeys/CompleteButton'
+import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 
@@ -16,6 +17,7 @@ type Journey = {
   id: JourneyId
   title: string
   emoji: string
+  iconName: AppIconName
   description: string
   challenges: string[]
   finalMessage: string
@@ -33,6 +35,7 @@ const journeys: Journey[] = [
     id: 'amor-proprio',
     title: 'Amor-Próprio',
     emoji: '💗',
+    iconName: 'heart',
     description: '7 dias para se olhar com carinho.',
     challenges: [
       'Olhe no espelho e diga algo gentil sobre você.',
@@ -49,6 +52,7 @@ const journeys: Journey[] = [
     id: 'calma',
     title: 'Calma',
     emoji: '🌿',
+    iconName: 'leaf',
     description: '7 dias para diminuir o ritmo.',
     challenges: [
       'Respire fundo três vezes antes de olhar o celular.',
@@ -65,6 +69,7 @@ const journeys: Journey[] = [
     id: 'energia-positiva',
     title: 'Energia Positiva',
     emoji: '☀️',
+    iconName: 'sun',
     description: '7 dias de leveza e alegria.',
     challenges: [
       'Abra a janela e sinta a luz do sol no rosto.',
@@ -81,6 +86,7 @@ const journeys: Journey[] = [
     id: 'gratidao',
     title: 'Gratidão',
     emoji: '🌸',
+    iconName: 'sparkles',
     description: '7 dias para perceber o que floresce.',
     challenges: [
       'Agradeça por algo simples do seu dia.',
@@ -97,6 +103,7 @@ const journeys: Journey[] = [
     id: 'descanso',
     title: 'Descanso',
     emoji: '🌙',
+    iconName: 'moon',
     description: '7 dias para cuidar do corpo e da mente.',
     challenges: [
       'Vá dormir 15 minutos mais cedo.',
@@ -113,6 +120,7 @@ const journeys: Journey[] = [
     id: 'confianca',
     title: 'Confiança',
     emoji: '🌺',
+    iconName: 'shieldCheck',
     description: '7 dias para voltar a acreditar em você.',
     challenges: [
       'Lembre-se de um desafio que você já superou — e celebre.',
@@ -191,10 +199,7 @@ export function CareJourneys() {
     <section className="rounded-3xl border border-white/70 bg-white/92 px-6 py-7 shadow-[0_18px_42px_-26px_rgba(47,58,86,0.28)] backdrop-blur-sm transition-shadow duration-300 md:px-8 md:py-9">
       <header className="space-y-2 md:space-y-3">
         <span className="eyebrow-capsule">Autocuidado guiado</span>
-        <h2 className="flex items-center gap-2 text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
-          <span aria-hidden="true">🌼</span>
-          <span>Jornadas do Cuidar</span>
-        </h2>
+        <h2 id="journeys-heading" className="sr-only">Jornadas do Cuidar</h2>
         <p className="max-w-2xl text-sm leading-[1.45] text-support-2/85 md:text-base">
           Escolha uma jornada de 7 dias e acompanhe desafios curtos para nutrir mente e coração.
         </p>
@@ -215,9 +220,9 @@ export function CareJourneys() {
                 onClick={() => setActiveJourneyId(journey.id)}
               >
                 <div className="space-y-2.5">
-                  <span className="text-3xl" aria-hidden="true">
-                    {journey.emoji}
-                  </span>
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-full" aria-hidden="true">
+                    <AppIcon name={journey.iconName} size={18} className="text-primary" />
+                  </div>
                   <h3 className="text-lg font-semibold text-support-1">{journey.title}</h3>
                   <p className="text-sm text-support-2/80 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden text-ellipsis">
                     {journey.description}
@@ -267,7 +272,9 @@ export function CareJourneys() {
                 </button>
 
                 <div className="space-y-2 pr-14">
-                  <span className="text-3xl">{activeJourneyState.journey.emoji}</span>
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-full" aria-hidden="true">
+                    <AppIcon name={activeJourneyState.journey.iconName} size={24} className="text-primary" />
+                  </div>
                   <h3 className="text-2xl font-semibold text-support-1">{activeJourneyState.journey.title}</h3>
                   <p className="text-sm text-support-2">{activeJourneyState.journey.description}</p>
                 </div>

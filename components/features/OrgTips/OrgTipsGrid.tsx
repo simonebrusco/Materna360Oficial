@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import Emoji from '@/components/ui/Emoji'
 import { Toast } from '@/components/ui/Toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
@@ -243,7 +244,7 @@ export function OrgTipsGrid() {
               {tip.duration}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-support-2/10 px-3 py-1 text-xs font-semibold text-support-2">
-              <span aria-hidden="true">🧩</span>
+              <Emoji char="🧩" />
               {tip.category}
             </span>
           </div>
@@ -294,7 +295,7 @@ export function OrgTipsGrid() {
         <div className="mx-auto max-w-[55rem] rounded-3xl border border-support-2/20 bg-white/95 p-3 shadow-[0_16px_38px_-28px_rgba(47,58,86,0.24)] backdrop-blur-sm sm:px-3 sm:py-3 md:px-4 md:py-4">
           <div className="space-y-3">
             <header className="space-y-2">
-              <h3 className="text-[18px] font-semibold leading-[1.28] text-support-1">Dicas de Organização</h3>
+              <h3 className="text-[18px] font-semibold leading-[1.28] text-support-1">Filtrar sugestões</h3>
               <p className="text-[13px] leading-[1.45] text-support-2/85">Sugestões rápidas para organizar a rotina com leveza.</p>
               <div className="h-px w-full bg-support-2/40" />
             </header>

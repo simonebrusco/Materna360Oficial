@@ -6,6 +6,9 @@ import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { isEnabled } from '@/app/lib/flags'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const BreathCard = nextDynamic(
   () => import('@/components/blocks/BreathTimer').then((m) => m.default ?? m),
   {
@@ -46,14 +49,13 @@ const ProfessionalsSection = nextDynamic(
   }
 )
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 export default async function Page() {
   noStore()
 
   const content = (
+
     <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
+
       <SectionWrapper className="relative bg-transparent" contentClassName="relative">
         <span
           aria-hidden

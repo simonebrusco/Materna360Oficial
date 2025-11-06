@@ -570,8 +570,8 @@ export function Mindfulness() {
                     return (
                       <li
                         key={track.id}
-                        className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition ${
-                          isLastPlayed ? 'border-primary/50 shadow-elevated' : ''
+                        className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition ${
+                          isLastPlayed ? 'border-primary/50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : ''
                         }`}
                       >
                         {isPlayable ? (
