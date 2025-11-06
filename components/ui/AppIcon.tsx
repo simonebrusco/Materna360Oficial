@@ -1,73 +1,51 @@
 
 'use client';
+
 import * as React from 'react';
-import * as Icons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
+import * as Icons from 'lucide-react';
 
-export type AppIconName =
-  | 'place'
-  | 'books'
-  | 'star'
-  | 'care'
-  | 'crown'
-  | 'sparkles'
-  | 'search'
-  | 'filters'
-  | 'idea'
-  | 'time'
-  | 'camera'
-  | 'calendar'
-  | 'play'
-  | 'share'
-  | 'download'
-  | 'check'
-  | 'x'
-  | 'edit'
-  | 'heart'
-  | 'leaf'
-  | 'sun'
-  | 'moon'
-  | 'shieldCheck';
-
-const ICON_MAP: Record<AppIconName, React.ComponentType<LucideProps>> = {
-  place: Icons.MapPin,
-  books: Icons.BookOpen,
-  star: Icons.Star,
-  care: Icons.Heart,
-  crown: Icons.Crown,
-  sparkles: Icons.Sparkles,
+/**
+ * Centralized icon map with stable aliases.
+ * Only classes control color (currentColor). No inline colors here.
+ */
+const ICON_MAP = {
   search: Icons.Search,
-  filters: Icons.Sliders,
+  filters: Icons.SlidersHorizontal,
+  filter: Icons.SlidersHorizontal,
+  time: Icons.Timer,
   idea: Icons.Lightbulb,
-  time: Icons.Clock,
-  camera: Icons.Camera,
   calendar: Icons.Calendar,
+  camera: Icons.Camera,
+  place: Icons.MapPin,
   play: Icons.Play,
   share: Icons.Share2,
   download: Icons.Download,
   check: Icons.Check,
   x: Icons.X,
-  edit: Icons.Edit,
-  heart: Icons.Heart,
-  leaf: Icons.Leaf,
-  sun: Icons.Sun,
-  moon: Icons.Moon,
-  shieldCheck: Icons.ShieldCheck,
-};
+  books: Icons.BookOpen,
+  care: Icons.Heart,
+  star: Icons.Star,
+  crown: Icons.Crown,
+  lock: Icons.Lock,
+  chevron: Icons.ChevronRight,
+  // fallback helper is HelpCircle
+} as const;
 
-export type AppIconProps = Omit<LucideProps, 'children'> & {
-  /** Icon name from the ICON_MAP */
-  name?: AppIconName;
-  /** Visual variant: 'neutral' (default) or 'brand' */
+type IconName = keyof typeof ICON_MAP;
+
+export type AppIconProps = LucideProps & {
+  name: IconName;
+  /** Visual tone hint; parent classes should provide the actual color tokens */
   variant?: 'neutral' | 'brand';
-  /** When true (default), the icon is decorative and must be hidden from AT. */
+  /** When true (default), hide from AT. When false, requires `label`. */
   decorative?: boolean;
   /** Required when decorative=false */
   label?: string;
 };
 
-export function AppIcon({
-  name = 'star',
+export default function AppIcon({
+  name,
   variant = 'neutral',
   decorative = true,
   label,
@@ -75,23 +53,16 @@ export function AppIcon({
   ...rest
 }: AppIconProps) {
   const IconComponent = ICON_MAP[name] || Icons.HelpCircle;
-  
-  // Determine color based on variant
-  const colorClass = variant === 'brand' ? 'text-primary' : 'text-support-2';
-  const mergedClassName = `${colorClass} ${className || ''}`.trim();
+  const variantClass = variant === 'brand' ? 'text-primary' : undefined;
+  const mergedClassName = [variantClass, className].filter(Boolean).join(' ');
 
   const ariaProps = decorative
     ? { 'aria-hidden': true as const }
     : { role: 'img' as const, 'aria-label': label ?? 'icon' };
 
-  return (
-    <IconComponent
-      {...ariaProps}
-      className={mergedClassName}
-      {...rest}
-    />
-  );
+  return <IconComponent {...ariaProps} className={mergedClassName} {...rest} />;
 }
+<<<<<<< HEAD
 
 export default AppIcon;
 
@@ -148,3 +119,5 @@ export const AppIcon = forwardRef<SVGSVGElement, Props>(function AppIcon(
 
 export default AppIcon
 
+=======
+>>>>>>> 0852f54 (Replace AppIcon.tsx with canonical single-export version)
