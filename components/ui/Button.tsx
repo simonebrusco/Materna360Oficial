@@ -21,10 +21,10 @@ export function Button({
     primary:
       'text-white bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
     secondary:
-      'bg-secondary/80 text-support-1 shadow-soft hover:bg-secondary hover:shadow-elevated',
+      'bg-secondary/80 text-support-1 shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:bg-secondary hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
     outline:
-      'border border-primary/60 text-primary bg-white/70 shadow-soft hover:bg-primary/10 hover:shadow-elevated',
-    ghost: 'bg-transparent text-support-1 shadow-none hover:bg-white/60 hover:shadow-soft',
+      'border border-primary/60 text-primary bg-white/70 shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:bg-primary/10 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
+    ghost: 'bg-transparent text-support-1 shadow-none hover:bg-white/60 hover:shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
   }
 
   const sizeStyles: Record<ButtonSize, string> = {
