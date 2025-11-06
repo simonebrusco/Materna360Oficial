@@ -130,7 +130,7 @@ export type LegacyToastProps = {
   duration?: number;
 };
 
-export function Toast({ message, type = 'default', onClose, className }: LegacyToastProps) {
+export function Toast({ message, type = 'default', onClose, className, duration }: LegacyToastProps) {
   if (!message) return null;
 
   // map aliases: "error" -> "danger", "info" -> "default"
