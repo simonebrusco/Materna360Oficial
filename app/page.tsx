@@ -1,8 +1,14 @@
-import { redirect } from 'next/navigation'
+'use client'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Page() {
-  redirect('/meu-dia')
+  const router = useRouter()
+  
+  useEffect(() => {
+    router.push('/meu-dia')
+  }, [router])
+  
+  return null
 }
