@@ -217,7 +217,8 @@ export default function Eu360Client() {
 
                 <div className="flex flex-wrap gap-2">
                   <Button variant="primary" className="flex-1 sm:flex-none">
-                    💳 Gerenciar Plano
+                    <AppIcon name="lock" size={16} />
+                    Gerenciar Plano
                   </Button>
                   <Button
                     variant="secondary"
@@ -230,7 +231,8 @@ export default function Eu360Client() {
                       }
                     }}
                   >
-                    📥 Exportar Semana (PDF)
+                    <AppIcon name="download" size={16} />
+                    Exportar Semana (PDF)
                   </Button>
                 </div>
               </div>
@@ -239,7 +241,7 @@ export default function Eu360Client() {
         </SectionWrapper>
       )}
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2">🏅<span>Conquistas</span></span>}>
+      <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></span>}>
         <GridRhythm className="grid-cols-2 sm:grid-cols-3">
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
