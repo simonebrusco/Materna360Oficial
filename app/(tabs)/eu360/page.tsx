@@ -1,19 +1,25 @@
 import { Suspense } from 'react';
+import Eu360Client from './Client';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+<<<<<<< HEAD
 
 function Eu360ClientWrapper() {
   const Eu360Client = require('./Client').default;
   return <Eu360Client />;
 }
 
+=======
+>>>>>>> 976c3ba (Restructure eu360/page.tsx with proper imports at top and main wrapper)
 export default function Page() {
   return (
-    <Suspense fallback={<div className="p-4 text-sm">Loading…</div>}>
-      <Eu360ClientWrapper />
-    </Suspense>
+    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
+      <Suspense fallback={<div className="p-4 text-sm">Loading…</div>}>
+        <Eu360Client />
+      </Suspense>
+    </main>
   );
 
 import GridRhythm from '@/components/common/GridRhythm'
