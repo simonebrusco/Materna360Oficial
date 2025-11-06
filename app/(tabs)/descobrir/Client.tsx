@@ -87,26 +87,51 @@ export default function DiscoverClient() {
         </HScroll>
       </SectionWrapper>
 
-      {/* Grade de resultados (placeholder seguro) */}
+      {/* Grade de resultados */}
       <GridRhythm className="grid-cols-1 gap-4 md:grid-cols-2">
-        {[1,2,3,4].map((i) => (
+        {[
+          {
+            id: 'brincadeira-sensorial',
+            title: 'Brincadeira Sensorial: Exploração Tátil',
+            description: 'Atividade para estimular os sentidos. Use texturas diferentes (algodão, papel, plástico) para exploração segura.',
+            icon: 'sparkles' as const,
+          },
+          {
+            id: 'respiracao-calma',
+            title: 'Respiração em 4 Tempos',
+            description: 'Técnica simples para acalmar você e as crianças. Inspire por 4, segure por 4, expire por 4.',
+            icon: 'care' as const,
+          },
+          {
+            id: 'receita-rapida',
+            title: 'Receita Rápida: Papinha Caseira',
+            description: 'Prepare uma papinha nutritiva em menos de 15 minutos com ingredientes que você tem em casa.',
+            icon: 'idea' as const,
+          },
+          {
+            id: 'momento-conexao',
+            title: 'Momento de Conexão: 10 Minutos',
+            description: 'Um ritual simples e afetuoso para fortalecer o vínculo com seus filhos todo dia.',
+            icon: 'heart' as const,
+          },
+        ].map((suggestion) => (
           <article
-            key={i}
+            key={suggestion.id}
             className="rounded-2xl bg-white p-4 shadow-[0_4px_24px_rgba(47,58,86,0.08)]"
           >
             <header className="mb-2 flex items-center gap-2">
-              <AppIcon name="idea" decorative />
-              <h2 className="text-base font-semibold">Sugestão #{i}</h2>
+              <AppIcon name={suggestion.icon} decorative />
+              <h2 className="text-base font-semibold text-support-1">{suggestion.title}</h2>
             </header>
-            <p className="text-sm text-[var(--text-muted,#4b5563)]">
-              Conteúdo de exemplo. A integração com IA/telemetria virá no Batch 6/4.
+            <p className="mb-4 text-sm text-support-2">
+              {suggestion.description}
             </p>
-            <div className="mt-3 flex gap-2">
-              <button className="rounded-md border px-3 py-1 text-sm" aria-label="Salvar no planner">
-                Salvar
+            <div className="flex gap-2 items-center">
+              <button className="flex-1 rounded-lg bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition-colors" aria-label={`Começar ${suggestion.title}`}>
+                Começar agora
               </button>
-              <button className="rounded-md border px-3 py-1 text-sm" aria-label="Abrir detalhes">
-                Abrir
+              <button className="text-primary text-sm font-medium hover:underline" aria-label={`Detalhes de ${suggestion.title}`}>
+                Detalhes
               </button>
             </div>
           </article>
