@@ -29,6 +29,9 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const previouslyFocusedElement = useRef<HTMLElement | null>(null)
 
+  // Use hook for Escape key handling
+  useEscapeToClose(open, onClose)
+
   useEffect(() => {
     if (!open) {
       return
@@ -38,12 +41,6 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
 
     const modalNode = modalRef.current
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
-        return
-      }
-
       if (event.key === 'Tab' && modalNode) {
         const focusable = Array.from(modalNode.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
           (element) => element.offsetParent !== null || element === closeButtonRef.current
@@ -112,6 +109,7 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
           aria-label="Fechar"
           onClick={onClose}
           className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-support-1 shadow transition hover:bg-white"
+          aria-label="Fechar"
         >
           ✕
         </button>
