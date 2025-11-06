@@ -8,6 +8,7 @@ import type { ChildActivity } from '@/app/data/childContent'
 import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import { Toast } from '@/components/ui/Toast'
 import {
   recommendationStorage,
   RECOMMENDATIONS_UPDATED_EVENT,
