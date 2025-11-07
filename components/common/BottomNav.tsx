@@ -36,28 +36,42 @@ export default function BottomNav() {
       "
       role="navigation" aria-label="Main"
     >
-      <ul className="mx-auto grid max-w-screen-md grid-cols-4">
-        {ITEMS.map((it) => {
+      <ul className={`mx-auto grid max-w-screen-md ${showHub ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        {items.map((it) => {
           const active =
             pathname === it.href ||
             (it.href !== '/' && pathname?.startsWith(it.href));
+          const isCenter = it.center ?? false;
+
           return (
             <li key={it.href}>
               <Link
                 href={it.href}
-                className="
-                  flex h-14 flex-col items-center justify-center gap-1
+                className={`
+                  flex flex-col items-center justify-center gap-1
                   text-[11px] sm:text-xs
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60
-                "
+                  transition-all duration-200
+                  ${isCenter ? 'h-16 -mt-2' : 'h-14'}
+                `}
+                aria-label={it.label}
                 aria-current={active ? 'page' : undefined}
               >
                 <AppIcon
                   name={it.icon}
-                  className={active ? 'text-primary' : 'text-support-2'}
+                  size={isCenter ? 32 : 24}
+                  className={
+                    isCenter
+                      ? 'text-primary'
+                      : active ? 'text-primary' : 'text-support-2'
+                  }
                   decorative
                 />
-                <span className={active ? 'text-pink-600' : 'text-slate-500'}>
+                <span className={
+                  isCenter
+                    ? 'text-primary font-semibold'
+                    : active ? 'text-pink-600' : 'text-slate-500'
+                }>
                   {it.label}
                 </span>
               </Link>
