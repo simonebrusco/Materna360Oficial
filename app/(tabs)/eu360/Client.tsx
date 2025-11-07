@@ -116,13 +116,13 @@ export default function Eu360Client() {
       title="Eu360"
       subtitle="Autocuidado, propósito e rede de apoio"
     >
-      <SectionWrapper className="bg-transparent">
+      <Card>
         <ProfileForm />
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal>
-          <Card className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white">
+          <div className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white rounded-xl">
             <div className="text-center">
               {isEnabled('FF_LAYOUT_V1') ? (
                 <AppIcon name="care" size={48} className="text-primary mx-auto mb-2" />
@@ -134,14 +134,15 @@ export default function Eu360Client() {
                 Vá no seu próprio ritmo. Cada passo conta e você está no caminho certo.
               </p>
             </div>
-          </Card>
+          </div>
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
       {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></span>}>
+        <Card>
           <Reveal delay={80}>
-            <Card className="p-7">
+            <div>
+              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></h3>
               <div className="space-y-5">
                 <div>
                   <div className="flex items-center justify-between">
@@ -164,15 +165,17 @@ export default function Eu360Client() {
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </Reveal>
-        </SectionWrapper>
+        </Card>
       )}
 
       {/* Plan Card Section - P2 */}
       {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></span>}>
+        <Card>
           <Reveal delay={120}>
+            <div>
+              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></h3>
             <PlanCard
               currentPlan={currentPlan}
               onManagePlan={() => {
@@ -182,13 +185,15 @@ export default function Eu360Client() {
                 window.location.href = '/planos'
               }}
             />
+            </div>
           </Reveal>
-        </SectionWrapper>
+        </Card>
       )}
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2">📊<span>Humor da Semana</span></span>}>
+      <Card>
         <Reveal delay={140}>
-          <Card className="p-7">
+          <div>
+            <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><span className="text-2xl">📊</span><span>Humor da Semana</span></h3>
             <div className="flex justify-between">
               {moodHistory.map(({ day, emoji }) => (
                 <div key={day} className="flex flex-col items-center gap-2">
@@ -202,12 +207,13 @@ export default function Eu360Client() {
             <p className="mt-4 text-center text-xs text-support-2">
               Toque em um emoji para registrar como você se sente neste momento.
             </p>
-          </Card>
+          </div>
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></span>}>
-        <GridRhythm className="grid-cols-2 sm:grid-cols-3">
+      <Card>
+        <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></h3>
+        <PageGrid cols={3}>
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
               <Card className="h-full text-center">
@@ -217,15 +223,16 @@ export default function Eu360Client() {
               </Card>
             </Reveal>
           ))}
-        </GridRhythm>
-      </SectionWrapper>
+        </PageGrid>
+      </Card>
 
-      <SectionWrapper
-        title={<span className="inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></span>}
-        description="Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias."
-      >
+      <Card>
         <Reveal delay={220}>
-          <Card className="p-7">
+          <div>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></h3>
+              <p className="text-sm text-support-2 mt-1">Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias.</p>
+            </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 type="text"
@@ -250,14 +257,16 @@ export default function Eu360Client() {
             ) : (
               <p className="mt-4 text-xs text-support-2">Comece a registrar suas gratidões do dia!</p>
             )}
-          </Card>
+          </div>
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
       {/* Weekly Summary Section - P2 */}
       {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></span>}>
+        <Card>
           <Reveal delay={260}>
+            <div>
+              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></h3>
             <FeatureGate
               featureKey="weekly.summary"
               currentPlan={currentPlan}
@@ -291,14 +300,17 @@ export default function Eu360Client() {
                 onViewDetails={() => console.log('View details')}
               />
             </FeatureGate>
+            </div>
           </Reveal>
-        </SectionWrapper>
+        </Card>
       )}
 
       {/* PDF Export - P2 with FeatureGate */}
       {isEnabled('FF_LAYOUT_V1') && (
-        <SectionWrapper title={<span className="inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></span>}>
+        <Card>
           <Reveal delay={300}>
+            <div>
+              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
             <FeatureGate
               featureKey="weekly.pdf"
               currentPlan={currentPlan}
@@ -306,7 +318,7 @@ export default function Eu360Client() {
                 setUpsellSheet({ isOpen: true, type: 'export' })
               }}
             >
-              <Card className="p-7">
+              <div className="p-7">
                 <div className="text-center">
                   <p className="text-sm text-support-2 mb-4">
                     Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
@@ -321,10 +333,11 @@ export default function Eu360Client() {
                     Exportar PDF desta semana
                   </Button>
                 </div>
-              </Card>
+              </div>
             </FeatureGate>
+            </div>
           </Reveal>
-        </SectionWrapper>
+        </Card>
       )}
     </PageTemplate>
   )
