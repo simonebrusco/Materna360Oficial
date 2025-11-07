@@ -372,7 +372,7 @@ export function Mindfulness() {
     const handlePause = () => setIsPlaying(false)
 
     const handleError = () => {
-      setToastMessage('Não foi possível tocar este áudio.')
+      toast({ title: 'Não foi possível tocar este áudio.', kind: 'danger' })
       setIsPlaying(false)
     }
 
@@ -441,7 +441,7 @@ export function Mindfulness() {
           setIsPlaying(true)
         } catch (error) {
           console.error('Falha ao iniciar reprodução do Mindfulness', error)
-          setToastMessage('Não foi possível tocar este áudio.')
+          toast({ title: 'Não foi possível tocar este áudio.', kind: 'danger' })
           setCurrentPlayback(previousPlayback ?? null)
           setLastPlayback(previousLastPlayback ?? null)
           persistLastPlayback(previousLastPlayback ?? null)
