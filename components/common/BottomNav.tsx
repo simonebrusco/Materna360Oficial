@@ -3,18 +3,29 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
+import { isEnabled } from '@/app/lib/flags';
 
-type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' };
+type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' | 'home'; center?: boolean };
 
-const ITEMS: Item[] = [
+const ITEMS_WITHOUT_HUB: Item[] = [
   { href: '/meu-dia',    label: 'Meu Dia',   icon: 'star'  },
   { href: '/cuidar',     label: 'Cuidar',    icon: 'care'  },
   { href: '/descobrir',  label: 'Descobrir', icon: 'books' },
   { href: '/eu360',      label: 'Eu360',     icon: 'crown' },
 ];
 
+const ITEMS_WITH_HUB: Item[] = [
+  { href: '/meu-dia',    label: 'Meu Dia',   icon: 'star'  },
+  { href: '/cuidar',     label: 'Cuidar',    icon: 'care'  },
+  { href: '/maternar',   label: 'Maternar',  icon: 'home', center: true },
+  { href: '/descobrir',  label: 'Descobrir', icon: 'books' },
+  { href: '/eu360',      label: 'Eu360',     icon: 'crown' },
+];
+
 export default function BottomNav() {
   const pathname = usePathname();
+  const showHub = isEnabled('FF_MATERNAR_HUB');
+  const items = showHub ? ITEMS_WITH_HUB : ITEMS_WITHOUT_HUB;
 
   return (
     <nav
