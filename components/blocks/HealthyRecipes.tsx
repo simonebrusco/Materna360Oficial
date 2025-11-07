@@ -933,14 +933,6 @@ const childAgeBand = useMemo(
         </div>
       )}
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={3500}
-        />
-      )}
     </section>
   )
 }
