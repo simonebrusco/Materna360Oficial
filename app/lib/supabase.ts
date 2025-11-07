@@ -17,7 +17,7 @@ export function createBrowserSupabase(): Client | null {
   return createBrowserClient(url, anonKey)
 }
 
-export function createServerSupabase(serviceKey?: string): Client {
+export async function createServerSupabase(serviceKey?: string): Promise<Client> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = serviceKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -25,7 +25,7 @@ export function createServerSupabase(serviceKey?: string): Client {
     throw new Error('Supabase environment variables are not configured.')
   }
 
-  const { cookies } = require('next/headers')
+  const { cookies } = await import('next/headers')
   const cookieStore = cookies()
 
   return createServerClient(url, key, {
