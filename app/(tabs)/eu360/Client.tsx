@@ -33,12 +33,12 @@ type MoodHistory = {
 const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
 const MOODS = ['😔', '😐', '🙂', '😊', '😄'] as const
 const ACHIEVEMENTS = [
-  { emoji: '👣', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
-  { emoji: '🧘', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
-  { emoji: '🏡', title: 'Casa Organizada', desc: '20 tarefas completas' },
-  { emoji: '💛', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
-  { emoji: '🎨', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
-  { emoji: '📚', title: 'Leitora Dedicada', desc: '5 livros lidos' },
+  { icon: 'footprints', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
+  { icon: 'lotus', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
+  { icon: 'home', title: 'Casa Organizada', desc: '20 tarefas completas' },
+  { icon: 'hand-heart', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
+  { icon: 'palette', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
+  { icon: 'book-open', title: 'Leitora Dedicada', desc: '5 livros lidos' },
 ] as const
 const WEEKLY_SUMMARY = [
   { label: 'Autocuidado', value: 75 },
@@ -218,7 +218,9 @@ export default function Eu360Client() {
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
               <Card className="h-full text-center">
-                <p className="text-3xl">{achievement.emoji}</p>
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/30">
+                  <AppIcon name={achievement.icon as any} size={24} className="text-primary" decorative />
+                </div>
                 <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
                 <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">{achievement.desc}</p>
               </Card>
