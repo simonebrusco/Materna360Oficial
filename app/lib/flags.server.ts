@@ -1,66 +1,49 @@
-import { cookies } from 'next/headers';
-import type { Flags } from './flags';
+'use server';
+
+import { cookies, headers } from 'next/headers';
+
+export type Flags = {
+  FF_LAYOUT_V1: boolean;
+  FF_FEEDBACK_KIT: boolean;
+  FF_HOME_V1: boolean;
+  FF_MATERNAR_HUB: boolean;
+};
+
+const coerce = (v: string | undefined, fallback: boolean) =>
+  v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : fallback;
 
 /**
- * Coerce env value to boolean with fallback
+ * Server-side flag resolution - single source of truth
+ * Reads from: URL (via referer header) > cookie > env > Preview default
+ * Preview force switch via NEXT_PUBLIC_FORCE_MATERNAR guarantees visibility
  */
-function coerceEnv(v: string | undefined, fallback: '0' | '1'): boolean {
-  if (v === '1' || v === 'true') return true;
-  if (v === '0' || v === 'false') return false;
-  return fallback === '1';
-}
+export function getServerFlags(): Flags {
+  // Preview force switch (TEMP): guarantees visibility in Vercel preview / Builder
+  const force = coerce(process.env.NEXT_PUBLIC_FORCE_MATERNAR, false);
 
-/**
- * Resolve FF_MATERNAR_HUB from URL param > cookie > env default
- */
-function resolveMaternarFrom(
-  queryParam: string | null,
-  cookieValue: string | null,
-  envDefault: boolean
-): boolean {
-  // URL param takes highest precedence
-  if (queryParam === '1' || queryParam === 'true') return true;
-  if (queryParam === '0' || queryParam === 'false') return false;
+  const hdrs = headers();
+  const referer = hdrs.get('referer') ?? '';
+  const search = referer.includes('?')
+    ? new URLSearchParams(referer.split('?')[1])
+    : new URLSearchParams();
 
-  // Cookie takes second precedence
-  if (cookieValue === '1' || cookieValue === 'true') return true;
-  if (cookieValue === '0' || cookieValue === 'false') return false;
+  const qp = search.get('ff_maternar');
+  const cookieVal = cookies().get('ff_maternar')?.value ?? null;
 
-  // Env default takes lowest precedence
-  return envDefault;
-}
+  const isPreview = process.env.VERCEL_ENV === 'preview';
+  const envDefault = coerce(process.env.NEXT_PUBLIC_FF_MATERNAR_HUB, isPreview);
 
-/**
- * Server-side flag resolution (Unified API)
- * Reads from: cookie > env > Preview default
- * Note: URL params are not available on server without x-current-url header injection
- */
-export async function getServerFlags(): Promise<Flags> {
-  let cookieValue: string | null = null;
-
-  try {
-    const cookieStore = cookies();
-    cookieValue = cookieStore.get('ff_maternar')?.value ?? null;
-  } catch {
-    // cookies() might not be available in all contexts
-  }
-
-  // Get env defaults
-  const isPreview =
-    process.env.VERCEL_ENV === 'preview' ||
-    process.env.VERCEL_ENV === 'development';
-  const envDefault = coerceEnv(
-    process.env.NEXT_PUBLIC_FF_MATERNAR_HUB,
-    isPreview ? '1' : '0'
-  );
-
-  // Resolve without URL params (requires manual injection via headers if needed)
-  const maternarHub = resolveMaternarFrom(null, cookieValue, envDefault);
+  let mat = envDefault;
+  if (qp === '1') mat = true;
+  if (qp === '0') mat = false;
+  if (cookieVal === '1') mat = true;
+  if (cookieVal === '0') mat = false;
+  if (force) mat = true; // hard-enable in Preview if needed
 
   return {
     FF_LAYOUT_V1: true,
     FF_FEEDBACK_KIT: true,
     FF_HOME_V1: true,
-    FF_MATERNAR_HUB: maternarHub,
+    FF_MATERNAR_HUB: mat,
   };
 }
