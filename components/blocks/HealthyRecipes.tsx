@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import Emoji from '@/components/ui/Emoji'
 import { Reveal } from '@/components/ui/Reveal'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/Toast'
 import { isEnabled } from '@/app/lib/flags'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Empty } from '@/components/ui/feedback/Empty'
@@ -203,7 +203,7 @@ export function HealthyRecipesSection() {
   const [plannerTime, setPlannerTime] = useState<string>('12:00')
   const [plannerCategory, setPlannerCategory] = useState<PlannerCategory>('Almoço')
   const [plannerNote, setPlannerNote] = useState<string>('')
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     let active = true
