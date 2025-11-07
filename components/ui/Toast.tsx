@@ -122,6 +122,14 @@ export function ToastDemoButton() {
 // Provide a minimal inline component so those call sites compile
 // without rewriting them right now.
 
+/**
+ * @deprecated Use useToast().toast(...) instead. This compat shim is slated for removal.
+ *
+ * Legacy JSX API for backward compatibility only.
+ * All new code should use the useToast() hook:
+ *   const { toast } = useToast();
+ *   toast({ title: 'Message', kind: 'success' });
+ */
 export type LegacyToastProps = {
   message?: string;
   type?: 'default' | 'success' | 'warning' | 'danger' | 'error' | 'info';
@@ -130,6 +138,9 @@ export type LegacyToastProps = {
   duration?: number;
 };
 
+/**
+ * @deprecated Use useToast().toast(...) instead. This compat shim is slated for removal.
+ */
 export function Toast({ message, type = 'default', onClose, className, duration }: LegacyToastProps) {
   if (!message) return null;
 
