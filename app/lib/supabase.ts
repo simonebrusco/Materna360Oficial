@@ -1,5 +1,4 @@
 import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Client = SupabaseClient
@@ -26,6 +25,7 @@ export function createServerSupabase(serviceKey?: string): Client {
     throw new Error('Supabase environment variables are not configured.')
   }
 
+  const { cookies } = require('next/headers')
   const cookieStore = cookies()
 
   return createServerClient(url, key, {
