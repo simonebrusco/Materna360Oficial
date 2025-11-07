@@ -4,6 +4,7 @@ import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
 
 import Emoji from '@/components/ui/Emoji'
 import AppIcon from '@/components/ui/AppIcon'
+import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import BreathTimer from '@/components/blocks/BreathTimer'
