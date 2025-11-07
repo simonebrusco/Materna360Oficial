@@ -6,6 +6,7 @@ import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import HScroll from '@/components/common/HScroll'
+import { useToast } from '@/components/ui/Toast'
 
 const moods = [
   { emoji: '😔', label: 'Triste', value: 'triste' },
@@ -22,6 +23,7 @@ export function CheckInCard() {
   const [quote, setQuote] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const requestIdRef = useRef(0)
+  const { toast } = useToast()
 
   const moodLabelMap = useMemo(() => {
     return moods.reduce<Record<MoodValue, string>>((accumulator, mood) => {
@@ -82,15 +84,10 @@ export function CheckInCard() {
 
   const handleSubmit = () => {
     if (selectedMood) {
-      const label = moodLabelMap[selectedMood]
-      // Show success feedback
-      if (typeof window !== 'undefined' && window.parent) {
-        window.parent.postMessage({
-          type: 'toast',
-          message: 'Humor registrado! Um passo de cada vez é o suficiente.',
-          kind: 'success'
-        }, '*')
-      }
+      toast({
+        title: 'Humor registrado! Um passo de cada vez é o suficiente.',
+        kind: 'success',
+      })
       setSelectedMood(null)
       setQuote('')
       setIsLoading(false)
