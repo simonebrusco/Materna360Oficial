@@ -3,18 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
-import type { Flags } from '@/app/lib/flags.server';
 
 type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' | 'home'; center?: boolean };
 
-const ITEMS_WITHOUT_HUB: Item[] = [
-  { href: '/meu-dia',    label: 'Meu Dia',   icon: 'star'  },
-  { href: '/cuidar',     label: 'Cuidar',    icon: 'care'  },
-  { href: '/descobrir',  label: 'Descobrir', icon: 'books' },
-  { href: '/eu360',      label: 'Eu360',     icon: 'crown' },
-];
-
-const ITEMS_WITH_HUB: Item[] = [
+/**
+ * Forced 5-item navigation (temporary UX override to unblock QA)
+ * Always displays Maternar center tab, regardless of server flags
+ * If flag is OFF, clicking Maternar will redirect to /meu-dia server-side
+ */
+const ITEMS_FORCED: Item[] = [
   { href: '/meu-dia',    label: 'Meu Dia',   icon: 'star'  },
   { href: '/cuidar',     label: 'Cuidar',    icon: 'care'  },
   { href: '/maternar',   label: 'Maternar',  icon: 'home', center: true },
@@ -23,13 +20,14 @@ const ITEMS_WITH_HUB: Item[] = [
 ];
 
 interface BottomNavProps {
-  flags?: Flags;
+  flags?: any; // Ignored; kept for backward compat with layout
+  'data-debug-nav'?: string;
+  [key: string]: any;
 }
 
-export default function BottomNav({ flags }: BottomNavProps) {
+export default function BottomNav({ 'data-debug-nav': debugNav, ...props }: BottomNavProps) {
   const pathname = usePathname();
-  const hubOn = !!flags?.FF_MATERNAR_HUB;
-  const items = hubOn ? ITEMS_WITH_HUB : ITEMS_WITHOUT_HUB;
+  const items = ITEMS_FORCED; // Always 5 items, always center-highlighted
 
   return (
     <nav
@@ -38,9 +36,11 @@ export default function BottomNav({ flags }: BottomNavProps) {
         border-t bg-white/90 backdrop-blur
         shadow-[0_-2px_16px_rgba(47,58,86,0.06)]
       "
-      role="navigation" aria-label="Main"
+      role="navigation"
+      aria-label="Main"
+      data-debug-nav={debugNav ?? 'count:5;forced:yes'}
     >
-      <ul className={`mx-auto grid max-w-screen-md ${hubOn ? 'grid-cols-5' : 'grid-cols-4'}`}>
+      <ul className="mx-auto grid max-w-screen-md grid-cols-5">
         {items.map((it) => {
           const active =
             pathname === it.href ||
@@ -67,15 +67,21 @@ export default function BottomNav({ flags }: BottomNavProps) {
                   className={
                     isCenter
                       ? 'text-primary'
-                      : active ? 'text-primary' : 'text-support-2'
+                      : active
+                        ? 'text-primary'
+                        : 'text-support-2'
                   }
                   decorative
                 />
-                <span className={
-                  isCenter
-                    ? 'text-primary font-semibold'
-                    : active ? 'text-pink-600' : 'text-slate-500'
-                }>
+                <span
+                  className={
+                    isCenter
+                      ? 'text-primary font-semibold'
+                      : active
+                        ? 'text-pink-600'
+                        : 'text-slate-500'
+                  }
+                >
                   {it.label}
                 </span>
               </Link>
