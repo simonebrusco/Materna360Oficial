@@ -1,5 +1,5 @@
 /** Runtime feature flags used across the app. Extend this union when you add new flags. */
-export type FlagName = 'FF_LAYOUT_V1' | 'FF_FEEDBACK_KIT' | 'FF_HOME_V1';
+export type FlagName = 'FF_LAYOUT_V1' | 'FF_FEEDBACK_KIT' | 'FF_HOME_V1' | 'FF_MATERNAR_HUB';
 
 /** Discover surface flags (UI toggles derived from FF_LAYOUT_V1 by default) */
 export type DiscoverFlags = {
