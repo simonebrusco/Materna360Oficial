@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
+import { PageGrid } from '@/components/common/PageGrid'
 import { isEnabled } from '@/app/lib/flags'
 
 import { useGamification } from '@/app/lib/useGamification'
