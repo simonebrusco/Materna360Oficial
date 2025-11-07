@@ -88,29 +88,29 @@ export function MeuDiaClient({
 
   return (
     <PageTemplate title="Meu Dia" subtitle={dailyGreeting}>
-      <SectionWrapper>
+      <Card>
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal delay={160}>
           <CheckInCard />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal delay={220}>
           <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <GridStable>
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
-              <Card className="h-full">
+              <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
                 <div className="mb-3">
                   {isEnabled('FF_LAYOUT_V1') && action.iconName ? (
                     <AppIcon name={action.iconName as any} size={28} />
@@ -123,13 +123,13 @@ export function MeuDiaClient({
                 <Button variant="primary" size="sm" className="w-full">
                   Acessar
                 </Button>
-              </Card>
+              </div>
             </Reveal>
           ))}
         </GridStable>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal delay={280}>
           <FamilyPlanner
             currentDateKey={currentDateKey}
@@ -142,51 +142,49 @@ export function MeuDiaClient({
             initialBuckets={initialBuckets}
           />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal delay={320}>
           <Checklist currentDateKey={currentDateKey} />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card className="notesCard">
         <Reveal delay={360}>
-          <Card className="notesCard">
-            <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
-              <div className="notesCard-text">
-                <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
-                  <span className="mr-1">
-                    <AppIcon name="edit" size={16} aria-hidden />
-                  </span>
-                  {notesLabel}
-                </h2>
-                <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
-              </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowNoteModal(true)}
-                className="notesCard-action"
-              >
-                ＋ Adicionar
-              </Button>
+          <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
+            <div className="notesCard-text">
+              <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
+                <span className="mr-1">
+                  <AppIcon name="edit" size={16} aria-hidden />
+                </span>
+                {notesLabel}
+              </h2>
+              <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
             </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowNoteModal(true)}
+              className="notesCard-action"
+            >
+              ＋ Adicionar
+            </Button>
+          </div>
 
-            {notes.length > 0 ? (
-              <div className="notesCard-list space-y-2">
-                {notes.map((note, idx) => (
-                  <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
-                    {note}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
-            )}
-          </Card>
+          {notes.length > 0 ? (
+            <div className="notesCard-list space-y-2">
+              {notes.map((note, idx) => (
+                <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                  {note}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
+          )}
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
