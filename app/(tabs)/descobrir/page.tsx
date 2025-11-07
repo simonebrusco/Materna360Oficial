@@ -6,8 +6,10 @@ export const revalidate = 0;
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="p-4 text-sm">Loading…</div>}>
-      <Client />
-    </Suspense>
+    <main data-layout="page-template-v1">
+      <Suspense fallback={<div className="p-4 text-sm">Loading…</div>}>
+        <Client />
+      </Suspense>
+    </main>
   );
 }
