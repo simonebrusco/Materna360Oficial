@@ -1,145 +1,69 @@
 'use client'
 
-import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
-
-import Emoji from '@/components/ui/Emoji'
-import AppIcon from '@/components/ui/AppIcon'
-import { Card } from '@/components/ui/card'
-import { Reveal } from '@/components/ui/Reveal'
+import * as React from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
-import BreathTimer from '@/components/blocks/BreathTimer'
-import { CareJourneys } from '@/components/blocks/CareJourneys'
-import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
-import { OrganizationTips } from '@/components/features/OrganizationTips'
-import ProfessionalsSection from '@/components/support/ProfessionalsSection'
+import { SoftCard as Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PageGrid } from '@/components/common/PageGrid'
+import { FilterPill } from '@/components/ui/FilterPill'
 
-interface CuidarClientProps {
-  firstName?: string
-  initialProfessionalId?: string
-  recipesSection?: ReactNode
+type Props = {
+  recipesSection?: React.ReactNode
 }
 
-function SectionSkeleton({ className = '' }: { className?: string }) {
-  return <div className={`section-card h-44 animate-pulse bg-white/70 ${className}`} aria-hidden />
-}
-
-class SectionErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Falha ao renderizar seção em Cuide-se:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="section-card border border-primary/30 bg-primary/10 text-sm text-primary">
-          Algo não carregou corretamente. Tente recarregar a página.
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-
-function GuardedSection({ children }: { children: ReactNode }) {
-  return (
-    <Suspense fallback={<SectionSkeleton />}>
-      <SectionErrorBoundary>{children}</SectionErrorBoundary>
-    </Suspense>
-  )
-}
-
-export default function CuidarClient({ firstName = '', initialProfessionalId, recipesSection }: CuidarClientProps) {
-  const trimmedName = firstName.trim()
-  const hasName = trimmedName.length > 0
-  const subheadingTail =
-    'seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.'
-  const subheading = hasName ? `${trimmedName}, ${subheadingTail}` : `Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.`
-
+export default function CuidarClient({ recipesSection }: Props) {
   return (
     <PageTemplate
-      title="Cuide-se"
-      subtitle="Saúde física, emocional e segurança"
-      hero={
-        <Reveal>
-          <div className="space-y-4 mb-4">
-            <span className="section-eyebrow eyebrow-capsule">Autocuidado</span>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <AppIcon name="leaf" size={28} className="text-primary" decorative />
-              </div>
-              {hasName && (
-                <span
-                  className="inline-flex max-w-[12ch] items-center truncate rounded-full bg-support-1/10 px-3 py-1 text-sm font-semibold text-support-1"
-                  aria-label={`Mãe: ${trimmedName}`}
-                  title={trimmedName}
-                >
-                  {trimmedName}
-                </span>
-              )}
-            </div>
-          </div>
-        </Reveal>
-      }
+      title="Cuidar"
+      subtitle="Saúde física, emocional e segurança — no ritmo da vida real."
     >
       <Card>
-        <GuardedSection>
-          <Reveal delay={80}>
-            <BreathTimer />
-          </Reveal>
-        </GuardedSection>
+        <div className="flex flex-wrap gap-2">
+          <FilterPill active>Hoje</FilterPill>
+          <FilterPill>Semana</FilterPill>
+          <FilterPill>Bem-estar</FilterPill>
+          <FilterPill>Sono</FilterPill>
+          <FilterPill>Consultas</FilterPill>
+        </div>
       </Card>
 
-      <Card>
-        <GuardedSection>
-          <section className="space-y-4" aria-label="Mindfulness para Mães">
-            <Reveal>
-              <div className="space-y-2">
-                <h2 className="section-title">Mindfulness para Mães</h2>
-                <p className="section-subtitle max-w-2xl">
-                  Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
-                </p>
-              </div>
-            </Reveal>
-            <MindfulnessCollections />
-          </section>
-        </GuardedSection>
-      </Card>
-
-      <Card>
-        <GuardedSection>
-          <Reveal delay={140}>
-            <CareJourneys />
-          </Reveal>
-        </GuardedSection>
-      </Card>
-
-      {recipesSection && (
+      <PageGrid>
         <Card>
-          <GuardedSection>
-            {recipesSection}
-          </GuardedSection>
+          <EmptyState
+            title="Check-in de bem-estar"
+            text="Registre energia, humor e sinais do dia para receber sugestões."
+          />
         </Card>
-      )}
+
+        <Card>
+          <EmptyState
+            title="Diário da criança"
+            text="Alimentação, sono, humor e observações em um só lugar."
+          />
+        </Card>
+
+        <Card>
+          <EmptyState
+            title="Saúde & Vacinas"
+            text="Acompanhe vacinas, consultas e lembretes importantes."
+          />
+        </Card>
+      </PageGrid>
 
       <Card>
-        <GuardedSection>
-          <Reveal delay={200}>
-            <OrganizationTips />
-          </Reveal>
-        </GuardedSection>
+        {recipesSection ?? (
+          <EmptyState
+            title="Receitas saudáveis"
+            text="Personalizadas para a rotina — adicione um ingrediente e receba sugestões."
+          />
+        )}
       </Card>
 
       <Card>
-        <GuardedSection>
-          <ProfessionalsSection />
-        </GuardedSection>
+        <EmptyState
+          title="Momento de respiro"
+          text="Práticas rápidas para acalmar e recentrar."
+        />
       </Card>
     </PageTemplate>
   )

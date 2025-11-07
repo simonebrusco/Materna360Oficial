@@ -1,15 +1,20 @@
-import { Suspense } from 'react'
-
-import CuidarClient from '@/app/(tabs)/cuidar/Client'
+import type { Metadata } from 'next'
+import CuidarClient from './Client'
 import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export default function Page() {
+export const metadata: Metadata = {
+  title: 'Cuidar | Materna360',
+  description:
+    'Saúde física, emocional e segurança para sua família com uma experiência leve e organizada.',
+}
+
+export default async function Page() {
   return (
-    <Suspense fallback={<div className="p-4">Loading…</div>}>
+    <main data-layout="page-template-v1" className="bg-soft-page min-h-[100dvh] pb-24">
       <CuidarClient recipesSection={<HealthyRecipesSection />} />
-    </Suspense>
+    </main>
   )
 }
