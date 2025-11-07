@@ -1,10 +1,7 @@
 import { Suspense } from 'react'
 
 import { unstable_noStore as noStore } from 'next/cache'
-import nextDynamic from 'next/dynamic'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import AppShell from '@/components/common/AppShell'
-import { isEnabled } from '@/app/lib/flags'
+import CuidarClient from '@/app/(tabs)/cuidar/Client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
