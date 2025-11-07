@@ -32,6 +32,10 @@ export function SoftCard({
   );
 }
 
+// Backward compatibility alias
+export const Card = SoftCard;
+export default SoftCard;
+
 export function SoftCardContent({
   className,
   children,
