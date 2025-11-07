@@ -40,7 +40,7 @@ export default function BottomNav({ flags }: BottomNavProps) {
       "
       role="navigation" aria-label="Main"
     >
-      <ul className={`mx-auto grid max-w-screen-md ${showHub ? 'grid-cols-5' : 'grid-cols-4'}`}>
+      <ul className={`mx-auto grid max-w-screen-md ${hubOn ? 'grid-cols-5' : 'grid-cols-4'}`}>
         {items.map((it) => {
           const active =
             pathname === it.href ||
