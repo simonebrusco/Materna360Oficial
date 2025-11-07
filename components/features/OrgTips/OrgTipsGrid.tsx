@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import Emoji from '@/components/ui/Emoji'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/Toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
 import { OrgTipModal } from './OrgTipModal'
@@ -53,10 +53,6 @@ const COM_QUEM_OPTIONS = [
   { label: 'Em família', value: 'com_familia' },
 ] as const
 
-type ToastState = {
-  message: string
-  type?: 'success' | 'error' | 'info'
-}
 
 type Option = { label: string; value: string }
 
@@ -87,7 +83,7 @@ const labelFromOptions = (value: string | null, options: readonly Option[]) =>
 export function OrgTipsGrid() {
   const [selectedTip, setSelectedTip] = useState<OrgTip | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [toast, setToast] = useState<ToastState | null>(null)
+  const { toast } = useToast()
   const [showResults, setShowResults] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [fTempo, setFTempo] = useState<string | null>(null)
@@ -142,7 +138,7 @@ export function OrgTipsGrid() {
 
   const handleAddToPlanner = (tip: OrgTip) => {
     console.debug('planner:add:not-implemented', { id: tip.id })
-    setToast({ message: 'Em breve você poderá salvar no planner ❤️', type: 'info' })
+    toast({ title: 'Em breve você poderá salvar no planner', kind: 'default' })
   }
 
   const toggleCollapse = (key: keyof CollapseState) => {
@@ -545,7 +541,6 @@ export function OrgTipsGrid() {
         <OrgTipModal tip={selectedTip} open={isModalOpen} onClose={handleCloseModal} onComplete={handleComplete} />
       )}
 
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   )
 }
