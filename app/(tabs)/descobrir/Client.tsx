@@ -7,6 +7,11 @@ import { SectionWrapper } from '@/components/common/SectionWrapper';
 import GridRhythm from '@/components/common/GridRhythm';
 import { Button } from '@/components/ui/Button';
 import { Empty } from '@/components/ui/Empty';
+import { PageTemplate } from '@/components/common/PageTemplate';
+import { PageGrid } from '@/components/common/PageGrid';
+import { Card } from '@/components/ui/card';
+import { FilterPill } from '@/components/ui/FilterPill';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { 
   DISCOVER_CATALOG, 
   filterAndRankSuggestions, 
