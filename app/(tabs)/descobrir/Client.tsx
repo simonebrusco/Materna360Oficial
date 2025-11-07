@@ -151,11 +151,11 @@ export default function DiscoverClient() {
       ) : null}
 
       {/* Time Window Section */}
-      <SectionWrapper
-        title="Quanto tempo você tem agora?"
-        description="Escolha o tempo disponível para adaptar as sugestões."
-        className="mb-8"
-      >
+      <Card>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-support-1 mb-1">Quanto tempo você tem agora?</h3>
+          <p className="text-sm text-support-2">Escolha o tempo disponível para adaptar as sugestões.</p>
+        </div>
         <HScroll aria-label="Opções de tempo disponível">
           {TIME_OPTIONS.map((option) => (
             <button
@@ -179,14 +179,14 @@ export default function DiscoverClient() {
             </button>
           ))}
         </HScroll>
-      </SectionWrapper>
+      </Card>
 
       {/* Location Section */}
-      <SectionWrapper
-        title="Onde você está?"
-        description="Escolha o local para ideias relevantes."
-        className="mb-8"
-      >
+      <Card>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-support-1 mb-1">Onde você está?</h3>
+          <p className="text-sm text-support-2">Escolha o local para ideias relevantes.</p>
+        </div>
         <HScroll aria-label="Opções de local">
           {LOCATION_OPTIONS.map((option) => (
             <button
@@ -210,14 +210,14 @@ export default function DiscoverClient() {
             </button>
           ))}
         </HScroll>
-      </SectionWrapper>
+      </Card>
 
       {/* Mood Section */}
-      <SectionWrapper
-        title="Como você está agora?"
-        description="Escolha um humor para adaptar as sugestões."
-        className="mb-8"
-      >
+      <Card>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-support-1 mb-1">Como você está agora?</h3>
+          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugestões.</p>
+        </div>
         <HScroll aria-label="Opções de humor">
           {MOODS.map((m) => (
             <button
@@ -239,19 +239,16 @@ export default function DiscoverClient() {
             </button>
           ))}
         </HScroll>
-      </SectionWrapper>
+      </Card>
 
       {/* Suggestions Grid */}
       {filteredSuggestions.length > 0 ? (
-        <GridRhythm className="grid-cols-1 gap-4 md:grid-cols-2">
+        <PageGrid cols={2}>
           {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
             const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
             return (
-              <article
-                key={suggestion.id}
-                className="rounded-2xl bg-white p-4 shadow-[0_4px_24px_rgba(47,58,86,0.08)]"
-              >
+              <Card key={suggestion.id}>
                 <header className="mb-2 flex items-center gap-2">
                   <AppIcon name={suggestion.icon} decorative />
                   <h2 className="text-base font-semibold text-support-1">{suggestion.title}</h2>
@@ -289,10 +286,10 @@ export default function DiscoverClient() {
                     Detalhes
                   </button>
                 </div>
-              </article>
+              </Card>
             );
           })}
-        </GridRhythm>
+        </PageGrid>
       ) : (
         <EmptyState
           title="Nenhuma ideia encontrada"
