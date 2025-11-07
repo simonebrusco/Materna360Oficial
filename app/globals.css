@@ -4,6 +4,8 @@
 
 /* ===== Materna360 token fallbacks (safe to keep) ===== */
 :root {
+  /* Page background - soft luxury aesthetic */
+  --soft-page-bg: #fff7fb; /* very light pink */
 
   /* RGB triplets for Tailwind color mapping */
   --primary: 242 84 130; /* #F25482 → brand pink */
