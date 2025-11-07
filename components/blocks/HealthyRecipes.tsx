@@ -471,9 +471,9 @@ const childAgeBand = useMemo(
       closePlannerModal()
     } catch (err) {
       console.error(err)
-      setToast({
-        message: err instanceof Error ? err.message : 'Erro ao salvar no Planner.',
-        type: 'error',
+      toast({
+        title: err instanceof Error ? err.message : 'Erro ao salvar no Planner.',
+        kind: 'danger',
       })
     }
   }
@@ -492,10 +492,10 @@ const childAgeBand = useMemo(
 
     try {
       await navigator.clipboard.writeText(text)
-      setToast({ message: 'Detalhes copiados para compartilhar!', type: 'info' })
+      toast({ title: 'Detalhes copiados para compartilhar!', kind: 'default' })
     } catch (error) {
       console.error('Falha ao copiar para área de transferência:', error)
-      setToast({ message: 'Não foi possível copiar o conteúdo.', type: 'error' })
+      toast({ title: 'Não foi possível copiar o conteúdo.', kind: 'danger' })
     }
   }
 
