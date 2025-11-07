@@ -49,33 +49,48 @@ export function FeatureGate({
   onUpgradeClick,
 }: FeatureGateProps) {
   const isAllowed = FEATURE_ACCESS[featureKey].includes(currentPlan);
+  const [dismissed, setDismissed] = React.useState(false);
 
   if (isAllowed) {
     return <>{children}</>;
   }
 
+  if (dismissed) {
+    return <div className="opacity-50 pointer-events-none">{children}</div>;
+  }
+
   return (
     <div className="relative">
-      {/* Blur overlay */}
-      <div className="absolute inset-0 backdrop-blur-sm bg-white/40 rounded-2xl z-10 flex items-center justify-center pointer-events-none">
-        <div className="bg-white rounded-xl p-4 shadow-lg text-center max-w-xs pointer-events-auto">
+      {/* Blur overlay - soft and dismissible */}
+      <div className="absolute inset-0 backdrop-blur-sm bg-white/40 rounded-2xl z-10 flex items-center justify-center">
+        <div className="bg-white rounded-[var(--radius-card)] p-4 shadow-[0_4px_24px_rgba(47,58,86,0.08)] text-center max-w-xs border border-white/60">
           <div className="mb-2 flex justify-center">
             <AppIcon name="crown" variant="brand" size={32} />
           </div>
           <p className="text-sm font-semibold text-support-1 mb-1">
             {FEATURE_LABELS[featureKey]}
           </p>
-          <p className="text-xs text-support-2 mb-3">
+          <p className="text-xs text-support-2 mb-4">
             Recurso do plano Plus ou Premium
           </p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onUpgradeClick}
-            className="w-full"
-          >
-            Conheça os planos
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onUpgradeClick}
+              className="flex-1"
+            >
+              Conheça os planos
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDismissed(true)}
+              className="flex-1"
+            >
+              Ver depois
+            </Button>
+          </div>
         </div>
       </div>
 
