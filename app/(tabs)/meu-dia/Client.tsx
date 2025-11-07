@@ -20,6 +20,7 @@ import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+import { PageTemplate } from '@/components/common/PageTemplate'
 
 type MeuDiaClientProps = {
   dailyGreeting: string
