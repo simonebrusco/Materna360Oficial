@@ -466,7 +466,7 @@ const childAgeBand = useMemo(
       const time = formatTime(plannerTime)
       toast({
         title: `Receita salva no Planner para ${weekday} �s ${time}.`,
-        type: 'success',
+        kind: 'success',
       })
       closePlannerModal()
     } catch (err) {
