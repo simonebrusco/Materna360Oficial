@@ -87,15 +87,10 @@ export default function DiscoverClient() {
   };
 
   return (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
-      <div className="mb-6">
-        <h1 className="text-display font-bold text-support-1">
-          Descobrir
-        </h1>
-        <p className="mt-1 text-base-md text-support-2">
-          Encontre ideias rápidas e conteúdos para agora.
-        </p>
-      </div>
+    <PageTemplate
+      title="Descobrir"
+      subtitle="Brincadeiras e ideias inteligentes, por idade e objetivo"
+    >
 
       {/* Filter Pills: Time Window */}
       {selectedTimeWindow || selectedLocation || selectedMood ? (
@@ -299,15 +294,13 @@ export default function DiscoverClient() {
           })}
         </GridRhythm>
       ) : (
-        <Empty
-          icon="sparkles"
+        <EmptyState
           title="Nenhuma ideia encontrada"
-          subtitle="Tente ajustar os filtros para ver mais sugestões."
-          actionLabel="Limpar filtros"
-          onAction={handleClearFilters}
+          text="Tente ajustar os filtros para ver mais sugestões."
+          cta={<button onClick={handleClearFilters} className="text-sm font-medium text-primary hover:underline">Limpar filtros</button>}
         />
       )}
-    </main>
+    </PageTemplate>
   );
 }
 
