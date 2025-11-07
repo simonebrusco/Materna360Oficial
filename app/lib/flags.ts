@@ -1,5 +1,3 @@
-import { cookies } from 'next/headers';
-
 /**
  * Unified Flags type - single source of truth for all feature flags
  */
@@ -52,41 +50,6 @@ function resolveMaternarFrom(
 
   // Env default takes lowest precedence
   return envDefault;
-}
-
-/**
- * Server-side flag resolution (Unified API)
- * Reads from: cookie > env > Preview default
- * Note: URL params are not available on server without x-current-url header injection
- */
-export async function getServerFlags(): Promise<Flags> {
-  let cookieValue: string | null = null;
-
-  try {
-    const cookieStore = cookies();
-    cookieValue = cookieStore.get('ff_maternar')?.value ?? null;
-  } catch {
-    // cookies() might not be available in all contexts
-  }
-
-  // Get env defaults
-  const isPreview =
-    process.env.VERCEL_ENV === 'preview' ||
-    process.env.VERCEL_ENV === 'development';
-  const envDefault = coerceEnv(
-    process.env.NEXT_PUBLIC_FF_MATERNAR_HUB,
-    isPreview ? '1' : '0'
-  );
-
-  // Resolve without URL params (requires manual injection via headers if needed)
-  const maternarHub = resolveMaternarFrom(null, cookieValue, envDefault);
-
-  return {
-    FF_LAYOUT_V1: true,
-    FF_FEEDBACK_KIT: true,
-    FF_HOME_V1: true,
-    FF_MATERNAR_HUB: maternarHub,
-  };
 }
 
 /**
@@ -159,11 +122,11 @@ export function getClientFlags(
 
 /**
  * Legacy server-side equivalent
- * @deprecated - use getServerFlags() for unified Flags type instead
+ * @deprecated - use getServerFlags() from flags.server.ts instead
  */
 export async function getServerDiscoverFlags(): Promise<DiscoverFlags> {
-  const flags = await getServerFlags();
-  const on = flags.FF_LAYOUT_V1;
+  // This is deprecated - use the server module directly
+  const on = true; // Default value
   return {
     recShelf: on,
     recShelfAI: on,
