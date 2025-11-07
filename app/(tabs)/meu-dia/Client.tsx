@@ -87,7 +87,7 @@ export function MeuDiaClient({
   }
 
   return (
-    <>
+    <PageTemplate title="Meu Dia" subtitle={dailyGreeting}>
       <SectionWrapper>
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
@@ -217,6 +217,6 @@ export function MeuDiaClient({
           </div>
         </div>
       )}
-    </>
+    </PageTemplate>
   )
 }
