@@ -29,11 +29,6 @@ type TipState = {
   targetTimestamp?: number
 }
 
-type ToastState = {
-  message: string
-  type: 'success' | 'error' | 'info'
-}
-
 type StoredState = Record<string, TipState>
 
 type OrganizationTipsClientProps = {
@@ -512,14 +507,6 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         Você não precisa fazer tudo. Só o que cabe hoje.
       </p>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={4000}
-        />
-      )}
     </div>
   )
 }
