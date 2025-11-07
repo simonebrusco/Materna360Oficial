@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
-import { isEnabled } from '@/app/lib/flags';
+import { getClientFlagsUnified } from '@/app/lib/flags';
 
 type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' | 'home'; center?: boolean };
 
@@ -24,7 +24,8 @@ const ITEMS_WITH_HUB: Item[] = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const showHub = isEnabled('FF_MATERNAR_HUB');
+  const flags = getClientFlagsUnified();
+  const showHub = flags.FF_MATERNAR_HUB;
   const items = showHub ? ITEMS_WITH_HUB : ITEMS_WITHOUT_HUB;
 
   return (
