@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+
 /**
  * Unified Flags type - single source of truth for all feature flags
  */
@@ -53,39 +55,34 @@ function resolveMaternarFrom(
 }
 
 /**
- * Server-side flag resolution
- * Reads from: URL (via x-current-url header) > cookie > env > Preview default
+ * Server-side flag resolution (Unified API)
+ * Reads from: cookie > env > Preview default
+ * Note: URL params are not available on server without x-current-url header injection
  */
-export function getServerFlags(): Flags {
-  // Try to extract URL from headers if available
-  let queryParam: string | null = null;
-  try {
-    // This will only work if called in a Server Component with headers()
-    // For now, we'll just use env defaults
-    queryParam = null;
-  } catch {
-    // headers() not available, fall back to env
-  }
-
-  // Try to read cookie (requires 'use server' or cookies() call)
+export async function getServerFlags(): Promise<Flags> {
   let cookieValue: string | null = null;
+
   try {
-    const { cookies } = require('next/headers');
     const cookieStore = cookies();
     cookieValue = cookieStore.get('ff_maternar')?.value ?? null;
   } catch {
-    // cookies() not available in this context
+    // cookies() might not be available in all contexts
   }
 
   // Get env defaults
-  const isPreview = process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development';
-  const envDefault = coerceEnv(process.env.NEXT_PUBLIC_FF_MATERNAR_HUB, isPreview ? '1' : '0');
+  const isPreview =
+    process.env.VERCEL_ENV === 'preview' ||
+    process.env.VERCEL_ENV === 'development';
+  const envDefault = coerceEnv(
+    process.env.NEXT_PUBLIC_FF_MATERNAR_HUB,
+    isPreview ? '1' : '0'
+  );
 
-  // Resolve with precedence
-  const maternarHub = resolveMaternarFrom(queryParam, cookieValue, envDefault);
+  // Resolve without URL params (requires manual injection via headers if needed)
+  const maternarHub = resolveMaternarFrom(null, cookieValue, envDefault);
 
   return {
-    FF_LAYOUT_V1: true, // default to on
+    FF_LAYOUT_V1: true,
     FF_FEEDBACK_KIT: true,
     FF_HOME_V1: true,
     FF_MATERNAR_HUB: maternarHub,
@@ -93,11 +90,11 @@ export function getServerFlags(): Flags {
 }
 
 /**
- * Client-side flag resolution
+ * Client-side flag resolution (Unified API)
  * Reads from: URL param > cookie > env > Preview default
- * Safe to call on client only
+ * Safe to call only on client
  */
-export function getClientFlags(): Flags {
+export function getClientFlagsUnified(): Flags {
   // URL params (always available on client)
   const search =
     typeof window !== 'undefined'
@@ -105,7 +102,7 @@ export function getClientFlags(): Flags {
       : new URLSearchParams();
   const queryParam = search.get('ff_maternar');
 
-  // Cookie parsing (safe on client with document access)
+  // Cookie parsing
   let cookieValue: string | null = null;
   if (typeof document !== 'undefined') {
     const match = /(?:^|; )ff_maternar=([^;]*)/.exec(document.cookie);
@@ -133,52 +130,17 @@ export function getClientFlags(): Flags {
 }
 
 /**
- * Deprecated: use getServerFlags() or getClientFlags() instead
- * Main helper: isEnabled(flag) with proper per-flag policy
+ * Helper to check a single flag on client
+ * Supports URL override: ?ff_maternar=1|0
  */
 export function isEnabled(flag: FlagName): boolean {
-  const vercelEnv =
-    (process.env.NEXT_PUBLIC_VERCEL_ENV ||
-      process.env.VERCEL_ENV ||
-      'local')!.toLowerCase();
-
-  // QA override for layout flag (URL ?ff=1|0) - client-side only
-  if (flag === 'FF_LAYOUT_V1' && typeof window !== 'undefined') {
-    const q = new URLSearchParams(window.location.search).get('ff');
-    if (q != null) return q === '1' || q.toLowerCase() === 'true';
-  }
-
-  // QA override for maternar flag (URL ?ff_maternar=1|0) - client-side only
-  if (flag === 'FF_MATERNAR_HUB' && typeof window !== 'undefined') {
-    const q = new URLSearchParams(window.location.search).get('ff_maternar');
-    if (q != null) return q === '1' || q.toLowerCase() === 'true';
-  }
-
-  const raw = process.env[`NEXT_PUBLIC_${flag}` as keyof NodeJS.ProcessEnv] as
-    | string
-    | undefined;
-
-  if (flag === 'FF_LAYOUT_V1') {
-    if (vercelEnv === 'production') {
-      const v = (raw ?? '').trim().toLowerCase();
-      return v !== 'false' && v !== '0';
-    }
-    return coerceEnv(raw, '0');
-  }
-
-  if (flag === 'FF_MATERNAR_HUB') {
-    if (vercelEnv === 'production') {
-      return false;
-    }
-    return coerceEnv(raw, '1'); // Preview default true
-  }
-
-  return coerceEnv(raw, '0');
+  const flags = getClientFlagsUnified();
+  return flags[flag];
 }
 
 /**
- * Client-friendly pack of toggles for Descobrir (derived from layout flag by default)
- * @deprecated - use getClientFlags() for Flags type instead
+ * Legacy helper for Discover flags (backward compatible)
+ * @deprecated - use getClientFlagsUnified() instead
  */
 export function getClientFlags(
   overrides?: Partial<DiscoverFlags>
@@ -196,9 +158,18 @@ export function getClientFlags(
 }
 
 /**
- * Server-side equivalent (keeps same defaults)
- * @deprecated - use getServerFlags() for Flags type instead
+ * Legacy server-side equivalent
+ * @deprecated - use getServerFlags() for unified Flags type instead
  */
-export function getServerFlags(): DiscoverFlags {
-  return getClientFlags();
+export async function getServerDiscoverFlags(): Promise<DiscoverFlags> {
+  const flags = await getServerFlags();
+  const on = flags.FF_LAYOUT_V1;
+  return {
+    recShelf: on,
+    recShelfAI: on,
+    flashRoutine: on,
+    flashRoutineAI: on,
+    selfCare: on,
+    selfCareAI: on,
+  };
 }
