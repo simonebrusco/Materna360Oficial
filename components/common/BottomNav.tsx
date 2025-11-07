@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
-import { getClientFlagsUnified } from '@/app/lib/flags';
+import type { Flags } from '@/app/lib/flags.server';
 
 type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' | 'home'; center?: boolean };
 
@@ -22,11 +22,14 @@ const ITEMS_WITH_HUB: Item[] = [
   { href: '/eu360',      label: 'Eu360',     icon: 'crown' },
 ];
 
-export default function BottomNav() {
+interface BottomNavProps {
+  flags?: Flags;
+}
+
+export default function BottomNav({ flags }: BottomNavProps) {
   const pathname = usePathname();
-  const flags = getClientFlagsUnified();
-  const showHub = flags.FF_MATERNAR_HUB;
-  const items = showHub ? ITEMS_WITH_HUB : ITEMS_WITHOUT_HUB;
+  const hubOn = !!flags?.FF_MATERNAR_HUB;
+  const items = hubOn ? ITEMS_WITH_HUB : ITEMS_WITHOUT_HUB;
 
   return (
     <nav
