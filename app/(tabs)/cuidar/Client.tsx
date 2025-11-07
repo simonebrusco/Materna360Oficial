@@ -62,22 +62,16 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
   const subheading = hasName ? `${trimmedName}, ${subheadingTail}` : `Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.`
 
   return (
-    <div className="relative page-shell pb-32 pt-12">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-6 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
-      />
-
-      <div className="relative space-y-12">
+    <PageTemplate
+      title="Cuide-se"
+      subtitle="Saúde física, emocional e segurança"
+      hero={
         <Reveal>
-          <div className="space-y-4">
+          <div className="space-y-4 mb-4">
             <span className="section-eyebrow eyebrow-capsule">Autocuidado</span>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <AppIcon name="leaf" size={28} className="text-primary" decorative />
-                <h1 className="section-title md:text-4xl">
-                  Cuide-se
-                </h1>
               </div>
               {hasName && (
                 <span
@@ -89,12 +83,11 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
                 </span>
               )}
             </div>
-            <p className="section-subtitle max-w-3xl" aria-label={subheading}>
-              {subheading}
-            </p>
           </div>
         </Reveal>
-
+      }
+    >
+      <div className="relative space-y-6">
         <GuardedSection>
           <Reveal delay={80}>
             <BreathTimer />
@@ -104,18 +97,12 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
         <GuardedSection>
           <section className="space-y-4" aria-label="Mindfulness para Mães">
             <Reveal>
-
-              <p className="section-subtitle max-w-2xl">
-                Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
-              </p>
-
               <div className="space-y-2">
                 <h2 className="section-title">Mindfulness para Mães</h2>
                 <p className="section-subtitle max-w-2xl">
                   Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
                 </p>
               </div>
-
             </Reveal>
             <MindfulnessCollections />
           </section>
@@ -141,6 +128,6 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
           <ProfessionalsSection />
         </GuardedSection>
       </div>
-    </div>
+    </PageTemplate>
   )
 }
