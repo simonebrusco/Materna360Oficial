@@ -44,6 +44,14 @@ export function isEnabled(flag: FlagName): boolean {
     return coerceEnvBoolean(raw);
   }
 
+  if (flag === 'FF_MATERNAR_HUB') {
+    // Production OFF by default, Preview/Dev literal
+    if (vercelEnv === 'production') {
+      return false;
+    }
+    return coerceEnvBoolean(raw);
+  }
+
   // Other flags: literal in all environments (no prod fallback)
   return coerceEnvBoolean(raw);
 }
