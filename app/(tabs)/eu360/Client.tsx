@@ -112,12 +112,10 @@ export default function Eu360Client() {
   const currentPlan: 'Free' | 'Plus' | 'Premium' = 'Free'
 
   const content = (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6 md:px-8">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(58%_58%_at_50%_0%,rgba(255,216,230,0.5),transparent)]"
-      />
-
+    <PageTemplate
+      title="Eu360"
+      subtitle="Autocuidado, propósito e rede de apoio"
+    >
       <SectionWrapper className="bg-transparent">
         <ProfileForm />
       </SectionWrapper>
@@ -328,7 +326,7 @@ export default function Eu360Client() {
           </Reveal>
         </SectionWrapper>
       )}
-    </main>
+    </PageTemplate>
   )
 
   return (
