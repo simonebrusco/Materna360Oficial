@@ -59,6 +59,11 @@
   --glow-pink: 0 24px 48px rgba(255, 0, 94, 0.18);
 }
 
+/* Soft page background utility */
+.bg-soft-page {
+  background: var(--soft-page-bg);
+}
+
 @layer base {
   html,
   body {
