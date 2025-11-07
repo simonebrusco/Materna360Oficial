@@ -87,13 +87,15 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
         </Reveal>
       }
     >
-      <div className="relative space-y-6">
+      <Card>
         <GuardedSection>
           <Reveal delay={80}>
             <BreathTimer />
           </Reveal>
         </GuardedSection>
+      </Card>
 
+      <Card>
         <GuardedSection>
           <section className="space-y-4" aria-label="Mindfulness para Mães">
             <Reveal>
@@ -107,27 +109,35 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
             <MindfulnessCollections />
           </section>
         </GuardedSection>
+      </Card>
 
+      <Card>
         <GuardedSection>
           <Reveal delay={140}>
             <CareJourneys />
           </Reveal>
         </GuardedSection>
+      </Card>
 
+      <Card>
         <GuardedSection>
           <HealthyRecipesSection />
         </GuardedSection>
+      </Card>
 
+      <Card>
         <GuardedSection>
           <Reveal delay={200}>
             <OrganizationTips />
           </Reveal>
         </GuardedSection>
+      </Card>
 
+      <Card>
         <GuardedSection>
           <ProfessionalsSection />
         </GuardedSection>
-      </div>
+      </Card>
     </PageTemplate>
   )
 }
