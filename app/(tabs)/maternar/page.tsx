@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getServerFlags } from '@/app/lib/flags';
+import { getServerFlags } from '@/app/lib/flags.server';
 import MaternarClient from './Client';
 
 export const metadata = {
