@@ -19,9 +19,11 @@ export function SoftCard({
   return (
     <Component
       className={clsx(
-        'rounded-[var(--radius-card)] md:rounded-[var(--radius-card-lg)]',
-        'border shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]',
-        'border-[var(--border-soft-gray)] bg-white/90 backdrop-blur-sm',
+        'rounded-2xl border border-white/60',
+        'shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
+        'hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
+        'bg-white/95 backdrop-blur-[1px]',
+        'p-4 md:p-5',
         'transition-shadow duration-200',
         className
       )}
