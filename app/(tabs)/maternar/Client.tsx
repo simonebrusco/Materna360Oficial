@@ -14,7 +14,7 @@ export default function MaternarClient() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)]">
+    <main data-layout="page-template-v1" className="min-h-screen bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)]">
       <PageTemplate
         title="Bem-vinda ao Maternar"
         subtitle="Como você quer se cuidar hoje?"
