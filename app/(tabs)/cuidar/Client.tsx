@@ -55,7 +55,7 @@ function GuardedSection({ children }: { children: ReactNode }) {
   )
 }
 
-export default function CuidarClient({ firstName = '', initialProfessionalId }: CuidarClientProps) {
+export default function CuidarClient({ firstName = '', initialProfessionalId, recipesSection }: CuidarClientProps) {
   const trimmedName = firstName.trim()
   const hasName = trimmedName.length > 0
   const subheadingTail =
