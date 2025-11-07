@@ -1,4 +1,4 @@
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 
 export type Flags = {
   FF_LAYOUT_V1: boolean;
@@ -7,36 +7,46 @@ export type Flags = {
   FF_MATERNAR_HUB: boolean;
 };
 
-const coerce = (v: string | undefined, fallback: boolean) =>
-  v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : fallback;
+const toBool = (v: string | undefined, fallback: boolean) => {
+  if (v === '1' || v === 'true') return true;
+  if (v === '0' || v === 'false') return false;
+  return fallback;
+};
 
 /**
- * Server-side flag resolution - single source of truth
- * Reads from: URL (via referer header) > cookie > env > Preview default
- * Preview force switch via NEXT_PUBLIC_FORCE_MATERNAR guarantees visibility
+ * Server-side flag resolution - deterministic and single source of truth
+ * Precedence:
+ * 1. FORCE_MATERNAR_SSR (server-only, highest priority, not public)
+ * 2. Cookie override (set by QA/UI if needed)
+ * 3. Environment variables with Preview default
+ *
+ * No longer reads referer header (unreliable in Builder/Preview contexts)
  */
 export function getServerFlags(): Flags {
-  // Preview force switch (TEMP): guarantees visibility in Vercel preview / Builder
-  const force = coerce(process.env.NEXT_PUBLIC_FORCE_MATERNAR, false);
+  // 1) Hard server override (highest priority, server-only env):
+  const forceSSR = toBool(process.env.FORCE_MATERNAR_SSR, false);
+  if (forceSSR) {
+    return {
+      FF_LAYOUT_V1: true,
+      FF_FEEDBACK_KIT: true,
+      FF_HOME_V1: true,
+      FF_MATERNAR_HUB: true,
+    };
+  }
 
-  const hdrs = headers();
-  const referer = hdrs.get('referer') ?? '';
-  const search = referer.includes('?')
-    ? new URLSearchParams(referer.split('?')[1])
-    : new URLSearchParams();
-
-  const qp = search.get('ff_maternar');
+  // 2) Cookie override (set by QA/UI if any)
   const cookieVal = cookies().get('ff_maternar')?.value ?? null;
+  const cookieBool =
+    cookieVal === '1' ? true : cookieVal === '0' ? false : null;
 
+  // 3) Environment defaults (Preview vs Prod) + public env
   const isPreview = process.env.VERCEL_ENV === 'preview';
-  const envDefault = coerce(process.env.NEXT_PUBLIC_FF_MATERNAR_HUB, isPreview);
+  const envDefault = toBool(
+    process.env.NEXT_PUBLIC_FF_MATERNAR_HUB,
+    isPreview
+  );
 
-  let mat = envDefault;
-  if (qp === '1') mat = true;
-  if (qp === '0') mat = false;
-  if (cookieVal === '1') mat = true;
-  if (cookieVal === '0') mat = false;
-  if (force) mat = true; // hard-enable in Preview if needed
+  const mat = cookieBool !== null ? cookieBool : envDefault;
 
   return {
     FF_LAYOUT_V1: true,
