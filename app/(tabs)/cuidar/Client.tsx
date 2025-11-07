@@ -120,11 +120,13 @@ export default function CuidarClient({ firstName = '', initialProfessionalId }: 
         </GuardedSection>
       </Card>
 
-      <Card>
-        <GuardedSection>
-          <HealthyRecipesSection />
-        </GuardedSection>
-      </Card>
+      {recipesSection && (
+        <Card>
+          <GuardedSection>
+            {recipesSection}
+          </GuardedSection>
+        </Card>
+      )}
 
       <Card>
         <GuardedSection>
