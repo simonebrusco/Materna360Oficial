@@ -9,10 +9,17 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
   // This is the single source of truth for flag resolution
   const flags = getServerFlags();
 
+  // Compute nav item count for debugging
+  const itemCount = flags.FF_MATERNAR_HUB ? 5 : 4;
+  const hubStatus = flags.FF_MATERNAR_HUB ? 'on' : 'off';
+
   return (
     <div className="relative">
       <div className="pb-24">{children}</div>
-      <BottomNav flags={flags} />
+      <BottomNav
+        flags={flags}
+        data-debug-nav={`count:${itemCount};hub:${hubStatus}`}
+      />
     </div>
   );
 }
