@@ -2,7 +2,7 @@
 
 import clsx from 'clsx';
 import React from 'react';
-import { AppIcon } from '@/components/ui/AppIcon';
+import AppIcon from '@/components/ui/AppIcon';
 
 export interface EmptyStateProps {
   title: string;
