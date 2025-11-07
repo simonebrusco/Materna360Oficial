@@ -3,20 +3,52 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
+import { trackTelemetry } from '@/app/lib/telemetry';
 
-type Item = { href: string; label: string; icon: 'star' | 'care' | 'books' | 'crown' | 'home'; center?: boolean };
+type Item = {
+  href: string;
+  label: string;
+  icon: 'star' | 'care' | 'books' | 'crown' | 'home';
+  center?: boolean;
+  match?: (pathname: string) => boolean;
+};
 
 /**
- * Forced 5-item navigation (temporary UX override to unblock QA)
- * Always displays Maternar center tab, regardless of server flags
- * If flag is OFF, clicking Maternar will redirect to /meu-dia server-side
+ * 5-item bottom navigation with active state, telemetry, and accessibility
+ * Center Maternar tab always visible and highlighted
  */
 const ITEMS_FORCED: Item[] = [
-  { href: '/meu-dia',    label: 'Meu Dia',   icon: 'star'  },
-  { href: '/cuidar',     label: 'Cuidar',    icon: 'care'  },
-  { href: '/maternar',   label: 'Maternar',  icon: 'home', center: true },
-  { href: '/descobrir',  label: 'Descobrir', icon: 'books' },
-  { href: '/eu360',      label: 'Eu360',     icon: 'crown' },
+  {
+    href: '/meu-dia',
+    label: 'Meu Dia',
+    icon: 'star',
+    match: (p: string) => p === '/meu-dia',
+  },
+  {
+    href: '/cuidar',
+    label: 'Cuidar',
+    icon: 'care',
+    match: (p: string) => p === '/cuidar',
+  },
+  {
+    href: '/maternar',
+    label: 'Maternar',
+    icon: 'home',
+    center: true,
+    match: (p: string) => p.startsWith('/maternar'),
+  },
+  {
+    href: '/descobrir',
+    label: 'Descobrir',
+    icon: 'books',
+    match: (p: string) => p.startsWith('/descobrir'),
+  },
+  {
+    href: '/eu360',
+    label: 'Eu360',
+    icon: 'crown',
+    match: (p: string) => p === '/eu360' || p.startsWith('/eu360/'),
+  },
 ];
 
 interface BottomNavProps {
@@ -25,9 +57,20 @@ interface BottomNavProps {
   [key: string]: any;
 }
 
-export default function BottomNav({ 'data-debug-nav': debugNav, ...props }: BottomNavProps) {
+export default function BottomNav({
+  'data-debug-nav': debugNav,
+  ...props
+}: BottomNavProps) {
   const pathname = usePathname();
   const items = ITEMS_FORCED; // Always 5 items, always center-highlighted
+
+  const handleNavClick = (href: string, label: string) => {
+    trackTelemetry('nav_click', {
+      href,
+      label,
+      from: pathname,
+    });
+  };
 
   return (
     <nav
@@ -35,6 +78,7 @@ export default function BottomNav({ 'data-debug-nav': debugNav, ...props }: Bott
         fixed inset-x-0 bottom-0 z-50
         border-t bg-white/90 backdrop-blur
         shadow-[0_-2px_16px_rgba(47,58,86,0.06)]
+        safe-area pb-[env(safe-area-inset-bottom,0.75rem)]
       "
       role="navigation"
       aria-label="Main"
@@ -42,45 +86,46 @@ export default function BottomNav({ 'data-debug-nav': debugNav, ...props }: Bott
     >
       <ul className="mx-auto grid max-w-screen-md grid-cols-5">
         {items.map((it) => {
-          const active =
-            pathname === it.href ||
-            (it.href !== '/' && pathname?.startsWith(it.href));
+          // Determine active state using custom match function or equality
+          const isActive = it.match
+            ? it.match(pathname)
+            : pathname === it.href;
           const isCenter = it.center ?? false;
 
+          // Icon size: base size + 2px if active, capped at max if center
+          const baseIconSize = isCenter ? 28 : 22;
+          const iconSize = isActive && !isCenter ? baseIconSize + 2 : baseIconSize;
+
           return (
-            <li key={it.href}>
+            <li key={it.href} className="flex">
               <Link
                 href={it.href}
+                onClick={() => handleNavClick(it.href, it.label)}
                 className={`
                   flex flex-col items-center justify-center gap-1
                   text-[11px] sm:text-xs
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                   transition-all duration-200
-                  ${isCenter ? 'h-16 -mt-2' : 'h-14'}
+                  flex-1
+                  ${isCenter ? 'py-1 -mt-2 h-16' : 'py-2 h-14'}
                 `}
                 aria-label={it.label}
-                aria-current={active ? 'page' : undefined}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <AppIcon
                   name={it.icon}
-                  size={isCenter ? 32 : 24}
+                  size={iconSize}
                   className={
-                    isCenter
+                    isActive
                       ? 'text-primary'
-                      : active
-                        ? 'text-primary'
-                        : 'text-support-2'
+                      : 'text-support-2'
                   }
                   decorative
                 />
                 <span
-                  className={
-                    isCenter
-                      ? 'text-primary font-semibold'
-                      : active
-                        ? 'text-pink-600'
-                        : 'text-slate-500'
-                  }
+                  className={`
+                    ${isActive ? 'font-semibold text-primary' : 'text-support-2'}
+                  `}
                 >
                   {it.label}
                 </span>
