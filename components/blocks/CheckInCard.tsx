@@ -83,7 +83,14 @@ export function CheckInCard() {
   const handleSubmit = () => {
     if (selectedMood) {
       const label = moodLabelMap[selectedMood]
-      alert(`Check-in registrado com sucesso! ${label} 💛`)
+      // Show success feedback
+      if (typeof window !== 'undefined' && window.parent) {
+        window.parent.postMessage({
+          type: 'toast',
+          message: 'Humor registrado! Um passo de cada vez é o suficiente.',
+          kind: 'success'
+        }, '*')
+      }
       setSelectedMood(null)
       setQuote('')
       setIsLoading(false)

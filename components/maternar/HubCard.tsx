@@ -81,7 +81,7 @@ export default function HubCard({
         )}
 
         <div className="mt-auto pt-3 text-primary text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-          Acessar
+          Acessar →
           <AppIcon
             name="chevron"
             size={16}

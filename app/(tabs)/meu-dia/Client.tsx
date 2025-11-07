@@ -87,7 +87,7 @@ export function MeuDiaClient({
   }
 
   return (
-    <PageTemplate title="Meu Dia" subtitle={dailyGreeting}>
+    <PageTemplate title="Seu dia, no seu ritmo." subtitle="Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.">
       <Card>
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
