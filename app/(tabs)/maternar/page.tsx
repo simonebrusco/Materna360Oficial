@@ -7,9 +7,9 @@ export const metadata = {
   description: 'Central hub para acessar todos os recursos do Maternar',
 };
 
-export default async function MaternarPage() {
+export default function MaternarPage() {
   // Get server flags and redirect if flag is disabled
-  const flags = await getServerFlags();
+  const flags = getServerFlags();
   if (!flags.FF_MATERNAR_HUB) {
     redirect('/meu-dia');
   }
