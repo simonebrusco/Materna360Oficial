@@ -19,7 +19,7 @@ export function SoftCard({
   return (
     <Component
       className={clsx(
-        'rounded-2xl border border-white/60',
+        'rounded-[var(--radius-card)] border border-white/60',
         'shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
         'hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
         'bg-white/95 backdrop-blur-[1px]',

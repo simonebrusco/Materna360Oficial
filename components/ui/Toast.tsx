@@ -74,10 +74,11 @@ function ToastViewport({
         <div
           key={t.id}
           className={clsx(
-            'pointer-events-auto w-full max-w-sm rounded-xl shadow-lg border bg-white px-4 py-3',
-            t.kind === 'success' && 'border-green-200',
-            t.kind === 'warning' && 'border-yellow-200',
-            t.kind === 'danger' && 'border-red-200'
+            'pointer-events-auto w-full max-w-sm rounded-[var(--radius-card)] shadow-[0_4px_24px_rgba(47,58,86,0.08)] border border-white/60 bg-white px-4 py-3',
+            'hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] transition-shadow duration-200',
+            t.kind === 'success' && 'border-white/60',
+            t.kind === 'warning' && 'border-white/60',
+            t.kind === 'danger' && 'border-white/60'
           )}
           role="status"
           aria-live="polite"
