@@ -464,8 +464,8 @@ const childAgeBand = useMemo(
 
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
-      setToast({
-        message: `Receita salva no Planner para ${weekday} �s ${time}.`,
+      toast({
+        title: `Receita salva no Planner para ${weekday} �s ${time}.`,
         type: 'success',
       })
       closePlannerModal()
