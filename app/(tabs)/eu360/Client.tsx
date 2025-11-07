@@ -20,6 +20,8 @@ import { FeatureGate } from '@/components/ui/FeatureGate'
 import { WeeklySummary } from '@/components/ui/WeeklySummary'
 
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
+import { PageTemplate } from '@/components/common/PageTemplate'
+import { StatTile } from '@/components/ui/StatTile'
 
 
 type MoodHistory = {
