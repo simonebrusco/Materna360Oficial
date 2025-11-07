@@ -17,7 +17,7 @@ export function createBrowserSupabase(): Client | null {
   return createBrowserClient(url, anonKey)
 }
 
-export async function createServerSupabase(serviceKey?: string): Promise<Client> {
+export function createServerSupabase(serviceKey?: string): Client {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = serviceKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -25,7 +25,10 @@ export async function createServerSupabase(serviceKey?: string): Promise<Client>
     throw new Error('Supabase environment variables are not configured.')
   }
 
-  const { cookies } = await import('next/headers')
+  // Import cookies from next/headers here to avoid module-level server-only imports
+  // that would break client component compatibility
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { cookies } = require('next/headers')
   const cookieStore = cookies()
 
   return createServerClient(url, key, {
