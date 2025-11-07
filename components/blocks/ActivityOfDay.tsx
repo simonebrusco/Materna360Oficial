@@ -8,7 +8,7 @@ import type { ChildActivity } from '@/app/data/childContent'
 import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/Toast'
 import {
   recommendationStorage,
   RECOMMENDATIONS_UPDATED_EVENT,
@@ -31,10 +31,6 @@ const FALLBACK_ACTIVITY: ChildActivity = {
   ],
 }
 
-type ToastState = {
-  message: string
-  type: 'success' | 'error'
-}
 
 type ActivityOfDayProps = {
   dateKey: string
@@ -128,7 +124,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
   )
   const [isExpanded, setIsExpanded] = useState(false)
   const [savingKey, setSavingKey] = useState<string | null>(null)
-  const [toast, setToast] = useState<ToastState | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (children.length === 0) {
@@ -302,10 +298,10 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
           )
         }
 
-        setToast({ message: 'Atividade adicionada às Recomendações de hoje.', type: 'success' })
+        toast({ title: 'Atividade adicionada às Recomendações de hoje.', kind: 'success' })
       } catch (error) {
         console.error('Falha ao salvar atividade no Planner:', error)
-        setToast({ message: 'Não foi possível salvar agora. Tente novamente.', type: 'error' })
+        toast({ title: 'Não foi possível salvar agora. Tente novamente.', kind: 'danger' })
       } finally {
         setSavingKey((current) => (current === key ? null : current))
       }
@@ -476,7 +472,6 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
         )}
       </Card>
 
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   )
 }
