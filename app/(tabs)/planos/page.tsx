@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useState, useEffect } from 'react'
 import { track } from '@/app/lib/telemetry-track'
 import AppIcon from '@/components/ui/AppIcon'
