@@ -253,11 +253,7 @@ export function ProfessionalProfileSheet({
               aria-label="Fechar perfil"
               autoFocus
             >
-
               Voltar
-
-              <Emoji char="←" size={14} /> Voltar
-
             </Button>
             <Button
               variant="primary"
