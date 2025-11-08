@@ -465,14 +465,14 @@ const childAgeBand = useMemo(
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
       toast({
-        title: `Receita salva no Planner para ${weekday} �s ${time}.`,
+        title: `Tudo certo! Receita guardada para ${weekday}.`,
         kind: 'success',
       })
       closePlannerModal()
     } catch (err) {
       console.error(err)
       toast({
-        title: err instanceof Error ? err.message : 'Erro ao salvar no Planner.',
+        title: 'Algo não funcionou como esperado. Tente novamente.',
         kind: 'danger',
       })
     }
@@ -492,10 +492,10 @@ const childAgeBand = useMemo(
 
     try {
       await navigator.clipboard.writeText(text)
-      toast({ title: 'Detalhes copiados para compartilhar!', kind: 'default' })
+      toast({ title: 'Detalhes copiados. Compartilhe com quem desejar.', kind: 'default' })
     } catch (error) {
       console.error('Falha ao copiar para área de transferência:', error)
-      toast({ title: 'Não foi possível copiar o conteúdo.', kind: 'danger' })
+      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
     }
   }
 
