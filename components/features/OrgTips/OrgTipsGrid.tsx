@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import Emoji from '@/components/ui/Emoji'
 import { useToast } from '@/components/ui/Toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
@@ -240,7 +239,6 @@ export function OrgTipsGrid() {
               {tip.duration}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-support-2/10 px-3 py-1 text-xs font-semibold text-support-2">
-              <Emoji char="🧩" />
               {tip.category}
             </span>
           </div>
