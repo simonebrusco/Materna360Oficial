@@ -150,8 +150,8 @@ export default function PlanosPage() {
         {/* Feature Limit Banner (soft paywall) */}
         {showBanner && (
           <PaywallBanner
-            title="Você atingiu seu limite diário"
-            description="No plano Gratuito, você tem até 3 ideias por dia. Volte amanhã ou explore nossos planos."
+            title="Você atingiu o limite do seu plano atual."
+            description="Que tal conhecer as vantagens do próximo nível?"
             featureName="Gerador de Ideias"
             onUpgradeClick={() => handleUpgrade('plus')}
             onDismiss={() => setShowBanner(false)}
