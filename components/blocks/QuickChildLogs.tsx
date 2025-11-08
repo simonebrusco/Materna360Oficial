@@ -131,11 +131,11 @@ export function QuickChildLogs() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'alimentacao':
-        return '🍽️ Alimentação'
+        return 'Alimentação'
       case 'sono':
-        return '😴 Sono'
+        return 'Sono'
       case 'humor':
-        return '😊 Humor'
+        return 'Humor'
       default:
         return type
     }
