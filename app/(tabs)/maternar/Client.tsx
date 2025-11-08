@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
+import ContinueFromSection from '@/components/maternar/ContinueFromSection';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { trackTelemetry } from '@/app/lib/telemetry';
 
@@ -20,6 +21,7 @@ export default function MaternarClient() {
         subtitle="Aqui começa o seu centro de equilíbrio. Explore suas rotinas, cuide de você e acompanhe o crescimento do seu filho com leveza — tudo em um só lugar."
         hero={<HubHeader greeting="Bem-vinda ao Maternar." subtitle="Aqui começa o seu centro de equilíbrio. Explore suas rotinas, cuide de você e acompanhe o crescimento do seu filho com leveza — tudo em um só lugar." />}
       >
+        <ContinueFromSection />
         <CardHub />
       </PageTemplate>
     </main>
