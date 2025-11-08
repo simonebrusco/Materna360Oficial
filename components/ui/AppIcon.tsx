@@ -72,7 +72,7 @@ const VARIANT_CLASS: Record<AppIconVariant, string> = {
 };
 
 export type AppIconProps = Omit<LucideProps, 'color'> & {
-  name: AppIconName;
+  name: string;
   /** When true (default), hide from AT. When false, requires `label`. */
   decorative?: boolean;
   /** Required when decorative=false */
