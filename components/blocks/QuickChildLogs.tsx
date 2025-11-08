@@ -148,21 +148,18 @@ export function QuickChildLogs() {
       <div className="space-y-4">
         <ChipGroup
           title="Alimentação"
-          icon="fork"
           options={ALIMENTACAO_OPTIONS}
           onSelect={(value) => handleLogEntry('alimentacao', value)}
         />
 
         <ChipGroup
           title="Sono"
-          icon="moon"
           options={SONO_OPTIONS}
           onSelect={(value) => handleLogEntry('sono', value)}
         />
 
         <ChipGroup
           title="Humor"
-          icon="smile"
           options={HUMOR_OPTIONS}
           onSelect={(value) => handleLogEntry('humor', value)}
         />
