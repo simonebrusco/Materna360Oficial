@@ -21,8 +21,7 @@ const FEATURED_COLLECTION_IDS = new Set(['acolhimento', 'clareza'])
 
 type Collection = {
   id: string
-  iconName?: AppIconName
-  icon?: string
+  iconName: AppIconName
   titulo: string
   descricao: string
 }
