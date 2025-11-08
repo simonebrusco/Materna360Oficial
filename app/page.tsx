@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function Page() {
-  const flags = getServerFlags()
+  const flags = await getServerFlags()
   if (flags.FF_MATERNAR_HUB) {
     redirect('/maternar')
   }
