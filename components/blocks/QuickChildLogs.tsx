@@ -32,7 +32,6 @@ const HUMOR_OPTIONS = [
 
 interface ChipGroupProps {
   title: string
-  icon: string
   options: Array<{ label: string; icon: string }>
   onSelect: (value: string) => void
 }
