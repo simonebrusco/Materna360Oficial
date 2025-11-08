@@ -37,11 +37,10 @@ interface ChipGroupProps {
   onSelect: (value: string) => void
 }
 
-function ChipGroup({ title, icon, options, onSelect }: ChipGroupProps) {
+function ChipGroup({ title, options, onSelect }: Omit<ChipGroupProps, 'icon'> & { options: Array<{ label: string; icon: string }> }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-semibold text-support-1 flex items-center gap-2">
-        <AppIcon name={icon as any} size={16} decorative />
+      <label className="text-sm font-semibold text-support-1">
         {title}
       </label>
       <div className="flex gap-2 flex-wrap">
