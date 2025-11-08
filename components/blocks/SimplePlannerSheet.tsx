@@ -7,17 +7,21 @@ import AppIcon from '@/components/ui/AppIcon';
 
 export interface PlannerItem {
   id: string;
+  createdAt: number;
   title: string;
   note?: string;
-  horario?: string;
+  time?: string;
   done: boolean;
-  createdAt: number;
 }
+
+export type PlannerDraft = Omit<PlannerItem, 'id' | 'createdAt' | 'done'> & {
+  done?: boolean;
+};
 
 interface SimplePlannerSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (item: Omit<PlannerItem, 'id' | 'createdAt' | 'done'> & { done?: boolean }) => void;
+  onAdd: (draft: PlannerDraft) => void;
 }
 
 export function SimplePlannerSheet({ isOpen, onClose, onAdd }: SimplePlannerSheetProps) {
