@@ -173,6 +173,17 @@ export function MeuDiaClient({
       </Card>
 
       <Card>
+        <Reveal delay={190}>
+          <div className="space-y-6">
+            <MoodQuickSelector />
+            <div className="border-t border-white/40 pt-4">
+              <MoodSparkline />
+            </div>
+          </div>
+        </Reveal>
+      </Card>
+
+      <Card>
         <Reveal delay={220}>
           <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
         </Reveal>
