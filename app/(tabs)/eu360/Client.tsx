@@ -278,7 +278,7 @@ export default function Eu360Client() {
       {/* Weekly Summary Section - P2 */}
       {isEnabled('FF_LAYOUT_V1') && (
         <Card>
-          <Reveal delay={260}>
+          <Reveal delay={320}>
             <div>
               <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></h3>
             <FeatureGate
