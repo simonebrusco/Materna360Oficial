@@ -13,8 +13,9 @@ import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
-import { save, load } from '@/app/lib/persist';
-import { track } from '@/app/lib/telemetry-track';
+import { PaywallBanner } from '@/components/ui/PaywallBanner';
+import { save, load, getCurrentDateKey } from '@/app/lib/persist';
+import { track, trackTelemetry } from '@/app/lib/telemetry-track';
 import {
   DISCOVER_CATALOG,
   filterAndRankSuggestions,
