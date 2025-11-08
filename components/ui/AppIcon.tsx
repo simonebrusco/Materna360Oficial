@@ -89,8 +89,15 @@ export default function AppIcon({
   className,
   ...rest
 }: AppIconProps) {
-  const IconComponent = ICON_MAP[name] || Icons.HelpCircle;
-  
+  // Safe fallback: pick icon from ICON_MAP or use DEFAULT_ICON
+  const IconComponent = (ICON_MAP as Record<string, React.ComponentType<any>>)[name] ?? DEFAULT_ICON;
+
+  // Dev-only warning for unknown icon names
+  if (process.env.NODE_ENV !== 'production' && !(name in ICON_MAP)) {
+    // eslint-disable-next-line no-console
+    console.warn('[AppIcon] Unknown icon name:', name);
+  }
+
   // Merge variant class with any custom className
   const variantClass = VARIANT_CLASS[variant];
   const mergedClassName = variantClass && className ? `${variantClass} ${className}` : (variantClass || className);
