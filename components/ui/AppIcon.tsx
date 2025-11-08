@@ -49,7 +49,10 @@ const ICON_MAP = {
   target: Icons.Target,
 } as const;
 
+const DEFAULT_ICON = Icons.Info;
+
 export type AppIconName = keyof typeof ICON_MAP;
+export type KnownIconName = keyof typeof ICON_MAP;
 
 /**
  * Variant maps to semantic color classes.
