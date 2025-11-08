@@ -177,11 +177,10 @@ export function ProfessionalProfileSheet({
                   {professional.especialidade}
                 </p>
                 {professional.precoHint && (
-
-                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5">{professional.precoHint}</p>
-
-                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5"><Emoji char="💰" size={12} /> {professional.precoHint}</p>
-
+                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5">
+                    <AppIcon name="dollar-sign" size={14} variant="muted" />
+                    {professional.precoHint}
+                  </p>
                 )}
               </div>
             </div>
