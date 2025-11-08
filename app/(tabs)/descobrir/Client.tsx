@@ -340,9 +340,9 @@ export default function DiscoverClient() {
         </PageGrid>
       ) : (
         <EmptyState
-          title="Nenhum resultado encontrado com esses filtros."
-          text="Experimente ajustar as opções ou limpar os filtros para explorar novas ideias."
-          cta={<button onClick={handleClearFilters} className="text-sm font-medium text-primary hover:underline">Limpar filtros</button>}
+          title="Nenhum resultado encontrado."
+          text="Ajuste os filtros e tente novamente."
+          cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
         />
       )}
     </PageTemplate>
