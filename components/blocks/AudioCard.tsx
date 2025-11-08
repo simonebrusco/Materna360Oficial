@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import Emoji from '@/components/ui/Emoji'
 
 interface AudioCardProps {
   title: string
