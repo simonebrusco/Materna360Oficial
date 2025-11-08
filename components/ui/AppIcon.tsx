@@ -22,8 +22,10 @@ const ICON_MAP = {
   share: Icons.Share2,
   download: Icons.Download,
   check: Icons.Check,
+  'check-circle': Icons.CheckCircle,
   x: Icons.X,
   books: Icons.BookOpen,
+  'book-open': Icons.BookOpen,
   care: Icons.Heart,
   heart: Icons.Heart,
   star: Icons.Star,
@@ -37,6 +39,11 @@ const ICON_MAP = {
   sparkles: Icons.Sparkles,
   shieldCheck: Icons.ShieldCheck,
   'alert-circle': Icons.AlertCircle,
+  info: Icons.Info,
+  footprints: Icons.Footprints,
+  lotus: Icons.Lotus,
+  'hand-heart': Icons.HandHeart,
+  palette: Icons.Palette,
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;
