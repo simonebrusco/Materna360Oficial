@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { v4 as uuid } from 'uuid'
 
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
