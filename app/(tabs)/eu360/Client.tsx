@@ -23,6 +23,7 @@ import { WeeklySummary } from '@/components/ui/WeeklySummary'
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { StatTile } from '@/components/ui/StatTile'
+import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
 
 
 type MoodHistory = {
