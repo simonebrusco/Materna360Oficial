@@ -41,6 +41,7 @@ export default function CuidarClient({ recipesSection }: Props) {
             <h3 className="text-lg font-semibold text-support-1">Diário da criança</h3>
             <p className="text-sm text-support-2 mt-1">Registre alimentação, sono e humor em tempo real</p>
           </div>
+
           <QuickChildLogs />
         </Card>
 
@@ -68,5 +69,56 @@ export default function CuidarClient({ recipesSection }: Props) {
         />
       </Card>
     </PageTemplate>
+
+        </Reveal>
+
+        <GuardedSection>
+          <Reveal delay={80}>
+            <BreathTimer />
+          </Reveal>
+        </GuardedSection>
+
+        <GuardedSection>
+          <section className="space-y-4" aria-label="Mindfulness para Mães">
+            <Reveal>
+
+              <p className="section-subtitle max-w-2xl">
+                Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
+              </p>
+
+              <div className="space-y-2">
+                <h2 className="section-title">Mindfulness para Mães</h2>
+                <p className="section-subtitle max-w-2xl">
+                  Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
+                </p>
+              </div>
+
+            </Reveal>
+            <MindfulnessCollections />
+          </section>
+        </GuardedSection>
+
+        <GuardedSection>
+          <Reveal delay={140}>
+            <CareJourneys />
+          </Reveal>
+        </GuardedSection>
+
+        <GuardedSection>
+          <HealthyRecipesSection />
+        </GuardedSection>
+
+        <GuardedSection>
+          <Reveal delay={200}>
+            <OrganizationTips />
+          </Reveal>
+        </GuardedSection>
+
+        <GuardedSection>
+          <ProfessionalsSection />
+        </GuardedSection>
+      </div>
+    </div>
+
   )
 }
