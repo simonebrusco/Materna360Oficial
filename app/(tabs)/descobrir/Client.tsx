@@ -51,11 +51,20 @@ const LOCATION_OPTIONS: { id: Location; label: string; icon: 'place' | 'leaf' }[
 ];
 
 export default function DiscoverClient() {
+  const { toast } = useToast();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
   const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
   const [selectedLocation, setSelectedLocation] = React.useState<Location | undefined>(undefined);
   const [selectedMood, setSelectedMood] = React.useState<Mood | undefined>(undefined);
   const [savedItems, setSavedItems] = React.useState<Set<string>>(new Set());
+
+  // Load saved items from localStorage on mount
+  React.useEffect(() => {
+    const saved = load<string[]>('saved:discover', []);
+    if (saved && Array.isArray(saved)) {
+      setSavedItems(new Set(saved));
+    }
+  }, []);
 
   // Compute filtered suggestions in real time
   const filters: FilterInputs = {
