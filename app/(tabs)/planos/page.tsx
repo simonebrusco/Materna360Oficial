@@ -52,7 +52,7 @@ const PLANS: Plan[] = [
     ],
   },
   {
-    id: 'plus',
+    id: 'essencial',
     name: 'Essencial',
     price: '29',
     period: 'ao mês',
