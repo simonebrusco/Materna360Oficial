@@ -103,12 +103,14 @@ export function MeuDiaClient({
     }
   }
 
-  const handleAddPlannerItem = (item: Omit<PlannerItem, 'id' | 'createdAt'>) => {
+  const handleAddPlannerItem = (draft: PlannerDraft) => {
     const newItem: PlannerItem = {
-      ...item,
-      id: `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      id: globalThis.crypto?.randomUUID?.() ?? `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       createdAt: Date.now(),
-      done: item.done || false,
+      title: draft.title,
+      note: draft.note,
+      time: draft.time,
+      done: draft.done ?? false,
     }
 
     const updated = [...plannerItems, newItem]
@@ -125,7 +127,7 @@ export function MeuDiaClient({
       tab: 'meu-dia',
       component: 'SimplePlannerSheet',
       action: 'add',
-      payload: { title: item.title, hasNote: !!item.note, hasTime: !!item.horario },
+      payload: { title: draft.title, hasNote: !!draft.note, hasTime: !!draft.time },
     })
 
     // Show toast
