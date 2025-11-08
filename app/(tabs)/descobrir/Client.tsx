@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import HScroll from '@/components/common/HScroll';
 import AppIcon from '@/components/ui/AppIcon';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
