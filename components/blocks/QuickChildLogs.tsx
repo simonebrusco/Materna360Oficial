@@ -36,7 +36,7 @@ interface ChipGroupProps {
   onSelect: (value: string) => void
 }
 
-function ChipGroup({ title, options, onSelect }: Omit<ChipGroupProps, 'icon'> & { options: Array<{ label: string; icon: string }> }) {
+function ChipGroup({ title, options, onSelect }: ChipGroupProps) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-semibold text-support-1">
