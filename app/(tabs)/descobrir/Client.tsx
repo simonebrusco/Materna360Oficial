@@ -12,9 +12,12 @@ import { PageGrid } from '@/components/common/PageGrid';
 import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { 
-  DISCOVER_CATALOG, 
-  filterAndRankSuggestions, 
+import { useToast } from '@/components/ui/Toast';
+import { save, load } from '@/app/lib/persist';
+import { track } from '@/app/lib/telemetry-track';
+import {
+  DISCOVER_CATALOG,
+  filterAndRankSuggestions,
   shouldShowSaveForLater,
   type FilterInputs,
   type TimeWindow,
