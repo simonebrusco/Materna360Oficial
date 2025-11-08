@@ -125,11 +125,7 @@ export default function Eu360Client() {
         <Reveal>
           <div className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white rounded-xl">
             <div className="text-center">
-              {isEnabled('FF_LAYOUT_V1') ? (
-                <AppIcon name="care" size={48} className="text-primary mx-auto mb-2" />
-              ) : (
-                <p className="text-4xl"><Emoji char="💛" /></p>
-              )}
+              <AppIcon name="care" size={48} className="text-primary mx-auto mb-2" decorative />
               <h1 className="mt-3 text-2xl font-semibold md:text-3xl">Você é Importante</h1>
               <p className="mt-2 text-sm text-white/90 md:text-base">
                 Vá no seu próprio ritmo. Cada passo conta e você está no caminho certo.
@@ -151,7 +147,7 @@ export default function Eu360Client() {
                     <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
                   </div>
                   <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
-                  <p className="mt-2 text-xs text-support-2">Total de pontos: {gamification.totalPoints} <Emoji char="🎯" size={12} /></p>
+                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1">Total de pontos: {gamification.totalPoints} <AppIcon name="target" size={14} decorative /></p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
