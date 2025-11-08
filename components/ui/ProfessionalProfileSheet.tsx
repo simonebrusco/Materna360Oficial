@@ -193,11 +193,7 @@ export function ProfessionalProfileSheet({
                     key={`badge-${badge}-${idx}`}
                     className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary flex items-center gap-1.5"
                   >
-
                     <AppIcon name="check" size={12} decorative /> {badge}
-
-                    <Emoji char="✓" size={12} /> {badge}
-
                   </span>
                 ))}
               </div>
