@@ -60,13 +60,10 @@ export function track(event: EventBase & { event: EventName }): void {
       ts: event.ts || Date.now(),
     }
 
-    // Call existing telemetry system (fire-and-forget)
-    trackTelemetry(enriched.event, enriched.payload ?? {}, {
-      tab: enriched.tab,
-      component: enriched.component,
-      action: enriched.action,
-      id: enriched.id,
-    })
+    // Log to console in dev mode
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.debug('[telemetry]', enriched.event, enriched.payload)
+    }
 
     // Optionally post to endpoint (non-blocking)
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
