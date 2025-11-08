@@ -322,7 +322,7 @@ export default function Eu360Client() {
       {/* PDF Export - P2 with FeatureGate */}
       {isEnabled('FF_LAYOUT_V1') && (
         <Card>
-          <Reveal delay={300}>
+          <Reveal delay={360}>
             <div>
               <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
             <FeatureGate
