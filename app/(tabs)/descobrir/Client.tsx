@@ -190,6 +190,13 @@ export default function DiscoverClient() {
     handleFilterChange('clear_all');
   };
 
+  const handlePaywallCTA = () => {
+    trackTelemetry('paywall.click', {
+      context: 'ideas_quota_limit',
+      action: 'upgrade_click',
+    });
+  };
+
   return (
     <PageTemplate
       title="Descobrir"
