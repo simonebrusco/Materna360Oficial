@@ -83,12 +83,48 @@ export default function DiscoverClient() {
   };
 
   const handleSaveSuggestion = (id: string) => {
-    setSavedItems((prev) => new Set(prev).add(id));
-    console.log('[telemetry] discover.suggestion_saved', { suggestionId: id });
+    setSavedItems((prev) => {
+      const updated = new Set(prev);
+      const isSaved = updated.has(id);
+
+      if (isSaved) {
+        updated.delete(id);
+      } else {
+        updated.add(id);
+      }
+
+      // Persist to localStorage
+      save('saved:discover', Array.from(updated));
+
+      // Show toast
+      if (!isSaved) {
+        toast({
+          description: "Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.",
+        });
+      }
+
+      // Fire telemetry
+      track({
+        event: 'discover.suggestion_saved',
+        tab: 'descobrir',
+        component: 'DiscoverClient',
+        action: isSaved ? 'unsave' : 'save',
+        id,
+        payload: { id, isSaved: !isSaved },
+      });
+
+      return updated;
+    });
   };
 
-  const handleFilterChange = (filterType: string) => {
-    console.log('[telemetry] discover.filter_changed', { filterType });
+  const handleFilterChange = (filterType: string, value?: string) => {
+    track({
+      event: 'discover.filter_changed',
+      tab: 'descobrir',
+      component: 'DiscoverClient',
+      action: 'filter',
+      payload: { filter: filterType, value },
+    });
   };
 
   const handleClearFilters = () => {
