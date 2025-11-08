@@ -84,7 +84,7 @@ export default function BottomNav({
       aria-label="Main"
       data-debug-nav={debugNav ?? 'count:5;forced:yes'}
     >
-      <ul className="mx-auto grid max-w-screen-md grid-cols-5">
+      <ul className="mx-auto grid max-w-screen-md grid-cols-5 gap-1">
         {items.map((it) => {
           // Determine active state using custom match function or equality
           const isActive = it.match
@@ -102,12 +102,11 @@ export default function BottomNav({
                 href={it.href}
                 onClick={() => handleNavClick(it.href, it.label)}
                 className={`
-                  flex flex-col items-center justify-center gap-1
-                  text-[11px] sm:text-xs
+                  flex flex-col items-center justify-center
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                   transition-all duration-200
                   flex-1
-                  ${isCenter ? 'py-1 -mt-2 h-16' : 'py-2 h-14'}
+                  ${isCenter ? 'py-1 -mt-2 h-16' : 'py-1.5 h-14'}
                 `}
                 aria-label={it.label}
                 aria-current={isActive ? 'page' : undefined}
@@ -122,11 +121,7 @@ export default function BottomNav({
                   }
                   decorative
                 />
-                <span
-                  className={`
-                    ${isActive ? 'font-semibold text-primary' : 'text-support-2'}
-                  `}
-                >
+                <span className="block mt-0.5 text-[10px] leading-tight text-support-3">
                   {it.label}
                 </span>
               </Link>
