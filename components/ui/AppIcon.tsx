@@ -36,6 +36,7 @@ const ICON_MAP = {
   moon: Icons.Moon,
   sparkles: Icons.Sparkles,
   shieldCheck: Icons.ShieldCheck,
+  'alert-circle': Icons.AlertCircle,
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;
