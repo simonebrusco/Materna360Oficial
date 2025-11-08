@@ -195,6 +195,8 @@ export default function DiscoverClient() {
       context: 'ideas_quota_limit',
       action: 'upgrade_click',
     });
+    // Navigate to plans page
+    window.location.href = '/planos';
   };
 
   return (
