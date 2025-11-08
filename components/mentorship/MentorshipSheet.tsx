@@ -31,7 +31,7 @@ export function MentorshipSheet({ isOpen, onClose }: MentorshipSheetProps) {
   };
 
   const handleViewAvailability = (mentorName: string) => {
-    toast({ title: `Conectando com ${mentorName}...`, kind: 'default' });
+    toast({ title: `Conectando com ${mentorName}. Aguarde um momento.`, kind: 'default' });
   };
 
   return (

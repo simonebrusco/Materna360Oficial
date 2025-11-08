@@ -298,10 +298,10 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
           )
         }
 
-        toast({ title: 'Atividade adicionada às Recomendações de hoje.', kind: 'success' })
+        toast({ title: 'Tudo certo! Atividade adicionada às suas Recomendações.', kind: 'success' })
       } catch (error) {
         console.error('Falha ao salvar atividade no Planner:', error)
-        toast({ title: 'Não foi possível salvar agora. Tente novamente.', kind: 'danger' })
+        toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
       } finally {
         setSavingKey((current) => (current === key ? null : current))
       }

@@ -356,10 +356,10 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         void plannerApi.savePlannerItem(dateKey, item)
       }
 
-      toast({ title: 'Adicionado ao Planner.', kind: 'success' })
+      toast({ title: 'Tudo certo! Dica guardada no seu Planner.', kind: 'success' })
     } catch (error) {
       console.error('Falha ao adicionar dica ao Planner:', error)
-      toast({ title: 'Não foi possível adicionar agora. Tente novamente.', kind: 'danger' })
+      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
     }
   }
 

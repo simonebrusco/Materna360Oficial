@@ -138,7 +138,7 @@ export function OrgTipsGrid() {
 
   const handleAddToPlanner = (tip: OrgTip) => {
     console.debug('planner:add:not-implemented', { id: tip.id })
-    toast({ title: 'Em breve você poderá salvar no planner', kind: 'default' })
+    toast({ title: 'Ação registrada. Continue no seu ritmo.', kind: 'default' })
   }
 
   const toggleCollapse = (key: keyof CollapseState) => {

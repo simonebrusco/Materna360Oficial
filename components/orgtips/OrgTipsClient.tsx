@@ -52,7 +52,7 @@ export function OrgTipsClient() {
   }, [searchText, selectedTags]);
 
   const handleSave = (tipTitle: string) => {
-    toast({ title: `"${tipTitle}" salva no Planner`, kind: 'success' });
+    toast({ title: `Tudo certo! "${tipTitle}" foi guardada.`, kind: 'success' });
     // Telemetry
     console.log('[telemetry] orgtips.saved_to_planner', { tip: tipTitle });
   };
