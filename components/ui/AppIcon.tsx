@@ -47,6 +47,8 @@ const ICON_MAP = {
   meh: Icons.Meh,
   frown: Icons.Frown,
   target: Icons.Target,
+  plus: Icons.Plus,
+  clock: Icons.Clock,
 } as const;
 
 const DEFAULT_ICON = Icons.Info;
