@@ -1,6 +1,6 @@
 'use client'
 
-import { trackTelemetry } from './telemetry'
+export { trackTelemetry } from './telemetry'
 
 /**
  * Unified event schema for telemetry tracking
