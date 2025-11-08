@@ -2,7 +2,7 @@
 
 import React from 'react';
 import AppIcon from '@/components/ui/AppIcon';
-import { PlannerItem } from './SimplePlannerSheet';
+import type { PlannerItem } from './SimplePlannerSheet';
 
 interface SimplePlannerListProps {
   items: PlannerItem[];
@@ -41,10 +41,10 @@ export function SimplePlannerList({ items, onToggleDone }: SimplePlannerListProp
               </button>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-support-1 line-clamp-2">{item.title}</p>
-                {item.horario && (
+                {item.time && (
                   <div className="flex items-center gap-1 mt-1 text-xs text-support-2">
                     <AppIcon name="clock" size={12} decorative />
-                    {item.horario}
+                    {item.time}
                   </div>
                 )}
                 {item.note && <p className="text-xs text-support-2/70 mt-1">{item.note}</p>}
