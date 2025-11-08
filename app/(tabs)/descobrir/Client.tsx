@@ -352,6 +352,18 @@ export default function DiscoverClient() {
         </HScroll>
       </Card>
 
+      {/* Quota Limit Banner */}
+      {quotaLimitReached && (
+        <PaywallBanner
+          title="Você atingiu o limite do seu plano atual."
+          description="Atualize para explorar mais ideias e brincadeiras para seu filho."
+          featureName="ideas_daily"
+          upgradeText="Ver planos →"
+          onUpgradeClick={handlePaywallCTA}
+          variant="info"
+        />
+      )}
+
       {/* Suggestions Grid */}
       {filteredSuggestions.length > 0 ? (
         <PageGrid cols={2}>
