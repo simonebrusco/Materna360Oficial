@@ -11,9 +11,6 @@ import { PaywallBanner } from '@/components/ui/PaywallBanner'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { PageGrid } from '@/components/common/PageGrid'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 type PlanId = 'free' | 'plus' | 'premium'
 
 interface Plan {
