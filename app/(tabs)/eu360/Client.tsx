@@ -10,7 +10,6 @@ import { isEnabled } from '@/app/lib/flags'
 
 import { useGamification } from '@/app/lib/useGamification'
 import AppIcon from '@/components/ui/AppIcon'
-import Emoji from '@/components/ui/Emoji'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
@@ -28,11 +27,11 @@ import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
 
 type MoodHistory = {
   day: string
-  emoji: string
+  icon: string
 }
 
 const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
-const MOODS = ['😔', '😐', '🙂', '😊', '😄'] as const
+const MOODS = ['frown', 'meh', 'smile', 'smile-plus', 'sparkles'] as const
 const ACHIEVEMENTS = [
   { icon: 'footprints', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
   { icon: 'sparkles', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
@@ -70,7 +69,7 @@ export default function Eu360Client() {
   }
 
   const moodHistory: MoodHistory[] = useMemo(
-    () => daysOfWeek.map((day, index) => ({ day, emoji: MOODS[(index + 2) % MOODS.length] })),
+    () => daysOfWeek.map((day, index) => ({ day, icon: MOODS[(index + 2) % MOODS.length] })),
     []
   )
 
@@ -156,12 +155,12 @@ export default function Eu360Client() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <p className="text-2xl"><Emoji char="🔥" /></p>
+                    <div className="text-2xl text-primary"><AppIcon name="sparkles" size={28} decorative /></div>
                     <p className="mt-2 text-xs text-support-2">Sequência</p>
                     <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
                   </div>
                   <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <p className="text-2xl"><Emoji char="⭐" /></p>
+                    <div className="text-2xl text-primary"><AppIcon name="star" size={28} decorative /></div>
                     <p className="mt-2 text-xs text-support-2">Selos</p>
                     <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
                   </div>
@@ -195,19 +194,19 @@ export default function Eu360Client() {
       <Card>
         <Reveal delay={140}>
           <div>
-            <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><span className="text-2xl">📊</span><span>Humor da Semana</span></h3>
+            <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="smile" size={20} decorative /><span>Humor da Semana</span></h3>
             <div className="flex justify-between">
-              {moodHistory.map(({ day, emoji }) => (
+              {moodHistory.map(({ day, icon }) => (
                 <div key={day} className="flex flex-col items-center gap-2">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-2xl shadow-soft transition-transform duration-300 hover:-translate-y-1">
-                    {emoji}
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-primary shadow-soft transition-transform duration-300 hover:-translate-y-1">
+                    <AppIcon name={icon} size={20} decorative />
                   </span>
                   <span className="text-xs text-support-2">{day}</span>
                 </div>
               ))}
             </div>
             <p className="mt-4 text-center text-xs text-support-2">
-              Toque em um emoji para registrar como você se sente neste momento.
+              Registre como você se sente para acompanhar seu bem-estar.
             </p>
           </div>
         </Reveal>

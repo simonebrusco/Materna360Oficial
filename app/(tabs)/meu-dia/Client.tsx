@@ -7,8 +7,6 @@ import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
 
-import Emoji from '@/components/ui/Emoji'
-
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
@@ -43,10 +41,10 @@ type MeuDiaClientProps = {
 }
 
 const quickActions = [
-  { emoji: '🏡', iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
-  { emoji: '📸', iconName: 'books', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
-  { emoji: '🎯', iconName: 'star', title: 'Atividade do Dia', description: 'Faça com as crianças' },
-  { emoji: '☕', iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
+  { iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
+  { iconName: 'books', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
+  { iconName: 'star', title: 'Atividade do Dia', description: 'Faça com as crianças' },
+  { iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
 const NOTES_LABEL = 'Notas R\u00E1pidas'
@@ -195,11 +193,7 @@ export function MeuDiaClient({
             <Reveal key={action.title} delay={index * 80} className="h-full">
               <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
                 <div className="mb-3">
-                  {isEnabled('FF_LAYOUT_V1') && action.iconName ? (
-                    <AppIcon name={action.iconName as any} size={28} />
-                  ) : (
-                    <span className="text-2xl">{action.emoji}</span>
-                  )}
+                  <AppIcon name={action.iconName as any} size={28} decorative />
                 </div>
                 <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
                 <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
