@@ -51,13 +51,13 @@ const COLLECTIONS: Collection[] = [
   },
   {
     id: 'acolhimento',
-    icon: '���',
+    iconName: 'heart',
     titulo: 'Acolher emoções',
     descricao: 'Meditações guiadas para reconhecer sentimentos e transformá-los em cuidado consigo mesma.',
   },
   {
     id: 'clareza',
-    icon: '✨',
+    iconName: 'sparkles',
     titulo: 'Clareza e foco',
     descricao: 'Respirações focadas que ajudam a organizar pensamentos e priorizar com leveza.',
   },
