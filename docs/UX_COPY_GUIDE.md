@@ -103,12 +103,12 @@ Gentle and nurturing. Encourages self-care and awareness of both mother and chil
 > Diário atualizado! Este é um momento só seu.
 
 **Achievements Section:**  
-- Primeiro Passo → "Cada início merece ser celebrado."  
-- Mestre da Meditação → "A calma também se aprende."  
-- Casa Organizada → "Harmonia começa aos poucos."  
-- Mãe Cuidadora → "Seu cuidado transforma tudo ao redor."  
-- Criatividade em Ação → "Ideias simples geram grandes momentos."  
-- Leitora Dedicada → "O conhecimento é um presente que se multiplica."
+- **Primeiro Passo:** Cada início merece ser celebrado.  
+- **Mestre da Meditação:** A calma também se aprende.  
+- **Casa Organizada:** Harmonia começa aos poucos.  
+- **Mãe Cuidadora:** Seu cuidado transforma tudo ao redor.  
+- **Criatividade em Ação:** Ideias simples geram grandes momentos.  
+- **Leitora Dedicada:** O conhecimento é um presente que se multiplica.
 
 **Tone intention:**  
 Reflective and inspiring. Invites mothers to slow down, appreciate progress, and feel proud of their journey.
@@ -162,10 +162,10 @@ Transparent and empowering. Highlights value calmly, without pressure — every 
 
 5. **Toasts and Feedbacks:**  
    - Keep tone calm and positive.  
-   - Success → "Tudo certo! Sua ação foi concluída com sucesso."  
-   - Warning → "Verifique as informações e tente novamente."  
-   - Danger → "Algo não funcionou como esperado. Tente novamente."  
-   - Default/Info → "Ação registrada. Continue no seu ritmo."
+   - **Success:** Tudo certo! Sua ação foi concluída com sucesso.  
+   - **Warning:** Verifique as informações e tente novamente.  
+   - **Danger:** Algo não funcionou como esperado. Tente novamente.  
+   - **Info/Default:** Ação registrada. Continue no seu ritmo.
 
 ---
 
