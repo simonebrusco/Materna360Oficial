@@ -231,7 +231,17 @@ export default function Eu360Client() {
       </Card>
 
       <Card>
-        <Reveal delay={220}>
+        <Reveal delay={240}>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="bookmark" size={20} className="text-primary" decorative /><span>Diário Emocional</span></h3>
+            <p className="text-sm text-support-2 mt-1">Um espaço só seu para expressar e refletir sobre seus sentimentos.</p>
+          </div>
+          <EmotionalDiary />
+        </Reveal>
+      </Card>
+
+      <Card>
+        <Reveal delay={280}>
           <div>
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></h3>
