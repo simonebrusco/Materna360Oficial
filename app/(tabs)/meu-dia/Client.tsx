@@ -106,7 +106,7 @@ export function MeuDiaClient({
   const handleAddPlannerItem = (item: Omit<PlannerItem, 'id' | 'createdAt'>) => {
     const newItem: PlannerItem = {
       ...item,
-      id: uuid(),
+      id: `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       createdAt: Date.now(),
       done: item.done || false,
     }
