@@ -125,8 +125,17 @@ export default function DiscoverClient() {
 
   // Handlers
   const handleStartSuggestion = (id: string) => {
-    // Fire telemetry event (reuse existing helpers if available)
-    console.log('[telemetry] discover.suggestion_started', { suggestionId: id });
+    // Increment idea count (quota tracking)
+    incrementIdeaCount();
+
+    // Fire telemetry event
+    track({
+      event: 'discover.suggestion_started',
+      tab: 'descobrir',
+      component: 'DiscoverClient',
+      id,
+      payload: { suggestionId: id },
+    });
   };
 
   const handleSaveSuggestion = (id: string) => {
