@@ -307,7 +307,7 @@ export default function DiscoverClient() {
                 <p className="mb-4 text-xs text-support-3">
                   ⏱️ {suggestion.durationMin} minutos
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   {showSaveForLater ? (
                     <Button
                       variant="primary"
@@ -315,7 +315,7 @@ export default function DiscoverClient() {
                       onClick={() => handleSaveSuggestion(suggestion.id)}
                       className="flex-1"
                     >
-                      {isSaved ? '✓ Salvo' : 'Salvar para depois'}
+                      Salvar para depois
                     </Button>
                   ) : (
                     <Button
@@ -328,10 +328,16 @@ export default function DiscoverClient() {
                     </Button>
                   )}
                   <button
-                    className="text-primary text-sm font-medium hover:underline px-2 py-2"
-                    aria-label={`Detalhes de ${suggestion.title}`}
+                    onClick={() => handleSaveSuggestion(suggestion.id)}
+                    className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                    aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
+                    title={isSaved ? 'Remover de Salvos' : 'Salvar para depois'}
                   >
-                    Detalhes
+                    <AppIcon
+                      name="bookmark"
+                      size={20}
+                      variant={isSaved ? 'brand' : 'default'}
+                    />
                   </button>
                 </div>
               </Card>
