@@ -16,7 +16,6 @@ type JourneyId = 'amor-proprio' | 'calma' | 'energia-positiva' | 'gratidao' | 'd
 type Journey = {
   id: JourneyId
   title: string
-  emoji: string
   iconName: AppIconName
   description: string
   challenges: string[]
