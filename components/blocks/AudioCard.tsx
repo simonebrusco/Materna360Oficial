@@ -41,7 +41,7 @@ export function AudioCard({ title, duration, instructor, image, description }: A
           onClick={() => setIsPlaying(!isPlaying)}
           className="flex-1"
         >
-          {isPlaying ? <><Emoji char="⏸️" size={14} /> Pausar</> : <><Emoji char="▶️" size={14} /> Ouvir</>}
+          {isPlaying ? <><AppIcon name="check" size={16} variant="default" /> Pausar</> : <><AppIcon name="play" size={16} variant="default" /> Ouvir</>}
         </Button>
         <Button variant="secondary" size="sm" className="flex-1">
           Salvar
