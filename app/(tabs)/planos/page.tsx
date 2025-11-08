@@ -185,7 +185,7 @@ export default function PlanosPage() {
                   <AppIcon
                     name={plan.iconName}
                     size={28}
-                    variant={plan.isPrimary ? 'brand' : 'neutral'}
+                    variant={plan.isPrimary ? 'brand' : undefined}
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xl font-semibold text-support-1">
@@ -295,7 +295,7 @@ export default function PlanosPage() {
         {/* FAQ Section */}
         <div>
           <h2 className="text-lg font-semibold text-support-1 mb-4">
-            Dúvidas?
+            D��vidas?
           </h2>
           <div className="space-y-3">
             {[
