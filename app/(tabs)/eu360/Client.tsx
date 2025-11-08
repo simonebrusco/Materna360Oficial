@@ -34,7 +34,7 @@ const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
 const MOODS = ['😔', '😐', '🙂', '😊', '😄'] as const
 const ACHIEVEMENTS = [
   { icon: 'footprints', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
-  { icon: 'lotus', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
+  { icon: 'sparkles', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
   { icon: 'home', title: 'Casa Organizada', desc: '20 tarefas completas' },
   { icon: 'hand-heart', title: 'Mãe Cuidadora', desc: '30 momentos registrados' },
   { icon: 'palette', title: 'Criatividade em Ação', desc: '10 atividades criadas' },
