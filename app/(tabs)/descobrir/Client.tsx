@@ -51,6 +51,8 @@ const LOCATION_OPTIONS: { id: Location; label: string; icon: 'place' | 'leaf' }[
   { id: 'outdoor', label: 'Ao ar livre', icon: 'leaf' },
 ];
 
+const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
+
 export default function DiscoverClient() {
   const { toast } = useToast();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
@@ -58,14 +60,58 @@ export default function DiscoverClient() {
   const [selectedLocation, setSelectedLocation] = React.useState<Location | undefined>(undefined);
   const [selectedMood, setSelectedMood] = React.useState<Mood | undefined>(undefined);
   const [savedItems, setSavedItems] = React.useState<Set<string>>(new Set());
+  const [ideaCount, setIdeaCount] = React.useState(0);
+  const [quotaLimitReached, setQuotaLimitReached] = React.useState(false);
 
-  // Load saved items from localStorage on mount
+  // Helper: Get today's idea view count
+  const getTodayIdeaCount = React.useCallback(() => {
+    const dateKey = getCurrentDateKey();
+    const count = load<number>(`ideas:${dateKey}`, 0);
+    return typeof count === 'number' ? count : 0;
+  }, []);
+
+  // Helper: Increment idea count and check limit
+  const incrementIdeaCount = React.useCallback(() => {
+    const dateKey = getCurrentDateKey();
+    const currentCount = getTodayIdeaCount();
+    const newCount = currentCount + 1;
+
+    // Persist new count
+    save(`ideas:${dateKey}`, newCount);
+    setIdeaCount(newCount);
+
+    // Check if limit reached (emit telemetry when reached)
+    if (newCount === IDEA_QUOTA_LIMIT) {
+      setQuotaLimitReached(true);
+      trackTelemetry('paywall.view', {
+        context: 'ideas_quota_limit_reached',
+        count: newCount,
+        limit: IDEA_QUOTA_LIMIT,
+      });
+    }
+
+    return newCount;
+  }, [getTodayIdeaCount]);
+
+  // Load saved items and quota on mount
   React.useEffect(() => {
     const saved = load<string[]>('saved:discover', []);
     if (saved && Array.isArray(saved)) {
       setSavedItems(new Set(saved));
     }
-  }, []);
+
+    // Load today's idea count
+    const todayCount = getTodayIdeaCount();
+    setIdeaCount(todayCount);
+    if (todayCount >= IDEA_QUOTA_LIMIT) {
+      setQuotaLimitReached(true);
+      trackTelemetry('paywall.view', {
+        context: 'page_load_quota_limit',
+        count: todayCount,
+        limit: IDEA_QUOTA_LIMIT,
+      });
+    }
+  }, [getTodayIdeaCount]);
 
   // Compute filtered suggestions in real time
   const filters: FilterInputs = {
