@@ -177,7 +177,11 @@ export function ProfessionalProfileSheet({
                   {professional.especialidade}
                 </p>
                 {professional.precoHint && (
+
                   <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5">{professional.precoHint}</p>
+
+                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5"><Emoji char="💰" size={12} /> {professional.precoHint}</p>
+
                 )}
               </div>
             </div>
@@ -190,7 +194,11 @@ export function ProfessionalProfileSheet({
                     key={`badge-${badge}-${idx}`}
                     className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary flex items-center gap-1.5"
                   >
+
                     <AppIcon name="check" size={12} decorative /> {badge}
+
+                    <Emoji char="✓" size={12} /> {badge}
+
                   </span>
                 ))}
               </div>
@@ -250,7 +258,11 @@ export function ProfessionalProfileSheet({
               aria-label="Fechar perfil"
               autoFocus
             >
+
               Voltar
+
+              <Emoji char="←" size={14} /> Voltar
+
             </Button>
             <Button
               variant="primary"
