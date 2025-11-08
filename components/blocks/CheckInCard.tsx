@@ -9,11 +9,11 @@ import HScroll from '@/components/common/HScroll'
 import { useToast } from '@/components/ui/Toast'
 
 const moods = [
-  { iconName: 'heart' as const, label: 'Triste', value: 'triste' },
-  { iconName: 'circle' as const, label: 'Neutra', value: 'neutra' },
-  { iconName: 'smile' as const, label: 'Leve', value: 'leve' },
-  { iconName: 'star' as const, label: 'Feliz', value: 'feliz' },
-  { iconName: 'zap' as const, label: 'Exausta', value: 'sobrecarregada' },
+  { iconName: 'heart' as const, label: 'Triste', value: 'triste', color: 'danger' as const },
+  { iconName: 'sun' as const, label: 'Neutra', value: 'neutra', color: 'default' as const },
+  { iconName: 'sparkles' as const, label: 'Leve', value: 'leve', color: 'brand' as const },
+  { iconName: 'star' as const, label: 'Feliz', value: 'feliz', color: 'brand' as const },
+  { iconName: 'moon' as const, label: 'Exausta', value: 'sobrecarregada', color: 'muted' as const },
 ] as const
 
 type MoodValue = (typeof moods)[number]['value']
