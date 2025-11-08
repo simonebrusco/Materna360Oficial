@@ -6,6 +6,7 @@ import { SoftCard as Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageGrid } from '@/components/common/PageGrid'
 import { FilterPill } from '@/components/ui/FilterPill'
+import { QuickChildLogs } from '@/components/blocks/QuickChildLogs'
 
 type Props = {
   recipesSection?: React.ReactNode
