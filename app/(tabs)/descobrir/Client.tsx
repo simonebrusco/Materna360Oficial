@@ -198,7 +198,7 @@ export default function DiscoverClient() {
       action: 'upgrade_click',
     });
     // Navigate to plans page
-    window.location.href = '/planos';
+    router.push('/planos');
   };
 
   return (
