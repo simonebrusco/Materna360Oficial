@@ -11,7 +11,7 @@ import { PaywallBanner } from '@/components/ui/PaywallBanner'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { PageGrid } from '@/components/common/PageGrid'
 
-type PlanId = 'free' | 'plus' | 'premium'
+type PlanId = 'free' | 'essencial' | 'premium'
 
 interface Plan {
   id: PlanId
@@ -33,15 +33,15 @@ const PLANS: Plan[] = [
     name: 'Gratuito',
     price: '0',
     period: 'para sempre',
-    description: 'Perfeito para começar sua jornada',
+    description: 'Organize suas rotinas e acompanhe o básico.',
     badge: 'Sua opção atual',
     iconName: 'place',
     isPrimary: false,
-    cta: 'Sua opção atual',
+    cta: 'Acessar →',
     features: [
-      'Registrar humor e atividades',
-      '3 questões IA por semana',
+      'Registrar humor e atividades diárias',
       'Receitas e dicas de organização',
+      'Comunidade e suporte básico',
     ],
     fullFeatures: [
       'Registrar humor e atividades',
@@ -53,17 +53,17 @@ const PLANS: Plan[] = [
   },
   {
     id: 'plus',
-    name: 'Plus',
+    name: 'Essencial',
     price: '29',
     period: 'ao mês',
-    description: 'Para mães que querem mais insights',
+    description: 'Desbloqueie recomendações personalizadas e relatórios semanais.',
     badge: 'Popular',
     iconName: 'star',
     isPrimary: true,
-    cta: 'Fazer upgrade',
+    cta: 'Acessar →',
     features: [
       'Respostas IA ilimitadas',
-      'Análises avançadas e relatórios personalizados',
+      'Relatórios semanais personalizados',
       'Exportar semana em PDF',
     ],
     fullFeatures: [
@@ -80,18 +80,18 @@ const PLANS: Plan[] = [
     name: 'Premium',
     price: '49',
     period: 'ao mês',
-    description: 'Suporte completo e máximo de funcionalidades',
+    description: 'Viva a experiência completa, com acesso exclusivo a insights e exportações.',
     badge: 'Melhor valor',
     iconName: 'crown',
     isPrimary: true,
-    cta: 'Fazer upgrade',
+    cta: 'Acessar →',
     features: [
       'Mentorias mensais com profissionais',
       'Consultoria familiar personalizada',
       'Acesso antecipado a novos recursos',
     ],
     fullFeatures: [
-      'Tudo do Plus, mais:',
+      'Tudo do Essencial, mais:',
       'Mentorias mensais com profissionais',
       'Consultoria familiar personalizada',
       'Planos avançados com IA generativa',
@@ -130,8 +130,8 @@ export default function PlanosPage() {
     const plan = PLANS.find((p) => p.id === planId)
     if (!plan) return
 
-    if (planId === 'plus') {
-      const url = process.env.NEXT_PUBLIC_CHECKOUT_PLUS_URL || '#'
+    if (planId === 'essencial') {
+      const url = process.env.NEXT_PUBLIC_CHECKOUT_ESSENCIAL_URL || process.env.NEXT_PUBLIC_CHECKOUT_PLUS_URL || '#'
       if (url !== '#') window.location.href = url
       else alert('URL de checkout não configurada')
     } else if (planId === 'premium') {
@@ -269,7 +269,11 @@ export default function PlanosPage() {
                 <Button
                   variant={plan.isPrimary ? 'primary' : 'secondary'}
                   size="md"
-                  onClick={() => handleUpgrade(plan.id)}
+                  onClick={() => {
+                    if (plan.id !== 'free') {
+                      handleUpgrade(plan.id)
+                    }
+                  }}
                   className="w-full"
                 >
                   {plan.cta}
