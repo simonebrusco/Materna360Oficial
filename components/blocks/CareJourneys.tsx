@@ -33,7 +33,6 @@ const journeys: Journey[] = [
   {
     id: 'amor-proprio',
     title: 'Amor-Próprio',
-    emoji: '💗',
     iconName: 'heart',
     description: '7 dias para se olhar com carinho.',
     challenges: [
