@@ -125,7 +125,7 @@ export function CheckInCard() {
                   data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
                 >
                   <span className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
-                    <span className="text-2xl sm:text-3xl leading-none">{mood.emoji}</span>
+                    <AppIcon name={mood.iconName} size={24} variant={mood.color} />
                   </span>
                   <span className="mt-1 sm:mt-2 max-w-[11ch] text-center text-xs sm:text-sm md:text-base font-semibold leading-snug text-support-1 line-clamp-2">
                     {mood.label}
