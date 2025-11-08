@@ -166,7 +166,7 @@ export default function PlanosPage() {
             title="Você atingiu o limite do seu plano atual."
             description="Que tal conhecer as vantagens do próximo nível?"
             featureName="Gerador de Ideias"
-            onUpgradeClick={() => handleUpgrade('plus')}
+            onUpgradeClick={() => handleUpgrade(getNextPlanId(currentPlanId))}
             onDismiss={() => setShowBanner(false)}
           />
         )}
