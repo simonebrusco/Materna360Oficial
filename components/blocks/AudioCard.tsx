@@ -27,7 +27,7 @@ export function AudioCard({ title, duration, instructor, image, description }: A
           <h3 className="text-base font-semibold text-support-1 md:text-lg">{title}</h3>
           <p className="mt-1 text-xs font-medium uppercase tracking-[0.28em] text-support-2/70">{instructor}</p>
           <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-primary">
-            <Emoji char="⏱️" size={12} /> {duration}
+            <AppIcon name="time" size={14} variant="brand" /> {duration}
           </p>
         </div>
       </div>
