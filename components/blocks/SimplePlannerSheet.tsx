@@ -37,8 +37,7 @@ export function SimplePlannerSheet({ isOpen, onClose, onAdd }: SimplePlannerShee
     onAdd({
       title: titulo.trim(),
       note: nota.trim() || undefined,
-      horario: horario.trim() || undefined,
-      done: false,
+      time: horario.trim() || undefined,
     });
 
     // Clear form
