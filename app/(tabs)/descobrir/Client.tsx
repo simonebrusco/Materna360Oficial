@@ -184,7 +184,7 @@ export default function DiscoverClient() {
               >
                 <AppIcon name="heart" size={14} decorative />
                 {MOODS.find(m => m.id === selectedMood)?.label}
-                <span className="ml-1">✕</span>
+                <AppIcon name="x" size={14} decorative className="ml-1" />
               </button>
             )}
             <button
@@ -304,8 +304,9 @@ export default function DiscoverClient() {
                 <p className="mb-3 text-sm text-support-2">
                   {suggestion.description}
                 </p>
-                <p className="mb-4 text-xs text-support-3">
-                  ⏱️ {suggestion.durationMin} minutos
+                <p className="mb-4 text-xs text-support-3 flex items-center gap-1">
+                  <AppIcon name="time" size={14} decorative />
+                  {suggestion.durationMin} minutos
                 </p>
                 <div className="flex gap-2 items-center">
                   {showSaveForLater ? (
