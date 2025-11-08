@@ -107,9 +107,22 @@ const FEATURE_COMPARISON = [
   { category: 'Support', icon: 'message-circle' },
 ] as const
 
+/**
+ * Compute the next plan tier based on current plan
+ * Progression: free → essencial → premium
+ */
+function getNextPlanId(current: PlanId): PlanId {
+  if (current === 'free') return 'essencial'
+  if (current === 'essencial') return 'premium'
+  return 'premium'
+}
+
 export default function PlanosPage() {
   const [expandedPlan, setExpandedPlan] = useState<PlanId | null>(null)
   const [showBanner, setShowBanner] = useState(false)
+
+  // TODO: Wire to real user plan from context/state
+  const currentPlanId: PlanId = 'free'
 
   // Track page view on mount
   useEffect(() => {
