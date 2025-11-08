@@ -42,7 +42,7 @@ export function UpsellSheet({
               aria-label="Fechar"
 
             >
-              ✕
+              <AppIcon name="x" size={20} decorative />
             </button>
             <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary">
 
