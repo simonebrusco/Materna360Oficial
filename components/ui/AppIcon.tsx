@@ -41,7 +41,6 @@ const ICON_MAP = {
   'alert-circle': Icons.AlertCircle,
   info: Icons.Info,
   footprints: Icons.Footprints,
-  lotus: Icons.Lotus,
   'hand-heart': Icons.HandHeart,
   palette: Icons.Palette,
 } as const;
