@@ -48,6 +48,7 @@ const ICON_MAP = {
   meh: Icons.Meh,
   frown: Icons.Frown,
   bed: Icons.Bed,
+  bookmark: Icons.Bookmark,
   target: Icons.Target,
   plus: Icons.Plus,
   clock: Icons.Clock,
