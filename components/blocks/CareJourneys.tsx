@@ -49,7 +49,6 @@ const journeys: Journey[] = [
   {
     id: 'calma',
     title: 'Calma',
-    emoji: '🌿',
     iconName: 'leaf',
     description: '7 dias para diminuir o ritmo.',
     challenges: [
@@ -66,7 +65,6 @@ const journeys: Journey[] = [
   {
     id: 'energia-positiva',
     title: 'Energia Positiva',
-    emoji: '☀️',
     iconName: 'sun',
     description: '7 dias de leveza e alegria.',
     challenges: [
@@ -83,7 +81,6 @@ const journeys: Journey[] = [
   {
     id: 'gratidao',
     title: 'Gratidão',
-    emoji: '🌸',
     iconName: 'sparkles',
     description: '7 dias para perceber o que floresce.',
     challenges: [
@@ -100,7 +97,6 @@ const journeys: Journey[] = [
   {
     id: 'descanso',
     title: 'Descanso',
-    emoji: '🌙',
     iconName: 'moon',
     description: '7 dias para cuidar do corpo e da mente.',
     challenges: [
@@ -117,7 +113,6 @@ const journeys: Journey[] = [
   {
     id: 'confianca',
     title: 'Confiança',
-    emoji: '🌺',
     iconName: 'shieldCheck',
     description: '7 dias para voltar a acreditar em você.',
     challenges: [
