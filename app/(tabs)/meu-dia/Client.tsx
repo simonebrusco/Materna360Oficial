@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { v4 as uuid } from 'uuid'
 
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
@@ -14,6 +15,8 @@ import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
 import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
+import { SimplePlannerSheet, type PlannerItem } from '@/components/blocks/SimplePlannerSheet'
+import { SimplePlannerList } from '@/components/blocks/SimplePlannerList'
 import GridRhythm from '@/components/common/GridRhythm'
 import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -21,6 +24,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { useToast } from '@/components/ui/Toast'
+import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
+import { track } from '@/app/lib/telemetry-track'
 
 type MeuDiaClientProps = {
   dailyGreeting: string
@@ -74,9 +80,21 @@ export function MeuDiaClient({
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
 
+  const [showPlannerSheet, setShowPlannerSheet] = useState(false)
+  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
+  const { toast } = useToast()
+
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
+
+  // Load planner items from persistence on mount
+  useEffect(() => {
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    const savedItems = load<PlannerItem[]>(persistKey, [])
+    setPlannerItems(savedItems || [])
+  }, [])
 
   const handleAddNote = () => {
     if (noteText.trim()) {
@@ -84,6 +102,57 @@ export function MeuDiaClient({
       setNoteText('')
       setShowNoteModal(false)
     }
+  }
+
+  const handleAddPlannerItem = (item: Omit<PlannerItem, 'id' | 'createdAt'>) => {
+    const newItem: PlannerItem = {
+      ...item,
+      id: uuid(),
+      createdAt: Date.now(),
+      done: item.done || false,
+    }
+
+    const updated = [...plannerItems, newItem]
+    setPlannerItems(updated)
+
+    // Persist the updated list
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    save(persistKey, updated)
+
+    // Fire telemetry
+    track({
+      event: 'planner.item_add',
+      tab: 'meu-dia',
+      component: 'SimplePlannerSheet',
+      action: 'add',
+      payload: { title: item.title, hasNote: !!item.note, hasTime: !!item.horario },
+    })
+
+    // Show toast
+    toast({ description: 'Alterações salvas!' })
+  }
+
+  const handleTogglePlannerItem = (id: string) => {
+    const updated = plannerItems.map(item =>
+      item.id === id ? { ...item, done: !item.done } : item
+    )
+    setPlannerItems(updated)
+
+    // Persist the updated list
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    save(persistKey, updated)
+
+    // Fire telemetry
+    const item = plannerItems.find(i => i.id === id)
+    track({
+      event: 'planner.item_done',
+      tab: 'meu-dia',
+      component: 'SimplePlannerList',
+      action: 'toggle',
+      payload: { done: !item?.done },
+    })
   }
 
   return (
@@ -143,6 +212,36 @@ export function MeuDiaClient({
           />
         </Reveal>
       </Card>
+
+      <Card>
+        <Reveal delay={300}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-support-1 md:text-xl flex items-center gap-2">
+                <AppIcon name="check" size={20} decorative />
+                Itens da Semana
+              </h2>
+              <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowPlannerSheet(true)}
+              className="flex items-center gap-1"
+            >
+              <AppIcon name="plus" size={16} decorative />
+              Adicionar item
+            </Button>
+          </div>
+          <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
+        </Reveal>
+      </Card>
+
+      <SimplePlannerSheet
+        isOpen={showPlannerSheet}
+        onClose={() => setShowPlannerSheet(false)}
+        onAdd={handleAddPlannerItem}
+      />
 
       <Card>
         <Reveal delay={320}>
