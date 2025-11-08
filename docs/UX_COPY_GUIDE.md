@@ -8,7 +8,7 @@ No emojis are allowed in UI texts. Lucide icons should be used where visual emph
 
 ---
 
-## 🧩 /maternar
+## 🌸 /maternar
 **Title:**  
 > Bem-vinda ao Maternar.
 
@@ -23,8 +23,7 @@ No emojis are allowed in UI texts. Lucide icons should be used where visual emph
 > Antes de começar, conte um pouco sobre você e seu filho. Assim conseguimos sugerir conteúdos sob medida.
 
 **Tone intention:**  
-Warm welcome + calm balance.  
-Encourages self-organization and connection without pressure.
+Warm welcome + calm balance. Encourages self-organization and connection without pressure.
 
 ---
 
@@ -39,11 +38,104 @@ Encourages self-organization and connection without pressure.
 **Toast (after mood check-in):**  
 > Humor registrado! Um passo de cada vez é o suficiente.
 
-**Empty planner message:**  
+**Empty Planner:**  
 > Nenhum compromisso adicionado hoje. Que tal começar com algo leve?
 
 **Tone intention:**  
 Supportive and motivating, helping mothers to plan the day with empathy, not perfectionism.
+
+---
+
+## 🌱 /descobrir
+**Title:**  
+> Descubra o que inspira o desenvolvimento do seu filho.
+
+**Subtitle:**  
+> Atividades, brincadeiras e ideias pensadas para fortalecer o vínculo e transformar cada momento em aprendizado.
+
+**Empty State (no results):**  
+> Nenhum resultado encontrado com esses filtros.  
+> Experimente ajustar as opções ou limpar os filtros para explorar novas ideias.
+
+**CTA (empty state):**  
+> Limpar filtros
+
+**Toast (after saving an idea):**  
+> Ideia salva com sucesso! Você pode acessá-la mais tarde em "Salvos".
+
+**Tone intention:**  
+Curious and encouraging. Invites mothers to explore without guilt — every discovery is progress.
+
+---
+
+## 💞 /cuidar
+**Title:**  
+> Cuidar também é um gesto de amor.
+
+**Subtitle:**  
+> Acompanhe o bem-estar do seu filho e o seu próprio. Pequenas pausas fazem toda a diferença.
+
+**Empty State (no records yet):**  
+> Nenhum registro adicionado hoje.  
+> Que tal começar anotando como foi a alimentação ou o sono?
+
+**Toast (after adding record):**  
+> Registro salvo! Cada detalhe conta para acompanhar o progresso do seu filho.
+
+**Tone intention:**  
+Gentle and nurturing. Encourages self-care and awareness of both mother and child in a calm, caring tone.
+
+---
+
+## 🌿 /eu360
+**Title:**  
+> Como você está hoje?
+
+**Subtitle:**  
+> Um espaço para se observar, respirar e celebrar suas pequenas conquistas.  
+> Porque cuidar de si é parte essencial de cuidar dos outros.
+
+**Empty Diary (no entries yet):**  
+> Nenhum registro no diário ainda.  
+> Escreva algumas palavras sobre o seu dia — você vai se surpreender com o que descobre.
+
+**Toast (after saving entry):**  
+> Diário atualizado! Este é um momento só seu.
+
+**Achievements Section:**  
+- Primeiro Passo → "Cada início merece ser celebrado."  
+- Mestre da Meditação → "A calma também se aprende."  
+- Casa Organizada → "Harmonia começa aos poucos."  
+- Mãe Cuidadora → "Seu cuidado transforma tudo ao redor."  
+- Criatividade em Ação → "Ideias simples geram grandes momentos."  
+- Leitora Dedicada → "O conhecimento é um presente que se multiplica."
+
+**Tone intention:**  
+Reflective and inspiring. Invites mothers to slow down, appreciate progress, and feel proud of their journey.
+
+---
+
+## 💎 /planos
+**Title:**  
+> Descubra o plano ideal para sua jornada.
+
+**Subtitle:**  
+> Escolha o formato que combina com o seu ritmo — cada plano oferece recursos para facilitar o dia a dia com mais leveza.
+
+**Table copy (examples):**
+- **Gratuito:** organize suas rotinas e acompanhe o básico.  
+- **Essencial:** desbloqueie recomendações personalizadas e relatórios semanais.  
+- **Premium:** viva a experiência completa, com acesso exclusivo a insights e exportações.
+
+**Banner message (when user hits limit):**  
+> Você atingiu o limite do seu plano atual.  
+> Que tal conhecer as vantagens do próximo nível?
+
+**CTA (banner):**  
+> Ver planos →
+
+**Tone intention:**  
+Transparent and empowering. Highlights value calmly, without pressure — every user should feel in control of their choice.
 
 ---
 
@@ -61,12 +153,19 @@ Supportive and motivating, helping mothers to plan the day with empathy, not per
 3. **Hierarchy:**  
    - Titles: sentence case, semibold, calm.  
    - Subtitles: regular weight, slightly smaller, two-line max.  
-   - CTAs: concise and active (e.g., "Acessar →", "Adicionar item", "Salvar").  
+   - CTAs: concise and active (e.g., "Acessar →", "Salvar", "Adicionar item").  
 
 4. **Empty States:**  
-   - Should always encourage, never scold.  
-   - Offer one simple next step ("Comece com algo leve").  
+   - Always encouraging, never reprimanding.  
+   - Offer one clear next step ("Comece com algo leve").  
    - Prefer warm imperatives ("Conte um pouco", "Planeje pequenas tarefas").  
+
+5. **Toasts and Feedbacks:**  
+   - Keep tone calm and positive.  
+   - Success → "Tudo certo! Sua ação foi concluída com sucesso."  
+   - Warning → "Verifique as informações e tente novamente."  
+   - Danger → "Algo não funcionou como esperado. Tente novamente."  
+   - Default/Info → "Ação registrada. Continue no seu ritmo."
 
 ---
 
