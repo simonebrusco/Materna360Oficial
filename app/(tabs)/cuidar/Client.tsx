@@ -31,21 +31,21 @@ export default function CuidarClient({ recipesSection }: Props) {
         <Card>
           <EmptyState
             title="Check-in de bem-estar"
-            text="Registre energia, humor e sinais do dia para receber sugestões."
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
           />
         </Card>
 
         <Card>
           <EmptyState
             title="Diário da criança"
-            text="Alimentação, sono, humor e observações em um só lugar."
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
           />
         </Card>
 
         <Card>
           <EmptyState
             title="Saúde & Vacinas"
-            text="Acompanhe vacinas, consultas e lembretes importantes."
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
           />
         </Card>
       </PageGrid>
@@ -54,7 +54,7 @@ export default function CuidarClient({ recipesSection }: Props) {
         {recipesSection ?? (
           <EmptyState
             title="Receitas saudáveis"
-            text="Personalizadas para a rotina — adicione um ingrediente e receba sugestões."
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
           />
         )}
       </Card>
@@ -62,7 +62,7 @@ export default function CuidarClient({ recipesSection }: Props) {
       <Card>
         <EmptyState
           title="Momento de respiro"
-          text="Práticas rápidas para acalmar e recentrar."
+          text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
         />
       </Card>
     </PageTemplate>
