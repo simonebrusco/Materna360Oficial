@@ -37,10 +37,11 @@ export default function CuidarClient({ recipesSection }: Props) {
         </Card>
 
         <Card>
-          <EmptyState
-            title="Diário da criança"
-            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
-          />
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-support-1">Diário da criança</h3>
+            <p className="text-sm text-support-2 mt-1">Registre alimentação, sono e humor em tempo real</p>
+          </div>
+          <QuickChildLogs />
         </Card>
 
         <Card>
