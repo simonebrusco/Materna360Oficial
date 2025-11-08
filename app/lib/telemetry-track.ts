@@ -24,6 +24,7 @@ export type EventName =
   // Maternar
   | 'maternar.page_view'
   | 'maternar.card_click'
+  | 'maternar.highlight_click'
   // Planner (Meu Dia)
   | 'planner.item_add'
   | 'planner.item_done'
