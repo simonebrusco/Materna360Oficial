@@ -27,7 +27,7 @@ export default function ContinueFromSection() {
     if (plannerData && Array.isArray(plannerData) && plannerData.length > 0) {
       items.push({
         label: 'Retomar seu planner',
-        href: '/meu-dia#planner',
+        href: '/meu-dia',
         icon: 'calendar',
         priority: 1,
       });
@@ -49,7 +49,7 @@ export default function ContinueFromSection() {
     if (moodData && Array.isArray(moodData) && moodData.length > 0) {
       items.push({
         label: 'Ver seu humor da semana',
-        href: '/meu-dia#mood',
+        href: '/meu-dia',
         icon: 'smile',
         priority: 3,
       });
@@ -60,7 +60,7 @@ export default function ContinueFromSection() {
     if (diaryData && Array.isArray(diaryData) && diaryData.length > 0) {
       items.push({
         label: 'Abrir diário',
-        href: '/eu360#diary',
+        href: '/eu360',
         icon: 'bookmark',
         priority: 4,
       });
@@ -71,7 +71,7 @@ export default function ContinueFromSection() {
     if (savedData && Array.isArray(savedData) && savedData.length > 0) {
       items.push({
         label: 'Ver ideias salvas',
-        href: '/descobrir#salvos',
+        href: '/descobrir',
         icon: 'bookmark',
         priority: 5,
       });
