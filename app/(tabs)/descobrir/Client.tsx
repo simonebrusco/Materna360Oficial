@@ -108,7 +108,7 @@ export default function DiscoverClient() {
               >
                 <AppIcon name="time" size={14} decorative />
                 {TIME_OPTIONS.find(t => t.id === selectedTimeWindow)?.label}
-                <span className="ml-1">✕</span>
+                <AppIcon name="x" size={14} decorative className="ml-1" />
               </button>
             )}
             {selectedLocation && (
