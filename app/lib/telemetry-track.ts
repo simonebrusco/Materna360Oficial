@@ -128,10 +128,3 @@ export function trackFilterChange(
     payload: { filterType, filterValue, appliedFilters },
   })
 }
-
-/**
- * Backwards-compatible alias for track() function
- * Allows existing code to use: import { trackTelemetry } from '@/app/lib/telemetry-track'
- * Note: The original trackTelemetry from './telemetry' is also re-exported above (line 2)
- */
-export const trackTelemetry = track
