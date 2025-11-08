@@ -122,7 +122,7 @@ export default function DiscoverClient() {
               >
                 <AppIcon name="place" size={14} decorative />
                 {LOCATION_OPTIONS.find(l => l.id === selectedLocation)?.label}
-                <span className="ml-1">✕</span>
+                <AppIcon name="x" size={14} decorative className="ml-1" />
               </button>
             )}
             {selectedMood && (
