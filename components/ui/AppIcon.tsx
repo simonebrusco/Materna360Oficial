@@ -43,6 +43,10 @@ const ICON_MAP = {
   footprints: Icons.Footprints,
   'hand-heart': Icons.HandHeart,
   palette: Icons.Palette,
+  smile: Icons.Smile,
+  meh: Icons.Meh,
+  frown: Icons.Frown,
+  target: Icons.Target,
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;
