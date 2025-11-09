@@ -270,6 +270,10 @@ export default function Eu360Client() {
         <AchievementsPanel />
       </Reveal>
 
+      <Reveal delay={310}>
+        <BadgesPanel />
+      </Reveal>
+
       <Card>
         <Reveal delay={280}>
           <div>
