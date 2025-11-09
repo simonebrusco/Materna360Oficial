@@ -5,7 +5,7 @@ import { MentorCard } from './MentorCard';
 import { MENTORS_CATALOG } from '@/app/(tabs)/cuidar/mentors.catalog';
 import { Button } from '@/components/ui/Button';
 import AppIcon from '@/components/ui/AppIcon';
-import { useToast } from '@/components/ui/Toast';
+import { toast } from '@/app/lib/toast';
 
 interface MentorshipSheetProps {
   isOpen: boolean;
@@ -16,13 +16,12 @@ export function MentorshipSheet({ isOpen, onClose }: MentorshipSheetProps) {
   const [activeTab, setActiveTab] = useState<'mentoras' | 'tira-duvidas'>('mentoras');
   const [tema, setTema] = useState('');
   const [pergunta, setPergunta] = useState('');
-  const { toast } = useToast();
 
   if (!isOpen) return null;
 
   const handleEnviar = () => {
     if (tema && pergunta) {
-      toast({ title: 'Pergunta enviada com sucesso!', description: 'Em breve você receberá uma resposta.', kind: 'success' });
+      toast.success('Pergunta enviada com sucesso!');
       setTema('');
       setPergunta('');
       setActiveTab('mentoras');
@@ -31,7 +30,7 @@ export function MentorshipSheet({ isOpen, onClose }: MentorshipSheetProps) {
   };
 
   const handleViewAvailability = (mentorName: string) => {
-    toast({ title: `Conectando com ${mentorName}. Aguarde um momento.`, kind: 'default' });
+    toast.info(`Conectando com ${mentorName}. Aguarde um momento.`);
   };
 
   return (
