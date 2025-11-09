@@ -11,52 +11,37 @@ export type TelemetryEventName =
   | 'reminder.deleted'
   | 'care.appointment_add'
   | 'eu360.summary_view'
+  | 'badge.unlocked'
+  | 'toast.shown'
+  | 'audio.play'
+  | 'audio.pause'
+  | 'audio.restart'
+  | 'audio.end'
+  | 'audio.select'
   | 'discover.suggestion_saved'
-  | (string & {}) // allow forward-compatible custom events
 
-export type TelemetryPayload = Record<string, unknown>
+type TelemetryProvider = (event: TelemetryEventName, payload?: Record<string, unknown>) => void
 
-type LegacyShape = {
-  event: TelemetryEventName
-  payload?: TelemetryPayload
-} & Record<string, unknown>
+let provider: TelemetryProvider | null = null
 
-type Provider = (name: TelemetryEventName, payload?: TelemetryPayload) => void
-let provider: Provider | null = null
-
-export function setTelemetryProvider(p: Provider | null) {
+export function setTelemetryProvider(p: TelemetryProvider | null) {
   provider = p
 }
 
-// Overloads — support both 2-arg and legacy 1-arg object styles.
-export function track(name: TelemetryEventName, payload?: TelemetryPayload): void
-export function track(legacy: LegacyShape): void
-export function track(a: any, b?: any): void {
-  let name: TelemetryEventName
-  let payload: TelemetryPayload | undefined
-
-  if (typeof a === 'string') {
-    // Preferred style: track('event', { ... })
-    name = a as TelemetryEventName
-    payload = b ?? {}
-  } else if (a && typeof a === 'object' && typeof a.event === 'string') {
-    // Legacy style: track({ event, payload?, ...rest })
-    name = a.event as TelemetryEventName
-    const { event, payload: p, ...rest } = a as LegacyShape
-    payload = p ? { ...rest, ...p } : rest
-  } else {
-    return
-  }
+/** Non-blocking fire-and-forget telemetry call. */
+export function track(event: TelemetryEventName, payload?: Record<string, unknown>) {
+  const debug =
+    typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TELEMETRY_DEBUG === '1'
 
   queueMicrotask(() => {
-    if (process.env.NEXT_PUBLIC_TELEMETRY_DEBUG === '1') {
-      try { console.debug('[telemetry]', { event: name, ...(payload ?? {}) }) } catch {}
+    try {
+      provider?.(event, payload)
+      if (debug) {
+        // eslint-disable-next-line no-console
+        console.debug('[telemetry]', { event, ...(payload || {}), ts: Date.now() })
+      }
+    } catch {
+      /* swallow */
     }
-    try { provider?.(name, payload) } catch { /* swallow */ }
   })
 }
-
-// Back-compat exports
-export const trackTelemetry = track
-export type TelemetryContext = TelemetryPayload
-export default track
