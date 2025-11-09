@@ -2,6 +2,7 @@
 import * as React from 'react'
 import { Trophy, Heart, MessageCircle, Users } from 'lucide-react'
 import { track } from '@/app/lib/telemetry'
+import { toast } from '@/app/lib/toast'
 
 const cn = (...args: Array<string | false | null | undefined>) =>
   args.filter(Boolean).join(' ')
@@ -48,15 +49,19 @@ export function BadgesPanel() {
   }, [])
 
   const unlock = (id: string) => {
-    setBadges(prev =>
-      prev.map(b =>
-        b.id === id ? { ...b, unlocked: true } : b
-      )
-    )
+    setBadges(prev => {
+      const updated = prev.map(b => (b.id === id ? { ...b, unlocked: true } : b))
+      const b = updated.find(x => x.id === id)
+      if (b) {
+        toast.success(`Conquista desbloqueada: ${b.label}!`)
+        track('toast.shown', { type: 'success', id, msg: 'badge_unlocked' })
+      }
+      return updated
+    })
     const saved = JSON.parse(localStorage.getItem(BADGE_KEY) || '[]')
     if (!saved.includes(id)) {
-      const updated = [...saved, id]
-      localStorage.setItem(BADGE_KEY, JSON.stringify(updated))
+      const next = [...saved, id]
+      localStorage.setItem(BADGE_KEY, JSON.stringify(next))
       track('badge.unlocked', { id })
     }
   }
