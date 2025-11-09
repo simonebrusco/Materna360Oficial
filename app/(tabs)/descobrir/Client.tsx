@@ -357,7 +357,7 @@ export default function DiscoverClient() {
       <Card>
         <div className="mb-4">
           <SectionH2 className="mb-1">Como você está agora?</SectionH2>
-          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugestões.</p>
+          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugest��es.</p>
         </div>
         <HScroll aria-label="Opções de humor">
           {MOODS.map((m) => (
@@ -397,6 +397,9 @@ export default function DiscoverClient() {
           {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
             const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
+            const q = canSaveMore();
+            const saveDisabled = !isSaved && !q.allowed; // Disable save buttons when quota reached
+
             return (
               <Card key={suggestion.id}>
                 <SuggestionCover
@@ -421,6 +424,7 @@ export default function DiscoverClient() {
                       variant="primary"
                       size="sm"
                       onClick={() => handleSaveSuggestion(suggestion.id)}
+                      disabled={saveDisabled}
                       className="flex-1"
                     >
                       Salvar para depois
@@ -437,7 +441,13 @@ export default function DiscoverClient() {
                   )}
                   <button
                     onClick={() => handleSaveSuggestion(suggestion.id)}
-                    className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                    disabled={saveDisabled}
+                    className={[
+                      'p-2 rounded-lg transition-colors',
+                      saveDisabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-primary/10',
+                    ].join(' ')}
                     aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
                     title={isSaved ? 'Remover de Salvos' : 'Salvar para depois'}
                   >
