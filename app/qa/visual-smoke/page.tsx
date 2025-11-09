@@ -64,10 +64,15 @@ async function probeRoute(route: string): Promise<Result> {
         if (firstInteractive) {
           firstInteractive.focus()
           const style = win.getComputedStyle(firstInteractive)
-          // Heuristic: ring or outline visible (not perfect, good enough for smoke)
-          const outline = style.outlineStyle !== 'none' && style.outlineWidth !== '0px'
-          const boxShadow = style.boxShadow && style.boxShadow !== 'none'
-          focusVisible = outline || boxShadow
+          // Heuristic: ring or outline visible (boolean-coerced)
+          const hasOutline =
+            style.outlineStyle !== 'none' &&
+            style.outlineWidth !== '0px'
+          const hasShadow =
+            Boolean(style.boxShadow) &&
+            style.boxShadow !== 'none' &&
+            style.boxShadow !== '0px'
+          focusVisible = hasOutline || hasShadow
         }
 
         // Contrast check on headings and body text elements (heuristic)
