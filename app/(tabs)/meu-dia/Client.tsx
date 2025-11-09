@@ -233,56 +233,58 @@ export function MeuDiaClient({
         </GridStable>
       </Card>
 
-      <Card>
-        <Reveal delay={280}>
-          <FamilyPlanner
-            currentDateKey={currentDateKey}
-            weekStartKey={weekStartKey}
-            weekLabels={weekLabels}
-            plannerTitle={plannerTitle}
-            profile={profile}
-            dateKey={dateKey}
-            recommendations={recommendations}
-            initialBuckets={initialBuckets}
-          />
-        </Reveal>
-      </Card>
+      <div id="meu-dia-print-area" className="print-card space-y-4">
+        <Card>
+          <Reveal delay={280}>
+            <FamilyPlanner
+              currentDateKey={currentDateKey}
+              weekStartKey={weekStartKey}
+              weekLabels={weekLabels}
+              plannerTitle={plannerTitle}
+              profile={profile}
+              dateKey={dateKey}
+              recommendations={recommendations}
+              initialBuckets={initialBuckets}
+            />
+          </Reveal>
+        </Card>
 
-      <Card>
-        <Reveal delay={300}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <SectionH2 className="flex items-center gap-2">
-                <AppIcon name="check" size={20} decorative />
-                Itens da Semana
-              </SectionH2>
-              <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+        <Card>
+          <Reveal delay={300}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <SectionH2 className="flex items-center gap-2">
+                  <AppIcon name="check" size={20} decorative />
+                  Itens da Semana
+                </SectionH2>
+                <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowPlannerSheet(true)}
+                className="flex items-center gap-1"
+              >
+                <AppIcon name="plus" size={16} decorative />
+                Adicionar item
+              </Button>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowPlannerSheet(true)}
-              className="flex items-center gap-1"
-            >
-              <AppIcon name="plus" size={16} decorative />
-              Adicionar item
-            </Button>
-          </div>
-          <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
-        </Reveal>
-      </Card>
+            <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
+          </Reveal>
+        </Card>
 
-      <SimplePlannerSheet
-        isOpen={showPlannerSheet}
-        onClose={() => setShowPlannerSheet(false)}
-        onAdd={handleAddPlannerItem}
-      />
+        <SimplePlannerSheet
+          isOpen={showPlannerSheet}
+          onClose={() => setShowPlannerSheet(false)}
+          onAdd={handleAddPlannerItem}
+        />
 
-      <Card>
-        <Reveal delay={320}>
-          <Checklist currentDateKey={currentDateKey} />
-        </Reveal>
-      </Card>
+        <Card>
+          <Reveal delay={320}>
+            <Checklist currentDateKey={currentDateKey} />
+          </Reveal>
+        </Card>
+      </div>
 
       <Card className="notesCard">
         <Reveal delay={360}>
