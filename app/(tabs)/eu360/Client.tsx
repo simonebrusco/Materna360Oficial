@@ -25,6 +25,7 @@ import { StatTile } from '@/components/ui/StatTile'
 import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
 import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
 import { track } from '@/app/lib/telemetry'
+import { SectionH2, BlockH3 } from '@/components/common/Headings'
 
 type MoodHistory = {
   day: string
@@ -132,7 +133,7 @@ export default function Eu360Client() {
           <div className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white rounded-xl">
             <div className="text-center">
               <AppIcon name="care" size={48} className="text-primary mx-auto mb-2" decorative />
-              <h1 className="mt-3 text-2xl font-semibold md:text-3xl">Você é Importante</h1>
+              <BlockH3 className="mt-3 text-2xl font-semibold md:text-3xl text-white">Você é Importante</BlockH3>
               <p className="mt-2 text-sm text-white/90 md:text-base">
                 Vá no seu próprio ritmo. Cada passo conta e você está no caminho certo.
               </p>
@@ -145,7 +146,7 @@ export default function Eu360Client() {
         <Card>
           <Reveal delay={80}>
             <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></h3>
+              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
               <div className="space-y-5">
                 <div>
                   <div className="flex items-center justify-between">
