@@ -122,7 +122,4 @@ export function track(a: any, b?: any): void {
  */
 export const trackTelemetry = track
 
-export type { TelemetryEventName as TelemetryEvent, Tab, TelemetryPayload, TelemetryContext, Payload }
-
-// Legacy type alias for backward compatibility
-export type Payload = TelemetryPayload
+export type { TelemetryEventName as TelemetryEvent, Tab, TelemetryPayload as Payload, TelemetryContext }
