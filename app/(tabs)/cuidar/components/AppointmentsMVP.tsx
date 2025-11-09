@@ -55,7 +55,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
           <CalendarPlus className="h-4 w-4 text-[#ff005e]" aria-hidden />
         </div>
         <div>
-          <h3 className="text-[16px] font-semibold">Vacinas & Consultas</h3>
+          <h3 className="text-[16px] font-semibold">Vacinas &amp; Consultas</h3>
           <p id="ap-desc" className="text-[12px] text-[#545454]">
             Registre e visualize seus próximos cuidados
           </p>
@@ -63,7 +63,11 @@ export function AppointmentsMVP({ storageKey }: Props) {
       </div>
 
       {/* Form */}
-      <div role="group" aria-describedby="ap-desc" className="grid gap-2 mb-3 md:grid-cols-[1fr_auto_auto_auto]">
+      <div
+        role="group"
+        aria-describedby="ap-desc"
+        className="grid gap-2 mb-3 md:grid-cols-[1fr_auto_auto_auto]"
+      >
         <input
           className="rounded-xl border px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
           placeholder="Título (ex.: Influenza, Pediatra…)"
@@ -90,7 +94,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
         />
         <button
           type="button"
-          className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99] focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
+          className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99]"
           onClick={add}
         >
           Adicionar
@@ -100,27 +104,30 @@ export function AppointmentsMVP({ storageKey }: Props) {
       {/* Próximos */}
       <section className="mb-4">
         <h4 className="text-[14px] font-semibold mb-2 flex items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-[#2f3a56]" aria-hidden />
-          Próximos
+          <CalendarClock className="h-4 w-4 text-[#2f3a56]" /> Próximos
         </h4>
         <ul className="flex flex-col gap-2">
           {upcoming.map((e) => (
             <li key={e.id} className="flex items-center justify-between rounded-xl border px-3 py-2">
               <div className="flex items-center gap-2">
                 {e.kind === 'vaccine' ? (
-                  <Syringe className="h-4 w-4 text-[#2f3a56]" aria-hidden />
+                  <Syringe className="h-4 w-4 text-[#2f3a56]" />
                 ) : (
-                  <Stethoscope className="h-4 w-4 text-[#2f3a56]" aria-hidden />
+                  <Stethoscope className="h-4 w-4 text-[#2f3a56]" />
                 )}
                 <div>
                   <div className="text-[14px] font-medium">{e.title}</div>
-                  <div className="text-[12px] text-[#545454]">{new Date(e.date).toLocaleDateString()}</div>
+                  <div className="text-[12px] text-[#545454]">
+                    {new Date(e.date).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
               <span className="rounded-full border px-2 py-0.5 text-[11px]">Agendado</span>
             </li>
           ))}
-          {upcoming.length === 0 && <li className="text-[12px] text-[#545454]">Sem registros futuros.</li>}
+          {upcoming.length === 0 && (
+            <li className="text-[12px] text-[#545454]">Sem registros futuros.</li>
+          )}
         </ul>
       </section>
 
@@ -132,16 +139,20 @@ export function AppointmentsMVP({ storageKey }: Props) {
             <li key={e.id} className="flex items-center justify-between rounded-xl border px-3 py-2">
               <div className="flex items-center gap-2">
                 {e.kind === 'vaccine' ? (
-                  <Syringe className="h-4 w-4 text-[#2f3a56]" aria-hidden />
+                  <Syringe className="h-4 w-4 text-[#2f3a56]" />
                 ) : (
-                  <Stethoscope className="h-4 w-4 text-[#2f3a56]" aria-hidden />
+                  <Stethoscope className="h-4 w-4 text-[#2f3a56]" />
                 )}
                 <div>
                   <div className="text-[14px] font-medium">{e.title}</div>
-                  <div className="text-[12px] text-[#545454]">{new Date(e.date).toLocaleDateString()}</div>
+                  <div className="text-[12px] text-[#545454]">
+                    {new Date(e.date).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
-              <span className="rounded-full border px-2 py-0.5 text-[11px] bg-[#ffd8e6]/60">Concluído</span>
+              <span className="rounded-full border px-2 py-0.5 text-[11px] bg-[#ffd8e6]/60">
+                Concluído
+              </span>
             </li>
           ))}
           {past.length === 0 && <li className="text-[12px] text-[#545454]">Sem registros passados.</li>}
