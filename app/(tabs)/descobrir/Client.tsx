@@ -62,7 +62,6 @@ const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
 export default function DiscoverClient() {
   const router = useRouter();
-  const router = useRouter();
   const { saved } = useSavedSuggestions();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
   const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
