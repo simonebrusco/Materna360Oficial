@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry-track'
 
@@ -84,7 +84,6 @@ export function MeuDiaClient({
 
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
-  const { toast } = useToast()
 
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
@@ -143,7 +142,7 @@ export function MeuDiaClient({
     })
 
     // Show toast
-    toast({ description: 'Alterações salvas!' })
+    toast.success('Alterações salvas!')
   }
 
   const handleTogglePlannerItem = (id: string) => {
