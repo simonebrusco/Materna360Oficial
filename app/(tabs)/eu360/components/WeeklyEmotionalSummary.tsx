@@ -20,6 +20,7 @@ function computeInsight(avgMood: number, avgEnergy: number): string {
 export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
   const [entries, setEntries] = React.useState<Entry[] | null>(null)
 
+  // Always call hooks in the same order (Rule of Hooks)
   React.useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey)
@@ -29,6 +30,12 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
       setEntries([])
     }
   }, [storageKey])
+
+  React.useEffect(() => {
+    if (entries !== null) {
+      track('eu360.summary_view', { tab: 'eu360', range: 'week' })
+    }
+  }, [entries])
 
   if (entries === null) {
     // skeleton
@@ -47,10 +54,6 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
   const avgMood = last7.length ? last7.reduce((s, e) => s + e.mood, 0) / last7.length : 0
   const avgEnergy = last7.length ? last7.reduce((s, e) => s + e.energy, 0) / last7.length : 0
   const insight = computeInsight(avgMood, avgEnergy)
-
-  React.useEffect(() => {
-    track('eu360.summary_view', { tab: 'eu360', range: 'week' })
-  }, [])
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
