@@ -156,6 +156,18 @@ export default function DiscoverClient() {
   };
 
   const handleSaveSuggestion = (id: string) => {
+    // Check if this is a new save (not an unsave)
+    const isCurrenlySaved = savedItems.has(id);
+
+    if (!isCurrenlySaved) {
+      // This is a new save attempt - check quota first
+      const q = canSaveMore();
+      if (!q.allowed) {
+        toast.danger('Limite diário atingido.');
+        return;
+      }
+    }
+
     setSavedItems((prev) => {
       const updated = new Set(prev);
       const isSaved = updated.has(id);
@@ -164,6 +176,8 @@ export default function DiscoverClient() {
         updated.delete(id);
       } else {
         updated.add(id);
+        // Increment daily save count after successful save
+        incTodayCount();
       }
 
       // Persist to localStorage
