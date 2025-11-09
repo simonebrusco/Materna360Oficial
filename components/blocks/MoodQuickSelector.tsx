@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import HScroll from '@/components/common/HScroll'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry-track'
@@ -29,7 +29,6 @@ interface MoodQuickSelectorProps {
 
 export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
   const [selectedMood, setSelectedMood] = useState<MoodValue | null>(null)
-  const { toast } = useToast()
 
   // Load today's mood on mount
   useEffect(() => {
