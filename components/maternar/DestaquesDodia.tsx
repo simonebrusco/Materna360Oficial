@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AppIcon from '@/components/ui/AppIcon';
 import { load, getCurrentDateKey } from '@/app/lib/persist';
 import { trackTelemetry } from '@/app/lib/telemetry';
+import { SectionH2 } from '@/components/common/Headings';
 
 export interface Highlight {
   id: string;
