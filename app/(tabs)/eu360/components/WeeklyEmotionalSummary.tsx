@@ -74,7 +74,7 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
       <div className="flex items-center gap-2 mb-3">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
-          <AppIcon name="activity-square" size={16} className="text-[#ff005e]" decorative />
+          <AppIcon name="heart" size={16} variant="brand" decorative />
         </div>
         <h3 className="text-[16px] font-semibold text-[#2f3a56]">
           Resumo Emocional da Semana
