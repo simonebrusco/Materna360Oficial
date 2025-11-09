@@ -5,7 +5,7 @@ import AppIcon from '@/components/ui/AppIcon'
 import { toast } from '@/app/lib/toast'
 import HScroll from '@/components/common/HScroll'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 
 export type MoodValue = 4 | 3 | 2 | 1 | 0
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Button } from '@/components/ui/Button'

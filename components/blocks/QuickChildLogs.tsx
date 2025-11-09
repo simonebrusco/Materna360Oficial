@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { save, load, getCurrentDateKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import AppIcon from '@/components/ui/AppIcon'
 
