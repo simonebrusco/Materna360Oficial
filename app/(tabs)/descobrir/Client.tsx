@@ -133,13 +133,13 @@ export default function DiscoverClient() {
 
   const filteredSuggestions = filterAndRankSuggestions(DISCOVER_CATALOG, filters);
 
-  // Compute quota info
+  // Compute quota info - using daily save count
   const quota = gate('ideas.dailyQuota');
-  const savedCount = savedItems.size;
+  const { count: dailySaveCount, limit: dailyLimit } = readTodayCount();
   const showQuotaWarning =
     quota.enabled &&
-    typeof quota.limit === 'number' &&
-    savedCount >= Math.max(0, quota.limit - 1);
+    Number.isFinite(dailyLimit) &&
+    dailySaveCount >= Math.max(0, (dailyLimit as number) - 1);
 
   // Handlers
   const handleStartSuggestion = (id: string) => {
