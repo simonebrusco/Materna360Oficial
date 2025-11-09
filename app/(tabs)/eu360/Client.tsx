@@ -24,6 +24,7 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { StatTile } from '@/components/ui/StatTile'
 import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
 import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
+import { AchievementsPanel } from './components/AchievementsPanel'
 import { track } from '@/app/lib/telemetry'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
@@ -255,6 +256,10 @@ export default function Eu360Client() {
           <WeeklyEmotionalSummary />
         </Reveal>
       </Card>
+
+      <Reveal delay={300}>
+        <AchievementsPanel />
+      </Reveal>
 
       <Card>
         <Reveal delay={280}>
