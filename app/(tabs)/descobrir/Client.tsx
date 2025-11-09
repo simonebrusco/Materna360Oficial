@@ -13,7 +13,7 @@ import { PageGrid } from '@/components/common/PageGrid';
 import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useToast } from '@/components/ui/Toast';
+import { toast } from '@/app/lib/toast';
 import { PaywallBanner } from '@/components/ui/PaywallBanner';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
 import { track, trackTelemetry } from '@/app/lib/telemetry-track';
@@ -56,7 +56,6 @@ const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
 export default function DiscoverClient() {
   const router = useRouter();
-  const { toast } = useToast();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
   const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
   const [selectedLocation, setSelectedLocation] = React.useState<Location | undefined>(undefined);
@@ -165,9 +164,7 @@ export default function DiscoverClient() {
 
       // Show toast
       if (!isSaved) {
-        toast({
-          description: "Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.",
-        });
+        toast.success("Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.");
       }
 
       // Fire telemetry
