@@ -61,7 +61,6 @@ function ChipGroup({ title, options, onSelect }: ChipGroupProps) {
 }
 
 export function QuickChildLogs() {
-  const { toast } = useToast()
   const [entries, setEntries] = useState<LogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
