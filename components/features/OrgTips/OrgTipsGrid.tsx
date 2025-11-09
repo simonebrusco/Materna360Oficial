@@ -82,7 +82,6 @@ const labelFromOptions = (value: string | null, options: readonly Option[]) =>
 export function OrgTipsGrid() {
   const [selectedTip, setSelectedTip] = useState<OrgTip | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { toast } = useToast()
   const [showResults, setShowResults] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [fTempo, setFTempo] = useState<string | null>(null)
