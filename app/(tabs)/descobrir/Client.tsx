@@ -135,7 +135,8 @@ export default function DiscoverClient() {
 
   // Compute quota info - using daily save count
   const quota = gate('ideas.dailyQuota');
-  const { count: dailySaveCount, limit: dailyLimit } = readTodayCount();
+  const { count: dailySaveCount } = readTodayCount();
+  const { count: _, limit: dailyLimit } = canSaveMore();
   const showQuotaWarning =
     quota.enabled &&
     Number.isFinite(dailyLimit) &&
