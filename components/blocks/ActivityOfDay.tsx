@@ -8,7 +8,7 @@ import type { ChildActivity } from '@/app/data/childContent'
 import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import {
   recommendationStorage,
   RECOMMENDATIONS_UPDATED_EVENT,
@@ -124,7 +124,6 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
   )
   const [isExpanded, setIsExpanded] = useState(false)
   const [savingKey, setSavingKey] = useState<string | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     if (children.length === 0) {
@@ -298,10 +297,10 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
           )
         }
 
-        toast({ title: 'Tudo certo! Atividade adicionada às suas Recomendações.', kind: 'success' })
+        toast.success('Tudo certo! Atividade adicionada às suas Recomendações.')
       } catch (error) {
         console.error('Falha ao salvar atividade no Planner:', error)
-        toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
+        toast.danger('Algo não funcionou como esperado. Tente novamente.')
       } finally {
         setSavingKey((current) => (current === key ? null : current))
       }
