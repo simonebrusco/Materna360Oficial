@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import {
   plannerApi,
   plannerStorage,
