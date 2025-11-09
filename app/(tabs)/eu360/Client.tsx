@@ -26,6 +26,8 @@ import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
 import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
 import { track } from '@/app/lib/telemetry'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
+import { PaywallBanner } from '@/components/paywall/PaywallBanner'
+import { getCurrentPlanId } from '@/app/lib/planClient'
 
 type MoodHistory = {
   day: string
