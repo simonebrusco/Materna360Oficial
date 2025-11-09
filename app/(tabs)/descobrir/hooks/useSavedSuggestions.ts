@@ -1,8 +1,9 @@
 'use client'
-import * as React from 'react'
-import { track } from '@/app/lib/telemetry'
 
-export function useSavedSuggestions(storageKey = 'descobrir:saved') {
+import * as React from 'react'
+import { track } from '@/app/lib/telemetry-track'
+
+export function useSavedSuggestions(storageKey = 'saved:discover') {
   const [saved, setSaved] = React.useState<string[]>([])
 
   React.useEffect(() => {
@@ -21,17 +22,29 @@ export function useSavedSuggestions(storageKey = 'descobrir:saved') {
   const save = (id: string) => {
     setSaved((prev) => {
       const updated = new Set(prev)
-      if (updated.has(id)) {
+      const wasSaved = updated.has(id)
+
+      if (wasSaved) {
         updated.delete(id)
       } else {
         updated.add(id)
       }
+
       // Persist to localStorage
       try {
         localStorage.setItem(storageKey, JSON.stringify(Array.from(updated)))
       } catch {}
-      // Fire telemetry
-      track('suggestion_saved', { tab: 'descobrir', id, isSaved: !updated.has(id) })
+
+      // Fire telemetry (only on save, not on unsave)
+      if (!wasSaved) {
+        track({
+          event: 'discover.suggestion_saved',
+          tab: 'descobrir',
+          id,
+          payload: { id, isSaved: true },
+        })
+      }
+
       return Array.from(updated)
     })
   }
