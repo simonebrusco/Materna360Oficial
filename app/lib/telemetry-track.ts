@@ -1,5 +1,9 @@
 'use client'
+export { track, setTelemetryProvider } from './telemetry'
 
-// Canonical re-exports from the unified telemetry module
-export { track, trackTelemetry, setTelemetryProvider, default } from './telemetry'
-export type { TelemetryEventName, TelemetryPayload } from './telemetry'
+/** Deprecated default export kept for back-compat if any import still uses it. */
+export default function trackTelemetry(event: any, payload?: any) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const { track } = require('./telemetry')
+  track(event as any, payload as any)
+}
