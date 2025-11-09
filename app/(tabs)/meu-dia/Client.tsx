@@ -16,6 +16,9 @@ import { SimplePlannerSheet, type PlannerItem, type PlannerDraft } from '@/compo
 import { SimplePlannerList } from '@/components/blocks/SimplePlannerList'
 import { MoodQuickSelector } from '@/components/blocks/MoodQuickSelector'
 import { MoodSparkline } from '@/components/blocks/MoodSparkline'
+import { MomInMotion } from './components/MomInMotion'
+import { MoodEnergyCheckin } from './components/MoodEnergyCheckin'
+import { Reminders } from './components/Reminders'
 import GridRhythm from '@/components/common/GridRhythm'
 import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -181,8 +184,20 @@ export function MeuDiaClient({
         </Reveal>
       </Card>
 
+      <Reveal delay={210}>
+        <MoodEnergyCheckin dateKey={dateKey} />
+      </Reveal>
+
+      <Reveal delay={230}>
+        <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
+      </Reveal>
+
+      <Reveal delay={250}>
+        <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+      </Reveal>
+
       <Card>
-        <Reveal delay={220}>
+        <Reveal delay={270}>
           <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
         </Reveal>
       </Card>
