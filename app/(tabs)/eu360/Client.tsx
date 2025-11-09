@@ -244,6 +244,12 @@ export default function Eu360Client() {
         </Reveal>
       </Card>
 
+      {getCurrentPlanId() === 'free' && (
+        <div className="mb-4">
+          <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
+        </div>
+      )}
+
       <Card>
         <Reveal delay={260}>
           <WeeklyEmotionalSummary />
