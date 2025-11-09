@@ -51,11 +51,7 @@ const WEEKLY_SUMMARY = [
 export default function Eu360Client() {
   // Page-view telemetry on mount
   useEffect(() => {
-    track({
-      event: 'nav.click',
-      tab: 'eu360',
-      payload: { dest: '/eu360' },
-    })
+    track('nav.click', { tab: 'eu360', dest: '/eu360' })
   }, [])
 
   const [gratitude, setGratitude] = useState('')

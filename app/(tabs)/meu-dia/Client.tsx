@@ -91,11 +91,7 @@ export function MeuDiaClient({
 
   // Page-view telemetry on mount
   useEffect(() => {
-    track({
-      event: 'nav.click',
-      tab: 'meu-dia',
-      payload: { dest: '/meu-dia' },
-    })
+    track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
   }, [])
 
   // Load planner items from persistence on mount

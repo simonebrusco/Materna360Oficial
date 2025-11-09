@@ -96,11 +96,7 @@ export default function DiscoverClient() {
 
   // Page-view telemetry on mount
   React.useEffect(() => {
-    track({
-      event: 'nav.click',
-      tab: 'descobrir',
-      payload: { dest: '/descobrir' },
-    });
+    track('nav.click', { tab: 'descobrir', dest: '/descobrir' });
   }, []);
 
   // Load saved items and quota on mount
