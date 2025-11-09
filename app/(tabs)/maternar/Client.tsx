@@ -9,10 +9,10 @@ import { HighlightsSection } from './components/HighlightsSection';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { Reveal } from '@/components/ui/Reveal';
 import { trackTelemetry } from '@/app/lib/telemetry';
-import { getCurrentDateKey } from '@/app/lib/persist';
+import { getBrazilDateKey } from '@/app/lib/dateKey';
 
 export default function MaternarClient() {
-  const dateKey = getCurrentDateKey();
+  const dateKey = getBrazilDateKey(new Date());
 
   useEffect(() => {
     trackTelemetry('maternar.page_view', {
@@ -28,10 +28,12 @@ export default function MaternarClient() {
         hero={<HubHeader greeting="Bem-vinda ao Maternar." subtitle="Aqui começa o seu centro de equilíbrio. Explore suas rotinas, cuide de você e acompanhe o crescimento do seu filho com leveza — tudo em um só lugar." />}
       >
         <DestaquesDodia />
-        <Reveal delay={180}>
+        <Reveal delay={200}>
           <HighlightsSection />
         </Reveal>
-        <ContinueCard dateKey={dateKey} />
+        <Reveal delay={240}>
+          <ContinueCard dateKey={dateKey} />
+        </Reveal>
         <CardHub />
       </PageTemplate>
     </main>
