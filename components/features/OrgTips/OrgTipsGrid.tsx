@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
 import { OrgTipModal } from './OrgTipModal'
