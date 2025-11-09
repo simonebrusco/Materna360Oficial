@@ -26,7 +26,7 @@ export default function MaternarClient() {
         hero={<HubHeader greeting="Bem-vinda ao Maternar." subtitle="Aqui começa o seu centro de equilíbrio. Explore suas rotinas, cuide de você e acompanhe o crescimento do seu filho com leveza — tudo em um só lugar." />}
       >
         <DestaquesDodia />
-        <ContinueFromSection />
+        <ContinueCard dateKey={dateKey} />
         <CardHub />
       </PageTemplate>
     </main>
