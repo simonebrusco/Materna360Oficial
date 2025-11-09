@@ -1,6 +1,6 @@
 import '@/app/globals.css'
 import type { Metadata } from 'next'
-import { Script } from 'next/script'
+import Script from 'next/script'
 import { ToastHost } from '@/components/ui/toast/ToastHost'
 
 export const metadata: Metadata = {
