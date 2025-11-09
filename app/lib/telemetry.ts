@@ -17,7 +17,16 @@ type TelemetryEvent =
   | 'reminder.created'
   | 'reminder.deleted'
   | 'care.appointment_add'
+  | 'care.log_add'
   | 'eu360.summary_view'
+  | 'eu360.diary_add'
+  | 'planner.item_add'
+  | 'planner.item_done'
+  | 'discover.suggestion_started'
+  | 'discover.suggestion_saved'
+  | 'discover.filter_changed'
+  | 'paywall.view'
+  | 'paywall.click'
 
 type Payload = Record<string, unknown> & { tab?: Tab }
 
