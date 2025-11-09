@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 import { save as persistSave, load as persistLoad } from '@/app/lib/persist'
 
 export function useSavedSuggestions(storageKey = 'saved:discover') {
@@ -44,11 +44,9 @@ export function useSavedSuggestions(storageKey = 'saved:discover') {
 
       // Fire telemetry (only on save, not on unsave)
       if (!wasSaved) {
-        track({
-          event: 'discover.suggestion_saved',
-          tab: 'descobrir',
+        track('discover.suggestion_saved', {
           id,
-          payload: { id, isSaved: true },
+          isSaved: true,
         })
       }
 

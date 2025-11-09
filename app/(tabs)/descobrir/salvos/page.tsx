@@ -3,28 +3,26 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useSavedSuggestions } from '../hooks/useSavedSuggestions'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 import { BookmarkMinus, ArrowLeft } from 'lucide-react'
 
 export default function DiscoverSavedPage() {
   const { saved, remove, isSaved } = useSavedSuggestions()
 
   React.useEffect(() => {
-    track({
-      event: 'discover.suggestion_saved',
-      tab: 'descobrir',
-      payload: { action: 'view', view: 'saved_page_open', count: saved.length },
+    track('discover.suggestion_saved', {
+      action: 'view',
+      view: 'saved_page_open',
+      count: saved.length,
     })
   }, [])
 
   const onRemove = (id: string) => {
     if (!isSaved(id)) return
     remove(id)
-    track({
-      event: 'discover.suggestion_saved',
-      tab: 'descobrir',
+    track('discover.suggestion_saved', {
+      action: 'remove',
       id,
-      payload: { action: 'remove', id },
     })
   }
 
