@@ -369,15 +369,12 @@ export default function DiscoverClient() {
       </Card>
 
       {/* Quota Limit Banner */}
-      {quotaLimitReached && (
-        <PaywallBanner
-          title="Você atingiu o limite do seu plano atual."
-          description="Atualize para explorar mais ideias e brincadeiras para seu filho."
-          featureName="ideas_daily"
-          upgradeText="Ver planos →"
-          onUpgradeClick={handlePaywallCTA}
-          variant="info"
-        />
+      {quota.enabled && typeof quota.limit === 'number' && savedCount >= Math.max(0, quota.limit - 1) && (
+        <div className="mb-4">
+          <PaywallBanner
+            message={`Está perto do limite diário de ideias salvas (${quota.limit}). Faça upgrade para ampliar.`}
+          />
+        </div>
       )}
 
       {/* Suggestions Grid */}
