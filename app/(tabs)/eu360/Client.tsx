@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -23,7 +23,7 @@ import { UpsellSheet } from '@/components/ui/UpsellSheet'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { StatTile } from '@/components/ui/StatTile'
 import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
-
+import { track } from '@/app/lib/telemetry'
 
 type MoodHistory = {
   day: string
@@ -48,6 +48,15 @@ const WEEKLY_SUMMARY = [
 ] as const
 
 export default function Eu360Client() {
+  // Page-view telemetry on mount
+  useEffect(() => {
+    track({
+      event: 'nav.click',
+      tab: 'eu360',
+      payload: { dest: '/eu360' },
+    })
+  }, [])
+
   const [gratitude, setGratitude] = useState('')
   const [gratitudes, setGratitudes] = useState<string[]>([
     'Meus filhos saudáveis e felizes',
