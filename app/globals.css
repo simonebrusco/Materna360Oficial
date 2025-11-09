@@ -731,3 +731,43 @@ body {
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
+
+/* Print stylesheet for PDF export */
+@media print {
+  /* Hide interactive chrome */
+  nav,
+  header,
+  footer,
+  [data-bottomnav],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Page padding for A4 */
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body {
+    padding: 16mm !important;
+  }
+
+  /* Focused area to export */
+  [data-print-focus="1"] {
+    outline: none !important;
+  }
+
+  /* Card cleanup */
+  .print-card {
+    box-shadow: none !important;
+    border: 1px solid #e9ecf2 !important;
+  }
+
+  /* Typography */
+  h1,
+  h2,
+  h3 {
+    color: #000 !important;
+  }
+}
