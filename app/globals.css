@@ -707,3 +707,27 @@ body {
 .__app-surface-reset {
   background: transparent !important;
 }
+
+/* Microinteractions */
+.ui-press {
+  transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
+}
+
+.ui-press:hover {
+  opacity: 0.96;
+}
+
+.ui-press:active {
+  transform: scale(0.98);
+}
+
+/* Focus ring */
+.ui-ring:focus {
+  outline: none;
+}
+
+.ui-ring:focus-visible {
+  box-shadow: 0 0 0 2px #ffd8e6;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
