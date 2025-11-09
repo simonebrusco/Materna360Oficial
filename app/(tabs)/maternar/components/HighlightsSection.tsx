@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { BookmarkCheck, CalendarClock, Bell, Activity } from 'lucide-react'
+import { SectionH2 } from '@/components/common/Headings'
 
 type Highlight =
   | { id: 'saved'; title: string; subtitle: string; href: string; priority: number }
