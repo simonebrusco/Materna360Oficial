@@ -113,7 +113,7 @@ export function HighlightsSection() {
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
-      <h3 className="text-[16px] font-semibold mb-3">Destaques do dia</h3>
+      <SectionH2 className="mb-3">Destaques do dia</SectionH2>
       <div className="grid gap-3 md:grid-cols-2">
         {items.map(h => {
           const Icon = IconOf(h.id)
