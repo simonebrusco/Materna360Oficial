@@ -40,7 +40,7 @@ export default function CuidarClient({ recipesSection }: Props) {
 
         <Card>
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-support-1">Diário da criança</h3>
+            <SectionH2 className="text-lg">Diário da criança</SectionH2>
             <p className="text-sm text-support-2 mt-1">Registre alimentação, sono e humor em tempo real</p>
           </div>
 
