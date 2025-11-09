@@ -8,6 +8,7 @@ import { PageGrid } from '@/components/common/PageGrid'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { QuickChildLogs } from '@/components/blocks/QuickChildLogs'
 import { AppointmentsMVP } from './components/AppointmentsMVP'
+import { SectionH2 } from '@/components/common/Headings'
 
 type Props = {
   recipesSection?: React.ReactNode
