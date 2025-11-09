@@ -18,6 +18,7 @@ import { PaywallBanner } from '@/components/ui/PaywallBanner';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
 import { track, trackTelemetry } from '@/app/lib/telemetry-track';
 import { SectionH2, BlockH3 } from '@/components/common/Headings';
+import { SuggestionCover } from './components/SuggestionCover';
 import {
   DISCOVER_CATALOG,
   filterAndRankSuggestions,
