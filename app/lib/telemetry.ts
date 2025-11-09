@@ -58,4 +58,5 @@ export function track(a: any, b?: any): void {
 
 // Back-compat exports
 export const trackTelemetry = track
+export type TelemetryContext = TelemetryPayload
 export default track
