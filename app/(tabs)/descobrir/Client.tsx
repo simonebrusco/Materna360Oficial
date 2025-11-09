@@ -98,6 +98,11 @@ export default function DiscoverClient() {
     return newCount;
   }, [getTodayIdeaCount]);
 
+  // Reset quota counter on new day (idempotent)
+  React.useEffect(() => {
+    resetIfNewDay();
+  }, []);
+
   // Page-view telemetry on mount
   React.useEffect(() => {
     track('nav.click', { tab: 'descobrir', dest: '/descobrir' });
