@@ -90,6 +90,15 @@ export function MeuDiaClient({
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
 
+  // Page-view telemetry on mount
+  useEffect(() => {
+    track({
+      event: 'nav.click',
+      tab: 'meu-dia',
+      payload: { dest: '/meu-dia' },
+    })
+  }, [])
+
   // Load planner items from persistence on mount
   useEffect(() => {
     const weekKey = getCurrentWeekKey()
