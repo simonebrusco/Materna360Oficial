@@ -66,9 +66,7 @@ export function EmotionalDiary() {
       })
 
       // Show toast
-      toast({
-        description: 'Diário atualizado! Este é um momento só seu.',
-      })
+      toast.success('Diário atualizado! Este é um momento só seu.')
 
       // Reset form
       setText('')
