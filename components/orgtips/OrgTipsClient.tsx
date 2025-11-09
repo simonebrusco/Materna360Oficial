@@ -5,13 +5,12 @@ import { OrgTipsFilters } from './OrgTipsFilters';
 import { OrgTipCard } from './OrgTipCard';
 import { ORGTIPS_CATALOG } from '@/app/(tabs)/cuidar/orgtips.catalog';
 import { Empty } from '@/components/ui/Empty';
-import { useToast } from '@/components/ui/Toast';
+import { toast } from '@/app/lib/toast';
 import GridRhythm from '@/components/common/GridRhythm';
 
 export function OrgTipsClient() {
   const [searchText, setSearchText] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const { toast } = useToast();
 
   // Filter and sort logic
   const filteredTips = useMemo(() => {
@@ -52,7 +51,7 @@ export function OrgTipsClient() {
   }, [searchText, selectedTags]);
 
   const handleSave = (tipTitle: string) => {
-    toast({ title: `Tudo certo! "${tipTitle}" foi guardada.`, kind: 'success' });
+    toast.success(`Tudo certo! "${tipTitle}" foi guardada.`);
     // Telemetry
     console.log('[telemetry] orgtips.saved_to_planner', { tip: tipTitle });
   };
