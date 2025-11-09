@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { PageGrid } from '@/components/common/PageGrid'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { QuickChildLogs } from '@/components/blocks/QuickChildLogs'
+import { AppointmentsMVP } from './components/AppointmentsMVP'
 
 type Props = {
   recipesSection?: React.ReactNode
@@ -52,6 +53,10 @@ export default function CuidarClient({ recipesSection }: Props) {
           />
         </Card>
       </PageGrid>
+
+      <Card>
+        <AppointmentsMVP storageKey="cuidar:appointments" />
+      </Card>
 
       <Card>
         {recipesSection ?? (
