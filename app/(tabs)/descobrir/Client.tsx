@@ -20,7 +20,7 @@ import { SectionH2, BlockH3 } from '@/components/common/Headings';
 import { SuggestionCover } from './components/SuggestionCover';
 import { PaywallBanner } from '@/components/paywall/PaywallBanner';
 import { gate } from '@/app/lib/gate';
-import { canSaveMore, incTodayCount, readTodayCount } from './lib/quota';
+import { canSaveMore, incTodayCount, readTodayCount, resetIfNewDay } from './lib/quota';
 import {
   DISCOVER_CATALOG,
   filterAndRankSuggestions,
