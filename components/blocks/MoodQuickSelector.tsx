@@ -62,12 +62,12 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
     save(persistKey, updatedMoods)
 
     // Fire telemetry
-    track({
-      event: 'mood.checkin',
+    track('mood.checkin', {
       tab: 'meu-dia',
       component: 'MoodQuickSelector',
       action: 'select',
-      payload: { value: moodValue, dayIndex },
+      value: moodValue,
+      dayIndex,
     })
 
     // Show toast

@@ -54,15 +54,12 @@ export function EmotionalDiary() {
       setEntries(updated)
 
       // Fire telemetry
-      track({
-        event: 'eu360.diary_add',
+      track('eu360.diary_add', {
         tab: 'eu360',
         component: 'EmotionalDiary',
         action: 'save',
-        payload: {
-          intensity,
-          chars: text.length,
-        },
+        intensity,
+        chars: text.length,
       })
 
       // Show toast

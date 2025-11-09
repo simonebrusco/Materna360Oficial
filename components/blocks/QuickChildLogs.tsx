@@ -89,12 +89,12 @@ export function QuickChildLogs() {
     setEntries(updated)
 
     // Fire telemetry
-    track({
-      event: 'care.log_add',
+    track('care.log_add', {
       tab: 'cuidar',
       component: 'QuickChildLogs',
       action: 'log',
-      payload: { type, value },
+      type,
+      value,
     })
 
     // Show toast
