@@ -179,7 +179,7 @@ export default function Eu360Client() {
         <Card>
           <Reveal delay={120}>
             <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></h3>
+              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
             <PlanCard
               currentPlan={currentPlan}
               onManagePlan={() => {
@@ -197,7 +197,7 @@ export default function Eu360Client() {
       <Card>
         <Reveal delay={140}>
           <div>
-            <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="smile" size={20} decorative /><span>Humor da Semana</span></h3>
+            <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="smile" size={20} decorative /><span>Humor da Semana</span></SectionH2>
             <div className="flex justify-between">
               {moodHistory.map(({ day, icon }) => (
                 <div key={day} className="flex flex-col items-center gap-2">
@@ -216,7 +216,7 @@ export default function Eu360Client() {
       </Card>
 
       <Card>
-        <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></h3>
+        <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></SectionH2>
         <PageGrid cols={3}>
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
@@ -224,7 +224,7 @@ export default function Eu360Client() {
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/30">
                   <AppIcon name={achievement.icon as any} size={24} className="text-primary" decorative />
                 </div>
-                <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
+                <BlockH3 className="mt-3 text-sm">{achievement.title}</BlockH3>
                 <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">{achievement.desc}</p>
               </Card>
             </Reveal>
@@ -235,7 +235,7 @@ export default function Eu360Client() {
       <Card>
         <Reveal delay={240}>
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="bookmark" size={20} className="text-primary" decorative /><span>Diário Emocional</span></h3>
+            <SectionH2 className="inline-flex items-center gap-2"><AppIcon name="bookmark" size={20} className="text-primary" decorative /><span>Diário Emocional</span></SectionH2>
             <p className="text-sm text-support-2 mt-1">Um espaço só seu para expressar e refletir sobre seus sentimentos.</p>
           </div>
           <EmotionalDiary />
@@ -252,7 +252,7 @@ export default function Eu360Client() {
         <Reveal delay={280}>
           <div>
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></h3>
+              <SectionH2 className="inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></SectionH2>
               <p className="text-sm text-support-2 mt-1">Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias.</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -288,7 +288,7 @@ export default function Eu360Client() {
         <Card>
           <Reveal delay={320}>
             <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></h3>
+              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
             <FeatureGate
               featureKey="weekly.summary"
               currentPlan={currentPlan}
