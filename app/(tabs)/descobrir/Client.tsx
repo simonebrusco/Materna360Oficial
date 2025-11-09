@@ -135,12 +135,11 @@ export default function DiscoverClient() {
     incrementIdeaCount();
 
     // Fire telemetry event
-    track({
-      event: 'discover.suggestion_started',
+    track('discover.suggestion_started', {
       tab: 'descobrir',
       component: 'DiscoverClient',
       id,
-      payload: { suggestionId: id },
+      suggestionId: id,
     });
   };
 
@@ -164,13 +163,12 @@ export default function DiscoverClient() {
       }
 
       // Fire telemetry
-      track({
-        event: 'discover.suggestion_saved',
+      track('discover.suggestion_saved', {
         tab: 'descobrir',
         component: 'DiscoverClient',
         action: isSaved ? 'unsave' : 'save',
         id,
-        payload: { id, isSaved: !isSaved },
+        isSaved: !isSaved,
       });
 
       return updated;
@@ -178,12 +176,12 @@ export default function DiscoverClient() {
   };
 
   const handleFilterChange = (filterType: string, value?: string) => {
-    track({
-      event: 'discover.filter_changed',
+    track('discover.filter_changed', {
       tab: 'descobrir',
       component: 'DiscoverClient',
       action: 'filter',
-      payload: { filter: filterType, value },
+      filter: filterType,
+      value,
     });
   };
 
