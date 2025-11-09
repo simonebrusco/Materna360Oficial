@@ -23,6 +23,7 @@ import { UpsellSheet } from '@/components/ui/UpsellSheet'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { StatTile } from '@/components/ui/StatTile'
 import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
+import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
 import { track } from '@/app/lib/telemetry'
 
 type MoodHistory = {
@@ -241,6 +242,12 @@ export default function Eu360Client() {
             <p className="text-sm text-support-2 mt-1">Um espaço só seu para expressar e refletir sobre seus sentimentos.</p>
           </div>
           <EmotionalDiary />
+        </Reveal>
+      </Card>
+
+      <Card>
+        <Reveal delay={260}>
+          <WeeklyEmotionalSummary />
         </Reveal>
       </Card>
 
