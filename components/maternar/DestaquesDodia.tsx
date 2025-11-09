@@ -208,9 +208,9 @@ export default function DestaquesDodia() {
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-support-1 uppercase tracking-wide">
+          <SectionH2 className="text-sm uppercase tracking-wide">
             Destaques do dia
-          </h3>
+          </SectionH2>
         </div>
 
         {/* Horizontal Cards Grid */}
