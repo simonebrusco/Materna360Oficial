@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry-track'
@@ -214,7 +215,7 @@ export function MeuDiaClient({
                 <div className="mb-3">
                   <AppIcon name={action.iconName as any} size={28} decorative />
                 </div>
-                <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
+                <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
                 <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="primary" size="sm" className="w-full">
                   Acessar
@@ -244,10 +245,10 @@ export function MeuDiaClient({
         <Reveal delay={300}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-support-1 md:text-xl flex items-center gap-2">
+              <SectionH2 className="flex items-center gap-2">
                 <AppIcon name="check" size={20} decorative />
                 Itens da Semana
-              </h2>
+              </SectionH2>
               <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
             </div>
             <Button
@@ -280,12 +281,12 @@ export function MeuDiaClient({
         <Reveal delay={360}>
           <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
             <div className="notesCard-text">
-              <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
+              <SectionH2 className="notesCard-title title title--clamp md:text-xl">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
                 </span>
                 {notesLabel}
-              </h2>
+              </SectionH2>
               <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
             </div>
             <Button
@@ -316,7 +317,7 @@ export function MeuDiaClient({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
           <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
             <Card className="w-full notesCard-modal">
-              <h3 className="mb-2 text-lg font-semibold text-support-1">Adicionar Nota</h3>
+              <BlockH3 className="mb-2 text-lg">Adicionar Nota</BlockH3>
               <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
               <textarea
                 value={noteText}
