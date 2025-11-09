@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppIcon from '@/components/ui/AppIcon';
-import { trackTelemetry } from '@/app/lib/telemetry';
+import { track } from '@/app/lib/telemetry';
 
 type Item = {
   href: string;
@@ -64,11 +64,16 @@ export default function BottomNav({
   const pathname = usePathname();
   const items = ITEMS_FORCED; // Always 5 items, always center-highlighted
 
-  const handleNavClick = (href: string, label: string) => {
-    trackTelemetry('nav_click', {
-      href,
-      label,
-      from: pathname,
+  const getTabFromHref = (href: string): string => {
+    // Map href to tab name (e.g., '/meu-dia' -> 'meu-dia')
+    return href.split('/')[1] || href;
+  };
+
+  const handleNavClick = (href: string) => {
+    const tab = getTabFromHref(href);
+    track('nav.click', {
+      tab,
+      dest: href,
     });
   };
 
@@ -100,7 +105,7 @@ export default function BottomNav({
             <li key={it.href} className="flex">
               <Link
                 href={it.href}
-                onClick={() => handleNavClick(it.href, it.label)}
+                onClick={() => handleNavClick(it.href)}
                 className={`
                   flex flex-col items-center justify-center
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
