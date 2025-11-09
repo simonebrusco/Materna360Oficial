@@ -64,14 +64,14 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
       : ''
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
+      <div className="flex items-center gap-2 mb-3" role="group" aria-describedby="mood-subtitle">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
           <Activity className="h-4 w-4 text-[#ff005e]" aria-hidden />
         </div>
         <div>
           <h3 className="text-[16px] font-semibold">Como você está hoje?</h3>
-          <p className="text-[12px] text-[#545454]">Registre seu humor e energia</p>
+          <p className="text-[12px] text-[#545454]" id="mood-subtitle">Registre seu humor e energia</p>
         </div>
       </div>
 
@@ -79,14 +79,14 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
         <fieldset>
           <legend className="text-[12px] text-[#545454] mb-1">Humor</legend>
           <div className="flex gap-2">
-            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 ${mood===1 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setMood(1); commitIfReady(1, energy) }}>
-              <Frown className="h-4 w-4 inline" /> Baixo
+            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none ${mood===1 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setMood(1); commitIfReady(1, energy) }} aria-label="Humor baixo">
+              <Frown className="h-4 w-4 inline" aria-hidden /> Baixo
             </button>
-            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 ${mood===2 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setMood(2); commitIfReady(2, energy) }}>
-              <Meh className="h-4 w-4 inline" /> Médio
+            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none ${mood===2 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setMood(2); commitIfReady(2, energy) }} aria-label="Humor neutro">
+              <Meh className="h-4 w-4 inline" aria-hidden /> Médio
             </button>
-            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 ${mood===3 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setMood(3); commitIfReady(3, energy) }}>
-              <Smile className="h-4 w-4 inline" /> Alto
+            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none ${mood===3 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setMood(3); commitIfReady(3, energy) }} aria-label="Humor alto">
+              <Smile className="h-4 w-4 inline" aria-hidden /> Alto
             </button>
           </div>
         </fieldset>
@@ -94,13 +94,13 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
         <fieldset>
           <legend className="text-[12px] text-[#545454] mb-1">Energia</legend>
           <div className="flex gap-2">
-            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 ${energy===1 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setEnergy(1); commitIfReady(mood, 1) }}>
+            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none ${energy===1 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setEnergy(1); commitIfReady(mood, 1) }} aria-label="Energia baixa">
               Baixa
             </button>
-            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 ${energy===2 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setEnergy(2); commitIfReady(mood, 2) }}>
+            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none ${energy===2 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setEnergy(2); commitIfReady(mood, 2) }} aria-label="Energia média">
               Média
             </button>
-            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 ${energy===3 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setEnergy(3); commitIfReady(mood, 3) }}>
+            <button type="button" className={`rounded-xl border px-3 py-2 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none ${energy===3 ? 'bg-[#ffd8e6]/60' : ''}`} onClick={() => { setEnergy(3); commitIfReady(mood, 3) }} aria-label="Energia alta">
               Alta
             </button>
           </div>
@@ -109,7 +109,7 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
 
       <div className="flex items-center justify-between">
         <p className="text-[12px] text-[#545454]">Últimos 7 dias</p>
-        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-label="Sparkline 7 dias">
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-label="Gráfico de humor e energia dos últimos 7 dias">
           <polyline
             points={polyPoints}
             fill="none"
