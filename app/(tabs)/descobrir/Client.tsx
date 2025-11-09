@@ -62,6 +62,8 @@ const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
 export default function DiscoverClient() {
   const router = useRouter();
+  const router = useRouter();
+  const { saved } = useSavedSuggestions();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
   const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
   const [selectedLocation, setSelectedLocation] = React.useState<Location | undefined>(undefined);
@@ -69,6 +71,7 @@ export default function DiscoverClient() {
   const [savedItems, setSavedItems] = React.useState<Set<string>>(new Set());
   const [ideaCount, setIdeaCount] = React.useState(0);
   const [quotaLimitReached, setQuotaLimitReached] = React.useState(false);
+  const [savedCount, setSavedCount] = React.useState(0);
 
   // Helper: Get today's idea view count
   const getTodayIdeaCount = React.useCallback(() => {
