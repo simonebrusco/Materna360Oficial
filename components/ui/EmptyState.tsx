@@ -15,7 +15,7 @@ export interface EmptyStateProps {
 export function EmptyState({
   title,
   text,
-  icon = 'inbox',
+  icon = 'info',
   cta,
   className,
 }: EmptyStateProps) {
