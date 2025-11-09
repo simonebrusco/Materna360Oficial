@@ -1,21 +1,22 @@
-// import './globals.css'
+import '@/app/globals.css'
 import type { Metadata } from 'next'
-// import { ToastHost } from '@/components/ui/toast/ToastHost'
+import { ToastHost } from '@/components/ui/toast/ToastHost'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Soft Luxury Materna360',
+  description: 'Soft luxury experience for conscious parenting',
+  icons: { icon: '/favicon.ico' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full">
-      <head>
-        <meta charSet="utf-8" />
-      </head>
-      <body className="min-h-dvh bg-soft-page text-[#2f3a56] antialiased">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body>
+        {/* Page content */}
         {children}
-        {/* <ToastHost /> */}
+
+        {/* Global, non-blocking toasts */}
+        <ToastHost />
       </body>
     </html>
   )
