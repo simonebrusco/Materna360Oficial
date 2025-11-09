@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry-track'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
@@ -15,7 +15,6 @@ interface DiaryEntry {
 }
 
 export function EmotionalDiary() {
-  const { toast } = useToast()
   const [text, setText] = useState('')
   const [intensity, setIntensity] = useState(2)
   const [entries, setEntries] = useState<DiaryEntry[]>([])
@@ -33,7 +32,7 @@ export function EmotionalDiary() {
 
   const handleSave = async () => {
     if (!text.trim()) {
-      toast({ kind: 'warning', description: 'Escreva algo antes de salvar.' })
+      toast.warning('Escreva algo antes de salvar.')
       return
     }
 
