@@ -1,4 +1,4 @@
-import './globals.css'
+// import './globals.css'
 import Script from 'next/script'
 import type { Metadata } from 'next'
 import { ToastHost } from '@/components/ui/toast/ToastHost'
