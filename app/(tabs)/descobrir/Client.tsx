@@ -16,7 +16,7 @@ import { FilterPill } from '@/components/ui/FilterPill';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from '@/app/lib/toast';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
-import { track, trackTelemetry } from '@/app/lib/telemetry-track';
+import { track } from '@/app/lib/telemetry';
 import { SectionH2, BlockH3 } from '@/components/common/Headings';
 import { SuggestionCover } from './components/SuggestionCover';
 import { PaywallBanner } from '@/components/paywall/PaywallBanner';
@@ -92,7 +92,7 @@ export default function DiscoverClient() {
     // Check if limit reached (emit telemetry when reached)
     if (newCount === IDEA_QUOTA_LIMIT) {
       setQuotaLimitReached(true);
-      trackTelemetry('paywall.view', {
+      track('paywall.view', {
         context: 'ideas_quota_limit_reached',
         count: newCount,
         limit: IDEA_QUOTA_LIMIT,
@@ -124,7 +124,7 @@ export default function DiscoverClient() {
     setIdeaCount(todayCount);
     if (todayCount >= IDEA_QUOTA_LIMIT) {
       setQuotaLimitReached(true);
-      trackTelemetry('paywall.view', {
+      track('paywall.view', {
         context: 'page_load_quota_limit',
         count: todayCount,
         limit: IDEA_QUOTA_LIMIT,
@@ -234,7 +234,7 @@ export default function DiscoverClient() {
   };
 
   const handlePaywallCTA = () => {
-    trackTelemetry('paywall.click', {
+    track('paywall.click', {
       context: 'ideas_quota_limit',
       action: 'upgrade_click',
     });
