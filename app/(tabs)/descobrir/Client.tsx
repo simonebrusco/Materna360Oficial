@@ -17,6 +17,7 @@ import { toast } from '@/app/lib/toast';
 import { PaywallBanner } from '@/components/ui/PaywallBanner';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
 import { track, trackTelemetry } from '@/app/lib/telemetry-track';
+import { SectionH2, BlockH3 } from '@/components/common/Headings';
 import {
   DISCOVER_CATALOG,
   filterAndRankSuggestions,
@@ -268,7 +269,7 @@ export default function DiscoverClient() {
       {/* Time Window Section */}
       <Card>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-support-1 mb-1">Quanto tempo você tem agora?</h3>
+          <SectionH2 className="mb-1">Quanto tempo você tem agora?</SectionH2>
           <p className="text-sm text-support-2">Escolha o tempo disponível para adaptar as sugestões.</p>
         </div>
         <HScroll aria-label="Opções de tempo disponível">
@@ -299,7 +300,7 @@ export default function DiscoverClient() {
       {/* Location Section */}
       <Card>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-support-1 mb-1">Onde você está?</h3>
+          <SectionH2 className="mb-1">Onde você está?</SectionH2>
           <p className="text-sm text-support-2">Escolha o local para ideias relevantes.</p>
         </div>
         <HScroll aria-label="Opções de local">
@@ -330,7 +331,7 @@ export default function DiscoverClient() {
       {/* Mood Section */}
       <Card>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-support-1 mb-1">Como você está agora?</h3>
+          <SectionH2 className="mb-1">Como você está agora?</SectionH2>
           <p className="text-sm text-support-2">Escolha um humor para adaptar as sugestões.</p>
         </div>
         <HScroll aria-label="Opções de humor">
@@ -378,7 +379,7 @@ export default function DiscoverClient() {
               <Card key={suggestion.id}>
                 <header className="mb-2 flex items-center gap-2">
                   <AppIcon name={suggestion.icon} decorative />
-                  <h2 className="text-base font-semibold text-support-1">{suggestion.title}</h2>
+                  <BlockH3 className="text-base">{suggestion.title}</BlockH3>
                 </header>
                 <p className="mb-3 text-sm text-support-2">
                   {suggestion.description}
