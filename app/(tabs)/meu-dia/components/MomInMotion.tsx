@@ -93,15 +93,17 @@ export function MomInMotion({ enabled = true, storageKey }: MomInMotionProps) {
       <div className="flex gap-2 mb-3">
         <button
           type="button"
-          className="rounded-full border px-3 py-1 text-[12px] hover:bg-[#ffd8e6]/40"
+          className="rounded-full border px-3 py-1 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
           onClick={() => seedFromTemplate('grocery')}
+          aria-label="Seed: Mercado"
         >
           + Mercado
         </button>
         <button
           type="button"
-          className="rounded-full border px-3 py-1 text-[12px] hover:bg-[#ffd8e6]/40"
+          className="rounded-full border px-3 py-1 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
           onClick={() => seedFromTemplate('lunchbox')}
+          aria-label="Seed: Lancheira"
         >
           + Lancheira
         </button>
