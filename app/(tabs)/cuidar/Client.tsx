@@ -8,6 +8,7 @@ import { PageGrid } from '@/components/common/PageGrid'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { ChildDiary } from './components/ChildDiary'
 import { AppointmentsMVP } from './components/AppointmentsMVP'
+import { BreathAudios } from './components/BreathAudios'
 import { SectionH2 } from '@/components/common/Headings'
 
 type Props = {
