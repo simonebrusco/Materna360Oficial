@@ -184,7 +184,6 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
   })
 
   const [expandedIds, setExpandedIds] = useState<string[]>([])
-  const { toast } = useToast()
 
   useEffect(() => {
     persistState(states)
