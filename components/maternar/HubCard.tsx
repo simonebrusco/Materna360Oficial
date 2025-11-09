@@ -42,6 +42,7 @@ export default function HubCard({
         focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
         p-5 sm:p-6
         min-h-[160px] sm:min-h-[180px]
+        ui-press ui-ring
       "
       aria-label={subtitle ? `${title}: ${subtitle}` : title}
     >
