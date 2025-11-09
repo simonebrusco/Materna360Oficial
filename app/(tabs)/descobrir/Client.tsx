@@ -132,6 +132,11 @@ export default function DiscoverClient() {
     }
   }, [getTodayIdeaCount]);
 
+  // Update saved count from hook
+  React.useEffect(() => {
+    setSavedCount(saved.length);
+  }, [saved]);
+
   // Compute filtered suggestions in real time
   const filters: FilterInputs = {
     childAgeMonths,
