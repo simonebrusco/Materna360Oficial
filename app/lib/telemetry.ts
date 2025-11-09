@@ -1,5 +1,7 @@
 'use client'
 
+// Unified telemetry typing for Materna360 (non-blocking, SSR-safe)
+
 export type TelemetryEventName =
   | 'page_view'
   | 'nav_click'
@@ -13,7 +15,11 @@ export type TelemetryEventName =
   | 'paywall.view'
   | 'paywall.click'
   | 'badge.unlocked'
-  | 'toast.shown';
+  | 'toast.shown'
+  // --- Care (Cuidar) events
+  | 'care.appointment_add'
+  | 'care.log_add'
+  | 'care.view_section';
 
 type TelemetryEventPayloads = {
   'page_view': { path: string; tab?: string };
@@ -31,6 +37,23 @@ type TelemetryEventPayloads = {
   'paywall.click': { action: string; context?: string };
   'badge.unlocked': { badge: string };
   'toast.shown': { kind: 'default' | 'success' | 'warning' | 'danger'; message?: string; context?: string };
+
+  // --- Care (Cuidar)
+  'care.appointment_add': {
+    tab: 'cuidar';
+    type: 'consulta' | 'vacina' | 'exame' | string; // flexible
+    date: string; // ISO or yyyy-mm-dd
+  };
+  'care.log_add': {
+    tab: 'cuidar';
+    kind: 'alimentacao' | 'sono' | 'humor' | string;
+    value?: string | number;
+    at?: string; // ISO timestamp (optional)
+  };
+  'care.view_section': {
+    tab: 'cuidar';
+    section: 'timeline' | 'vacinas' | 'consultas' | 'registros' | string;
+  };
 };
 
 export function track<E extends TelemetryEventName>(
@@ -40,6 +63,7 @@ export function track<E extends TelemetryEventName>(
   try {
     if (typeof window !== 'undefined') {
       if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
         console.debug('[telemetry]', name, payload);
       }
       window.dispatchEvent(
@@ -49,11 +73,12 @@ export function track<E extends TelemetryEventName>(
       );
     } else {
       if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
         console.debug('[telemetry][server]', name, payload);
       }
     }
   } catch {
-    // No-op
+    // no-op: telemetry must never break UI/build
   }
 }
 
