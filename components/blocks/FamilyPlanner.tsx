@@ -1077,7 +1077,7 @@ export function FamilyPlanner({
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-4 py-6 text-center">
-              <p className="text-sm text-support-2">Nada por aqui ainda. Que tal planejar algo rápido?</p>
+              <p className="text-sm text-support-2">Nenhum compromisso adicionado hoje. Que tal começar com algo leve?</p>
             </div>
           )}
 

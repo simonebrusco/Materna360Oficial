@@ -21,6 +21,8 @@ export type TelemetryEvent =
   | 'curator_request'
   | 'curator_response'
   | 'curator_error'
+  | 'maternar.page_view'
+  | 'maternar.card_click'
   | (string & {})
 
 export type TelemetryContext = Record<string, unknown>

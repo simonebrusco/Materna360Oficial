@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/Toast'
 import {
   plannerApi,
   plannerStorage,
@@ -27,11 +27,6 @@ type TipState = {
   timerStatus: TimerStatus
   remainingMs: number
   targetTimestamp?: number
-}
-
-type ToastState = {
-  message: string
-  type: 'success' | 'error' | 'info'
 }
 
 type StoredState = Record<string, TipState>
@@ -189,7 +184,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
   })
 
   const [expandedIds, setExpandedIds] = useState<string[]>([])
-  const [toast, setToast] = useState<ToastState | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     persistState(states)
@@ -361,10 +356,10 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         void plannerApi.savePlannerItem(dateKey, item)
       }
 
-      setToast({ message: '✅ Adicionado ao Planner.', type: 'success' })
+      toast({ title: 'Tudo certo! Dica guardada no seu Planner.', kind: 'success' })
     } catch (error) {
       console.error('Falha ao adicionar dica ao Planner:', error)
-      setToast({ message: 'Não foi possível adicionar agora. Tente novamente.', type: 'error' })
+      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
     }
   }
 
@@ -512,14 +507,6 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         Você não precisa fazer tudo. Só o que cabe hoje.
       </p>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={4000}
-        />
-      )}
     </div>
   )
 }

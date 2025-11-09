@@ -21,8 +21,7 @@ const FEATURED_COLLECTION_IDS = new Set(['acolhimento', 'clareza'])
 
 type Collection = {
   id: string
-  iconName?: AppIconName
-  icon?: string
+  iconName: AppIconName
   titulo: string
   descricao: string
 }
@@ -51,13 +50,13 @@ const COLLECTIONS: Collection[] = [
   },
   {
     id: 'acolhimento',
-    icon: '���',
+    iconName: 'heart',
     titulo: 'Acolher emoções',
     descricao: 'Meditações guiadas para reconhecer sentimentos e transformá-los em cuidado consigo mesma.',
   },
   {
     id: 'clareza',
-    icon: '✨',
+    iconName: 'sparkles',
     titulo: 'Clareza e foco',
     descricao: 'Respirações focadas que ajudam a organizar pensamentos e priorizar com leveza.',
   },

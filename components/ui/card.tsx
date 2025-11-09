@@ -1,26 +1,69 @@
-import * as React from 'react'
+'use client';
 
-interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
-  children: React.ReactNode
+import clsx from 'clsx';
+import React from 'react';
+
+export interface SoftCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  as?: React.ElementType;
+  children: React.ReactNode;
 }
 
-export function Card({
+export function SoftCard({
+  as: As = 'div',
+  className,
   children,
-  className = '',
-  onClick,
-  ...props
-}: CardProps) {
+  ...rest
+}: SoftCardProps) {
+  const Component = As;
+
+  return (
+    <Component
+      className={clsx(
+        'rounded-[var(--radius-card)] border border-white/60',
+        'shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
+        'hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
+        'bg-white/95 backdrop-blur-[1px]',
+        'p-4 md:p-5',
+        'transition-shadow duration-200',
+        className
+      )}
+      {...rest}
+    >
+      {children}
+    </Component>
+  );
+}
+
+// Backward compatibility alias
+export const Card = SoftCard;
+export default SoftCard;
+
+export function SoftCardContent({
+  className,
+  children,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`group/card glass-panel blurred-border p-6 transition-all duration-500 ease-gentle hover:-translate-y-1 hover:shadow-elevated ${onClick ? 'cursor-pointer' : ''} ${className}`}
-      onClick={onClick}
-      {...props}
+      className={clsx('p-5 sm:p-6', className)}
+      {...rest}
     >
-      <span className="pointer-events-none absolute inset-0 -z-10 bg-materna-card opacity-0 transition-opacity duration-700 group-hover/card:opacity-80" />
-      <span className="pointer-events-none absolute inset-x-6 top-2 -z-0 h-1 rounded-full bg-white/70 opacity-0 blur-lg transition-opacity duration-700 group-hover/card:opacity-100" />
-      <div className="relative z-10">
-        {children}
-      </div>
+      {children}
     </div>
-  )
+  );
+}
+
+export function SoftCardHeader({
+  className,
+  children,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={clsx('p-5 sm:p-6 border-b border-[var(--border-soft-gray)]', className)}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
 }

@@ -3,9 +3,6 @@ import { unstable_noStore as noStore } from 'next/cache'
 
 import { MeuDiaClient } from './Client'
 
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import AppShell from '@/components/common/AppShell'
-import { isEnabled } from '@/app/lib/flags'
 import { CHILD_ACTIVITIES, CHILD_RECOMMENDATIONS } from '@/app/data/childContent'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
@@ -97,41 +94,18 @@ export default async function Page() {
 
   const initialBuckets = profilePreferredBuckets(profileForClient)
 
-  const content = (
-
-    <main className="PageSafeBottom relative mx-auto max-w-5xl bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)] px-4 pt-10 pb-24 sm:px-6 md:px-8">
-
-      <SectionWrapper className="relative bg-transparent" contentClassName="relative space-y-2">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-12 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(65%_65%_at_50%_0%,rgba(255,216,230,0.55),transparent)]"
-        />
-        <div>
-          <span className="eyebrow-capsule">Hoje</span>
-          <h1 data-testid="greeting-text" className="mt-2 text-3xl font-semibold text-support-1 md:text-4xl" suppressHydrationWarning>
-            {greeting}
-          </h1>
-          <p className="text-sm text-support-2 md:text-base">Pequenos momentos criam grandes memórias.</p>
-          <p className="text-sm text-support-2 md:text-base" suppressHydrationWarning>{formattedDate}</p>
-        </div>
-      </SectionWrapper>
-
-      <section id="planner" style={{ scrollMarginTop: '120px' }}>
-        <MeuDiaClient
-          dailyGreeting={dailyGreeting}
-          currentDateKey={currentDateKey}
-          weekStartKey={weekStartKey}
-          weekLabels={weekLabels}
-          plannerTitle={plannerTitle}
-          profile={profileForClient}
-          dateKey={currentDateKey}
-          allActivities={CHILD_ACTIVITIES}
-          recommendations={CHILD_RECOMMENDATIONS}
-          initialBuckets={initialBuckets}
-        />
-      </section>
-    </main>
+  return (
+    <MeuDiaClient
+      dailyGreeting={dailyGreeting}
+      currentDateKey={currentDateKey}
+      weekStartKey={weekStartKey}
+      weekLabels={weekLabels}
+      plannerTitle={plannerTitle}
+      profile={profileForClient}
+      dateKey={currentDateKey}
+      allActivities={CHILD_ACTIVITIES}
+      recommendations={CHILD_RECOMMENDATIONS}
+      initialBuckets={initialBuckets}
+    />
   )
-
-  return isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content
 }

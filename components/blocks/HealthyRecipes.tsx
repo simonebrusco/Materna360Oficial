@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import Emoji from '@/components/ui/Emoji'
 import { Reveal } from '@/components/ui/Reveal'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/Toast'
 import { isEnabled } from '@/app/lib/flags'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Empty } from '@/components/ui/feedback/Empty'
@@ -203,7 +203,7 @@ export function HealthyRecipesSection() {
   const [plannerTime, setPlannerTime] = useState<string>('12:00')
   const [plannerCategory, setPlannerCategory] = useState<PlannerCategory>('Almoço')
   const [plannerNote, setPlannerNote] = useState<string>('')
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     let active = true
@@ -464,16 +464,16 @@ const childAgeBand = useMemo(
 
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
-      setToast({
-        message: `Receita salva no Planner para ${weekday} �s ${time}.`,
-        type: 'success',
+      toast({
+        title: `Tudo certo! Receita guardada para ${weekday}.`,
+        kind: 'success',
       })
       closePlannerModal()
     } catch (err) {
       console.error(err)
-      setToast({
-        message: err instanceof Error ? err.message : 'Erro ao salvar no Planner.',
-        type: 'error',
+      toast({
+        title: 'Algo não funcionou como esperado. Tente novamente.',
+        kind: 'danger',
       })
     }
   }
@@ -492,10 +492,10 @@ const childAgeBand = useMemo(
 
     try {
       await navigator.clipboard.writeText(text)
-      setToast({ message: 'Detalhes copiados para compartilhar!', type: 'info' })
+      toast({ title: 'Detalhes copiados. Compartilhe com quem desejar.', kind: 'default' })
     } catch (error) {
       console.error('Falha ao copiar para área de transferência:', error)
-      setToast({ message: 'Não foi possível copiar o conteúdo.', type: 'error' })
+      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
     }
   }
 
@@ -933,14 +933,6 @@ const childAgeBand = useMemo(
         </div>
       )}
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={3500}
-        />
-      )}
     </section>
   )
 }

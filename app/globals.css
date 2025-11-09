@@ -4,6 +4,8 @@
 
 /* ===== Materna360 token fallbacks (safe to keep) ===== */
 :root {
+  /* Page background - soft luxury aesthetic */
+  --soft-page-bg: #fff7fb; /* very light pink */
 
   /* RGB triplets for Tailwind color mapping */
   --primary: 242 84 130; /* #F25482 → brand pink */
@@ -12,7 +14,28 @@
   --neutral-1: 248 249 250; /* #F8F9FA → bg soft */
   --neutral-2: 255 255 255; /* #FFFFFF → white */
 
+  /* Soft Luxury Design Tokens */
+  --space-xs: 8px;
+  --space-s: 12px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
 
+  --radius-card: 20px;
+  --radius-card-lg: 24px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 8px 28px rgba(47, 58, 86, 0.08);
+  --shadow-card-hover: 0 12px 40px rgba(47, 58, 86, 0.12);
+  --shadow-press: 0 4px 16px rgba(47, 58, 86, 0.1);
+
+  --border-soft-white: rgba(255, 255, 255, 0.6);
+  --border-soft-gray: #e9ecf2;
+
+  --color-primary: #ff005e;
+  --color-primary-weak: #ffd8e6;
+  --color-ink-1: #2f3a56;
+  --color-ink-2: #545454;
 
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
@@ -36,6 +59,11 @@
   --shadow-card-hover-neutral: 0 12px 28px rgba(16, 24, 40, 0.12), 0 2px 0 rgba(16, 24, 40, 0.04);
   --shadow-card-active: 0 8px 20px rgba(16, 24, 40, 0.1), 0 1px 0 rgba(16, 24, 40, 0.04);
   --glow-pink: 0 24px 48px rgba(255, 0, 94, 0.18);
+}
+
+/* Soft page background utility */
+.bg-soft-page {
+  background: var(--soft-page-bg);
 }
 
 @layer base {
@@ -247,6 +275,79 @@
 }
 
 @layer utilities {
+  /* ===== Typography Scale Utilities ===== */
+  .text-display {
+    font-size: clamp(28px, 6vw, 32px);
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  .text-title {
+    font-size: clamp(22px, 5vw, 24px);
+    line-height: 1.28;
+    font-weight: 600;
+  }
+
+  .text-subtitle {
+    font-size: clamp(18px, 4vw, 20px);
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  .text-base-lg {
+    font-size: clamp(16px, 2vw, 17px);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .text-base-md {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .text-base-sm {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .text-meta {
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+
+  /* ===== Spacing Utilities ===== */
+  .spacing-section-vertical {
+    @apply py-6 md:py-8;
+  }
+
+  .spacing-card-padding {
+    @apply p-4 md:p-5;
+  }
+
+  .spacing-list-dense {
+    @apply gap-3;
+  }
+
+  .spacing-list-default {
+    @apply gap-4;
+  }
+
+  /* ===== Icon utilities ===== */
+  .icon-sm {
+    @apply w-4 h-4;
+  }
+
+  .icon-md {
+    @apply w-5 h-5;
+  }
+
+  .icon-lg {
+    @apply w-6 h-6;
+  }
+
   .shadow-card {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   }

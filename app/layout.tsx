@@ -1,21 +1,17 @@
 import './globals.css'
-
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 import Script from 'next/script'
 import type { Metadata } from 'next'
-import SiteHeader from '@/components/common/SiteHeader'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  icons: { icon: '/favicon.ico', shortcut: '/favicon.ico', apple: '/favicon.ico' },
+  description: 'Soft Luxury Materna360',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full AppGradient">
+    <html lang="pt-BR" className="h-full">
       <head>
+        <meta charSet="utf-8" />
         <Script
           id="fullstory-fetch-fix"
           strategy="beforeInteractive"
@@ -24,21 +20,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-screen text-slate-800 antialiased">
-        <SiteHeader />
+      <body className="min-h-dvh bg-soft-page text-[#2f3a56] antialiased">
         {children}
       </body>
     </html>
   )
 }
 
-/** Inline helper used by the Script above */
+/** Inline helper to fix FullStory breaking fetch operations */
 function fixFetch() {
   const nativeFetch = window.fetch;
-  // same logic you already had, shortened for brevity:
   window.fetch = function wrappedFetch(input, init) {
     return nativeFetch(input as any, init as any).catch((error: any) => {
-      if (error && (String(error).includes('Failed to fetch'))) {
+      if (error && String(error).includes('Failed to fetch')) {
         return new Promise((resolve, reject) => {
           try {
             const xhr = new XMLHttpRequest();

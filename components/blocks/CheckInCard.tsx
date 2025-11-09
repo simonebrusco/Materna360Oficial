@@ -6,13 +6,14 @@ import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import HScroll from '@/components/common/HScroll'
+import { useToast } from '@/components/ui/Toast'
 
 const moods = [
-  { emoji: '😔', label: 'Triste', value: 'triste' },
-  { emoji: '😐', label: 'Neutra', value: 'neutra' },
-  { emoji: '🙂', label: 'Leve', value: 'leve' },
-  { emoji: '😊', label: 'Feliz', value: 'feliz' },
-  { emoji: '😵‍💫', label: 'Exausta', value: 'sobrecarregada' },
+  { iconName: 'heart' as const, label: 'Triste', value: 'triste', color: 'danger' as const },
+  { iconName: 'sun' as const, label: 'Neutra', value: 'neutra', color: 'default' as const },
+  { iconName: 'sparkles' as const, label: 'Leve', value: 'leve', color: 'brand' as const },
+  { iconName: 'star' as const, label: 'Feliz', value: 'feliz', color: 'brand' as const },
+  { iconName: 'moon' as const, label: 'Exausta', value: 'sobrecarregada', color: 'muted' as const },
 ] as const
 
 type MoodValue = (typeof moods)[number]['value']
@@ -22,6 +23,7 @@ export function CheckInCard() {
   const [quote, setQuote] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const requestIdRef = useRef(0)
+  const { toast } = useToast()
 
   const moodLabelMap = useMemo(() => {
     return moods.reduce<Record<MoodValue, string>>((accumulator, mood) => {
@@ -82,8 +84,10 @@ export function CheckInCard() {
 
   const handleSubmit = () => {
     if (selectedMood) {
-      const label = moodLabelMap[selectedMood]
-      alert(`Check-in registrado com sucesso! ${label} 💛`)
+      toast({
+        title: 'Humor registrado! Um passo de cada vez é o suficiente.',
+        kind: 'success',
+      })
       setSelectedMood(null)
       setQuote('')
       setIsLoading(false)
@@ -121,7 +125,7 @@ export function CheckInCard() {
                   data-testid={mood.value === 'sobrecarregada' ? 'mood-sobrecarregada' : undefined}
                 >
                   <span className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
-                    <span className="text-2xl sm:text-3xl leading-none">{mood.emoji}</span>
+                    <AppIcon name={mood.iconName} size={24} variant={mood.color} />
                   </span>
                   <span className="mt-1 sm:mt-2 max-w-[11ch] text-center text-xs sm:text-sm md:text-base font-semibold leading-snug text-support-1 line-clamp-2">
                     {mood.label}

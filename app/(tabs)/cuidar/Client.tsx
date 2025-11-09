@@ -1,144 +1,73 @@
 'use client'
 
-import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
+import * as React from 'react'
+import { PageTemplate } from '@/components/common/PageTemplate'
+import { SoftCard as Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PageGrid } from '@/components/common/PageGrid'
+import { FilterPill } from '@/components/ui/FilterPill'
+import { QuickChildLogs } from '@/components/blocks/QuickChildLogs'
 
-import Emoji from '@/components/ui/Emoji'
-import { Reveal } from '@/components/ui/Reveal'
-import BreathTimer from '@/components/blocks/BreathTimer'
-import { CareJourneys } from '@/components/blocks/CareJourneys'
-import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
-import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
-import { OrganizationTips } from '@/components/features/OrganizationTips'
-import ProfessionalsSection from '@/components/support/ProfessionalsSection'
-
-interface CuidarClientProps {
-  firstName?: string
-  initialProfessionalId?: string
+type Props = {
+  recipesSection?: React.ReactNode
 }
 
-function SectionSkeleton({ className = '' }: { className?: string }) {
-  return <div className={`section-card h-44 animate-pulse bg-white/70 ${className}`} aria-hidden />
-}
-
-class SectionErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Falha ao renderizar seção em Cuide-se:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="section-card border border-primary/30 bg-primary/10 text-sm text-primary">
-          Algo não carregou corretamente. Tente recarregar a página.
+export default function CuidarClient({ recipesSection }: Props) {
+  return (
+    <PageTemplate
+      title="Cuidar"
+      subtitle="Saúde física, emocional e segurança — no ritmo da vida real."
+    >
+      <Card>
+        <div className="flex flex-wrap gap-2">
+          <FilterPill active>Hoje</FilterPill>
+          <FilterPill>Semana</FilterPill>
+          <FilterPill>Bem-estar</FilterPill>
+          <FilterPill>Sono</FilterPill>
+          <FilterPill>Consultas</FilterPill>
         </div>
-      )
-    }
+      </Card>
 
-    return this.props.children
-  }
-}
+      <PageGrid>
+        <Card>
+          <EmptyState
+            title="Check-in de bem-estar"
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+          />
+        </Card>
 
-function GuardedSection({ children }: { children: ReactNode }) {
-  return (
-    <Suspense fallback={<SectionSkeleton />}>
-      <SectionErrorBoundary>{children}</SectionErrorBoundary>
-    </Suspense>
-  )
-}
-
-export default function CuidarClient({ firstName = '', initialProfessionalId }: CuidarClientProps) {
-  const trimmedName = firstName.trim()
-  const hasName = trimmedName.length > 0
-  const subheadingTail =
-    'seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.'
-  const subheading = hasName ? `${trimmedName}, ${subheadingTail}` : `Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.`
-
-  return (
-    <div className="relative page-shell pb-32 pt-12">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-6 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
-      />
-
-      <div className="relative space-y-12">
-        <Reveal>
-          <div className="space-y-4">
-            <span className="section-eyebrow eyebrow-capsule">Autocuidado</span>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span aria-hidden="true" className="text-3xl">🌿</span>
-                <h1 className="section-title md:text-4xl" aria-label="Cuide-se">
-                  Cuide-se
-                </h1>
-              </div>
-              {hasName && (
-                <span
-                  className="inline-flex max-w-[12ch] items-center truncate rounded-full bg-support-1/10 px-3 py-1 text-sm font-semibold text-support-1"
-                  aria-label={`Mãe: ${trimmedName}`}
-                  title={trimmedName}
-                >
-                  {trimmedName}
-                </span>
-              )}
-            </div>
-            <p className="section-subtitle max-w-3xl" aria-label={subheading}>
-              {subheading}
-            </p>
+        <Card>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-support-1">Diário da criança</h3>
+            <p className="text-sm text-support-2 mt-1">Registre alimentação, sono e humor em tempo real</p>
           </div>
-        </Reveal>
 
-        <GuardedSection>
-          <Reveal delay={80}>
-            <BreathTimer />
-          </Reveal>
-        </GuardedSection>
+          <QuickChildLogs />
+        </Card>
 
-        <GuardedSection>
-          <section className="space-y-4" aria-label="Mindfulness para Mães">
-            <Reveal>
+        <Card>
+          <EmptyState
+            title="Saúde & Vacinas"
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+          />
+        </Card>
+      </PageGrid>
 
-              <p className="section-subtitle max-w-2xl">
-                Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
-              </p>
+      <Card>
+        {recipesSection ?? (
+          <EmptyState
+            title="Receitas saudáveis"
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+          />
+        )}
+      </Card>
 
-              <div className="space-y-2">
-                <h2 className="section-title">Mindfulness para Mães</h2>
-                <p className="section-subtitle max-w-2xl">
-                  Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
-                </p>
-              </div>
-
-            </Reveal>
-            <MindfulnessCollections />
-          </section>
-        </GuardedSection>
-
-        <GuardedSection>
-          <Reveal delay={140}>
-            <CareJourneys />
-          </Reveal>
-        </GuardedSection>
-
-        <GuardedSection>
-          <HealthyRecipesSection />
-        </GuardedSection>
-
-        <GuardedSection>
-          <Reveal delay={200}>
-            <OrganizationTips />
-          </Reveal>
-        </GuardedSection>
-
-        <GuardedSection>
-          <ProfessionalsSection />
-        </GuardedSection>
-      </div>
-    </div>
+      <Card>
+        <EmptyState
+          title="Momento de respiro"
+          text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+        />
+      </Card>
+    </PageTemplate>
   )
 }

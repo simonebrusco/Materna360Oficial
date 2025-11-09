@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import Emoji from '@/components/ui/Emoji'
+import AppIcon from '@/components/ui/AppIcon'
 import { UpsellSheet } from '@/components/ui/UpsellSheet'
 import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
 
@@ -177,7 +177,10 @@ export function ProfessionalProfileSheet({
                   {professional.especialidade}
                 </p>
                 {professional.precoHint && (
-                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5"><Emoji char="💰" size={12} /> {professional.precoHint}</p>
+                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1.5">
+                    <AppIcon name="dollar-sign" size={14} variant="muted" />
+                    {professional.precoHint}
+                  </p>
                 )}
               </div>
             </div>
@@ -190,7 +193,7 @@ export function ProfessionalProfileSheet({
                     key={`badge-${badge}-${idx}`}
                     className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary flex items-center gap-1.5"
                   >
-                    <Emoji char="✓" size={12} /> {badge}
+                    <AppIcon name="check" size={12} decorative /> {badge}
                   </span>
                 ))}
               </div>
@@ -210,11 +213,11 @@ export function ProfessionalProfileSheet({
               <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
                 <div className="space-y-2 text-sm text-support-2">
                   <p>
-                    <span className="font-semibold text-support-1"><Emoji char="📍" size={14} /> Local:</span> Atendimento online
+                    <span className="font-semibold text-support-1">Local:</span> Atendimento online
                   </p>
                   {professional.cidade && (
                     <p>
-                      <span className="font-semibold text-support-1"><Emoji char="🏙️" size={14} /> Baseado em:</span> {professional.cidade}
+                      <span className="font-semibold text-support-1">Baseado em:</span> {professional.cidade}
                     </p>
                   )}
                 </div>
@@ -250,7 +253,7 @@ export function ProfessionalProfileSheet({
               aria-label="Fechar perfil"
               autoFocus
             >
-              <Emoji char="←" size={14} /> Voltar
+              Voltar
             </Button>
             <Button
               variant="primary"
@@ -259,7 +262,7 @@ export function ProfessionalProfileSheet({
               className="w-full sm:w-auto flex items-center justify-center gap-1.5"
               aria-label="Agendar atendimento"
             >
-              <Emoji char="📞" size={14} /> Agendar
+              Agendar
             </Button>
           </div>
         </Card>

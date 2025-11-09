@@ -1,7 +1,19 @@
-/** Runtime feature flags used across the app. Extend this union when you add new flags. */
-export type FlagName = 'FF_LAYOUT_V1' | 'FF_FEEDBACK_KIT' | 'FF_HOME_V1';
+/**
+ * Unified Flags type - single source of truth for all feature flags
+ */
+export type Flags = {
+  FF_LAYOUT_V1: boolean;
+  FF_FEEDBACK_KIT: boolean;
+  FF_HOME_V1: boolean;
+  FF_MATERNAR_HUB: boolean;
+};
 
-/** Discover surface flags (UI toggles derived from FF_LAYOUT_V1 by default) */
+export type FlagName = keyof Flags;
+
+/**
+ * Discover surface flags (UI toggles derived from FF_LAYOUT_V1 by default)
+ * @deprecated - use Flags type instead
+ */
 export type DiscoverFlags = {
   recShelf: boolean;
   recShelfAI: boolean;
@@ -11,44 +23,88 @@ export type DiscoverFlags = {
   selfCareAI: boolean;
 };
 
-/** Read a NEXT_PUBLIC_* env and coerce to boolean (true/1) */
-function coerceEnvBoolean(raw: string | undefined | null): boolean {
-  const v = (raw ?? '').trim().toLowerCase();
-  return v === 'true' || v === '1';
+/**
+ * Coerce env value to boolean with fallback
+ */
+function coerceEnv(v: string | undefined, fallback: '0' | '1'): boolean {
+  if (v === '1' || v === 'true') return true;
+  if (v === '0' || v === 'false') return false;
+  return fallback === '1';
 }
 
-/** Main helper: isEnabled(flag) with proper per-flag policy */
+/**
+ * Resolve FF_MATERNAR_HUB from URL param > cookie > env default
+ */
+function resolveMaternarFrom(
+  queryParam: string | null,
+  cookieValue: string | null,
+  envDefault: boolean
+): boolean {
+  // URL param takes highest precedence
+  if (queryParam === '1' || queryParam === 'true') return true;
+  if (queryParam === '0' || queryParam === 'false') return false;
+
+  // Cookie takes second precedence
+  if (cookieValue === '1' || cookieValue === 'true') return true;
+  if (cookieValue === '0' || cookieValue === 'false') return false;
+
+  // Env default takes lowest precedence
+  return envDefault;
+}
+
+/**
+ * Client-side flag resolution (Unified API)
+ * Reads from: URL param > cookie > env > Preview default
+ * Safe to call only on client
+ */
+export function getClientFlagsUnified(): Flags {
+  // URL params (always available on client)
+  const search =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
+  const queryParam = search.get('ff_maternar');
+
+  // Cookie parsing
+  let cookieValue: string | null = null;
+  if (typeof document !== 'undefined') {
+    const match = /(?:^|; )ff_maternar=([^;]*)/.exec(document.cookie);
+    cookieValue = match?.[1] ?? null;
+  }
+
+  // Get env defaults
+  const isPreview =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === 'development';
+  const envDefault = coerceEnv(
+    process.env.NEXT_PUBLIC_FF_MATERNAR_HUB,
+    isPreview ? '1' : '0'
+  );
+
+  // Resolve with precedence
+  const maternarHub = resolveMaternarFrom(queryParam, cookieValue, envDefault);
+
+  return {
+    FF_LAYOUT_V1: true,
+    FF_FEEDBACK_KIT: true,
+    FF_HOME_V1: true,
+    FF_MATERNAR_HUB: maternarHub,
+  };
+}
+
+/**
+ * Helper to check a single flag on client
+ * Supports URL override: ?ff_maternar=1|0
+ */
 export function isEnabled(flag: FlagName): boolean {
-  const vercelEnv =
-    (process.env.NEXT_PUBLIC_VERCEL_ENV ||
-      process.env.VERCEL_ENV ||
-      'local')!.toLowerCase();
-
-  // QA override only for layout flag (URL ?ff=1|0)
-  if (flag === 'FF_LAYOUT_V1' && typeof window !== 'undefined') {
-    const q = new URLSearchParams(window.location.search).get('ff');
-    if (q != null) return q === '1' || q.toLowerCase() === 'true';
-  }
-
-  const raw = process.env[`NEXT_PUBLIC_${flag}` as keyof NodeJS.ProcessEnv] as
-    | string
-    | undefined;
-
-  if (flag === 'FF_LAYOUT_V1') {
-    // Production fallback ON if missing/invalid (safe default to new UI)
-    if (vercelEnv === 'production') {
-      const v = (raw ?? '').trim().toLowerCase();
-      return v !== 'false' && v !== '0';
-    }
-    // Preview/Dev literal only
-    return coerceEnvBoolean(raw);
-  }
-
-  // Other flags: literal in all environments (no prod fallback)
-  return coerceEnvBoolean(raw);
+  const flags = getClientFlagsUnified();
+  return flags[flag];
 }
 
-/** Client-friendly pack of toggles for Descobrir (derived from layout flag by default) */
+/**
+ * Legacy helper for Discover flags (backward compatible)
+ * @deprecated - use getClientFlagsUnified() instead
+ */
 export function getClientFlags(
   overrides?: Partial<DiscoverFlags>
 ): DiscoverFlags {
@@ -64,7 +120,19 @@ export function getClientFlags(
   return { ...base, ...overrides };
 }
 
-/** Server-side equivalent (keeps same defaults) */
-export function getServerFlags(): DiscoverFlags {
-  return getClientFlags();
+/**
+ * Legacy server-side equivalent
+ * @deprecated - use getServerFlags() from flags.server.ts instead
+ */
+export async function getServerDiscoverFlags(): Promise<DiscoverFlags> {
+  // This is deprecated - use the server module directly
+  const on = true; // Default value
+  return {
+    recShelf: on,
+    recShelfAI: on,
+    flashRoutine: on,
+    flashRoutineAI: on,
+    selfCare: on,
+    selfCareAI: on,
+  };
 }

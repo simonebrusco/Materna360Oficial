@@ -1,25 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
 
-import Emoji from '@/components/ui/Emoji'
-
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
 import { Checklist } from '@/components/blocks/Checklist'
 import DailyMessageCard from '@/components/blocks/DailyMessageCard'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
+import { SimplePlannerSheet, type PlannerItem, type PlannerDraft } from '@/components/blocks/SimplePlannerSheet'
+import { SimplePlannerList } from '@/components/blocks/SimplePlannerList'
+import { MoodQuickSelector } from '@/components/blocks/MoodQuickSelector'
+import { MoodSparkline } from '@/components/blocks/MoodSparkline'
 import GridRhythm from '@/components/common/GridRhythm'
 import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+import { PageTemplate } from '@/components/common/PageTemplate'
+import { useToast } from '@/components/ui/Toast'
+import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
+import { track } from '@/app/lib/telemetry-track'
 
 type MeuDiaClientProps = {
   dailyGreeting: string
@@ -35,10 +41,10 @@ type MeuDiaClientProps = {
 }
 
 const quickActions = [
-  { emoji: '🏡', iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
-  { emoji: '📸', iconName: 'books', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
-  { emoji: '🎯', iconName: 'star', title: 'Atividade do Dia', description: 'Faça com as crianças' },
-  { emoji: '☕', iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
+  { iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
+  { iconName: 'books', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
+  { iconName: 'star', title: 'Atividade do Dia', description: 'Faça com as crianças' },
+  { iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
 const NOTES_LABEL = 'Notas R\u00E1pidas'
@@ -73,9 +79,21 @@ export function MeuDiaClient({
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
 
+  const [showPlannerSheet, setShowPlannerSheet] = useState(false)
+  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
+  const { toast } = useToast()
+
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
+
+  // Load planner items from persistence on mount
+  useEffect(() => {
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    const savedItems = load<PlannerItem[]>(persistKey, [])
+    setPlannerItems(savedItems || [])
+  }, [])
 
   const handleAddNote = () => {
     if (noteText.trim()) {
@@ -85,57 +103,110 @@ export function MeuDiaClient({
     }
   }
 
+  const handleAddPlannerItem = (draft: PlannerDraft) => {
+    const newItem: PlannerItem = {
+      id: globalThis.crypto?.randomUUID?.() ?? `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      createdAt: Date.now(),
+      title: draft.title,
+      note: draft.note,
+      time: draft.time,
+      done: draft.done ?? false,
+    }
+
+    const updated = [...plannerItems, newItem]
+    setPlannerItems(updated)
+
+    // Persist the updated list
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    save(persistKey, updated)
+
+    // Fire telemetry
+    track({
+      event: 'planner.item_add',
+      tab: 'meu-dia',
+      component: 'SimplePlannerSheet',
+      action: 'add',
+      payload: { title: draft.title, hasNote: !!draft.note, hasTime: !!draft.time },
+    })
+
+    // Show toast
+    toast({ description: 'Alterações salvas!' })
+  }
+
+  const handleTogglePlannerItem = (id: string) => {
+    const updated = plannerItems.map(item =>
+      item.id === id ? { ...item, done: !item.done } : item
+    )
+    setPlannerItems(updated)
+
+    // Persist the updated list
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    save(persistKey, updated)
+
+    // Fire telemetry
+    const item = plannerItems.find(i => i.id === id)
+    track({
+      event: 'planner.item_done',
+      tab: 'meu-dia',
+      component: 'SimplePlannerList',
+      action: 'toggle',
+      payload: { done: !item?.done },
+    })
+  }
+
   return (
-    <>
-      <SectionWrapper>
+    <PageTemplate title="Seu dia, no seu ritmo." subtitle="Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.">
+      <Card>
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal delay={160}>
           <CheckInCard />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
+        <Reveal delay={190}>
+          <div className="space-y-6">
+            <MoodQuickSelector />
+            <div className="border-t border-white/40 pt-4">
+              <MoodSparkline />
+            </div>
+          </div>
+        </Reveal>
+      </Card>
+
+      <Card>
         <Reveal delay={220}>
           <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <GridStable>
           {quickActions.map((action, index) => (
             <Reveal key={action.title} delay={index * 80} className="h-full">
-              <Card className="h-full">
-
-                <div className="mb-3 inline-flex items-center gap-2">
-                  <AppIcon name={action.iconName as any} size={18} className="text-primary" decorative />
-                  <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
-                </div>
-
+              <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
                 <div className="mb-3">
-                  {isEnabled('FF_LAYOUT_V1') && action.iconName ? (
-                    <AppIcon name={action.iconName as any} size={28} />
-                  ) : (
-                    <span className="text-2xl">{action.emoji}</span>
-                  )}
+                  <AppIcon name={action.iconName as any} size={28} decorative />
                 </div>
                 <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
-
                 <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="primary" size="sm" className="w-full">
                   Acessar
                 </Button>
-              </Card>
+              </div>
             </Reveal>
           ))}
         </GridStable>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
         <Reveal delay={280}>
           <FamilyPlanner
             currentDateKey={currentDateKey}
@@ -148,51 +219,79 @@ export function MeuDiaClient({
             initialBuckets={initialBuckets}
           />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card>
+        <Reveal delay={300}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-support-1 md:text-xl flex items-center gap-2">
+                <AppIcon name="check" size={20} decorative />
+                Itens da Semana
+              </h2>
+              <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowPlannerSheet(true)}
+              className="flex items-center gap-1"
+            >
+              <AppIcon name="plus" size={16} decorative />
+              Adicionar item
+            </Button>
+          </div>
+          <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
+        </Reveal>
+      </Card>
+
+      <SimplePlannerSheet
+        isOpen={showPlannerSheet}
+        onClose={() => setShowPlannerSheet(false)}
+        onAdd={handleAddPlannerItem}
+      />
+
+      <Card>
         <Reveal delay={320}>
           <Checklist currentDateKey={currentDateKey} />
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
-      <SectionWrapper>
+      <Card className="notesCard">
         <Reveal delay={360}>
-          <Card className="notesCard">
-            <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
-              <div className="notesCard-text">
-                <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
-                  <span className="mr-1">
-                    <AppIcon name="edit" size={16} aria-hidden />
-                  </span>
-                  {notesLabel}
-                </h2>
-                <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
-              </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowNoteModal(true)}
-                className="notesCard-action"
-              >
-                ＋ Adicionar
-              </Button>
+          <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
+            <div className="notesCard-text">
+              <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
+                <span className="mr-1">
+                  <AppIcon name="edit" size={16} aria-hidden />
+                </span>
+                {notesLabel}
+              </h2>
+              <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
             </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowNoteModal(true)}
+              className="notesCard-action"
+            >
+              ＋ Adicionar
+            </Button>
+          </div>
 
-            {notes.length > 0 ? (
-              <div className="notesCard-list space-y-2">
-                {notes.map((note, idx) => (
-                  <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
-                    {note}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
-            )}
-          </Card>
+          {notes.length > 0 ? (
+            <div className="notesCard-list space-y-2">
+              {notes.map((note, idx) => (
+                <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                  {note}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
+          )}
         </Reveal>
-      </SectionWrapper>
+      </Card>
 
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
@@ -223,6 +322,6 @@ export function MeuDiaClient({
           </div>
         </div>
       )}
-    </>
+    </PageTemplate>
   )
 }
