@@ -378,6 +378,11 @@ export default function DiscoverClient() {
             const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
             return (
               <Card key={suggestion.id}>
+                <SuggestionCover
+                  src={suggestion.coverUrl}
+                  alt={suggestion.title}
+                  className="mb-3"
+                />
                 <header className="mb-2 flex items-center gap-2">
                   <AppIcon name={suggestion.icon} decorative />
                   <BlockH3 className="text-base">{suggestion.title}</BlockH3>
