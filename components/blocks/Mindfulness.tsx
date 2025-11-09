@@ -312,7 +312,7 @@ export function Mindfulness() {
       }
       window.localStorage.removeItem(LEGACY_LAST_TRACK_KEY)
     } catch (error) {
-      console.error('Não foi possível salvar o último áudio do mindfulness.', error)
+      console.error('N��o foi possível salvar o último áudio do mindfulness.', error)
     }
   }, [])
 
@@ -440,7 +440,7 @@ export function Mindfulness() {
           setIsPlaying(true)
         } catch (error) {
           console.error('Falha ao iniciar reprodução do Mindfulness', error)
-          toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
+          toast.danger('Algo não funcionou como esperado. Tente novamente.')
           setCurrentPlayback(previousPlayback ?? null)
           setLastPlayback(previousLastPlayback ?? null)
           persistLastPlayback(previousLastPlayback ?? null)
