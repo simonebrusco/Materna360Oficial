@@ -7,7 +7,7 @@ type Tab =
   | 'descobrir'
   | 'eu360'
 
-type TelemetryEvent =
+export type TelemetryEventName =
   | 'nav.click'
   | 'mood.checkin'
   | 'todos.add'
@@ -28,16 +28,21 @@ type TelemetryEvent =
   | 'paywall.view'
   | 'paywall.click'
 
-type Payload = Record<string, unknown> & { tab?: Tab }
+export type TelemetryPayload = Record<string, unknown> & { tab?: Tab }
+
+type LegacyShape = {
+  event: TelemetryEventName
+  payload?: Record<string, unknown>
+} & Record<string, unknown>
 
 type TelemetryContext = {
-  event?: string
+  event: TelemetryEventName
   tab?: Tab
   component?: string
   action?: string
   id?: string
-  payload?: Record<string, unknown>
   timestamp?: number
+  [key: string]: unknown
 }
 
 const DEBUG =
@@ -50,29 +55,62 @@ let telemetryProvider: ((ctx: TelemetryContext) => void) | null = null
 /**
  * Set a custom telemetry provider (FS, GA4, Segment, etc.)
  */
-export function setTelemetryProvider(provider: (ctx: TelemetryContext) => void): void {
+export function setTelemetryProvider(provider: ((ctx: TelemetryContext) => void) | null): void {
   telemetryProvider = provider
 }
 
 /**
- * Fire-and-forget telemetry. Must never block UI.
- * In production, this can be wired to your provider (FS, GA4, Segment, etc.).
- * For now, it no-ops unless DEBUG=1 (which logs to console).
+ * Fire-and-forget telemetry. Supports two calling styles:
+ * - Style A (preferred):  track('nav.click', { tab: '...', dest: '...' })
+ * - Style B (legacy):     track({ event: 'nav.click', tab: '...', payload: { dest: '...' } })
+ *
+ * Both styles work and produce the same result. Style A is preferred for new code.
+ * Must never block UI.
  */
-export function track(event: TelemetryEvent, payload: Payload = {}): void {
+
+// Overload 1: Style A - track('event-name', { ...payload })
+export function track(name: TelemetryEventName, payload?: TelemetryPayload): void
+
+// Overload 2: Style B - track({ event: 'event-name', ...rest })
+export function track(legacy: LegacyShape): void
+
+// Implementation
+export function track(a: any, b?: any): void {
+  let name: TelemetryEventName
+  let payload: TelemetryPayload | undefined
+
   try {
-    // Non-blocking microtask to avoid any UI stall.
+    if (typeof a === 'string') {
+      // Style A: track('event', { ... })
+      name = a as TelemetryEventName
+      payload = b ?? {}
+    } else if (a && typeof a === 'object' && typeof a.event === 'string') {
+      // Style B: track({ event, ...rest, payload? })
+      name = a.event as TelemetryEventName
+      const { event, payload: p, ...rest } = a as LegacyShape
+      payload = p ? { ...rest, ...p } : rest
+    } else {
+      // Unknown shape -> ignore safely
+      return
+    }
+
+    // Non-blocking fire-and-forget
     queueMicrotask(() => {
-      const ctx: TelemetryContext = { event, ...payload, timestamp: Date.now() }
-      if (telemetryProvider) {
-        telemetryProvider(ctx)
+      try {
+        const ctx: TelemetryContext = { event: name, ...payload, timestamp: Date.now() }
+
+        if (DEBUG) {
+          // eslint-disable-next-line no-console
+          console.debug('[telemetry]', ctx)
+        }
+
+        if (telemetryProvider) {
+          telemetryProvider(ctx)
+        }
+        // TODO: P1.5/P2: send to provider here (navigator.sendBeacon or fetch keepalive)
+      } catch {
+        // Never throw from telemetry
       }
-      if (DEBUG) {
-        // Minimal, structured log for QA
-        // eslint-disable-next-line no-console
-        console.debug('[telemetry]', ctx)
-      }
-      // TODO: P1.5/P2: send to provider here (navigator.sendBeacon or fetch keepalive)
     })
   } catch {
     // Never throw from telemetry
@@ -82,8 +120,9 @@ export function track(event: TelemetryEvent, payload: Payload = {}): void {
 /**
  * Backward-compatible alias for track
  */
-export function trackTelemetry(event: string, payload?: Record<string, unknown>): void {
-  track(event as TelemetryEvent, payload as Payload)
-}
+export const trackTelemetry = track
 
-export type { TelemetryEvent, Tab, Payload, TelemetryContext }
+export type { TelemetryEventName as TelemetryEvent, Tab, TelemetryPayload, TelemetryContext, Payload }
+
+// Legacy type alias for backward compatibility
+export type Payload = TelemetryPayload
