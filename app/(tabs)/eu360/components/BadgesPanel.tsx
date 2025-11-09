@@ -49,15 +49,18 @@ export function BadgesPanel() {
   }, [])
 
   const unlock = (id: string) => {
+    let badge: Badge | undefined
     setBadges(prev => {
       const updated = prev.map(b => (b.id === id ? { ...b, unlocked: true } : b))
-      const b = updated.find(x => x.id === id)
-      if (b) {
-        toast.success(`Conquista desbloqueada: ${b.label}!`)
-        track('toast.shown', { type: 'success', id, msg: 'badge_unlocked' })
-      }
+      badge = updated.find(x => x.id === id)
       return updated
     })
+
+    if (badge) {
+      toast.success(`Conquista desbloqueada: ${badge.label}!`)
+      track('toast.shown', { type: 'success', id, msg: 'badge_unlocked' })
+    }
+
     const saved = JSON.parse(localStorage.getItem(BADGE_KEY) || '[]')
     if (!saved.includes(id)) {
       const next = [...saved, id]
