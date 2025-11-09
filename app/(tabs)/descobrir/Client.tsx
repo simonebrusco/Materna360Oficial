@@ -31,6 +31,7 @@ import {
   type Location,
   type Mood,
 } from './utils';
+import { useSavedSuggestions } from './hooks/useSavedSuggestions';
 
 type MoodOption = {
   id: Mood;
