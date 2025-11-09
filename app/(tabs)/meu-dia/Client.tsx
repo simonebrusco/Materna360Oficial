@@ -30,7 +30,7 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 
 type MeuDiaClientProps = {
   dailyGreeting: string

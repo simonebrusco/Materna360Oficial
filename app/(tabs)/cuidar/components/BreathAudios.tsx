@@ -5,7 +5,7 @@ import { Play, Pause, RotateCcw, Waves } from 'lucide-react'
 import { gate } from '@/app/lib/gate'
 import { readProgress, writeProgress, clearProgress } from '@/app/lib/audioProgress'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 
 type AudioItem = { id: string; title: string; src: string; durationHint?: string }
 
