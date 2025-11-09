@@ -291,6 +291,9 @@ export default function PlanosPage() {
           ))}
         </PageGrid>
 
+        {/* QA Feature Table */}
+        <PlansTable />
+
         {/* Info Section */}
         <Card className="rounded-[var(--radius-card)] p-5 md:p-6 text-center border-white/60 bg-white/95">
           <p className="text-sm text-support-2">
