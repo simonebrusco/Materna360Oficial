@@ -76,14 +76,14 @@ export function MomInMotion({ enabled = true, storageKey }: MomInMotionProps) {
   const doneCount = items.filter((i) => i.done).length
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
+      <div className="flex items-center gap-2 mb-3" role="group" aria-describedby="mom-subtitle">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
           <ListChecks className="h-4 w-4 text-[#ff005e]" aria-hidden />
         </div>
         <div>
           <h3 className="text-[16px] font-semibold">Mãe em Movimento</h3>
-          <p className="text-[12px] text-[#545454]">Listas rápidas para o seu dia</p>
+          <p className="text-[12px] text-[#545454]" id="mom-subtitle">Listas rápidas para o seu dia</p>
         </div>
         <div className="ml-auto text-[12px] text-[#545454]">
           {doneCount}/{items.length} concluídos
@@ -124,7 +124,7 @@ export function MomInMotion({ enabled = true, storageKey }: MomInMotionProps) {
         />
         <button
           type="submit"
-          className="inline-flex items-center gap-1 rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99]"
+          className="inline-flex items-center gap-1 rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99] focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Adicionar
@@ -140,7 +140,7 @@ export function MomInMotion({ enabled = true, storageKey }: MomInMotionProps) {
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-[#ff005e]"
+                className="h-4 w-4 accent-[#ff005e] focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
                 checked={i.done}
                 onChange={() => toggleDone(i.id)}
                 aria-label={i.done ? 'Marcar como não concluído' : 'Marcar como concluído'}
@@ -153,9 +153,9 @@ export function MomInMotion({ enabled = true, storageKey }: MomInMotionProps) {
               {i.done && <CheckCircle2 className="h-4 w-4 text-[#2f3a56]" aria-hidden />}
               <button
                 type="button"
-                className="rounded-lg border px-2 py-1 text-[12px] hover:bg-[#ffd8e6]/40"
+                className="rounded-lg border px-2 py-1 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
                 onClick={() => removeItem(i.id)}
-                aria-label="Remover item"
+                aria-label={`Remover item: ${i.text}`}
               >
                 <Trash2 className="h-4 w-4" aria-hidden />
               </button>
