@@ -1,6 +1,7 @@
 import './globals.css'
 import Script from 'next/script'
 import type { Metadata } from 'next'
+import { ToastHost } from '@/components/ui/toast/ToastHost'
 
 export const metadata: Metadata = {
   title: 'Materna360',
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-dvh bg-soft-page text-[#2f3a56] antialiased">
         {children}
+        <ToastHost />
       </body>
     </html>
   )
