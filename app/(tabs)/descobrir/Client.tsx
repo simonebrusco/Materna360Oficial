@@ -19,6 +19,8 @@ import { save, load, getCurrentDateKey } from '@/app/lib/persist';
 import { track, trackTelemetry } from '@/app/lib/telemetry-track';
 import { SectionH2, BlockH3 } from '@/components/common/Headings';
 import { SuggestionCover } from './components/SuggestionCover';
+import { PaywallBanner } from '@/components/paywall/PaywallBanner';
+import { gate } from '@/app/lib/gate';
 import {
   DISCOVER_CATALOG,
   filterAndRankSuggestions,
@@ -130,6 +132,14 @@ export default function DiscoverClient() {
   };
 
   const filteredSuggestions = filterAndRankSuggestions(DISCOVER_CATALOG, filters);
+
+  // Compute quota info
+  const quota = gate('ideas.dailyQuota');
+  const savedCount = savedItems.size;
+  const showQuotaWarning =
+    quota.enabled &&
+    typeof quota.limit === 'number' &&
+    savedCount >= Math.max(0, quota.limit - 1);
 
   // Handlers
   const handleStartSuggestion = (id: string) => {
