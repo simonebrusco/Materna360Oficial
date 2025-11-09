@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useState, useEffect } from 'react'
 import { track } from '@/app/lib/telemetry-track'
 import AppIcon from '@/components/ui/AppIcon'
@@ -10,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { PaywallBanner } from '@/components/ui/PaywallBanner'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { PageGrid } from '@/components/common/PageGrid'
+import { PlansTable } from '@/components/paywall/PlansTable'
 
 type PlanId = 'free' | 'essencial' | 'premium'
 
