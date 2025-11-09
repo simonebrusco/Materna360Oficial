@@ -95,6 +95,15 @@ export default function DiscoverClient() {
     return newCount;
   }, [getTodayIdeaCount]);
 
+  // Page-view telemetry on mount
+  React.useEffect(() => {
+    track({
+      event: 'nav.click',
+      tab: 'descobrir',
+      payload: { dest: '/descobrir' },
+    });
+  }, []);
+
   // Load saved items and quota on mount
   React.useEffect(() => {
     const saved = load<string[]>('saved:discover', []);
