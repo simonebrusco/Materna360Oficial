@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-dvh bg-soft-page text-[#2f3a56] antialiased">
         {children}
-        <ToastHost />
+        {/* <ToastHost /> */}
       </body>
     </html>
   )
