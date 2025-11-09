@@ -198,6 +198,12 @@ export function MeuDiaClient({
         <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
       </Reveal>
 
+      <Card>
+        <Reveal delay={240}>
+          <ExportPlanner />
+        </Reveal>
+      </Card>
+
       <Reveal delay={250}>
         <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
       </Reveal>
