@@ -1,15 +1,8 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default function Page() {
-  const router = useRouter()
-
-  useEffect(() => {
-    // Client-side redirect
-    router.replace('/meu-dia')
-  }, [router])
-
-  return null
+  redirect('/meu-dia')
 }
