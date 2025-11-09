@@ -8,14 +8,15 @@ import DestaquesDodia from '@/components/maternar/DestaquesDodia';
 import { HighlightsSection } from './components/HighlightsSection';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { Reveal } from '@/components/ui/Reveal';
-import { trackTelemetry } from '@/app/lib/telemetry';
+import { track } from '@/app/lib/telemetry';
 import { getBrazilDateKey } from '@/app/lib/dateKey';
 
 export default function MaternarClient() {
   const dateKey = getBrazilDateKey(new Date());
 
   useEffect(() => {
-    trackTelemetry('maternar.page_view', {
+    track('nav.click', {
+      tab: 'maternar',
       timestamp: new Date().toISOString(),
     });
   }, []);

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import AppIcon, { type AppIconName } from '@/components/ui/AppIcon';
-import { trackTelemetry } from '@/app/lib/telemetry';
+import { track } from '@/app/lib/telemetry';
 
 export interface HubCardProps {
   icon: AppIconName;
@@ -23,9 +23,10 @@ export default function HubCard({
   cardId,
 }: HubCardProps) {
   const handleClick = () => {
-    trackTelemetry('maternar.card_click', {
+    track('nav.click', {
+      tab: 'maternar',
       card: cardId,
-      href,
+      dest: href,
     });
   };
 
