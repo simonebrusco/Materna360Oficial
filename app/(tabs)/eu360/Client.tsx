@@ -135,6 +135,12 @@ export default function Eu360Client() {
         <ProfileForm />
       </Card>
 
+      <Reveal delay={180}>
+        <div className="flex items-center justify-end mb-2">
+          <AchievementsCounter />
+        </div>
+      </Reveal>
+
       <Card>
         <Reveal>
           <div className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white rounded-xl">
