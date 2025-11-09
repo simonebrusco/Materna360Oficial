@@ -9,7 +9,6 @@ import { FilterPill } from '@/components/ui/FilterPill'
 import { ChildDiary } from './components/ChildDiary'
 import { AppointmentsMVP } from './components/AppointmentsMVP'
 import { SectionH2 } from '@/components/common/Headings'
-import { SectionH2 } from '@/components/common/Headings'
 
 type Props = {
   recipesSection?: React.ReactNode
@@ -39,14 +38,7 @@ export default function CuidarClient({ recipesSection }: Props) {
           />
         </Card>
 
-        <Card>
-          <div className="mb-4">
-            <SectionH2 className="text-lg">Diário da criança</SectionH2>
-            <p className="text-sm text-support-2 mt-1">Registre alimentação, sono e humor em tempo real</p>
-          </div>
-
-          <QuickChildLogs />
-        </Card>
+        <ChildDiary />
 
         <Card>
           <EmptyState
