@@ -2,20 +2,25 @@
 
 import * as React from 'react'
 import { track } from '@/app/lib/telemetry-track'
+import { save as persistSave, load as persistLoad } from '@/app/lib/persist'
 
 export function useSavedSuggestions(storageKey = 'saved:discover') {
   const [saved, setSaved] = React.useState<string[]>([])
 
+  // Load from localStorage on mount
   React.useEffect(() => {
     try {
-      const raw = localStorage.getItem(storageKey)
-      if (raw) setSaved(JSON.parse(raw))
+      const loaded = persistLoad<string[]>(storageKey, [])
+      if (loaded && Array.isArray(loaded)) {
+        setSaved(loaded)
+      }
     } catch {}
   }, [storageKey])
 
+  // Persist whenever saved changes
   React.useEffect(() => {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(saved))
+      persistSave(storageKey, saved)
     } catch {}
   }, [storageKey, saved])
 
@@ -30,9 +35,11 @@ export function useSavedSuggestions(storageKey = 'saved:discover') {
         updated.add(id)
       }
 
+      const newArray = Array.from(updated)
+
       // Persist to localStorage
       try {
-        localStorage.setItem(storageKey, JSON.stringify(Array.from(updated)))
+        persistSave(storageKey, newArray)
       } catch {}
 
       // Fire telemetry (only on save, not on unsave)
@@ -45,7 +52,7 @@ export function useSavedSuggestions(storageKey = 'saved:discover') {
         })
       }
 
-      return Array.from(updated)
+      return newArray
     })
   }
 
@@ -53,7 +60,7 @@ export function useSavedSuggestions(storageKey = 'saved:discover') {
     setSaved((prev) => {
       const updated = prev.filter((x) => x !== id)
       try {
-        localStorage.setItem(storageKey, JSON.stringify(updated))
+        persistSave(storageKey, updated)
       } catch {}
       return updated
     })
