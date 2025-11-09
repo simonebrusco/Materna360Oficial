@@ -99,9 +99,7 @@ export function QuickChildLogs() {
     })
 
     // Show toast
-    toast({
-      description: 'Registro salvo!',
-    })
+    toast.success('Registro salvo!')
   }
 
   const formatTime = (ts: number) => {
