@@ -29,6 +29,8 @@ import { track } from '@/app/lib/telemetry'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
 import { getCurrentPlanId } from '@/app/lib/planClient'
+import { ExportBlock } from './components/ExportBlock'
+import { printElementById } from '@/app/lib/print'
 
 type MoodHistory = {
   day: string
