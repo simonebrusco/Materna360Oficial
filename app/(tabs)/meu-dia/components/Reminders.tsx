@@ -47,19 +47,19 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
   const now = Date.now()
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
+      <div className="flex items-center gap-2 mb-3" role="group" aria-describedby="reminders-subtitle">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
           <Bell className="h-4 w-4 text-[#ff005e]" aria-hidden />
         </div>
         <div>
           <h3 className="text-[16px] font-semibold">Lembretes</h3>
-          <p className="text-[12px] text-[#545454]">Avisos suaves para o seu dia</p>
+          <p className="text-[12px] text-[#545454]" id="reminders-subtitle">Avisos suaves para o seu dia</p>
         </div>
       </div>
 
       <form
-        className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 mb-3"
+        className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 mb-3"
         onSubmit={(e) => {
           e.preventDefault()
           const t = title.trim()
@@ -69,25 +69,23 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
           setWhen('')
         }}
       >
-        <div className="flex gap-2">
-          <input
-            className="flex-1 rounded-xl border px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
-            placeholder="Título do lembrete"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            name="title"
-          />
-          <input
-            className="rounded-xl border px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
-            type="datetime-local"
-            value={when}
-            onChange={(e) => setWhen(e.target.value)}
-            name="when"
-          />
-        </div>
+        <input
+          className="rounded-xl border px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+          placeholder="Título do lembrete"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          name="title"
+        />
+        <input
+          className="rounded-xl border px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+          type="datetime-local"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
+          name="when"
+        />
         <button
           type="submit"
-          className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99]"
+          className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99] focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
         >
           Adicionar
         </button>
@@ -118,8 +116,9 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
                 ) : null}
                 <button
                   type="button"
-                  className="rounded-lg border px-2 py-1 text-[12px] hover:bg-[#ffd8e6]/40"
+                  className="rounded-lg border px-2 py-1 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
                   onClick={() => remove(r.id)}
+                  aria-label={`Remover lembrete: ${r.title}`}
                 >
                   Remover
                 </button>
