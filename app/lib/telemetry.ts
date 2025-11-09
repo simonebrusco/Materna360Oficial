@@ -1,47 +1,61 @@
 'use client'
 
 export type TelemetryEventName =
-  | 'nav.click'
+  | 'page_view'
+  | 'nav_click'
+  | 'maternar.page_view'
+  | 'maternar.card_click'
+  | 'planner.item_add'
+  | 'planner.item_done'
   | 'mood.checkin'
-  | 'todos.add'
-  | 'todos.edit'
-  | 'todos.remove'
-  | 'todos.complete'
-  | 'reminder.created'
-  | 'reminder.deleted'
-  | 'care.appointment_add'
-  | 'eu360.summary_view'
+  | 'discover.filter_changed'
+  | 'suggestion_saved'
+  | 'paywall.view'
+  | 'paywall.click'
   | 'badge.unlocked'
-  | 'toast.shown'
-  | 'audio.play'
-  | 'audio.pause'
-  | 'audio.restart'
-  | 'audio.end'
-  | 'audio.select'
-  | 'discover.suggestion_saved'
+  | 'toast.shown';
 
-type TelemetryProvider = (event: TelemetryEventName, payload?: Record<string, unknown>) => void
+type TelemetryEventPayloads = {
+  'page_view': { path: string; tab?: string };
+  'nav_click': { from?: string; to: string };
+  'maternar.page_view': { source?: 'redirect' | 'nav' | 'deeplink' };
+  'maternar.card_click': {
+    card: 'eu360' | 'cuidar' | 'meu-dia' | 'descobrir' | 'conquistas' | 'planos';
+  };
+  'planner.item_add': { id: string; kind: 'task' | 'event' | 'note' };
+  'planner.item_done': { id: string; kind: 'task' | 'event' | 'note' };
+  'mood.checkin': { mood: 'baixa' | 'média' | 'alta'; energy?: 'baixa' | 'média' | 'alta' };
+  'discover.filter_changed': { key: 'tempo' | 'local' | 'energia' | 'idade'; value: string | number };
+  'suggestion_saved': { id: string; list?: 'later' | 'planner' };
+  'paywall.view': { context: string; count?: number; limit?: number };
+  'paywall.click': { action: string; context?: string };
+  'badge.unlocked': { badge: string };
+  'toast.shown': { kind: 'default' | 'success' | 'warning' | 'danger'; message?: string; context?: string };
+};
 
-let provider: TelemetryProvider | null = null
-
-export function setTelemetryProvider(p: TelemetryProvider | null) {
-  provider = p
-}
-
-/** Non-blocking fire-and-forget telemetry call. */
-export function track(event: TelemetryEventName, payload?: Record<string, unknown>) {
-  const debug =
-    typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TELEMETRY_DEBUG === '1'
-
-  queueMicrotask(() => {
-    try {
-      provider?.(event, payload)
-      if (debug) {
-        // eslint-disable-next-line no-console
-        console.debug('[telemetry]', { event, ...(payload || {}), ts: Date.now() })
+export function track<E extends TelemetryEventName>(
+  name: E,
+  payload: TelemetryEventPayloads[E]
+): void {
+  try {
+    if (typeof window !== 'undefined') {
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[telemetry]', name, payload);
       }
-    } catch {
-      /* swallow */
+      window.dispatchEvent(
+        new CustomEvent('m360:telemetry', {
+          detail: { name, payload, ts: Date.now() },
+        })
+      );
+    } else {
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[telemetry][server]', name, payload);
+      }
     }
-  })
+  } catch {
+    // No-op
+  }
 }
+
+export const trackTelemetry = track;
+export type { TelemetryEventPayloads as TelemetryPayloads };
