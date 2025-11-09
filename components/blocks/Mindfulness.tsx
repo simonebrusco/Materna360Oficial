@@ -371,7 +371,7 @@ export function Mindfulness() {
     const handlePause = () => setIsPlaying(false)
 
     const handleError = () => {
-      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
       setIsPlaying(false)
     }
 
