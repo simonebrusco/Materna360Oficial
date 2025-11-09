@@ -111,6 +111,7 @@ export default function BottomNav({
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                   transition-all duration-200
                   flex-1
+                  ui-press ui-ring
                   ${isCenter ? 'py-1 -mt-2 h-16' : 'py-1.5 h-14'}
                 `}
                 aria-label={it.label}
