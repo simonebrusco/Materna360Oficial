@@ -86,11 +86,7 @@ export function BreathAudios() {
 
       {!allowProgress && (
         <div className="mb-4">
-          <PaywallBanner
-            title="Playback liberado"
-            description="Para salvar seu progresso e retomar de onde parou, conheça os planos."
-            featureName="audio.progress"
-          />
+          <PaywallBanner message="Playback liberado. Para salvar seu progresso e retomar de onde parou, conheça os planos." />
         </div>
       )}
 
