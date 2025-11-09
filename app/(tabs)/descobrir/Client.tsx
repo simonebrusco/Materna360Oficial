@@ -14,7 +14,6 @@ import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from '@/app/lib/toast';
-import { PaywallBanner } from '@/components/ui/PaywallBanner';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
 import { track, trackTelemetry } from '@/app/lib/telemetry-track';
 import { SectionH2, BlockH3 } from '@/components/common/Headings';
