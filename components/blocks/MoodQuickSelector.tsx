@@ -71,9 +71,7 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
     })
 
     // Show toast
-    toast({
-      description: 'Humor registrado! Um passo de cada vez é o suficiente.',
-    })
+    toast.success('Humor registrado! Um passo de cada vez é o suficiente.')
 
     // Callback if provided
     if (onMoodSelect) {
