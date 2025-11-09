@@ -3,12 +3,15 @@
 import { useEffect } from 'react';
 import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
-import ContinueFromSection from '@/components/maternar/ContinueFromSection';
+import { ContinueCard } from './components/ContinueCard';
 import DestaquesDodia from '@/components/maternar/DestaquesDodia';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { trackTelemetry } from '@/app/lib/telemetry';
+import { getCurrentDateKey } from '@/app/lib/persist';
 
 export default function MaternarClient() {
+  const dateKey = getCurrentDateKey();
+
   useEffect(() => {
     trackTelemetry('maternar.page_view', {
       timestamp: new Date().toISOString(),
