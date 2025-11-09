@@ -62,12 +62,7 @@ export default function CuidarClient({ recipesSection }: Props) {
         )}
       </Card>
 
-      <Card>
-        <EmptyState
-          title="Momento de respiro"
-          text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
-        />
-      </Card>
+      <BreathAudios />
     </PageTemplate>
   )
 }
