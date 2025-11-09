@@ -191,7 +191,8 @@ export default function DestaquesDodia() {
   }, []);
 
   const handleHighlightClick = (highlight: Highlight) => {
-    trackTelemetry('maternar.highlight_click', {
+    track('nav.click', {
+      tab: 'maternar',
       slot: highlight.slot,
       type: highlight.type,
       id: highlight.id,
