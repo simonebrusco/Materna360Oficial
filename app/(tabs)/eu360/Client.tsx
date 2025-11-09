@@ -253,11 +253,17 @@ export default function Eu360Client() {
         </div>
       )}
 
-      <Card>
-        <Reveal delay={260}>
-          <WeeklyEmotionalSummary />
-        </Reveal>
-      </Card>
+      <Reveal delay={250}>
+        <ExportBlock />
+      </Reveal>
+
+      <div id="eu360-print-area" className="print-card">
+        <Card>
+          <Reveal delay={260}>
+            <WeeklyEmotionalSummary />
+          </Reveal>
+        </Card>
+      </div>
 
       <Reveal delay={300}>
         <AchievementsPanel />
