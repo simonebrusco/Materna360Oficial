@@ -248,6 +248,19 @@ export default function DiscoverClient() {
       subtitle="Brincadeiras e ideias inteligentes, por idade e objetivo"
     >
 
+      {/* Saved Count Chip */}
+      {savedCount > 0 && (
+        <div className="mb-6">
+          <Link
+            href="/descobrir/salvos"
+            className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
+            aria-label={`Ver itens salvos (${savedCount})`}
+          >
+            Salvos ({savedCount})
+          </Link>
+        </div>
+      )}
+
       {/* Filter Pills: Time Window */}
       {selectedTimeWindow || selectedLocation || selectedMood ? (
         <div className="mb-6">
