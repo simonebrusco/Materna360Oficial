@@ -20,6 +20,7 @@ export interface Suggestion {
   energy: Energy;
   tags: string[];
   saveable?: boolean;
+  coverUrl?: string;
 }
 
 export interface FilterInputs {
