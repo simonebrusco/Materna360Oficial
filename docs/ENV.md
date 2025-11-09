@@ -8,6 +8,7 @@
 - `FORCE_MATERNAR_SSR=1`
 - `NEXT_PUBLIC_FF_MATERNAR_HUB=1`
 - `NEXT_PUBLIC_TELEMETRY_DEBUG=0|1` (optional console logs)
+  - To enable console telemetry logs for QA, set `NEXT_PUBLIC_TELEMETRY_DEBUG=1` in Preview. Events will log as `[telemetry] { event: '...', ... }` to browser console.
 
 ## Variables — Production
 - `NEXT_PUBLIC_FF_MATERNAR_HUB=1`
