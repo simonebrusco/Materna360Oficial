@@ -383,10 +383,10 @@ export default function DiscoverClient() {
       </Card>
 
       {/* Quota Limit Banner */}
-      {quota.enabled && typeof quota.limit === 'number' && savedCount >= Math.max(0, quota.limit - 1) && (
+      {showQuotaWarning && (
         <div className="mb-4">
           <PaywallBanner
-            message={`Está perto do limite diário de ideias salvas (${quota.limit}). Faça upgrade para ampliar.`}
+            message={`Está perto do limite diário de ideias salvas (${dailyLimit}). Faça upgrade para ampliar.`}
           />
         </div>
       )}
