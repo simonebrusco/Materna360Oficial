@@ -2,7 +2,9 @@
 import * as React from 'react'
 import { Trophy, Heart, MessageCircle, Users } from 'lucide-react'
 import { track } from '@/app/lib/telemetry'
-import { cn } from '@/lib/utils'
+
+const cn = (...args: Array<string | false | null | undefined>) =>
+  args.filter(Boolean).join(' ')
 
 type Badge = {
   id: string
