@@ -126,18 +126,14 @@ export default function PlanosPage() {
 
   // Track page view on mount
   useEffect(() => {
-    track({
-      event: 'paywall.view',
-      payload: { page: 'plans_overview' },
-    })
+    track('paywall.view', { page: 'plans_overview' })
   }, [])
 
   const handleUpgrade = (planId: PlanId) => {
-    track({
-      event: 'paywall.click',
+    track('paywall.click', {
       action: 'upgrade_click',
       id: planId,
-      payload: { plan: planId },
+      plan: planId,
     })
 
     const plan = PLANS.find((p) => p.id === planId)
@@ -345,10 +341,9 @@ export default function PlanosPage() {
             Ainda tem dúvidas? Entre em contato conosco
           </p>
           <Button variant="primary" size="md" onClick={() => {
-            track({
-              event: 'paywall.click',
+            track('paywall.click', {
               action: 'contact_support',
-              payload: { context: 'plans_page' },
+              context: 'plans_page',
             })
           }}>
             Conversar com suporte

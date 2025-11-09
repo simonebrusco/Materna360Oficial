@@ -129,12 +129,13 @@ export function MeuDiaClient({
     save(persistKey, updated)
 
     // Fire telemetry
-    track({
-      event: 'planner.item_add',
+    track('planner.item_add', {
       tab: 'meu-dia',
       component: 'SimplePlannerSheet',
       action: 'add',
-      payload: { title: draft.title, hasNote: !!draft.note, hasTime: !!draft.time },
+      title: draft.title,
+      hasNote: !!draft.note,
+      hasTime: !!draft.time,
     })
 
     // Show toast
@@ -154,12 +155,11 @@ export function MeuDiaClient({
 
     // Fire telemetry
     const item = plannerItems.find(i => i.id === id)
-    track({
-      event: 'planner.item_done',
+    track('planner.item_done', {
       tab: 'meu-dia',
       component: 'SimplePlannerList',
       action: 'toggle',
-      payload: { done: !item?.done },
+      done: !item?.done,
     })
   }
 
