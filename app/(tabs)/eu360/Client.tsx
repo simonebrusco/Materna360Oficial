@@ -408,15 +408,33 @@ export default function Eu360Client() {
                   <p className="text-sm text-support-2 mb-4">
                     Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
                   </p>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setUpsellSheet({ isOpen: true, type: 'export' })
-                    }}
-                  >
-                    <AppIcon name="download" size={16} />
-                    Exportar PDF desta semana
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link
+                      href="/eu360/export?range=weekly"
+                      onClick={() => {
+                        try {
+                          trackTelemetry('pdf.export_open', { range: 'weekly', tab: 'eu360' })
+                        } catch {}
+                      }}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 bg-white/90 px-4 py-3 font-medium text-support-1 hover:bg-primary/5 transition-colors"
+                    >
+                      <AppIcon name="download" size={16} decorative />
+                      Semanal
+                    </Link>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        try {
+                          trackTelemetry('pdf.export_open', { range: 'monthly', tab: 'eu360' })
+                        } catch {}
+                        window.location.href = '/eu360/export?range=monthly'
+                      }}
+                      className="inline-flex items-center gap-2"
+                    >
+                      <AppIcon name="download" size={16} decorative />
+                      Mensal
+                    </Button>
+                  </div>
                 </div>
               </div>
             </FeatureGate>
