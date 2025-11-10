@@ -92,6 +92,9 @@ export function MeuDiaClient({
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
 
+  const [trendOpen, setTrendOpen] = useState(false)
+  const canShowTrends = isClientFlagEnabled('FF_EMOTION_TRENDS')
+
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
@@ -99,6 +102,17 @@ export function MeuDiaClient({
   // Page-view telemetry on mount
   useEffect(() => {
     track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
+  }, [])
+
+  // Seed demo mood data in dev/preview mode
+  useEffect(() => {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      try {
+        seedIfEmpty()
+      } catch {
+        // silently fail
+      }
+    }
   }, [])
 
   // Load planner items from persistence on mount
