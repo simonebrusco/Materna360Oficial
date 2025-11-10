@@ -402,57 +402,59 @@ export default function Eu360Client() {
       </ClientOnly>
 
       {/* PDF Export - P2 with FeatureGate */}
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={360}>
-            <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
-            <FeatureGate
-              featureKey="weekly.pdf"
-              currentPlan={currentPlan}
-              onUpgradeClick={() => {
-                setUpsellSheet({ isOpen: true, type: 'export' })
-              }}
-            >
-              <div className="p-7">
-                <div className="text-center">
-                  <p className="text-sm text-support-2 mb-4">
-                    Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link
-                      href="/eu360/export?range=weekly"
-                      onClick={() => {
-                        try {
-                          trackTelemetry('pdf.export_open', { range: 'weekly', tab: 'eu360' })
-                        } catch {}
-                      }}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 bg-white/90 px-4 py-3 font-medium text-support-1 hover:bg-primary/5 transition-colors"
-                    >
-                      <AppIcon name="download" size={16} decorative />
-                      Semanal
-                    </Link>
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        try {
-                          trackTelemetry('pdf.export_open', { range: 'monthly', tab: 'eu360' })
-                        } catch {}
-                        window.location.href = '/eu360/export?range=monthly'
-                      }}
-                      className="inline-flex items-center gap-2"
-                    >
-                      <AppIcon name="download" size={16} decorative />
-                      Mensal
-                    </Button>
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={360}>
+              <div>
+                <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
+              <FeatureGate
+                featureKey="weekly.pdf"
+                currentPlan={currentPlan}
+                onUpgradeClick={() => {
+                  setUpsellSheet({ isOpen: true, type: 'export' })
+                }}
+              >
+                <div className="p-7">
+                  <div className="text-center">
+                    <p className="text-sm text-support-2 mb-4">
+                      Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Link
+                        href="/eu360/export?range=weekly"
+                        onClick={() => {
+                          try {
+                            trackTelemetry('pdf.export_open', { range: 'weekly', tab: 'eu360' })
+                          } catch {}
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 bg-white/90 px-4 py-3 font-medium text-support-1 hover:bg-primary/5 transition-colors"
+                      >
+                        <AppIcon name="download" size={16} decorative />
+                        Semanal
+                      </Link>
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          try {
+                            trackTelemetry('pdf.export_open', { range: 'monthly', tab: 'eu360' })
+                          } catch {}
+                          window.location.href = '/eu360/export?range=monthly'
+                        }}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <AppIcon name="download" size={16} decorative />
+                        Mensal
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              </FeatureGate>
               </div>
-            </FeatureGate>
-            </div>
-          </Reveal>
-        </Card>
-      )}
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       {/* Internal Insights Link (preview only) */}
       <div suppressHydrationWarning>
