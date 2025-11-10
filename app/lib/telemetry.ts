@@ -5,6 +5,42 @@ export type TelemetryEventName = string;
 export type TelemetryPayload = Record<string, unknown>;
 export type TelemetryPayloads = TelemetryPayload; // alias de compat
 
+// Local telemetry sink for insights (preview/dev only)
+const LOCAL_TEL_KEY = 'm360_telemetry_local';
+
+function appendLocalEvent(name: TelemetryEventName, payload: TelemetryPayload, ts: number) {
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem(LOCAL_TEL_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    arr.push({ event: name, payload, ts });
+    // keep last 5k events to avoid unbounded growth
+    const trimmed = arr.slice(-5000);
+    localStorage.setItem(LOCAL_TEL_KEY, JSON.stringify(trimmed));
+  } catch {
+    // no-op
+  }
+}
+
+export function readLocalEvents(): Array<{ event: string; payload?: TelemetryPayload; ts: number }> {
+  try {
+    if (typeof window === 'undefined') return [];
+    const raw = localStorage.getItem(LOCAL_TEL_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function clearLocalEvents() {
+  try {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(LOCAL_TEL_KEY);
+  } catch {
+    // no-op
+  }
+}
+
 // Provider opcional para capturar eventos (server ou client)
 type TelemetryHandler = (name: TelemetryEventName, payload: TelemetryPayload) => void;
 let __provider: TelemetryHandler | null = null;
