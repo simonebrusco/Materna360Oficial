@@ -28,13 +28,14 @@ export type TelemetryEventName =
   | 'care.log_add'
   | 'care.view_section'
   // Audio (Breath / Mindfulness)
+  | 'audio.select'    // ← NEW
   | 'audio.play'
   | 'audio.pause'
   | 'audio.end'
   | 'audio.seek'
   | 'audio.progress'
   | 'audio.error'
-  | 'audio.restart'; // ← NEW
+  | 'audio.restart';
 
 type TelemetryEventPayloads = {
   // Core
@@ -84,13 +85,14 @@ type TelemetryEventPayloads = {
   };
 
   // Audio (Breath / Mindfulness)
-  'audio.play': { id: string; allowProgress?: boolean; at?: number };    // at: currentTime (s)
+  'audio.select': { id: string };                            // ← NEW
+  'audio.play': { id: string; allowProgress?: boolean; at?: number }; // at: currentTime (s)
   'audio.pause': { id: string; at?: number };
   'audio.end': { id: string; at?: number };
   'audio.seek': { id: string; from: number; to: number };
   'audio.progress': { id: string; current: number; duration?: number };
   'audio.error': { id?: string; code?: string | number; message?: string };
-  'audio.restart': { id: string; at?: number; from?: number }; // ← NEW
+  'audio.restart': { id: string; at?: number; from?: number };
 };
 
 export function track<E extends TelemetryEventName>(
