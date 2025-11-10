@@ -208,9 +208,17 @@ export function MeuDiaClient({
         </Reveal>
       </Card>
 
-      <Reveal delay={250}>
-        <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
-      </Reveal>
+      <SoftCard className="mb-4">
+        <Reveal delay={250}>
+          <div>
+            <Badge className="mb-2">Lembretes</Badge>
+            <h3 className="m360-card-title">Avisos suaves para o seu dia</h3>
+            <div className="mt-4">
+              <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+            </div>
+          </div>
+        </Reveal>
+      </SoftCard>
 
       <Card>
         <Reveal delay={270}>
