@@ -47,10 +47,15 @@ export default function ExportReportPage() {
   const avgEnergy = avg(mood.map((m) => m.energy));
 
   React.useEffect(() => {
+    // Track export page view
+    try {
+      trackTelemetry('pdf.export_view', { range, tab: 'eu360' });
+    } catch {}
+
     // Remove visual clutter when printing
     document.body.classList.add('print-bg-white');
     return () => document.body.classList.remove('print-bg-white');
-  }, []);
+  }, [range]);
 
   return (
     <div className="mx-auto max-w-[800px] p-4 md:p-8 bg-white min-h-screen">
