@@ -1,25 +1,31 @@
 'use client';
 
 export function isEnabled(name: string): boolean {
-  if (typeof window === 'undefined') return false;
-
-  // Preview toggle via localStorage OR NEXT_PUBLIC_ env OR default list
-  const ls = (key: string) => {
-    try {
-      return window.localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  };
+  // Evaluate flag logic consistently for both server and client
+  // Priority: localStorage > env > defaults
 
   const env =
     (typeof process !== 'undefined' && process?.env?.[`NEXT_PUBLIC_${name}`]) || '';
-  const localOverride = ls(name);
-  const defaultsOn = ['FF_EMOTION_TRENDS', 'FF_LAYOUT_V1', 'FF_COACH_V1', 'FF_EXPORT_PDF', 'FF_PAYWALL_MODAL', 'FF_INTERNAL_INSIGHTS'];
 
-  // Priority: localStorage > env > defaults
+  // Try localStorage only on client (safe to check window here)
+  let localOverride: string | null = null;
+  if (typeof window !== 'undefined') {
+    try {
+      localOverride = window.localStorage.getItem(name);
+    } catch {
+      localOverride = null;
+    }
+  }
+
+  // Check environment variable first (consistent on server and client)
+  if (env === '1' || env === 'true') return true;
+  if (env === '0' || env === 'false') return false;
+
+  // Then check localStorage override (client-side only)
   if (localOverride === '1') return true;
   if (localOverride === '0') return false;
-  if (env === '1' || env === 'true') return true;
-  return defaultsOn.includes(name);
+
+  // Default list for backward compatibility - use actual env values instead of hardcoding
+  // If env variable is not set, use false as default to match production
+  return false;
 }
