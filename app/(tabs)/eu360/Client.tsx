@@ -303,7 +303,7 @@ export default function Eu360Client() {
       </Reveal>
 
       <div id="eu360-print-area" className="print-card">
-        <Card>
+        <Card suppressHydrationWarning>
           <Reveal delay={260}>
             <WeeklyEmotionalSummary />
           </Reveal>
