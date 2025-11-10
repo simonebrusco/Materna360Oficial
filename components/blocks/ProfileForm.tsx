@@ -349,7 +349,7 @@ export function ProfileForm() {
 
   return (
     <Reveal>
-      <Card className="p-7">
+      <Card className="p-7" suppressHydrationWarning>
         <form className="space-y-7" onSubmit={handleSubmit} noValidate>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
@@ -365,13 +365,13 @@ export function ProfileForm() {
 
           <div suppressHydrationWarning>
             {loading ? (
-              <div className="space-y-4">
+              <div className="space-y-4" suppressHydrationWarning>
                 <div className="h-12 w-full animate-pulse rounded-2xl bg-white/40" />
                 <div className="h-36 w-full animate-pulse rounded-2xl bg-white/40" />
                 <div className="h-28 w-full animate-pulse rounded-2xl bg-white/40" />
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6" suppressHydrationWarning>
               <div className="space-y-2">
                 <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
                   Seu nome
