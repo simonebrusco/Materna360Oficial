@@ -4,6 +4,7 @@ import * as React from 'react';
 import SoftCard from '@/components/ui/SoftCard';
 import { Badge } from '@/components/ui/Badge';
 import WhyThisDrawer from '@/components/ui/WhyThisDrawer';
+import HydrationGate from '@/components/common/HydrationGate';
 import type { CoachSuggestion, CoachTone } from '@/app/lib/coachMaterno.client';
 import { setCoachTone } from '@/app/lib/coachMaterno.client';
 
