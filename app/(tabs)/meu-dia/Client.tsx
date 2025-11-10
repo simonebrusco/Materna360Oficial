@@ -315,11 +315,13 @@ export function MeuDiaClient({
           onAdd={handleAddPlannerItem}
         />
 
-        <Card>
+        <SoftCard className="mb-4">
           <Reveal delay={320}>
+            <Badge className="mb-2">Checklist</Badge>
+            <h3 className="m360-card-title mb-4">Marque suas conquistas</h3>
             <Checklist currentDateKey={currentDateKey} />
           </Reveal>
-        </Card>
+        </SoftCard>
       </div>
 
       <Card className="notesCard">
