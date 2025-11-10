@@ -27,12 +27,15 @@ import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
 import { AchievementsPanel } from './components/AchievementsPanel'
 import { BadgesPanel } from './components/BadgesPanel'
 import { AchievementsCounter } from './components/AchievementsCounter'
-import { track } from '@/app/lib/telemetry'
+import { track, trackTelemetry } from '@/app/lib/telemetry'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
 import { getCurrentPlanId } from '@/app/lib/planClient'
 import { ExportBlock } from './components/ExportBlock'
 import { printElementById } from '@/app/lib/print'
+import { isEnabled as isClientEnabled } from '@/app/lib/flags.client'
+import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
+import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
 
 type MoodHistory = {
   day: string
@@ -154,6 +157,32 @@ export default function Eu360Client() {
           </div>
         </Reveal>
       </Card>
+
+      {isClientEnabled('FF_COACH_V1') && (
+        <CoachSuggestionCard
+          resolve={() => Promise.resolve(generateCoachSuggestion())}
+          onView={(id) => {
+            try {
+              trackTelemetry('coach.card_view', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onApply={(id) => {
+            try {
+              trackTelemetry('coach.suggestion_apply', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onSave={(id) => {
+            try {
+              trackTelemetry('coach.save_for_later', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onWhyOpen={(id) => {
+            try {
+              trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
+            } catch {}
+          }}
+        />
+      )}
 
       {isEnabled('FF_LAYOUT_V1') && (
         <Card>
