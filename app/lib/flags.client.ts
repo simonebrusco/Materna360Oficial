@@ -15,7 +15,7 @@ export function isEnabled(name: string): boolean {
   const env =
     (typeof process !== 'undefined' && process?.env?.[`NEXT_PUBLIC_${name}`]) || '';
   const localOverride = ls(name);
-  const defaultsOn = ['FF_EMOTION_TRENDS', 'FF_LAYOUT_V1'];
+  const defaultsOn = ['FF_EMOTION_TRENDS', 'FF_LAYOUT_V1', 'FF_COACH_V1'];
 
   // Priority: localStorage > env > defaults
   if (localOverride === '1') return true;
