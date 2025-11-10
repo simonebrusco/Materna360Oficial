@@ -7,6 +7,11 @@ interface ClientOnlyProps {
   fallback?: React.ReactNode;
 }
 
+/**
+ * Renders children only on the client after hydration.
+ * On server, renders fallback (default: nothing).
+ * Uses suppressHydrationWarning to allow content to differ between server/client.
+ */
 export function ClientOnly({ children, fallback }: ClientOnlyProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -14,11 +19,16 @@ export function ClientOnly({ children, fallback }: ClientOnlyProps) {
     setMounted(true);
   }, []);
 
-  // Always render a consistent wrapper to prevent hydration mismatch
-  // Use suppressHydrationWarning because content differs by design
+  // Render placeholder on server that matches fallback
+  // This ensures HTML structure is consistent during hydration
+  if (!mounted) {
+    return fallback ? <>{fallback}</> : null;
+  }
+
+  // After hydration, render actual children with suppressed warnings
   return (
-    <div suppressHydrationWarning>
-      {mounted ? children : fallback}
-    </div>
+    <>
+      {children}
+    </>
   );
 }
