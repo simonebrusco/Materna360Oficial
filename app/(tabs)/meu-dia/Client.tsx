@@ -216,6 +216,7 @@ export function MeuDiaClient({
             </div>
             <button
               type="button"
+              onClick={() => setTrendOpen(true)}
               className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
               data-event="meu-dia.trend_view"
             >
