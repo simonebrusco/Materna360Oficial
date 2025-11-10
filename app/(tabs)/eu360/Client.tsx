@@ -7,7 +7,6 @@ import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { PageGrid } from '@/components/common/PageGrid'
 import { isEnabled } from '@/app/lib/flags'
-import { ClientOnly } from '@/components/common/ClientOnly'
 
 import { useGamification } from '@/app/lib/useGamification'
 import AppIcon from '@/components/ui/AppIcon'
