@@ -467,7 +467,7 @@ export default function Eu360Client() {
 
   return (
     <>
-      {isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content}
+      <AppShell>{content}</AppShell>
       {upsellSheet.isOpen && currentUpsellConfig && (
         <UpsellSheet
           {...currentUpsellConfig}
