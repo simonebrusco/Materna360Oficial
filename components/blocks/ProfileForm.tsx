@@ -412,11 +412,11 @@ export function ProfileForm() {
 
                       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-2">
-                          <label htmlFor={`child-gender-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-gender-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Gênero
                           </label>
                           <select
-                            id={`child-gender-${child.id}`}
+                            id={`child-gender-${index}`}
                             value={child.genero}
                             onChange={(event) => updateChild(child.id, 'genero', event.target.value)}
                             className={`${inputClasses} appearance-none`}
@@ -426,11 +426,11 @@ export function ProfileForm() {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label htmlFor={`child-age-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-age-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Idade (em meses)
                           </label>
                           <input
-                            id={`child-age-${child.id}`}
+                            id={`child-age-${index}`}
                             type="number"
                             min={0}
                             inputMode="numeric"
@@ -463,11 +463,11 @@ export function ProfileForm() {
                           </div>
                         )}
                         <div className="space-y-2">
-                          <label htmlFor={`child-name-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-name-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Nome (opcional)
                           </label>
                           <input
-                            id={`child-name-${child.id}`}
+                            id={`child-name-${index}`}
                             type="text"
                             value={child.nome}
                             onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
