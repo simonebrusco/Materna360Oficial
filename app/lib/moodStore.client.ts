@@ -6,7 +6,8 @@ const KEY = 'm360_mood_checkins';
 
 export function getMoodEntries(): MoodEntry[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    if (typeof window === 'undefined') return [];
+    const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw) as MoodEntry[];
     return Array.isArray(arr) ? arr : [];
@@ -17,6 +18,8 @@ export function getMoodEntries(): MoodEntry[] {
 
 // Optional: seed demo data if empty (dev/preview only)
 export function seedIfEmpty() {
+  if (typeof window === 'undefined') return;
+
   const existing = getMoodEntries();
   if (existing.length > 0) return;
 
@@ -39,7 +42,7 @@ export function seedIfEmpty() {
   });
 
   try {
-    localStorage.setItem(KEY, JSON.stringify(demo));
+    window.localStorage.setItem(KEY, JSON.stringify(demo));
   } catch {
     // silently fail if localStorage unavailable
   }
