@@ -802,6 +802,26 @@ body {
     display: none !important;
   }
 
+  /* Print-only utilities (P2 Export Enhancement) */
+  .print-only {
+    display: block !important;
+  }
+
+  .print-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print-break-after {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-avoid-break-inside {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   /* Page padding for A4 */
   html,
   body {
