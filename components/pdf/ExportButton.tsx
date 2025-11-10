@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
 import { FileDown } from 'lucide-react';
 import { getMoodEntries } from '@/app/lib/moodStore.client';
 import { getPlannerItemsWithin } from '@/app/lib/plannerStore.client';
@@ -9,15 +8,6 @@ import { getSavedCoachFocus } from '@/app/lib/coachMaterno.client';
 import { readLocalEvents } from '@/app/lib/telemetry';
 import { trackTelemetry } from '@/app/lib/telemetry';
 import { isEnabled } from '@/app/lib/flags.client';
-
-/**
- * Lazy-loaded PDF builder (no SSR)
- * Only imports @react-pdf/renderer when user clicks export
- */
-const buildReportModule = dynamic(
-  () => import('@/app/lib/pdf/buildReport').then((m) => ({ default: m })),
-  { ssr: false, loading: () => <span>Loading...</span> }
-);
 
 interface ExportButtonProps {
   variant: 'wellness' | 'insights';
