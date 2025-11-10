@@ -20,9 +20,15 @@ export function seedIfEmpty() {
   const existing = getMoodEntries();
   if (existing.length > 0) return;
 
+  // Freeze today to first call time to prevent SSR/client drift
   const today = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
-  const mk = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const mk = (d: Date) => {
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    return `${year}-${month}-${day}`;
+  };
 
   const demo = Array.from({ length: 28 }).map((_, i) => {
     const d = new Date(today);
