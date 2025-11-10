@@ -356,48 +356,50 @@ export default function Eu360Client() {
       </Card>
 
       {/* Weekly Summary Section - P2 */}
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={320}>
-            <div>
-              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
-            <FeatureGate
-              featureKey="weekly.summary"
-              currentPlan={currentPlan}
-              onUpgradeClick={() => {
-                window.location.href = '/planos'
-              }}
-            >
-              <WeeklySummary
-                data={{
-                  humor: {
-                    daysLogged: 5,
-                    totalDays: 7,
-                    data: [40, 60, 50, 70, 80, 65, 75],
-                  },
-                  checklist: {
-                    completed: 18,
-                    total: 24,
-                    data: [2, 3, 2, 4, 3, 2, 2],
-                  },
-                  planner: {
-                    completed: 6,
-                    total: 7,
-                    data: [1, 1, 1, 1, 1, 1, 0],
-                  },
-                  achievements: {
-                    unlocked: 3,
-                    total: 12,
-                    data: [0, 1, 0, 0, 1, 0, 1],
-                  },
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={320}>
+              <div>
+                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
+              <FeatureGate
+                featureKey="weekly.summary"
+                currentPlan={currentPlan}
+                onUpgradeClick={() => {
+                  window.location.href = '/planos'
                 }}
-                onViewDetails={() => console.log('View details')}
-              />
-            </FeatureGate>
-            </div>
-          </Reveal>
-        </Card>
-      )}
+              >
+                <WeeklySummary
+                  data={{
+                    humor: {
+                      daysLogged: 5,
+                      totalDays: 7,
+                      data: [40, 60, 50, 70, 80, 65, 75],
+                    },
+                    checklist: {
+                      completed: 18,
+                      total: 24,
+                      data: [2, 3, 2, 4, 3, 2, 2],
+                    },
+                    planner: {
+                      completed: 6,
+                      total: 7,
+                      data: [1, 1, 1, 1, 1, 1, 0],
+                    },
+                    achievements: {
+                      unlocked: 3,
+                      total: 12,
+                      data: [0, 1, 0, 0, 1, 0, 1],
+                    },
+                  }}
+                  onViewDetails={() => console.log('View details')}
+                />
+              </FeatureGate>
+              </div>
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       {/* PDF Export - P2 with FeatureGate */}
       {isEnabled('FF_LAYOUT_V1') && (
