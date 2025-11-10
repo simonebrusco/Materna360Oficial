@@ -162,7 +162,7 @@ export function ProfileForm() {
   const addChild = () => {
     setForm((previous) => ({
       ...previous,
-      filhos: [...previous.filhos, createEmptyChild()],
+      filhos: [...previous.filhos, createEmptyChild(previous.filhos.length)],
     }))
   }
 
