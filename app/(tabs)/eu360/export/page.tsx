@@ -6,6 +6,7 @@ import { getMoodEntries } from '@/app/lib/moodStore.client';
 import { Button } from '@/components/ui/Button';
 import AppIcon from '@/components/ui/AppIcon';
 import { isEnabled } from '@/app/lib/flags.client';
+import { trackTelemetry } from '@/app/lib/telemetry';
 
 function formatDate(d: Date) {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
