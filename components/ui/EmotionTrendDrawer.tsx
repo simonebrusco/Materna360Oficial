@@ -19,19 +19,8 @@ export function EmotionTrendDrawer({ open, onClose, resolveData }: Props) {
   if (!open) return null;
 
   return (
-    <HydrationGate
-      as="div"
-      className="fixed inset-0 z-50"
-      fallback={
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
-          <div
-            className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-[0_8px_28px_rgba(47,58,86,0.12)] p-4 md:p-5 max-h-[90vh] overflow-y-auto animate-pulse"
-            style={{ minHeight: 200 }}
-          />
-        </div>
-      }
-    >
+    <ClientOnly>
+      <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
         className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-[0_8px_28px_rgba(47,58,86,0.12)] p-4 md:p-5 max-h-[90vh] overflow-y-auto"
@@ -79,7 +68,8 @@ export function EmotionTrendDrawer({ open, onClose, resolveData }: Props) {
 
         <p className="m360-micro text-center">Dica: observe padrões, sem julgamentos. Foque em pequenas vitórias.</p>
       </div>
-    </HydrationGate>
+      </div>
+    </ClientOnly>
   );
 }
 
