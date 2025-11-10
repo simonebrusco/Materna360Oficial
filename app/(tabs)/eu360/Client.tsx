@@ -160,38 +160,36 @@ export default function Eu360Client() {
         </Reveal>
       </Card>
 
-      <ClientOnly>
-        {isClientEnabled('FF_COACH_V1') && (
-          <CoachSuggestionCard
-            resolve={() => Promise.resolve(generateCoachSuggestion())}
-            onView={(id) => {
-              try {
-                trackTelemetry('coach.card_view', { id, tab: 'eu360' });
-              } catch {}
-            }}
-            onApply={(id) => {
-              try {
-                trackTelemetry('coach.suggestion_apply', { id, tab: 'eu360' });
-              } catch {}
-            }}
-            onSave={(id) => {
-              try {
-                trackTelemetry('coach.save_for_later', { id, tab: 'eu360' });
-              } catch {}
-            }}
-            onWhyOpen={(id) => {
-              try {
-                trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
-              } catch {}
-            }}
-            onToneChange={(tone) => {
-              try {
-                trackTelemetry('coach.tone_change', { tone, tab: 'eu360' });
-              } catch {}
-            }}
-          />
-        )}
-      </ClientOnly>
+      {isClientEnabled('FF_COACH_V1') && (
+        <CoachSuggestionCard
+          resolve={() => Promise.resolve(generateCoachSuggestion())}
+          onView={(id) => {
+            try {
+              trackTelemetry('coach.card_view', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onApply={(id) => {
+            try {
+              trackTelemetry('coach.suggestion_apply', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onSave={(id) => {
+            try {
+              trackTelemetry('coach.save_for_later', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onWhyOpen={(id) => {
+            try {
+              trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
+            } catch {}
+          }}
+          onToneChange={(tone) => {
+            try {
+              trackTelemetry('coach.tone_change', { tone, tab: 'eu360' });
+            } catch {}
+          }}
+        />
+      )}
 
       {isEnabled('FF_LAYOUT_V1') && (
         <Card>
