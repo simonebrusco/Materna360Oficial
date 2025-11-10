@@ -8,7 +8,7 @@ import HydrationGate from '@/components/common/HydrationGate';
 import type { CoachSuggestion, CoachTone } from '@/app/lib/coachMaterno.client';
 import { setCoachTone } from '@/app/lib/coachMaterno.client';
 
-export default function CoachSuggestionCard({
+function InnerCoachSuggestionCard({
   resolve,
   onApply,
   onSave,
