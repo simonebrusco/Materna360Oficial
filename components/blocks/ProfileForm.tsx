@@ -64,7 +64,6 @@ export function ProfileForm() {
   const router = useRouter()
   const [form, setForm] = useState<ProfileFormState>(() => defaultState())
   const [babyBirthdate, setBabyBirthdate] = useState('')
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [statusMessage, setStatusMessage] = useState('')
@@ -359,7 +358,7 @@ export function ProfileForm() {
               Antes de começarmos, me conte um pouquinho sobre você
             </h2>
             <p className="text-sm text-support-2 md:text-base">
-              Isso personaliza sua experiência e deixa tudo mais pr��tico no dia a dia.
+              Isso personaliza sua experiência e deixa tudo mais prático no dia a dia.
             </p>
           </div>
 
