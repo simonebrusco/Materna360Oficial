@@ -16,12 +16,15 @@ const KEY = (dk: string) => `descobrir:${dk}:savedCount`
 
 /**
  * Read today's save count from localStorage
- * Safe: returns { dateKey, count: 0 } on error
+ * Safe: returns { dateKey, count: 0 } on error or if not in browser
  */
 export function readTodayCount() {
   const dk = getBrazilDateKeyFor(new Date())
   try {
-    const raw = localStorage.getItem(KEY(dk))
+    if (typeof window === 'undefined') {
+      return { dateKey: dk, count: 0 }
+    }
+    const raw = window.localStorage.getItem(KEY(dk))
     const n = raw ? Number(raw) : 0
     return { dateKey: dk, count: Number.isFinite(n) ? n : 0 }
   } catch {
@@ -31,12 +34,15 @@ export function readTodayCount() {
 
 /**
  * Increment today's save count by 1
- * Idempotent: silently fails if localStorage unavailable
+ * Idempotent: silently fails if localStorage unavailable or not in browser
  */
 export function incTodayCount() {
   try {
+    if (typeof window === 'undefined') {
+      return
+    }
     const { dateKey, count } = readTodayCount()
-    localStorage.setItem(KEY(dateKey), String(count + 1))
+    window.localStorage.setItem(KEY(dateKey), String(count + 1))
   } catch {
     // Silently fail if localStorage is not available
   }
