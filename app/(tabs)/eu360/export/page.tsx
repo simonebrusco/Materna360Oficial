@@ -33,6 +33,7 @@ export default function ExportReportPage() {
   // Data
   const mood = getMoodEntries().filter((e) => new Date(e.date) >= start);
   const planner = getPlannerItemsWithin(range === 'monthly' ? 28 : 7);
+  const coachFocus = getSavedCoachFocus();
 
   // Stats
   const avg = (arr: number[]) =>
