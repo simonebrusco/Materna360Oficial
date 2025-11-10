@@ -182,6 +182,11 @@ export default function Eu360Client() {
               trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
             } catch {}
           }}
+          onToneChange={(tone) => {
+            try {
+              trackTelemetry('coach.tone_change', { tone, tab: 'eu360' });
+            } catch {}
+          }}
         />
       )}
 
