@@ -11,12 +11,10 @@ import { isEnabled } from '@/app/lib/flags.client';
 
 interface ExportButtonProps {
   variant: 'wellness' | 'insights';
-  className?: string;
 }
 
 export default function ExportButton({
   variant,
-  className = '',
 }: ExportButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
