@@ -160,7 +160,7 @@ export default function Eu360Client() {
         </Reveal>
       </Card>
 
-      <div suppressHydrationWarning>
+      <ClientOnly>
         {isClientEnabled('FF_COACH_V1') && (
           <CoachSuggestionCard
             resolve={() => Promise.resolve(generateCoachSuggestion())}
@@ -191,7 +191,7 @@ export default function Eu360Client() {
             }}
           />
         )}
-      </div>
+      </ClientOnly>
 
       {isEnabled('FF_LAYOUT_V1') && (
         <Card>
