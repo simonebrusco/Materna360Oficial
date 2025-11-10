@@ -133,18 +133,5 @@ function InnerCoachSuggestionCard({
 }
 
 export default function CoachSuggestionCard(props: any) {
-  return (
-    <HydrationGate
-      as="div"
-      className="mb-4"
-      fallback={
-        <div
-          className="rounded-2xl border bg-white p-4 opacity-50 animate-pulse"
-          style={{ minHeight: 96 }}
-        />
-      }
-    >
-      <InnerCoachSuggestionCard {...props} />
-    </HydrationGate>
-  );
+  return <InnerCoachSuggestionCard {...props} />;
 }
