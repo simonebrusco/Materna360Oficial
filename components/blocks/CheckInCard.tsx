@@ -23,6 +23,7 @@ export function CheckInCard() {
   const [quote, setQuote] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const requestIdRef = useRef(0)
+  const { toast } = useToast()
 
   const moodLabelMap = useMemo(() => {
     return moods.reduce<Record<MoodValue, string>>((accumulator, mood) => {
