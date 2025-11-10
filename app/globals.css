@@ -40,6 +40,11 @@
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
   --font-secondary: 'Quicksand', sans-serif;
+
+  /* MATERNA360 TYPOGRAPHY TOKENS START */
+  --text-title-page: 22px/28px;
+  --text-title-page-md: 28px/34px;
+  /* MATERNA360 TYPOGRAPHY TOKENS END */
   --rhythm-section-d: 56px;
   --rhythm-section-t: 48px;
   --rhythm-section-m: 32px;
@@ -318,6 +323,27 @@
     font-weight: 500;
   }
 
+  /* ===== MATERNA360 Typography Utilities ===== */
+  .m360-title-page {
+    @apply text-[22px] leading-[28px] md:text-[28px] md:leading-[34px] font-semibold;
+  }
+
+  .m360-subtitle {
+    @apply text-[14px] leading-[20px] text-[#545454];
+  }
+
+  .m360-card-title {
+    @apply text-[16px] leading-[22px] font-semibold;
+  }
+
+  .m360-body {
+    @apply text-[14px] leading-[20px] text-[#2f3a56];
+  }
+
+  .m360-micro {
+    @apply text-[12px] leading-[16px] text-[#545454];
+  }
+
   /* ===== Spacing Utilities ===== */
   .spacing-section-vertical {
     @apply py-6 md:py-8;
@@ -384,6 +410,39 @@
     .PageSafeBottom {
       padding-bottom: var(--safearea-bottom-d);
     }
+  }
+
+  /* ===== Typography Scale Variants ===== */
+  .text-title-page {
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+  }
+
+  @media (min-width: 768px) {
+    .text-title-page {
+      font-size: 28px;
+      line-height: 34px;
+    }
+  }
+
+  .text-card-title {
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 600;
+    color: var(--color-ink-1);
+  }
+
+  .text-body {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--color-ink-1);
+  }
+
+  .text-micro {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-ink-2);
   }
 }
 

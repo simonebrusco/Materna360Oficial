@@ -25,6 +25,8 @@ import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import SoftCard from '@/components/ui/SoftCard'
+import { Badge } from '@/components/ui/Badge'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
@@ -167,71 +169,107 @@ export function MeuDiaClient({
 
   return (
     <PageTemplate title="Seu dia, no seu ritmo." subtitle="Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.">
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
         </Reveal>
-      </Card>
+      </SoftCard>
 
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={160}>
-          <CheckInCard />
-        </Reveal>
-      </Card>
-
-      <Card>
-        <Reveal delay={190}>
-          <div className="space-y-6">
-            <MoodQuickSelector />
-            <div className="border-t border-white/40 pt-4">
-              <MoodSparkline />
+          <div>
+            <Badge className="mb-2">Humor e Energia</Badge>
+            <h3 className="m360-card-title">Registre seu humor e energia de hoje.</h3>
+            <div className="mt-4 space-y-6">
+              <MoodQuickSelector />
+              <div className="border-t border-white/40 pt-4">
+                <MoodSparkline />
+              </div>
             </div>
           </div>
         </Reveal>
-      </Card>
+      </SoftCard>
 
-      <Reveal delay={210}>
-        <MoodEnergyCheckin dateKey={dateKey} />
-      </Reveal>
+      <SoftCard className="mb-4">
+        <Reveal delay={210}>
+          <div className="flex items-center justify-between">
+            <div>
+              <Badge className="mb-2">Resumo da semana</Badge>
+              <p className="m360-body">Humor diário registrado — 3× Feliz · 2× Neutra · 2× Cansada</p>
+            </div>
+            <button
+              type="button"
+              className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
+              data-event="meu-dia.trend_view"
+            >
+              Ver tendência
+            </button>
+          </div>
+        </Reveal>
+      </SoftCard>
 
-      <Reveal delay={230}>
-        <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
-      </Reveal>
+      <SoftCard className="mb-4">
+        <Reveal delay={230}>
+          <div>
+            <Badge className="mb-2">Rotina da Casa</Badge>
+            <h3 className="m360-card-title">Organize as tarefas do lar</h3>
+            <div className="mt-4">
+              <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
+            </div>
+          </div>
+        </Reveal>
+      </SoftCard>
 
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={240}>
           <ExportPlanner />
         </Reveal>
-      </Card>
+      </SoftCard>
 
-      <Reveal delay={250}>
-        <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
-      </Reveal>
-
-      <Card>
-        <Reveal delay={270}>
-          <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+      <SoftCard className="mb-4">
+        <Reveal delay={250}>
+          <div>
+            <Badge className="mb-2">Lembretes</Badge>
+            <h3 className="m360-card-title">Avisos suaves para o seu dia</h3>
+            <div className="mt-4">
+              <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+            </div>
+          </div>
         </Reveal>
-      </Card>
+      </SoftCard>
 
-      <Card>
-        <GridStable>
-          {quickActions.map((action, index) => (
-            <Reveal key={action.title} delay={index * 80} className="h-full">
-              <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
-                <div className="mb-3">
-                  <AppIcon name={action.iconName as any} size={28} decorative />
-                </div>
-                <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
-                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
-                <Button variant="primary" size="sm" className="w-full">
-                  Acessar
-                </Button>
-              </div>
-            </Reveal>
-          ))}
-        </GridStable>
-      </Card>
+      <SoftCard className="mb-4">
+        <Reveal delay={270}>
+          <div>
+            <Badge className="mb-2">Atividade do dia</Badge>
+            <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+          </div>
+        </Reveal>
+      </SoftCard>
+
+      <SoftCard className="mb-4">
+        <Reveal delay={260}>
+          <div>
+            <Badge className="mb-4">Ações Rápidas</Badge>
+            <GridStable>
+              {quickActions.map((action, index) => (
+                <Reveal key={action.title} delay={index * 80} className="h-full">
+                  <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
+                    <div className="mb-3">
+                      <AppIcon name={action.iconName as any} size={28} decorative />
+                    </div>
+                    <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
+                    <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
+                    <Button variant="primary" size="sm" className="w-full">
+                      Acessar
+                    </Button>
+                  </div>
+                </Reveal>
+              ))}
+            </GridStable>
+          </div>
+        </Reveal>
+      </SoftCard>
 
       <div id="meu-dia-print-area" className="print-card space-y-4">
         <Card>
@@ -249,14 +287,12 @@ export function MeuDiaClient({
           </Reveal>
         </Card>
 
-        <Card>
+        <SoftCard className="mb-4">
           <Reveal delay={300}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <SectionH2 className="flex items-center gap-2">
-                  <AppIcon name="check" size={20} decorative />
-                  Itens da Semana
-                </SectionH2>
+                <Badge className="mb-2">Planejamento</Badge>
+                <h3 className="m360-card-title">Itens da Semana</h3>
                 <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
               </div>
               <Button
@@ -271,7 +307,7 @@ export function MeuDiaClient({
             </div>
             <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
           </Reveal>
-        </Card>
+        </SoftCard>
 
         <SimplePlannerSheet
           isOpen={showPlannerSheet}
@@ -279,23 +315,26 @@ export function MeuDiaClient({
           onAdd={handleAddPlannerItem}
         />
 
-        <Card>
+        <SoftCard className="mb-4">
           <Reveal delay={320}>
+            <Badge className="mb-2">Checklist</Badge>
+            <h3 className="m360-card-title mb-4">Marque suas conquistas</h3>
             <Checklist currentDateKey={currentDateKey} />
           </Reveal>
-        </Card>
+        </SoftCard>
       </div>
 
-      <Card className="notesCard">
+      <SoftCard className="notesCard mb-4">
         <Reveal delay={360}>
           <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
             <div className="notesCard-text">
-              <SectionH2 className="notesCard-title title title--clamp md:text-xl">
+              <Badge className="mb-2">Anotações</Badge>
+              <h3 className="m360-card-title">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
                 </span>
                 {notesLabel}
-              </SectionH2>
+              </h3>
               <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
             </div>
             <Button
@@ -320,13 +359,13 @@ export function MeuDiaClient({
             <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
           )}
         </Reveal>
-      </Card>
+      </SoftCard>
 
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
           <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
-            <Card className="w-full notesCard-modal">
-              <BlockH3 className="mb-2 text-lg">Adicionar Nota</BlockH3>
+            <SoftCard className="w-full notesCard-modal">
+              <h3 className="m360-card-title mb-2">Adicionar Nota</h3>
               <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
               <textarea
                 value={noteText}
@@ -347,7 +386,7 @@ export function MeuDiaClient({
                   Cancelar
                 </button>
               </div>
-            </Card>
+            </SoftCard>
           </div>
         </div>
       )}
