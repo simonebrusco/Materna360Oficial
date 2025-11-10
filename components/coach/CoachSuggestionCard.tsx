@@ -1,137 +1,119 @@
 'use client';
 
 import * as React from 'react';
-import SoftCard from '@/components/ui/SoftCard';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/Badge';
+import { Reveal } from '@/components/ui/Reveal';
 import WhyThisDrawer from '@/components/ui/WhyThisDrawer';
-import type { CoachSuggestion, CoachTone } from '@/app/lib/coachMaterno.client';
-import { setCoachTone } from '@/app/lib/coachMaterno.client';
 
-function InnerCoachSuggestionCard({
-  resolve,
-  onApply,
-  onSave,
-  onView,
-  onWhyOpen,
-  onToneChange,
-}: {
-  resolve: () => Promise<CoachSuggestion | null>;
+export type CoachSuggestion = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  actionLabel?: string;   // primary CTA (e.g. "Fazer agora (5 min)")
+  saveLabel?: string;     // secondary CTA
+  reason?: string;        // transparency text
+};
+
+type Props = {
+  resolve: () => Promise<CoachSuggestion>;
+  onView?: (id: string) => void;
   onApply?: (id: string) => void;
   onSave?: (id: string) => void;
-  onView?: (id: string) => void;
   onWhyOpen?: (id: string) => void;
-  onToneChange?: (tone: CoachTone) => void;
-}) {
-  const [sug, setSug] = React.useState<CoachSuggestion | null>(null);
-  const [whyOpen, setWhyOpen] = React.useState(false);
+};
 
-  React.useEffect(() => {
+export default function CoachSuggestionCard({
+  resolve,
+  onView,
+  onApply,
+  onSave,
+  onWhyOpen,
+}: Props) {
+  const [suggestion, setSuggestion] = useState<CoachSuggestion | null>(null);
+  const [whyOpen, setWhyOpen] = useState(false);
+
+  useEffect(() => {
     let alive = true;
     resolve().then((s) => {
       if (!alive) return;
-      setSug(s);
-      if (s && onView) onView(s.id);
+      setSuggestion(s);
+      try {
+        onView?.(s.id);
+      } catch {}
     });
     return () => {
       alive = false;
     };
   }, [resolve, onView]);
 
-  if (!sug) return null;
-
-  const handleTone = (tone: CoachTone) => {
-    setCoachTone(tone);
-    onToneChange && onToneChange(tone);
-  };
+  if (!suggestion) {
+    return (
+      <Card className="rounded-2xl bg-white/90 p-5">
+        <div className="h-5 w-24 bg-black/10 rounded mb-4 animate-pulse" />
+        <div className="h-6 w-2/3 bg-black/10 rounded mb-2 animate-pulse" />
+        <div className="h-4 w-1/2 bg-black/10 rounded animate-pulse" />
+      </Card>
+    );
+  }
 
   return (
-    <>
-      <SoftCard className="mb-4">
-        {/* Header with badge and focus */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <Badge className="mb-2">Coach Materno</Badge>
-          <span className="text-xs text-support-2 rounded-full border border-white/60 bg-white/40 px-2.5 py-1 whitespace-nowrap">
-            Foco: <strong>{sug.focus}</strong>
-          </span>
+    <Reveal>
+      <Card className="rounded-2xl bg-white/90 p-5">
+        <div className="mb-3">
+          <Badge>Coach Materno</Badge>
         </div>
+        <h3 className="m360-card-title">{suggestion.title}</h3>
+        {suggestion.subtitle && (
+          <p className="m360-body mt-1 text-[#545454]">{suggestion.subtitle}</p>
+        )}
 
-        {/* Title and body */}
-        <h3 className="m360-card-title mb-1">{sug.title}</h3>
-        <p className="m360-body mb-4">{sug.body}</p>
-
-        {/* Tone selector */}
-        <div className="mb-4 pb-4 border-b border-white/60">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-support-2 font-medium">Tom:</span>
-            <button
-              onClick={() => handleTone('acolhedor')}
-              aria-pressed={sug.tone === 'acolhedor'}
-              className={`text-xs rounded-full px-3 py-1 font-medium transition-colors ${
-                sug.tone === 'acolhedor'
-                  ? 'bg-primary/20 border border-primary text-primary'
-                  : 'bg-white/60 border border-white/60 text-support-2 hover:bg-white/80'
-              }`}
-            >
-              Acolhedor
-            </button>
-            <button
-              onClick={() => handleTone('prático')}
-              aria-pressed={sug.tone === 'prático'}
-              className={`text-xs rounded-full px-3 py-1 font-medium transition-colors ${
-                sug.tone === 'prático'
-                  ? 'bg-primary/20 border border-primary text-primary'
-                  : 'bg-white/60 border border-white/60 text-support-2 hover:bg-white/80'
-              }`}
-            >
-              Prático
-            </button>
-            <button
-              onClick={() => handleTone('motivador')}
-              aria-pressed={sug.tone === 'motivador'}
-              className={`text-xs rounded-full px-3 py-1 font-medium transition-colors ${
-                sug.tone === 'motivador'
-                  ? 'bg-primary/20 border border-primary text-primary'
-                  : 'bg-white/60 border border-white/60 text-support-2 hover:bg-white/80'
-              }`}
-            >
-              Motivador
-            </button>
-          </div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            className="rounded-xl px-4 py-2 bg-primary text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all shadow-soft focus:outline-none focus:ring-2 focus:ring-primary/30"
-            onClick={() => onApply && onApply(sug.id)}
-          >
-            {sug.actionLabel}
-          </button>
-          {sug.secondaryLabel && (
-            <button
-              className="rounded-xl px-4 py-2 border border-white/60 bg-white/90 font-medium text-sm text-support-1 hover:bg-white/95 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-primary/30"
-              onClick={() => onSave && onSave(sug.id)}
-            >
-              {sug.secondaryLabel}
-            </button>
-          )}
-          <button
-            className="ml-auto underline text-sm text-primary hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1"
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => {
-              setWhyOpen(true);
-              onWhyOpen && onWhyOpen(sug.id);
+              try {
+                onApply?.(suggestion.id);
+              } catch {}
             }}
           >
-            Por que?
+            {suggestion.actionLabel ?? 'Fazer agora'}
+          </Button>
+          {suggestion.saveLabel && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                try {
+                  onSave?.(suggestion.id);
+                } catch {}
+              }}
+            >
+              {suggestion.saveLabel}
+            </Button>
+          )}
+          <button
+            className="m360-micro underline opacity-70 hover:opacity-100 transition-opacity"
+            onClick={() => {
+              setWhyOpen(true);
+              try {
+                onWhyOpen?.(suggestion.id);
+              } catch {}
+            }}
+          >
+            Por que estou vendo isso?
           </button>
         </div>
-      </SoftCard>
 
-      <WhyThisDrawer open={whyOpen} onClose={() => setWhyOpen(false)} text={sug.why} />
-    </>
+        <WhyThisDrawer
+          open={whyOpen}
+          onClose={() => setWhyOpen(false)}
+          text={suggestion.reason ?? 'Sugestão baseada no seu padrão recente de humor/energia.'}
+        />
+      </Card>
+    </Reveal>
   );
-}
-
-export default function CoachSuggestionCard(props: any) {
-  return <InnerCoachSuggestionCard {...props} />;
 }
