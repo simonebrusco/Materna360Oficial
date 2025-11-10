@@ -53,12 +53,17 @@ export function setTelemetryProvider(fn: TelemetryHandler | null) {
 // Função principal de tracking (não-bloqueante, SSR-safe)
 export function track(name: TelemetryEventName, payload: TelemetryPayload): void {
   try {
+    const ts = Date.now();
+
     // 1) Dispara provider se existir (server ou client)
     if (__provider) {
       try { __provider(name, payload); } catch { /* no-op */ }
     }
 
-    // 2) Ambiente de navegador: console.debug + CustomEvent para dev tools
+    // 2) Local sink for insights (preview/dev only)
+    try { appendLocalEvent(name, payload, ts); } catch { /* no-op */ }
+
+    // 3) Ambiente de navegador: console.debug + CustomEvent para dev tools
     if (typeof window !== 'undefined') {
       if (process.env.NODE_ENV !== 'production') {
         // eslint-disable-next-line no-console
@@ -66,11 +71,11 @@ export function track(name: TelemetryEventName, payload: TelemetryPayload): void
       }
       try {
         window.dispatchEvent(new CustomEvent('m360:telemetry', {
-          detail: { name, payload, ts: Date.now() },
+          detail: { name, payload, ts },
         }));
       } catch { /* no-op */ }
     } else {
-      // 3) Ambiente server (sem quebrar)
+      // 4) Ambiente server (sem quebrar)
       if (process.env.NODE_ENV !== 'production') {
         // eslint-disable-next-line no-console
         console.debug('[telemetry][server]', name, payload);
