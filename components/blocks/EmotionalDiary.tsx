@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
-import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 
@@ -87,6 +86,7 @@ export function EmotionalDiary() {
 
   // Get last 7 entries for history
   const historyEntries = entries.slice(-7).reverse()
+  const hasHistory = historyEntries.length > 0
 
   return (
     <div className="space-y-6">
@@ -94,7 +94,7 @@ export function EmotionalDiary() {
       <div className="space-y-4">
         <div>
           <label className="text-sm font-semibold text-support-1 block mb-2">
-            Como você est�� se sentindo?
+            Como você está se sentindo?
           </label>
           <textarea
             value={text}
@@ -147,21 +147,23 @@ export function EmotionalDiary() {
         </Button>
       </div>
 
-      {/* History Section */}
-      {isLoading ? (
-        <div className="space-y-3 border-t border-white/40 pt-4">
-          <Skeleton className="h-4 w-20" />
-          {Array(3)
-            .fill(0)
-            .map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-        </div>
-      ) : historyEntries.length > 0 ? (
-        <div className="border-t border-white/40 pt-4 space-y-3">
-          <h4 className="text-sm font-semibold text-support-1">Histórico</h4>
-          <div className="space-y-2">
-            {historyEntries.map((entry, idx) => {
+      {/* History Section - Always rendered with conditional classes */}
+      <div className={`border-t border-white/40 pt-4 space-y-3 ${isLoading ? 'opacity-50 animate-pulse' : ''}`} suppressHydrationWarning>
+        {/* Heading - always present */}
+        <h4 className="text-sm font-semibold text-support-1">Histórico</h4>
+
+        {/* Content area - shows skeleton or actual entries based on state */}
+        <div className="space-y-2">
+          {isLoading ? (
+            // Skeleton placeholders (same DOM structure, just blurred/pulsing)
+            <>
+              <div className="h-12 w-full rounded-lg bg-white/40" />
+              <div className="h-12 w-full rounded-lg bg-white/40" />
+              <div className="h-12 w-full rounded-lg bg-white/40" />
+            </>
+          ) : hasHistory ? (
+            // Actual entries
+            historyEntries.map((entry, idx) => {
               const date = new Date(entry.ts)
               const dayLabel =
                 date.toLocaleDateString('pt-BR', {
@@ -198,10 +200,13 @@ export function EmotionalDiary() {
                   <p className="text-support-2 text-xs line-clamp-1">{preview}</p>
                 </div>
               )
-            })}
-          </div>
+            })
+          ) : (
+            // No entries message
+            <p className="text-sm text-support-2 py-4">Nenhum registro no diário ainda. Escreva algumas palavras sobre o seu dia.</p>
+          )}
         </div>
-      ) : null}
+      </div>
     </div>
   )
 }
