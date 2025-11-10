@@ -49,7 +49,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
     .sort((a, b) => b.date.localeCompare(a.date))
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
+    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5" suppressHydrationWarning>
       <div className="flex items-center gap-2 mb-3">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
           <CalendarPlus className="h-4 w-4 text-[#ff005e]" aria-hidden />
