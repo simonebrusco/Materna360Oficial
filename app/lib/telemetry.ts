@@ -8,7 +8,8 @@ type WithExtra<T> = T & { [key: string]: unknown };
 export type TelemetryEventName =
   // Core
   | 'page_view'
-  | 'nav_click'
+  | 'nav_click'   // underscore variant (kept for compatibility)
+  | 'nav.click'   // dot variant (new)
   // Maternar
   | 'maternar.page_view'
   | 'maternar.card_click'
@@ -43,7 +44,10 @@ export type TelemetryEventName =
 type TelemetryEventPayloads = {
   // Core
   'page_view': WithExtra<{ path: string; tab?: string }>;
-  'nav_click': WithExtra<{ from?: string; to: string }>;
+
+  // Keep both variants compatible
+  'nav_click': WithExtra<{ from?: string; to: string; tab?: string; dest?: string }>;
+  'nav.click': WithExtra<{ from?: string; to?: string; tab?: string; dest?: string }>;
 
   // Maternar
   'maternar.page_view': WithExtra<{ source?: 'redirect' | 'nav' | 'deeplink' | string }>;
@@ -56,7 +60,6 @@ type TelemetryEventPayloads = {
   'planner.item_done': WithExtra<{ id: string; kind: 'task' | 'event' | 'note' | string }>;
 
   // Mood / Eu360 / Cuidar
-  // Accepts either parent-style (mood/energy) or child-diary style (tab/source/level)
   'mood.checkin': WithExtra<{
     // Eu360 (parent self-check)
     mood?: 'baixa' | 'média' | 'alta' | string;
