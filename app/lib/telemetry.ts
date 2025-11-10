@@ -8,8 +8,8 @@ type WithExtra<T> = T & { [key: string]: unknown };
 export type TelemetryEventName =
   // Core
   | 'page_view'
-  | 'nav_click'   // underscore variant (kept for compatibility)
-  | 'nav.click'   // dot variant (new)
+  | 'nav_click'   // underscore variant (compat)
+  | 'nav.click'   // dot variant
   // Maternar
   | 'maternar.page_view'
   | 'maternar.card_click'
@@ -20,7 +20,10 @@ export type TelemetryEventName =
   | 'mood.checkin'
   // Descobrir
   | 'discover.filter_changed'
-  | 'suggestion_saved'
+  | 'discover.suggestion_started'   // NEW
+  | 'discover.suggestion_saved'     // NEW
+  | 'suggestion_saved'              // legacy alias (compat)
+  | 'suggestion_started'            // legacy alias (compat)
   // Paywall
   | 'paywall.view'
   | 'paywall.click'
@@ -45,7 +48,7 @@ type TelemetryEventPayloads = {
   // Core
   'page_view': WithExtra<{ path: string; tab?: string }>;
 
-  // Keep both variants compatible
+  // Nav (both variants accepted)
   'nav_click': WithExtra<{ from?: string; to: string; tab?: string; dest?: string }>;
   'nav.click': WithExtra<{ from?: string; to?: string; tab?: string; dest?: string }>;
 
@@ -72,7 +75,14 @@ type TelemetryEventPayloads = {
 
   // Descobrir
   'discover.filter_changed': WithExtra<{ key: 'tempo' | 'local' | 'energia' | 'idade' | string; value: string | number }>;
+
+  // NEW namespaced events
+  'discover.suggestion_started': WithExtra<{ id?: string; tab?: 'descobrir' | string; source?: string }>;
+  'discover.suggestion_saved': WithExtra<{ id: string; list?: 'later' | 'planner' | string; tab?: 'descobrir' | string }>;
+
+  // Legacy aliases (compat)
   'suggestion_saved': WithExtra<{ id: string; list?: 'later' | 'planner' | string }>;
+  'suggestion_started': WithExtra<{ id?: string; source?: string }>;
 
   // Paywall
   'paywall.view': WithExtra<{ context: string; count?: number; limit?: number }>;
@@ -83,21 +93,9 @@ type TelemetryEventPayloads = {
   'toast.shown': WithExtra<{ kind: 'default' | 'success' | 'warning' | 'danger' | string; message?: string; context?: string }>;
 
   // Care (Cuidar)
-  'care.appointment_add': WithExtra<{
-    tab: 'cuidar';
-    type?: string;   // flexible
-    date?: string;   // ISO or yyyy-mm-dd
-  }>;
-  'care.log_add': WithExtra<{
-    tab: 'cuidar';
-    kind: 'alimentacao' | 'sono' | 'humor' | string;
-    value?: string | number;
-    at?: string; // ISO timestamp (optional)
-  }>;
-  'care.view_section': WithExtra<{
-    tab: 'cuidar';
-    section: 'timeline' | 'vacinas' | 'consultas' | 'registros' | string;
-  }>;
+  'care.appointment_add': WithExtra<{ tab: 'cuidar'; type?: string; date?: string }>;
+  'care.log_add': WithExtra<{ tab: 'cuidar'; kind: 'alimentacao' | 'sono' | 'humor' | string; value?: string | number; at?: string }>;
+  'care.view_section': WithExtra<{ tab: 'cuidar'; section: 'timeline' | 'vacinas' | 'consultas' | 'registros' | string }>;
 
   // Audio (Breath / Mindfulness)
   'audio.select': WithExtra<{ id: string }>;
