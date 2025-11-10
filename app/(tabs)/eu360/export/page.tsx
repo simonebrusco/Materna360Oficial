@@ -91,6 +91,11 @@ export default function ExportReportPage() {
             <p className="text-sm text-support-1">
               Resumo do seu bem-estar emocional e das pequenas ações que fizeram a diferença.
             </p>
+            {coachFocus && (
+              <p className="text-sm text-support-1 mt-2">
+                <strong>Foco da semana:</strong> {coachFocus}
+              </p>
+            )}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft">
