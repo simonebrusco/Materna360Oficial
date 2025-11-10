@@ -1,6 +1,9 @@
 'use client'
 
 // Unified telemetry typing for Materna360 (non-blocking, SSR-safe)
+// Now tolerant to extra payload keys via WithExtra<T>.
+
+type WithExtra<T> = T & { [key: string]: unknown };
 
 export type TelemetryEventName =
   // Core
@@ -28,7 +31,7 @@ export type TelemetryEventName =
   | 'care.log_add'
   | 'care.view_section'
   // Audio (Breath / Mindfulness)
-  | 'audio.select'    // ← NEW
+  | 'audio.select'
   | 'audio.play'
   | 'audio.pause'
   | 'audio.end'
@@ -39,60 +42,60 @@ export type TelemetryEventName =
 
 type TelemetryEventPayloads = {
   // Core
-  'page_view': { path: string; tab?: string };
-  'nav_click': { from?: string; to: string };
+  'page_view': WithExtra<{ path: string; tab?: string }>;
+  'nav_click': WithExtra<{ from?: string; to: string }>;
 
   // Maternar
-  'maternar.page_view': { source?: 'redirect' | 'nav' | 'deeplink' };
-  'maternar.card_click': {
+  'maternar.page_view': WithExtra<{ source?: 'redirect' | 'nav' | 'deeplink' }>;
+  'maternar.card_click': WithExtra<{
     card: 'eu360' | 'cuidar' | 'meu-dia' | 'descobrir' | 'conquistas' | 'planos';
-  };
+  }>;
 
   // Planner / Meu Dia
-  'planner.item_add': { id: string; kind: 'task' | 'event' | 'note' };
-  'planner.item_done': { id: string; kind: 'task' | 'event' | 'note' };
+  'planner.item_add': WithExtra<{ id: string; kind: 'task' | 'event' | 'note' | string }>;
+  'planner.item_done': WithExtra<{ id: string; kind: 'task' | 'event' | 'note' | string }>;
 
   // Mood / Eu360
-  'mood.checkin': { mood: 'baixa' | 'média' | 'alta'; energy?: 'baixa' | 'média' | 'alta' };
+  'mood.checkin': WithExtra<{ mood: 'baixa' | 'média' | 'alta' | string; energy?: 'baixa' | 'média' | 'alta' | string }>;
 
   // Descobrir
-  'discover.filter_changed': { key: 'tempo' | 'local' | 'energia' | 'idade'; value: string | number };
-  'suggestion_saved': { id: string; list?: 'later' | 'planner' };
+  'discover.filter_changed': WithExtra<{ key: 'tempo' | 'local' | 'energia' | 'idade' | string; value: string | number }>;
+  'suggestion_saved': WithExtra<{ id: string; list?: 'later' | 'planner' | string }>;
 
   // Paywall
-  'paywall.view': { context: string; count?: number; limit?: number };
-  'paywall.click': { action: string; context?: string };
+  'paywall.view': WithExtra<{ context: string; count?: number; limit?: number }>;
+  'paywall.click': WithExtra<{ action: string; context?: string }>;
 
   // Gamification / Toasts
-  'badge.unlocked': { badge: string };
-  'toast.shown': { kind: 'default' | 'success' | 'warning' | 'danger'; message?: string; context?: string };
+  'badge.unlocked': WithExtra<{ badge: string }>;
+  'toast.shown': WithExtra<{ kind: 'default' | 'success' | 'warning' | 'danger' | string; message?: string; context?: string }>;
 
   // Care (Cuidar)
-  'care.appointment_add': {
+  'care.appointment_add': WithExtra<{
     tab: 'cuidar';
-    type: 'consulta' | 'vacina' | 'exame' | string;
-    date: string; // ISO or yyyy-mm-dd
-  };
-  'care.log_add': {
+    type?: string;   // keep flexible
+    date?: string;   // ISO or yyyy-mm-dd
+  }>;
+  'care.log_add': WithExtra<{
     tab: 'cuidar';
     kind: 'alimentacao' | 'sono' | 'humor' | string;
     value?: string | number;
     at?: string; // ISO timestamp (optional)
-  };
-  'care.view_section': {
+  }>;
+  'care.view_section': WithExtra<{
     tab: 'cuidar';
     section: 'timeline' | 'vacinas' | 'consultas' | 'registros' | string;
-  };
+  }>;
 
   // Audio (Breath / Mindfulness)
-  'audio.select': { id: string };                            // ← NEW
-  'audio.play': { id: string; allowProgress?: boolean; at?: number }; // at: currentTime (s)
-  'audio.pause': { id: string; at?: number };
-  'audio.end': { id: string; at?: number };
-  'audio.seek': { id: string; from: number; to: number };
-  'audio.progress': { id: string; current: number; duration?: number };
-  'audio.error': { id?: string; code?: string | number; message?: string };
-  'audio.restart': { id: string; at?: number; from?: number };
+  'audio.select': WithExtra<{ id: string }>;
+  'audio.play': WithExtra<{ id: string; allowProgress?: boolean; at?: number }>;
+  'audio.pause': WithExtra<{ id: string; at?: number }>;
+  'audio.end': WithExtra<{ id: string; at?: number }>;
+  'audio.seek': WithExtra<{ id: string; from: number; to: number }>;
+  'audio.progress': WithExtra<{ id: string; current: number; duration?: number }>;
+  'audio.error': WithExtra<{ id?: string; code?: string | number; message?: string }>;
+  'audio.restart': WithExtra<{ id: string; at?: number; from?: number }>;
 };
 
 export function track<E extends TelemetryEventName>(
