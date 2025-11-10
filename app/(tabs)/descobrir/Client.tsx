@@ -422,7 +422,8 @@ export default function DiscoverClient() {
       )}
 
       {/* Suggestions Grid */}
-      {filteredSuggestions.length > 0 ? (
+      <div suppressHydrationWarning>
+        {filteredSuggestions.length > 0 ? (
         <PageGrid cols={2}>
           {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
@@ -499,6 +500,7 @@ export default function DiscoverClient() {
           cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
         />
       )}
+      </div>
     </PageTemplate>
   );
 }
