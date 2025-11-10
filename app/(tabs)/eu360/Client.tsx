@@ -188,37 +188,39 @@ export default function Eu360Client() {
         )}
       </ClientOnly>
 
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={80}>
-            <div>
-              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-support-1">Nível {gamification.level}</span>
-                    <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={80}>
+              <div>
+                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-support-1">Nível {gamification.level}</span>
+                      <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
+                    </div>
+                    <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
+                    <p className="mt-2 text-xs text-support-2 flex items-center gap-1">Total de pontos: {gamification.totalPoints} <AppIcon name="target" size={14} decorative /></p>
                   </div>
-                  <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
-                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1">Total de pontos: {gamification.totalPoints} <AppIcon name="target" size={14} decorative /></p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <div className="text-2xl text-primary"><AppIcon name="sparkles" size={28} decorative /></div>
-                    <p className="mt-2 text-xs text-support-2">Sequência</p>
-                    <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <div className="text-2xl text-primary"><AppIcon name="star" size={28} decorative /></div>
-                    <p className="mt-2 text-xs text-support-2">Selos</p>
-                    <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+                      <div className="text-2xl text-primary"><AppIcon name="sparkles" size={28} decorative /></div>
+                      <p className="mt-2 text-xs text-support-2">Sequência</p>
+                      <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+                      <div className="text-2xl text-primary"><AppIcon name="star" size={28} decorative /></div>
+                      <p className="mt-2 text-xs text-support-2">Selos</p>
+                      <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Reveal>
-        </Card>
-      )}
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       {/* Plan Card Section - P2 */}
       {isEnabled('FF_LAYOUT_V1') && (
