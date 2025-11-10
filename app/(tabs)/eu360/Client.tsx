@@ -457,7 +457,7 @@ export default function Eu360Client() {
       </ClientOnly>
 
       {/* Internal Insights Link (preview only) */}
-      <div suppressHydrationWarning>
+      <ClientOnly>
         {isClientEnabled('FF_INTERNAL_INSIGHTS') && (
           <div className="mt-6 pt-4 border-t border-white/20">
             <Link href="/admin/insights" className="inline-flex items-center gap-2 text-xs text-support-2 hover:text-primary transition-colors opacity-60 hover:opacity-100">
@@ -466,7 +466,7 @@ export default function Eu360Client() {
             </Link>
           </div>
         )}
-      </div>
+      </ClientOnly>
     </PageTemplate>
   )
 
