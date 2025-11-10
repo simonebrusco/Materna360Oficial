@@ -23,8 +23,15 @@ function addDays(d: Date, n: number) {
 
 export default function ExportReportPage() {
   const [paywall, setPaywall] = React.useState(false);
+  const [isClient, setIsClient] = React.useState(false);
   const router = useRouter();
   const qs = useSearchParams();
+  
+  // Initialize client flag after hydration
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
   const ffEnabled = isEnabled('FF_EXPORT_PDF');
   const range = (qs.get('range') as 'weekly' | 'monthly') || 'weekly';
   const today = new Date();
@@ -247,37 +254,40 @@ export default function ExportReportPage() {
       </footer>
 
       {/* ===== Print Controls (hidden on print) ===== */}
-      <div className="no-print fixed right-4 bottom-4 flex flex-col gap-2 md:flex-row md:gap-2 sm:gap-2">
-        <select
-          className="rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-support-1 shadow-soft focus:outline-none focus:ring-2 focus:ring-primary/30"
-          value={range}
-          onChange={(e) => router.replace(`/eu360/export?range=${e.target.value}`)}
-        >
-          <option value="weekly">Semanal (7 dias)</option>
-          <option value="monthly">Mensal (28 dias)</option>
-        </select>
-        <button
-          className="rounded-xl px-3 py-2 bg-primary text-white font-medium hover:opacity-95 active:scale-[0.99] transition-all shadow-soft"
-          onClick={() => {
-            if (isEnabled('FF_PAYWALL_MODAL')) {
-              const premium = localStorage.getItem('m360_premium') === '1';
-              if (!premium) {
-                setPaywall(true);
-                try {
-                  trackTelemetry('paywall.block_trigger', { feature: 'export_pdf' });
-                } catch {}
-                return;
+      {isClient && (
+        <div className="no-print fixed right-4 bottom-4 flex flex-col gap-2 md:flex-row md:gap-2 sm:gap-2">
+          <select
+            className="rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-support-1 shadow-soft focus:outline-none focus:ring-2 focus:ring-primary/30"
+            value={range}
+            onChange={(e) => router.replace(`/eu360/export?range=${e.target.value}`)}
+            suppressHydrationWarning
+          >
+            <option value="weekly">Semanal (7 dias)</option>
+            <option value="monthly">Mensal (28 dias)</option>
+          </select>
+          <button
+            className="rounded-xl px-3 py-2 bg-primary text-white font-medium hover:opacity-95 active:scale-[0.99] transition-all shadow-soft"
+            onClick={() => {
+              if (isEnabled('FF_PAYWALL_MODAL')) {
+                const premium = localStorage.getItem('m360_premium') === '1';
+                if (!premium) {
+                  setPaywall(true);
+                  try {
+                    trackTelemetry('paywall.block_trigger', { feature: 'export_pdf' });
+                  } catch {}
+                  return;
+                }
               }
-            }
-            try {
-              trackTelemetry('pdf.export_print', { range, tab: 'eu360' });
-            } catch {}
-            window.print();
-          }}
-        >
-          Baixar PDF
-        </button>
-      </div>
+              try {
+                trackTelemetry('pdf.export_print', { range, tab: 'eu360' });
+              } catch {}
+              window.print();
+            }}
+          >
+            Baixar PDF
+          </button>
+        </div>
+      )}
 
       {/* Paywall Modal */}
       <PaywallModal
@@ -296,7 +306,7 @@ export default function ExportReportPage() {
         }}
       />
 
-      <style jsx global>{`
+      <style>{`
         @media print {
           .no-print {
             display: none !important;
