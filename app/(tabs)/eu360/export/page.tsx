@@ -14,7 +14,7 @@ import { SummaryBlock } from '@/components/pdf/SummaryBlock';
 import PaywallModal from '@/components/paywall/PaywallModal';
 
 function formatDate(d: Date) {
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' });
 }
 
 function addDays(d: Date, n: number) {
