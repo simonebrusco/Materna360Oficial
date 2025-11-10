@@ -469,7 +469,11 @@ export default function Eu360Client() {
 
   return (
     <>
-      <AppShell>{content}</AppShell>
+      <AppShell>
+        <ClientOnly>
+          {content}
+        </ClientOnly>
+      </AppShell>
       {upsellSheet.isOpen && currentUpsellConfig && (
         <UpsellSheet
           {...currentUpsellConfig}
