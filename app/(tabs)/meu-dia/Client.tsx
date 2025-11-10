@@ -231,29 +231,24 @@ export function MeuDiaClient({
       {isClientFlagEnabled('FF_COACH_V1') && (
         <CoachSuggestionCard
           resolve={() => Promise.resolve(generateCoachSuggestion())}
-          onView={(id) => {
+          onView={(id: string) => {
             try {
               trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
             } catch {}
           }}
-          onApply={(id) => {
+          onApply={(id: string) => {
             try {
               trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
             } catch {}
           }}
-          onSave={(id) => {
+          onSave={(id: string) => {
             try {
               trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
             } catch {}
           }}
-          onWhyOpen={(id) => {
+          onWhyOpen={(id: string) => {
             try {
               trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
-            } catch {}
-          }}
-          onToneChange={(tone) => {
-            try {
-              trackTelemetry('coach.tone_change', { tone, tab: 'meu-dia' });
             } catch {}
           }}
         />
