@@ -228,6 +228,32 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
+      {isClientFlagEnabled('FF_COACH_V1') && (
+        <CoachSuggestionCard
+          resolve={() => Promise.resolve(generateCoachSuggestion())}
+          onView={(id) => {
+            try {
+              trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
+            } catch {}
+          }}
+          onApply={(id) => {
+            try {
+              trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
+            } catch {}
+          }}
+          onSave={(id) => {
+            try {
+              trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
+            } catch {}
+          }}
+          onWhyOpen={(id) => {
+            try {
+              trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
+            } catch {}
+          }}
+        />
+      )}
+
       <SoftCard className="mb-4">
         <Reveal delay={230}>
           <div>
@@ -363,7 +389,7 @@ export function MeuDiaClient({
               onClick={() => setShowNoteModal(true)}
               className="notesCard-action"
             >
-              ＋ Adicionar
+              ��� Adicionar
             </Button>
           </div>
 
