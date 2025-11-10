@@ -191,6 +191,24 @@ export function MeuDiaClient({
       </SoftCard>
 
       <SoftCard className="mb-4">
+        <Reveal delay={210}>
+          <div className="flex items-center justify-between">
+            <div>
+              <Badge className="mb-2">Resumo da semana</Badge>
+              <p className="m360-body">Humor diário registrado — 3× Feliz · 2× Neutra · 2× Cansada</p>
+            </div>
+            <button
+              type="button"
+              className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
+              data-event="meu-dia.trend_view"
+            >
+              Ver tendência
+            </button>
+          </div>
+        </Reveal>
+      </SoftCard>
+
+      <SoftCard className="mb-4">
         <Reveal delay={230}>
           <div>
             <Badge className="mb-2">Rotina da Casa</Badge>
