@@ -175,26 +175,20 @@ export function MeuDiaClient({
         </Reveal>
       </Card>
 
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={160}>
-          <CheckInCard />
-        </Reveal>
-      </Card>
-
-      <Card>
-        <Reveal delay={190}>
-          <div className="space-y-6">
-            <MoodQuickSelector />
-            <div className="border-t border-white/40 pt-4">
-              <MoodSparkline />
+          <div>
+            <Badge className="mb-2">Humor e Energia</Badge>
+            <h3 className="m360-card-title">Registre seu humor e energia de hoje.</h3>
+            <div className="mt-4 space-y-6">
+              <MoodQuickSelector />
+              <div className="border-t border-white/40 pt-4">
+                <MoodSparkline />
+              </div>
             </div>
           </div>
         </Reveal>
-      </Card>
-
-      <Reveal delay={210}>
-        <MoodEnergyCheckin dateKey={dateKey} />
-      </Reveal>
+      </SoftCard>
 
       <Reveal delay={230}>
         <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
