@@ -1,34 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface ClientOnlyProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
 }
 
 /**
  * Renders children only on the client after hydration.
- * On server, renders fallback (default: nothing).
- * Uses suppressHydrationWarning to allow content to differ between server/client.
+ * Does NOT render anything on the server.
+ *
+ * This prevents hydration mismatches by ensuring the client
+ * renders the same DOM structure that the server produced.
  */
-export function ClientOnly({ children, fallback }: ClientOnlyProps) {
-  const [mounted, setMounted] = useState(false);
+export function ClientOnly({ children }: ClientOnlyProps) {
+  const isMountedRef = useRef(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Render placeholder on server that matches fallback
-  // This ensures HTML structure is consistent during hydration
-  if (!mounted) {
-    return fallback ? <>{fallback}</> : null;
+  // Use a ref instead of state to avoid causing a re-render
+  // Simply checking if we're on the client
+  if (typeof window === 'undefined') {
+    // Server-side: return nothing
+    return null;
   }
 
-  // After hydration, render actual children with suppressed warnings
-  return (
-    <>
-      {children}
-    </>
-  );
+  // Client-side: return children
+  return <>{children}</>;
 }
