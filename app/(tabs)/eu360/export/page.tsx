@@ -8,7 +8,8 @@ import { getSavedCoachFocus } from '@/app/lib/coachMaterno.client';
 import { EmotionTrendMini } from '@/components/charts/EmotionTrendChart';
 import { isEnabled } from '@/app/lib/flags.client';
 import { trackTelemetry } from '@/app/lib/telemetry';
-import { Button } from '@/components/ui/Button';
+import { PremiumCover } from '@/components/pdf/PremiumCover';
+import { SummaryBlock } from '@/components/pdf/SummaryBlock';
 import PaywallModal from '@/components/paywall/PaywallModal';
 
 function formatDate(d: Date) {
@@ -26,16 +27,17 @@ export default function ExportReportPage() {
   const [isClient, setIsClient] = React.useState(false);
   const router = useRouter();
   const qs = useSearchParams();
-  
+
   // Initialize client flag after hydration
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   const ffEnabled = isEnabled('FF_EXPORT_PDF');
   const range = (qs.get('range') as 'weekly' | 'monthly') || 'weekly';
   const today = new Date();
   const start = range === 'monthly' ? addDays(today, -27) : addDays(today, -6);
+  const periodText = `Período: ${formatDate(start)} – ${formatDate(today)}`;
 
   // Data
   const mood = getMoodEntries().filter((e) => new Date(e.date) >= start);
@@ -45,10 +47,8 @@ export default function ExportReportPage() {
   // Stats
   const avg = (arr: number[]) =>
     arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : 0;
-  const avgMood = avg(mood.map((m) => m.mood));
-  const avgEnergy = avg(mood.map((m) => m.energy));
-  const totalDays = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  const trackedDays = new Set(mood.map((m) => m.date)).size;
+  const avgMood = avg(mood.map((m) => m.mood)) || '—';
+  const avgEnergy = avg(mood.map((m) => m.energy)) || '—';
 
   React.useEffect(() => {
     // Track export page view
@@ -69,9 +69,12 @@ export default function ExportReportPage() {
           <p className="text-support-2 mb-6">
             A exportação de PDF está em fase de testes. Por favor, tente novamente mais tarde.
           </p>
-          <Button variant="primary" onClick={() => router.push('/eu360')}>
+          <button
+            onClick={() => router.push('/eu360')}
+            className="rounded-xl px-4 py-2 bg-primary text-white font-medium hover:opacity-95"
+          >
             Voltar ao Eu360
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -79,69 +82,26 @@ export default function ExportReportPage() {
 
   return (
     <div className="mx-auto max-w-[840px] p-4 md:p-8 bg-white text-ink-1 min-h-screen">
-      {/* ===== Cover ===== */}
-      <section className="mb-8 print-avoid-break-inside">
-        <div className="rounded-2xl border border-white/60 bg-gradient-to-br from-[#FFE5EF] to-white p-6 md:p-8 shadow-[0_8px_28px_rgba(47,58,86,0.08)]">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-ink-1">
-                Relatório {range === 'monthly' ? 'Mensal' : 'Semanal'}
-              </h1>
-              <p className="text-sm text-support-2 mt-2">
-                Período: {formatDate(start)} – {formatDate(today)}
-              </p>
-            </div>
-            {/* Brand circle placeholder */}
-            <div className="rounded-full w-12 h-12 bg-[#ffd8e6] border border-white/60 flex-shrink-0" aria-hidden />
-          </div>
-          <div className="mt-4">
-            <p className="text-sm text-support-1">
-              Resumo do seu bem-estar emocional e das pequenas ações que fizeram a diferença.
-            </p>
-            {coachFocus && (
-              <p className="text-sm text-support-1 mt-2">
-                <strong>Foco da semana:</strong> {coachFocus}
-              </p>
-            )}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft">
-              <div className="text-xs text-support-2">Média de Humor</div>
-              <div className="text-xl font-bold text-primary mt-2">{avgMood || '–'}</div>
-            </div>
-            <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft">
-              <div className="text-xs text-support-2">Média de Energia</div>
-              <div className="text-xl font-bold text-primary mt-2">{avgEnergy || '–'}</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ===== Branded Premium Cover ===== */}
+      <PremiumCover
+        title={`Relatório ${range === 'monthly' ? 'Mensal' : 'Semanal'}`}
+        period={periodText}
+        kpis={[
+          { label: 'Humor médio', value: avgMood },
+          { label: 'Energia média', value: avgEnergy },
+          { label: 'Registros', value: mood.length },
+          { label: 'Itens do planner', value: planner.length },
+        ]}
+      />
 
-      {/* ===== Quick Stats ===== */}
-      <section className="mb-8 print-avoid-break-inside">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft text-center">
-            <div className="text-xs text-support-2">Registros</div>
-            <div className="text-lg font-bold text-primary mt-1">{mood.length}</div>
-          </div>
-          <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft text-center">
-            <div className="text-xs text-support-2">Dias Rastreados</div>
-            <div className="text-lg font-bold text-primary mt-1">
-              {trackedDays}/{totalDays}
-            </div>
-          </div>
-          <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft text-center">
-            <div className="text-xs text-support-2">Taxa de Preenchimento</div>
-            <div className="text-lg font-bold text-primary mt-1">
-              {totalDays > 0 ? Math.round((trackedDays / totalDays) * 100) : 0}%
-            </div>
-          </div>
-          <div className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft text-center">
-            <div className="text-xs text-support-2">Itens Planejados</div>
-            <div className="text-lg font-bold text-primary mt-1">{planner.length}</div>
-          </div>
-        </div>
-      </section>
+      {/* ===== Dynamic Summary Block ===== */}
+      <SummaryBlock
+        focus={coachFocus}
+        avgMood={avgMood as number | string}
+        avgEnergy={avgEnergy as number | string}
+        totalEntries={mood.length}
+        plannerCount={planner.length}
+      />
 
       {/* ===== Trend Chart (inline SVG) ===== */}
       <section className="mb-8 print-avoid-break-inside">
@@ -164,7 +124,7 @@ export default function ExportReportPage() {
         </div>
       </section>
 
-      {/* ===== Weekly/Monthly Planner ===== */}
+      {/* ===== Weekly/Monthly Planner Table ===== */}
       <section className="mb-8 print-avoid-break-inside">
         <h2 className="text-lg font-semibold text-ink-1 mb-3">
           Planner {range === 'monthly' ? 'do período' : 'da semana'}
