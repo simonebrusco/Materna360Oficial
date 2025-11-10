@@ -115,6 +115,7 @@ export default function InsightsPage() {
         >
           Export CSV
         </button>
+        <ExportButton variant="insights" className="rounded-xl px-4 py-2" />
         <button
           className="rounded-xl px-4 py-2 border border-white/60 bg-white/90 font-medium text-support-1 hover:bg-white/95 active:scale-[0.99] transition-all"
           onClick={handleClearData}
