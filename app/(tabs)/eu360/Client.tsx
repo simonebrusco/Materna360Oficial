@@ -447,6 +447,16 @@ export default function Eu360Client() {
           </Reveal>
         </Card>
       )}
+
+      {/* Internal Insights Link (preview only) */}
+      {isClientEnabled('FF_INTERNAL_INSIGHTS') && (
+        <div className="mt-6 pt-4 border-t border-white/20">
+          <Link href="/admin/insights" className="inline-flex items-center gap-2 text-xs text-support-2 hover:text-primary transition-colors opacity-60 hover:opacity-100">
+            <AppIcon name="activity" size={14} decorative />
+            Internal Insights
+          </Link>
+        </div>
+      )}
     </PageTemplate>
   )
 
