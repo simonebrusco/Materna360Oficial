@@ -84,10 +84,15 @@ export function getClientFlagsUnified(): Flags {
   // Resolve with precedence
   const maternarHub = resolveMaternarFrom(queryParam, cookieValue, envDefault);
 
+  // Get actual env values instead of hardcoded true
+  const layoutV1 = coerceEnv(process.env.NEXT_PUBLIC_FF_LAYOUT_V1, '0');
+  const feedbackKit = coerceEnv(process.env.NEXT_PUBLIC_FF_FEEDBACK_KIT, '0');
+  const homeV1 = coerceEnv(process.env.NEXT_PUBLIC_FF_HOME_V1, '0');
+
   return {
-    FF_LAYOUT_V1: true,
-    FF_FEEDBACK_KIT: true,
-    FF_HOME_V1: true,
+    FF_LAYOUT_V1: layoutV1,
+    FF_FEEDBACK_KIT: feedbackKit,
+    FF_HOME_V1: homeV1,
     FF_MATERNAR_HUB: maternarHub,
   };
 }
