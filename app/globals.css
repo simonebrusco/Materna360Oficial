@@ -323,6 +323,27 @@
     font-weight: 500;
   }
 
+  /* ===== MATERNA360 Typography Utilities ===== */
+  .m360-title-page {
+    @apply text-[22px] leading-[28px] md:text-[28px] md:leading-[34px] font-semibold;
+  }
+
+  .m360-subtitle {
+    @apply text-[14px] leading-[20px] text-[#545454];
+  }
+
+  .m360-card-title {
+    @apply text-[16px] leading-[22px] font-semibold;
+  }
+
+  .m360-body {
+    @apply text-[14px] leading-[20px] text-[#2f3a56];
+  }
+
+  .m360-micro {
+    @apply text-[12px] leading-[16px] text-[#545454];
+  }
+
   /* ===== Spacing Utilities ===== */
   .spacing-section-vertical {
     @apply py-6 md:py-8;
