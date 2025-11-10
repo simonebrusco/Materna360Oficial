@@ -223,24 +223,26 @@ export default function Eu360Client() {
       </ClientOnly>
 
       {/* Plan Card Section - P2 */}
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={120}>
-            <div>
-              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
-            <PlanCard
-              currentPlan={currentPlan}
-              onManagePlan={() => {
-                window.location.href = '/planos'
-              }}
-              onExplorePlans={() => {
-                window.location.href = '/planos'
-              }}
-            />
-            </div>
-          </Reveal>
-        </Card>
-      )}
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={120}>
+              <div>
+                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
+              <PlanCard
+                currentPlan={currentPlan}
+                onManagePlan={() => {
+                  window.location.href = '/planos'
+                }}
+                onExplorePlans={() => {
+                  window.location.href = '/planos'
+                }}
+              />
+              </div>
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       <Card>
         <Reveal delay={140}>
