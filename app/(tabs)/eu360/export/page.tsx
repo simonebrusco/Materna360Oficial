@@ -29,6 +29,9 @@ export default function ExportReportPage() {
   const router = useRouter();
   const qs = useSearchParams();
 
+  // Freeze "today" once on client to avoid SSR/client drift
+  const [today] = React.useState<Date>(() => new Date());
+
   // Initialize client flag after hydration
   React.useEffect(() => {
     setIsClient(true);
@@ -36,7 +39,6 @@ export default function ExportReportPage() {
 
   const ffEnabled = isEnabled('FF_EXPORT_PDF');
   const range = (qs.get('range') as 'weekly' | 'monthly') || 'weekly';
-  const today = new Date();
   const start = range === 'monthly' ? addDays(today, -27) : addDays(today, -6);
   const periodText = `Período: ${formatDate(start)} – ${formatDate(today)}`;
 
