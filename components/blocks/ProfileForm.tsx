@@ -438,10 +438,10 @@ export function ProfileForm() {
                             onChange={(event) => updateChild(child.id, 'idadeMeses', event.target.value)}
                             className={`${inputClasses} ${errors.filhos?.[child.id] ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
                             aria-invalid={Boolean(errors.filhos?.[child.id])}
-                            aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${child.id}` : undefined}
+                            aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${index}` : undefined}
                           />
                           {errors.filhos?.[child.id] && (
-                            <p id={`child-age-error-${child.id}`} className="text-xs font-medium text-primary">
+                            <p id={`child-age-error-${index}`} className="text-xs font-medium text-primary">
                               {errors.filhos[child.id]}
                             </p>
                           )}
@@ -475,11 +475,11 @@ export function ProfileForm() {
                           />
                         </div>
                         <div className="space-y-2 sm:col-span-3">
-                          <label htmlFor={`child-allergies-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-allergies-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Alergias (separe por vírgula)
                           </label>
                           <input
-                            id={`child-allergies-${child.id}`}
+                            id={`child-allergies-${index}`}
                             type="text"
                             value={child.alergias.join(', ')}
                             onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
