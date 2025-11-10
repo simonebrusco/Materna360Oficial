@@ -38,6 +38,7 @@ export function AchievementsCounter() {
         pulse ? 'animate-pulse' : ''
       }`}
       aria-live="polite"
+      suppressHydrationWarning
     >
       Conquistas: {count}/{TOTAL}
     </div>
