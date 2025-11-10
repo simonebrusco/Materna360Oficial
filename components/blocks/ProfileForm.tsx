@@ -17,14 +17,6 @@ const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
   'mae-tranquila': 'Serenidade e autocuidado.',
 }
 
-const createId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID()
-  }
-
-  return Math.random().toString(36).slice(2, 11)
-}
-
 type ChildProfile = {
   id: string
   genero: 'menino' | 'menina'
@@ -46,8 +38,8 @@ type FormErrors = {
   general?: string
 }
 
-const createEmptyChild = (): ChildProfile => ({
-  id: createId(),
+const createEmptyChild = (index: number): ChildProfile => ({
+  id: `child-${index}`,
   genero: 'menino',
   idadeMeses: 0,
   nome: '',
