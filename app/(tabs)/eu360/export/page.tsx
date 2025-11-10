@@ -272,6 +272,23 @@ export default function ExportReportPage() {
         </button>
       </div>
 
+      {/* Paywall Modal */}
+      <PaywallModal
+        open={paywall}
+        onClose={() => {
+          setPaywall(false);
+          try {
+            trackTelemetry('paywall.dismiss', { feature: 'export_pdf' });
+          } catch {}
+        }}
+        onUpgrade={() => {
+          try {
+            trackTelemetry('paywall.upgrade_click', { feature: 'export_pdf' });
+          } catch {}
+          window.location.href = '/planos';
+        }}
+      />
+
       <style jsx global>{`
         @media print {
           .no-print {
