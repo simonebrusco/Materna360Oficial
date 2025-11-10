@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getMoodEntries } from '@/app/lib/moodStore.client';
 import { getPlannerItemsWithin } from '@/app/lib/plannerStore.client';
+import { getSavedCoachFocus } from '@/app/lib/coachMaterno.client';
 import { EmotionTrendMini } from '@/components/charts/EmotionTrendChart';
 import { isEnabled } from '@/app/lib/flags.client';
 import { trackTelemetry } from '@/app/lib/telemetry';
