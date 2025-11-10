@@ -290,11 +290,13 @@ export default function Eu360Client() {
         </Reveal>
       </Card>
 
-      {getCurrentPlanId() === 'free' && (
-        <div className="mb-4">
-          <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
-        </div>
-      )}
+      <div suppressHydrationWarning>
+        {getCurrentPlanId() === 'free' && (
+          <div className="mb-4">
+            <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
+          </div>
+        )}
+      </div>
 
       <Reveal delay={250}>
         <ExportBlock />
