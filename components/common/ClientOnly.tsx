@@ -14,9 +14,11 @@ export function ClientOnly({ children, fallback }: ClientOnlyProps) {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return fallback ?? null;
-  }
-
-  return <>{children}</>;
+  // Always render a consistent wrapper to prevent hydration mismatch
+  // Use suppressHydrationWarning because content differs by design
+  return (
+    <div suppressHydrationWarning>
+      {mounted ? children : fallback}
+    </div>
+  );
 }
