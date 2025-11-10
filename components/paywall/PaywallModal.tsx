@@ -19,7 +19,7 @@ export default function PaywallModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="paywall-title"
-        className="relative bg-white rounded-2xl max-w-[420px] w-[calc(100%-2rem)] shadow-[0_8px_28px_rgba(47,58,86,0.15)] p-6 animate-fadeIn"
+        className="relative bg-white rounded-2xl max-w-[420px] w-[calc(100%-2rem)] shadow-[0_8px_28px_rgba(47,58,86,0.15)] p-6 animate-in fade-in slide-in-from-bottom-2 duration-200"
       >
         {/* Close button */}
         <button
@@ -76,23 +76,6 @@ export default function PaywallModal({
           Transparência: este bloqueio é apenas para exportação. Você pode visualizar tudo normalmente.
         </p>
       </div>
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        [role='dialog'].animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-      `}</style>
     </div>
   );
 }
