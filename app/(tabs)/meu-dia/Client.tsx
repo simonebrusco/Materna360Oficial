@@ -364,8 +364,8 @@ export function MeuDiaClient({
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
           <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
-            <Card className="w-full notesCard-modal">
-              <BlockH3 className="mb-2 text-lg">Adicionar Nota</BlockH3>
+            <SoftCard className="w-full notesCard-modal">
+              <h3 className="m360-card-title mb-2">Adicionar Nota</h3>
               <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
               <textarea
                 value={noteText}
@@ -386,7 +386,7 @@ export function MeuDiaClient({
                   Cancelar
                 </button>
               </div>
-            </Card>
+            </SoftCard>
           </div>
         </div>
       )}
