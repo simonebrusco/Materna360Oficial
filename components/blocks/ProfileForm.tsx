@@ -348,7 +348,7 @@ export function ProfileForm() {
   const todayISO = new Date().toISOString().split('T')[0]
 
   return (
-    <Reveal>
+    <Reveal suppressHydrationWarning>
       <Card className="p-7" suppressHydrationWarning>
         <form className="space-y-7" onSubmit={handleSubmit} noValidate>
           <div className="space-y-2">
