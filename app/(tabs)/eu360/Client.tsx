@@ -135,14 +135,12 @@ export default function Eu360Client() {
       title="Eu360"
       subtitle="Autocuidado, propósito e rede de apoio"
     >
-      <div suppressHydrationWarning>
-        <Card>
-          <ProfileForm />
-        </Card>
-      </div>
+      <Card suppressHydrationWarning>
+        <ProfileForm />
+      </Card>
 
       <Reveal delay={180}>
-        <div className="flex items-center justify-end mb-2">
+        <div className="flex items-center justify-end mb-2" suppressHydrationWarning>
           <AchievementsCounter />
         </div>
       </Reveal>
