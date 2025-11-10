@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { isEnabled } from '@/app/lib/flags.client';
 import { readLocalEvents, clearLocalEvents } from '@/app/lib/telemetry';
+import ExportButton from '@/components/pdf/ExportButton';
 import MiniBar from '@/components/charts/MiniBar';
 
 type Ev = { event: string; payload?: Record<string, unknown>; ts: number };
