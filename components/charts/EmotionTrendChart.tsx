@@ -149,4 +149,13 @@ export function EmotionTrendChart({
   );
 }
 
+export function EmotionTrendMini({ data }: { data: EmotionPoint[] }) {
+  // Compact sparkline-style wrapper for print export (fixed height, no scrolling)
+  return (
+    <div className="w-full h-[140px]">
+      <EmotionTrendChart data={data} range="28d" />
+    </div>
+  );
+}
+
 export default EmotionTrendChart;
