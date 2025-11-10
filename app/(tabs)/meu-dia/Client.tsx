@@ -229,31 +229,33 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
-      {isClientFlagEnabled('FF_COACH_V1') && (
-        <CoachSuggestionCard
-          resolve={() => Promise.resolve(generateCoachSuggestion())}
-          onView={(id: string) => {
-            try {
-              trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
-            } catch {}
-          }}
-          onApply={(id: string) => {
-            try {
-              trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
-            } catch {}
-          }}
-          onSave={(id: string) => {
-            try {
-              trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
-            } catch {}
-          }}
-          onWhyOpen={(id: string) => {
-            try {
-              trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
-            } catch {}
-          }}
-        />
-      )}
+      <ClientOnly>
+        {isClientFlagEnabled('FF_COACH_V1') && (
+          <CoachSuggestionCard
+            resolve={() => Promise.resolve(generateCoachSuggestion())}
+            onView={(id: string) => {
+              try {
+                trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+            onApply={(id: string) => {
+              try {
+                trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+            onSave={(id: string) => {
+              try {
+                trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+            onWhyOpen={(id: string) => {
+              try {
+                trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+          />
+        )}
+      </ClientOnly>
 
       <SoftCard className="mb-4">
         <Reveal delay={230}>
