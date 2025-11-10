@@ -71,7 +71,7 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
   const insight = computeInsight(avgMood, avgEnergy)
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
+    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5" suppressHydrationWarning>
       <div className="flex items-center gap-2 mb-3">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
           <AppIcon name="heart" size={16} variant="brand" decorative />
