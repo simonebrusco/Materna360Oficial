@@ -220,11 +220,11 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={240}>
           <ExportPlanner />
         </Reveal>
-      </Card>
+      </SoftCard>
 
       <SoftCard className="mb-4">
         <Reveal delay={250}>
