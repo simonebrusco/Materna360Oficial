@@ -1,61 +1,138 @@
-# Materna360 — Project Tracker
+# 🌸 Materna360 – Live Project Tracker
 
-## 1) Overview
-- **Status**: P0 completed (production stable, UX premium, TS=0, green deploy).
-- **Current phase**: P1 (Incremental Value) — routine, empathy, and daily recurrence.
-- **Principles**: Soft Luxury, consistency, no dead-ends, non-blocking telemetry.
+**Last update:** November 10, 2025  
+**Branch:** `cosmos-verse`  
+**Overall progress:** 🟢 **78% complete**  
+**Estimated completion:** ~19 working days (≈ 4 weeks)
 
-## 2) Roadmap by Phase
-- **P1 (now)**:
-  - /meu-dia: "Mom in Motion" (smart lists + reminders), mood/energy check-in complete.
-  - /cuidar: Vaccines & Appointments (MVP: log + timeline).
-  - /eu360: Weekly emotional summary (light insights).
-  - Light AI daily messages (local), soft local notifications.
-- **P1.5 (next)**:
-  - Free/Plus/Premium plans, soft paywall, upsell toasts/banners.
-  - Gamification (3 badges), quota for free tier.
-- **P2**:
-  - Maternal Coach (AI), auto suggestions, charts, PDF export, "Learning Through Play Week", quizzes.
-- **P3**:
-  - Strong launch, community, partnerships, courses, RN/Expo future.
+---
 
-## 3) Route Status (quick)
-- **/maternar**: OK; needs "Highlights of the day" + "Continue where I left off" (P1).
-- **/meu-dia**: OK base; implement Mom in Motion + final check-in + reminders (P1).
-- **/cuidar**: OK base; Vaccines/Appointments MVP + timeline (P1).
-- **/descobrir**: filters/empty OK; "Save for later" persistent (P1).
-- **/eu360**: weekly summary OK; emotional weekly summary (P1).
+## 🧭 Overview
+The Materna360 app is a premium parental wellness and organization platform focused on emotional intelligence, self-care, and daily planning for mothers.  
+This tracker summarizes progress across **UX/UI, Engineering, Product, and QA**.
 
-## 4) Sprint P1.1 (7 days)
-**Goal**: increase daily utility and emotional care.
+---
 
-### Backlog (with acceptance criteria)
-- **MEU-DIA-001** Mom in Motion (smart lists)
-  - *Acceptance*: create/edit/remove; quick templates (grocery/lunchbox); local persistence; telemetry `todos.add|edit|remove`.
-- **MEU-DIA-002** Mood/Energy check-in 100%
-  - *Acceptance*: 1-tap; 7-day sparkline; telemetry `mood.checkin`.
-- **MEU-DIA-003** Local reminders
-  - *Acceptance*: date/time; confirmation toast; telemetry `reminder.created`.
-- **CUIDAR-001** Vaccines & Appointments (MVP)
-  - *Acceptance*: add record (name, date, notes, type); list upcoming/past; timeline; telemetry `care.appointment_add`.
-- **EU360-001** Weekly emotional summary
-  - *Acceptance*: weekly avg mood/energy + one text insight; telemetry `eu360.summary_view`.
+## ✅ Status Summary
 
-### Definition of Done
-- TS=0; preview build green; basic Lighthouse OK.
-- A11y focus/AA contrast; mobile 375/414 and ≥768 no overflow.
-- Telemetry wired and non-blocking; events named per Telemetry Spec.
+| Phase | Status | Description |
+|--------|---------|-------------|
+| P0 – UI Base & Structure | ✅ Completed | Design system, navigation, typography, infra |
+| P1 – Core Features | ✅ Completed | Meu Dia, Cuidar, Descobrir, Eu360 |
+| P2 – Intelligence & Personalization | 🟡 In progress | Coach Materno, Emotion Trends, PDF |
+| P3 – Premium Expansion | ⏳ Next | Paywall, insights, export, plans |
+| P4 – QA & Launch | 🔜 Upcoming | Final testing and release |
 
-## 5) Decision Log
-- 2025-11-09: P0 closed; P1 prioritized for routine/empathy.
-- 2025-11-09: Paywall/gamification moved to P1.5 for fluid UX.
+---
 
-## 6) Risks & Mitigations
-- Visual drift → enforce templates/tokens (see `UX_GUIDELINES.md`).
-- Over-tracking → only essential events; never block UI.
-- P1 scope creep → keep MVPs useful; push monetization to P1.5.
+## 📦 Development Checklist
 
-## 7) Telemetry Spec (summary)
-- `event`: kebab-case (`mood.checkin`, `todos.add`, `care.appointment_add`)
-- `tab`: `meu-dia|cuidar|maternar|descobrir|eu360`
-- `payload`: short keys (`id`, `template`, `value`, `date`)
+### 1. Core Infrastructure
+- [x] Navigation (5 tabs: Meu Dia, Cuidar, Maternar, Descobrir, Eu360)
+- [x] Feature flags and redirects
+- [x] Telemetry base events
+- [x] TypeScript clean build
+- [ ] Emoji checker final cleanup (0.5d)
+- [ ] Docs: PROJECT_TRACKER.md, ENV.md, QA_CHECKLIST.md filled (1.5d)
+
+### 2. Design System & UI Consistency
+- [x] Design tokens (spacing, radius, colors, typography)
+- [x] Components (SoftCard, Badge, FilterPill, Toast, EmptyState)
+- [x] Unified typography classes `.m360-*`
+- [ ] A11y review (contrast & focus) (1d)
+- [ ] Responsive QA (mobile/tablet) (1d)
+
+### 3. Tabs
+
+#### /maternar (Hub)
+- [x] 6-card grid navigation
+- [ ] Empty/onboarding state (1d)
+- [ ] "Continue where you left off" (1.5d)
+- [ ] Dynamic highlights (1d)
+
+#### /meu-dia
+- [x] Planner & reminders
+- [x] Mood check-in (single)
+- [x] Emotion trend chart (SVG)
+- [x] Coach Materno v0.1
+- [x] Coach Materno v0.2 (tone + focus)
+- [x] PDF focus integration
+
+#### /cuidar
+- [ ] Child diary (1d)
+- [ ] Mother tracker (0.5d)
+- [ ] Consultations/vaccines (1d)
+- [ ] Digital safety guide (1.5d)
+
+#### /descobrir
+- [x] Filters & ranking by age
+- [x] Empty-state
+- [ ] Save for later persistence (0.5d)
+- [ ] "Semana do Aprender Brincando" (2d)
+- [ ] Development quiz MVP (2d)
+
+#### /eu360
+- [x] Weekly summary
+- [x] Emotional diary
+- [x] Coach Materno integration
+- [x] Export PDF v1
+- [x] Paywall soft modal
+- [ ] Export PDF v2 (premium cover + summary) (1.5d)
+
+---
+
+### 4. Premium Features
+- [x] Paywall modal
+- [ ] Real gating by plan (1d)
+- [ ] Premium onboarding flow (1d)
+
+---
+
+### 5. Intelligence & Personalization
+- [x] Coach Materno v0.2 (focus + tone)
+- [ ] Coach v0.3 – contextual empathy (2d)
+- [ ] Emotion trends: long-term analytics (1.5d)
+- [ ] Local reminders (1d)
+
+---
+
+### 6. PDF Export & Reports
+- [x] Basic export (window.print)
+- [ ] Premium PDF (logo, cover, summary, planner) (1.5d)
+- [ ] Real PDF generation (@react-pdf/renderer) (2d)
+
+---
+
+### 7. Telemetry & Insights
+- [x] Unified telemetry
+- [ ] Local insights dashboard `/admin/insights` (1d)
+- [ ] Clean log outputs (0.5d)
+
+---
+
+### 8. QA & Launch
+- [ ] Playwright visual smoke (1d)
+- [ ] Functional QA across 5 routes (1d)
+- [ ] Final documentation (1d)
+- [ ] Production deploy (0.5d)
+
+---
+
+## ⏱️ Estimated Remaining Time
+| Category | Time |
+|-----------|------|
+| Pending + Partial | **~17 days** |
+| QA + Documentation | **+2 days** |
+| **Total (MVP+)** | **≈ 19 working days (≈ 4 weeks)** |
+
+---
+
+## 🌟 Next Milestones
+1. PDF Premium (cover + summary + logo)
+2. Internal insights dashboard
+3. QA responsive polish
+4. Public launch (target: early December 2025)
+
+---
+
+_This tracker is auto-updated manually at the end of each sprint and serves as a living reference for Materna360's progress._
