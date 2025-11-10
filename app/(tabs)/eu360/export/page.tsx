@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import HydrationGate from '@/components/common/HydrationGate';
+import { ClientOnly } from '@/components/common/ClientOnly';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getMoodEntries } from '@/app/lib/moodStore.client';
 import { getPlannerItemsWithin } from '@/app/lib/plannerStore.client';
