@@ -40,6 +40,11 @@
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
   --font-secondary: 'Quicksand', sans-serif;
+
+  /* MATERNA360 TYPOGRAPHY TOKENS START */
+  --text-title-page: 22px/28px;
+  --text-title-page-md: 28px/34px;
+  /* MATERNA360 TYPOGRAPHY TOKENS END */
   --rhythm-section-d: 56px;
   --rhythm-section-t: 48px;
   --rhythm-section-m: 32px;
