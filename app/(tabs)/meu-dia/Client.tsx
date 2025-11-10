@@ -169,11 +169,11 @@ export function MeuDiaClient({
 
   return (
     <PageTemplate title="Seu dia, no seu ritmo." subtitle="Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.">
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
         </Reveal>
-      </Card>
+      </SoftCard>
 
       <SoftCard className="mb-4">
         <Reveal delay={160}>
