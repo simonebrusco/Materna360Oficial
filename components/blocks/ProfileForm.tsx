@@ -121,10 +121,6 @@ export function ProfileForm() {
           console.error('Falha ao carregar perfil eu360:', errorMsg)
         }
       }
-
-      if (isMounted) {
-        setLoading(false)
-      }
     }
 
     void loadProfile()
