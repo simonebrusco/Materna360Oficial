@@ -223,7 +223,7 @@ export function MeuDiaClient({
               className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
               data-event="meu-dia.trend_view"
             >
-              Ver tendência
+              Ver tend��ncia
             </button>
           </div>
         </Reveal>
@@ -440,13 +440,15 @@ export function MeuDiaClient({
         </div>
       )}
 
-      {canShowTrends && (
-        <EmotionTrendDrawer
-          open={trendOpen}
-          onClose={() => setTrendOpen(false)}
-          resolveData={() => getMoodEntries()}
-        />
-      )}
+      <ClientOnly>
+        {canShowTrends && (
+          <EmotionTrendDrawer
+            open={trendOpen}
+            onClose={() => setTrendOpen(false)}
+            resolveData={() => getMoodEntries()}
+          />
+        )}
+      </ClientOnly>
     </PageTemplate>
   )
 }
