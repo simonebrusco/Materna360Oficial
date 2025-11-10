@@ -33,6 +33,9 @@ import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
+import { isEnabled as isClientFlagEnabled } from '@/app/lib/flags.client'
+import EmotionTrendDrawer from '@/components/ui/EmotionTrendDrawer'
+import { getMoodEntries, seedIfEmpty } from '@/app/lib/moodStore.client'
 
 type MeuDiaClientProps = {
   dailyGreeting: string
