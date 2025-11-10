@@ -287,14 +287,12 @@ export function MeuDiaClient({
           </Reveal>
         </Card>
 
-        <Card>
+        <SoftCard className="mb-4">
           <Reveal delay={300}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <SectionH2 className="flex items-center gap-2">
-                  <AppIcon name="check" size={20} decorative />
-                  Itens da Semana
-                </SectionH2>
+                <Badge className="mb-2">Planejamento</Badge>
+                <h3 className="m360-card-title">Itens da Semana</h3>
                 <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
               </div>
               <Button
@@ -309,7 +307,7 @@ export function MeuDiaClient({
             </div>
             <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
           </Reveal>
-        </Card>
+        </SoftCard>
 
         <SimplePlannerSheet
           isOpen={showPlannerSheet}
