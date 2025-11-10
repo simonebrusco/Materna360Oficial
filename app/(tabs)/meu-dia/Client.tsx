@@ -251,6 +251,11 @@ export function MeuDiaClient({
               trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
             } catch {}
           }}
+          onToneChange={(tone) => {
+            try {
+              trackTelemetry('coach.tone_change', { tone, tab: 'meu-dia' });
+            } catch {}
+          }}
         />
       )}
 
