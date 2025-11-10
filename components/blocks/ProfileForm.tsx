@@ -363,14 +363,15 @@ export function ProfileForm() {
             </p>
           </div>
 
-          {loading ? (
-            <div className="space-y-4">
-              <div className="h-12 w-full animate-pulse rounded-2xl bg-white/40" />
-              <div className="h-36 w-full animate-pulse rounded-2xl bg-white/40" />
-              <div className="h-28 w-full animate-pulse rounded-2xl bg-white/40" />
-            </div>
-          ) : (
-            <div className="space-y-6">
+          <div suppressHydrationWarning>
+            {loading ? (
+              <div className="space-y-4">
+                <div className="h-12 w-full animate-pulse rounded-2xl bg-white/40" />
+                <div className="h-36 w-full animate-pulse rounded-2xl bg-white/40" />
+                <div className="h-28 w-full animate-pulse rounded-2xl bg-white/40" />
+              </div>
+            ) : (
+              <div className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
                   Seu nome
@@ -558,7 +559,8 @@ export function ProfileForm() {
                 )}
               </div>
             </div>
-          )}
+            )}
+          </div>
         </form>
       </Card>
     </Reveal>
