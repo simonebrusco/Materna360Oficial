@@ -7,7 +7,7 @@ import { Pause, Play } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 
 type MindfulnessTrack = {
   id: string
@@ -160,7 +160,6 @@ export function Mindfulness() {
   const [currentPlayback, setCurrentPlayback] = useState<{ theme: MindfulnessTheme; track: MindfulnessTrack } | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [lastPlayback, setLastPlayback] = useState<LastPlayback | null>(null)
-  const { toast } = useToast()
   const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({})
   const [missingFiles, setMissingFiles] = useState<string[]>([])
   const [hasManifestError, setHasManifestError] = useState(false)
@@ -313,7 +312,7 @@ export function Mindfulness() {
       }
       window.localStorage.removeItem(LEGACY_LAST_TRACK_KEY)
     } catch (error) {
-      console.error('Não foi possível salvar o último áudio do mindfulness.', error)
+      console.error('N��o foi possível salvar o último áudio do mindfulness.', error)
     }
   }, [])
 
@@ -372,7 +371,7 @@ export function Mindfulness() {
     const handlePause = () => setIsPlaying(false)
 
     const handleError = () => {
-      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
       setIsPlaying(false)
     }
 
@@ -441,7 +440,7 @@ export function Mindfulness() {
           setIsPlaying(true)
         } catch (error) {
           console.error('Falha ao iniciar reprodução do Mindfulness', error)
-          toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
+          toast.danger('Algo não funcionou como esperado. Tente novamente.')
           setCurrentPlayback(previousPlayback ?? null)
           setLastPlayback(previousLastPlayback ?? null)
           persistLastPlayback(previousLastPlayback ?? null)

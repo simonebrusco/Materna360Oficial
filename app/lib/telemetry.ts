@@ -1,82 +1,49 @@
-export type TelemetryEvent =
-  | 'recipes.generate'
-  | 'recipes.generate.error'
-  | 'planner.add'
-  | 'planner.add.error'
-  | 'discover_rec_impression'
-  | 'discover_rec_click_buy'
-  | 'discover_rec_save_planner'
-  | 'discover_rec_view_details'
-  | 'discover_flash_impression'
-  | 'discover_flash_start'
-  | 'discover_flash_save_planner'
-  | 'discover_flash_error'
-  | 'discover_selfcare_impression'
-  | 'discover_selfcare_done'
-  | 'discover_selfcare_save_planner'
-  | 'discover_selfcare_error'
-  | 'discover_section_error'
-  | 'planner_save_ok'
-  | 'planner_payload_invalid'
-  | 'curator_request'
-  | 'curator_response'
-  | 'curator_error'
-  | 'maternar.page_view'
-  | 'maternar.card_click'
-  | (string & {})
+// app/lib/telemetry.ts — permissive hotfix + provider API (compat com telemetryServer.ts)
 
-export type TelemetryContext = Record<string, unknown>
+// Aceita qualquer nome de evento e payload genérico
+export type TelemetryEventName = string;
+export type TelemetryPayload = Record<string, unknown>;
+export type TelemetryPayloads = TelemetryPayload; // alias de compat
 
-export type TelemetrySink = (
-  event: TelemetryEvent,
-  payload?: unknown,
-  ctx?: TelemetryContext
-) => void | Promise<void>
+// Provider opcional para capturar eventos (server ou client)
+type TelemetryHandler = (name: TelemetryEventName, payload: TelemetryPayload) => void;
+let __provider: TelemetryHandler | null = null;
 
-let provider: TelemetrySink | null = null
-
-export function setTelemetryProvider(fn: TelemetrySink) {
-  provider = fn
+// Exposto para o server configurar um handler (ex.: persistir/logar no servidor)
+export function setTelemetryProvider(fn: TelemetryHandler | null) {
+  __provider = fn;
 }
 
-export function sample(p = 1): boolean {
-  return Math.random() < p
-}
-
-export function trackTelemetry(
-  event: TelemetryEvent,
-  payload: unknown = {},
-  ctx: TelemetryContext = {}
-): void {
+// Função principal de tracking (não-bloqueante, SSR-safe)
+export function track(name: TelemetryEventName, payload: TelemetryPayload): void {
   try {
-    if (provider) {
-      void provider(event, payload, ctx)
-      return
+    // 1) Dispara provider se existir (server ou client)
+    if (__provider) {
+      try { __provider(name, payload); } catch { /* no-op */ }
     }
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.debug('[telemetry]', event, payload ?? {}, ctx ?? {})
+
+    // 2) Ambiente de navegador: console.debug + CustomEvent para dev tools
+    if (typeof window !== 'undefined') {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.debug('[telemetry]', name, payload);
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('m360:telemetry', {
+          detail: { name, payload, ts: Date.now() },
+        }));
+      } catch { /* no-op */ }
+    } else {
+      // 3) Ambiente server (sem quebrar)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.debug('[telemetry][server]', name, payload);
+      }
     }
   } catch {
-    // never propagate error
+    // Nunca quebrar build/UI por causa de telemetria
   }
 }
 
-export function pick<T>(arg: T | T[], n?: 1): T | null
-export function pick<T>(arg: T | T[], n: number): T[]
-export function pick<T>(arg: T | T[], n = 1): T | T[] | null {
-  const arr = arg instanceof Array ? arg : [arg]
-  if (arr.length === 0) {
-    return n === 1 ? null : []
-  }
-  if (n <= 1) {
-    return arr[Math.floor(Math.random() * arr.length)] ?? null
-  }
-  const copy = [...arr]
-  const out: T[] = []
-  while (out.length < n && copy.length) {
-    const i = Math.floor(Math.random() * copy.length)
-    out.push(copy.splice(i, 1)[0])
-  }
-  return out
-}
+// Alias usado em diversas partes do app
+export const trackTelemetry = track;

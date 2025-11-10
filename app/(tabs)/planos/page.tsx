@@ -1,15 +1,14 @@
 'use client'
 
-'use client'
-
 import { useState, useEffect } from 'react'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { PaywallBanner } from '@/components/ui/PaywallBanner'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { PageGrid } from '@/components/common/PageGrid'
+import { PlansTable } from '@/components/paywall/PlansTable'
 
 type PlanId = 'free' | 'essencial' | 'premium'
 
@@ -126,18 +125,14 @@ export default function PlanosPage() {
 
   // Track page view on mount
   useEffect(() => {
-    track({
-      event: 'paywall.view',
-      payload: { page: 'plans_overview' },
-    })
+    track('paywall.view', { page: 'plans_overview' })
   }, [])
 
   const handleUpgrade = (planId: PlanId) => {
-    track({
-      event: 'paywall.click',
+    track('paywall.click', {
       action: 'upgrade_click',
       id: planId,
-      payload: { plan: planId },
+      plan: planId,
     })
 
     const plan = PLANS.find((p) => p.id === planId)
@@ -296,6 +291,9 @@ export default function PlanosPage() {
           ))}
         </PageGrid>
 
+        {/* QA Feature Table */}
+        <PlansTable />
+
         {/* Info Section */}
         <Card className="rounded-[var(--radius-card)] p-5 md:p-6 text-center border-white/60 bg-white/95">
           <p className="text-sm text-support-2">
@@ -345,10 +343,9 @@ export default function PlanosPage() {
             Ainda tem dúvidas? Entre em contato conosco
           </p>
           <Button variant="primary" size="md" onClick={() => {
-            track({
-              event: 'paywall.click',
+            track('paywall.click', {
               action: 'contact_support',
-              payload: { context: 'plans_page' },
+              context: 'plans_page',
             })
           }}>
             Conversar com suporte

@@ -707,3 +707,67 @@ body {
 .__app-surface-reset {
   background: transparent !important;
 }
+
+/* Microinteractions */
+.ui-press {
+  transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
+}
+
+.ui-press:hover {
+  opacity: 0.96;
+}
+
+.ui-press:active {
+  transform: scale(0.98);
+}
+
+/* Focus ring */
+.ui-ring:focus {
+  outline: none;
+}
+
+.ui-ring:focus-visible {
+  box-shadow: 0 0 0 2px #ffd8e6;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/* Print stylesheet for PDF export */
+@media print {
+  /* Hide interactive chrome */
+  nav,
+  header,
+  footer,
+  [data-bottomnav],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Page padding for A4 */
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body {
+    padding: 16mm !important;
+  }
+
+  /* Focused area to export */
+  [data-print-focus="1"] {
+    outline: none !important;
+  }
+
+  /* Card cleanup */
+  .print-card {
+    box-shadow: none !important;
+    border: 1px solid #e9ecf2 !important;
+  }
+
+  /* Typography */
+  h1,
+  h2,
+  h3 {
+    color: #000 !important;
+  }
+}

@@ -89,7 +89,7 @@ export function PaywallBanner({
         {/* Close button (alternative dismiss) */}
         <button
           onClick={handleDismiss}
-          className="flex-shrink-0 mt-0.5 text-support-2 hover:text-support-1 transition-colors"
+          className="flex-shrink-0 mt-0.5 text-support-2 hover:text-support-1 transition-colors ui-press ui-ring"
           aria-label="Fechar"
         >
           <AppIcon name="x" size={16} />

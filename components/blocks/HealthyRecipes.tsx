@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import Emoji from '@/components/ui/Emoji'
 import { Reveal } from '@/components/ui/Reveal'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import { isEnabled } from '@/app/lib/flags'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Empty } from '@/components/ui/feedback/Empty'
@@ -203,7 +203,6 @@ export function HealthyRecipesSection() {
   const [plannerTime, setPlannerTime] = useState<string>('12:00')
   const [plannerCategory, setPlannerCategory] = useState<PlannerCategory>('Almoço')
   const [plannerNote, setPlannerNote] = useState<string>('')
-  const { toast } = useToast()
 
   useEffect(() => {
     let active = true
@@ -464,17 +463,11 @@ const childAgeBand = useMemo(
 
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
-      toast({
-        title: `Tudo certo! Receita guardada para ${weekday}.`,
-        kind: 'success',
-      })
+      toast.success(`Tudo certo! Receita guardada para ${weekday}.`)
       closePlannerModal()
     } catch (err) {
       console.error(err)
-      toast({
-        title: 'Algo não funcionou como esperado. Tente novamente.',
-        kind: 'danger',
-      })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
     }
   }
 
@@ -492,10 +485,10 @@ const childAgeBand = useMemo(
 
     try {
       await navigator.clipboard.writeText(text)
-      toast({ title: 'Detalhes copiados. Compartilhe com quem desejar.', kind: 'default' })
+      toast.info('Detalhes copiados. Compartilhe com quem desejar.')
     } catch (error) {
       console.error('Falha ao copiar para área de transferência:', error)
-      toast({ title: 'Algo não funcionou como esperado. Tente novamente.', kind: 'danger' })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
     }
   }
 

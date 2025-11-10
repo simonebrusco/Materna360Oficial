@@ -16,6 +16,10 @@ import { SimplePlannerSheet, type PlannerItem, type PlannerDraft } from '@/compo
 import { SimplePlannerList } from '@/components/blocks/SimplePlannerList'
 import { MoodQuickSelector } from '@/components/blocks/MoodQuickSelector'
 import { MoodSparkline } from '@/components/blocks/MoodSparkline'
+import { MomInMotion } from './components/MomInMotion'
+import { MoodEnergyCheckin } from './components/MoodEnergyCheckin'
+import { Reminders } from './components/Reminders'
+import { ExportPlanner } from './components/ExportPlanner'
 import GridRhythm from '@/components/common/GridRhythm'
 import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -23,9 +27,10 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
-import { useToast } from '@/components/ui/Toast'
+import { SectionH2, BlockH3 } from '@/components/common/Headings'
+import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 
 type MeuDiaClientProps = {
   dailyGreeting: string
@@ -81,11 +86,15 @@ export function MeuDiaClient({
 
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
-  const { toast } = useToast()
 
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
+
+  // Page-view telemetry on mount
+  useEffect(() => {
+    track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
+  }, [])
 
   // Load planner items from persistence on mount
   useEffect(() => {
@@ -122,16 +131,17 @@ export function MeuDiaClient({
     save(persistKey, updated)
 
     // Fire telemetry
-    track({
-      event: 'planner.item_add',
+    track('planner.item_add', {
       tab: 'meu-dia',
       component: 'SimplePlannerSheet',
       action: 'add',
-      payload: { title: draft.title, hasNote: !!draft.note, hasTime: !!draft.time },
+      title: draft.title,
+      hasNote: !!draft.note,
+      hasTime: !!draft.time,
     })
 
     // Show toast
-    toast({ description: 'Alterações salvas!' })
+    toast.success('Alterações salvas!')
   }
 
   const handleTogglePlannerItem = (id: string) => {
@@ -147,12 +157,11 @@ export function MeuDiaClient({
 
     // Fire telemetry
     const item = plannerItems.find(i => i.id === id)
-    track({
-      event: 'planner.item_done',
+    track('planner.item_done', {
       tab: 'meu-dia',
       component: 'SimplePlannerList',
       action: 'toggle',
-      payload: { done: !item?.done },
+      done: !item?.done,
     })
   }
 
@@ -181,8 +190,26 @@ export function MeuDiaClient({
         </Reveal>
       </Card>
 
+      <Reveal delay={210}>
+        <MoodEnergyCheckin dateKey={dateKey} />
+      </Reveal>
+
+      <Reveal delay={230}>
+        <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
+      </Reveal>
+
       <Card>
-        <Reveal delay={220}>
+        <Reveal delay={240}>
+          <ExportPlanner />
+        </Reveal>
+      </Card>
+
+      <Reveal delay={250}>
+        <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+      </Reveal>
+
+      <Card>
+        <Reveal delay={270}>
           <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
         </Reveal>
       </Card>
@@ -195,7 +222,7 @@ export function MeuDiaClient({
                 <div className="mb-3">
                   <AppIcon name={action.iconName as any} size={28} decorative />
                 </div>
-                <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
+                <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
                 <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
                 <Button variant="primary" size="sm" className="w-full">
                   Acessar
@@ -206,67 +233,69 @@ export function MeuDiaClient({
         </GridStable>
       </Card>
 
-      <Card>
-        <Reveal delay={280}>
-          <FamilyPlanner
-            currentDateKey={currentDateKey}
-            weekStartKey={weekStartKey}
-            weekLabels={weekLabels}
-            plannerTitle={plannerTitle}
-            profile={profile}
-            dateKey={dateKey}
-            recommendations={recommendations}
-            initialBuckets={initialBuckets}
-          />
-        </Reveal>
-      </Card>
+      <div id="meu-dia-print-area" className="print-card space-y-4">
+        <Card>
+          <Reveal delay={280}>
+            <FamilyPlanner
+              currentDateKey={currentDateKey}
+              weekStartKey={weekStartKey}
+              weekLabels={weekLabels}
+              plannerTitle={plannerTitle}
+              profile={profile}
+              dateKey={dateKey}
+              recommendations={recommendations}
+              initialBuckets={initialBuckets}
+            />
+          </Reveal>
+        </Card>
 
-      <Card>
-        <Reveal delay={300}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-support-1 md:text-xl flex items-center gap-2">
-                <AppIcon name="check" size={20} decorative />
-                Itens da Semana
-              </h2>
-              <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+        <Card>
+          <Reveal delay={300}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <SectionH2 className="flex items-center gap-2">
+                  <AppIcon name="check" size={20} decorative />
+                  Itens da Semana
+                </SectionH2>
+                <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowPlannerSheet(true)}
+                className="flex items-center gap-1"
+              >
+                <AppIcon name="plus" size={16} decorative />
+                Adicionar item
+              </Button>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowPlannerSheet(true)}
-              className="flex items-center gap-1"
-            >
-              <AppIcon name="plus" size={16} decorative />
-              Adicionar item
-            </Button>
-          </div>
-          <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
-        </Reveal>
-      </Card>
+            <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
+          </Reveal>
+        </Card>
 
-      <SimplePlannerSheet
-        isOpen={showPlannerSheet}
-        onClose={() => setShowPlannerSheet(false)}
-        onAdd={handleAddPlannerItem}
-      />
+        <SimplePlannerSheet
+          isOpen={showPlannerSheet}
+          onClose={() => setShowPlannerSheet(false)}
+          onAdd={handleAddPlannerItem}
+        />
 
-      <Card>
-        <Reveal delay={320}>
-          <Checklist currentDateKey={currentDateKey} />
-        </Reveal>
-      </Card>
+        <Card>
+          <Reveal delay={320}>
+            <Checklist currentDateKey={currentDateKey} />
+          </Reveal>
+        </Card>
+      </div>
 
       <Card className="notesCard">
         <Reveal delay={360}>
           <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
             <div className="notesCard-text">
-              <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
+              <SectionH2 className="notesCard-title title title--clamp md:text-xl">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
                 </span>
                 {notesLabel}
-              </h2>
+              </SectionH2>
               <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
             </div>
             <Button
@@ -297,7 +326,7 @@ export function MeuDiaClient({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
           <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
             <Card className="w-full notesCard-modal">
-              <h3 className="mb-2 text-lg font-semibold text-support-1">Adicionar Nota</h3>
+              <BlockH3 className="mb-2 text-lg">Adicionar Nota</BlockH3>
               <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
               <textarea
                 value={noteText}

@@ -3,14 +3,20 @@
 import { useEffect } from 'react';
 import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
-import ContinueFromSection from '@/components/maternar/ContinueFromSection';
+import { ContinueCard } from './components/ContinueCard';
 import DestaquesDodia from '@/components/maternar/DestaquesDodia';
+import { HighlightsSection } from './components/HighlightsSection';
 import { PageTemplate } from '@/components/common/PageTemplate';
-import { trackTelemetry } from '@/app/lib/telemetry';
+import { Reveal } from '@/components/ui/Reveal';
+import { track } from '@/app/lib/telemetry';
+import { getBrazilDateKey } from '@/app/lib/dateKey';
 
 export default function MaternarClient() {
+  const dateKey = getBrazilDateKey(new Date());
+
   useEffect(() => {
-    trackTelemetry('maternar.page_view', {
+    track('nav.click', {
+      tab: 'maternar',
       timestamp: new Date().toISOString(),
     });
   }, []);
@@ -23,7 +29,12 @@ export default function MaternarClient() {
         hero={<HubHeader greeting="Bem-vinda ao Maternar." subtitle="Aqui começa o seu centro de equilíbrio. Explore suas rotinas, cuide de você e acompanhe o crescimento do seu filho com leveza — tudo em um só lugar." />}
       >
         <DestaquesDodia />
-        <ContinueFromSection />
+        <Reveal delay={200}>
+          <HighlightsSection />
+        </Reveal>
+        <Reveal delay={240}>
+          <ContinueCard dateKey={dateKey} />
+        </Reveal>
         <CardHub />
       </PageTemplate>
     </main>

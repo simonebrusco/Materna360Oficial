@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
-import { useToast } from '@/components/ui/Toast'
+import { track } from '@/app/lib/telemetry'
+import { toast } from '@/app/lib/toast'
 import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
@@ -15,7 +15,6 @@ interface DiaryEntry {
 }
 
 export function EmotionalDiary() {
-  const { toast } = useToast()
   const [text, setText] = useState('')
   const [intensity, setIntensity] = useState(2)
   const [entries, setEntries] = useState<DiaryEntry[]>([])
@@ -33,7 +32,7 @@ export function EmotionalDiary() {
 
   const handleSave = async () => {
     if (!text.trim()) {
-      toast({ kind: 'warning', description: 'Escreva algo antes de salvar.' })
+      toast.warning('Escreva algo antes de salvar.')
       return
     }
 
@@ -55,21 +54,16 @@ export function EmotionalDiary() {
       setEntries(updated)
 
       // Fire telemetry
-      track({
-        event: 'eu360.diary_add',
+      track('eu360.diary_add', {
         tab: 'eu360',
         component: 'EmotionalDiary',
         action: 'save',
-        payload: {
-          intensity,
-          chars: text.length,
-        },
+        intensity,
+        chars: text.length,
       })
 
       // Show toast
-      toast({
-        description: 'Diário atualizado! Este é um momento só seu.',
-      })
+      toast.success('Diário atualizado! Este é um momento só seu.')
 
       // Reset form
       setText('')

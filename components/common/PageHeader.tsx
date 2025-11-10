@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import { PageH1 } from './Headings';
 
 export interface PageHeaderProps {
   title: string;
@@ -11,11 +12,9 @@ export interface PageHeaderProps {
 export function PageHeader({ title, subtitle, className }: PageHeaderProps) {
   return (
     <header className={clsx('mb-4 md:mb-6', className)}>
-      <h1 className="text-[22px] md:text-[28px] leading-[28px] md:leading-[34px] font-semibold tracking-[-0.01em] text-[var(--color-ink-1)]">
-        {title}
-      </h1>
+      <PageH1>{title}</PageH1>
       {subtitle && (
-        <p className="mt-1 text-[14px] text-[var(--color-ink-2)] line-clamp-2">
+        <p className="mt-1 text-[12px] text-[#545454] line-clamp-2">
           {subtitle}
         </p>
       )}

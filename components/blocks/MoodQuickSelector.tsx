@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import HScroll from '@/components/common/HScroll'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
+import { track } from '@/app/lib/telemetry'
 
 export type MoodValue = 4 | 3 | 2 | 1 | 0
 
@@ -29,7 +29,6 @@ interface MoodQuickSelectorProps {
 
 export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
   const [selectedMood, setSelectedMood] = useState<MoodValue | null>(null)
-  const { toast } = useToast()
 
   // Load today's mood on mount
   useEffect(() => {
@@ -63,18 +62,16 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
     save(persistKey, updatedMoods)
 
     // Fire telemetry
-    track({
-      event: 'mood.checkin',
+    track('mood.checkin', {
       tab: 'meu-dia',
       component: 'MoodQuickSelector',
       action: 'select',
-      payload: { value: moodValue, dayIndex },
+      value: moodValue,
+      dayIndex,
     })
 
     // Show toast
-    toast({
-      description: 'Humor registrado! Um passo de cada vez é o suficiente.',
-    })
+    toast.success('Humor registrado! Um passo de cada vez é o suficiente.')
 
     // Callback if provided
     if (onMoodSelect) {

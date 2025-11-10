@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { save, load, getCurrentDateKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry-track'
-import { useToast } from '@/components/ui/Toast'
+import { track } from '@/app/lib/telemetry'
+import { toast } from '@/app/lib/toast'
 import AppIcon from '@/components/ui/AppIcon'
 
 interface LogEntry {
@@ -61,7 +61,6 @@ function ChipGroup({ title, options, onSelect }: ChipGroupProps) {
 }
 
 export function QuickChildLogs() {
-  const { toast } = useToast()
   const [entries, setEntries] = useState<LogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -90,18 +89,16 @@ export function QuickChildLogs() {
     setEntries(updated)
 
     // Fire telemetry
-    track({
-      event: 'care.log_add',
+    track('care.log_add', {
       tab: 'cuidar',
       component: 'QuickChildLogs',
       action: 'log',
-      payload: { type, value },
+      type,
+      value,
     })
 
     // Show toast
-    toast({
-      description: 'Registro salvo!',
-    })
+    toast.success('Registro salvo!')
   }
 
   const formatTime = (ts: number) => {

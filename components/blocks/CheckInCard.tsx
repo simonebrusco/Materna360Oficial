@@ -6,7 +6,7 @@ import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 import HScroll from '@/components/common/HScroll'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 
 const moods = [
   { iconName: 'heart' as const, label: 'Triste', value: 'triste', color: 'danger' as const },
@@ -84,10 +84,7 @@ export function CheckInCard() {
 
   const handleSubmit = () => {
     if (selectedMood) {
-      toast({
-        title: 'Humor registrado! Um passo de cada vez é o suficiente.',
-        kind: 'success',
-      })
+      toast.success('Humor registrado! Um passo de cada vez é o suficiente.')
       setSelectedMood(null)
       setQuote('')
       setIsLoading(false)

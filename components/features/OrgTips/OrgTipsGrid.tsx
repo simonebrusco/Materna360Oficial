@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import { useToast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
 import { OrgTipModal } from './OrgTipModal'
@@ -82,7 +82,6 @@ const labelFromOptions = (value: string | null, options: readonly Option[]) =>
 export function OrgTipsGrid() {
   const [selectedTip, setSelectedTip] = useState<OrgTip | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { toast } = useToast()
   const [showResults, setShowResults] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [fTempo, setFTempo] = useState<string | null>(null)
@@ -137,7 +136,7 @@ export function OrgTipsGrid() {
 
   const handleAddToPlanner = (tip: OrgTip) => {
     console.debug('planner:add:not-implemented', { id: tip.id })
-    toast({ title: 'Ação registrada. Continue no seu ritmo.', kind: 'default' })
+    toast.info('Ação registrada. Continue no seu ritmo.')
   }
 
   const toggleCollapse = (key: keyof CollapseState) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import HScroll from '@/components/common/HScroll';
 import AppIcon from '@/components/ui/AppIcon';
@@ -13,10 +14,14 @@ import { PageGrid } from '@/components/common/PageGrid';
 import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useToast } from '@/components/ui/Toast';
-import { PaywallBanner } from '@/components/ui/PaywallBanner';
+import { toast } from '@/app/lib/toast';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
-import { track, trackTelemetry } from '@/app/lib/telemetry-track';
+import { track } from '@/app/lib/telemetry';
+import { SectionH2, BlockH3 } from '@/components/common/Headings';
+import { SuggestionCover } from './components/SuggestionCover';
+import { PaywallBanner } from '@/components/paywall/PaywallBanner';
+import { gate } from '@/app/lib/gate';
+import { canSaveMore, incTodayCount, readTodayCount, resetIfNewDay } from './lib/quota';
 import {
   DISCOVER_CATALOG,
   filterAndRankSuggestions,
@@ -26,6 +31,7 @@ import {
   type Location,
   type Mood,
 } from './utils';
+import { useSavedSuggestions } from './hooks/useSavedSuggestions';
 
 type MoodOption = {
   id: Mood;
@@ -56,7 +62,7 @@ const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
 export default function DiscoverClient() {
   const router = useRouter();
-  const { toast } = useToast();
+  const { saved } = useSavedSuggestions();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
   const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
   const [selectedLocation, setSelectedLocation] = React.useState<Location | undefined>(undefined);
@@ -64,6 +70,7 @@ export default function DiscoverClient() {
   const [savedItems, setSavedItems] = React.useState<Set<string>>(new Set());
   const [ideaCount, setIdeaCount] = React.useState(0);
   const [quotaLimitReached, setQuotaLimitReached] = React.useState(false);
+  const [savedCount, setSavedCount] = React.useState(0);
 
   // Helper: Get today's idea view count
   const getTodayIdeaCount = React.useCallback(() => {
@@ -85,7 +92,7 @@ export default function DiscoverClient() {
     // Check if limit reached (emit telemetry when reached)
     if (newCount === IDEA_QUOTA_LIMIT) {
       setQuotaLimitReached(true);
-      trackTelemetry('paywall.view', {
+      track('paywall.view', {
         context: 'ideas_quota_limit_reached',
         count: newCount,
         limit: IDEA_QUOTA_LIMIT,
@@ -94,6 +101,16 @@ export default function DiscoverClient() {
 
     return newCount;
   }, [getTodayIdeaCount]);
+
+  // Reset quota counter on new day (idempotent)
+  React.useEffect(() => {
+    resetIfNewDay();
+  }, []);
+
+  // Page-view telemetry on mount
+  React.useEffect(() => {
+    track('nav.click', { tab: 'descobrir', dest: '/descobrir' });
+  }, []);
 
   // Load saved items and quota on mount
   React.useEffect(() => {
@@ -107,13 +124,18 @@ export default function DiscoverClient() {
     setIdeaCount(todayCount);
     if (todayCount >= IDEA_QUOTA_LIMIT) {
       setQuotaLimitReached(true);
-      trackTelemetry('paywall.view', {
+      track('paywall.view', {
         context: 'page_load_quota_limit',
         count: todayCount,
         limit: IDEA_QUOTA_LIMIT,
       });
     }
   }, [getTodayIdeaCount]);
+
+  // Update saved count from hook
+  React.useEffect(() => {
+    setSavedCount(saved.length);
+  }, [saved]);
 
   // Compute filtered suggestions in real time
   const filters: FilterInputs = {
@@ -125,22 +147,42 @@ export default function DiscoverClient() {
 
   const filteredSuggestions = filterAndRankSuggestions(DISCOVER_CATALOG, filters);
 
+  // Compute quota info - using daily save count
+  const quota = gate('ideas.dailyQuota');
+  const { count: dailySaveCount } = readTodayCount();
+  const { count: _, limit: dailyLimit } = canSaveMore();
+  const showQuotaWarning =
+    quota.enabled &&
+    Number.isFinite(dailyLimit) &&
+    dailySaveCount >= Math.max(0, (dailyLimit as number) - 1);
+
   // Handlers
   const handleStartSuggestion = (id: string) => {
     // Increment idea count (quota tracking)
     incrementIdeaCount();
 
     // Fire telemetry event
-    track({
-      event: 'discover.suggestion_started',
+    track('discover.suggestion_started', {
       tab: 'descobrir',
       component: 'DiscoverClient',
       id,
-      payload: { suggestionId: id },
+      suggestionId: id,
     });
   };
 
   const handleSaveSuggestion = (id: string) => {
+    // Check if this is a new save (not an unsave)
+    const isCurrenlySaved = savedItems.has(id);
+
+    if (!isCurrenlySaved) {
+      // This is a new save attempt - check quota first
+      const q = canSaveMore();
+      if (!q.allowed) {
+        toast.danger('Limite diário atingido.');
+        return;
+      }
+    }
+
     setSavedItems((prev) => {
       const updated = new Set(prev);
       const isSaved = updated.has(id);
@@ -149,6 +191,8 @@ export default function DiscoverClient() {
         updated.delete(id);
       } else {
         updated.add(id);
+        // Increment daily save count after successful save
+        incTodayCount();
       }
 
       // Persist to localStorage
@@ -156,19 +200,16 @@ export default function DiscoverClient() {
 
       // Show toast
       if (!isSaved) {
-        toast({
-          description: "Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.",
-        });
+        toast.success("Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.");
       }
 
       // Fire telemetry
-      track({
-        event: 'discover.suggestion_saved',
+      track('discover.suggestion_saved', {
         tab: 'descobrir',
         component: 'DiscoverClient',
         action: isSaved ? 'unsave' : 'save',
         id,
-        payload: { id, isSaved: !isSaved },
+        isSaved: !isSaved,
       });
 
       return updated;
@@ -176,12 +217,12 @@ export default function DiscoverClient() {
   };
 
   const handleFilterChange = (filterType: string, value?: string) => {
-    track({
-      event: 'discover.filter_changed',
+    track('discover.filter_changed', {
       tab: 'descobrir',
       component: 'DiscoverClient',
       action: 'filter',
-      payload: { filter: filterType, value },
+      filter: filterType,
+      value,
     });
   };
 
@@ -193,7 +234,7 @@ export default function DiscoverClient() {
   };
 
   const handlePaywallCTA = () => {
-    trackTelemetry('paywall.click', {
+    track('paywall.click', {
       context: 'ideas_quota_limit',
       action: 'upgrade_click',
     });
@@ -206,6 +247,19 @@ export default function DiscoverClient() {
       title="Descobrir"
       subtitle="Brincadeiras e ideias inteligentes, por idade e objetivo"
     >
+
+      {/* Saved Count Chip */}
+      {savedCount > 0 && (
+        <div className="mb-6">
+          <Link
+            href="/descobrir/salvos"
+            className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
+            aria-label={`Ver itens salvos (${savedCount})`}
+          >
+            Salvos ({savedCount})
+          </Link>
+        </div>
+      )}
 
       {/* Filter Pills: Time Window */}
       {selectedTimeWindow || selectedLocation || selectedMood ? (
@@ -268,7 +322,7 @@ export default function DiscoverClient() {
       {/* Time Window Section */}
       <Card>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-support-1 mb-1">Quanto tempo você tem agora?</h3>
+          <SectionH2 className="mb-1">Quanto tempo você tem agora?</SectionH2>
           <p className="text-sm text-support-2">Escolha o tempo disponível para adaptar as sugestões.</p>
         </div>
         <HScroll aria-label="Opções de tempo disponível">
@@ -299,7 +353,7 @@ export default function DiscoverClient() {
       {/* Location Section */}
       <Card>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-support-1 mb-1">Onde você está?</h3>
+          <SectionH2 className="mb-1">Onde você está?</SectionH2>
           <p className="text-sm text-support-2">Escolha o local para ideias relevantes.</p>
         </div>
         <HScroll aria-label="Opções de local">
@@ -330,8 +384,8 @@ export default function DiscoverClient() {
       {/* Mood Section */}
       <Card>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-support-1 mb-1">Como você está agora?</h3>
-          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugestões.</p>
+          <SectionH2 className="mb-1">Como você está agora?</SectionH2>
+          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugest��es.</p>
         </div>
         <HScroll aria-label="Opções de humor">
           {MOODS.map((m) => (
@@ -357,15 +411,12 @@ export default function DiscoverClient() {
       </Card>
 
       {/* Quota Limit Banner */}
-      {quotaLimitReached && (
-        <PaywallBanner
-          title="Você atingiu o limite do seu plano atual."
-          description="Atualize para explorar mais ideias e brincadeiras para seu filho."
-          featureName="ideas_daily"
-          upgradeText="Ver planos →"
-          onUpgradeClick={handlePaywallCTA}
-          variant="info"
-        />
+      {showQuotaWarning && (
+        <div className="mb-4">
+          <PaywallBanner
+            message={`Está perto do limite diário de ideias salvas (${dailyLimit}). Faça upgrade para ampliar.`}
+          />
+        </div>
       )}
 
       {/* Suggestions Grid */}
@@ -374,11 +425,19 @@ export default function DiscoverClient() {
           {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
             const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
+            const q = canSaveMore();
+            const saveDisabled = !isSaved && !q.allowed; // Disable save buttons when quota reached
+
             return (
               <Card key={suggestion.id}>
+                <SuggestionCover
+                  src={suggestion.coverUrl}
+                  alt={suggestion.title}
+                  className="mb-3"
+                />
                 <header className="mb-2 flex items-center gap-2">
                   <AppIcon name={suggestion.icon} decorative />
-                  <h2 className="text-base font-semibold text-support-1">{suggestion.title}</h2>
+                  <BlockH3 className="text-base">{suggestion.title}</BlockH3>
                 </header>
                 <p className="mb-3 text-sm text-support-2">
                   {suggestion.description}
@@ -393,6 +452,7 @@ export default function DiscoverClient() {
                       variant="primary"
                       size="sm"
                       onClick={() => handleSaveSuggestion(suggestion.id)}
+                      disabled={saveDisabled}
                       className="flex-1"
                     >
                       Salvar para depois
@@ -409,7 +469,13 @@ export default function DiscoverClient() {
                   )}
                   <button
                     onClick={() => handleSaveSuggestion(suggestion.id)}
-                    className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                    disabled={saveDisabled}
+                    className={[
+                      'p-2 rounded-lg transition-colors',
+                      saveDisabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-primary/10',
+                    ].join(' ')}
                     aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
                     title={isSaved ? 'Remover de Salvos' : 'Salvar para depois'}
                   >

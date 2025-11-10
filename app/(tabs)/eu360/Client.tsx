@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -23,7 +23,16 @@ import { UpsellSheet } from '@/components/ui/UpsellSheet'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { StatTile } from '@/components/ui/StatTile'
 import { EmotionalDiary } from '@/components/blocks/EmotionalDiary'
-
+import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
+import { AchievementsPanel } from './components/AchievementsPanel'
+import { BadgesPanel } from './components/BadgesPanel'
+import { AchievementsCounter } from './components/AchievementsCounter'
+import { track } from '@/app/lib/telemetry'
+import { SectionH2, BlockH3 } from '@/components/common/Headings'
+import { PaywallBanner } from '@/components/paywall/PaywallBanner'
+import { getCurrentPlanId } from '@/app/lib/planClient'
+import { ExportBlock } from './components/ExportBlock'
+import { printElementById } from '@/app/lib/print'
 
 type MoodHistory = {
   day: string
@@ -48,6 +57,11 @@ const WEEKLY_SUMMARY = [
 ] as const
 
 export default function Eu360Client() {
+  // Page-view telemetry on mount
+  useEffect(() => {
+    track('nav.click', { tab: 'eu360', dest: '/eu360' })
+  }, [])
+
   const [gratitude, setGratitude] = useState('')
   const [gratitudes, setGratitudes] = useState<string[]>([
     'Meus filhos saudáveis e felizes',
@@ -121,12 +135,18 @@ export default function Eu360Client() {
         <ProfileForm />
       </Card>
 
+      <Reveal delay={180}>
+        <div className="flex items-center justify-end mb-2">
+          <AchievementsCounter />
+        </div>
+      </Reveal>
+
       <Card>
         <Reveal>
           <div className="bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] p-8 text-white rounded-xl">
             <div className="text-center">
               <AppIcon name="care" size={48} className="text-primary mx-auto mb-2" decorative />
-              <h1 className="mt-3 text-2xl font-semibold md:text-3xl">Você é Importante</h1>
+              <BlockH3 className="mt-3 text-2xl font-semibold md:text-3xl text-white">Você é Importante</BlockH3>
               <p className="mt-2 text-sm text-white/90 md:text-base">
                 Vá no seu próprio ritmo. Cada passo conta e você está no caminho certo.
               </p>
@@ -139,7 +159,7 @@ export default function Eu360Client() {
         <Card>
           <Reveal delay={80}>
             <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></h3>
+              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
               <div className="space-y-5">
                 <div>
                   <div className="flex items-center justify-between">
@@ -172,7 +192,7 @@ export default function Eu360Client() {
         <Card>
           <Reveal delay={120}>
             <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></h3>
+              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
             <PlanCard
               currentPlan={currentPlan}
               onManagePlan={() => {
@@ -190,7 +210,7 @@ export default function Eu360Client() {
       <Card>
         <Reveal delay={140}>
           <div>
-            <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="smile" size={20} decorative /><span>Humor da Semana</span></h3>
+            <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="smile" size={20} decorative /><span>Humor da Semana</span></SectionH2>
             <div className="flex justify-between">
               {moodHistory.map(({ day, icon }) => (
                 <div key={day} className="flex flex-col items-center gap-2">
@@ -209,7 +229,7 @@ export default function Eu360Client() {
       </Card>
 
       <Card>
-        <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></h3>
+        <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="star" size={20} className="text-primary" decorative /><span>Conquistas</span></SectionH2>
         <PageGrid cols={3}>
           {ACHIEVEMENTS.map((achievement, index) => (
             <Reveal key={achievement.title} delay={index * 70} className="h-full">
@@ -217,7 +237,7 @@ export default function Eu360Client() {
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/30">
                   <AppIcon name={achievement.icon as any} size={24} className="text-primary" decorative />
                 </div>
-                <h3 className="mt-3 text-sm font-semibold text-support-1">{achievement.title}</h3>
+                <BlockH3 className="mt-3 text-sm">{achievement.title}</BlockH3>
                 <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">{achievement.desc}</p>
               </Card>
             </Reveal>
@@ -228,18 +248,44 @@ export default function Eu360Client() {
       <Card>
         <Reveal delay={240}>
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="bookmark" size={20} className="text-primary" decorative /><span>Diário Emocional</span></h3>
+            <SectionH2 className="inline-flex items-center gap-2"><AppIcon name="bookmark" size={20} className="text-primary" decorative /><span>Diário Emocional</span></SectionH2>
             <p className="text-sm text-support-2 mt-1">Um espaço só seu para expressar e refletir sobre seus sentimentos.</p>
           </div>
           <EmotionalDiary />
         </Reveal>
       </Card>
 
+      {getCurrentPlanId() === 'free' && (
+        <div className="mb-4">
+          <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
+        </div>
+      )}
+
+      <Reveal delay={250}>
+        <ExportBlock />
+      </Reveal>
+
+      <div id="eu360-print-area" className="print-card">
+        <Card>
+          <Reveal delay={260}>
+            <WeeklyEmotionalSummary />
+          </Reveal>
+        </Card>
+      </div>
+
+      <Reveal delay={300}>
+        <AchievementsPanel />
+      </Reveal>
+
+      <Reveal delay={310}>
+        <BadgesPanel />
+      </Reveal>
+
       <Card>
         <Reveal delay={280}>
           <div>
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-support-1 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></h3>
+              <SectionH2 className="inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" decorative /><span>Gratidão</span></SectionH2>
               <p className="text-sm text-support-2 mt-1">Registre pequenas alegrias para lembrar-se do quanto você realiza todos os dias.</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -275,7 +321,7 @@ export default function Eu360Client() {
         <Card>
           <Reveal delay={320}>
             <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></h3>
+              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
             <FeatureGate
               featureKey="weekly.summary"
               currentPlan={currentPlan}

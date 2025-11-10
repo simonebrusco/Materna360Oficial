@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Card } from '@/components/ui/card';
-import { useToast } from '@/components/ui/Toast';
+import { toast } from '@/app/lib/toast';
 import { useIdeasQuota, type PlanTier } from './useIdeasQuota';
 
 interface IdeaCard {
@@ -49,7 +49,6 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
   const [ideas, setIdeas] = useState<IdeaCard[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [buttonDisabled, setButtonDisabled] = useState(false);
-  const { toast } = useToast();
 
   const handleGenerateIdea = async () => {
     if (!quota.canGenerate) {
@@ -77,7 +76,7 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
       setButtonDisabled(false);
     }, 3000);
 
-    toast({ title: `Tudo certo! Ideia gerada: ${newIdea.title}`, kind: 'success' });
+    toast.success(`Tudo certo! Ideia gerada: ${newIdea.title}`);
     console.log('[telemetry] ideas.generated', { idea: newIdea.id, tier: quota.tier });
   };
 
