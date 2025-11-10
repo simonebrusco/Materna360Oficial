@@ -21,6 +21,7 @@ function addDays(d: Date, n: number) {
 }
 
 export default function ExportReportPage() {
+  const [paywall, setPaywall] = React.useState(false);
   const router = useRouter();
   const qs = useSearchParams();
   const ffEnabled = isEnabled('FF_EXPORT_PDF');
