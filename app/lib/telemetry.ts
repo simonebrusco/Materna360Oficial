@@ -1,7 +1,7 @@
 'use client'
 
 // Unified telemetry typing for Materna360 (non-blocking, SSR-safe)
-// Now tolerant to extra payload keys via WithExtra<T>.
+// Tolerant payloads via WithExtra<T>.
 
 type WithExtra<T> = T & { [key: string]: unknown };
 
@@ -15,7 +15,7 @@ export type TelemetryEventName =
   // Planner / Meu Dia
   | 'planner.item_add'
   | 'planner.item_done'
-  // Mood / Eu360
+  // Mood / Eu360 / Cuidar
   | 'mood.checkin'
   // Descobrir
   | 'discover.filter_changed'
@@ -46,17 +46,26 @@ type TelemetryEventPayloads = {
   'nav_click': WithExtra<{ from?: string; to: string }>;
 
   // Maternar
-  'maternar.page_view': WithExtra<{ source?: 'redirect' | 'nav' | 'deeplink' }>;
+  'maternar.page_view': WithExtra<{ source?: 'redirect' | 'nav' | 'deeplink' | string }>;
   'maternar.card_click': WithExtra<{
-    card: 'eu360' | 'cuidar' | 'meu-dia' | 'descobrir' | 'conquistas' | 'planos';
+    card: 'eu360' | 'cuidar' | 'meu-dia' | 'descobrir' | 'conquistas' | 'planos' | string;
   }>;
 
   // Planner / Meu Dia
   'planner.item_add': WithExtra<{ id: string; kind: 'task' | 'event' | 'note' | string }>;
   'planner.item_done': WithExtra<{ id: string; kind: 'task' | 'event' | 'note' | string }>;
 
-  // Mood / Eu360
-  'mood.checkin': WithExtra<{ mood: 'baixa' | 'média' | 'alta' | string; energy?: 'baixa' | 'média' | 'alta' | string }>;
+  // Mood / Eu360 / Cuidar
+  // Accepts either parent-style (mood/energy) or child-diary style (tab/source/level)
+  'mood.checkin': WithExtra<{
+    // Eu360 (parent self-check)
+    mood?: 'baixa' | 'média' | 'alta' | string;
+    energy?: 'baixa' | 'média' | 'alta' | string;
+    // Cuidar (child diary)
+    level?: 'low' | 'high' | 'ok' | string;
+    tab?: 'eu360' | 'cuidar' | string;
+    source?: 'self' | 'child' | string;
+  }>;
 
   // Descobrir
   'discover.filter_changed': WithExtra<{ key: 'tempo' | 'local' | 'energia' | 'idade' | string; value: string | number }>;
@@ -73,7 +82,7 @@ type TelemetryEventPayloads = {
   // Care (Cuidar)
   'care.appointment_add': WithExtra<{
     tab: 'cuidar';
-    type?: string;   // keep flexible
+    type?: string;   // flexible
     date?: string;   // ISO or yyyy-mm-dd
   }>;
   'care.log_add': WithExtra<{
