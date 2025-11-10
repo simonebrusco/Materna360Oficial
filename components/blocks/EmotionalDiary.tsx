@@ -170,11 +170,13 @@ export function EmotionalDiary() {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',
+                  timeZone: 'America/Sao_Paulo',
                 }).charAt(0).toUpperCase() +
                 date.toLocaleDateString('pt-BR', {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',
+                  timeZone: 'America/Sao_Paulo',
                 }).slice(1)
 
               const preview = entry.text.substring(0, 60) + (entry.text.length > 60 ? '...' : '')
