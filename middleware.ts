@@ -6,6 +6,11 @@ const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Allow Builder preview mode to pass through
+  if (request.nextUrl.searchParams.has('builder.preview')) {
+    return NextResponse.next()
+  }
+
   if (!TABS_PREFIX_PATTERN.test(pathname)) {
     return NextResponse.next()
   }
