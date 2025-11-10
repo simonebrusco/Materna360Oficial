@@ -33,7 +33,8 @@ export type TelemetryEventName =
   | 'audio.end'
   | 'audio.seek'
   | 'audio.progress'
-  | 'audio.error';
+  | 'audio.error'
+  | 'audio.restart'; // ← NEW
 
 type TelemetryEventPayloads = {
   // Core
@@ -89,6 +90,7 @@ type TelemetryEventPayloads = {
   'audio.seek': { id: string; from: number; to: number };
   'audio.progress': { id: string; current: number; duration?: number };
   'audio.error': { id?: string; code?: string | number; message?: string };
+  'audio.restart': { id: string; at?: number; from?: number }; // ← NEW
 };
 
 export function track<E extends TelemetryEventName>(
