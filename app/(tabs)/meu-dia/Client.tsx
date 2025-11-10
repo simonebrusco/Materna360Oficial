@@ -229,24 +229,29 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
-      <Card>
-        <GridStable>
-          {quickActions.map((action, index) => (
-            <Reveal key={action.title} delay={index * 80} className="h-full">
-              <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
-                <div className="mb-3">
-                  <AppIcon name={action.iconName as any} size={28} decorative />
-                </div>
-                <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
-                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
-                <Button variant="primary" size="sm" className="w-full">
-                  Acessar
-                </Button>
-              </div>
-            </Reveal>
-          ))}
-        </GridStable>
-      </Card>
+      <SoftCard className="mb-4">
+        <Reveal delay={260}>
+          <div>
+            <Badge className="mb-4">Ações Rápidas</Badge>
+            <GridStable>
+              {quickActions.map((action, index) => (
+                <Reveal key={action.title} delay={index * 80} className="h-full">
+                  <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
+                    <div className="mb-3">
+                      <AppIcon name={action.iconName as any} size={28} decorative />
+                    </div>
+                    <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
+                    <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
+                    <Button variant="primary" size="sm" className="w-full">
+                      Acessar
+                    </Button>
+                  </div>
+                </Reveal>
+              ))}
+            </GridStable>
+          </div>
+        </Reveal>
+      </SoftCard>
 
       <div id="meu-dia-print-area" className="print-card space-y-4">
         <Card>
