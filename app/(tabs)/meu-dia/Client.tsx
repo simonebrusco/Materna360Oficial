@@ -190,9 +190,17 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
-      <Reveal delay={230}>
-        <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
-      </Reveal>
+      <SoftCard className="mb-4">
+        <Reveal delay={230}>
+          <div>
+            <Badge className="mb-2">Rotina da Casa</Badge>
+            <h3 className="m360-card-title">Organize as tarefas do lar</h3>
+            <div className="mt-4">
+              <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
+            </div>
+          </div>
+        </Reveal>
+      </SoftCard>
 
       <Card>
         <Reveal delay={240}>
