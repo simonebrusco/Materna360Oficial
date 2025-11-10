@@ -33,27 +33,6 @@ export function EmotionTrendDrawer({ open, onClose, resolveData }: Props) {
       }
     >
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
-      <InnerEmotionTrendDrawer open={open} onClose={onClose} range={range} setRange={setRange} data={data} />
-    </HydrationGate>
-  );
-}
-
-function InnerEmotionTrendDrawer({
-  open,
-  onClose,
-  range,
-  setRange,
-  data,
-}: {
-  open: boolean;
-  onClose: () => void;
-  range: '7d' | '28d';
-  setRange: (r: '7d' | '28d') => void;
-  data: EmotionPoint[];
-}) {
-  return (
-    <div className="absolute inset-0 z-50">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
         className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-[0_8px_28px_rgba(47,58,86,0.12)] p-4 md:p-5 max-h-[90vh] overflow-y-auto"
         role="dialog"
@@ -100,7 +79,7 @@ function InnerEmotionTrendDrawer({
 
         <p className="m360-micro text-center">Dica: observe padrões, sem julgamentos. Foque em pequenas vitórias.</p>
       </div>
-    </div>
+    </HydrationGate>
   );
 }
 
