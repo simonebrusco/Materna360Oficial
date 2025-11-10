@@ -48,7 +48,7 @@ const createEmptyChild = (index: number): ChildProfile => ({
 
 const defaultState = (): ProfileFormState => ({
   nomeMae: '',
-  filhos: [createEmptyChild()],
+  filhos: [createEmptyChild(0)],
   figurinha: '',
 })
 
