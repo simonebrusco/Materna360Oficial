@@ -90,9 +90,26 @@ To verify the fixes work correctly:
 
 ## Files Modified
 
-1. `app/lib/flags.client.ts` - Fixed flag resolution logic
-2. `app/(tabs)/eu360/Client.tsx` - Wrapped flag-dependent sections in `ClientOnly`
-3. `components/blocks/ProfileForm.tsx` - Changed from random to index-based IDs
+1. **`app/lib/flags.client.ts`** - Fixed flag resolution logic
+   - Changed to check environment variables first (consistent on both server and client)
+   - Only check localStorage on client side
+   - Return false as default instead of hardcoded list
+
+2. **`app/(tabs)/eu360/Client.tsx`** - Wrapped all flag-dependent sections in `ClientOnly`
+   - "Sua Jornada Gamificada" section (FF_LAYOUT_V1)
+   - "Seu Plano" section (FF_LAYOUT_V1)
+   - "Resumo da Semana" section (FF_LAYOUT_V1)
+   - "Exportar Relatório" section (FF_LAYOUT_V1)
+   - "Internal Insights" section (FF_INTERNAL_INSIGHTS)
+
+3. **`app/(tabs)/meu-dia/Client.tsx`** - Added ClientOnly import and wrapped flag-dependent sections
+   - Coach suggestion card (FF_COACH_V1)
+   - Emotion trend drawer (FF_EMOTION_TRENDS)
+
+4. **`components/blocks/ProfileForm.tsx`** - Changed from random to index-based IDs
+   - Removed `createId()` function
+   - Changed `createEmptyChild()` to use index parameter
+   - Child IDs now use format: `child-${index}`
 
 ## Impact Assessment
 
