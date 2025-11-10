@@ -220,11 +220,14 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
-      <Card>
+      <SoftCard className="mb-4">
         <Reveal delay={270}>
-          <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+          <div>
+            <Badge className="mb-2">Atividade do dia</Badge>
+            <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+          </div>
         </Reveal>
-      </Card>
+      </SoftCard>
 
       <Card>
         <GridStable>
