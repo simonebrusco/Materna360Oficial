@@ -20,10 +20,25 @@ function addDays(d: Date, n: number) {
 export default function ExportReportPage() {
   const router = useRouter();
   const qs = useSearchParams();
+  const ffEnabled = isEnabled('FF_EXPORT_PDF');
   const range = (qs.get('range') as 'weekly' | 'monthly') || 'weekly';
   const today = new Date();
   const start = range === 'monthly' ? addDays(today, -27) : addDays(today, -6);
   const mood = getMoodEntries().filter((e) => new Date(e.date) >= start);
+
+  if (!ffEnabled) {
+    return (
+      <div className="mx-auto max-w-[800px] p-4 md:p-8 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-ink-1 mb-4">Recurso não disponível</h1>
+          <p className="text-support-2 mb-6">A exportação de PDF está em fase de testes. Por favor, tente novamente mais tarde.</p>
+          <Button variant="primary" onClick={() => router.push('/eu360')}>
+            Voltar ao Eu360
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Basic stats
   const avg = (arr: number[]) => (arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : 0);
