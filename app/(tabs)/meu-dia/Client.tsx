@@ -272,7 +272,12 @@ export function MeuDiaClient({
 
       <SoftCard className="mb-4">
         <Reveal delay={240}>
-          <ExportPlanner />
+          <div className="space-y-3">
+            <ExportPlanner />
+            <div className="border-t border-white/60 pt-3">
+              <ExportButton variant="wellness" />
+            </div>
+          </div>
         </Reveal>
       </SoftCard>
 
