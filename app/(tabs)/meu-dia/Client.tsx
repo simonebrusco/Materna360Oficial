@@ -324,16 +324,17 @@ export function MeuDiaClient({
         </SoftCard>
       </div>
 
-      <Card className="notesCard">
+      <SoftCard className="notesCard mb-4">
         <Reveal delay={360}>
           <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
             <div className="notesCard-text">
-              <SectionH2 className="notesCard-title title title--clamp md:text-xl">
+              <Badge className="mb-2">Anotações</Badge>
+              <h3 className="m360-card-title">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
                 </span>
                 {notesLabel}
-              </SectionH2>
+              </h3>
               <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
             </div>
             <Button
@@ -358,7 +359,7 @@ export function MeuDiaClient({
             <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
           )}
         </Reveal>
-      </Card>
+      </SoftCard>
 
       {showNoteModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
