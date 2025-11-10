@@ -84,13 +84,8 @@ export default function ExportReportPage() {
   }
 
   return (
-    <HydrationGate
-      as="div"
-      className="mx-auto max-w-[840px] p-4 md:p-8 bg-white text-ink-1 min-h-screen"
-      fallback={
-        <div className="mx-auto max-w-[840px] p-4 md:p-8 bg-white rounded-2xl border animate-pulse" style={{ minHeight: 480 }} />
-      }
-    >
+    <ClientOnly>
+      <div className="mx-auto max-w-[840px] p-4 md:p-8 bg-white text-ink-1 min-h-screen">
       {/* ===== Branded Premium Cover ===== */}
       <PremiumCover
         title={`Relatório ${range === 'monthly' ? 'Mensal' : 'Semanal'}`}
@@ -291,6 +286,7 @@ export default function ExportReportPage() {
           }
         }
       `}</style>
-    </HydrationGate>
+      </div>
+    </ClientOnly>
   );
 }
