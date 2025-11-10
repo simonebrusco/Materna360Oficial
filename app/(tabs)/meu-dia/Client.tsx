@@ -408,6 +408,14 @@ export function MeuDiaClient({
           </div>
         </div>
       )}
+
+      {canShowTrends && (
+        <EmotionTrendDrawer
+          open={trendOpen}
+          onClose={() => setTrendOpen(false)}
+          resolveData={() => getMoodEntries()}
+        />
+      )}
     </PageTemplate>
   )
 }
