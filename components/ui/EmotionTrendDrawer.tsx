@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import HydrationGate from '@/components/common/HydrationGate';
+import { ClientOnly } from '@/components/common/ClientOnly';
 import EmotionTrendChart, { EmotionPoint } from '@/components/charts/EmotionTrendChart';
 
 type Props = {
