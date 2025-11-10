@@ -12,7 +12,8 @@ const KEY = 'm360_planner_week';
 
 export function getPlannerItemsWithin(days = 7): PlannerItem[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    if (typeof window === 'undefined') return [];
+    const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw) as PlannerItem[];
     if (!Array.isArray(arr)) return [];
