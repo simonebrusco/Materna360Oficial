@@ -8,6 +8,7 @@ import { EmotionTrendMini } from '@/components/charts/EmotionTrendChart';
 import { isEnabled } from '@/app/lib/flags.client';
 import { trackTelemetry } from '@/app/lib/telemetry';
 import { Button } from '@/components/ui/Button';
+import PaywallModal from '@/components/paywall/PaywallModal';
 
 function formatDate(d: Date) {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
