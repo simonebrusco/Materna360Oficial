@@ -150,13 +150,7 @@ export default function ExportButton({
         onClick={handleExport}
         disabled={isLoading || !hasData}
         aria-label="Export as PDF (Beta)"
-        className={`
-          inline-flex items-center gap-2 rounded-lg border border-white/60 bg-white/90 px-3 py-2 text-xs font-medium text-support-1
-          hover:bg-white/95 transition-colors
-          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60
-          disabled:opacity-50 disabled:cursor-not-allowed
-          ${className}
-        `}
+        className="inline-flex items-center gap-2 rounded-lg border border-white/60 bg-white/90 px-3 py-2 text-xs font-medium text-support-1 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <FileDown
           size={16}
