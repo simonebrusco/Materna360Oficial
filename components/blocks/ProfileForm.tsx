@@ -359,19 +359,11 @@ export function ProfileForm() {
               Antes de começarmos, me conte um pouquinho sobre você
             </h2>
             <p className="text-sm text-support-2 md:text-base">
-              Isso personaliza sua experiência e deixa tudo mais prático no dia a dia.
+              Isso personaliza sua experiência e deixa tudo mais pr��tico no dia a dia.
             </p>
           </div>
 
-          <div suppressHydrationWarning>
-            {loading ? (
-              <div className="space-y-4" suppressHydrationWarning>
-                <div className="h-12 w-full animate-pulse rounded-2xl bg-white/40" />
-                <div className="h-36 w-full animate-pulse rounded-2xl bg-white/40" />
-                <div className="h-28 w-full animate-pulse rounded-2xl bg-white/40" />
-              </div>
-            ) : (
-              <div className="space-y-6" suppressHydrationWarning>
+          <div className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
                   Seu nome
@@ -558,8 +550,6 @@ export function ProfileForm() {
                   <p className="text-center text-xs font-semibold text-support-1">{statusMessage}</p>
                 )}
               </div>
-            </div>
-            )}
           </div>
         </form>
       </Card>
