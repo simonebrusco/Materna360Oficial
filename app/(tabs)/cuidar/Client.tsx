@@ -32,6 +32,8 @@ export default function CuidarClient({ recipesSection }: Props) {
         </div>
       </Card>
 
+      <ChildDiaryCard />
+
       <PageGrid>
         <Card>
           <EmptyState
