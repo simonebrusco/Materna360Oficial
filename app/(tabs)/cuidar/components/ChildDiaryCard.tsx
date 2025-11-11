@@ -81,7 +81,7 @@ export function ChildDiaryCard({ dateKey: providedDateKey }: ChildDiaryCardProps
 
       upsert(entry)
 
-      // Manual telemetry (upsert already fires one, but we can customize it)
+      // Telemetry event
       track('child_diary_save', {
         dateKey,
         mood: mood || null,
