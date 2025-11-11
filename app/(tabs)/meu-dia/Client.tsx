@@ -60,6 +60,8 @@ type MeuDiaClientProps = {
   __fallbackCurrentDateKey__?: string
   __fallbackWeekStartKey__?: string
   __fallbackPlannerTitle__?: string
+  // Hard disable heavy features (charts/pdf/timers) in iframe
+  __disableHeavy__?: boolean
 }
 
 const quickActions = [
