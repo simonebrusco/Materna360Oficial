@@ -103,6 +103,11 @@ const DEFAULT_BUCKETS: AgeRange[] = [
 export function MeuDiaClient(props?: MeuDiaClientProps) {
   const isBuilder = props?.__builderPreview__ === true
 
+  // Hard disable heavy features (charts/pdf/timers/observers) in iframe
+  const builderMode =
+    props?.__disableHeavy__ === true ||
+    (typeof window !== 'undefined' && (window as any).__BUILDER_MODE__)
+
   // Use fallbacks in builder mode, otherwise use provided props
   const dailyGreeting = isBuilder
     ? props?.__fallbackGreeting__ || 'Olá, Mãe!'
@@ -135,7 +140,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
 
   const [trendOpen, setTrendOpen] = useState(false)
-  const canShowTrends = isBuilder ? false : isClientFlagEnabled('FF_EMOTION_TRENDS')
+  const canShowTrends = builderMode ? false : (isBuilder ? false : isClientFlagEnabled('FF_EMOTION_TRENDS'))
 
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
