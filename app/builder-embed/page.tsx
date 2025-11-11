@@ -21,12 +21,6 @@ if (typeof window !== 'undefined') {
 }
 
 export default function BuilderEmbedPage() {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Force readable text (avoid theme inversion in iframe)
   const forceStyle: React.CSSProperties = {
     color: '#111',
@@ -41,28 +35,22 @@ export default function BuilderEmbedPage() {
           subtitle="Safe embed mode for Builder editor"
         />
 
-        {!mounted ? (
-          <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
-            Carregando preview…
-          </div>
-        ) : (
-          <React.Suspense
-            fallback={
-              <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
-                Carregando componentes…
-              </div>
-            }
-          >
-            <LazyMeuDia
-              __builderPreview__={true}
-              __fallbackProfile__={fallbackProfile}
-              __fallbackGreeting__="Olá, Mãe!"
-              __fallbackCurrentDateKey__={new Date().toISOString().slice(0, 10)}
-              __fallbackWeekStartKey__={`${new Date().getFullYear()}-W01`}
-              __disableHeavy__={true}
-            />
-          </React.Suspense>
-        )}
+        <React.Suspense
+          fallback={
+            <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
+              Carregando componentes…
+            </div>
+          }
+        >
+          <LazyMeuDia
+            __builderPreview__={true}
+            __fallbackProfile__={fallbackProfile}
+            __fallbackGreeting__="Olá, Mãe!"
+            __fallbackCurrentDateKey__={new Date().toISOString().slice(0, 10)}
+            __fallbackWeekStartKey__={`${new Date().getFullYear()}-W01`}
+            __disableHeavy__={true}
+          />
+        </React.Suspense>
 
         <BottomNav />
       </main>
