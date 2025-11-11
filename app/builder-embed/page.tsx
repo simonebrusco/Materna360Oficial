@@ -3,16 +3,16 @@
 import * as React from 'react';
 import BuilderErrorBoundary from '@/components/dev/BuilderErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
-import { BottomNav } from '@/components/common/BottomNav';
+import BottomNav from '@/components/common/BottomNav';
 
 // Lazy import MeuDiaClient only after mount (prevents SSR/hydration traps in iframe)
 const LazyMeuDia = React.lazy(() =>
   import('@/app/(tabs)/meu-dia/Client').then((m) => ({ default: m.MeuDiaClient }))
 );
 
-const fallbackProfile = {
+const fallbackProfile: any = {
   motherName: 'Mãe',
-  children: [{ name: 'Seu filho', age: 36 }],
+  children: [] as any,
 };
 
 // Hard-disable heavy features in Builder (charts/pdf/timers/observers) via global flag
@@ -57,8 +57,8 @@ export default function BuilderEmbedPage() {
               __builderPreview__={true}
               __fallbackProfile__={fallbackProfile}
               __fallbackGreeting__="Olá, Mãe!"
-              __fallbackCurrentDateKey={new Date().toISOString().slice(0, 10)}
-              __fallbackWeekStartKey={`${new Date().getFullYear()}-W01`}
+              __fallbackCurrentDateKey__={new Date().toISOString().slice(0, 10)}
+              __fallbackWeekStartKey__={`${new Date().getFullYear()}-W01`}
               __disableHeavy__={true}
             />
           </React.Suspense>
