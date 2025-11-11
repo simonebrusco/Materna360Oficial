@@ -26,11 +26,15 @@ function useLocalArray<T>(key: string) {
 }
 
 export function ChildDiary() {
-  const dateKey = getBrazilDateKey(new Date())
+  const [dateKey, setDateKey] = React.useState('2025-01-01')
 
   const [feeds, setFeeds] = useLocalArray<FeedEntry>('cuidar:feeds')
   const [sleeps, setSleeps] = useLocalArray<SleepEntry>('cuidar:sleeps')
   const [moods, setMoods] = useLocalArray<MoodEntry>('cuidar:moods')
+
+  React.useEffect(() => {
+    setDateKey(getBrazilDateKey(new Date()))
+  }, [])
 
   const nowISO = () => new Date().toISOString()
 
