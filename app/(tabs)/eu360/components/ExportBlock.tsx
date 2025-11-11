@@ -2,17 +2,29 @@
 
 import * as React from 'react'
 import { printElementById } from '@/app/lib/print'
-import { gate } from '@/app/lib/gate'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
+import { track } from '@/app/lib/telemetry'
+import { isPremium } from '@/app/lib/plan'
 import { FileDown } from 'lucide-react'
 
 export function ExportBlock() {
-  const { enabled } = gate('export.pdf' as any)
+  const [isPremiumUser, setIsPremiumUser] = React.useState(false)
 
-  if (!enabled) {
+  React.useEffect(() => {
+    setIsPremiumUser(isPremium())
+    if (!isPremium()) {
+      track('paywall_open', { feature: 'pdf_export', context: 'eu360' })
+    }
+  }, [])
+
+  if (!isPremiumUser) {
     return (
       <div className="mb-3">
-        <PaywallBanner message="Exportação em PDF disponível nos planos pagos." />
+        <PaywallBanner
+          message="Exportação em PDF disponível nos planos pagos."
+          cta="Desbloquear PDF"
+          href="/planos"
+        />
       </div>
     )
   }
