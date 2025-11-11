@@ -1,5 +1,25 @@
 # 🌸 Materna360
 
+## 🚀 Versão Atual — v0.2.0-p2-staging1
+**Status:** 🟢 Estável em Staging / Fase P2 – Inteligência & Personalização  
+
+### Principais entregas
+- Coach Materno v0.2 (persistência e tom empático)
+- PDF Export v1 (capa com dados do coach)
+- Telemetria unificada (nav/page/card/coach/pdf/paywall)
+- Correções de hidratação e tipos
+- Builder Preview estável (`/builder-embed`)
+
+### Próximos marcos
+- PDF v2 (capa dinâmica e sumário premium)
+- Feature gating real por plano
+- Diário da criança persistente (/cuidar)
+- QA visual e A11y final
+
+📄 Veja também:
+- [`/docs/DEPLOYMENT_CHECKLIST_COSMOS_VERSE.md`](./docs/DEPLOYMENT_CHECKLIST_COSMOS_VERSE.md)
+- [`/docs/QA_CHECKLIST.md`](./docs/QA_CHECKLIST.md)
+
 **Materna360** is a mobile-first web application focused on the emotional and organizational well-being of mothers.  
 It combines daily planning, emotional tracking, and personalized coaching — all inside a soft, premium digital experience.
 
