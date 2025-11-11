@@ -5,7 +5,7 @@ import { computeBadges } from '@/app/lib/badges'
 import { Award } from 'lucide-react'
 
 export default function ConquistasPage() {
-  const [badges, setBadges] = React.useState(() => computeBadges())
+  const [badges, setBadges] = React.useState<ReturnType<typeof computeBadges>>([])
 
   React.useEffect(() => {
     setBadges(computeBadges())
