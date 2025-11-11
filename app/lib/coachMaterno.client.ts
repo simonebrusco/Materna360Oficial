@@ -9,9 +9,13 @@ export function generateCoachSuggestion(): CoachSuggestion {
   const avgMood = avg(entries.map(e => e.mood));
   const lowStreak = entries.slice(-3).every(e => e.mood <= 2);
 
+  // Generate deterministic ID based on data (avoid Date.now() which differs per render)
+  const dataHash = `${lowStreak}-${avgMood}`;
+  const baseId = `coach-${dataHash}`;
+
   if (lowStreak) {
     return {
-      id: `coach-${Date.now()}`,
+      id: baseId,
       title: 'Respiração + alongamento',
       subtitle: '5 min para regular o sistema nervoso',
       actionLabel: 'Fazer agora (5 min)',
@@ -22,7 +26,7 @@ export function generateCoachSuggestion(): CoachSuggestion {
 
   if (avgMood >= 4) {
     return {
-      id: `coach-${Date.now()}`,
+      id: baseId,
       title: 'Microvitórias',
       subtitle: 'Aproveite a maré positiva e planeje 1 passo pequeno',
       actionLabel: 'Planejar 1 passo',
@@ -32,7 +36,7 @@ export function generateCoachSuggestion(): CoachSuggestion {
   }
 
   return {
-    id: `coach-${Date.now()}`,
+    id: baseId,
     title: 'Pausa de hidratação',
     subtitle: '2 minutos de água + 3 respirações profundas',
     actionLabel: 'Fazer agora',
