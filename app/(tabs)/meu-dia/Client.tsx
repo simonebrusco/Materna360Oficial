@@ -90,15 +90,12 @@ const safeUtf = (value?: string | null): string => {
 // Default values for Builder preview
 const DEFAULT_PROFILE: Profile = {
   motherName: 'Mãe',
-  children: [{ name: 'Seu filho', age: 36 }], // age in months
+  children: [{ name: 'Seu filho' } as any], // age in months
 }
 
 const DEFAULT_ACTIVITIES: ChildActivity[] = []
 const DEFAULT_RECOMMENDATIONS: ChildRecommendation[] = []
-const DEFAULT_BUCKETS: AgeRange[] = [
-  { id: 'movimento', name: 'Movimento', ageMin: 0, ageMax: 60, activities: [] },
-  { id: 'linguagem', name: 'Linguagem', ageMin: 0, ageMax: 60, activities: [] },
-]
+const DEFAULT_BUCKETS: AgeRange[] = [] as any;
 
 export function MeuDiaClient(props?: MeuDiaClientProps) {
   const isBuilder = props?.__builderPreview__ === true
