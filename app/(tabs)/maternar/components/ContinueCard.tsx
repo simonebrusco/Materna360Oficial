@@ -19,7 +19,7 @@ function safeParse<T>(raw: string | null): T | null {
   }
 }
 
-function pickLatest(dateKey: string): Resume | null {
+function pickLatest(dateKey: string, now: number): Resume | null {
   const todos = safeParse<{ id: string; text: string; done: boolean }[]>(
     localStorage.getItem(`meu-dia:${dateKey}:todos`)
   )
@@ -37,7 +37,7 @@ function pickLatest(dateKey: string): Resume | null {
       kind: 'todos',
       label: 'Continuar sua lista do dia',
       href: '/meu-dia',
-      updatedAt: Date.now() - 1,
+      updatedAt: now - 1,
     })
   }
   if (rems && rems.length) {
@@ -45,7 +45,7 @@ function pickLatest(dateKey: string): Resume | null {
       kind: 'reminder',
       label: 'Ver seus lembretes de hoje',
       href: '/meu-dia',
-      updatedAt: Date.now() - 2,
+      updatedAt: now - 2,
     })
   }
   if (moods && moods.length) {
@@ -55,7 +55,7 @@ function pickLatest(dateKey: string): Resume | null {
         kind: 'mood',
         label: 'Registrar seu humor/energia',
         href: '/meu-dia',
-        updatedAt: Date.now() - 3,
+        updatedAt: now - 3,
       })
     }
   }
