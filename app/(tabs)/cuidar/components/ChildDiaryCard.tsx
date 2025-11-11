@@ -210,7 +210,7 @@ export function ChildDiaryCard({ dateKey: providedDateKey }: ChildDiaryCardProps
 
         {hasExistingEntry && (
           <Button
-            variant="danger"
+            variant="destructive"
             size="md"
             onClick={handleDelete}
             className="px-3"
