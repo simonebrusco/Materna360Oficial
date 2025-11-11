@@ -10,9 +10,9 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { useChildDiary, type ChildDiary } from '../hooks/useChildDiary'
 
 const MOOD_OPTIONS = [
-  { value: 'low' as const, label: 'Baixo', icon: 'frown' as const },
-  { value: 'ok' as const, label: 'Ok', icon: 'meh' as const },
-  { value: 'high' as const, label: 'Alto', icon: 'smile' as const },
+  { value: 'low' as const, label: 'Baixo' },
+  { value: 'ok' as const, label: 'Ok' },
+  { value: 'high' as const, label: 'Alto' },
 ]
 
 const AVAILABLE_TAGS = ['sonolento', 'ativo', 'tranquilo', 'agitado', 'bem-alimentado', 'irritado']
