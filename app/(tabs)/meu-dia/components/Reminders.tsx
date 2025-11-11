@@ -45,11 +45,11 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
     track('reminder.deleted', { tab: 'meu-dia', id })
   }
 
-  const now = Date.now()
   const [displayList, setDisplayList] = React.useState<(Reminder & { whenStr?: string; due?: boolean; soon?: boolean })[]>([])
 
   // Format dates on client after mount
   React.useEffect(() => {
+    const now = Date.now()
     const formatted = list.map((r) => {
       const ts = new Date(r.when).getTime()
       const delta = ts - now
@@ -61,7 +61,7 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
       }
     })
     setDisplayList(formatted)
-  }, [list, now])
+  }, [list])
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
