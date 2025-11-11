@@ -29,57 +29,70 @@ const STORAGE_KEYS = [
 ] as const
 
 export function useMindfulnessProgress(): WeekProgress {
-  let completed = 0
+  // SSR-safe defaults
+  const [progress, setProgress] = React.useState<WeekProgress>({
+    completed: 0,
+    total: 7,
+    percentage: 0,
+    weekLabel: '',
+  })
 
-  if (typeof window !== 'undefined') {
-    try {
-      const uniqueThisWeek = new Set<string>()
+  // Compute progress on client-side only (guards SSR mismatch)
+  React.useEffect(() => {
+    let completed = 0
 
-      for (const key of STORAGE_KEYS) {
-        const raw = window.localStorage.getItem(key)
-        if (!raw) continue
+    if (typeof window !== 'undefined') {
+      try {
+        const uniqueThisWeek = new Set<string>()
 
-        const parsed = JSON.parse(raw)
-        if (!Array.isArray(parsed)) {
-          continue
-        }
+        for (const key of STORAGE_KEYS) {
+          const raw = window.localStorage.getItem(key)
+          if (!raw) continue
 
-        for (const entry of parsed) {
-          if (!entry) continue
-
-          if (typeof entry === 'string') {
-            uniqueThisWeek.add(entry)
+          const parsed = JSON.parse(raw)
+          if (!Array.isArray(parsed)) {
             continue
           }
 
-          const id = typeof entry.id === 'string' ? entry.id : String(entry.id ?? '')
-          const listenedAt = Number(entry.listenedAt ?? entry.timestamp ?? entry.when ?? 0)
+          for (const entry of parsed) {
+            if (!entry) continue
 
-          if (id && Number.isFinite(listenedAt) && isWithinThisISOWeek(listenedAt)) {
-            uniqueThisWeek.add(id)
+            if (typeof entry === 'string') {
+              uniqueThisWeek.add(entry)
+              continue
+            }
+
+            const id = typeof entry.id === 'string' ? entry.id : String(entry.id ?? '')
+            const listenedAt = Number(entry.listenedAt ?? entry.timestamp ?? entry.when ?? 0)
+
+            if (id && Number.isFinite(listenedAt) && isWithinThisISOWeek(listenedAt)) {
+              uniqueThisWeek.add(id)
+            }
           }
         }
+
+        completed = Math.min(7, uniqueThisWeek.size)
+      } catch (error) {
+        console.warn('[MindfulnessTrail] Failed to read weekly progress', error)
+        completed = 0
       }
-
-      completed = Math.min(7, uniqueThisWeek.size)
-    } catch (error) {
-      console.warn('[MindfulnessTrail] Failed to read weekly progress', error)
-      completed = 0
     }
-  }
 
-  const total = 7
-  const percentage = Math.max(0, Math.min(100, Math.round((completed / total) * 100)))
+    const total = 7
+    const percentage = Math.max(0, Math.min(100, Math.round((completed / total) * 100)))
 
-  const now = new Date()
-  const startOfYear = new Date(now.getFullYear(), 0, 1)
-  const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000) + 1
-  const week = Math.max(1, Math.ceil(dayOfYear / 7))
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000) + 1
+    const week = Math.max(1, Math.ceil(dayOfYear / 7))
 
-  return {
-    completed,
-    total,
-    percentage,
-    weekLabel: `Semana ${week}`,
-  }
+    setProgress({
+      completed,
+      total,
+      percentage,
+      weekLabel: `Semana ${week}`,
+    })
+  }, [])
+
+  return progress
 }
