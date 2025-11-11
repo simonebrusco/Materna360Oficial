@@ -6,8 +6,8 @@ const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Allow Builder preview mode to pass through
-  if (request.nextUrl.searchParams.has('builder.preview')) {
+  // Allow Builder preview mode to pass through (both ?builder.preview=1 and /builder-embed paths)
+  if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
     return NextResponse.next()
   }
 
@@ -22,5 +22,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/(tabs)/:path*'],
+  matcher: ['/((?!_next|api|.*\\..*|builder-embed).*)'],
 }
