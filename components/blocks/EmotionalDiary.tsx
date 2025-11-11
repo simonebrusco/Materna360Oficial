@@ -13,10 +13,16 @@ interface DiaryEntry {
   ts: number
 }
 
+interface DisplayEntry extends DiaryEntry {
+  dayLabel: string
+  preview: string
+}
+
 export function EmotionalDiary() {
   const [text, setText] = useState('')
   const [intensity, setIntensity] = useState(2)
   const [entries, setEntries] = useState<DiaryEntry[]>([])
+  const [displayEntries, setDisplayEntries] = useState<DisplayEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -28,6 +34,32 @@ export function EmotionalDiary() {
     setEntries(loaded || [])
     setIsLoading(false)
   }, [])
+
+  // Compute display entries with formatted dates
+  useEffect(() => {
+    const historyEntries = entries.slice(-7).reverse()
+    const formatted = historyEntries.map((entry) => {
+      const date = new Date(entry.ts)
+      const dayLabel =
+        date.toLocaleDateString('pt-BR', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          timeZone: 'America/Sao_Paulo',
+        }).charAt(0).toUpperCase() +
+        date.toLocaleDateString('pt-BR', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          timeZone: 'America/Sao_Paulo',
+        }).slice(1)
+
+      const preview = entry.text.substring(0, 60) + (entry.text.length > 60 ? '...' : '')
+
+      return { ...entry, dayLabel, preview }
+    })
+    setDisplayEntries(formatted)
+  }, [entries])
 
   const handleSave = async () => {
     if (!text.trim()) {
@@ -84,9 +116,7 @@ export function EmotionalDiary() {
     return 'text-primary'
   }
 
-  // Get last 7 entries for history
-  const historyEntries = entries.slice(-7).reverse()
-  const hasHistory = historyEntries.length > 0
+  const hasHistory = displayEntries.length > 0
 
   return (
     <div className="space-y-6">
@@ -163,46 +193,27 @@ export function EmotionalDiary() {
             </>
           ) : hasHistory ? (
             // Actual entries
-            historyEntries.map((entry, idx) => {
-              const date = new Date(entry.ts)
-              const dayLabel =
-                date.toLocaleDateString('pt-BR', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  timeZone: 'America/Sao_Paulo',
-                }).charAt(0).toUpperCase() +
-                date.toLocaleDateString('pt-BR', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  timeZone: 'America/Sao_Paulo',
-                }).slice(1)
-
-              const preview = entry.text.substring(0, 60) + (entry.text.length > 60 ? '...' : '')
-
-              return (
-                <div
-                  key={`${entry.ts}-${idx}`}
-                  className="rounded-lg bg-white/40 p-3 text-sm"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="font-medium text-support-1">{dayLabel}</span>
-                    <div className="flex items-center gap-1">
-                      {[...Array(entry.intensity + 1)].map((_, i) => (
-                        <span
-                          key={i}
-                          className={`text-xs ${getIntensityColor(entry.intensity)}`}
-                        >
-                          ●
-                        </span>
-                      ))}
-                    </div>
+            displayEntries.map((entry, idx) => (
+              <div
+                key={`${entry.ts}-${idx}`}
+                className="rounded-lg bg-white/40 p-3 text-sm"
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <span className="font-medium text-support-1">{entry.dayLabel}</span>
+                  <div className="flex items-center gap-1">
+                    {[...Array(entry.intensity + 1)].map((_, i) => (
+                      <span
+                        key={i}
+                        className={`text-xs ${getIntensityColor(entry.intensity)}`}
+                      >
+                        ●
+                      </span>
+                    ))}
                   </div>
-                  <p className="text-support-2 text-xs line-clamp-1">{preview}</p>
                 </div>
-              )
-            })
+                <p className="text-support-2 text-xs line-clamp-1">{entry.preview}</p>
+              </div>
+            ))
           ) : (
             // No entries message
             <p className="text-sm text-support-2 py-4">Nenhum registro no diário ainda. Escreva algumas palavras sobre o seu dia.</p>
