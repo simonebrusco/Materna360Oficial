@@ -98,6 +98,19 @@ export default function Eu360Client() {
     []
   )
 
+  // Normalize any persisted value to a valid PlanTier, defaulting to 'Free'
+  type AnyPlan = string | null | undefined
+  type PlanTier = 'Free' | 'Plus' | 'Premium'
+  const normalizePlanTier = (v: AnyPlan): PlanTier => {
+    const normalized = (typeof v === 'string' && v.trim()) ? v.toLowerCase() : 'free'
+    const validPlans: Record<string, PlanTier> = {
+      free: 'Free',
+      plus: 'Plus',
+      premium: 'Premium',
+    }
+    return validPlans[normalized] || 'Free'
+  }
+
   const upsellSheetConfig = {
     export: {
       title: 'Exportar Semana em PDF',
@@ -235,7 +248,7 @@ export default function Eu360Client() {
               <div>
                 <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
               <PlanCard
-                currentPlan={currentPlan}
+                currentPlan={normalizePlanTier(currentPlan)}
                 onManagePlan={() => {
                   window.location.href = '/planos'
                 }}
@@ -369,7 +382,7 @@ export default function Eu360Client() {
                 <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
               <FeatureGate
                 featureKey="weekly.summary"
-                currentPlan={currentPlan}
+                currentPlan={normalizePlanTier(currentPlan)}
                 onUpgradeClick={() => {
                   window.location.href = '/planos'
                 }}
@@ -415,7 +428,7 @@ export default function Eu360Client() {
                 <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
               <FeatureGate
                 featureKey="weekly.pdf"
-                currentPlan={currentPlan}
+                currentPlan={normalizePlanTier(currentPlan)}
                 onUpgradeClick={() => {
                   setUpsellSheet({ isOpen: true, type: 'export' })
                 }}
