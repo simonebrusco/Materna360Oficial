@@ -38,6 +38,8 @@ import { isEnabled as isClientEnabled } from '@/app/lib/flags.client'
 import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
 import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
 import Link from 'next/link'
+import { isPremium } from '@/app/lib/plan'
+import { PremiumExportButton } from './components/PremiumExportButton'
 
 type MoodHistory = {
   day: string
