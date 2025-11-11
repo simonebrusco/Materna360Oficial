@@ -146,13 +146,19 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
 
-  // Page-view telemetry on mount
+  // Page-view telemetry on mount (guarded for iframe)
   useEffect(() => {
-    track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
-  }, [])
+    if (builderMode) return
+    try {
+      track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
+    } catch {
+      // Silently fail if telemetry unavailable
+    }
+  }, [builderMode])
 
-  // Seed demo mood data in dev/preview mode
+  // Seed demo mood data in dev/preview mode (guarded for iframe)
   useEffect(() => {
+    if (builderMode) return
     if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
       try {
         seedIfEmpty()
@@ -160,7 +166,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         // silently fail
       }
     }
-  }, [])
+  }, [builderMode])
 
   // Load planner items from persistence on mount (guarded for iframe)
   useEffect(() => {
