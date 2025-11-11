@@ -12,9 +12,12 @@ import { track } from '@/app/lib/telemetry';
 import { getBrazilDateKey } from '@/app/lib/dateKey';
 
 export default function MaternarClient() {
-  const dateKey = getBrazilDateKey(new Date());
+  const [dateKey, setDateKey] = React.useState('2025-01-01');
 
   useEffect(() => {
+    // Set today's date on client side only
+    setDateKey(getBrazilDateKey(new Date()));
+
     track('nav.click', {
       tab: 'maternar',
       timestamp: new Date().toISOString(),
