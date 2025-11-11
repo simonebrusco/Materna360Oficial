@@ -24,6 +24,31 @@ export type ChildDiary = {
  */
 const KEY = 'm360.childDiary.v1'
 
+/**
+ * Hook for managing child diary entries with localStorage persistence
+ *
+ * Usage:
+ * ```tsx
+ * const { entries, isLoaded, upsert, remove } = useChildDiary()
+ *
+ * // Add or update entry
+ * upsert({
+ *   dateKey: getBrazilDateKey(),
+ *   notes: 'Dia tranquilo, brincou muito',
+ *   mood: 'high',
+ *   tags: ['playful', 'well-fed']
+ * })
+ *
+ * // Remove entry
+ * remove('2025-01-15')
+ * ```
+ *
+ * Telemetry:
+ * - Fires `cuidar.diary_saved` on upsert with payload: { dateKey, hasMood, mood, hasTags, tagCount, notesLength }
+ * - Fires `cuidar.diary_removed` on remove with payload: { dateKey }
+ *
+ * @returns Object with entries array, isLoaded flag, and methods to upsert and remove entries
+ */
 export function useChildDiary() {
   const [entries, setEntries] = React.useState<ChildDiary[]>([])
   const [isLoaded, setIsLoaded] = React.useState(false)
