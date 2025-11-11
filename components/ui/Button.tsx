@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost'
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'
 
 type ButtonSize = 'sm' | 'md' | 'lg'
 
@@ -25,6 +25,8 @@ export function Button({
     outline:
       'border border-primary/60 text-primary bg-white/70 shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:bg-primary/10 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
     ghost: 'bg-transparent text-support-1 shadow-none hover:bg-white/60 hover:shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
+    destructive:
+      'text-white bg-red-600 shadow-[0_4px_24px_rgba(220,38,38,0.2)] hover:bg-red-700 hover:shadow-[0_8px_32px_rgba(220,38,38,0.3)]',
   }
 
   const sizeStyles: Record<ButtonSize, string> = {
