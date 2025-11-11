@@ -90,7 +90,7 @@ const safeUtf = (value?: string | null): string => {
 // Default values for Builder preview
 const DEFAULT_PROFILE: Profile = {
   motherName: 'Mãe',
-  children: [{ name: 'Seu filho', ageMonths: 36 }],
+  children: [{ name: 'Seu filho', age: 36 }], // age in months
 }
 
 const DEFAULT_ACTIVITIES: ChildActivity[] = []
@@ -439,7 +439,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         <Reveal delay={360}>
           <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
             <div className="notesCard-text">
-              <Badge className="mb-2">Anotações</Badge>
+              <Badge className="mb-2">Anota��ões</Badge>
               <h3 className="m360-card-title">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
