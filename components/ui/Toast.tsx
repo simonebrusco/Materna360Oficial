@@ -35,7 +35,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
 
   const toast = React.useCallback((t: Omit<ToastItem, 'id'>) => {
-    const id = Math.random().toString(36).slice(2);
+    // Generate ID in callback (safe - runs after hydration)
+    const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
     const next: ToastItem = {
       id,
       durationMs: 2200,
