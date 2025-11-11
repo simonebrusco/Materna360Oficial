@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { track } from '@/app/lib/telemetry'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
 
 export type ChildDiary = {
   dateKey: string // YYYY-MM-DD (TZ America/Sao_Paulo)
