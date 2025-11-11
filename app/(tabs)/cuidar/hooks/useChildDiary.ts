@@ -4,6 +4,13 @@ import * as React from 'react'
 import { track } from '@/app/lib/telemetry'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 
+/**
+ * ChildDiary entry type
+ * @property dateKey - YYYY-MM-DD in America/Sao_Paulo timezone (use getBrazilDateKey())
+ * @property notes - Free-form notes about the child's day
+ * @property mood - Child's mood level (optional)
+ * @property tags - Additional metadata like sleep status, food intake, etc. (optional)
+ */
 export type ChildDiary = {
   dateKey: string // YYYY-MM-DD (TZ America/Sao_Paulo)
   notes: string
@@ -11,6 +18,10 @@ export type ChildDiary = {
   tags?: string[] // e.g., sleep, food, appointment
 }
 
+/**
+ * localStorage key for child diary entries
+ * Stores array of ChildDiary entries
+ */
 const KEY = 'm360.childDiary.v1'
 
 export function useChildDiary() {
