@@ -69,7 +69,7 @@ export function ContinueCard({ dateKey }: { dateKey: string }) {
 
   React.useEffect(() => {
     try {
-      setResume(pickLatest(dateKey))
+      setResume(pickLatest(dateKey, Date.now()))
     } catch {
       setResume(null)
     }
