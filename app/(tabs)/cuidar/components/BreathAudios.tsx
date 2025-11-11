@@ -76,7 +76,7 @@ export function BreathAudios() {
   const active = AUDIOS.find((x) => x.id === currentId) ?? AUDIOS[0]
 
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/95 backdrop-blur-[1px] shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5">
+    <div className="rounded-2xl border border-white/60 bg-white/95 backdrop-blur-[1px] shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5" suppressHydrationWarning>
       <div className="flex items-center gap-2 mb-4">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
           <Waves className="h-4 w-4 text-primary" aria-hidden="true" />

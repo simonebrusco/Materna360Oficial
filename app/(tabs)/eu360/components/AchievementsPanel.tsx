@@ -12,9 +12,9 @@ export function AchievementsPanel() {
     setCount(computeBadges().length)
   }, [])
 
-  if (count === 0) return null
-
   return (
+    <div suppressHydrationWarning>
+      {count === 0 ? null : (
     <div className="rounded-2xl border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5">
       <div className="flex items-center gap-2 mb-2">
         <Award className="h-4 w-4 text-primary" aria-hidden />
@@ -27,6 +27,8 @@ export function AchievementsPanel() {
       >
         Ver todas →
       </Link>
+    </div>
+      )}
     </div>
   )
 }

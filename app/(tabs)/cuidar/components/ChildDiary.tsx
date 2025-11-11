@@ -26,11 +26,15 @@ function useLocalArray<T>(key: string) {
 }
 
 export function ChildDiary() {
-  const dateKey = getBrazilDateKey(new Date())
+  const [dateKey, setDateKey] = React.useState('2025-01-01')
 
   const [feeds, setFeeds] = useLocalArray<FeedEntry>('cuidar:feeds')
   const [sleeps, setSleeps] = useLocalArray<SleepEntry>('cuidar:sleeps')
   const [moods, setMoods] = useLocalArray<MoodEntry>('cuidar:moods')
+
+  React.useEffect(() => {
+    setDateKey(getBrazilDateKey(new Date()))
+  }, [])
 
   const nowISO = () => new Date().toISOString()
 
@@ -68,7 +72,7 @@ export function ChildDiary() {
   const openSleep = sleeps.find((s) => s.dateKey === dateKey && !s.end)
 
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5">
+    <div className="rounded-2xl border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5" suppressHydrationWarning>
       <h2 className="text-base font-semibold mb-4">Diário da criança</h2>
 
       {/* Quick actions - Feeding */}

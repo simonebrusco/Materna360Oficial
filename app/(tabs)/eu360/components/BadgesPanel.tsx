@@ -70,7 +70,7 @@ export function BadgesPanel() {
   }
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4">
+    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4" suppressHydrationWarning>
       <h2 className="text-[18px] font-semibold mb-2 text-[#2f3a56] flex items-center gap-2">
         <Trophy className="h-5 w-5 text-[#ff005e]" /> Conquistas
       </h2>

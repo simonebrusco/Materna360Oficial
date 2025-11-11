@@ -249,17 +249,19 @@ export default function DiscoverClient() {
     >
 
       {/* Saved Count Chip */}
-      {savedCount > 0 && (
-        <div className="mb-6">
-          <Link
-            href="/descobrir/salvos"
-            className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
-            aria-label={`Ver itens salvos (${savedCount})`}
-          >
-            Salvos ({savedCount})
-          </Link>
-        </div>
-      )}
+      <div suppressHydrationWarning>
+        {savedCount > 0 && (
+          <div className="mb-6">
+            <Link
+              href="/descobrir/salvos"
+              className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
+              aria-label={`Ver itens salvos (${savedCount})`}
+            >
+              Salvos ({savedCount})
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Filter Pills: Time Window */}
       {selectedTimeWindow || selectedLocation || selectedMood ? (
@@ -420,7 +422,8 @@ export default function DiscoverClient() {
       )}
 
       {/* Suggestions Grid */}
-      {filteredSuggestions.length > 0 ? (
+      <div suppressHydrationWarning>
+        {filteredSuggestions.length > 0 ? (
         <PageGrid cols={2}>
           {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
@@ -497,6 +500,7 @@ export default function DiscoverClient() {
           cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
         />
       )}
+      </div>
     </PageTemplate>
   );
 }

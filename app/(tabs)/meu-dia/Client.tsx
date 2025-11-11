@@ -20,6 +20,7 @@ import { MomInMotion } from './components/MomInMotion'
 import { MoodEnergyCheckin } from './components/MoodEnergyCheckin'
 import { Reminders } from './components/Reminders'
 import { ExportPlanner } from './components/ExportPlanner'
+import ExportButton from '@/components/pdf/ExportButton'
 import GridRhythm from '@/components/common/GridRhythm'
 import GridStable from '@/components/common/GridStable'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -30,21 +31,37 @@ import { Badge } from '@/components/ui/Badge'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
+import { ClientOnly } from '@/components/common/ClientOnly'
 import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry'
+import { track, trackTelemetry } from '@/app/lib/telemetry'
+import { isEnabled as isClientFlagEnabled } from '@/app/lib/flags.client'
+import EmotionTrendDrawer from '@/components/ui/EmotionTrendDrawer'
+import { getMoodEntries, seedIfEmpty } from '@/app/lib/moodStore.client'
+import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
+import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
 
 type MeuDiaClientProps = {
-  dailyGreeting: string
-  currentDateKey: string
-  weekStartKey: string
-  weekLabels: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
-  plannerTitle: string
-  profile: Profile
-  dateKey: string
-  allActivities: ChildActivity[]
-  recommendations: ChildRecommendation[]
-  initialBuckets: AgeRange[]
+  dailyGreeting?: string
+  currentDateKey?: string
+  weekStartKey?: string
+  weekLabels?: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
+  plannerTitle?: string
+  profile?: Profile
+  dateKey?: string
+  allActivities?: ChildActivity[]
+  recommendations?: ChildRecommendation[]
+  initialBuckets?: AgeRange[]
+  // Builder preview fallbacks
+  __builderPreview__?: boolean
+  __fallbackProfile__?: Profile
+  __fallbackGreeting__?: string
+  __fallbackWeekLabels__?: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
+  __fallbackCurrentDateKey__?: string
+  __fallbackWeekStartKey__?: string
+  __fallbackPlannerTitle__?: string
+  // Hard disable heavy features (charts/pdf/timers) in iframe
+  __disableHeavy__?: boolean
 }
 
 const quickActions = [
@@ -70,18 +87,58 @@ const safeUtf = (value?: string | null): string => {
   }
 }
 
-export function MeuDiaClient({
-  dailyGreeting,
-  currentDateKey,
-  weekStartKey,
-  weekLabels,
-  plannerTitle,
-  profile,
-  dateKey,
-  allActivities,
-  recommendations,
-  initialBuckets,
-}: MeuDiaClientProps) {
+// Default values for Builder preview
+const DEFAULT_PROFILE: Profile = {
+  motherName: 'Mãe',
+  children: [{ name: 'Seu filho' } as any], // age in months
+}
+
+const DEFAULT_ACTIVITIES: ChildActivity[] = []
+const DEFAULT_RECOMMENDATIONS: ChildRecommendation[] = []
+const DEFAULT_BUCKETS: AgeRange[] = [] as any;
+
+export function MeuDiaClient(props?: MeuDiaClientProps) {
+  const isBuilder = props?.__builderPreview__ === true
+
+  // Hard disable heavy features (charts/pdf/timers/observers) in iframe
+  const builderMode =
+    props?.__disableHeavy__ === true ||
+    (typeof window !== 'undefined' && (window as any).__BUILDER_MODE__)
+
+  // SSR-stable date defaults (compute in useEffect)
+  const [ssrDateKey, setSsrDateKey] = useState('2025-01-01')
+  const [ssrWeekKey, setSsrWeekKey] = useState('2025-W01')
+
+  useEffect(() => {
+    const now = new Date()
+    setSsrDateKey(now.toISOString().slice(0, 10))
+    setSsrWeekKey(`${now.getFullYear()}-W01`)
+  }, [])
+
+  // Use fallbacks in builder mode, otherwise use provided props
+  const dailyGreeting = isBuilder
+    ? props?.__fallbackGreeting__ || 'Olá, Mãe!'
+    : props?.dailyGreeting || 'Olá, Mãe!'
+  const currentDateKey = isBuilder
+    ? props?.__fallbackCurrentDateKey__ || ssrDateKey
+    : props?.currentDateKey || ssrDateKey
+  const weekStartKey = isBuilder
+    ? props?.__fallbackWeekStartKey__ || ssrWeekKey
+    : props?.weekStartKey || ssrWeekKey
+  const weekLabels = isBuilder
+    ? props?.__fallbackWeekLabels__ || []
+    : props?.weekLabels || []
+  const plannerTitle = isBuilder
+    ? props?.__fallbackPlannerTitle__ || 'Planner'
+    : props?.plannerTitle || 'Planner'
+  const profile = isBuilder
+    ? props?.__fallbackProfile__ || DEFAULT_PROFILE
+    : props?.profile || DEFAULT_PROFILE
+  const dateKey = currentDateKey
+  const allActivities = props?.allActivities || DEFAULT_ACTIVITIES
+  const recommendations = props?.recommendations || DEFAULT_RECOMMENDATIONS
+  const initialBuckets = props?.initialBuckets || DEFAULT_BUCKETS
+
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
@@ -89,22 +146,47 @@ export function MeuDiaClient({
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
 
+  const [trendOpen, setTrendOpen] = useState(false)
+  const canShowTrends = builderMode ? false : (isBuilder ? false : isClientFlagEnabled('FF_EMOTION_TRENDS'))
+
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
   const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
 
-  // Page-view telemetry on mount
+  // Page-view telemetry on mount (guarded for iframe)
   useEffect(() => {
-    track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
-  }, [])
+    if (builderMode) return
+    try {
+      track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
+    } catch {
+      // Silently fail if telemetry unavailable
+    }
+  }, [builderMode])
 
-  // Load planner items from persistence on mount
+  // Seed demo mood data in dev/preview mode (guarded for iframe)
   useEffect(() => {
-    const weekKey = getCurrentWeekKey()
-    const persistKey = `planner:${weekKey}`
-    const savedItems = load<PlannerItem[]>(persistKey, [])
-    setPlannerItems(savedItems || [])
-  }, [])
+    if (builderMode) return
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      try {
+        seedIfEmpty()
+      } catch {
+        // silently fail
+      }
+    }
+  }, [builderMode])
+
+  // Load planner items from persistence on mount (guarded for iframe)
+  useEffect(() => {
+    if (builderMode) return // Skip heavy operations in builder mode
+    try {
+      const weekKey = getCurrentWeekKey()
+      const persistKey = `planner:${weekKey}`
+      const savedItems = load<PlannerItem[]>(persistKey, [])
+      setPlannerItems(savedItems || [])
+    } catch {
+      // Silently fail if localStorage unavailable
+    }
+  }, [builderMode])
 
   const handleAddNote = () => {
     if (noteText.trim()) {
@@ -199,14 +281,43 @@ export function MeuDiaClient({
             </div>
             <button
               type="button"
+              onClick={() => setTrendOpen(true)}
               className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
               data-event="meu-dia.trend_view"
             >
-              Ver tendência
+              Ver tend��ncia
             </button>
           </div>
         </Reveal>
       </SoftCard>
+
+      <ClientOnly>
+        {isClientFlagEnabled('FF_COACH_V1') && (
+          <CoachSuggestionCard
+            resolve={() => Promise.resolve(generateCoachSuggestion())}
+            onView={(id: string) => {
+              try {
+                trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+            onApply={(id: string) => {
+              try {
+                trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+            onSave={(id: string) => {
+              try {
+                trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+            onWhyOpen={(id: string) => {
+              try {
+                trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
+              } catch {}
+            }}
+          />
+        )}
+      </ClientOnly>
 
       <SoftCard className="mb-4">
         <Reveal delay={230}>
@@ -220,11 +331,18 @@ export function MeuDiaClient({
         </Reveal>
       </SoftCard>
 
-      <SoftCard className="mb-4">
-        <Reveal delay={240}>
-          <ExportPlanner />
-        </Reveal>
-      </SoftCard>
+      {!builderMode && (
+        <SoftCard className="mb-4">
+          <Reveal delay={240}>
+            <div className="space-y-3">
+              <ExportPlanner />
+              <div className="border-t border-white/60 pt-3">
+                <ExportButton variant="wellness" />
+              </div>
+            </div>
+          </Reveal>
+        </SoftCard>
+      )}
 
       <SoftCard className="mb-4">
         <Reveal delay={250}>
@@ -328,7 +446,7 @@ export function MeuDiaClient({
         <Reveal delay={360}>
           <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
             <div className="notesCard-text">
-              <Badge className="mb-2">Anotações</Badge>
+              <Badge className="mb-2">Anota��ões</Badge>
               <h3 className="m360-card-title">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
@@ -343,7 +461,7 @@ export function MeuDiaClient({
               onClick={() => setShowNoteModal(true)}
               className="notesCard-action"
             >
-              ＋ Adicionar
+              ��� Adicionar
             </Button>
           </div>
 
@@ -390,6 +508,16 @@ export function MeuDiaClient({
           </div>
         </div>
       )}
+
+      <ClientOnly>
+        {canShowTrends && (
+          <EmotionTrendDrawer
+            open={trendOpen}
+            onClose={() => setTrendOpen(false)}
+            resolveData={() => getMoodEntries()}
+          />
+        )}
+      </ClientOnly>
     </PageTemplate>
   )
 }

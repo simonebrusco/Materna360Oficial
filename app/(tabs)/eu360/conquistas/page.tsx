@@ -4,11 +4,18 @@ import * as React from 'react'
 import { computeBadges } from '@/app/lib/badges'
 import { Award } from 'lucide-react'
 
+type BadgeWithDateStr = ReturnType<typeof computeBadges>[number] & { dateStr?: string }
+
 export default function ConquistasPage() {
-  const [badges, setBadges] = React.useState(() => computeBadges())
+  const [badges, setBadges] = React.useState<BadgeWithDateStr[]>([])
 
   React.useEffect(() => {
-    setBadges(computeBadges())
+    const computed = computeBadges()
+    const withDates = computed.map(b => ({
+      ...b,
+      dateStr: new Date(b.unlockedAt).toLocaleDateString('pt-BR')
+    }))
+    setBadges(withDates)
   }, [])
 
   return (
@@ -30,7 +37,7 @@ export default function ConquistasPage() {
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-ink-1">{b.label}</div>
                   <div className="text-xs text-support-2">
-                    Desbloqueado em {new Date(b.unlockedAt).toLocaleDateString('pt-BR')}
+                    Desbloqueado em {b.dateStr || '—'}
                   </div>
                 </div>
               </li>

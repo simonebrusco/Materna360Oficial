@@ -13,7 +13,11 @@ type Props = {
 }
 
 export function PaywallBanner({ message, cta = 'Conheça os planos', href = '/planos' }: Props) {
-  const plan = getCurrentPlanId()
+  const [plan, setPlan] = React.useState('free')
+
+  React.useEffect(() => {
+    setPlan(getCurrentPlanId())
+  }, [])
 
   return (
     <div className="rounded-2xl border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-3 flex items-start gap-3">

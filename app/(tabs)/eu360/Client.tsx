@@ -7,6 +7,7 @@ import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { PageGrid } from '@/components/common/PageGrid'
 import { isEnabled } from '@/app/lib/flags'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 import { useGamification } from '@/app/lib/useGamification'
 import AppIcon from '@/components/ui/AppIcon'
@@ -27,12 +28,16 @@ import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
 import { AchievementsPanel } from './components/AchievementsPanel'
 import { BadgesPanel } from './components/BadgesPanel'
 import { AchievementsCounter } from './components/AchievementsCounter'
-import { track } from '@/app/lib/telemetry'
+import { track, trackTelemetry } from '@/app/lib/telemetry'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
 import { getCurrentPlanId } from '@/app/lib/planClient'
 import { ExportBlock } from './components/ExportBlock'
 import { printElementById } from '@/app/lib/print'
+import { isEnabled as isClientEnabled } from '@/app/lib/flags.client'
+import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
+import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
+import Link from 'next/link'
 
 type MoodHistory = {
   day: string
@@ -72,6 +77,12 @@ export default function Eu360Client() {
     isOpen: boolean
     type?: 'export' | 'advanced' | 'mentorship'
   }>({ isOpen: false })
+  const [currentPlan, setCurrentPlan] = useState('free')
+
+  // Load plan from localStorage after mount
+  useEffect(() => {
+    setCurrentPlan(getCurrentPlanId())
+  }, [])
 
   const gamification = useGamification()
 
@@ -86,6 +97,19 @@ export default function Eu360Client() {
     () => daysOfWeek.map((day, index) => ({ day, icon: MOODS[(index + 2) % MOODS.length] })),
     []
   )
+
+  // Normalize any persisted value to a valid PlanTier, defaulting to 'Free'
+  type AnyPlan = string | null | undefined
+  type PlanTier = 'Free' | 'Plus' | 'Premium'
+  const normalizePlanTier = (v: AnyPlan): PlanTier => {
+    const normalized = (typeof v === 'string' && v.trim()) ? v.toLowerCase() : 'free'
+    const validPlans: Record<string, PlanTier> = {
+      free: 'Free',
+      plus: 'Plus',
+      premium: 'Premium',
+    }
+    return validPlans[normalized] || 'Free'
+  }
 
   const upsellSheetConfig = {
     export: {
@@ -124,19 +148,18 @@ export default function Eu360Client() {
   }
 
   const currentUpsellConfig = upsellSheet.type ? upsellSheetConfig[upsellSheet.type] : null
-  const currentPlan: 'Free' | 'Plus' | 'Premium' = 'Free'
 
   const content = (
     <PageTemplate
       title="Eu360"
       subtitle="Autocuidado, propósito e rede de apoio"
     >
-      <Card>
+      <Card suppressHydrationWarning>
         <ProfileForm />
       </Card>
 
       <Reveal delay={180}>
-        <div className="flex items-center justify-end mb-2">
+        <div className="flex items-center justify-end mb-2" suppressHydrationWarning>
           <AchievementsCounter />
         </div>
       </Reveal>
@@ -155,57 +178,89 @@ export default function Eu360Client() {
         </Reveal>
       </Card>
 
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={80}>
-            <div>
-              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-support-1">Nível {gamification.level}</span>
-                    <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
+      <ClientOnly>
+        {isClientEnabled('FF_COACH_V1') && (
+          <CoachSuggestionCard
+            resolve={() => Promise.resolve(generateCoachSuggestion())}
+            onView={(id: string) => {
+              try {
+                trackTelemetry('coach.card_view', { id, tab: 'eu360' });
+              } catch {}
+            }}
+            onApply={(id: string) => {
+              try {
+                trackTelemetry('coach.suggestion_apply', { id, tab: 'eu360' });
+              } catch {}
+            }}
+            onSave={(id: string) => {
+              try {
+                trackTelemetry('coach.save_for_later', { id, tab: 'eu360' });
+              } catch {}
+            }}
+            onWhyOpen={(id: string) => {
+              try {
+                trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
+              } catch {}
+            }}
+          />
+        )}
+      </ClientOnly>
+
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={80}>
+              <div>
+                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-support-1">Nível {gamification.level}</span>
+                      <span className="text-xs font-semibold text-primary">{gamification.xp}/{gamification.xpToNextLevel} XP</span>
+                    </div>
+                    <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
+                    <p className="mt-2 text-xs text-support-2 flex items-center gap-1">Total de pontos: {gamification.totalPoints} <AppIcon name="target" size={14} decorative /></p>
                   </div>
-                  <Progress value={gamification.xp} max={gamification.xpToNextLevel} />
-                  <p className="mt-2 text-xs text-support-2 flex items-center gap-1">Total de pontos: {gamification.totalPoints} <AppIcon name="target" size={14} decorative /></p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <div className="text-2xl text-primary"><AppIcon name="sparkles" size={28} decorative /></div>
-                    <p className="mt-2 text-xs text-support-2">Sequência</p>
-                    <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
-                    <div className="text-2xl text-primary"><AppIcon name="star" size={28} decorative /></div>
-                    <p className="mt-2 text-xs text-support-2">Selos</p>
-                    <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+                      <div className="text-2xl text-primary"><AppIcon name="sparkles" size={28} decorative /></div>
+                      <p className="mt-2 text-xs text-support-2">Sequência</p>
+                      <p className="mt-1 text-sm font-semibold text-primary">{gamification.streak} dias</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+                      <div className="text-2xl text-primary"><AppIcon name="star" size={28} decorative /></div>
+                      <p className="mt-2 text-xs text-support-2">Selos</p>
+                      <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Reveal>
-        </Card>
-      )}
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       {/* Plan Card Section - P2 */}
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={120}>
-            <div>
-              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
-            <PlanCard
-              currentPlan={currentPlan}
-              onManagePlan={() => {
-                window.location.href = '/planos'
-              }}
-              onExplorePlans={() => {
-                window.location.href = '/planos'
-              }}
-            />
-            </div>
-          </Reveal>
-        </Card>
-      )}
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={120}>
+              <div>
+                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Seu Plano</span></SectionH2>
+              <PlanCard
+                currentPlan={normalizePlanTier(currentPlan)}
+                onManagePlan={() => {
+                  window.location.href = '/planos'
+                }}
+                onExplorePlans={() => {
+                  window.location.href = '/planos'
+                }}
+              />
+              </div>
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       <Card>
         <Reveal delay={140}>
@@ -255,18 +310,20 @@ export default function Eu360Client() {
         </Reveal>
       </Card>
 
-      {getCurrentPlanId() === 'free' && (
-        <div className="mb-4">
-          <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
-        </div>
-      )}
+      <div suppressHydrationWarning>
+        {currentPlan === 'free' && (
+          <div className="mb-4">
+            <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
+          </div>
+        )}
+      </div>
 
       <Reveal delay={250}>
         <ExportBlock />
       </Reveal>
 
       <div id="eu360-print-area" className="print-card">
-        <Card>
+        <Card suppressHydrationWarning>
           <Reveal delay={260}>
             <WeeklyEmotionalSummary />
           </Reveal>
@@ -317,89 +374,127 @@ export default function Eu360Client() {
       </Card>
 
       {/* Weekly Summary Section - P2 */}
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={320}>
-            <div>
-              <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
-            <FeatureGate
-              featureKey="weekly.summary"
-              currentPlan={currentPlan}
-              onUpgradeClick={() => {
-                window.location.href = '/planos'
-              }}
-            >
-              <WeeklySummary
-                data={{
-                  humor: {
-                    daysLogged: 5,
-                    totalDays: 7,
-                    data: [40, 60, 50, 70, 80, 65, 75],
-                  },
-                  checklist: {
-                    completed: 18,
-                    total: 24,
-                    data: [2, 3, 2, 4, 3, 2, 2],
-                  },
-                  planner: {
-                    completed: 6,
-                    total: 7,
-                    data: [1, 1, 1, 1, 1, 1, 0],
-                  },
-                  achievements: {
-                    unlocked: 3,
-                    total: 12,
-                    data: [0, 1, 0, 0, 1, 0, 1],
-                  },
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={320}>
+              <div>
+                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="heart" size={20} className="text-primary" /><span>Resumo da Semana</span></SectionH2>
+              <FeatureGate
+                featureKey="weekly.summary"
+                currentPlan={normalizePlanTier(currentPlan)}
+                onUpgradeClick={() => {
+                  window.location.href = '/planos'
                 }}
-                onViewDetails={() => console.log('View details')}
-              />
-            </FeatureGate>
-            </div>
-          </Reveal>
-        </Card>
-      )}
+              >
+                <WeeklySummary
+                  data={{
+                    humor: {
+                      daysLogged: 5,
+                      totalDays: 7,
+                      data: [40, 60, 50, 70, 80, 65, 75],
+                    },
+                    checklist: {
+                      completed: 18,
+                      total: 24,
+                      data: [2, 3, 2, 4, 3, 2, 2],
+                    },
+                    planner: {
+                      completed: 6,
+                      total: 7,
+                      data: [1, 1, 1, 1, 1, 1, 0],
+                    },
+                    achievements: {
+                      unlocked: 3,
+                      total: 12,
+                      data: [0, 1, 0, 0, 1, 0, 1],
+                    },
+                  }}
+                  onViewDetails={() => console.log('View details')}
+                />
+              </FeatureGate>
+              </div>
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
 
       {/* PDF Export - P2 with FeatureGate */}
-      {isEnabled('FF_LAYOUT_V1') && (
-        <Card>
-          <Reveal delay={360}>
-            <div>
-              <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
-            <FeatureGate
-              featureKey="weekly.pdf"
-              currentPlan={currentPlan}
-              onUpgradeClick={() => {
-                setUpsellSheet({ isOpen: true, type: 'export' })
-              }}
-            >
-              <div className="p-7">
-                <div className="text-center">
-                  <p className="text-sm text-support-2 mb-4">
-                    Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
-                  </p>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setUpsellSheet({ isOpen: true, type: 'export' })
-                    }}
-                  >
-                    <AppIcon name="download" size={16} />
-                    Exportar PDF desta semana
-                  </Button>
+      <ClientOnly>
+        {isEnabled('FF_LAYOUT_V1') && (
+          <Card>
+            <Reveal delay={360}>
+              <div>
+                <h3 className="text-lg font-semibold text-support-1 mb-4 inline-flex items-center gap-2"><AppIcon name="download" size={20} className="text-primary" /><span>Exportar Relatório</span></h3>
+              <FeatureGate
+                featureKey="weekly.pdf"
+                currentPlan={normalizePlanTier(currentPlan)}
+                onUpgradeClick={() => {
+                  setUpsellSheet({ isOpen: true, type: 'export' })
+                }}
+              >
+                <div className="p-7">
+                  <div className="text-center">
+                    <p className="text-sm text-support-2 mb-4">
+                      Gere um relatório em PDF da sua semana com gráficos e resumos para compartilhar com profissionais de saúde.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Link
+                        href="/eu360/export?range=weekly"
+                        onClick={() => {
+                          try {
+                            trackTelemetry('pdf.export_open', { range: 'weekly', tab: 'eu360' })
+                          } catch {}
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 bg-white/90 px-4 py-3 font-medium text-support-1 hover:bg-primary/5 transition-colors"
+                      >
+                        <AppIcon name="download" size={16} decorative />
+                        Semanal
+                      </Link>
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          try {
+                            trackTelemetry('pdf.export_open', { range: 'monthly', tab: 'eu360' })
+                          } catch {}
+                          window.location.href = '/eu360/export?range=monthly'
+                        }}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <AppIcon name="download" size={16} decorative />
+                        Mensal
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+              </FeatureGate>
               </div>
-            </FeatureGate>
-            </div>
-          </Reveal>
-        </Card>
-      )}
+            </Reveal>
+          </Card>
+        )}
+      </ClientOnly>
+
+      {/* Internal Insights Link (preview only) */}
+      <ClientOnly>
+        {isClientEnabled('FF_INTERNAL_INSIGHTS') && (
+          <div className="mt-6 pt-4 border-t border-white/20">
+            <Link href="/admin/insights" className="inline-flex items-center gap-2 text-xs text-support-2 hover:text-primary transition-colors opacity-60 hover:opacity-100">
+              <AppIcon name="eye" size={14} decorative />
+              Internal Insights
+            </Link>
+          </div>
+        )}
+      </ClientOnly>
     </PageTemplate>
   )
 
   return (
     <>
-      {isEnabled('FF_LAYOUT_V1') ? <AppShell>{content}</AppShell> : content}
+      <AppShell>
+        <ClientOnly>
+          {content}
+        </ClientOnly>
+      </AppShell>
       {upsellSheet.isOpen && currentUpsellConfig && (
         <UpsellSheet
           {...currentUpsellConfig}

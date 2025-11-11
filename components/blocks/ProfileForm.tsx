@@ -17,14 +17,6 @@ const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
   'mae-tranquila': 'Serenidade e autocuidado.',
 }
 
-const createId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID()
-  }
-
-  return Math.random().toString(36).slice(2, 11)
-}
-
 type ChildProfile = {
   id: string
   genero: 'menino' | 'menina'
@@ -46,8 +38,8 @@ type FormErrors = {
   general?: string
 }
 
-const createEmptyChild = (): ChildProfile => ({
-  id: createId(),
+const createEmptyChild = (index: number): ChildProfile => ({
+  id: `child-${index}`,
   genero: 'menino',
   idadeMeses: 0,
   nome: '',
@@ -56,7 +48,7 @@ const createEmptyChild = (): ChildProfile => ({
 
 const defaultState = (): ProfileFormState => ({
   nomeMae: '',
-  filhos: [createEmptyChild()],
+  filhos: [createEmptyChild(0)],
   figurinha: '',
 })
 
@@ -64,7 +56,6 @@ export function ProfileForm() {
   const router = useRouter()
   const [form, setForm] = useState<ProfileFormState>(() => defaultState())
   const [babyBirthdate, setBabyBirthdate] = useState('')
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [statusMessage, setStatusMessage] = useState('')
@@ -122,10 +113,6 @@ export function ProfileForm() {
           console.error('Falha ao carregar perfil eu360:', errorMsg)
         }
       }
-
-      if (isMounted) {
-        setLoading(false)
-      }
     }
 
     void loadProfile()
@@ -175,7 +162,7 @@ export function ProfileForm() {
   const addChild = () => {
     setForm((previous) => ({
       ...previous,
-      filhos: [...previous.filhos, createEmptyChild()],
+      filhos: [...previous.filhos, createEmptyChild(previous.filhos.length)],
     }))
   }
 
@@ -345,11 +332,18 @@ export function ProfileForm() {
   }
 
   const inputClasses = 'w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft transition-all duration-300 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30'
-  const todayISO = new Date().toISOString().split('T')[0]
+
+  // SSR-safe date computation (avoid new Date() at render time)
+  const [todayISO, setTodayISO] = useState<string>('')
+
+  useEffect(() => {
+    const date = new Date().toISOString().split('T')[0]
+    setTodayISO(date)
+  }, [])
 
   return (
     <Reveal>
-      <Card className="p-7">
+      <Card className="p-7" suppressHydrationWarning>
         <form className="space-y-7" onSubmit={handleSubmit} noValidate>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
@@ -363,14 +357,7 @@ export function ProfileForm() {
             </p>
           </div>
 
-          {loading ? (
-            <div className="space-y-4">
-              <div className="h-12 w-full animate-pulse rounded-2xl bg-white/40" />
-              <div className="h-36 w-full animate-pulse rounded-2xl bg-white/40" />
-              <div className="h-28 w-full animate-pulse rounded-2xl bg-white/40" />
-            </div>
-          ) : (
-            <div className="space-y-6">
+          <div className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
                   Seu nome
@@ -424,11 +411,11 @@ export function ProfileForm() {
 
                       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-2">
-                          <label htmlFor={`child-gender-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-gender-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Gênero
                           </label>
                           <select
-                            id={`child-gender-${child.id}`}
+                            id={`child-gender-${index}`}
                             value={child.genero}
                             onChange={(event) => updateChild(child.id, 'genero', event.target.value)}
                             className={`${inputClasses} appearance-none`}
@@ -438,11 +425,11 @@ export function ProfileForm() {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label htmlFor={`child-age-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-age-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Idade (em meses)
                           </label>
                           <input
-                            id={`child-age-${child.id}`}
+                            id={`child-age-${index}`}
                             type="number"
                             min={0}
                             inputMode="numeric"
@@ -450,10 +437,10 @@ export function ProfileForm() {
                             onChange={(event) => updateChild(child.id, 'idadeMeses', event.target.value)}
                             className={`${inputClasses} ${errors.filhos?.[child.id] ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
                             aria-invalid={Boolean(errors.filhos?.[child.id])}
-                            aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${child.id}` : undefined}
+                            aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${index}` : undefined}
                           />
                           {errors.filhos?.[child.id] && (
-                            <p id={`child-age-error-${child.id}`} className="text-xs font-medium text-primary">
+                            <p id={`child-age-error-${index}`} className="text-xs font-medium text-primary">
                               {errors.filhos[child.id]}
                             </p>
                           )}
@@ -475,11 +462,11 @@ export function ProfileForm() {
                           </div>
                         )}
                         <div className="space-y-2">
-                          <label htmlFor={`child-name-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-name-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Nome (opcional)
                           </label>
                           <input
-                            id={`child-name-${child.id}`}
+                            id={`child-name-${index}`}
                             type="text"
                             value={child.nome}
                             onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
@@ -487,11 +474,11 @@ export function ProfileForm() {
                           />
                         </div>
                         <div className="space-y-2 sm:col-span-3">
-                          <label htmlFor={`child-allergies-${child.id}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                          <label htmlFor={`child-allergies-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
                             Alergias (separe por vírgula)
                           </label>
                           <input
-                            id={`child-allergies-${child.id}`}
+                            id={`child-allergies-${index}`}
                             type="text"
                             value={child.alergias.join(', ')}
                             onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
@@ -557,8 +544,7 @@ export function ProfileForm() {
                   <p className="text-center text-xs font-semibold text-support-1">{statusMessage}</p>
                 )}
               </div>
-            </div>
-          )}
+          </div>
         </form>
       </Card>
     </Reveal>

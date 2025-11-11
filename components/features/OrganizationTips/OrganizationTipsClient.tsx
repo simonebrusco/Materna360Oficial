@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
@@ -167,7 +165,11 @@ const createId = () => {
 }
 
 export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
-  const [states, setStates] = useState<StoredState>(() => {
+  // SSR-safe initial state (no Date.now() call)
+  const [states, setStates] = useState<StoredState>({})
+
+  // Sanitize state on client mount only (avoids Date.now() during SSR)
+  useEffect(() => {
     const stored = readStoredState()
     const now = Date.now()
     const sanitized: StoredState = {}
@@ -180,8 +182,8 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
       sanitized[tip.id] = sanitizeTipState(tip, stored[tip.id], now)
     })
 
-    return sanitized
-  })
+    setStates(sanitized)
+  }, [tips])
 
   const [expandedIds, setExpandedIds] = useState<string[]>([])
 

@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useEffect, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
@@ -17,6 +15,8 @@ type StoredMessage = {
   message: string
 }
 
+type DateParts = Record<'year' | 'month' | 'day', string>
+
 const getTodayDateKey = () => {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: BRAZIL_TIMEZONE,
@@ -25,7 +25,14 @@ const getTodayDateKey = () => {
     day: '2-digit',
   })
 
-  return formatter.format(new Date())
+  const parts = formatter.formatToParts(new Date()).reduce<DateParts>((acc, part) => {
+    if (part.type === 'year' || part.type === 'month' || part.type === 'day') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, { year: '', month: '', day: '' })
+
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 const hashDateKey = (value: string) => {

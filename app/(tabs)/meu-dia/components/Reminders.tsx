@@ -9,6 +9,7 @@ type Reminder = {
   title: string
   when: string // ISO string
   notes?: string
+  whenStr?: string // cached formatted date
 }
 
 type Props = {
@@ -44,7 +45,23 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
     track('reminder.deleted', { tab: 'meu-dia', id })
   }
 
-  const now = Date.now()
+  const [displayList, setDisplayList] = React.useState<(Reminder & { whenStr?: string; due?: boolean; soon?: boolean })[]>([])
+
+  // Format dates on client after mount
+  React.useEffect(() => {
+    const now = Date.now()
+    const formatted = list.map((r) => {
+      const ts = new Date(r.when).getTime()
+      const delta = ts - now
+      return {
+        ...r,
+        whenStr: new Date(r.when).toLocaleString(),
+        due: delta <= 0,
+        soon: delta > 0 && delta <= 1000 * 60 * 30,
+      }
+    })
+    setDisplayList(formatted)
+  }, [list])
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
@@ -92,40 +109,34 @@ export function Reminders({ storageKey = 'meu-dia:reminders' }: Props) {
       </form>
 
       <ul className="flex flex-col gap-2">
-        {list.map((r) => {
-          const ts = new Date(r.when).getTime()
-          const delta = ts - now
-          const due = delta <= 0
-          const soon = delta > 0 && delta <= 1000 * 60 * 30 // 30min
-          return (
-            <li key={r.id} className="flex items-center justify-between rounded-xl border px-3 py-2">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#2f3a56]" aria-hidden />
-                <div>
-                  <div className="text-[14px] font-medium">{r.title}</div>
-                  <div className="text-[12px] text-[#545454]">
-                    {new Date(r.when).toLocaleString()}
-                  </div>
+        {displayList.map((r) => (
+          <li key={r.id} className="flex items-center justify-between rounded-xl border px-3 py-2">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#2f3a56]" aria-hidden />
+              <div>
+                <div className="text-[14px] font-medium">{r.title}</div>
+                <div className="text-[12px] text-[#545454]">
+                  {r.whenStr || '—'}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {due ? (
-                  <span className="rounded-full border px-2 py-0.5 text-[11px] bg-[#ffd8e6]/60">Vencido</span>
-                ) : soon ? (
-                  <span className="rounded-full border px-2 py-0.5 text-[11px]">Em breve</span>
-                ) : null}
-                <button
-                  type="button"
-                  className="rounded-lg border px-2 py-1 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
-                  onClick={() => remove(r.id)}
-                  aria-label={`Remover lembrete: ${r.title}`}
-                >
-                  Remover
-                </button>
-              </div>
-            </li>
-          )
-        })}
+            </div>
+            <div className="flex items-center gap-2">
+              {r.due ? (
+                <span className="rounded-full border px-2 py-0.5 text-[11px] bg-[#ffd8e6]/60">Vencido</span>
+              ) : r.soon ? (
+                <span className="rounded-full border px-2 py-0.5 text-[11px]">Em breve</span>
+              ) : null}
+              <button
+                type="button"
+                className="rounded-lg border px-2 py-1 text-[12px] hover:bg-[#ffd8e6]/40 focus:ring-2 focus:ring-[#ffd8e6] focus:outline-none"
+                onClick={() => remove(r.id)}
+                aria-label={`Remover lembrete: ${r.title}`}
+              >
+                Remover
+              </button>
+            </div>
+          </li>
+        ))}
       </ul>
     </div>
   )

@@ -20,7 +20,6 @@ const ALL_CHILDREN_ID = '__all__'
 const FALLBACK_ACTIVITY: ChildActivity = {
   id: 'contato-afetuoso',
   title: 'Momento de contato afetuoso',
-  emoji: '🤗',
   durationMin: 10,
   ageRange: '0-1',
   materials: ['Cobertor macio', 'Música calma'],
@@ -363,7 +362,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
               const childLabel = child.name ?? `Filho ${index + 1}`
               const saveKey = `${child.id}-${activity.id}`
               const childAgeLabel = formatAgeRangeLabel(child.ageRange ?? resolveAgeRange(child))
-              const activityTitle = activity.emoji ? `${activity.emoji} ${activity.title}` : activity.title
+              const activityTitle = activity.title
 
               return (
                 <div key={child.id} className="rounded-2xl border border-white/60 bg-white/75 p-4 shadow-soft">
@@ -374,7 +373,10 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
                         {childLabel} · {childAgeLabel}
                       </p>
                       {activity.durationMin ? (
-                        <p className="mt-1 text-xs text-support-2">⏱️ {activity.durationMin} min</p>
+                        <p className="mt-1 text-xs text-support-2 inline-flex items-center gap-1">
+                          <AppIcon name="time" size={12} aria-hidden />
+                          {activity.durationMin} min
+                        </p>
                       ) : null}
                     </div>
 
