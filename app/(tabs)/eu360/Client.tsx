@@ -299,7 +299,7 @@ export default function Eu360Client() {
       </Card>
 
       <div suppressHydrationWarning>
-        {getCurrentPlanId() === 'free' && (
+        {currentPlan === 'free' && (
           <div className="mb-4">
             <PaywallBanner message="Resumo detalhado e exportação em PDF estão disponíveis nos planos pagos." />
           </div>
