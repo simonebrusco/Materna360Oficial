@@ -12,7 +12,7 @@ const LazyMeuDia = React.lazy(() =>
 
 const fallbackProfile = {
   motherName: 'Mãe',
-  children: [{ name: 'Seu filho', ageMonths: 36 }],
+  children: [{ name: 'Seu filho', age: 36 }],
 };
 
 // Hard-disable heavy features in Builder (charts/pdf/timers/observers) via global flag
