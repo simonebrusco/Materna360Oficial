@@ -318,16 +318,18 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         </Reveal>
       </SoftCard>
 
-      <SoftCard className="mb-4">
-        <Reveal delay={240}>
-          <div className="space-y-3">
-            <ExportPlanner />
-            <div className="border-t border-white/60 pt-3">
-              <ExportButton variant="wellness" />
+      {!builderMode && (
+        <SoftCard className="mb-4">
+          <Reveal delay={240}>
+            <div className="space-y-3">
+              <ExportPlanner />
+              <div className="border-t border-white/60 pt-3">
+                <ExportButton variant="wellness" />
+              </div>
             </div>
-          </div>
-        </Reveal>
-      </SoftCard>
+          </Reveal>
+        </SoftCard>
+      )}
 
       <SoftCard className="mb-4">
         <Reveal delay={250}>
