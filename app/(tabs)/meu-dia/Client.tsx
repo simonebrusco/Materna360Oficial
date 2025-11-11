@@ -42,16 +42,24 @@ import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
 import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
 
 type MeuDiaClientProps = {
-  dailyGreeting: string
-  currentDateKey: string
-  weekStartKey: string
-  weekLabels: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
-  plannerTitle: string
-  profile: Profile
-  dateKey: string
-  allActivities: ChildActivity[]
-  recommendations: ChildRecommendation[]
-  initialBuckets: AgeRange[]
+  dailyGreeting?: string
+  currentDateKey?: string
+  weekStartKey?: string
+  weekLabels?: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
+  plannerTitle?: string
+  profile?: Profile
+  dateKey?: string
+  allActivities?: ChildActivity[]
+  recommendations?: ChildRecommendation[]
+  initialBuckets?: AgeRange[]
+  // Builder preview fallbacks
+  __builderPreview__?: boolean
+  __fallbackProfile__?: Profile
+  __fallbackGreeting__?: string
+  __fallbackWeekLabels__?: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
+  __fallbackCurrentDateKey__?: string
+  __fallbackWeekStartKey__?: string
+  __fallbackPlannerTitle__?: string
 }
 
 const quickActions = [
