@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { Trash2 } from 'lucide-react'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/useToast'
 import { Button } from '@/components/ui/Button'
 import { FilterPill } from '@/components/ui/FilterPill'
 import AppIcon from '@/components/ui/AppIcon'
