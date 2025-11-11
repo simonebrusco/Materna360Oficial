@@ -1,59 +1,71 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { MeuDiaClient } from '@/app/(tabs)/meu-dia/Client'
-import { PageHeader } from '@/components/common/PageHeader'
-import { BottomNav } from '@/components/common/BottomNav'
+import * as React from 'react';
+import BuilderErrorBoundary from '@/components/dev/BuilderErrorBoundary';
+import { PageHeader } from '@/components/common/PageHeader';
+import { BottomNav } from '@/components/common/BottomNav';
 
-const isBuilder =
-  typeof window !== 'undefined' &&
-  (new URLSearchParams(window.location.search).has('builder.preview') ||
-    /builder\.io/.test(document.referrer || ''))
+// Lazy import MeuDiaClient only after mount (prevents SSR/hydration traps in iframe)
+const LazyMeuDia = React.lazy(() =>
+  import('@/app/(tabs)/meu-dia/Client').then((m) => ({ default: m.MeuDiaClient }))
+);
 
-// Fallback data used when cookies/localStorage are blocked in iframe
 const fallbackProfile = {
   motherName: 'Mãe',
   children: [{ name: 'Seu filho', ageMonths: 36 }],
+};
+
+// Hard-disable heavy features in Builder (charts/pdf/timers/observers) via global flag
+if (typeof window !== 'undefined') {
+  (window as any).__BUILDER_MODE__ = true;
 }
 
-const fallbackGreeting = 'Olá, Mãe!'
-
-const fallbackWeekLabels = [
-  { key: '2024-W01-Mon', shortLabel: 'Seg', longLabel: 'Segunda', chipLabel: 'Seg' },
-  { key: '2024-W01-Tue', shortLabel: 'Ter', longLabel: 'Terça', chipLabel: 'Ter' },
-  { key: '2024-W01-Wed', shortLabel: 'Qua', longLabel: 'Quarta', chipLabel: 'Qua' },
-  { key: '2024-W01-Thu', shortLabel: 'Qui', longLabel: 'Quinta', chipLabel: 'Qui' },
-  { key: '2024-W01-Fri', shortLabel: 'Sex', longLabel: 'Sexta', chipLabel: 'Sex' },
-  { key: '2024-W01-Sat', shortLabel: 'Sab', longLabel: 'Sábado', chipLabel: 'Sab' },
-  { key: '2024-W01-Sun', shortLabel: 'Dom', longLabel: 'Domingo', chipLabel: 'Dom' },
-]
-
 export default function BuilderEmbedPage() {
-  const [ready, setReady] = React.useState(false)
-  React.useEffect(() => setReady(true), [])
-  if (!ready) return null
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Force readable text (avoid theme inversion in iframe)
+  const forceStyle: React.CSSProperties = {
+    color: '#111',
+    background: 'transparent',
+  };
 
   return (
-    <main
-      className="min-h-screen pb-24"
-      style={{ backgroundColor: '#fff7fb' }}
-    >
-      <PageHeader
-        title="Meu Dia (Builder Preview)"
-        subtitle="Visualização segura para editor"
-      />
+    <BuilderErrorBoundary>
+      <main className="min-h-screen pb-24" style={forceStyle}>
+        <PageHeader
+          title="Meu Dia (Builder Preview)"
+          subtitle="Safe embed mode for Builder editor"
+        />
 
-      <MeuDiaClient
-        __builderPreview__={isBuilder}
-        __fallbackProfile__={fallbackProfile}
-        __fallbackGreeting__={fallbackGreeting}
-        __fallbackWeekLabels__={fallbackWeekLabels}
-        __fallbackCurrentDateKey__={new Date().toISOString().slice(0, 10)}
-        __fallbackWeekStartKey__={`${new Date().getFullYear()}-W01`}
-        __fallbackPlannerTitle__="Planner do Dia"
-      />
+        {!mounted ? (
+          <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
+            Carregando preview…
+          </div>
+        ) : (
+          <React.Suspense
+            fallback={
+              <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
+                Carregando componentes…
+              </div>
+            }
+          >
+            <LazyMeuDia
+              __builderPreview__={true}
+              __fallbackProfile__={fallbackProfile}
+              __fallbackGreeting__="Olá, Mãe!"
+              __fallbackCurrentDateKey={new Date().toISOString().slice(0, 10)}
+              __fallbackWeekStartKey={`${new Date().getFullYear()}-W01`}
+              __disableHeavy__={true}
+            />
+          </React.Suspense>
+        )}
 
-      <BottomNav />
-    </main>
-  )
+        <BottomNav />
+      </main>
+    </BuilderErrorBoundary>
+  );
 }
