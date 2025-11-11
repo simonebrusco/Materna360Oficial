@@ -105,16 +105,26 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     props?.__disableHeavy__ === true ||
     (typeof window !== 'undefined' && (window as any).__BUILDER_MODE__)
 
+  // SSR-stable date defaults (compute in useEffect)
+  const [ssrDateKey, setSsrDateKey] = useState('2025-01-01')
+  const [ssrWeekKey, setSsrWeekKey] = useState('2025-W01')
+
+  useEffect(() => {
+    const now = new Date()
+    setSsrDateKey(now.toISOString().slice(0, 10))
+    setSsrWeekKey(`${now.getFullYear()}-W01`)
+  }, [])
+
   // Use fallbacks in builder mode, otherwise use provided props
   const dailyGreeting = isBuilder
     ? props?.__fallbackGreeting__ || 'Olá, Mãe!'
     : props?.dailyGreeting || 'Olá, Mãe!'
   const currentDateKey = isBuilder
-    ? props?.__fallbackCurrentDateKey__ || new Date().toISOString().slice(0, 10)
-    : props?.currentDateKey || new Date().toISOString().slice(0, 10)
+    ? props?.__fallbackCurrentDateKey__ || ssrDateKey
+    : props?.currentDateKey || ssrDateKey
   const weekStartKey = isBuilder
-    ? props?.__fallbackWeekStartKey__ || `${new Date().getFullYear()}-W01`
-    : props?.weekStartKey || `${new Date().getFullYear()}-W01`
+    ? props?.__fallbackWeekStartKey__ || ssrWeekKey
+    : props?.weekStartKey || ssrWeekKey
   const weekLabels = isBuilder
     ? props?.__fallbackWeekLabels__ || []
     : props?.weekLabels || []
