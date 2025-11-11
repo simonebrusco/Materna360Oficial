@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import type { Child } from '@/app/lib/ageRange'
 import BuilderErrorBoundary from '@/components/dev/BuilderErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import { BottomNav } from '@/components/common/BottomNav';

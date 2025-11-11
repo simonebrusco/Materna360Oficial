@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { Child } from '@/app/lib/ageRange'
 
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
@@ -90,7 +91,7 @@ const safeUtf = (value?: string | null): string => {
 // Default values for Builder preview
 const DEFAULT_PROFILE: Profile = {
   motherName: 'Mãe',
-  children: [{ name: 'Seu filho', age: 36 }], // age in months
+  children: [{ name: 'Seu filho' } as unknown as Child], // age in months
 }
 
 const DEFAULT_ACTIVITIES: ChildActivity[] = []
