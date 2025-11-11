@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Force readable text in iframe (Builder embed mode) ===== */
+html,
+body {
+  color-scheme: light;
+  color: #111;
+}
+
 /* ===== Materna360 token fallbacks (safe to keep) ===== */
 :root {
   /* Page background - soft luxury aesthetic */
