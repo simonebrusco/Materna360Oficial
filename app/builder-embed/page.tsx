@@ -27,6 +27,18 @@ export default function BuilderEmbedPage() {
     background: 'transparent',
   };
 
+  // Generate stable date strings with SSR-safe defaults
+  const [dateKey, setDateKey] = React.useState<string>('2025-01-01');
+  const [weekKey, setWeekKey] = React.useState<string>('2025-W01');
+
+  React.useEffect(() => {
+    const now = new Date();
+    const iso = now.toISOString().slice(0, 10);
+    const year = now.getFullYear();
+    setDateKey(iso);
+    setWeekKey(`${year}-W01`);
+  }, []);
+
   return (
     <BuilderErrorBoundary>
       <main className="min-h-screen pb-24" style={forceStyle}>
@@ -46,8 +58,8 @@ export default function BuilderEmbedPage() {
             __builderPreview__={true}
             __fallbackProfile__={fallbackProfile}
             __fallbackGreeting__="Olá, Mãe!"
-            __fallbackCurrentDateKey__={new Date().toISOString().slice(0, 10)}
-            __fallbackWeekStartKey__={`${new Date().getFullYear()}-W01`}
+            __fallbackCurrentDateKey__={dateKey}
+            __fallbackWeekStartKey__={weekKey}
             __disableHeavy__={true}
           />
         </React.Suspense>
