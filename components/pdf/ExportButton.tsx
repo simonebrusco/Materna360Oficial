@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileDown } from 'lucide-react';
 import { getMoodEntries } from '@/app/lib/moodStore.client';
 import { getPlannerItemsWithin } from '@/app/lib/plannerStore.client';
 import { getSavedCoachFocus } from '@/app/lib/coachMaterno.client';
-import { readLocalEvents } from '@/app/lib/telemetry';
+import { readLocalEvents, track } from '@/app/lib/telemetry';
 import { trackTelemetry } from '@/app/lib/telemetry';
 import { isEnabled } from '@/app/lib/flags.client';
+import { isPremium } from '@/app/lib/plan';
 
 interface ExportButtonProps {
   variant: 'wellness' | 'insights';
@@ -18,11 +19,29 @@ export default function ExportButton({
 }: ExportButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+
+  useEffect(() => {
+    const premium = isPremium();
+    setIsPremiumUser(premium);
+    if (!premium) {
+      track('paywall_open', { feature: 'pdf_export', variant, context: 'admin_insights' });
+    }
+  }, [variant]);
 
   // Check feature flag
   const ffEnabled = isEnabled('FF_PDF_EXPORT');
   if (!ffEnabled) {
     return null;
+  }
+
+  // Gate premium feature
+  if (!isPremiumUser) {
+    return (
+      <div className="rounded-lg border border-white/60 bg-white/90 px-3 py-2 text-xs text-support-2">
+        Exportação de PDF disponível apenas para planos Premium
+      </div>
+    );
   }
 
   // Check data availability
