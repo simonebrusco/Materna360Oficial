@@ -77,6 +77,12 @@ export default function Eu360Client() {
     isOpen: boolean
     type?: 'export' | 'advanced' | 'mentorship'
   }>({ isOpen: false })
+  const [currentPlan, setCurrentPlan] = useState('free')
+
+  // Load plan from localStorage after mount
+  useEffect(() => {
+    setCurrentPlan(getCurrentPlanId())
+  }, [])
 
   const gamification = useGamification()
 
