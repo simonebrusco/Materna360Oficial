@@ -85,18 +85,46 @@ const safeUtf = (value?: string | null): string => {
   }
 }
 
-export function MeuDiaClient({
-  dailyGreeting,
-  currentDateKey,
-  weekStartKey,
-  weekLabels,
-  plannerTitle,
-  profile,
-  dateKey,
-  allActivities,
-  recommendations,
-  initialBuckets,
-}: MeuDiaClientProps) {
+// Default values for Builder preview
+const DEFAULT_PROFILE: Profile = {
+  motherName: 'Mãe',
+  children: [{ name: 'Seu filho', ageMonths: 36 }],
+}
+
+const DEFAULT_ACTIVITIES: ChildActivity[] = []
+const DEFAULT_RECOMMENDATIONS: ChildRecommendation[] = []
+const DEFAULT_BUCKETS: AgeRange[] = [
+  { id: 'movimento', name: 'Movimento', ageMin: 0, ageMax: 60, activities: [] },
+  { id: 'linguagem', name: 'Linguagem', ageMin: 0, ageMax: 60, activities: [] },
+]
+
+export function MeuDiaClient(props?: MeuDiaClientProps) {
+  const isBuilder = props?.__builderPreview__ === true
+
+  // Use fallbacks in builder mode, otherwise use provided props
+  const dailyGreeting = isBuilder
+    ? props?.__fallbackGreeting__ || 'Olá, Mãe!'
+    : props?.dailyGreeting || 'Olá, Mãe!'
+  const currentDateKey = isBuilder
+    ? props?.__fallbackCurrentDateKey__ || new Date().toISOString().slice(0, 10)
+    : props?.currentDateKey || new Date().toISOString().slice(0, 10)
+  const weekStartKey = isBuilder
+    ? props?.__fallbackWeekStartKey__ || `${new Date().getFullYear()}-W01`
+    : props?.weekStartKey || `${new Date().getFullYear()}-W01`
+  const weekLabels = isBuilder
+    ? props?.__fallbackWeekLabels__ || []
+    : props?.weekLabels || []
+  const plannerTitle = isBuilder
+    ? props?.__fallbackPlannerTitle__ || 'Planner'
+    : props?.plannerTitle || 'Planner'
+  const profile = isBuilder
+    ? props?.__fallbackProfile__ || DEFAULT_PROFILE
+    : props?.profile || DEFAULT_PROFILE
+  const dateKey = currentDateKey
+  const allActivities = props?.allActivities || DEFAULT_ACTIVITIES
+  const recommendations = props?.recommendations || DEFAULT_RECOMMENDATIONS
+  const initialBuckets = props?.initialBuckets || DEFAULT_BUCKETS
+
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<string[]>([])
@@ -105,7 +133,7 @@ export function MeuDiaClient({
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
 
   const [trendOpen, setTrendOpen] = useState(false)
-  const canShowTrends = isClientFlagEnabled('FF_EMOTION_TRENDS')
+  const canShowTrends = isBuilder ? false : isClientFlagEnabled('FF_EMOTION_TRENDS')
 
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
