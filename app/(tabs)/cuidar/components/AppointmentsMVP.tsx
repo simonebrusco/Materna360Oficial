@@ -5,7 +5,7 @@ import { track } from '@/app/lib/telemetry'
 import { CalendarPlus, CalendarClock, Syringe, Stethoscope } from 'lucide-react'
 
 type Kind = 'vaccine' | 'consult'
-type Entry = { id: string; kind: Kind; title: string; date: string; notes?: string }
+type Entry = { id: string; kind: Kind; title: string; date: string; notes?: string; dateStr?: string }
 
 type Props = { storageKey?: string }
 const keyOf = (s?: string) => s ?? 'cuidar:appointments'
@@ -40,13 +40,28 @@ export function AppointmentsMVP({ storageKey }: Props) {
     setDate('')
   }
 
-  const upcoming = list
-    .filter((e) => new Date(e.date).getTime() >= Date.now())
-    .sort((a, b) => a.date.localeCompare(b.date))
+  const [displayData, setDisplayData] = React.useState<{
+    upcoming: (Entry & { dateStr: string })[]
+    past: (Entry & { dateStr: string })[]
+  }>({ upcoming: [], past: [] })
 
-  const past = list
-    .filter((e) => new Date(e.date).getTime() < Date.now())
-    .sort((a, b) => b.date.localeCompare(a.date))
+  // Format dates on client after mount
+  React.useEffect(() => {
+    const withDates = list.map(e => ({
+      ...e,
+      dateStr: new Date(e.date).toLocaleDateString()
+    }))
+
+    const upcoming = withDates
+      .filter((e) => new Date(e.date).getTime() >= Date.now())
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    const past = withDates
+      .filter((e) => new Date(e.date).getTime() < Date.now())
+      .sort((a, b) => b.date.localeCompare(a.date))
+
+    setDisplayData({ upcoming, past })
+  }, [list])
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5" suppressHydrationWarning>
@@ -107,7 +122,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
           <CalendarClock className="h-4 w-4 text-[#2f3a56]" /> Próximos
         </h4>
         <ul className="flex flex-col gap-2">
-          {upcoming.map((e) => (
+          {displayData.upcoming.map((e) => (
             <li key={e.id} className="flex items-center justify-between rounded-xl border px-3 py-2">
               <div className="flex items-center gap-2">
                 {e.kind === 'vaccine' ? (
@@ -118,14 +133,14 @@ export function AppointmentsMVP({ storageKey }: Props) {
                 <div>
                   <div className="text-[14px] font-medium">{e.title}</div>
                   <div className="text-[12px] text-[#545454]">
-                    {new Date(e.date).toLocaleDateString()}
+                    {e.dateStr}
                   </div>
                 </div>
               </div>
               <span className="rounded-full border px-2 py-0.5 text-[11px]">Agendado</span>
             </li>
           ))}
-          {upcoming.length === 0 && (
+          {displayData.upcoming.length === 0 && (
             <li className="text-[12px] text-[#545454]">Sem registros futuros.</li>
           )}
         </ul>
@@ -135,7 +150,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
       <section>
         <h4 className="text-[14px] font-semibold mb-2">Passados</h4>
         <ul className="flex flex-col gap-2">
-          {past.map((e) => (
+          {displayData.past.map((e) => (
             <li key={e.id} className="flex items-center justify-between rounded-xl border px-3 py-2">
               <div className="flex items-center gap-2">
                 {e.kind === 'vaccine' ? (
@@ -146,7 +161,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
                 <div>
                   <div className="text-[14px] font-medium">{e.title}</div>
                   <div className="text-[12px] text-[#545454]">
-                    {new Date(e.date).toLocaleDateString()}
+                    {e.dateStr}
                   </div>
                 </div>
               </div>
@@ -155,7 +170,7 @@ export function AppointmentsMVP({ storageKey }: Props) {
               </span>
             </li>
           ))}
-          {past.length === 0 && <li className="text-[12px] text-[#545454]">Sem registros passados.</li>}
+          {displayData.past.length === 0 && <li className="text-[12px] text-[#545454]">Sem registros passados.</li>}
         </ul>
       </section>
     </div>
