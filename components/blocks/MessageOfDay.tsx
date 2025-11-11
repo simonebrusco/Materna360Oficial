@@ -23,7 +23,14 @@ const getTodayDateKey = () => {
     day: '2-digit',
   })
 
-  return formatter.format(new Date())
+  const parts = formatter.formatToParts(new Date()).reduce((acc, part) => {
+    if (part.type === 'year' || part.type === 'month' || part.type === 'day') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, {})
+
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 const hashDateKey = (value: string) => {
