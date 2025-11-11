@@ -26,7 +26,6 @@ export default function Health() {
       <hr style={{ margin: '24px 0', border: 'none', borderTop: '1px solid #e0e0e0' }} />
       <footer style={{ fontSize: '12px', color: '#666' }}>
         <p>Status: Ready for Builder preview</p>
-        <p>Time: {new Date().toISOString()}</p>
       </footer>
     </main>
   );
