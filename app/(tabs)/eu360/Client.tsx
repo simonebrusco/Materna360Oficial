@@ -135,7 +135,6 @@ export default function Eu360Client() {
   }
 
   const currentUpsellConfig = upsellSheet.type ? upsellSheetConfig[upsellSheet.type] : null
-  const currentPlan: 'Free' | 'Plus' | 'Premium' = 'Free'
 
   const content = (
     <PageTemplate
