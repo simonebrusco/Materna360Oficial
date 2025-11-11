@@ -162,13 +162,18 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     }
   }, [])
 
-  // Load planner items from persistence on mount
+  // Load planner items from persistence on mount (guarded for iframe)
   useEffect(() => {
-    const weekKey = getCurrentWeekKey()
-    const persistKey = `planner:${weekKey}`
-    const savedItems = load<PlannerItem[]>(persistKey, [])
-    setPlannerItems(savedItems || [])
-  }, [])
+    if (builderMode) return // Skip heavy operations in builder mode
+    try {
+      const weekKey = getCurrentWeekKey()
+      const persistKey = `planner:${weekKey}`
+      const savedItems = load<PlannerItem[]>(persistKey, [])
+      setPlannerItems(savedItems || [])
+    } catch {
+      // Silently fail if localStorage unavailable
+    }
+  }, [builderMode])
 
   const handleAddNote = () => {
     if (noteText.trim()) {
