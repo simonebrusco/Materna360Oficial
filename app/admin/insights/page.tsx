@@ -139,5 +139,3 @@ export default function InsightsPage() {
     </TelemetryCtx.Provider>
   );
 }
-
-export { useTelemetryContext };
