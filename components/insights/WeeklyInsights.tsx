@@ -107,9 +107,9 @@ export default function WeeklyInsights() {
             </p>
             <p className="text-xs text-support-2 mt-1">Dica: tente repetir hábitos desse dia.</p>
             <div className="mt-4">
-              <Button 
-                variant="default" 
-                size="sm" 
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => {
                   try {
                     track('insight_click', { area: 'eu360', which: 'best-day' });
