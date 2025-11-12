@@ -9,8 +9,9 @@ import { PaywallBanner } from '@/components/ui/PaywallBanner'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { PageGrid } from '@/components/common/PageGrid'
 import { PlansTable } from '@/components/paywall/PlansTable'
+import { getCurrentPlanId, setCurrentPlanId } from '@/app/lib/planClient'
 
-type PlanId = 'free' | 'essencial' | 'premium'
+type PlanId = 'free' | 'plus' | 'premium'
 
 interface Plan {
   id: PlanId
@@ -22,8 +23,8 @@ interface Plan {
   iconName: 'place' | 'star' | 'crown'
   isPrimary: boolean
   cta: string
-  features: string[] // 3 key features
-  fullFeatures: string[] // all features shown in expanded view
+  features: string[]
+  fullFeatures: string[]
 }
 
 const PLANS: Plan[] = [
@@ -51,8 +52,8 @@ const PLANS: Plan[] = [
     ],
   },
   {
-    id: 'essencial',
-    name: 'Essencial',
+    id: 'plus',
+    name: 'Plus',
     price: '29',
     period: 'ao mês',
     description: 'Desbloqueie recomendações personalizadas e relatórios semanais.',
@@ -90,7 +91,7 @@ const PLANS: Plan[] = [
       'Acesso antecipado a novos recursos',
     ],
     fullFeatures: [
-      'Tudo do Essencial, mais:',
+      'Tudo do Plus, mais:',
       'Mentorias mensais com profissionais',
       'Consultoria familiar personalizada',
       'Planos avançados com IA generativa',
@@ -100,52 +101,85 @@ const PLANS: Plan[] = [
   },
 ]
 
-const FEATURE_COMPARISON = [
-  { category: 'Fundamentals', icon: 'heart' },
-  { category: 'Analytics', icon: 'bar-chart-2' },
-  { category: 'Support', icon: 'message-circle' },
-] as const
-
 /**
  * Compute the next plan tier based on current plan
- * Progression: free → essencial → premium
+ * Progression: free → plus → premium
  */
 function getNextPlanId(current: PlanId): PlanId {
-  if (current === 'free') return 'essencial'
-  if (current === 'essencial') return 'premium'
+  if (current === 'free') return 'plus'
+  if (current === 'plus') return 'premium'
   return 'premium'
 }
 
 export default function PlanosPage() {
   const [expandedPlan, setExpandedPlan] = useState<PlanId | null>(null)
-  const [showBanner, setShowBanner] = useState(false)
+  const [currentPlanId, setLocalPlanId] = useState<PlanId>('free')
+  const [loading, setLoading] = useState(false)
 
-  // TODO: Wire to real user plan from context/state
-  const currentPlanId: PlanId = 'free'
-
-  // Track page view on mount
+  // Load current plan from localStorage on mount
   useEffect(() => {
-    track('paywall.view', { page: 'plans_overview' })
+    const planId = getCurrentPlanId()
+    setLocalPlanId(planId)
+    
+    // Track page view with plan info
+    track('plan_view', {
+      page: 'plans_overview',
+      currentPlan: planId,
+      timestamp: new Date().toISOString(),
+    })
   }, [])
 
+  /**
+   * Handle starting a 7-day trial
+   */
+  const handleStartTrial = (planId: PlanId) => {
+    if (planId === 'free') return
+    
+    try {
+      setLoading(true)
+      
+      // Emit telemetry
+      track('plan_start_trial', {
+        targetPlan: planId,
+        source: 'plans_page',
+        timestamp: new Date().toISOString(),
+      })
+      
+      // Set plan to the trial plan
+      setCurrentPlanId(planId)
+      setLocalPlanId(planId)
+      
+      // Emit success event
+      track('plan_upgrade_success', {
+        type: 'trial_started',
+        plan: planId,
+        durationDays: 7,
+        timestamp: new Date().toISOString(),
+      })
+    } catch (error) {
+      console.error('Failed to start trial:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /**
+   * Handle upgrade to premium plan (checkout)
+   */
   const handleUpgrade = (planId: PlanId) => {
-    track('paywall.click', {
+    track('paywall_open', {
       action: 'upgrade_click',
-      id: planId,
-      plan: planId,
+      planId,
+      source: 'plans_page',
+      timestamp: new Date().toISOString(),
     })
 
-    const plan = PLANS.find((p) => p.id === planId)
-    if (!plan) return
-
-    if (planId === 'essencial') {
-      const url = process.env.NEXT_PUBLIC_CHECKOUT_ESSENCIAL_URL || process.env.NEXT_PUBLIC_CHECKOUT_PLUS_URL || '#'
-      if (url !== '#') window.location.href = url
-      else alert('URL de checkout não configurada')
-    } else if (planId === 'premium') {
-      const url = process.env.NEXT_PUBLIC_CHECKOUT_PREMIUM_URL || '#'
-      if (url !== '#') window.location.href = url
-      else alert('URL de checkout não configurada')
+    // In production, this would redirect to Stripe/payment provider
+    const checkoutUrl = process.env.NEXT_PUBLIC_CHECKOUT_URL || '#'
+    if (checkoutUrl !== '#') {
+      window.location.href = checkoutUrl
+    } else {
+      alert('URL de checkout não configurada')
     }
   }
 
@@ -155,17 +189,6 @@ export default function PlanosPage() {
         title="Planos que Crescem com Você"
         subtitle="Escolha o plano ideal para sua jornada de maternidade e bem-estar familiar."
       >
-        {/* Feature Limit Banner (soft paywall) */}
-        {showBanner && (
-          <PaywallBanner
-            title="Você atingiu o limite do seu plano atual."
-            description="Que tal conhecer as vantagens do próximo nível?"
-            featureName="Gerador de Ideias"
-            onUpgradeClick={() => handleUpgrade(getNextPlanId(currentPlanId))}
-            onDismiss={() => setShowBanner(false)}
-          />
-        )}
-
         {/* Plans Grid */}
         <PageGrid className="gap-6 lg:gap-8">
           {PLANS.map((plan) => (
@@ -272,10 +295,21 @@ export default function PlanosPage() {
                 )}
               </div>
 
-              {/* CTA */}
-              <div className="px-5 py-4 border-t border-white/40">
+              {/* CTA - Trial or Upgrade */}
+              <div className="px-5 py-4 border-t border-white/40 space-y-2">
+                {plan.id !== 'free' && (
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() => handleStartTrial(plan.id)}
+                    disabled={loading || currentPlanId === plan.id}
+                    className="w-full"
+                  >
+                    {loading ? 'Processando...' : 'Teste 7 dias grátis'}
+                  </Button>
+                )}
                 <Button
-                  variant={plan.isPrimary ? 'primary' : 'secondary'}
+                  variant={plan.id === 'free' ? 'secondary' : 'ghost'}
                   size="md"
                   onClick={() => {
                     if (plan.id !== 'free') {
@@ -284,7 +318,7 @@ export default function PlanosPage() {
                   }}
                   className="w-full"
                 >
-                  {plan.cta}
+                  {plan.id === 'free' ? 'Acessar' : 'Ver planos completos'}
                 </Button>
               </div>
             </Card>
@@ -309,7 +343,7 @@ export default function PlanosPage() {
         {/* FAQ Section */}
         <div>
           <h2 className="text-lg font-semibold text-support-1 mb-4">
-            D��vidas?
+            Dúvidas?
           </h2>
           <div className="space-y-3">
             {[
@@ -342,12 +376,18 @@ export default function PlanosPage() {
           <p className="text-sm text-support-1 mb-4">
             Ainda tem dúvidas? Entre em contato conosco
           </p>
-          <Button variant="primary" size="md" onClick={() => {
-            track('paywall.click', {
-              action: 'contact_support',
-              context: 'plans_page',
-            })
-          }}>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => {
+              track('paywall_open', {
+                action: 'contact_support',
+                source: 'plans_page',
+                timestamp: new Date().toISOString(),
+              })
+              // In production, would open chat/contact form
+            }}
+          >
             Conversar com suporte
           </Button>
         </Card>
