@@ -3,23 +3,40 @@ import * as React from 'react';
 import { useTelemetry } from './store/useTelemetry';
 import { downloadText } from './utils/csv';
 import { readFileAsText } from './utils/json';
+import Kpis from './Kpis';
+import Filters from './Filters';
+import Chart from './Chart';
 
-const FLAG = process.env.NEXT_PUBLIC_FF_INTERNAL_INSIGHTS === '1';
+function flagEnabled() {
+  if (process.env.NEXT_PUBLIC_FF_INTERNAL_INSIGHTS === '1') return true;
+  if (typeof window !== 'undefined') {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('insights') === '1') return true;
+    try { if (localStorage.getItem('m360.insights_override') === '1') return true; } catch {}
+  }
+  return false;
+}
+const FLAG = flagEnabled();
 
 export default function InsightsPage(){
   if(!FLAG){
     return (
       <main className="max-w-screen-md mx-auto p-6">
-        <h1 className="text-xl font-semibold">/admin/insights</h1>
+        <h1 className="text-xl font-semibold">Insights (Restricted)</h1>
         <p className="text-sm text-neutral-600 mt-2">
-          This panel is disabled. Set <code>NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1</code> (Preview) to enable.
+          This page is gated by <code>FF_INTERNAL_INSIGHTS</code>.
         </p>
       </main>
     );
   }
 
   const fileRef = React.useRef<HTMLInputElement>(null);
-  const { filtered, total, page, pageSize, setPage, seed, clear, exportCSV, exportJSON, importJSON } = useTelemetry();
+  const {
+    filtered, total, page, pageSize, setPage,
+    seed, clear, exportCSV, exportJSON, importJSON,
+    types, routes, range, toggleType, toggleRoute, setRange, clearFilters,
+    kpiTotal, kpiTopType, kpiTopRoute, kpiLast7d, daily
+  } = useTelemetry();
 
   const start = (page-1)*pageSize;
   const end = Math.min(start + pageSize, filtered.length);
@@ -35,18 +52,15 @@ export default function InsightsPage(){
     e.target.value = '';
   }
 
-  function handleExportJSON() {
-    downloadText('telemetry.json', exportJSON());
-  }
-  function handleExportCSV() {
-    downloadText('telemetry.csv', exportCSV());
-  }
+  function handleExportJSON() { downloadText('telemetry.json', exportJSON()); }
+  function handleExportCSV() { downloadText('telemetry.csv', exportCSV()); }
 
   return (
     <main className="max-w-screen-xl mx-auto p-6 pb-28">
       <h1 className="text-2xl font-semibold tracking-tight">Telemetry Panel</h1>
       <p className="text-sm text-neutral-600 mb-4">Local & read-only (no data leaves your browser).</p>
 
+      {/* Toolbar */}
       <div className="flex flex-wrap gap-2 items-center mb-4">
         <button className="px-3 py-2 rounded-xl ring-1 ring-black/10 bg-white hover:bg-neutral-50" onClick={()=>seed(2000)}>Seed 2,000</button>
         <button className="px-3 py-2 rounded-xl ring-1 ring-black/10 bg-white hover:bg-neutral-50" onClick={()=>seed(500)}>Seed 500</button>
@@ -62,6 +76,32 @@ export default function InsightsPage(){
         <span className="ml-auto text-sm text-neutral-600">Events: <strong>{total}</strong> • Showing {start+1}-{end}</span>
       </div>
 
+      {/* KPIs */}
+      <div className="mb-4">
+        <Kpis total={kpiTotal} topType={kpiTopType} topRoute={kpiTopRoute} last7d={kpiLast7d}/>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-4">
+        <Filters
+          allTypes={['page_view','nav_click','card_click','coach','pdf_export_attempt','paywall_shown']}
+          allRoutes={['/meu-dia','/eu360','/cuidar','/descobrir','/maternar','/planos','/admin/insights']}
+          activeTypes={types as any}
+          activeRoutes={routes as any}
+          range={range}
+          onToggleType={toggleType}
+          onToggleRoute={toggleRoute}
+          onRange={setRange}
+          onClear={clearFilters}
+        />
+      </div>
+
+      {/* Chart */}
+      <div className="mb-4">
+        <Chart data={daily}/>
+      </div>
+
+      {/* Table */}
       <div className="p-3 overflow-x-auto rounded-2xl shadow-sm ring-1 ring-black/5 bg-white">
         <table className="min-w-[720px] w-full text-sm">
           <thead>
@@ -89,12 +129,12 @@ export default function InsightsPage(){
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-        <div className="text-sm text-neutral-600">Page {page} / {totalPages}</div>
+        <div className="text-sm text-neutral-600">Page {page} / {Math.max(1, Math.ceil(filtered.length / pageSize))}</div>
         <div className="flex gap-2">
           <button disabled={page<=1} onClick={()=>setPage(1)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">« First</button>
           <button disabled={page<=1} onClick={()=>setPage(page-1)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">‹ Prev</button>
-          <button disabled={page>=totalPages} onClick={()=>setPage(page+1)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">Next ›</button>
-          <button disabled={page>=totalPages} onClick={()=>setPage(totalPages)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">Last »</button>
+          <button disabled={page>=Math.max(1, Math.ceil(filtered.length / pageSize))} onClick={()=>setPage(page+1)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">Next ›</button>
+          <button disabled={page>=Math.max(1, Math.ceil(filtered.length / pageSize))} onClick={()=>setPage(Math.max(1, Math.ceil(filtered.length / pageSize)))} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">Last »</button>
         </div>
       </div>
     </main>
