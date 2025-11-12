@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
-import { SoftCard } from '@/components/common/SoftCard';
 import { Button } from '@/components/ui/Button';
 import { useTelemetry } from './store/useTelemetry';
 
