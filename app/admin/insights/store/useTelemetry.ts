@@ -18,6 +18,8 @@ function write(arr: TelemetryEvent[]) {
   localStorage.setItem(KEY, JSON.stringify(arr));
 }
 
+export type DateRange = { from: number; to: number } | null;
+
 export type TelemetryState = {
   data: TelemetryEvent[];
   filtered: TelemetryEvent[];
@@ -30,18 +32,98 @@ export type TelemetryState = {
   exportCSV: () => string;
   importJSON: (text: string) => { ok: boolean; added: number; total: number; error?: string };
   setPage: (p: number) => void;
+  types: Set<string>;
+  routes: Set<string>;
+  range: DateRange;
+  toggleType: (t: string) => void;
+  toggleRoute: (r: string) => void;
+  setRange: (r: DateRange) => void;
+  clearFilters: () => void;
+  kpiTotal: number;
+  kpiTopType: { type: string; count: number } | null;
+  kpiTopRoute: { route: string; count: number } | null;
+  kpiLast7d: number;
+  daily: Array<{ date: string; count: number }>;
 };
 
 export function useTelemetry(): TelemetryState {
   const [data, setData] = React.useState<TelemetryEvent[]>([]);
   const [page, setPage] = React.useState(1);
+  const [types, setTypes] = React.useState<Set<string>>(new Set());
+  const [routes, setRoutes] = React.useState<Set<string>>(new Set());
+  const [range, setRange] = React.useState<DateRange>(null);
   const pageSize = 50;
 
   // initial read
   React.useEffect(() => { setData(read()); }, []);
 
-  const filtered = React.useMemo(() => data, [data]);
-  const total = filtered.length;
+  // Filter logic
+  const filtered = React.useMemo(() => {
+    let result = data;
+
+    // Type filter
+    if (types.size > 0) {
+      result = result.filter(e => types.has(e.type));
+    }
+
+    // Route filter
+    if (routes.size > 0) {
+      result = result.filter(e => e.route && routes.has(e.route));
+    }
+
+    // Date range filter
+    if (range) {
+      result = result.filter(e => e.ts >= range.from && e.ts <= range.to);
+    }
+
+    return result.sort((a, b) => b.ts - a.ts);
+  }, [data, types, routes, range]);
+
+  // KPIs
+  const kpiTotal = data.length;
+  const kpiTopType = React.useMemo(() => {
+    if (filtered.length === 0) return null;
+    const counts = new Map<string, number>();
+    filtered.forEach(e => {
+      counts.set(e.type, (counts.get(e.type) || 0) + 1);
+    });
+    let max: { type: string; count: number } | null = null;
+    counts.forEach((count, type) => {
+      if (!max || count > max.count) max = { type, count };
+    });
+    return max;
+  }, [filtered]);
+
+  const kpiTopRoute = React.useMemo(() => {
+    if (filtered.length === 0) return null;
+    const counts = new Map<string, number>();
+    filtered.forEach(e => {
+      if (e.route) counts.set(e.route, (counts.get(e.route) || 0) + 1);
+    });
+    let max: { route: string; count: number } | null = null;
+    counts.forEach((count, route) => {
+      if (!max || count > max.count) max = { route, count };
+    });
+    return max;
+  }, [filtered]);
+
+  const kpiLast7d = React.useMemo(() => {
+    const now = Date.now();
+    const sevenDaysAgo = now - 1000 * 60 * 60 * 24 * 7;
+    return data.filter(e => e.ts >= sevenDaysAgo).length;
+  }, [data]);
+
+  // Daily aggregation
+  const daily = React.useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach(e => {
+      const date = new Date(e.ts).toISOString().split('T')[0];
+      map.set(date, (map.get(date) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [filtered]);
 
   function clear() {
     write([]); setData([]); setPage(1);
@@ -55,7 +137,7 @@ export function useTelemetry(): TelemetryState {
     for (let i = 0; i < n; i++) {
       arr.push({
         id: crypto.randomUUID(),
-        ts: Math.floor(now - Math.random() * 1000 * 60 * 60 * 24 * 21), // 21 days
+        ts: Math.floor(now - Math.random() * 1000 * 60 * 60 * 24 * 21),
         type: types[Math.floor(Math.random() * types.length)],
         route: routes[Math.floor(Math.random() * routes.length)],
       });
@@ -94,5 +176,33 @@ export function useTelemetry(): TelemetryState {
     }
   }
 
-  return { data, filtered, page, pageSize, total, clear, seed, exportJSON, exportCSV, importJSON, setPage };
+  function toggleType(t: string) {
+    const newTypes = new Set(types);
+    if (newTypes.has(t)) newTypes.delete(t);
+    else newTypes.add(t);
+    setTypes(newTypes);
+    setPage(1);
+  }
+
+  function toggleRoute(r: string) {
+    const newRoutes = new Set(routes);
+    if (newRoutes.has(r)) newRoutes.delete(r);
+    else newRoutes.add(r);
+    setRoutes(newRoutes);
+    setPage(1);
+  }
+
+  function clearFilters() {
+    setTypes(new Set());
+    setRoutes(new Set());
+    setRange(null);
+    setPage(1);
+  }
+
+  return {
+    data, filtered, page, pageSize, total: filtered.length,
+    clear, seed, exportJSON, exportCSV, importJSON, setPage,
+    types, routes, range, toggleType, toggleRoute, setRange, clearFilters,
+    kpiTotal, kpiTopType, kpiTopRoute, kpiLast7d, daily
+  };
 }
