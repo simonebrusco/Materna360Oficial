@@ -371,7 +371,7 @@ export default function Eu360Client() {
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {gratitudes.map((item, index) => (
                   <div key={`${item}-${index}`} className="rounded-2xl bg-secondary/70 p-4 text-sm text-support-1 shadow-soft">
-                    "{item}"
+                    &quot;{item}&quot;
                   </div>
                 ))}
               </div>
