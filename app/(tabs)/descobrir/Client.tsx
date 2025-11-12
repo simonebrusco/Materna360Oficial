@@ -189,28 +189,32 @@ export default function DiscoverClient() {
 
       if (isSaved) {
         updated.delete(id);
+        // Show toast for unsave
+        toast.info('Removido de Salvos');
+        // Fire unsave telemetry
+        track('discover_unsave', {
+          id,
+          source: 'card',
+          tab: 'descobrir',
+          component: 'DiscoverClient',
+        });
       } else {
         updated.add(id);
         // Increment daily save count after successful save
         incTodayCount();
+        // Show toast for save
+        toast.success('Salvo para depois');
+        // Fire save telemetry
+        track('discover_save', {
+          id,
+          source: 'card',
+          tab: 'descobrir',
+          component: 'DiscoverClient',
+        });
       }
 
       // Persist to localStorage
       save('saved:discover', Array.from(updated));
-
-      // Show toast
-      if (!isSaved) {
-        toast.success("Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.");
-      }
-
-      // Fire telemetry
-      track('discover.suggestion_saved', {
-        tab: 'descobrir',
-        component: 'DiscoverClient',
-        action: isSaved ? 'unsave' : 'save',
-        id,
-        isSaved: !isSaved,
-      });
 
       return updated;
     });
