@@ -73,16 +73,7 @@ export function ExportBlock() {
       </div>
 
       {/* Upgrade modal if user doesn't have access */}
-      {showUpgradeSheet && (
-        <UpgradeSheet
-          feature="Exportar Semana em PDF"
-          onClose={() => setShowUpgradeSheet(false)}
-          onUpgrade={() => {
-            // Allow them to try - they already clicked "Começar teste de 7 dias"
-            setHasAccess(true)
-          }}
-        />
-      )}
+      <UpgradeSheet open={showUpgradeSheet} onOpenChange={setShowUpgradeSheet} />
     </>
   )
 }
