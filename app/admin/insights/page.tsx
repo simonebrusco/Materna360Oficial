@@ -27,20 +27,26 @@ export default function InsightsPage(){
         <Button size="sm" variant="destructive" onClick={()=>clear()}>Clear</Button>
         <span className="m360-subtle">Eventos: {data.length}</span>
       </div>
-      <SoftCard className="p-3 overflow-x-auto">
+      <div className="p-3 overflow-x-auto rounded-2xl shadow-sm ring-1 ring-black/5 bg-white">
         <table className="min-w-[600px] w-full text-sm">
           <thead>
-            <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Rota</th>
+            <tr className="text-left border-b">
+              <th className="p-3">Data</th>
+              <th className="p-3">Tipo</th>
+              <th className="p-3">Rota</th>
             </tr>
           </thead>
           <tbody>
-            {data.map(e=><tr key={e.id}><td>{new Date(e.ts).toLocaleString()}</td><td>{e.type}</td><td>{e.route}</td></tr>)}
+            {data.map(e=>(
+              <tr key={e.id} className="border-b last:border-0">
+                <td className="p-3">{new Date(e.ts).toLocaleString()}</td>
+                <td className="p-3">{e.type}</td>
+                <td className="p-3">{e.route}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
-      </SoftCard>
+      </div>
     </SectionWrapper>
   );
 }
