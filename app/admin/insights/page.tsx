@@ -126,7 +126,7 @@ function InsightsBody(){
             {pageItems.length === 0 && (
               <tr>
                 <td className="p-6 text-center text-neutral-500" colSpan={4}>
-                  No events. Use "Seed 500" or "Seed 2,000" to generate test data.
+                  No events. Use &quot;Seed 500&quot; or &quot;Seed 2,000&quot; to generate test data.
                 </td>
               </tr>
             )}
