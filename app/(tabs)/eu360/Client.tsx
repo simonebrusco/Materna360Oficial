@@ -335,6 +335,10 @@ export default function Eu360Client() {
         </Card>
       </div>
 
+      <Reveal delay={270}>
+        <WeeklyInsights />
+      </Reveal>
+
       <Reveal delay={300}>
         <AchievementsPanel />
       </Reveal>
