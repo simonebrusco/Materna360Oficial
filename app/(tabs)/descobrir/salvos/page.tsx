@@ -47,11 +47,11 @@ export default function DiscoverSavedPage() {
         {!hasItems ? (
           <div className="rounded-2xl border border-white/60 bg-white/95 backdrop-blur-[1px] shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-6">
             <p className="text-base text-support-2">
-              Você ainda n��o salvou ideias. Explore o{' '}
+              Você ainda não salvou ideias. Explore o{' '}
               <Link href="/descobrir" className="font-semibold text-ink-1 underline hover:text-primary transition-colors">
                 Descobrir
               </Link>{' '}
-              e toque em "Salvar para depois".
+              e toque em &quot;Salvar para depois&quot;.
             </p>
           </div>
         ) : (
