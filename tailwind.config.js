@@ -99,6 +99,10 @@ module.exports = {
 
     // background colors (opacity variants)
     'bg-primary/10', 'bg-primary/20', 'bg-primary/5', 'hover:bg-primary/10', 'hover:bg-primary/20', 'hover:bg-primary/5',
+
+    // sheet / overlay utilities
+    'fixed', 'inset-0', 'inset-x-0', 'bottom-0', 'z-50', 'bg-black/50', 'backdrop-blur-sm',
+    'max-w-md', 'rounded-2xl', 'shadow-lg', 'transition', 'ease-out', 'duration-200',
   ],
   plugins: [],
 }
