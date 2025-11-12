@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { PageGrid } from '@/components/common/PageGrid'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { ChildDiary } from './components/ChildDiary'
+import { ChildDiaryCard } from './components/ChildDiaryCard'
 import { AppointmentsMVP } from './components/AppointmentsMVP'
 import { BreathAudios } from './components/BreathAudios'
 import { SectionH2 } from '@/components/common/Headings'
@@ -30,6 +31,8 @@ export default function CuidarClient({ recipesSection }: Props) {
           <FilterPill>Consultas</FilterPill>
         </div>
       </Card>
+
+      <ChildDiaryCard />
 
       <PageGrid>
         <Card>
