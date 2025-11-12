@@ -1,175 +1,143 @@
 'use client';
-
 import * as React from 'react';
-import { isEnabled } from '@/app/lib/flags.client';
-import { readLocalEvents, clearLocalEvents } from '@/app/lib/telemetry';
-import ExportButton from '@/components/pdf/ExportButton';
-import MiniBar from '@/components/charts/MiniBar';
+import { useTelemetry, UseTelemetryState } from './store/useTelemetry';
+import { downloadCsv } from './utils/csv';
+import { downloadJson } from './utils/json';
+import Filters from './Filters';
+import Kpis from './Kpis';
+import Chart from './Chart';
+import Table from './Table';
+import { Button } from '@/components/ui/Button';
 
-type Ev = { event: string; payload?: Record<string, unknown>; ts: number };
+const FLAG = process.env.NEXT_PUBLIC_FF_INTERNAL_INSIGHTS === '1';
 
-function byDay(ts: number) {
-  const d = new Date(ts);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
+// Context to share store across child components
+const TelemetryCtx = React.createContext<UseTelemetryState | null>(null);
+export const useTelemetryContext = () => {
+  const ctx = React.useContext(TelemetryCtx);
+  if (!ctx) throw new Error('useTelemetryContext must be used inside TelemetryCtx.Provider');
+  return ctx;
+};
 
 export default function InsightsPage() {
-  const allowed = isEnabled('FF_INTERNAL_INSIGHTS');
-  const [rows, setRows] = React.useState<Ev[]>([]);
-  const [query, setQuery] = React.useState('');
-  const [range, setRange] = React.useState<'7d' | '28d'>('7d');
-  const [bucket, setBucket] = React.useState<Record<number, number>>({});
-
-  React.useEffect(() => {
-    if (!allowed) return;
-    const data = readLocalEvents().sort((a: Ev, b: Ev) => a.ts - b.ts);
-    setRows(data);
-  }, [allowed]);
-
-  React.useEffect(() => {
-    const days = range === '28d' ? 28 : 7;
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    const filtered = rows.filter((r) => r.ts >= cutoff && (!query || r.event.includes(query)));
-    const grouped: Record<number, number> = {};
-    filtered.forEach((r) => {
-      const k = byDay(r.ts);
-      grouped[k] = (grouped[k] || 0) + 1;
-    });
-    setBucket(grouped);
-  }, [rows, query, range]);
-
-  if (!allowed) {
+  if (!FLAG) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold text-ink-1">Insights (Restricted)</h1>
-        <p className="text-support-1 mt-2">
-          This page is gated by <code className="bg-support-3/20 px-1.5 py-0.5 rounded text-xs">FF_INTERNAL_INSIGHTS</code>.
+      <main className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 pb-24 mt-6">
+        <h1 className="text-2xl font-bold text-gray-900">Telemetry Panel</h1>
+        <p className="text-gray-600 mt-2">
+          This panel is disabled. Set <code className="bg-gray-100 px-2 py-1 rounded">
+            NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1
+          </code> to enable.
         </p>
-      </div>
+      </main>
     );
   }
 
-  // build series ordered by day asc
-  const days = range === '28d' ? 28 : 7;
-  const series: number[] = Array.from({ length: days }).map((_, i) => {
-    const k = byDay(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000);
-    return bucket[k] || 0;
-  });
+  const store = useTelemetry();
+  const {
+    exportCsv,
+    exportJson,
+    importJson,
+    clearLocal,
+    seedLocal,
+    filtered,
+  } = store;
 
-  const total = rows.length;
-  const last24 = rows.filter((r) => r.ts >= Date.now() - 24 * 60 * 60 * 1000).length;
-
-  const handleExportCSV = () => {
-    const data = rows.filter((r) => !query || r.event.includes(query));
-    const header = 'ts,event,payload\n';
-    const body = data
-      .map((r) => {
-        const p = r.payload ? JSON.stringify(r.payload).replaceAll('"', '""') : '';
-        return `${new Date(r.ts).toISOString()},${r.event},"${p}"`;
-      })
-      .join('\n');
-    const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'materna360-insights.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+  const onExportCsv = () => {
+    downloadCsv('telemetry.csv', exportCsv());
   };
 
-  const handleClearData = () => {
-    if (!confirm('Clear all local telemetry events? This cannot be undone.')) return;
-    clearLocalEvents();
-    setRows([]);
+  const onExportJson = () => {
+    downloadJson('telemetry.json', exportJson());
+  };
+
+  const onImportJson = async () => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'application/json';
+    inp.onchange = async () => {
+      const f = inp.files?.[0];
+      if (!f) return;
+      const text = await f.text();
+      const res = importJson(text);
+      alert(
+        res.ok
+          ? `Imported ${res.count} events.`
+          : `Import failed: ${res.error}`
+      );
+    };
+    inp.click();
+  };
+
+  const onClearLocal = () => {
+    if (confirm('Clear all local telemetry events?')) {
+      clearLocal();
+      alert('Cleared.');
+    }
+  };
+
+  const onSeed = () => {
+    const n = seedLocal(2000);
+    alert(`Seeded ${n} events.`);
   };
 
   return (
-    <div className="mx-auto max-w-[960px] p-4 md:p-8 bg-white min-h-screen">
-      {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold text-ink-1">Insights</h1>
-        <p className="text-support-1 mt-2">
-          Local telemetry (preview-only) for product decisions. Events are stored in localStorage and cleared on app data reset.
-        </p>
-      </header>
+    <TelemetryCtx.Provider value={store}>
+      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 mt-6">
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Telemetry Panel</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Local &amp; read-only (no data leaves your browser).
+          </p>
+        </header>
 
-      {/* Controls */}
-      <div className="rounded-2xl border border-white/60 bg-white/90 p-4 mb-6 flex flex-wrap gap-3 items-center shadow-soft">
-        <input
-          className="rounded-xl border border-white/60 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-[200px]"
-          placeholder="Filter by event name (e.g., coach., paywall., planner.)"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <select
-          className="rounded-xl border border-white/60 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
-          value={range}
-          onChange={(e) => setRange(e.target.value as any)}
-        >
-          <option value="7d">Last 7 days</option>
-          <option value="28d">Last 28 days</option>
-        </select>
-        <button
-          className="rounded-xl px-4 py-2 bg-primary text-white font-medium hover:opacity-95 active:scale-[0.99] transition-all"
-          onClick={handleExportCSV}
-        >
-          Export CSV
-        </button>
-        <ExportButton variant="insights" />
-        <button
-          className="rounded-xl px-4 py-2 border border-white/60 bg-white/90 font-medium text-support-1 hover:bg-white/95 active:scale-[0.99] transition-all"
-          onClick={handleClearData}
-        >
-          Clear data
-        </button>
-        <span className="ml-auto text-xs text-support-2 font-medium">
-          Total: <strong>{total}</strong> · Last 24h: <strong>{last24}</strong>
-        </span>
-      </div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Button size="sm" variant="primary" onClick={onExportCsv}>
+            Export CSV
+          </Button>
+          <Button size="sm" variant="primary" onClick={onExportJson}>
+            Export JSON
+          </Button>
+          <Button size="sm" variant="primary" onClick={onImportJson}>
+            Import JSON
+          </Button>
+          <Button size="sm" variant="destructive" onClick={onClearLocal}>
+            Clear Local
+          </Button>
+          <Button size="sm" variant="primary" onClick={onSeed}>
+            Seed ×2000
+          </Button>
+          <span className="text-xs text-gray-600 ml-2 flex items-center">
+            Filtered: <strong className="ml-1">{filtered.length}</strong>
+          </span>
+        </div>
 
-      {/* Chart */}
-      <div className="rounded-2xl border border-white/60 bg-white/90 p-4 mb-6 shadow-soft overflow-x-auto">
-        <MiniBar values={series} width={Math.min(600, 50 * days)} height={160} />
-        <p className="text-xs text-support-2 mt-2">Events per day (range: {range}).</p>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-2xl border border-white/60 bg-white/90 shadow-soft overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/60 bg-white/60">
-              <th className="text-left p-3 font-semibold text-support-1">Time</th>
-              <th className="text-left p-3 font-semibold text-support-1">Event</th>
-              <th className="text-left p-3 font-semibold text-support-1">Payload</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows
-              .filter((r) => !query || r.event.includes(query))
-              .slice(-400) // clamp to 400 for performance
-              .reverse()
-              .map((r, idx) => (
-                <tr
-                  key={idx}
-                  className="border-b border-white/60 last:border-b-0 align-top hover:bg-white/40 transition-colors"
-                >
-                  <td className="p-3 text-xs text-support-2 whitespace-nowrap">
-                    {new Date(r.ts).toLocaleString('pt-BR')}
-                  </td>
-                  <td className="p-3 text-support-1 font-medium">{r.event}</td>
-                  <td className="p-3 text-xs text-support-2 whitespace-pre-wrap font-mono opacity-80">
-                    {r.payload ? JSON.stringify(r.payload, null, 2) : '—'}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-        {rows.length === 0 && (
-          <div className="p-6 text-center text-support-2">
-            <p className="text-sm">No telemetry events yet. Start interacting with the app to see events here.</p>
+        <div className="space-y-6">
+          <div>
+            <Filters filters={store.filters} setFilters={store.setFilters} />
           </div>
-        )}
-      </div>
-    </div>
+
+          <div>
+            <Kpis kpis={store.kpis} />
+          </div>
+
+          <div>
+            <Chart series={store.series} />
+          </div>
+
+          <div>
+            <Table
+              filtered={store.filtered}
+              page={store.page}
+              pageSize={store.pageSize}
+              totalPages={store.totalPages}
+              setPage={store.setPage}
+            />
+          </div>
+        </div>
+      </main>
+    </TelemetryCtx.Provider>
   );
 }
+
+export { useTelemetryContext };
