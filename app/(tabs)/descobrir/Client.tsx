@@ -189,28 +189,32 @@ export default function DiscoverClient() {
 
       if (isSaved) {
         updated.delete(id);
+        // Show toast for unsave
+        toast.info('Removido de Salvos');
+        // Fire unsave telemetry
+        track('discover_unsave', {
+          id,
+          source: 'card',
+          tab: 'descobrir',
+          component: 'DiscoverClient',
+        });
       } else {
         updated.add(id);
         // Increment daily save count after successful save
         incTodayCount();
+        // Show toast for save
+        toast.success('Salvo para depois');
+        // Fire save telemetry
+        track('discover_save', {
+          id,
+          source: 'card',
+          tab: 'descobrir',
+          component: 'DiscoverClient',
+        });
       }
 
       // Persist to localStorage
       save('saved:discover', Array.from(updated));
-
-      // Show toast
-      if (!isSaved) {
-        toast.success("Ideia salva com sucesso! Você pode acessá-la mais tarde em 'Salvos'.");
-      }
-
-      // Fire telemetry
-      track('discover.suggestion_saved', {
-        tab: 'descobrir',
-        component: 'DiscoverClient',
-        action: isSaved ? 'unsave' : 'save',
-        id,
-        isSaved: !isSaved,
-      });
 
       return updated;
     });
@@ -249,19 +253,17 @@ export default function DiscoverClient() {
     >
 
       {/* Saved Count Chip */}
-      <div suppressHydrationWarning>
-        {savedCount > 0 && (
-          <div className="mb-6">
-            <Link
-              href="/descobrir/salvos"
-              className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
-              aria-label={`Ver itens salvos (${savedCount})`}
-            >
-              Salvos ({savedCount})
-            </Link>
-          </div>
-        )}
-      </div>
+      {savedCount > 0 && (
+        <div className="mb-6 suppressHydrationWarning" suppressHydrationWarning>
+          <Link
+            href="/descobrir/salvos"
+            className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
+            aria-label={`Ver itens salvos (${savedCount})`}
+          >
+            Salvos ({savedCount})
+          </Link>
+        </div>
+      )}
 
       {/* Filter Pills: Time Window */}
       {selectedTimeWindow || selectedLocation || selectedMood ? (
@@ -422,8 +424,7 @@ export default function DiscoverClient() {
       )}
 
       {/* Suggestions Grid */}
-      <div suppressHydrationWarning>
-        {filteredSuggestions.length > 0 ? (
+      {filteredSuggestions.length > 0 ? (
         <PageGrid cols={2}>
           {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
@@ -449,44 +450,54 @@ export default function DiscoverClient() {
                   <AppIcon name="time" size={14} decorative />
                   {suggestion.durationMin} minutos
                 </p>
-                <div className="flex gap-2 items-center">
-                  {showSaveForLater ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleSaveSuggestion(suggestion.id)}
-                      disabled={saveDisabled}
-                      className="flex-1"
-                    >
-                      Salvar para depois
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleStartSuggestion(suggestion.id)}
-                      className="flex-1"
-                    >
-                      Começar agora
-                    </Button>
-                  )}
+                <div className="flex gap-2 items-center justify-between">
+                  <div className="flex-1">
+                    {showSaveForLater ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleSaveSuggestion(suggestion.id)}
+                        disabled={saveDisabled}
+                        className="w-full"
+                      >
+                        Salvar para depois
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleStartSuggestion(suggestion.id)}
+                        className="w-full"
+                      >
+                        Começar agora
+                      </Button>
+                    )}
+                  </div>
                   <button
+                    type="button"
                     onClick={() => handleSaveSuggestion(suggestion.id)}
                     disabled={saveDisabled}
                     className={[
-                      'p-2 rounded-lg transition-colors',
+                      'shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200',
+                      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60',
                       saveDisabled
                         ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-primary/10',
+                        : isSaved
+                        ? 'bg-primary/10 hover:bg-primary/20'
+                        : 'hover:bg-primary/5',
                     ].join(' ')}
                     aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
+                    aria-pressed={isSaved}
                     title={isSaved ? 'Remover de Salvos' : 'Salvar para depois'}
                   >
-                    <AppIcon
-                      name="bookmark"
-                      size={20}
-                      variant={isSaved ? 'brand' : 'default'}
-                    />
+                    <span className="inline-block w-5 h-5" aria-hidden="true">
+                      <AppIcon
+                        name="bookmark"
+                        size={20}
+                        variant={isSaved ? 'brand' : 'default'}
+                      />
+                    </span>
+                    <span className="sr-only">{isSaved ? 'Removido de Salvos' : 'Salvar para depois'}</span>
                   </button>
                 </div>
               </Card>
@@ -500,7 +511,6 @@ export default function DiscoverClient() {
           cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
         />
       )}
-      </div>
     </PageTemplate>
   );
 }
