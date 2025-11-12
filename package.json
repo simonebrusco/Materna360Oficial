@@ -11,7 +11,8 @@
     "prebuild": "node scripts/check-no-emoji.js",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "next lint || echo \"lint non-blocking\""
+    "lint": "next lint || echo \"lint non-blocking\"",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",
