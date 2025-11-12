@@ -478,12 +478,13 @@ export default function DiscoverClient() {
                     onClick={() => handleSaveSuggestion(suggestion.id)}
                     disabled={saveDisabled}
                     className={[
-                      'p-2 rounded-lg transition-colors',
+                      'p-2 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60',
                       saveDisabled
                         ? 'opacity-50 cursor-not-allowed'
                         : 'hover:bg-primary/10',
                     ].join(' ')}
                     aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
+                    aria-pressed={isSaved}
                     title={isSaved ? 'Remover de Salvos' : 'Salvar para depois'}
                   >
                     <AppIcon
