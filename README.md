@@ -84,3 +84,9 @@ Developed by **Simone Brusco**
 Pedagogue, mother, and creator of **Clube Nenê Feliz**, bringing emotional awareness and balance into the digital age.  
 
 **"A aventura de ser pai e mãe começa aqui."**
+
+## What's new (P2 – Intelligence & Personalization)
+- Premium PDF v2 on /eu360 (cover, dynamic TOC, weekly blocks)
+- Real plan gating (free vs premium) with telemetry
+- /descobrir: Save for later UX (toast + aria-pressed + icon toggle)
+- /cuidar: Child Diary delete button variant fixed (destructive)

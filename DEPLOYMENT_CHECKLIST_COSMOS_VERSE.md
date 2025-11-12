@@ -1,3 +1,24 @@
+---
+### undefined — Staging (cosmos-verse)
+
+- Date: undefined
+- Vercel Preview URL: undefined
+- Deployment ID: undefined
+- Notes:
+  - Premium PDF v2 enabled on /eu360
+  - Plan gating active (free vs premium)
+  - Save for later UX on /descobrir
+  - Child Diary destructive button fix
+
+### undefined — Production (main)
+
+- Date: undefined
+- Vercel Production URL: undefined
+- Deployment ID: undefined
+- Notes:
+  - Promoted from staging (cosmos-verse)
+  - Clear build cache on deploy
+
 # Cosmos-Verse Deployment Checklist
 
 ## Status: ✅ Code Ready for Deployment
