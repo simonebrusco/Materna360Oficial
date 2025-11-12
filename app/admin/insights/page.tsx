@@ -16,20 +16,23 @@ function flagEnabled() {
   }
   return false;
 }
-const FLAG = flagEnabled();
 
-export default function InsightsPage(){
-  if(!FLAG){
+export default function InsightsPage() {
+  const FLAG = flagEnabled();
+  if (!FLAG) {
     return (
       <main className="max-w-screen-md mx-auto p-6">
         <h1 className="text-xl font-semibold">Insights (Restricted)</h1>
         <p className="text-sm text-neutral-600 mt-2">
-          This page is gated by <code>FF_INTERNAL_INSIGHTS</code>.
+          This page is gated by <code>FF_INTERNAL_INSIGHTS</code>. Enable the flag to continue.
         </p>
       </main>
     );
   }
+  return <InsightsBody />;
+}
 
+function InsightsBody(){
   const fileRef = React.useRef<HTMLInputElement>(null);
   const {
     filtered, total, page, pageSize, setPage,
@@ -41,7 +44,6 @@ export default function InsightsPage(){
   const start = (page-1)*pageSize;
   const end = Math.min(start + pageSize, filtered.length);
   const pageItems = filtered.slice(start, end);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -62,8 +64,8 @@ export default function InsightsPage(){
 
       {/* Toolbar */}
       <div className="flex flex-wrap gap-2 items-center mb-4">
-        <button className="px-3 py-2 rounded-xl ring-1 ring-black/10 bg-white hover:bg-neutral-50" onClick={()=>seed(2000)}>Seed 2,000</button>
-        <button className="px-3 py-2 rounded-xl ring-1 ring-black/10 bg-white hover:bg-neutral-50" onClick={()=>seed(500)}>Seed 500</button>
+        <button className="px-3 py-2 rounded-xl ring-1 ring-black/10 bg-white hover:bg-neutral-50" onClick={()=>seed(2000)}>Seed&nbsp;2,000</button>
+        <button className="px-3 py-2 rounded-xl ring-1 ring-black/10 bg-white hover:bg-neutral-50" onClick={()=>seed(500)}>Seed&nbsp;500</button>
         <button className="px-3 py-2 rounded-xl ring-1 ring-red-500/20 bg-red-50 text-red-700 hover:bg-red-100" onClick={clear}>Clear</button>
 
         <span className="mx-3 h-6 w-px bg-neutral-200" />
@@ -122,14 +124,20 @@ export default function InsightsPage(){
               </tr>
             ))}
             {pageItems.length === 0 && (
-              <tr><td className="p-6 text-center text-neutral-500" colSpan={4}>No events. Use "Seed" to generate test data.</td></tr>
+              <tr>
+                <td className="p-6 text-center text-neutral-500" colSpan={4}>
+                  No events. Use "Seed 500" or "Seed 2,000" to generate test data.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-        <div className="text-sm text-neutral-600">Page {page} / {Math.max(1, Math.ceil(filtered.length / pageSize))}</div>
+        <div className="text-sm text-neutral-600">
+          Page {page} / {Math.max(1, Math.ceil(filtered.length / pageSize))}
+        </div>
         <div className="flex gap-2">
           <button disabled={page<=1} onClick={()=>setPage(1)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">« First</button>
           <button disabled={page<=1} onClick={()=>setPage(page-1)} className="px-3 py-2 rounded-xl ring-1 ring-black/10 disabled:opacity-40">‹ Prev</button>
