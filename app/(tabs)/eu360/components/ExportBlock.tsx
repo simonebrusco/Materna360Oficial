@@ -2,50 +2,87 @@
 
 import * as React from 'react'
 import { printElementById } from '@/app/lib/print'
-import { PaywallBanner } from '@/components/paywall/PaywallBanner'
 import { track } from '@/app/lib/telemetry'
-import { isPremium } from '@/app/lib/plan'
-import { FileDown } from 'lucide-react'
+import { canAccess } from '@/app/lib/premiumGate'
+import { UpgradeSheet } from '@/components/premium/UpgradeSheet'
+import { Button } from '@/components/ui/Button'
+import AppIcon from '@/components/ui/AppIcon'
 
+/**
+ * Export block for PDF with premium gating
+ * Shows upgrade modal if user doesn't have access
+ */
 export function ExportBlock() {
-  const [isPremiumUser, setIsPremiumUser] = React.useState(false)
+  const [hasAccess, setHasAccess] = React.useState(false)
+  const [showUpgradeSheet, setShowUpgradeSheet] = React.useState(false)
 
   React.useEffect(() => {
-    setIsPremiumUser(isPremium())
-    if (!isPremium()) {
-      track('paywall_open', { feature: 'pdf_export', context: 'eu360' })
+    const access = canAccess('export.pdf')
+    setHasAccess(access)
+
+    if (!access) {
+      track('paywall_open', {
+        feature: 'export.pdf',
+        context: 'eu360_export_block',
+        timestamp: new Date().toISOString(),
+      })
     }
   }, [])
 
-  if (!isPremiumUser) {
-    return (
-      <div className="mb-3">
-        <PaywallBanner
-          message="Exportação em PDF disponível nos planos pagos."
-          cta="Desbloquear PDF"
-          href="/planos"
-        />
-      </div>
-    )
+  const handleExportClick = () => {
+    if (!hasAccess) {
+      setShowUpgradeSheet(true)
+      return
+    }
+
+    track('plan_feature_accessed', {
+      feature: 'export.pdf',
+      context: 'eu360',
+      timestamp: new Date().toISOString(),
+    })
+
+    printElementById('eu360-print-area')
   }
 
   return (
-    <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <FileDown className="h-4 w-4 text-[#ff005e]" aria-hidden />
-          <h2 className="text-[16px] font-semibold">Exportar PDF</h2>
+    <>
+      <div className="rounded-[var(--radius-card)] border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <AppIcon name="download" size={20} variant="brand" />
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-support-1">
+                Exportar Semana em PDF
+              </h2>
+              <p className="text-xs text-support-2 mt-0.5">
+                {hasAccess
+                  ? 'Gere um resumo em PDF com todos os dados da semana'
+                  : 'Disponível no plano Plus e acima'}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant={hasAccess ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={handleExportClick}
+            className="flex-shrink-0"
+          >
+            {hasAccess ? 'Exportar' : 'Desbloquear'}
+          </Button>
         </div>
-        <button
-          className="ui-press ui-ring rounded-xl border px-3 py-1.5 text-[12px]"
-          onClick={() => printElementById('eu360-print-area')}
-        >
-          Exportar
-        </button>
       </div>
-      <p className="text-[12px] text-[#545454] mt-1">
-        Será gerado um PDF com o resumo da semana.
-      </p>
-    </div>
+
+      {/* Upgrade modal if user doesn't have access */}
+      {showUpgradeSheet && (
+        <UpgradeSheet
+          feature="Exportar Semana em PDF"
+          onClose={() => setShowUpgradeSheet(false)}
+          onUpgrade={() => {
+            // Allow them to try - they already clicked "Começar teste de 7 dias"
+            setHasAccess(true)
+          }}
+        />
+      )}
+    </>
   )
 }
