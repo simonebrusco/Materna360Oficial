@@ -1,52 +1,78 @@
 'use client'
 
-import { isPremium } from './plan'
-import { track } from './telemetry'
+import { type FeatureKey, PLANS, type PlanId } from './plans'
+import { getCurrentPlanId } from './planClient'
 
 /**
- * Gate a premium feature.
- * Returns true if user is premium, false otherwise.
- * Emits telemetry for analytics.
+ * Check if a feature is available in the current plan
+ * @param feature - Feature key to check
+ * @returns true if feature is available, false otherwise
  */
-export function canAccessPremium(
-  featureName: string,
-  context?: string
-): boolean {
-  const premium = isPremium()
+export function canAccess(feature: FeatureKey): boolean {
+  const planId = getCurrentPlanId()
+  const plan = PLANS[planId]
+  const limit = plan.limits[feature]
   
-  if (!premium) {
-    track('paywall_open', {
-      feature: featureName,
-      context: context || 'unknown'
-    })
-  }
-  
-  return premium
+  if (typeof limit === 'boolean') return limit
+  if (typeof limit === 'number') return limit > 0
+  return false
 }
 
 /**
- * Gate a premium action with confirmation.
- * Call this before performing a premium-only action.
+ * Get the minimum plan required for a feature
+ * @param feature - Feature key
+ * @returns Plan ID that first enables this feature, or 'premium' if not available
  */
-export function gatePremiumAction(
-  featureName: string,
-  context?: string
-): { allowed: boolean; message: string } {
-  if (isPremium()) {
-    return {
-      allowed: true,
-      message: ''
-    }
+export function getMinimumPlanFor(feature: FeatureKey): PlanId {
+  const planIds: PlanId[] = ['free', 'plus', 'premium']
+  
+  for (const planId of planIds) {
+    const plan = PLANS[planId]
+    const limit = plan.limits[feature]
+    if (typeof limit === 'boolean' && limit) return planId
+    if (typeof limit === 'number' && limit > 0) return planId
   }
+  
+  return 'premium'
+}
 
-  track('paywall_open', {
-    feature: featureName,
-    context: context || 'unknown',
-    action: 'attempt_access'
-  })
-
-  return {
-    allowed: false,
-    message: `${featureName} está disponível apenas para planos Premium`
+/**
+ * Require premium access for an action
+ * Returns true if user has access, false if needs upgrade
+ * @param feature - Feature key being accessed
+ * @param actionName - Name of action for telemetry
+ * @returns true if user can access, false if needs upgrade
+ */
+export function requirePremium(
+  feature: FeatureKey,
+  actionName?: string
+): boolean {
+  const hasAccess = canAccess(feature)
+  
+  if (!hasAccess && actionName) {
+    // Optionally emit telemetry here
+    console.debug(`[premiumGate] Access denied for ${actionName}`)
   }
+  
+  return hasAccess
+}
+
+/**
+ * Get a user-friendly message for why a feature is locked
+ * @param feature - Feature key
+ * @returns Friendly message about the feature lock
+ */
+export function getLockedMessage(feature: FeatureKey): string {
+  const minimumPlan = getMinimumPlanFor(feature)
+  const planLabel = PLANS[minimumPlan].label
+  
+  const featureMessages: Record<FeatureKey, string> = {
+    'export.pdf': 'Exportar relatórios em PDF está disponível apenas no plano Plus e acima.',
+    'ideas.dailyQuota': `Limite de ideias diárias. Atualize para ${planLabel} para mais.`,
+    'journeys.concurrentSlots': `Mais jornadas simultâneas disponíveis no plano ${planLabel}.`,
+    'audio.progress': `Acompanhamento de áudio disponível no plano ${planLabel}.`,
+    'insights.weekly': `Insights semanais disponíveis no plano ${planLabel}.`,
+  }
+  
+  return featureMessages[feature] || `Este recurso está disponível no plano ${planLabel}.`
 }
