@@ -475,13 +475,16 @@ export default function DiscoverClient() {
                     </Button>
                   )}
                   <button
+                    type="button"
                     onClick={() => handleSaveSuggestion(suggestion.id)}
                     disabled={saveDisabled}
                     className={[
-                      'p-2 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60',
+                      'p-2 rounded-lg transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60',
                       saveDisabled
                         ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-primary/10',
+                        : isSaved
+                        ? 'bg-primary/10 hover:bg-primary/20'
+                        : 'hover:bg-primary/5',
                     ].join(' ')}
                     aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
                     aria-pressed={isSaved}
