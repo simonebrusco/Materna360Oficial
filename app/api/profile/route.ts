@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { tryCreateServerSupabase } from '@/app/lib/supabase'
 
 export const runtime = 'nodejs'
 
@@ -26,6 +27,42 @@ const safeParse = (value: string | undefined): Record<string, unknown> => {
   }
 
   return {}
+}
+
+async function fetchChildrenNames(): Promise<string[]> {
+  try {
+    const supabase = tryCreateServerSupabase()
+    if (!supabase) {
+      return []
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return []
+    }
+
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('user_id', user.id)
+      .neq('name', '')
+
+    if (error) {
+      console.debug('[ProfileAPI] Failed to fetch children names:', error)
+      return []
+    }
+
+    return (profiles || [])
+      .map((p: { name?: string }) => p.name?.trim())
+      .filter((name: string | undefined): name is string => !!name && name.length > 0)
+  } catch (error) {
+    console.debug('[ProfileAPI] Error fetching children:', error)
+    return []
+  }
 }
 
 export async function POST(req: Request) {
@@ -59,10 +96,17 @@ export async function POST(req: Request) {
 export async function GET() {
   const raw = cookies().get(COOKIE)?.value
   const data = safeParse(raw)
+  const childrenNames = await fetchChildrenNames()
 
-  return NextResponse.json(data, {
-    headers: {
-      'Cache-Control': 'no-store',
+  return NextResponse.json(
+    {
+      ...data,
+      children: childrenNames,
     },
-  })
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  )
 }
