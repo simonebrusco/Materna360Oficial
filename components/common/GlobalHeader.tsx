@@ -20,7 +20,7 @@ export function GlobalHeader() {
         {/* Left: Logo */}
         <div className="flex-shrink-0">
           <Image
-            src="https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2F9c5c687deb494038abfe036af2f531dc"
+            src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
             width={32}
             height={32}
