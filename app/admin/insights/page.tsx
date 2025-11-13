@@ -163,12 +163,12 @@ function EmptyState({ hasAnyEvents, onReload }: { hasAnyEvents: boolean; onReloa
       <div className="mb-4">
         <div className="text-5xl mb-3">📊</div>
         <h3 className="text-lg font-semibold text-neutral-900">
-          {hasAnyEvents ? 'No events match filters' : 'No telemetry events yet'}
+          {hasAnyEvents ? 'Nenhum evento corresponde aos filtros' : 'Nenhum evento de telemetria ainda'}
         </h3>
         <p className="mt-2 text-sm text-neutral-600 max-w-sm mx-auto leading-relaxed">
           {hasAnyEvents
-            ? 'Try clearing filters or adjusting your search to see more events.'
-            : 'Navigate through the app (switch tabs, open paywall, try PDF export) to generate telemetry events, then refresh this page.'}
+            ? 'Tente limpar filtros ou ajustar sua busca para ver mais eventos.'
+            : 'Navegue pelo aplicativo (alterne abas, abra paywall, tente exportar PDF) para gerar eventos de telemetria e depois atualize esta página.'}
         </p>
       </div>
       <div className="mt-6 flex gap-3 justify-center flex-wrap">
@@ -176,13 +176,13 @@ function EmptyState({ hasAnyEvents, onReload }: { hasAnyEvents: boolean; onReloa
           href="/meu-dia"
           className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-neutral-900 rounded-md hover:bg-neutral-800 transition-colors"
         >
-          Back to app
+          Voltar ao app
         </a>
         <button
           onClick={onReload}
           className="inline-flex items-center px-4 py-2 text-sm font-semibold text-neutral-900 border border-neutral-300 rounded-md bg-white hover:bg-neutral-50 transition-colors"
         >
-          Reload telemetry
+          Recarregar telemetria
         </button>
       </div>
     </div>
