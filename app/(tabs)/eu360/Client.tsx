@@ -154,11 +154,14 @@ export default function Eu360Client() {
   }
 
   const currentUpsellConfig = upsellSheet.type ? upsellSheetConfig[upsellSheet.type] : null
+  const { name } = useProfile();
+  const personalizedTitle = name ? `Seu equilíbrio emocional, ${name.split(' ')[0]}` : 'Eu360';
+  const personalizedSubtitle = 'Autocuidado, propósito e rede de apoio';
 
   const content = (
     <PageTemplate
-      title="Eu360"
-      subtitle="Autocuidado, propósito e rede de apoio"
+      title={personalizedTitle}
+      subtitle={personalizedSubtitle}
     >
       <Card suppressHydrationWarning>
         <ProfileForm />
