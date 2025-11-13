@@ -25,10 +25,16 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
 
     const loadProfile = async () => {
       try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
         const response = await fetch('/api/profile', {
           credentials: 'include',
           cache: 'no-store',
+          signal: controller.signal,
         })
+
+        clearTimeout(timeoutId)
 
         if (response.ok && isMounted) {
           const data = await response.json()
@@ -46,10 +52,14 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
             avatar: data?.avatar || undefined,
             children,
           })
+        } else if (isMounted) {
+          // API returned error status, keep default profile
+          console.debug('[useProfile] API returned status:', response.status)
         }
       } catch (error) {
         if (isMounted) {
           console.debug('[useProfile] Failed to load profile:', error)
+          // Keep default empty profile on error
         }
       } finally {
         if (isMounted) {
