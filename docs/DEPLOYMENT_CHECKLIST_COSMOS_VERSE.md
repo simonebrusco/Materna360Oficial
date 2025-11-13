@@ -19,7 +19,7 @@
 
 ---
 
-## ⚙️ Deploy
+## ���️ Deploy
 - [x] Deploy Vercel a partir de `cosmos-verse`
 - [x] Deploy ID anotado (rollback fácil)
 - [x] Logs de build limpos e sem TypeErrors
@@ -73,9 +73,26 @@
 
 ---
 
-### 📘 Release Notes — v0.2.0-p2-staging1
-- **Coach Materno v0.2** — persistência de foco/tom e sugestões empáticas  
-- **PDF Export v1** — capa integrada ao coach e export direta  
-- **Builder Preview** — BottomNav estável e sem erro de hidratação  
-- **Telemetria unificada** — nav/page/card/coach/pdf/paywall  
-- **Correções** — tipos `Child` e `PlanTier`, MessageOfDay  
+### 📘 Release Notes — v0.2.0-p2-staging1 (P2 Complete)
+
+#### 🎯 P2 – Intelligence & Personalization
+- **Coach Materno v0.3** — 5 padrões contextuais com mensagens em PT-BR puras (low_energy_week, inactivity, trend_up, balanced, no_data)
+- **Weekly Emotional Insight** em /eu360 — Resumo semanal de humor/energia com tom empático
+- **Inactivity Reminder** em /meu-dia — Nudge suave após 3+ dias sem entrada (acolhedor, sem culpa)
+- **Premium PDF v2** — Capa dinâmica, sumário das semanas, seções personalizadas (gated por plan)
+- **Internal Telemetry Dashboard** (`/admin/insights`) — KPIs, filtros, gráfico time-series, botão clear (local-only, preview-only)
+- **Unified Telemetry** — Events completos: page_view, nav_click, card_click, coach*, pdf*, paywall*, plan_*, discover_save, reminder_inactivity_*
+- **TypeScript & Build** — Clean types, sem erros de compilação, SSR e Fusion-safe
+
+#### 🔧 Technical Improvements
+- Strict guards para SSR/Fusion (localStorage, window, document)
+- Pattern-based message builder (buildCoachMessage)
+- Local telemetry persistence (não requer servidor)
+- Feature flag: NEXT_PUBLIC_FF_INTERNAL_INSIGHTS
+
+#### 📝 Documentation
+- PROJECT_TRACKER.md atualizado com P2 concluído
+- QA_CHECKLIST.md com testes por aba e features
+- ENV.md com nova flag INTERNAL_INSIGHTS
+- README.md com seção "What's in P2"
+- DEPLOYMENT_CHECKLIST atualizado  
