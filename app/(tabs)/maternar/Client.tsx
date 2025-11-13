@@ -34,6 +34,7 @@ export default function MaternarClient() {
   return (
     <main data-layout="page-template-v1" className="min-h-screen bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)]">
       <PageTemplate
+        title=""
         hero={<HubHeader greeting={greeting} subtitle={subtitle} />}
       >
         <DestaquesDodia />
