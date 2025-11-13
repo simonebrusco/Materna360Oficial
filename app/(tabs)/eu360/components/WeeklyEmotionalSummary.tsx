@@ -110,7 +110,7 @@ function buildWeeklyEmotionalInsight(entries: Entry[]): WeeklyInsightResult {
     title = 'Semana exigente'
     summary =
       'Parece que foi uma semana exigente em vários fronts. Isso é absolutamente normal e esperado. Seja gentil com você — um passo de cada vez. Considere aumentar seus momentos de autocuidado e descanso esta semana.'
-    tags: ['semana intensa', 'autocuidado']
+    tags = ['semana intensa', 'autocuidado']
   }
 
   return { pattern, title, summary, tags }
