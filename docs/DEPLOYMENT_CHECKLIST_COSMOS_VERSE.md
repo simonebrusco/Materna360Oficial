@@ -1,25 +1,32 @@
 # 🚀 Deployment Checklist — cosmos-verse (P2 Complete)
 
-**Versão:** v0.2.0-p2-staging1
-**Data:** 11/12/2025
-**Responsável:** @simonebrusco
-**Branch:** `cosmos-verse`
-**Status:** 🟢 P2 – Intelligence & Personalization ✅ COMPLETO / Pronto para P3 (QA & Polish)  
+**Versão:** v0.2.0-p2-staging1  
+**Data:** 11/12/2025  
+**Responsável:** @simonebrusco  
+**Branch:** `cosmos-verse`  
+**Status:** 🟢 P2 – Intelligence & Personalization ✅ COMPLETO / Pronto para P3 (QA & Polish)
 
 ---
 
-## �� Pré-deploy
+## 🔨 Pré-deploy
 - [x] Branch: `cosmos-verse`
-- [x] PRs #143 e #145 mergeados
-- [x] CI: `pnpm run build` ✅
-- [x] ENVs Preview verificados (`NEXT_PUBLIC_FF_PDF_EXPORT=1`, `NEXT_PUBLIC_FF_COACH_V1=1`, `NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1`)
+- [x] Todas as PRs de P2 mergeadas
+- [x] CI: `pnpm run build` ✅ (sem warnings críticos)
+- [x] TypeScript: `tsc --noEmit` ✅
+- [x] ENVs Preview verificados:
+  - [x] `NEXT_PUBLIC_FF_MATERNAR_HUB=1`
+  - [x] `NEXT_PUBLIC_FF_EMOTION_TRENDS=1`
+  - [x] `NEXT_PUBLIC_FF_COACH_V1=1` (v0.3 ativo)
+  - [x] `NEXT_PUBLIC_FF_EXPORT_PDF=1`
+  - [x] `NEXT_PUBLIC_FF_PAYWALL_MODAL=1`
+  - [x] `NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1` (novo)
 - [x] Node 20 + Corepack ativo
-- [x] Flags habilitadas:  
-  `FF_LAYOUT_V1`, `FF_MATERNAR_HUB`, `FF_PREMIUM_ENABLED`
+- [x] Sem erros de hidratação em SSR/Fusion
+- [x] Builder CSP habilitado
 
 ---
 
-## ���️ Deploy
+## ⚙️ Deploy
 - [x] Deploy Vercel a partir de `cosmos-verse`
 - [x] Deploy ID anotado (rollback fácil)
 - [x] Logs de build limpos e sem TypeErrors
@@ -51,7 +58,7 @@
   - [x] Real-time table view
   - [x] Time-series chart
   - [x] Clear telemetry button
-- [x] LocalStorage persistence (não requer servidor)  
+- [x] LocalStorage persistence (não requer servidor)
 
 ---
 
@@ -60,16 +67,15 @@
 - [x] Gating por plano (`m360_premium` localStorage)
 - [x] Paywall intercept ativo e elegante
 - [x] Premium unlock permite download direto
-- [x] Telemetry captura `plan_` events e `paywall_shown`  
+- [x] Telemetry captura `plan_` events e `paywall_shown`
 
 ---
 
 ## ✅ Pós-deploy
 - [x] Tag criada: `v0.2.0-p2-staging1`
-- [x] Changelog curto incluído no commit
-- [x] PRs antigos (ex.: #144) encerrados como obsoletos
-- [x] Branches “fix/*” removidas após merge
-- [ ] Issues abertas para pendências menores  
+- [x] Changelog completo de P2 incluído
+- [x] PRs mergidas e branches removidas
+- [x] Documentação atualizada (PROJECT_TRACKER, QA_CHECKLIST, ENV, README)
 
 ---
 
@@ -95,4 +101,4 @@
 - QA_CHECKLIST.md com testes por aba e features
 - ENV.md com nova flag INTERNAL_INSIGHTS
 - README.md com seção "What's in P2"
-- DEPLOYMENT_CHECKLIST atualizado  
+- DEPLOYMENT_CHECKLIST atualizado
