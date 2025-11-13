@@ -24,14 +24,16 @@ export function InactivityReminder() {
       })
     } catch {}
 
-    // Scroll to the mood section
-    try {
-      const moodSection = document.querySelector('[data-section="mood"]')
-      if (moodSection) {
-        moodSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Scroll to the mood section (FUSION-SAFE: guarded for iframe context)
+    if (typeof document !== 'undefined') {
+      try {
+        const moodSection = document.querySelector('[data-section="mood"]')
+        if (moodSection) {
+          moodSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      } catch {
+        // Silently fail if querySelector is not available
       }
-    } catch {
-      // Silently fail if document is not available
     }
   }
 
