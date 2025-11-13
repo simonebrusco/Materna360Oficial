@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { Avatar } from '@/components/ui/Avatar'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getTimeGreeting } from '@/app/lib/greetings'
@@ -19,12 +18,11 @@ export function GlobalHeader() {
       <div className="mx-auto max-w-[1040px] px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
         {/* Left: Logo */}
         <div className="flex-shrink-0">
-          <Image
+          <img
             src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
             width={32}
             height={32}
-            priority
           />
         </div>
 
