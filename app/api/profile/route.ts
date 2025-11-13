@@ -85,7 +85,11 @@ export async function POST(req: Request) {
 
   const jar = cookies()
   const prev = safeParse(jar.get(COOKIE)?.value)
-  const next = effectiveName ? { ...prev, motherName: effectiveName, nomeMae: effectiveName } : { ...prev }
+  const next = {
+    ...prev,
+    ...(effectiveName ? { motherName: effectiveName, nomeMae: effectiveName } : {}),
+    ...(body.figurinha ? { figurinha: body.figurinha } : {}),
+  }
 
   jar.set({
     name: COOKIE,
