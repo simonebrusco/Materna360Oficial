@@ -271,19 +271,19 @@ function TelemetryViewer() {
       {/* KPI Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
-          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Total Events</div>
+          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Total de Eventos</div>
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.totalEvents}</div>
         </div>
         <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
-          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Page Views</div>
+          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Visualizações</div>
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.pageViewCount}</div>
         </div>
         <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
-          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Nav Clicks</div>
+          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Cliques Nav</div>
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.navClickCount}</div>
         </div>
         <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
-          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Paywall Events</div>
+          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Eventos Paywall</div>
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.paywallCount}</div>
         </div>
       </div>
