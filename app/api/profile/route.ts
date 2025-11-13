@@ -107,19 +107,37 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const raw = cookies().get(COOKIE)?.value
-  const data = safeParse(raw)
-  const childrenNames = await fetchChildrenNames()
+  try {
+    const raw = cookies().get(COOKIE)?.value
+    const data = safeParse(raw)
+    const childrenNames = await fetchChildrenNames()
 
-  return NextResponse.json(
-    {
-      ...data,
-      children: childrenNames,
-    },
-    {
-      headers: {
-        'Cache-Control': 'no-store',
+    return NextResponse.json(
+      {
+        ...data,
+        children: childrenNames,
       },
-    }
-  )
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    )
+  } catch (error) {
+    console.error('[ProfileAPI] Unexpected error in GET:', error)
+    // Always return a valid response, even if something fails
+    return NextResponse.json(
+      {
+        motherName: '',
+        children: [],
+      },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    )
+  }
 }
