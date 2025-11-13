@@ -258,7 +258,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         </Reveal>
       </SoftCard>
 
-      <InactivityReminder />
+      {/* <InactivityReminder /> */}
 
       <SoftCard className="mb-4" data-section="mood">
         <Reveal delay={160}>
