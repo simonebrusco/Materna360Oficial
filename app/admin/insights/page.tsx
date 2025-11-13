@@ -325,10 +325,10 @@ function TelemetryViewer() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-neutral-700 mb-1">Search Payload</label>
+            <label className="block text-xs font-semibold text-neutral-700 mb-1">Pesquisar Payload</label>
             <input
               type="text"
-              placeholder="Search in payload..."
+              placeholder="Pesquisar em payload..."
               value={textSearch}
               onChange={(e) => setTextSearch(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm"
