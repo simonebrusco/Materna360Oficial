@@ -248,7 +248,21 @@ export default function DiscoverClient() {
     router.push('/planos');
   };
 
-  const personalizedTitle = name ? `${name}, separei algumas ideias que combinam com você.` : 'Descobrir';
+  const personalizedTitle = React.useMemo(() => {
+    if (!name) return 'Descobrir';
+
+    if (children.length > 0) {
+      const childrenText = children.length === 1
+        ? children[0]
+        : children.length === 2
+          ? `${children[0]} e ${children[1]}`
+          : `${children.slice(0, -1).join(', ')} e ${children[children.length - 1]}`;
+
+      return `${name}, separei algumas ideias que combinam com você e com ${children.length === 1 ? 'o(a)' : ''} ${childrenText}.`;
+    }
+
+    return `${name}, separei algumas ideias que combinam com você.`;
+  }, [name, children]);
   const personalizedSubtitle = 'Brincadeiras e ideias inteligentes, por idade e objetivo';
 
   return (
