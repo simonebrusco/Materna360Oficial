@@ -397,13 +397,13 @@ export default function AdminInsightsPage() {
   if (!enabled) {
     return (
       <main className="max-w-screen-md mx-auto px-6 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight">Insights (restricted)</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Insights (restrito)</h1>
         <p className="mt-3 text-sm text-neutral-600">
-          This page is only available when the internal insights feature flag is enabled.
+          Esta página está disponível apenas quando o sinalizador de recurso de insights interno está ativado.
         </p>
         <p className="mt-2 text-sm text-neutral-600">
-          Ask the team to enable <code>NEXT_PUBLIC_FF_INTERNAL_INSIGHTS</code> for Preview if you need to use this
-          internal panel.
+          Peça à equipe para ativar <code>NEXT_PUBLIC_FF_INTERNAL_INSIGHTS</code> para Preview se precisar usar este
+          painel interno.
         </p>
       </main>
     );
