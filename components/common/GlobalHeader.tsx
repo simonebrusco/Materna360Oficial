@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { Avatar } from '@/components/ui/Avatar'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getTimeGreeting } from '@/app/lib/greetings'
 
