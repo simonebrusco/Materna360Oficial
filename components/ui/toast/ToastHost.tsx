@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { X } from 'lucide-react'
+import { X, CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react'
 import { useToastController } from './controller'
 
 export function ToastHost() {
