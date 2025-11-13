@@ -41,6 +41,7 @@ import EmotionTrendDrawer from '@/components/ui/EmotionTrendDrawer'
 import { getMoodEntries, seedIfEmpty } from '@/app/lib/moodStore.client'
 import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
 import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
+import { useProfile } from '@/app/hooks/useProfile'
 
 type MeuDiaClientProps = {
   dailyGreeting?: string
