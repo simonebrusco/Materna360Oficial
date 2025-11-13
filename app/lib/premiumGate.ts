@@ -2,6 +2,8 @@
 
 import { type FeatureKey, PLANS, type PlanId } from './plans'
 import { getCurrentPlanId } from './planClient'
+import { isPremium } from './plan'
+import { track } from './telemetry'
 
 /**
  * Check if a feature is available in the current plan
@@ -75,9 +77,7 @@ export function getLockedMessage(feature: FeatureKey): string {
   }
   
   return featureMessages[feature] || `Este recurso está disponível no plano ${planLabel}.`
-
-import { isPremium } from './plan'
-import { track } from './telemetry'
+}
 
 /**
  * Gate a premium feature.
