@@ -339,7 +339,7 @@ function TelemetryViewer() {
           onClick={handleClear}
           className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
         >
-          Clear Telemetry
+          Limpar Telemetria
         </button>
       </div>
 
