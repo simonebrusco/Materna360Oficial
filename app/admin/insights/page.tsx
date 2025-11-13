@@ -65,12 +65,10 @@ function useTelemetryEvents() {
 function formatTimestamp(ts: number): string {
   try {
     const d = new Date(ts);
-    return d.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      fractionalSecondDigits: 0,
-    });
+    return new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(d);
   } catch {
     return '—';
   }
