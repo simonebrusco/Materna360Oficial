@@ -79,7 +79,7 @@ export function getInactivityInfoFromStorage(): InactivityInfo {
       }
     }
 
-    const raw = localStorage.getItem(MOOD_STORAGE_KEY)
+    const raw = window.localStorage.getItem(MOOD_STORAGE_KEY)
     const moodData = raw ? JSON.parse(raw) : []
     const todayKey = getCurrentDateKey()
 
