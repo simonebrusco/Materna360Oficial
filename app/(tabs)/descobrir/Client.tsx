@@ -32,6 +32,7 @@ import {
   type Mood,
 } from './utils';
 import { useSavedSuggestions } from './hooks/useSavedSuggestions';
+import { useProfile } from '@/app/hooks/useProfile';
 
 type MoodOption = {
   id: Mood;
