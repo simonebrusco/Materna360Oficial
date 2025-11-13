@@ -16,13 +16,11 @@ export function GlobalHeader() {
     <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/85 border-b border-white/50">
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
         {/* Left: Logo */}
-        <div className="flex-shrink-0">
+        <div className="flex items-center shrink-0">
           <img
             src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
-            width={56}
-            height={56}
-            style={{ width: 'auto', maxWidth: 'none' }}
+            className="h-8 w-auto max-w-[140px] object-contain"
           />
         </div>
 
