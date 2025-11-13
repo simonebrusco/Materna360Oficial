@@ -2,16 +2,11 @@
 
 import * as React from 'react'
 import { printElementById } from '@/app/lib/print'
-
 import { track } from '@/app/lib/telemetry'
 import { canAccess } from '@/app/lib/premiumGate'
 import UpgradeSheet from '@/components/premium/UpgradeSheet'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
-import { PaywallBanner } from '@/components/paywall/PaywallBanner'
-import { track } from '@/app/lib/telemetry'
-import { isPremium } from '@/app/lib/plan'
-import { FileDown } from 'lucide-react'
 
 
 /**
