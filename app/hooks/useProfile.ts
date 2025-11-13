@@ -5,14 +5,15 @@ import { useEffect, useState } from 'react'
 export interface ProfileData {
   name: string
   avatar?: string
+  children: string[]
 }
 
 /**
- * Hook to safely fetch mother's name and avatar from profile.
+ * Hook to safely fetch mother's name, avatar, and children names from profile.
  * Uses guards to avoid hydration errors.
  */
 export function useProfile(): ProfileData & { isLoading: boolean } {
-  const [profile, setProfile] = useState<ProfileData>({ name: '' })
+  const [profile, setProfile] = useState<ProfileData>({ name: '', children: [] })
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -38,9 +39,12 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
                 ? data.nomeMae
                 : ''
 
+          const children = Array.isArray(data?.children) ? data.children : []
+
           setProfile({
             name: savedName.trim(),
             avatar: data?.avatar || undefined,
+            children,
           })
         }
       } catch (error) {
