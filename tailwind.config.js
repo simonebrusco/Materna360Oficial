@@ -95,6 +95,7 @@ module.exports = {
     'sr-only',
 
     // wrapper spacing
+
     'max-w-screen-md', 'max-w-screen-lg', 'max-w-screen-xl', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'min-h-[140px]', 'p-4', 'sm:p-5', 'pb-24', 'mt-6',
 
     // background colors (opacity variants)
@@ -114,6 +115,12 @@ module.exports = {
     // text utilities
     'text-xs', 'text-sm', 'text-2xl', 'text-center', 'text-gray-500', 'text-gray-600', 'text-gray-700', 'text-gray-900',
     'font-mono', 'font-semibold', 'font-bold',
+
+    'max-w-screen-md', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'min-h-[140px]', 'p-4', 'sm:p-5',
+
+    // background colors (opacity variants)
+    'bg-primary/10', 'bg-primary/20', 'bg-primary/5', 'hover:bg-primary/10', 'hover:bg-primary/20', 'hover:bg-primary/5',
+
   ],
   plugins: [],
 }

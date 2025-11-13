@@ -2,17 +2,24 @@
 
 import * as React from 'react'
 import { printElementById } from '@/app/lib/print'
+
 import { track } from '@/app/lib/telemetry'
 import { canAccess } from '@/app/lib/premiumGate'
 import UpgradeSheet from '@/components/premium/UpgradeSheet'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
+import { PaywallBanner } from '@/components/paywall/PaywallBanner'
+import { track } from '@/app/lib/telemetry'
+import { isPremium } from '@/app/lib/plan'
+import { FileDown } from 'lucide-react'
+
 
 /**
  * Export block for PDF with premium gating
  * Shows upgrade modal if user doesn't have access
  */
 export function ExportBlock() {
+
   const [hasAccess, setHasAccess] = React.useState(false)
   const [showUpgradeSheet, setShowUpgradeSheet] = React.useState(false)
 
@@ -42,6 +49,27 @@ export function ExportBlock() {
     })
 
     printElementById('eu360-print-area')
+
+  const [isPremiumUser, setIsPremiumUser] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsPremiumUser(isPremium())
+    if (!isPremium()) {
+      track('paywall_open', { feature: 'pdf_export', context: 'eu360' })
+    }
+  }, [])
+
+  if (!isPremiumUser) {
+    return (
+      <div className="mb-3">
+        <PaywallBanner
+          message="Exportação em PDF disponível nos planos pagos."
+          cta="Desbloquear PDF"
+          href="/planos"
+        />
+      </div>
+    )
+
   }
 
   return (
