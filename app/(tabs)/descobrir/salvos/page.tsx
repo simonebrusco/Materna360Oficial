@@ -15,7 +15,8 @@ export default function DiscoverSavedPage() {
       view: 'saved_page_open',
       count: saved.length,
     })
-  }, [])
+    // NOTE: include saved.length to satisfy react-hooks/exhaustive-deps
+  }, [saved.length])
 
   const onRemove = (id: string) => {
     if (!isSaved(id)) return
@@ -50,7 +51,7 @@ export default function DiscoverSavedPage() {
               <Link href="/descobrir" className="font-semibold text-ink-1 underline hover:text-primary transition-colors">
                 Descobrir
               </Link>{' '}
-              e toque em "Salvar para depois".
+              e toque em &quot;Salvar para depois&quot;.
             </p>
           </div>
         ) : (

@@ -28,6 +28,7 @@ import { WeeklyEmotionalSummary } from './components/WeeklyEmotionalSummary'
 import { AchievementsPanel } from './components/AchievementsPanel'
 import { BadgesPanel } from './components/BadgesPanel'
 import { AchievementsCounter } from './components/AchievementsCounter'
+import WeeklyInsights from '@/components/insights/WeeklyInsights'
 import { track, trackTelemetry } from '@/app/lib/telemetry'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { PaywallBanner } from '@/components/paywall/PaywallBanner'
@@ -35,8 +36,8 @@ import { getCurrentPlanId } from '@/app/lib/planClient'
 import { ExportBlock } from './components/ExportBlock'
 import { printElementById } from '@/app/lib/print'
 import { isEnabled as isClientEnabled } from '@/app/lib/flags.client'
-import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
-import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
+import CoachCardV3 from '@/components/coach/CoachCardV3'
+import { buildCoachMessage, getCoachContextFromStorage } from '@/app/lib/coachMaterno.v3'
 import Link from 'next/link'
 import { isPremium } from '@/app/lib/plan'
 import { PremiumExportButton } from './components/PremiumExportButton'
@@ -184,26 +185,31 @@ export default function Eu360Client() {
 
       <ClientOnly>
         {isClientEnabled('FF_COACH_V1') && (
-          <CoachSuggestionCard
-            resolve={() => Promise.resolve(generateCoachSuggestion())}
-            onView={(id: string) => {
+          <CoachCardV3
+            resolve={() => {
               try {
-                trackTelemetry('coach.card_view', { id, tab: 'eu360' });
+                const ctx = getCoachContextFromStorage()
+                return buildCoachMessage(ctx)
+              } catch (e) {
+                console.error('Coach v0.3 error:', e)
+                // Return fallback message
+                return {
+                  title: 'Ainda não temos muitos registros, e está tudo bem.',
+                  body: 'Cada entrada que você faz nos ajuda a entender melhor como você está. Não é sobre registrar tudo, é sobre registrar quando conseguir. Com os próximos registros, o Coach conseguirá trazer orientações muito mais personalizadas só para você. E a melhor parte? Você começa exatamente de onde está agora, sem cobrança, sem pressa.',
+                  tone: 'encouraging' as const,
+                  tags: ['comece de onde está', 'sem cobrança', 'cada dia conta'],
+                  patternKey: 'no_data',
+                }
+              }
+            }}
+            onView={(patternKey: string) => {
+              try {
+                track('coach_v3_view', { patternKey, tab: 'eu360' });
               } catch {}
             }}
-            onApply={(id: string) => {
+            onCTAClick={(ctaId: string, patternKey: string) => {
               try {
-                trackTelemetry('coach.suggestion_apply', { id, tab: 'eu360' });
-              } catch {}
-            }}
-            onSave={(id: string) => {
-              try {
-                trackTelemetry('coach.save_for_later', { id, tab: 'eu360' });
-              } catch {}
-            }}
-            onWhyOpen={(id: string) => {
-              try {
-                trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
+                track('coach_v3_cta_click', { ctaId, patternKey, tab: 'eu360' });
               } catch {}
             }}
           />
@@ -334,6 +340,10 @@ export default function Eu360Client() {
         </Card>
       </div>
 
+      <Reveal delay={270}>
+        <WeeklyInsights />
+      </Reveal>
+
       <Reveal delay={300}>
         <AchievementsPanel />
       </Reveal>
@@ -366,7 +376,7 @@ export default function Eu360Client() {
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {gratitudes.map((item, index) => (
                   <div key={`${item}-${index}`} className="rounded-2xl bg-secondary/70 p-4 text-sm text-support-1 shadow-soft">
-                    "{item}"
+                    &quot;{item}&quot;
                   </div>
                 ))}
               </div>

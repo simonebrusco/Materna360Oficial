@@ -36,9 +36,10 @@ NEXT_PUBLIC_FF_PAYWALL_MODAL=1
 | `FORCE_MATERNAR_SSR` | server | 1 | 0 | Server-side override to enable Maternar Hub SSR & root redirect testing. |
 | `NEXT_PUBLIC_FF_MATERNAR_HUB` | client | 1 | 0 | Feature flag for /maternar hub visibility and / → /maternar redirect. |
 | `NEXT_PUBLIC_FF_EMOTION_TRENDS` | client | 1 | 0 | Enables Emotion Trend (SVG chart + drawer) in /meu-dia. |
-| `NEXT_PUBLIC_FF_COACH_V1` | client | 1 | 0 | Enables Coach Materno v0.1/v0.2 (suggestions, weekly focus, tone). |
-| `NEXT_PUBLIC_FF_EXPORT_PDF` | client | 1 | 0 | Enables /eu360/export (printable report). |
+| `NEXT_PUBLIC_FF_COACH_V1` | client | 1 | 0 | Enables Coach Materno v0.1/v0.2/v0.3 (suggestions, weekly focus, empathetic tone). |
+| `NEXT_PUBLIC_FF_EXPORT_PDF` | client | 1 | 0 | Enables /eu360/export (printable report with premium v2). |
 | `NEXT_PUBLIC_FF_PAYWALL_MODAL` | client | 1 | 0 | Intercepts Baixar PDF for non-premium users with a soft paywall modal. |
+| `NEXT_PUBLIC_FF_INTERNAL_INSIGHTS` | client | 1 | 0 | Enables internal telemetry dashboard at /admin/insights (Preview/QA only). |
 | `STRICT_EMOJI` | server | (empty) | (empty) | Prebuild guard: 1 = fail build if emojis found; empty/other = warn only. |
 | `NEXT_PUBLIC_ALLOW_EMOJI` | client | (empty) | (empty) | If set, UI can allow emoji (we keep unset: Lucide icons only). |
 | `NODE_ENV` | both | development | production | Standard Next.js env. |
@@ -74,9 +75,10 @@ Materna360 flags follow a clear, safe precedence to avoid surprises:
 | Flag | Affects | Behavior |
 |------|---------|----------|
 | `NEXT_PUBLIC_FF_EMOTION_TRENDS` | /meu-dia | Shows "Ver tendência" → drawer with SVG chart (7d/28d). |
-| `NEXT_PUBLIC_FF_COACH_V1` | /meu-dia & /eu360 | Shows Coach Materno card (v0.1/v0.2 with tone + focus). |
-| `NEXT_PUBLIC_FF_EXPORT_PDF` | /eu360 | Shows Exportar Relatório + routes to /eu360/export. |
+| `NEXT_PUBLIC_FF_COACH_V1` | /meu-dia & /eu360 | Shows Coach Materno card (v0.3 with pattern-based messages). |
+| `NEXT_PUBLIC_FF_EXPORT_PDF` | /eu360 | Shows Exportar Relatório + routes to /eu360/export (Premium v2). |
 | `NEXT_PUBLIC_FF_PAYWALL_MODAL` | /eu360/export | Intercepts Baixar PDF if user not premium (soft modal + CTA). |
+| `NEXT_PUBLIC_FF_INTERNAL_INSIGHTS` | /admin/insights | Enables local telemetry dashboard (KPIs, filters, chart, clear button). |
 
 ---
 
@@ -129,6 +131,7 @@ NEXT_PUBLIC_FF_EMOTION_TRENDS=1
 NEXT_PUBLIC_FF_COACH_V1=1
 NEXT_PUBLIC_FF_EXPORT_PDF=1
 NEXT_PUBLIC_FF_PAYWALL_MODAL=1
+NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1
 NEXT_PUBLIC_APP_ENV=preview
 ```
 

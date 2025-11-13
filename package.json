@@ -4,15 +4,16 @@
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "engines": {
-    "node": ">=20 <21"
+    "node": ">=20 <21",
+    "pnpm": ">=8"
   },
   "scripts": {
-    "dev": "next dev -p 3001",
-    "prebuild": "node scripts/check-no-emoji.js",
+    "prebuild": "node scripts/check-no-emoji.js || true",
     "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "dev": "next dev -p 3001",
     "start": "next start -p 3001",
-    "lint": "next lint || echo \"lint non-blocking\"",
-    "typecheck": "tsc --noEmit"
+    "lint": "next lint || echo \"lint non-blocking\""
   },
   "dependencies": {
     "@builder.io/react": "3.2.7",

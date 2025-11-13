@@ -19,6 +19,7 @@ import { MoodSparkline } from '@/components/blocks/MoodSparkline'
 import { MomInMotion } from './components/MomInMotion'
 import { MoodEnergyCheckin } from './components/MoodEnergyCheckin'
 import { Reminders } from './components/Reminders'
+import { InactivityReminder } from './components/InactivityReminder'
 import { ExportPlanner } from './components/ExportPlanner'
 import ExportButton from '@/components/pdf/ExportButton'
 import GridRhythm from '@/components/common/GridRhythm'
@@ -257,7 +258,9 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         </Reveal>
       </SoftCard>
 
-      <SoftCard className="mb-4">
+      <InactivityReminder />
+
+      <SoftCard className="mb-4" data-section="mood">
         <Reveal delay={160}>
           <div>
             <Badge className="mb-2">Humor e Energia</Badge>
