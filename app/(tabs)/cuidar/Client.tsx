@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useProfile } from '@/app/hooks/useProfile'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard as Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
