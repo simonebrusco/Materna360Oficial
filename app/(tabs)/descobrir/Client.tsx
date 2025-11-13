@@ -248,10 +248,13 @@ export default function DiscoverClient() {
     router.push('/planos');
   };
 
+  const personalizedTitle = name ? `${name}, separei algumas ideias que combinam com você.` : 'Descobrir';
+  const personalizedSubtitle = 'Brincadeiras e ideias inteligentes, por idade e objetivo';
+
   return (
     <PageTemplate
-      title="Descobrir"
-      subtitle="Brincadeiras e ideias inteligentes, por idade e objetivo"
+      title={personalizedTitle}
+      subtitle={personalizedSubtitle}
     >
 
       {/* Saved Count Chip */}
