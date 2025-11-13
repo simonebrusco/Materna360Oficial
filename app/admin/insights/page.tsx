@@ -125,8 +125,8 @@ function ActivityChart({ events }: { events: TelemetryEvent[] }) {
   return (
     <div className="mb-8">
       <div className="mb-3">
-        <h2 className="text-lg font-semibold text-neutral-900">Activity over time</h2>
-        <p className="text-xs text-neutral-600">Based on local telemetry events stored in this browser.</p>
+        <h2 className="text-lg font-semibold text-neutral-900">Atividade ao longo do tempo</h2>
+        <p className="text-xs text-neutral-600">Baseado em eventos de telemetria locais armazenados neste navegador.</p>
       </div>
       <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
         <div className="flex items-end justify-start gap-2 h-48 overflow-x-auto pb-2">
