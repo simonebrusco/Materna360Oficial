@@ -101,6 +101,7 @@ const DEFAULT_BUCKETS: AgeRange[] = [] as any;
 
 export function MeuDiaClient(props?: MeuDiaClientProps) {
   const isBuilder = props?.__builderPreview__ === true
+  const { name } = useProfile()
 
   // Hard disable heavy features (charts/pdf/timers/observers) in iframe
   const builderMode =
