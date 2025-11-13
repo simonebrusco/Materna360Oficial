@@ -41,6 +41,7 @@ import { buildCoachMessage, getCoachContextFromStorage } from '@/app/lib/coachMa
 import Link from 'next/link'
 import { isPremium } from '@/app/lib/plan'
 import { PremiumExportButton } from './components/PremiumExportButton'
+import { useProfile } from '@/app/hooks/useProfile'
 
 type MoodHistory = {
   day: string
