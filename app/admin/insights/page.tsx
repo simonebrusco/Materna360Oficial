@@ -262,9 +262,9 @@ function TelemetryViewer() {
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Telemetry Insights (v0.2)</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Insights de Telemetria (v0.2)</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          Local-only debug panel. Reads telemetry events from browser <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
+          Painel de debug local. Lê eventos de telemetria do navegador <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
         </p>
       </div>
 
