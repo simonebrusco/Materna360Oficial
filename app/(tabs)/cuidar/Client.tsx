@@ -18,10 +18,14 @@ type Props = {
 }
 
 export default function CuidarClient({ recipesSection }: Props) {
+  const { name } = useProfile();
+  const personalizedTitle = name ? `${name}, vamos cuidar do que importa agora?` : 'Cuidar';
+  const personalizedSubtitle = 'Saúde física, emocional e segurança — no ritmo da vida real.';
+
   return (
     <PageTemplate
-      title="Cuidar"
-      subtitle="Saúde física, emocional e segurança — no ritmo da vida real."
+      title={personalizedTitle}
+      subtitle={personalizedSubtitle}
     >
       <Card>
         <div className="flex flex-wrap gap-2">
