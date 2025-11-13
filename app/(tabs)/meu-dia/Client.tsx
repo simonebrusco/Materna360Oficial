@@ -252,8 +252,11 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     })
   }
 
+  const personalizedTitle = name ? `${name}, como está seu dia hoje?` : 'Seu dia, no seu ritmo.';
+  const personalizedSubtitle = 'Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.';
+
   return (
-    <PageTemplate title="Seu dia, no seu ritmo." subtitle="Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.">
+    <PageTemplate title={personalizedTitle} subtitle={personalizedSubtitle}>
       <SoftCard className="mb-4">
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
