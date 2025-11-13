@@ -352,9 +352,9 @@ function TelemetryViewer() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-neutral-50 border-b border-neutral-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Timestamp</th>
-                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Event</th>
-                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Route</th>
+                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Data/Hora</th>
+                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Evento</th>
+                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Rota</th>
                   <th className="text-left px-4 py-3 font-semibold text-neutral-700">Payload</th>
                 </tr>
               </thead>
