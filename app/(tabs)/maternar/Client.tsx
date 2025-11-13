@@ -29,16 +29,12 @@ export default function MaternarClient() {
   }, []);
 
   const greeting = name ? getTimeGreeting(name) : 'Bem-vinda ao Maternar';
-  const personalizedSubtitle = name
-    ? `${greeting} 💛 — juntas vamos fazer de hoje um dia leve.`
-    : 'Aqui começa o seu centro de equilíbrio. Explore suas rotinas, cuide de você e acompanhe o crescimento do seu filho com leveza — tudo em um só lugar.';
+  const subtitle = 'Juntas vamos fazer de hoje um dia leve.';
 
   return (
     <main data-layout="page-template-v1" className="min-h-screen bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)]">
       <PageTemplate
-        title={greeting ? `${greeting} 💛` : 'Bem-vinda ao Maternar.'}
-        subtitle={personalizedSubtitle}
-        hero={<HubHeader greeting={greeting ? `${greeting} 💛` : 'Bem-vinda ao Maternar.'} subtitle={personalizedSubtitle} />}
+        hero={<HubHeader greeting={greeting} subtitle={subtitle} />}
       >
         <DestaquesDodia />
         <Reveal delay={200}>
