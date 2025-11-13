@@ -154,7 +154,7 @@ export function getCoachContextFromStorage(): CoachContext {
     }
 
     // Try to get today's entry from meu-dia:mood storage
-    const moodRaw = localStorage.getItem('m360_mood_checkins')
+    const moodRaw = window.localStorage.getItem('m360_mood_checkins')
     let moodEntries: DayEntry[] = []
     let todayEntry: DayEntry | null = null
     let lastEntryDate: string | null = null
