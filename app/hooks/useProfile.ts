@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { resolveSticker, isProfileStickerId, DEFAULT_STICKER_ID } from '@/app/lib/stickers'
 
 export interface ProfileData {
   name: string
@@ -47,9 +48,13 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
 
           const children = Array.isArray(data?.children) ? data.children : []
 
+          const figurinhaId = data?.figurinha
+          const validStickerIdId = isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID
+          const sticker = resolveSticker(validStickerIdId)
+
           setProfile({
             name: savedName.trim(),
-            avatar: data?.avatar || undefined,
+            avatar: sticker.asset,
             children,
           })
         } else if (isMounted) {
