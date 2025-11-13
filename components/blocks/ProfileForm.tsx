@@ -245,6 +245,7 @@ export function ProfileForm() {
         body: JSON.stringify({
           motherName: trimmedState.nomeMae,
           nomeMae: trimmedState.nomeMae,
+          figurinha: figurinhaToPersist,
         }),
       })
 
