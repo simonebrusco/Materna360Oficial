@@ -36,19 +36,21 @@ export function GlobalHeader() {
               </p>
             </div>
           )}
-          <div className="w-10 h-10 rounded-full border border-white/80 shadow-sm flex-shrink-0 overflow-hidden bg-secondary flex items-center justify-center">
-            {avatar ? (
+          {avatar ? (
+            <div className="flex-shrink-0 overflow-hidden">
               <img
                 src={avatar}
-                alt={name || 'U'}
-                className="w-full h-full object-cover"
+                alt={name || 'Avatar'}
+                className="h-10 w-10 rounded-full object-contain"
               />
-            ) : (
-              <span className="text-support-1 font-semibold text-sm">
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[#ff005e] text-white flex items-center justify-center flex-shrink-0">
+              <span className="font-semibold text-sm">
                 {name ? name.charAt(0) : 'U'}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
