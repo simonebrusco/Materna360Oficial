@@ -260,7 +260,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       <InactivityReminder />
 
-      <SoftCard className="mb-4">
+      <SoftCard className="mb-4" data-section="mood">
         <Reveal delay={160}>
           <div>
             <Badge className="mb-2">Humor e Energia</Badge>
