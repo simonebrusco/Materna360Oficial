@@ -1,9 +1,9 @@
 # 🌸 Materna360 – Live Project Tracker
 
-**Last update:** November 10, 2025  
-**Branch:** `cosmos-verse`  
-**Overall progress:** 🟢 **78% complete**  
-**Estimated completion:** ~19 working days (≈ 4 weeks)
+**Last update:** November 12, 2025
+**Branch:** `cosmos-verse`
+**Overall progress:** 🟢 **85% complete**
+**Estimated completion:** ~10 working days (≈ 2 weeks)
 
 ---
 
@@ -19,9 +19,9 @@ This tracker summarizes progress across **UX/UI, Engineering, Product, and QA**.
 |--------|---------|-------------|
 | P0 – UI Base & Structure | ✅ Completed | Design system, navigation, typography, infra |
 | P1 – Core Features | ✅ Completed | Meu Dia, Cuidar, Descobrir, Eu360 |
-| P2 – Intelligence & Personalization | 🟡 In progress | Coach Materno, Emotion Trends, PDF |
-| P3 – Premium Expansion | ⏳ Next | Paywall, insights, export, plans |
-| P4 – QA & Launch | 🔜 Upcoming | Final testing and release |
+| P2 – Intelligence & Personalization | ✅ Completed | Coach Materno v0.3, Emotion Trends, PDF v2, Telemetry Dashboard, Inactivity Reminders |
+| P3 – QA & Polish | 🟡 In progress | A11y review, responsive QA, edge case testing |
+| P4 – Launch | 🔜 Upcoming | Final deploy to production |
 
 ---
 
@@ -90,30 +90,38 @@ This tracker summarizes progress across **UX/UI, Engineering, Product, and QA**.
 
 ### 5. Intelligence & Personalization
 - [x] Coach Materno v0.2 (focus + tone)
-- [ ] Coach v0.3 – contextual empathy (2d)
-- [ ] Emotion trends: long-term analytics (1.5d)
-- [ ] Local reminders (1d)
+- [x] Coach v0.3 – contextual empathy with pattern-based messages (low_energy_week, inactivity, trend_up, balanced, no_data)
+- [x] Emotion trends: weekly emotional summary in /eu360
+- [x] Inactivity reminder in /meu-dia (local-only, gentle CTA)
 
 ---
 
 ### 6. PDF Export & Reports
 - [x] Basic export (window.print)
-- [ ] Premium PDF (logo, cover, summary, planner) (1.5d)
-- [ ] Real PDF generation (@react-pdf/renderer) (2d)
+- [x] Premium PDF v2 (logo, cover, summary, planner) gated by plan
+- [ ] Real PDF generation (@react-pdf/renderer) (future enhancement)
 
 ---
 
 ### 7. Telemetry & Insights
-- [x] Unified telemetry
-- [ ] Local insights dashboard `/admin/insights` (1d)
-- [ ] Clean log outputs (0.5d)
+- [x] Unified telemetry (page_view, nav_click, card_click, coach, pdf_export_attempt, paywall_shown, plan_*, discover_save, reminder_inactivity_*, coach_v3_*)
+- [x] Local insights dashboard `/admin/insights` v0.2 (flag-gated by NEXT_PUBLIC_FF_INTERNAL_INSIGHTS)
+  - KPIs (total events, unique users, top events)
+  - Filters by date range and event type
+  - Real-time table view with sorting
+  - Time-series chart
+  - Clear telemetry button
+- [x] Clean log outputs and privacy-safe storage
 
 ---
 
 ### 8. QA & Launch
-- [ ] Playwright visual smoke (1d)
-- [ ] Functional QA across 5 routes (1d)
-- [ ] Final documentation (1d)
+- [x] Functional QA across 5 routes (/meu-dia, /cuidar, /maternar, /descobrir, /eu360)
+- [x] Telemetry validation and dashboard testing
+- [x] Documentation updates (PROJECT_TRACKER, QA_CHECKLIST, ENV, README)
+- [ ] A11y audit (contrast, focus states) (1d)
+- [ ] Responsive polish (tablet ≥768px) (1d)
+- [ ] Final edge case testing (0.5d)
 - [ ] Production deploy (0.5d)
 
 ---
@@ -121,17 +129,30 @@ This tracker summarizes progress across **UX/UI, Engineering, Product, and QA**.
 ## ⏱️ Estimated Remaining Time
 | Category | Time |
 |-----------|------|
-| Pending + Partial | **~17 days** |
-| QA + Documentation | **+2 days** |
-| **Total (MVP+)** | **≈ 19 working days (≈ 4 weeks)** |
+| A11y + Responsive + Edge cases | **~2.5 days** |
+| Final deploy + monitoring | **+0.5 day** |
+| **Total (QA + Launch)** | **≈ 10 working days (≈ 2 weeks)** |
 
 ---
 
-## 🌟 Next Milestones
-1. PDF Premium (cover + summary + logo)
-2. Internal insights dashboard
-3. QA responsive polish
-4. Public launch (target: early December 2025)
+## 🌟 P2 – Intelligence & Personalization (✅ COMPLETE)
+
+### Delivered Features:
+- ✅ **Coach Materno v0.3** – Context-aware, pattern-based messages with empathetic tone
+- ✅ **Weekly Emotional Insight** in /eu360 – Summary and trends visualization
+- ✅ **Inactivity Reminder** in /meu-dia – Gentle nudge to return to journaling
+- ✅ **Premium PDF v2** – Dynamic cover, summary sections, gated by plan
+- ✅ **Internal Telemetry Dashboard** (`/admin/insights`) – Local-only KPIs, filters, chart, and clear button
+- ✅ **Unified Telemetry** – Comprehensive event tracking across all tabs and features
+- ✅ **TypeScript & Builds** – All types passing, no compilation errors
+
+---
+
+## 🌟 Upcoming Milestones (P3 & Beyond)
+1. A11y audit (contrast, focus states)
+2. Responsive polish for tablet
+3. Advanced analytics and exports
+4. Public launch (target: late December 2025)
 
 ---
 
