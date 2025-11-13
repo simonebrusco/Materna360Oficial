@@ -185,19 +185,26 @@ export default function Eu360Client() {
 
       <ClientOnly>
         {isClientEnabled('FF_COACH_V1') && (
-          <CoachCardV3
-            resolve={() => {
-              const ctx = getCoachContextFromStorage()
-              return buildCoachMessage(ctx)
-            }}
-            onView={(patternKey: string) => {
+          <CoachSuggestionCard
+            resolve={() => Promise.resolve(generateCoachSuggestion())}
+            onView={(id: string) => {
               try {
-                track('coach_v3_view', { patternKey, tab: 'eu360' });
+                trackTelemetry('coach.card_view', { id, tab: 'eu360' });
               } catch {}
             }}
-            onCTAClick={(ctaId: string, patternKey: string) => {
+            onApply={(id: string) => {
               try {
-                track('coach_v3_cta_click', { ctaId, patternKey, tab: 'eu360' });
+                trackTelemetry('coach.suggestion_apply', { id, tab: 'eu360' });
+              } catch {}
+            }}
+            onSave={(id: string) => {
+              try {
+                trackTelemetry('coach.save_for_later', { id, tab: 'eu360' });
+              } catch {}
+            }}
+            onWhyOpen={(id: string) => {
+              try {
+                trackTelemetry('coach.why_seen_open', { id, tab: 'eu360' });
               } catch {}
             }}
           />
