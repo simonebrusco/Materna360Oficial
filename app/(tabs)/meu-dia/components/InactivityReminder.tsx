@@ -24,10 +24,12 @@ export function InactivityReminder() {
       })
     } catch {}
 
-    // Scroll to the mood section
-    const moodSection = document.querySelector('[data-section="mood"]')
-    if (moodSection) {
-      moodSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Scroll to the mood section (guarded for SSR/iframe)
+    if (typeof document !== 'undefined') {
+      const moodSection = document.querySelector('[data-section="mood"]')
+      if (moodSection) {
+        moodSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
     }
   }
 
