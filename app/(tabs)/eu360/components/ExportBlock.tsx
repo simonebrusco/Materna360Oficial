@@ -49,27 +49,6 @@ export function ExportBlock() {
     })
 
     printElementById('eu360-print-area')
-
-  const [isPremiumUser, setIsPremiumUser] = React.useState(false)
-
-  React.useEffect(() => {
-    setIsPremiumUser(isPremium())
-    if (!isPremium()) {
-      track('paywall_open', { feature: 'pdf_export', context: 'eu360' })
-    }
-  }, [])
-
-  if (!isPremiumUser) {
-    return (
-      <div className="mb-3">
-        <PaywallBanner
-          message="Exportação em PDF disponível nos planos pagos."
-          cta="Desbloquear PDF"
-          href="/planos"
-        />
-      </div>
-    )
-
   }
 
   return (
