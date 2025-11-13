@@ -86,7 +86,7 @@ export function buildCoachMessage(ctx: CoachContext): CoachMessage {
 function buildPatternLowEnergyWeek(): CoachMessage {
   return {
     title: 'Parece que sua semana foi bem puxada…',
-    body: 'Energia e humor em baixa é um sinal de que você precisa de um descanso especial. Não é fraqueza, é você falando que merece acolhimento. Pequenos gestos de autocuidado — uma xícara de chá, um banho quentinho, cinco minutos respirando — fazem toda a diferença. Você não está sozinha nessa.',
+    body: 'Pelos seus registros, dá para sentir que o cansaço esteve bem presente nos últimos dias. E está tudo bem se você não deu conta de tudo. Isso não significa falta de amor nem de dedicação, só mostra que você é humana.\n\nSe puder, escolha hoje um pequeno gesto de autocuidado: alguns minutos em silêncio, um banho mais demorado, pedir ajuda em uma tarefa. Pequenas pausas não são egoísmo, são recarga. Você merece esse descanso.',
     tone: 'calm',
     tags: ['semana puxada', 'autocuidado', 'acolhimento'],
     patternKey: 'low_energy_week',
@@ -94,10 +94,9 @@ function buildPatternLowEnergyWeek(): CoachMessage {
 }
 
 function buildPatternInactivity(daysSinceLastEntry: number): CoachMessage {
-  const daysText = daysSinceLastEntry === 1 ? '1 dia' : `${daysSinceLastEntry} dias`
   return {
-    title: 'Você não precisa registrar tudo…',
-    body: `Já faz ${daysText} que não registra, e está tudo bem. Não existe mãe perfeita que registra todos os dias. O que importa é que quando você consegue registrar, você se entende melhor. Sem culpa, tá? Que tal começar de novo hoje, justamente do jeito que você está agora?`,
+    title: 'Você não precisa registrar tudo, só não precisa fazer isso sozinha.',
+    body: 'Notei que seus registros diminuíram nos últimos dias, e isso é mais comum do que parece. A rotina é corrida, a mente fica cheia e a gente simplesmente esquece de cuidar da gente.\n\nEm vez de se cobrar, que tal encarar hoje como um recomeço leve? Um único registro já é suficiente para retomar o hábito. Comece pequeno, sem perfeição, do jeitinho que dá hoje.',
     tone: 'encouraging',
     tags: ['sem culpa', 'recomeçar', 'pequenos passos'],
     patternKey: 'inactivity',
@@ -106,25 +105,20 @@ function buildPatternInactivity(daysSinceLastEntry: number): CoachMessage {
 
 function buildPatternTrendUp(): CoachMessage {
   return {
-    title: 'Olha só como você está encontrando caminhos que funcionam…',
-    body: 'Nos últimos dias você melhorou seu humor e sua energia. Isso não é coincidência: você está fazendo algo certo. Pode ser uma pausa maior, uma atividade legal, ou simplesmente ter respirado fundo. Que tal reconhecer o que te ajudou e tentar repetir? Pequenas rotinas que funcionam são ouro puro.',
+    title: 'Olha só como você está encontrando caminhos que funcionam.',
+    body: 'Os seus últimos registros mostram uma melhora, mesmo que discreta, no seu humor e na sua energia. Isso é sinal de que você está testando, ajustando e encontrando jeitos de tornar a rotina mais leve.\n\nCelebre essas pequenas vitórias. Às vezes, uma conversa diferente, um limite que você colocou ou um momento só seu já fazem toda a diferença. Continue prestando atenção no que tem funcionado para você e para sua família.',
     tone: 'celebrating',
-    tags: ['progresso', 'pequenas vitórias', 'você consegue'],
+    tags: ['progresso', 'pequenas vitórias', 'funcionou para você'],
     patternKey: 'trend_up',
   }
 }
 
 function buildPatternBalanced(avgMood: number, avgEnergy: number): CoachMessage {
-  const moodLabel =
-    avgMood >= 2.5 ? 'seu humor está bom' : 'seu humor está na média'
-  const energyLabel =
-    avgEnergy >= 2.5 ? 'sua energia equilibrada' : 'sua energia está presente'
-
   return {
     title: 'Sua semana parece ter sido mais equilibrada.',
-    body: `Com ${moodLabel} e ${energyLabel}, você está construindo um ritmo mais consistente. Semanas assim são oportunidade: não é o auge, nem o vale, mas é o espaço seguro para pequenos passos. Aproveite para notar o que está funcionando e celebre essa estabilidade que você conquistou.`,
+    body: 'Pelos seus registros, essa semana teve altos e baixos dentro de um ritmo mais estável. Isso não quer dizer que foi perfeita, mas mostra que você está conseguindo encontrar algum equilíbrio entre as demandas e o cuidado consigo mesma.\n\nSempre que puder, mantenha aquilo que trouxe essa sensação de equilíbrio: uma rotina que funcione para a sua casa, pausas intencionais e conversas sinceras. Você não precisa acertar sempre, só continuar presente.',
     tone: 'calm',
-    tags: ['equilíbrio', 'consistência', 'você está no caminho'],
+    tags: ['equilíbrio', 'consistência', 'presença'],
     patternKey: 'balanced',
   }
 }
@@ -132,9 +126,9 @@ function buildPatternBalanced(avgMood: number, avgEnergy: number): CoachMessage 
 function buildPatternNoData(): CoachMessage {
   return {
     title: 'Ainda não temos muitos registros, e está tudo bem.',
-    body: 'Cada entrada que você faz nos ajuda a entender melhor como você está. Não é sobre registrar tudo, é sobre registrar quando conseguir. Com os próximos registros, o Coach conseguirá trazer orientações muito mais personalizadas só para você. E a melhor parte? Você começa exatamente de onde está agora, sem cobrança, sem pressa.',
+    body: 'Quase não temos dados desta semana, e isso não é um problema. A vida real é cheia de imprevistos, e nem sempre dá para parar e anotar tudo.\n\nQuando você se sentir pronta, comece com um único registro: como foi seu dia hoje? A partir daí, o Materna360 vai conseguir te ajudar com insights mais personalizados, sempre com acolhimento e sem julgamentos.',
     tone: 'encouraging',
-    tags: ['comece de onde está', 'sem cobrança', 'cada dia conta'],
+    tags: ['comece de onde está', 'sem cobranças', 'vida real'],
     patternKey: 'no_data',
   }
 }
