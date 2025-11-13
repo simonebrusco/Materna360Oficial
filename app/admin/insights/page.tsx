@@ -253,7 +253,7 @@ function TelemetryViewer() {
     return (
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="text-sm text-neutral-600">Loading telemetry...</p>
+          <p className="text-sm text-neutral-600">Carregando telemetria...</p>
         </div>
       </main>
     );
