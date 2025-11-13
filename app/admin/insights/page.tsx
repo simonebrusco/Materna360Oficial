@@ -310,13 +310,13 @@ function TelemetryViewer() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-neutral-700 mb-1">Route</label>
+            <label className="block text-xs font-semibold text-neutral-700 mb-1">Rota</label>
             <select
               value={routeFilter}
               onChange={(e) => setRouteFilter(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm bg-white"
             >
-              <option value="">All routes</option>
+              <option value="">Todas as rotas</option>
               {routes.map((route) => (
                 <option key={route} value={route}>
                   {route}
