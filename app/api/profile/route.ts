@@ -33,32 +33,45 @@ async function fetchChildrenNames(): Promise<string[]> {
   try {
     const supabase = tryCreateServerSupabase()
     if (!supabase) {
+      console.debug('[ProfileAPI] Supabase not available')
       return []
     }
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const abortController = new AbortController()
+    const timeoutId = setTimeout(() => abortController.abort(), 3000) // 3 second timeout for Supabase
 
-    if (authError || !user) {
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
+
+      if (authError || !user) {
+        clearTimeout(timeoutId)
+        return []
+      }
+
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .neq('name', '')
+
+      clearTimeout(timeoutId)
+
+      if (error) {
+        console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
+        return []
+      }
+
+      return (profiles || [])
+        .map((p: { name?: string }) => p.name?.trim())
+        .filter((name: string | undefined): name is string => !!name && name.length > 0)
+    } catch (supabaseError) {
+      clearTimeout(timeoutId)
+      console.debug('[ProfileAPI] Supabase error:', supabaseError)
       return []
     }
-
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('user_id', user.id)
-      .neq('name', '')
-
-    if (error) {
-      console.debug('[ProfileAPI] Failed to fetch children names:', error)
-      return []
-    }
-
-    return (profiles || [])
-      .map((p: { name?: string }) => p.name?.trim())
-      .filter((name: string | undefined): name is string => !!name && name.length > 0)
   } catch (error) {
     console.debug('[ProfileAPI] Error fetching children:', error)
     return []
