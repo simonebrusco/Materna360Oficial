@@ -254,7 +254,7 @@ function TelemetryViewer() {
                       {event.event || '—'}
                     </td>
                     <td className="px-4 py-3 text-neutral-600 whitespace-nowrap text-xs">
-                      {event.payload?.route || event.payload?.path || event.payload?.page || '—'}
+                      {String(event.payload?.route || event.payload?.path || event.payload?.page || '—')}
                     </td>
                     <td className="px-4 py-3 text-neutral-600 max-w-xs truncate text-xs font-mono">
                       {event.payload ? JSON.stringify(event.payload) : '—'}
