@@ -10,6 +10,7 @@ const ONE_YEAR = 60 * 60 * 24 * 365
 type Profile = {
   motherName?: string
   nomeMae?: string
+  figurinha?: string
 }
 
 const safeParse = (value: string | undefined): Record<string, unknown> => {
