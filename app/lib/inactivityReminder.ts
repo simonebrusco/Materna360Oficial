@@ -119,7 +119,7 @@ export function dismissReminderForToday(): void {
 
     const todayKey = getCurrentDateKey()
     const dismissalKey = `${REMINDER_DISMISSAL_PREFIX}:${todayKey}`
-    localStorage.setItem(dismissalKey, 'true')
+    window.localStorage.setItem(dismissalKey, 'true')
   } catch {
     // no-op
   }
