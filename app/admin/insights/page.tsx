@@ -25,6 +25,12 @@ type TelemetryEvent = {
   ts: number;
 };
 
+type DailyStats = {
+  dateKey: string;
+  totalEvents: number;
+  pageViews: number;
+};
+
 function useTelemetryEvents() {
   const [events, setEvents] = React.useState<TelemetryEvent[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -74,8 +80,117 @@ function formatTimestamp(ts: number): string {
   }
 }
 
+function computeDailyStats(events: TelemetryEvent[]): DailyStats[] {
+  const map = new Map<string, DailyStats>();
+
+  events.forEach((e) => {
+    const d = new Date(e.ts);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+
+    if (!map.has(dateKey)) {
+      map.set(dateKey, { dateKey, totalEvents: 0, pageViews: 0 });
+    }
+
+    const stats = map.get(dateKey)!;
+    stats.totalEvents += 1;
+    if (e.event === 'page_view') {
+      stats.pageViews += 1;
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+}
+
+function ActivityChart({ events }: { events: TelemetryEvent[] }) {
+  const dailyStats = React.useMemo(() => computeDailyStats(events), [events]);
+
+  if (dailyStats.length === 0) {
+    return null;
+  }
+
+  const maxEvents = Math.max(...dailyStats.map((d) => d.totalEvents), 1);
+
+  const formatDateLabel = (dateKey: string): string => {
+    try {
+      const [year, month, day] = dateKey.split('-');
+      return `${day}/${month}`;
+    } catch {
+      return dateKey;
+    }
+  };
+
+  return (
+    <div className="mb-8">
+      <div className="mb-3">
+        <h2 className="text-lg font-semibold text-neutral-900">Activity over time</h2>
+        <p className="text-xs text-neutral-600">Based on local telemetry events stored in this browser.</p>
+      </div>
+      <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+        <div className="flex items-end justify-start gap-2 h-48 overflow-x-auto pb-2">
+          {dailyStats.map((stats) => {
+            const heightPercent = (stats.totalEvents / maxEvents) * 100;
+            return (
+              <div
+                key={stats.dateKey}
+                className="flex flex-col items-center gap-2 flex-shrink-0"
+                title={`${stats.dateKey}: ${stats.totalEvents} events`}
+              >
+                <div
+                  className="bg-pink-600 rounded-t-md w-10 hover:bg-pink-700 transition-colors cursor-pointer"
+                  style={{ height: `${heightPercent}%`, minHeight: '4px' }}
+                />
+                <div className="text-xs text-neutral-600 whitespace-nowrap font-medium">
+                  {formatDateLabel(stats.dateKey)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-3 text-xs text-neutral-500">
+          <p>Total: {dailyStats.reduce((sum, d) => sum + d.totalEvents, 0)} events across {dailyStats.length} days</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ hasAnyEvents, onReload }: { hasAnyEvents: boolean; onReload: () => void }) {
+  return (
+    <div className="rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50/50 p-8 text-center">
+      <div className="mb-4">
+        <div className="text-5xl mb-3">📊</div>
+        <h3 className="text-lg font-semibold text-neutral-900">
+          {hasAnyEvents ? 'No events match filters' : 'No telemetry events yet'}
+        </h3>
+        <p className="mt-2 text-sm text-neutral-600 max-w-sm mx-auto leading-relaxed">
+          {hasAnyEvents
+            ? 'Try clearing filters or adjusting your search to see more events.'
+            : 'Navigate through the app (switch tabs, open paywall, try PDF export) to generate telemetry events, then refresh this page.'}
+        </p>
+      </div>
+      <div className="mt-6 flex gap-3 justify-center flex-wrap">
+        <a
+          href="/meu-dia"
+          className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-neutral-900 rounded-md hover:bg-neutral-800 transition-colors"
+        >
+          Back to app
+        </a>
+        <button
+          onClick={onReload}
+          className="inline-flex items-center px-4 py-2 text-sm font-semibold text-neutral-900 border border-neutral-300 rounded-md bg-white hover:bg-neutral-50 transition-colors"
+        >
+          Reload telemetry
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TelemetryViewer() {
-  const { events, loading, clear } = useTelemetryEvents();
+  const { events, loading, clear, reload } = useTelemetryEvents();
   const [eventTypeFilter, setEventTypeFilter] = React.useState('');
   const [routeFilter, setRouteFilter] = React.useState('');
   const [textSearch, setTextSearch] = React.useState('');
@@ -147,7 +262,7 @@ function TelemetryViewer() {
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Telemetry Insights (v0.1)</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Telemetry Insights (v0.2)</h1>
         <p className="mt-2 text-sm text-neutral-600">
           Local-only debug panel. Reads telemetry events from browser <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
         </p>
@@ -172,6 +287,9 @@ function TelemetryViewer() {
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.paywallCount}</div>
         </div>
       </div>
+
+      {/* Activity Chart */}
+      {events.length > 0 && <ActivityChart events={events} />}
 
       {/* Filters & Clear Button */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -225,13 +343,9 @@ function TelemetryViewer() {
         </button>
       </div>
 
-      {/* Events Table */}
+      {/* Events Table or Empty State */}
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-8 text-center">
-          <p className="text-sm text-neutral-600">
-            {events.length === 0 ? 'No telemetry events recorded yet.' : 'No events match the current filters.'}
-          </p>
-        </div>
+        <EmptyState hasAnyEvents={events.length > 0} onReload={reload} />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
           <div className="max-h-[600px] overflow-y-auto">
@@ -268,9 +382,11 @@ function TelemetryViewer() {
       )}
 
       {/* Footer info */}
-      <div className="mt-6 text-xs text-neutral-500">
-        <p>Showing {filtered.length} of {events.length} events</p>
-      </div>
+      {filtered.length > 0 && (
+        <div className="mt-6 text-xs text-neutral-500">
+          <p>Showing {filtered.length} of {events.length} events</p>
+        </div>
+      )}
     </main>
   );
 }
