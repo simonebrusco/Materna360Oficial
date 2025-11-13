@@ -384,7 +384,7 @@ function TelemetryViewer() {
       {/* Footer info */}
       {filtered.length > 0 && (
         <div className="mt-6 text-xs text-neutral-500">
-          <p>Showing {filtered.length} of {events.length} events</p>
+          <p>Mostrando {filtered.length} de {events.length} eventos</p>
         </div>
       )}
     </main>
