@@ -102,7 +102,7 @@ export function isReminderDismissedForToday(): boolean {
 
     const todayKey = getCurrentDateKey()
     const dismissalKey = `${REMINDER_DISMISSAL_PREFIX}:${todayKey}`
-    const dismissed = localStorage.getItem(dismissalKey)
+    const dismissed = window.localStorage.getItem(dismissalKey)
 
     return dismissed === 'true'
   } catch {
