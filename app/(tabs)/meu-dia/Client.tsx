@@ -488,7 +488,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           <SoftCard className="mb-4">
             <Reveal delay={320}>
               <Badge className="mb-2">Checklist</Badge>
-              <h3 className="m360-card-title mb-4">Marque suas conquistas</h3>
+              <h3 className="m360-card-title">Marque suas <strong>conquistas</strong></h3>
+              <p className="text-xs text-support-2/70 mt-1 mb-4">Marque pequenos passos. Cada tarefa concluída é uma conquista.</p>
               <Checklist currentDateKey={currentDateKey} />
             </Reveal>
           </SoftCard>
