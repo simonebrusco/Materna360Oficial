@@ -498,7 +498,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
       <div className="mb-8">
-        <SectionH2 className="mb-4">Conexão & Cuidado</SectionH2>
+        <SectionH2 className="mb-2">Conexão & Cuidado</SectionH2>
+        <p className="text-xs text-support-2/70 mb-4">Encontre momentos de conexão com seu filho e cuide também de você.</p>
 
         {/* Activity of the Day Card */}
         <SoftCard className="mb-4">
