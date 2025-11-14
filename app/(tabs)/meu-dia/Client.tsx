@@ -118,12 +118,19 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
   // SSR-stable date defaults (compute in useEffect)
   const [ssrDateKey, setSsrDateKey] = useState('2025-01-01')
   const [ssrWeekKey, setSsrWeekKey] = useState('2025-01-01')
+  const [ssrWeekLabels, setSsrWeekLabels] = useState<{ key: string; shortLabel: string; longLabel: string; chipLabel: string }[]>([])
 
   useEffect(() => {
-    const dateKey = getCurrentDateKey()
-    setSsrDateKey(dateKey)
-    const weekStart = getWeekStartKey(dateKey)
-    setSsrWeekKey(weekStart)
+    try {
+      const dateKey = getBrazilDateKey()
+      setSsrDateKey(dateKey)
+      const weekStart = getWeekStartKey(dateKey)
+      setSsrWeekKey(weekStart)
+      const { labels } = buildWeekLabels(weekStart)
+      setSsrWeekLabels(labels)
+    } catch (error) {
+      console.error('Failed to compute week labels on mount:', error)
+    }
   }, [])
 
   // Use fallbacks in builder mode, otherwise use provided props
