@@ -7,7 +7,6 @@ import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getDayIndex } from '@/app/lib/dailyMessage'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
