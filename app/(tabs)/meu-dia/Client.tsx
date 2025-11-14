@@ -629,54 +629,6 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
             </div>
           </Reveal>
         </SoftCard>
-
-        {/* Quick Notes / Notes Card */}
-        <SoftCard className="notesCard mb-4">
-          <Reveal delay={360}>
-            <Badge className="mb-2">Anotações</Badge>
-            <div className="notesCard-header mb-4 flex items-start justify-between gap-4">
-              <div className="notesCard-text flex-1">
-                <h3 className="m360-card-title">
-                  <span className="mr-1">
-                    <AppIcon name="edit" size={16} aria-hidden />
-                  </span>
-                  {notesLabel}
-                </h3>
-                <p className="notesCard-meta meta text-xs text-support-2/70">Anote <strong>pensamentos</strong>, ideias ou momentos importantes para lembrar depois.</p>
-              </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowNoteModal(true)}
-                className="notesCard-action flex-shrink-0"
-              >
-                + Adicionar
-              </Button>
-            </div>
-
-            {notes.length > 0 ? (
-              <div className="notesCard-list space-y-2">
-                {notes.map((note, idx) => (
-                  <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
-                    {note}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="notesCard-empty rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
-                    <AppIcon name="edit" size={24} className="text-primary" decorative />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
-                    <p className="mt-1 text-xs text-support-2">Use este espaço para registrar pensamentos, ideias ou momentos especiais.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </Reveal>
-        </SoftCard>
       </div>
 
       {/* Note Modal */}
