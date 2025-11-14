@@ -445,40 +445,58 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
             </div>
           </Reveal>
         </SoftCard>
+      </div>
+
+      {/* MACRO BLOCK 2.5: BALANCE (Equilíbrio) */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-support-1 mb-2">Equilíbrio</h2>
+        <p className="m360-label-sm text-gray-600 mb-4">
+          Organize compromissos, tarefas e notas em um só lugar.
+        </p>
 
         {/* Family Planner / Balance Card */}
         <div id="meu-dia-print-area" className="print-card space-y-4">
-          <SoftCard>
-            <Reveal delay={280}>
-              <div>
-                <Badge className="mb-2">Equilíbrio</Badge>
-                <h3 className="m360-card-title">Semana em foco</h3>
-                <p className="text-xs text-support-2/70 mt-1">Veja seus compromissos da semana e ajuste o que for necessário hoje.</p>
-                <div className="mt-4">
-                  <FamilyPlanner
-                    currentDateKey={currentDateKey}
-                    weekStartKey={weekStartKey}
-                    weekLabels={weekLabels}
-                    plannerTitle={plannerTitle}
-                    profile={profile}
-                    dateKey={dateKey}
-                    recommendations={recommendations}
-                    initialBuckets={initialBuckets}
-                  />
-                </div>
+          {/* Planner da Mãe Card */}
+          <Reveal delay={280}>
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+              Planner da Mãe
+            </span>
+            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="m360-subtitle">O que é prioridade hoje?</h3>
+                <p className="m360-label-sm text-gray-600">
+                  Veja seus compromissos do dia e ajuste o que for necessário.
+                </p>
               </div>
-            </Reveal>
-          </SoftCard>
+              <div>
+                <FamilyPlanner
+                  currentDateKey={currentDateKey}
+                  weekStartKey={weekStartKey}
+                  weekLabels={weekLabels}
+                  plannerTitle={plannerTitle}
+                  profile={profile}
+                  dateKey={dateKey}
+                  recommendations={recommendations}
+                  initialBuckets={initialBuckets}
+                />
+              </div>
+            </div>
+          </Reveal>
 
           {/* Weekly Items / Planner Card */}
-          <SoftCard className="mb-4">
-            <Reveal delay={300}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <Badge className="mb-2">Planejamento</Badge>
-                  <h3 className="m360-card-title">Itens da <strong>Semana</strong></h3>
-                  <p className="text-xs text-support-2/70 mt-1">Deixe visível o que você não quer esquecer ao longo da semana.</p>
-                </div>
+          <Reveal delay={300}>
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+              Itens da Semana
+            </span>
+            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="m360-subtitle">O que você não quer esquecer esta semana?</h3>
+                <p className="m360-label-sm text-gray-600">
+                  Mantenha visíveis os itens importantes da sua semana.
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex-1" />
                 <Button
                   variant="primary"
                   size="sm"
@@ -490,8 +508,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
                 </Button>
               </div>
               <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
-            </Reveal>
-          </SoftCard>
+            </div>
+          </Reveal>
 
           <SimplePlannerSheet
             isOpen={showPlannerSheet}
@@ -500,14 +518,68 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           />
 
           {/* Checklist Card */}
-          <SoftCard className="mb-4">
-            <Reveal delay={320}>
-              <Badge className="mb-2">Checklist</Badge>
-              <h3 className="m360-card-title">Marque suas <strong>conquistas</strong></h3>
-              <p className="text-xs text-support-2/70 mt-1 mb-4">Marque pequenos passos. Cada tarefa concluída é uma conquista.</p>
+          <Reveal delay={320}>
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+              Checklist da Mãe
+            </span>
+            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="m360-subtitle">Pequenas tarefas, grandes conquistas.</h3>
+                <p className="m360-label-sm text-gray-600">
+                  Marque o que você já fez e celebre cada avanço.
+                </p>
+              </div>
               <Checklist currentDateKey={currentDateKey} />
-            </Reveal>
-          </SoftCard>
+            </div>
+          </Reveal>
+
+          {/* Notes Card */}
+          <Reveal delay={330}>
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+              Notas Rápidas
+            </span>
+            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4 notesCard">
+              <div className="flex flex-col gap-1">
+                <h3 className="m360-subtitle">Um espaço só seu para anotar o que importa.</h3>
+                <p className="m360-label-sm text-gray-600">
+                  Anote pensamentos, ideias ou momentos especiais para lembrar depois.
+                </p>
+              </div>
+              <div className="notesCard-header flex items-start justify-between gap-4">
+                <div className="notesCard-text flex-1" />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setShowNoteModal(true)}
+                  className="notesCard-action flex-shrink-0"
+                >
+                  + Adicionar
+                </Button>
+              </div>
+
+              {notes.length > 0 ? (
+                <div className="notesCard-list space-y-2">
+                  {notes.map((note, idx) => (
+                    <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                      {note}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="notesCard-empty rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
+                      <AppIcon name="edit" size={24} className="text-primary" decorative />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
+                      <p className="mt-1 text-xs text-support-2">Use este espaço para registrar pensamentos, ideias ou momentos especiais.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Reveal>
         </div>
       </div>
 
