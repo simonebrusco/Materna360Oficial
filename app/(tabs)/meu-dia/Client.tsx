@@ -269,7 +269,10 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     >
       <SoftCard className="mb-4">
         <Reveal delay={100}>
-          <DailyMessageCard greeting={dailyGreeting} />
+          <div>
+            <Badge className="mb-2">Mensagem de Hoje</Badge>
+            <DailyMessageCard greeting={dailyGreeting} />
+          </div>
         </Reveal>
       </SoftCard>
 
