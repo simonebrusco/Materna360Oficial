@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { PageHeader } from '@/components/common/PageHeader';
 
 export interface PageTemplateProps {
+  label?: string;
   title: string;
   subtitle?: string;
   hero?: React.ReactNode;
@@ -13,6 +14,7 @@ export interface PageTemplateProps {
 }
 
 export function PageTemplate({
+  label,
   title,
   subtitle,
   hero,
@@ -29,7 +31,7 @@ export function PageTemplate({
     >
       <div className="mx-auto max-w-[1040px] px-4 md:px-6">
         <header className="pt-6 md:pt-8 mb-4 md:mb-6">
-          <PageHeader title={title} subtitle={subtitle} />
+          <PageHeader label={label} title={title} subtitle={subtitle} />
           {hero ? <div className="mt-3 md:mt-4">{hero}</div> : null}
         </header>
         <div className="space-y-4 md:space-y-5">{children}</div>
