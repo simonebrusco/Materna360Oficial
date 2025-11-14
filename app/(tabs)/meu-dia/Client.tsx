@@ -77,7 +77,7 @@ const quickActions = [
   { iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
-const NOTES_LABEL = 'Notas Rápidas'
+const NOTES_LABEL = 'Notas R��pidas'
 const NOTES_DESCRIPTION = 'Capture ideias e lembretes em instantes.'
 const NOTES_EMPTY_TEXT = 'Nenhuma nota registrada ainda.'
 
@@ -357,7 +357,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       {/* MACRO BLOCK 2: ROUTINE & ORGANIZATION (Rotina & Organização) */}
       <div className="mb-8">
-        <SectionH2 className="mb-4">Rotina & Organização</SectionH2>
+        <SectionH2 className="mb-2">Rotina & Organização</SectionH2>
+        <p className="text-xs text-support-2/70 mb-4">Organize as tarefas da casa, compromissos e o que é prioridade hoje.</p>
 
         {/* House Routine Card */}
         <SoftCard className="mb-4">
