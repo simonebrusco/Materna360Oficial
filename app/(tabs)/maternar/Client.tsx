@@ -30,9 +30,22 @@ export default function MaternarClient() {
 
   const greeting = name ? getTimeGreeting(name) : 'Bem-vinda ao Maternar';
   const subtitle = 'Juntas vamos fazer de hoje um dia leve.';
+  const firstName = name ? name.split(' ')[0] : '';
 
   return (
     <main data-layout="page-template-v1" className="min-h-screen bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_64%)]">
+      {firstName && (
+        <div className="px-4 py-6 border-b border-white/20">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70 mb-2">
+              Maternar
+            </p>
+            <p className="text-base text-support-1">
+              Bom dia, {firstName}! Juntas vamos fazer de hoje um dia leve.
+            </p>
+          </div>
+        </div>
+      )}
       <PageTemplate
         title=""
         hero={<HubHeader greeting={greeting} subtitle={subtitle} />}
