@@ -1,6 +1,21 @@
 'use client';
 
 import * as React from 'react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import { readLocalEvents, clearLocalEvents } from '@/app/lib/telemetry';
 
 function isInsightsEnabled() {
@@ -104,55 +119,130 @@ function computeDailyStats(events: TelemetryEvent[]): DailyStats[] {
   return Array.from(map.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
 }
 
-function ActivityChart({ events }: { events: TelemetryEvent[] }) {
+function TabEngagementChart({ events }: { events: TelemetryEvent[] }) {
+  const tabCounts: Record<string, number> = {};
+
+  events.forEach((e) => {
+    const tab = (e.payload?.tab as string) || 'unknown';
+    tabCounts[tab] = (tabCounts[tab] || 0) + 1;
+  });
+
+  const data = Object.entries(tabCounts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
+
+  const COLORS = ['#ff005e', '#ffd8e6', '#2f3a56', '#545454', '#9CA3AF', '#E5E7EB'];
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-neutral-900 mb-4">Engajamento por Aba</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, value }) => `${name}: ${value}`}
+            outerRadius={100}
+            fill="#ff005e"
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function DailyActivityChart({ events }: { events: TelemetryEvent[] }) {
   const dailyStats = React.useMemo(() => computeDailyStats(events), [events]);
 
   if (dailyStats.length === 0) {
     return null;
   }
 
-  const maxEvents = Math.max(...dailyStats.map((d) => d.totalEvents), 1);
-
-  const formatDateLabel = (dateKey: string): string => {
-    try {
-      const [year, month, day] = dateKey.split('-');
-      return `${day}/${month}`;
-    } catch {
-      return dateKey;
-    }
-  };
+  const data = dailyStats.map((d) => ({
+    date: d.dateKey.slice(-5), // MM-DD format
+    total: d.totalEvents,
+    pageViews: d.pageViews,
+  }));
 
   return (
-    <div className="mb-8">
-      <div className="mb-3">
-        <h2 className="text-lg font-semibold text-neutral-900">Atividade ao longo do tempo</h2>
-        <p className="text-xs text-neutral-600">Baseado em eventos de telemetria locais armazenados neste navegador.</p>
-      </div>
-      <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
-        <div className="flex items-end justify-start gap-2 h-48 overflow-x-auto pb-2">
-          {dailyStats.map((stats) => {
-            const heightPercent = (stats.totalEvents / maxEvents) * 100;
-            return (
-              <div
-                key={stats.dateKey}
-                className="flex flex-col items-center gap-2 flex-shrink-0"
-                title={`${stats.dateKey}: ${stats.totalEvents} events`}
-              >
-                <div
-                  className="bg-pink-600 rounded-t-md w-10 hover:bg-pink-700 transition-colors cursor-pointer"
-                  style={{ height: `${heightPercent}%`, minHeight: '4px' }}
-                />
-                <div className="text-xs text-neutral-600 whitespace-nowrap font-medium">
-                  {formatDateLabel(stats.dateKey)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-3 text-xs text-neutral-500">
-          <p>Total: {dailyStats.reduce((sum, d) => sum + d.totalEvents, 0)} events across {dailyStats.length} days</p>
-        </div>
-      </div>
+    <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-neutral-900 mb-4">Atividade por Dia</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="total"
+            stroke="#ff005e"
+            strokeWidth={2}
+            dot={{ fill: '#ff005e', r: 4 }}
+            activeDot={{ r: 6 }}
+            name="Total de Eventos"
+          />
+          <Line
+            type="monotone"
+            dataKey="pageViews"
+            stroke="#ffd8e6"
+            strokeWidth={2}
+            dot={{ fill: '#ffd8e6', r: 4 }}
+            activeDot={{ r: 6 }}
+            name="Visualizações de Página"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function TopEventsChart({ events }: { events: TelemetryEvent[] }) {
+  const eventCounts: Record<string, number> = {};
+
+  events.forEach((e) => {
+    eventCounts[e.event] = (eventCounts[e.event] || 0) + 1;
+  });
+
+  const data = Object.entries(eventCounts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-neutral-900 mb-4">Top 10 Eventos</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 5, right: 30, left: 200, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis type="number" />
+          <YAxis dataKey="name" type="category" width={190} />
+          <Tooltip />
+          <Bar dataKey="value" fill="#ff005e" radius={[0, 8, 8, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -192,10 +282,10 @@ function EmptyState({ hasAnyEvents, onReload }: { hasAnyEvents: boolean; onReloa
 function TelemetryViewer() {
   const { events, loading, clear, reload } = useTelemetryEvents();
   const [eventTypeFilter, setEventTypeFilter] = React.useState('');
-  const [routeFilter, setRouteFilter] = React.useState('');
+  const [tabFilter, setTabFilter] = React.useState('');
   const [textSearch, setTextSearch] = React.useState('');
 
-  // Compute distinct event types and routes
+  // Compute distinct event types and tabs
   const eventTypes = React.useMemo(() => {
     const set = new Set<string>();
     events.forEach((e) => {
@@ -204,12 +294,10 @@ function TelemetryViewer() {
     return Array.from(set).sort();
   }, [events]);
 
-  const routes = React.useMemo(() => {
+  const tabs = React.useMemo(() => {
     const set = new Set<string>();
     events.forEach((e) => {
-      if (e.payload?.route) set.add(String(e.payload.route));
-      if (e.payload?.path) set.add(String(e.payload.path));
-      if (e.payload?.page) set.add(String(e.payload.page));
+      if (e.payload?.tab) set.add(String(e.payload.tab));
     });
     return Array.from(set).sort();
   }, [events]);
@@ -218,29 +306,29 @@ function TelemetryViewer() {
   const filtered = React.useMemo(() => {
     return events.filter((e) => {
       if (eventTypeFilter && e.event !== eventTypeFilter) return false;
-      if (routeFilter) {
-        const route = e.payload?.route || e.payload?.path || e.payload?.page;
-        if (route !== routeFilter) return false;
-      }
+      if (tabFilter && e.payload?.tab !== tabFilter) return false;
       if (textSearch) {
         const text = JSON.stringify(e.payload || '').toLowerCase();
-        const route = String(e.payload?.route || e.payload?.path || e.payload?.page || '').toLowerCase();
-        if (!text.includes(textSearch.toLowerCase()) && !route.includes(textSearch.toLowerCase())) {
+        const event = (e.event || '').toLowerCase();
+        if (!text.includes(textSearch.toLowerCase()) && !event.includes(textSearch.toLowerCase())) {
           return false;
         }
       }
       return true;
     });
-  }, [events, eventTypeFilter, routeFilter, textSearch]);
+  }, [events, eventTypeFilter, tabFilter, textSearch]);
 
   // Compute KPIs
   const kpis = React.useMemo(() => {
     const totalEvents = events.length;
-    const pageViewCount = events.filter((e) => e.event === 'page_view').length;
-    const navClickCount = events.filter((e) => e.event === 'nav_click').length;
+    const pageViewCount = events.filter((e) => e.event === 'page_view' || e.event === 'nav.click').length;
     const paywallCount = events.filter((e) => e.event?.startsWith('paywall_') || e.event?.includes('plan_')).length;
+    const uniqueDays = new Set(events.map((e) => {
+      const d = new Date(e.ts);
+      return d.toISOString().split('T')[0];
+    })).size;
 
-    return { totalEvents, pageViewCount, navClickCount, paywallCount };
+    return { totalEvents, pageViewCount, paywallCount, uniqueDays };
   }, [events]);
 
   const handleClear = () => {
@@ -251,7 +339,7 @@ function TelemetryViewer() {
 
   if (loading) {
     return (
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="text-center">
           <p className="text-sm text-neutral-600">Carregando telemetria...</p>
         </div>
@@ -260,11 +348,11 @@ function TelemetryViewer() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
+    <main className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Insights de Telemetria (v0.2)</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Insights de Telemetria (v0.3)</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          Painel de debug local. Lê eventos de telemetria do navegador <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
+          Painel de debug local com visualizações de dados. Lê eventos de telemetria do navegador <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
         </p>
       </div>
 
@@ -275,23 +363,34 @@ function TelemetryViewer() {
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.totalEvents}</div>
         </div>
         <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
-          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Visualizações</div>
+          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Navegações</div>
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.pageViewCount}</div>
-        </div>
-        <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
-          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Cliques Nav</div>
-          <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.navClickCount}</div>
         </div>
         <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
           <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Eventos Paywall</div>
           <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.paywallCount}</div>
         </div>
+        <div className="rounded-lg bg-white/60 border border-neutral-200 p-4 shadow-sm">
+          <div className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Dias com Dados</div>
+          <div className="mt-2 text-2xl font-bold text-neutral-900">{kpis.uniqueDays}</div>
+        </div>
       </div>
 
-      {/* Activity Chart */}
-      {events.length > 0 && <ActivityChart events={events} />}
+      {/* Charts */}
+      {events.length > 0 && (
+        <div className="mb-8 grid gap-8 lg:grid-cols-2">
+          <TabEngagementChart events={events} />
+          <DailyActivityChart events={events} />
+        </div>
+      )}
 
-      {/* Filters & Clear Button */}
+      {events.length > 0 && (
+        <div className="mb-8">
+          <TopEventsChart events={events} />
+        </div>
+      )}
+
+      {/* Filters & Controls */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3 flex-1">
           <div>
@@ -310,16 +409,16 @@ function TelemetryViewer() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-neutral-700 mb-1">Rota</label>
+            <label className="block text-xs font-semibold text-neutral-700 mb-1">Aba</label>
             <select
-              value={routeFilter}
-              onChange={(e) => setRouteFilter(e.target.value)}
+              value={tabFilter}
+              onChange={(e) => setTabFilter(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm bg-white"
             >
-              <option value="">Todas as rotas</option>
-              {routes.map((route) => (
-                <option key={route} value={route}>
-                  {route}
+              <option value="">Todas as abas</option>
+              {tabs.map((tab) => (
+                <option key={tab} value={tab}>
+                  {tab}
                 </option>
               ))}
             </select>
@@ -354,24 +453,24 @@ function TelemetryViewer() {
                 <tr>
                   <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Data/Hora</th>
                   <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Evento</th>
-                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Rota</th>
+                  <th className="text-left px-4 py-3 font-semibold text-neutral-700 whitespace-nowrap">Aba</th>
                   <th className="text-left px-4 py-3 font-semibold text-neutral-700">Payload</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
-                {filtered.map((event, index) => (
+                {filtered.slice(0, 50).map((event, index) => (
                   <tr key={`${event.ts}-${index}`} className="hover:bg-neutral-50 transition-colors">
                     <td className="px-4 py-3 text-neutral-600 whitespace-nowrap text-xs">
                       {formatTimestamp(event.ts)}
                     </td>
-                    <td className="px-4 py-3 text-neutral-900 font-medium whitespace-nowrap">
+                    <td className="px-4 py-3 text-neutral-900 font-medium whitespace-nowrap text-xs">
                       {event.event || '—'}
                     </td>
                     <td className="px-4 py-3 text-neutral-600 whitespace-nowrap text-xs">
-                      {String(event.payload?.route || event.payload?.path || event.payload?.page || '—')}
+                      {String(event.payload?.tab || '—')}
                     </td>
                     <td className="px-4 py-3 text-neutral-600 max-w-xs truncate text-xs font-mono">
-                      {event.payload ? JSON.stringify(event.payload) : '—'}
+                      {event.payload ? JSON.stringify(event.payload).slice(0, 100) : '—'}
                     </td>
                   </tr>
                 ))}
@@ -384,7 +483,7 @@ function TelemetryViewer() {
       {/* Footer info */}
       {filtered.length > 0 && (
         <div className="mt-6 text-xs text-neutral-500">
-          <p>Mostrando {filtered.length} de {events.length} eventos</p>
+          <p>Mostrando {Math.min(50, filtered.length)} de {filtered.length} eventos (últimas 50 linhas na tabela)</p>
         </div>
       )}
     </main>
