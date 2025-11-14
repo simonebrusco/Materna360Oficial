@@ -510,22 +510,27 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           <Reveal delay={260}>
             <div>
               <Badge className="mb-4">Ações Rápidas</Badge>
-              <GridStable>
+              <div className="grid grid-cols-2 gap-4 mb-8">
                 {quickActions.map((action, index) => (
                   <Reveal key={action.title} delay={index * 80} className="h-full">
-                    <div className="h-full rounded-xl bg-white/70 p-3 border border-white/40">
-                      <div className="mb-3">
-                        <AppIcon name={action.iconName as any} size={28} decorative />
+                    <button
+                      type="button"
+                      className="h-full rounded-2xl bg-white border border-white/60 p-4 shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                      aria-label={`${action.title} - ${action.description}`}
+                    >
+                      <div className="flex flex-col items-start gap-2 h-full">
+                        <div className="flex-shrink-0">
+                          <AppIcon name={action.iconName as any} size={24} decorative className="text-primary" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="font-semibold text-sm text-support-1">{action.title}</p>
+                          <p className="mt-1 text-xs text-support-2">{action.description}</p>
+                        </div>
                       </div>
-                      <BlockH3 className="text-base md:text-lg">{action.title}</BlockH3>
-                      <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
-                      <Button variant="primary" size="sm" className="w-full">
-                        Acessar
-                      </Button>
-                    </div>
+                    </button>
                   </Reveal>
                 ))}
-              </GridStable>
+              </div>
             </div>
           </Reveal>
         </SoftCard>
