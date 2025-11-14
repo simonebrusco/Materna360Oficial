@@ -305,6 +305,7 @@ export function FamilyPlanner({
   const [selectedDayKey, setSelectedDayKey] = useState(() => currentDateKey)
   const [plannerData, setPlannerData] = useState<PlannerData>({})
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isLoadingWeek, setIsLoadingWeek] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [draftType, setDraftType] = useState<(typeof TYPE_OPTIONS)[number]>('Brincadeira')
