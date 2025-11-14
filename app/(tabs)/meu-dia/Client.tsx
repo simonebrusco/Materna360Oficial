@@ -76,7 +76,7 @@ const quickActions = [
   { iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
-const NOTES_LABEL = 'Notas R\u00E1pidas'
+const NOTES_LABEL = 'Notas Rápidas'
 const NOTES_DESCRIPTION = 'Capture ideias e lembretes em instantes.'
 const NOTES_EMPTY_TEXT = 'Nenhuma nota registrada ainda.'
 
@@ -306,7 +306,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
               className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
               data-event="meu-dia.trend_view"
             >
-              Ver tend��ncia
+              Ver tendência
             </button>
           </div>
         </Reveal>
@@ -468,9 +468,9 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       <SoftCard className="notesCard mb-4">
         <Reveal delay={360}>
-          <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
-            <div className="notesCard-text">
-              <Badge className="mb-2">Anota��ões</Badge>
+          <Badge className="mb-2">Anotações</Badge>
+          <div className="notesCard-header mb-4 flex items-start justify-between gap-4">
+            <div className="notesCard-text flex-1">
               <h3 className="m360-card-title">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
@@ -483,9 +483,9 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
               variant="primary"
               size="sm"
               onClick={() => setShowNoteModal(true)}
-              className="notesCard-action"
+              className="notesCard-action flex-shrink-0"
             >
-              ��� Adicionar
+              + Adicionar
             </Button>
           </div>
 
