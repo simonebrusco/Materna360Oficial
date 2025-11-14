@@ -318,10 +318,14 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
         {/* Humor & Energia - Premium Card */}
         <Reveal delay={160}>
+          {/* Pink pill label above the card */}
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+            Humor e Energia
+          </span>
           <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-6">
             {/* Header */}
             <div className="flex flex-col gap-1">
-              <h3 className="m360-subtitle">Humor e Energia</h3>
+              <h3 className="m360-subtitle">Como você está hoje?</h3>
               <p className="m360-label-sm text-gray-600">
                 Registre seu humor e energia de hoje. Isso vai ajudar a acompanhar sua semana.
               </p>
