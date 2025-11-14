@@ -371,6 +371,9 @@ export function FamilyPlanner({
   useEffect(() => {
     setWeekStartKeyState(weekStartKey)
     setWeekDays(weekLabels)
+    if (weekLabels && weekLabels.length > 0) {
+      setIsInitialized(true)
+    }
   }, [weekStartKey, weekLabels])
 
   useEffect(() => {
