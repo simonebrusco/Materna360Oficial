@@ -858,20 +858,27 @@ export function FamilyPlanner({
             {weekDays.map((day) => {
               const isSelected = selectedDayKey === day.key
               const isToday = todayKey === day.key
+              const dayItems = plannerData[day.key] ?? []
+              const hasItems = dayItems.length > 0
 
               return (
                 <button
                   key={day.key}
                   type="button"
                   onClick={() => handleSelectDay(day.key)}
-                  className={`flex h-20 min-w-[88px] flex-1 items-center justify-center rounded-2xl border px-4 py-4 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-24 ${
+                  className={`flex flex-col h-20 min-w-[88px] flex-1 items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition-all duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-24 ${
                     isSelected
                       ? 'border-transparent bg-gradient-to-b from-primary to-primary/80 text-white shadow-soft ring-2 ring-primary/30 scale-[1.02]'
-                      : 'border-white/60 bg-white/70 text-support-1 shadow-soft hover:bg-white/90 hover:shadow-elevated'
-                  } ${isToday && !isSelected ? 'border-primary/40 text-primary' : ''}`}
+                      : isToday
+                        ? 'border-primary/50 bg-white/90 text-primary shadow-elevated hover:bg-white hover:shadow-elevated'
+                        : 'border-white/60 bg-white/70 text-support-1 shadow-soft hover:bg-white/90 hover:shadow-elevated'
+                  } hover:shadow-elevated`}
                   aria-current={isSelected ? 'date' : undefined}
                 >
                   <span className="text-[15px] font-semibold md:text-base">{day.chipLabel}</span>
+                  {hasItems && !isSelected && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1" aria-hidden="true" />
+                  )}
                 </button>
               )
             })}
