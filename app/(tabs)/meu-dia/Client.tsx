@@ -411,20 +411,23 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
       </SoftCard>
 
       <div id="meu-dia-print-area" className="print-card space-y-4">
-        <Card>
+        <SoftCard>
           <Reveal delay={280}>
-            <FamilyPlanner
-              currentDateKey={currentDateKey}
-              weekStartKey={weekStartKey}
-              weekLabels={weekLabels}
-              plannerTitle={plannerTitle}
-              profile={profile}
-              dateKey={dateKey}
-              recommendations={recommendations}
-              initialBuckets={initialBuckets}
-            />
+            <div>
+              <Badge className="mb-2">Equilíbrio</Badge>
+              <FamilyPlanner
+                currentDateKey={currentDateKey}
+                weekStartKey={weekStartKey}
+                weekLabels={weekLabels}
+                plannerTitle={plannerTitle}
+                profile={profile}
+                dateKey={dateKey}
+                recommendations={recommendations}
+                initialBuckets={initialBuckets}
+              />
+            </div>
           </Reveal>
-        </Card>
+        </SoftCard>
 
         <SoftCard className="mb-4">
           <Reveal delay={300}>
