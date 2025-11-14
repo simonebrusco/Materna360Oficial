@@ -516,7 +516,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
                     <Reveal key={action.title} delay={index * 80} className="h-full">
                       <button
                         type="button"
-                        className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 md:min-w-[220px] lg:min-w-[240px] shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                         aria-label={`${action.title} - ${action.description}`}
                       >
                         <div className="flex-shrink-0">
