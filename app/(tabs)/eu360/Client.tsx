@@ -160,6 +160,7 @@ export default function Eu360Client() {
 
   const content = (
     <PageTemplate
+      label="EU360"
       title={personalizedTitle}
       subtitle={personalizedSubtitle}
     >
