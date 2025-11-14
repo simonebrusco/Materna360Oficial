@@ -46,6 +46,7 @@ import { getMoodEntries, seedIfEmpty } from '@/app/lib/moodStore.client'
 import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
 import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
 import { useProfile } from '@/app/hooks/useProfile'
+import { PremiumPaywallCard } from '@/components/premium/PremiumPaywallCard'
 
 type MeuDiaClientProps = {
   dailyGreeting?: string
