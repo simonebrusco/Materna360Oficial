@@ -19,14 +19,27 @@ type Props = {
 
 export default function CuidarClient({ recipesSection }: Props) {
   const { name } = useProfile();
-  const personalizedTitle = name ? `${name}, vamos cuidar do que importa agora?` : 'Cuidar';
+  const firstName = name ? name.split(' ')[0] : '';
   const personalizedSubtitle = 'Saúde física, emocional e segurança — no ritmo da vida real.';
 
   return (
-    <PageTemplate
-      title={personalizedTitle}
-      subtitle={personalizedSubtitle}
-    >
+    <>
+      {firstName && (
+        <div className="px-4 py-6 border-b border-white/20">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70 mb-2">
+              Cuidar
+            </p>
+            <p className="text-base text-support-1">
+              {firstName}, vamos cuidar do que importa agora?
+            </p>
+          </div>
+        </div>
+      )}
+      <PageTemplate
+        title=""
+        subtitle={personalizedSubtitle}
+      >
       <Card>
         <div className="flex flex-wrap gap-2">
           <FilterPill active>Hoje</FilterPill>
@@ -72,5 +85,6 @@ export default function CuidarClient({ recipesSection }: Props) {
 
       <BreathAudios />
     </PageTemplate>
+    </>
   )
 }
