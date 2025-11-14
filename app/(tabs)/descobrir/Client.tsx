@@ -347,6 +347,7 @@ export default function DiscoverClient() {
       {/* Time Window Section */}
       <Card>
         <div className="mb-4">
+          <Badge className="mb-2">Tempo</Badge>
           <SectionH2 className="mb-1">Quanto tempo você tem agora?</SectionH2>
           <p className="text-sm text-support-2">Escolha o tempo disponível para adaptar as sugestões.</p>
         </div>
