@@ -437,16 +437,20 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
             <Reveal delay={280}>
               <div>
                 <Badge className="mb-2">Equilíbrio</Badge>
-                <FamilyPlanner
-                  currentDateKey={currentDateKey}
-                  weekStartKey={weekStartKey}
-                  weekLabels={weekLabels}
-                  plannerTitle={plannerTitle}
-                  profile={profile}
-                  dateKey={dateKey}
-                  recommendations={recommendations}
-                  initialBuckets={initialBuckets}
-                />
+                <h3 className="m360-card-title">Semana em foco</h3>
+                <p className="text-xs text-support-2/70 mt-1">Veja seus compromissos da semana e ajuste o que for necessário hoje.</p>
+                <div className="mt-4">
+                  <FamilyPlanner
+                    currentDateKey={currentDateKey}
+                    weekStartKey={weekStartKey}
+                    weekLabels={weekLabels}
+                    plannerTitle={plannerTitle}
+                    profile={profile}
+                    dateKey={dateKey}
+                    recommendations={recommendations}
+                    initialBuckets={initialBuckets}
+                  />
+                </div>
               </div>
             </Reveal>
           </SoftCard>
