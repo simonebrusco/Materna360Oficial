@@ -511,7 +511,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
             <div>
               <Badge className="mb-4">Ações Rápidas</Badge>
               <div className="w-full mx-auto md:max-w-2xl lg:max-w-4xl">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-3 mb-8 items-stretch">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-4 mb-8 items-stretch">
                   {quickActions.map((action, index) => (
                     <Reveal key={action.title} delay={index * 80} className="h-full">
                       <button
