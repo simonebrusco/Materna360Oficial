@@ -284,14 +284,12 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
         {/* Message of the Day - Premium Hero Card */}
         <Reveal delay={100}>
-          <div className="w-full rounded-3xl shadow-soft px-6 py-6 md:py-7 bg-gradient-to-b from-primary/3 to-white relative overflow-hidden mb-8 md:mb-10">
-            {/* Subtle illustration - top-right */}
-            <div className="absolute top-3 right-3 opacity-10 scale-50 md:scale-40 pointer-events-none">
-              <MaternaHeroDecoration />
-            </div>
+          <div className="w-full rounded-3xl shadow-soft bg-white px-6 py-6 md:px-8 md:py-8 relative overflow-hidden mb-8 md:mb-10">
+            {/* Subtle gradient accent blob - top-right corner */}
+            <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full" />
 
-            {/* Content wrapper with tight spacing */}
-            <div className="flex flex-col gap-2 md:gap-3">
+            {/* Content wrapper with tight spacing - positioned above accent */}
+            <div className="flex flex-col gap-2 md:gap-3 relative z-10">
               {/* Pill header */}
               <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm w-fit">
                 Mensagem de Hoje
