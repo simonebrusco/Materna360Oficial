@@ -106,16 +106,15 @@ export default function BottomNav({
                   href={it.href}
                   onClick={() => handleNavClick(it.href)}
                   className={`
-                    flex flex-col items-center justify-center
+                    flex flex-col items-center justify-center gap-0.5
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                     transition-all duration-200
                     rounded-full
-                    h-12 min-w-[88px] px-4 py-2
-                    -mt-3
+                    h-14 px-6 -mt-4
                     ${
                       isActive
-                        ? 'bg-gradient-to-t from-[#ff005e] to-[#ff6f9d] text-white shadow-lg'
-                        : 'bg-white shadow-md border border-pink-100'
+                        ? 'bg-gradient-to-t from-[#ff005e] to-[#ff7ba8] shadow-lg text-white'
+                        : 'bg-white border border-pink-100 shadow-md'
                     }
                   `}
                   aria-label={it.label}
@@ -127,8 +126,8 @@ export default function BottomNav({
                     className={isActive ? 'text-white' : 'text-neutral-500'}
                     decorative
                   />
-                  <span className={`block mt-0.5 text-xs font-medium leading-tight ${
-                    isActive ? 'text-white' : 'text-neutral-600'
+                  <span className={`text-xs font-semibold leading-tight ${
+                    isActive ? 'text-white tracking-wide' : 'text-[11px] text-neutral-600 font-medium'
                   }`}>
                     {it.label}
                   </span>
@@ -144,11 +143,11 @@ export default function BottomNav({
                 href={it.href}
                 onClick={() => handleNavClick(it.href)}
                 className={`
-                  flex flex-col items-center justify-center
+                  flex flex-col items-center justify-center gap-0.5
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                   transition-all duration-200
                   flex-1
-                  py-1.5 h-14
+                  h-12 px-2
                 `}
                 aria-label={it.label}
                 aria-current={isActive ? 'page' : undefined}
@@ -163,7 +162,7 @@ export default function BottomNav({
                   }
                   decorative
                 />
-                <span className={`block mt-0.5 text-xs font-medium leading-tight ${
+                <span className={`text-[11px] font-medium leading-tight ${
                   isActive ? 'text-[#ff005e]' : 'text-neutral-500'
                 }`}>
                   {it.label}
