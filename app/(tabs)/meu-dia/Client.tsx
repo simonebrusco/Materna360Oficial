@@ -116,12 +116,13 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
   // SSR-stable date defaults (compute in useEffect)
   const [ssrDateKey, setSsrDateKey] = useState('2025-01-01')
-  const [ssrWeekKey, setSsrWeekKey] = useState('2025-W01')
+  const [ssrWeekKey, setSsrWeekKey] = useState('2025-01-01')
 
   useEffect(() => {
-    const now = new Date()
-    setSsrDateKey(now.toISOString().slice(0, 10))
-    setSsrWeekKey(`${now.getFullYear()}-W01`)
+    const dateKey = getCurrentDateKey()
+    setSsrDateKey(dateKey)
+    const weekStart = getWeekStartKey(dateKey)
+    setSsrWeekKey(weekStart)
   }, [])
 
   // Use fallbacks in builder mode, otherwise use provided props
