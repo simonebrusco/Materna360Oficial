@@ -506,6 +506,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           <Reveal delay={270}>
             <div>
               <Badge className="mb-2">Atividade do dia</Badge>
+              <h3 className="m360-card-title">Uma ideia para <strong>hoje</strong></h3>
+              <p className="text-xs text-support-2/70 mt-1 mb-4">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
               <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
             </div>
           </Reveal>
