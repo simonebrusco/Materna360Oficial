@@ -44,6 +44,7 @@ export default function CuidarClient({ recipesSection }: Props) {
 
       <PageGrid>
         <Card>
+          <Badge className="mb-2">Bem-estar</Badge>
           <EmptyState
             title="Check-in de bem-estar"
             text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
@@ -53,6 +54,7 @@ export default function CuidarClient({ recipesSection }: Props) {
         <ChildDiary />
 
         <Card>
+          <Badge className="mb-2">Saúde</Badge>
           <EmptyState
             title="Saúde & Vacinas"
             text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
@@ -61,10 +63,12 @@ export default function CuidarClient({ recipesSection }: Props) {
       </PageGrid>
 
       <Card>
+        <Badge className="mb-2">Consultas</Badge>
         <AppointmentsMVP storageKey="cuidar:appointments" />
       </Card>
 
       <Card>
+        <Badge className="mb-2">Receitas</Badge>
         {recipesSection ?? (
           <EmptyState
             title="Receitas saudáveis"
