@@ -949,7 +949,7 @@ export function FamilyPlanner({
           </div>
 
           {selectedDayItems.length > 0 ? (
-            <div key={selectedDayKey} className="space-y-3 transition-all duration-200 ease-out">
+            <div key={effectiveSelectedDayKey} className="space-y-3 transition-all duration-200 ease-out">
               {selectedDayItems.map((item) => {
                 const isEditing = editingItemId === item.id
 
