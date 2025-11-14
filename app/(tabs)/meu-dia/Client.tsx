@@ -510,13 +510,13 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           <Reveal delay={260}>
             <div>
               <Badge className="mb-4">Ações Rápidas</Badge>
-              <div className="max-w-4xl mx-auto w-full">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="w-full">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-3 mb-8 md:max-w-3xl md:mx-auto">
                   {quickActions.map((action, index) => (
                     <Reveal key={action.title} delay={index * 80} className="h-full">
                       <button
                         type="button"
-                        className="h-full rounded-2xl bg-white border border-white/60 p-4 md:p-3 shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        className="h-full rounded-2xl bg-white border border-white/60 p-4 md:p-2 shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                         aria-label={`${action.title} - ${action.description}`}
                       >
                         <div className="flex flex-col items-start gap-2 h-full">
