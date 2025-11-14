@@ -461,8 +461,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <Badge className="mb-2">Planejamento</Badge>
-                  <h3 className="m360-card-title">Itens da Semana</h3>
-                  <p className="text-xs text-support-2/80 mt-1">Organize suas tarefas semanais</p>
+                  <h3 className="m360-card-title">Itens da <strong>Semana</strong></h3>
+                  <p className="text-xs text-support-2/70 mt-1">Deixe visível o que você não quer esquecer ao longo da semana.</p>
                 </div>
                 <Button
                   variant="primary"
