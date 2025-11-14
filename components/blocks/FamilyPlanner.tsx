@@ -1097,8 +1097,16 @@ export function FamilyPlanner({
               })}
             </div>
           ) : (
-            <div key={`empty-${effectiveSelectedDayKey}`} className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-4 py-6 text-center transition-all duration-200 ease-out">
-              <p className="text-sm text-support-2">Nenhum compromisso adicionado hoje. Que tal começar com algo leve?</p>
+            <div key={`empty-${effectiveSelectedDayKey}`} className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-6 py-8 transition-all duration-200 ease-out">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
+                  <CalendarIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-support-1">Nenhum compromisso adicionado hoje.</p>
+                  <p className="mt-1 text-xs text-support-2">Que tal começar com algo leve para a família?</p>
+                </div>
+              </div>
             </div>
           )}
 
