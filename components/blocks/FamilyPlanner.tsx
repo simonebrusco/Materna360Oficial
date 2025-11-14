@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import type { ChildRecommendation, RecommendationType } from '@/app/data/childContent'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import { Calendar as CalendarIcon, FileText as NotesIcon } from 'lucide-react'
 import { DEFAULT_AGE_BAND, mapMonthsToAgeBand } from '@/lib/dailyActivity'
 import {
   plannerApi,
