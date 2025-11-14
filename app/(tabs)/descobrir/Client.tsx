@@ -379,6 +379,7 @@ export default function DiscoverClient() {
       {/* Location Section */}
       <Card>
         <div className="mb-4">
+          <Badge className="mb-2">Local</Badge>
           <SectionH2 className="mb-1">Onde você está?</SectionH2>
           <p className="text-sm text-support-2">Escolha o local para ideias relevantes.</p>
         </div>
