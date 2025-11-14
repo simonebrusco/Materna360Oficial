@@ -147,7 +147,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     : props?.weekStartKey || ssrWeekKey
   const weekLabels = isBuilder
     ? props?.__fallbackWeekLabels__ || []
-    : props?.weekLabels || []
+    : props?.weekLabels || ssrWeekLabels
   const plannerTitle = isBuilder
     ? props?.__fallbackPlannerTitle__ || 'Planner'
     : props?.plannerTitle || 'Planner'
