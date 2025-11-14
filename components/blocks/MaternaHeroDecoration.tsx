@@ -3,8 +3,8 @@
 export default function MaternaHeroDecoration() {
   return (
     <svg
-      width="180"
-      height="180"
+      width="120"
+      height="120"
       viewBox="0 0 180 180"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
