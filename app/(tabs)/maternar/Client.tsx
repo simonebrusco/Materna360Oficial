@@ -49,6 +49,35 @@ export default function MaternarClient() {
         <Reveal delay={240}>
           <ContinueCard dateKey={dateKey} />
         </Reveal>
+        {!isPremium() && (
+          <Reveal delay={260}>
+            <SoftCard className="mb-4 border-primary/30 bg-gradient-to-br from-primary/8 to-white">
+              <div className="flex items-start gap-4 sm:items-center sm:justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-2">
+                    <AppIcon name="sparkles" size={12} decorative />
+                    Premium
+                  </div>
+                  <h3 className="font-semibold text-support-1">Recursos premium disponíveis</h3>
+                  <p className="text-xs text-support-2 mt-1">
+                    Desbloqueie PDF avançado e insights detalhados.
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    track('paywall_banner_click', { source: 'maternar', feature: 'premium_features' })
+                    window.location.href = '/planos'
+                  }}
+                  className="flex-shrink-0 whitespace-nowrap"
+                >
+                  Ver planos
+                </Button>
+              </div>
+            </SoftCard>
+          </Reveal>
+        )}
         <CardHub />
     </PageTemplate>
   );
