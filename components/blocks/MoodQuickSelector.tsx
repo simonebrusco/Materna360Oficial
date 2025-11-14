@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { toast } from '@/app/lib/toast'
-import HScroll from '@/components/common/HScroll'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 
