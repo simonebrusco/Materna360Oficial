@@ -434,7 +434,8 @@ export function FamilyPlanner({
     hasLoadedStoredWeek.current = true
   }, [loadWeek, weekStartKeyState])
 
-  const selectedDayItems = useMemo(() => plannerData[selectedDayKey] ?? [], [plannerData, selectedDayKey])
+  const effectiveSelectedDayKey = selectedDayKey || todayKey || weekDays[0]?.key || currentDateKey
+  const selectedDayItems = useMemo(() => plannerData[effectiveSelectedDayKey] ?? [], [plannerData, effectiveSelectedDayKey])
 
   useEffect(() => {
     let active = true
