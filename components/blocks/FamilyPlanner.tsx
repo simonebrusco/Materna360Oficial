@@ -1080,7 +1080,7 @@ export function FamilyPlanner({
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-4 py-6 text-center">
+            <div key={`empty-${selectedDayKey}`} className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-4 py-6 text-center transition-all duration-200 ease-out">
               <p className="text-sm text-support-2">Nenhum compromisso adicionado hoje. Que tal começar com algo leve?</p>
             </div>
           )}
