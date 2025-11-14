@@ -13,6 +13,7 @@ import { PageTemplate } from '@/components/common/PageTemplate';
 import { PageGrid } from '@/components/common/PageGrid';
 import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
+import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from '@/app/lib/toast';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
