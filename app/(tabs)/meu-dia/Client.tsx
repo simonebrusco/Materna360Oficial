@@ -284,24 +284,31 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
         {/* Message of the Day - Premium Hero Card */}
         <Reveal delay={100}>
-          <div className="w-full rounded-3xl shadow-soft px-6 py-6 md:px-8 md:py-8 bg-gradient-to-b from-primary/10 to-white relative overflow-hidden mb-8 md:mb-10">
+          <div className="w-full rounded-3xl shadow-soft px-6 py-6 md:py-8 bg-gradient-to-b from-primary/5 to-white relative overflow-hidden mb-8 md:mb-10">
             {/* Subtle illustration - top-right */}
-            <div className="absolute top-6 right-6 opacity-10 pointer-events-none select-none">
+            <div className="absolute top-4 right-4 opacity-10 scale-75 md:scale-50 pointer-events-none select-none">
               <MaternaHeroDecoration />
             </div>
 
-            {/* Pill header */}
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-4">
-              Mensagem de Hoje
-            </span>
+            {/* Content wrapper with tight spacing */}
+            <div className="flex flex-col gap-3 md:gap-4">
+              {/* Pill header */}
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm w-fit">
+                Mensagem de Hoje
+              </span>
 
-            {/* Content wrapper */}
-            <div>
-              <h2 className="m360-title mb-2">"{dailyGreeting}"</h2>
-              <p className="text-support-2/80 m360-body-sm">
+              {/* Message title */}
+              <h2 className="m360-title">"{dailyGreeting}"</h2>
+
+              {/* Subtitle */}
+              <p className="text-gray-600 m360-body-sm">
                 Uma mensagem especial para começar seu dia com leveza.
               </p>
-              <p className="m360-label-sm text-gray-500 mt-3">Atualizada automaticamente a cada novo dia.</p>
+
+              {/* Helper text */}
+              <p className="m360-label-sm text-gray-500">
+                Atualizada automaticamente a cada novo dia.
+              </p>
             </div>
           </div>
         </Reveal>
