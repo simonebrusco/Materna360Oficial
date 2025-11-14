@@ -169,7 +169,6 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
   const notesLabel = safeUtf(NOTES_LABEL)
   const notesDescription = safeUtf(NOTES_DESCRIPTION)
-  const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
 
   // Page-view telemetry on mount (guarded for iframe)
   useEffect(() => {
