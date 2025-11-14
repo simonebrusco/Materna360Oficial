@@ -41,6 +41,7 @@ import { buildCoachMessage, getCoachContextFromStorage } from '@/app/lib/coachMa
 import Link from 'next/link'
 import { isPremium } from '@/app/lib/plan'
 import { PremiumExportButton } from './components/PremiumExportButton'
+import { useProfile } from '@/app/hooks/useProfile'
 
 type MoodHistory = {
   day: string
@@ -153,11 +154,15 @@ export default function Eu360Client() {
   }
 
   const currentUpsellConfig = upsellSheet.type ? upsellSheetConfig[upsellSheet.type] : null
+  const { name } = useProfile();
+  const personalizedTitle = name ? `Seu equilíbrio emocional, ${name.split(' ')[0]}` : 'Eu360';
+  const personalizedSubtitle = 'Autocuidado, propósito e rede de apoio';
 
   const content = (
     <PageTemplate
-      title="Eu360"
-      subtitle="Autocuidado, propósito e rede de apoio"
+      label="EU360"
+      title={personalizedTitle}
+      subtitle={personalizedSubtitle}
     >
       <Card suppressHydrationWarning>
         <ProfileForm />

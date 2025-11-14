@@ -314,10 +314,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
       <Card data-testid="activity-of-day" className="bg-gradient-to-br from-primary/12 via-white/95 to-white p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="eyebrow-capsule">
-              {badgeLabel}
-            </span>
-            <p className="mt-2 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">
+            <p className="text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">
               {headlineTitle}
             </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">

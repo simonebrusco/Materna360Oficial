@@ -13,6 +13,7 @@ import { PageTemplate } from '@/components/common/PageTemplate';
 import { PageGrid } from '@/components/common/PageGrid';
 import { Card } from '@/components/ui/card';
 import { FilterPill } from '@/components/ui/FilterPill';
+import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from '@/app/lib/toast';
 import { save, load, getCurrentDateKey } from '@/app/lib/persist';
@@ -32,6 +33,7 @@ import {
   type Mood,
 } from './utils';
 import { useSavedSuggestions } from './hooks/useSavedSuggestions';
+import { useProfile } from '@/app/hooks/useProfile';
 
 type MoodOption = {
   id: Mood;
@@ -62,6 +64,7 @@ const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
 export default function DiscoverClient() {
   const router = useRouter();
+  const { name, children } = useProfile();
   const { saved } = useSavedSuggestions();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
   const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
@@ -246,10 +249,28 @@ export default function DiscoverClient() {
     router.push('/planos');
   };
 
+  const personalizedTitle = React.useMemo(() => {
+    if (!name) return 'Descobrir';
+
+    if (children.length > 0) {
+      const childrenText = children.length === 1
+        ? children[0]
+        : children.length === 2
+          ? `${children[0]} e ${children[1]}`
+          : `${children.slice(0, -1).join(', ')} e ${children[children.length - 1]}`;
+
+      return `${name}, separei algumas ideias que combinam com você e com ${children.length === 1 ? 'o(a)' : ''} ${childrenText}.`;
+    }
+
+    return `${name}, separei algumas ideias que combinam com você.`;
+  }, [name, children]);
+  const personalizedSubtitle = 'Brincadeiras e ideias inteligentes, por idade e objetivo';
+
   return (
     <PageTemplate
-      title="Descobrir"
-      subtitle="Brincadeiras e ideias inteligentes, por idade e objetivo"
+      label="DESCOBRIR"
+      title={personalizedTitle}
+      subtitle={personalizedSubtitle}
     >
 
       {/* Saved Count Chip */}
@@ -326,6 +347,7 @@ export default function DiscoverClient() {
       {/* Time Window Section */}
       <Card>
         <div className="mb-4">
+          <Badge className="mb-2">Tempo</Badge>
           <SectionH2 className="mb-1">Quanto tempo você tem agora?</SectionH2>
           <p className="text-sm text-support-2">Escolha o tempo disponível para adaptar as sugestões.</p>
         </div>
@@ -357,6 +379,7 @@ export default function DiscoverClient() {
       {/* Location Section */}
       <Card>
         <div className="mb-4">
+          <Badge className="mb-2">Local</Badge>
           <SectionH2 className="mb-1">Onde você está?</SectionH2>
           <p className="text-sm text-support-2">Escolha o local para ideias relevantes.</p>
         </div>
@@ -388,6 +411,7 @@ export default function DiscoverClient() {
       {/* Mood Section */}
       <Card>
         <div className="mb-4">
+          <Badge className="mb-2">Humor</Badge>
           <SectionH2 className="mb-1">Como você está agora?</SectionH2>
           <p className="text-sm text-support-2">Escolha um humor para adaptar as sugest��es.</p>
         </div>

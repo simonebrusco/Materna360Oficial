@@ -6,6 +6,9 @@ import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
+import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getDayIndex } from '@/app/lib/dailyMessage'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
@@ -33,6 +36,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SectionH2, BlockH3 } from '@/components/common/Headings'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { isPremium } from '@/app/lib/plan'
 import { toast } from '@/app/lib/toast'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track, trackTelemetry } from '@/app/lib/telemetry'
@@ -41,6 +45,7 @@ import EmotionTrendDrawer from '@/components/ui/EmotionTrendDrawer'
 import { getMoodEntries, seedIfEmpty } from '@/app/lib/moodStore.client'
 import CoachSuggestionCard from '@/components/coach/CoachSuggestionCard'
 import { generateCoachSuggestion } from '@/app/lib/coachMaterno.client'
+import { useProfile } from '@/app/hooks/useProfile'
 
 type MeuDiaClientProps = {
   dailyGreeting?: string
@@ -72,7 +77,7 @@ const quickActions = [
   { iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
 ] as const
 
-const NOTES_LABEL = 'Notas R\u00E1pidas'
+const NOTES_LABEL = 'Notas Rápidas'
 const NOTES_DESCRIPTION = 'Capture ideias e lembretes em instantes.'
 const NOTES_EMPTY_TEXT = 'Nenhuma nota registrada ainda.'
 
@@ -100,6 +105,7 @@ const DEFAULT_BUCKETS: AgeRange[] = [] as any;
 
 export function MeuDiaClient(props?: MeuDiaClientProps) {
   const isBuilder = props?.__builderPreview__ === true
+  const { name } = useProfile()
 
   // Hard disable heavy features (charts/pdf/timers/observers) in iframe
   const builderMode =
@@ -117,9 +123,11 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
   }, [])
 
   // Use fallbacks in builder mode, otherwise use provided props
+  const dateKeyForMessage = getBrazilDateKey()
+  const dayIndex = getDayIndex(dateKeyForMessage, DAILY_MESSAGES.length)
   const dailyGreeting = isBuilder
-    ? props?.__fallbackGreeting__ || 'Olá, Mãe!'
-    : props?.dailyGreeting || 'Olá, Mãe!'
+    ? props?.__fallbackGreeting__ || DAILY_MESSAGES[dayIndex] || 'Olá, Mãe!'
+    : props?.dailyGreeting || DAILY_MESSAGES[dayIndex] || 'Olá, Mãe!'
   const currentDateKey = isBuilder
     ? props?.__fallbackCurrentDateKey__ || ssrDateKey
     : props?.currentDateKey || ssrDateKey
@@ -250,11 +258,22 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     })
   }
 
+  const firstName = name ? name.split(' ')[0] : '';
+  const pageTitle = firstName ? `${firstName}, como está seu dia hoje?` : 'Meu dia';
+  const pageSubtitle = 'Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.';
+
   return (
-    <PageTemplate title="Seu dia, no seu ritmo." subtitle="Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.">
+    <PageTemplate
+      label="MEU DIA"
+      title={pageTitle}
+      subtitle={pageSubtitle}
+    >
       <SoftCard className="mb-4">
         <Reveal delay={100}>
-          <DailyMessageCard greeting={dailyGreeting} />
+          <div>
+            <Badge className="mb-2">Mensagem de Hoje</Badge>
+            <DailyMessageCard greeting={dailyGreeting} />
+          </div>
         </Reveal>
       </SoftCard>
 
@@ -288,7 +307,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
               className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
               data-event="meu-dia.trend_view"
             >
-              Ver tend��ncia
+              Ver tendência
             </button>
           </div>
         </Reveal>
@@ -347,6 +366,36 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         </SoftCard>
       )}
 
+      {!isPremium() && (
+        <SoftCard className="mb-4 border-primary/30 bg-gradient-to-br from-primary/8 to-white">
+          <Reveal delay={245}>
+            <div className="flex items-start gap-4 sm:items-center sm:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-2">
+                  <AppIcon name="sparkles" size={12} decorative />
+                  Premium
+                </div>
+                <h3 className="font-semibold text-support-1">Desbloqueie recursos premium</h3>
+                <p className="text-xs text-support-2 mt-1">
+                  Exportar PDFs, insights avançados e muito mais.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  track('paywall_banner_click', { source: 'meu-dia', feature: 'premium_features' })
+                  window.location.href = '/planos'
+                }}
+                className="flex-shrink-0 whitespace-nowrap"
+              >
+                Ver planos
+              </Button>
+            </div>
+          </Reveal>
+        </SoftCard>
+      )}
+
       <SoftCard className="mb-4">
         <Reveal delay={250}>
           <div>
@@ -393,20 +442,23 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
       </SoftCard>
 
       <div id="meu-dia-print-area" className="print-card space-y-4">
-        <Card>
+        <SoftCard>
           <Reveal delay={280}>
-            <FamilyPlanner
-              currentDateKey={currentDateKey}
-              weekStartKey={weekStartKey}
-              weekLabels={weekLabels}
-              plannerTitle={plannerTitle}
-              profile={profile}
-              dateKey={dateKey}
-              recommendations={recommendations}
-              initialBuckets={initialBuckets}
-            />
+            <div>
+              <Badge className="mb-2">Equilíbrio</Badge>
+              <FamilyPlanner
+                currentDateKey={currentDateKey}
+                weekStartKey={weekStartKey}
+                weekLabels={weekLabels}
+                plannerTitle={plannerTitle}
+                profile={profile}
+                dateKey={dateKey}
+                recommendations={recommendations}
+                initialBuckets={initialBuckets}
+              />
+            </div>
           </Reveal>
-        </Card>
+        </SoftCard>
 
         <SoftCard className="mb-4">
           <Reveal delay={300}>
@@ -447,9 +499,9 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       <SoftCard className="notesCard mb-4">
         <Reveal delay={360}>
-          <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
-            <div className="notesCard-text">
-              <Badge className="mb-2">Anota��ões</Badge>
+          <Badge className="mb-2">Anotações</Badge>
+          <div className="notesCard-header mb-4 flex items-start justify-between gap-4">
+            <div className="notesCard-text flex-1">
               <h3 className="m360-card-title">
                 <span className="mr-1">
                   <AppIcon name="edit" size={16} aria-hidden />
@@ -462,9 +514,9 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
               variant="primary"
               size="sm"
               onClick={() => setShowNoteModal(true)}
-              className="notesCard-action"
+              className="notesCard-action flex-shrink-0"
             >
-              ��� Adicionar
+              + Adicionar
             </Button>
           </div>
 

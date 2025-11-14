@@ -1,11 +1,13 @@
 'use client'
 
 import * as React from 'react'
+import { useProfile } from '@/app/hooks/useProfile'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard as Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageGrid } from '@/components/common/PageGrid'
 import { FilterPill } from '@/components/ui/FilterPill'
+import { Badge } from '@/components/ui/Badge'
 import { ChildDiary } from './components/ChildDiary'
 import { ChildDiaryCard } from './components/ChildDiaryCard'
 import { AppointmentsMVP } from './components/AppointmentsMVP'
@@ -17,10 +19,16 @@ type Props = {
 }
 
 export default function CuidarClient({ recipesSection }: Props) {
+  const { name } = useProfile();
+  const firstName = name ? name.split(' ')[0] : '';
+  const pageTitle = firstName ? `${firstName}, vamos cuidar do que importa agora?` : 'Cuidar';
+  const pageSubtitle = 'Saúde física, emocional e segurança — no ritmo da vida real.';
+
   return (
     <PageTemplate
-      title="Cuidar"
-      subtitle="Saúde física, emocional e segurança — no ritmo da vida real."
+      label="CUIDAR"
+      title={pageTitle}
+      subtitle={pageSubtitle}
     >
       <Card>
         <div className="flex flex-wrap gap-2">
@@ -36,6 +44,7 @@ export default function CuidarClient({ recipesSection }: Props) {
 
       <PageGrid>
         <Card>
+          <Badge className="mb-2">Bem-estar</Badge>
           <EmptyState
             title="Check-in de bem-estar"
             text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
@@ -45,6 +54,7 @@ export default function CuidarClient({ recipesSection }: Props) {
         <ChildDiary />
 
         <Card>
+          <Badge className="mb-2">Saúde</Badge>
           <EmptyState
             title="Saúde & Vacinas"
             text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
@@ -53,10 +63,12 @@ export default function CuidarClient({ recipesSection }: Props) {
       </PageGrid>
 
       <Card>
+        <Badge className="mb-2">Consultas</Badge>
         <AppointmentsMVP storageKey="cuidar:appointments" />
       </Card>
 
       <Card>
+        <Badge className="mb-2">Receitas</Badge>
         {recipesSection ?? (
           <EmptyState
             title="Receitas saudáveis"

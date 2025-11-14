@@ -15,23 +15,27 @@ export function PremiumCover({
   kpis: Array<{ label: string; value: string | number }>;
 }) {
   return (
-    <section className="mb-8 print-avoid-break-inside">
-      <div className="rounded-2xl border border-white/60 bg-gradient-to-br from-[#FFE5EF] to-white p-6 md:p-8 shadow-[0_8px_28px_rgba(47,58,86,0.08)]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-ink-1">{title}</h1>
-            <p className="text-sm text-support-2 mt-2">{period}</p>
+    <section className="mb-10 print-avoid-break-inside">
+      <div className="rounded-3xl border border-pink-200/50 bg-gradient-to-br from-pink-50 via-white to-white p-8 md:p-12 shadow-[0_12px_40px_rgba(255,0,94,0.06)]">
+        <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight">{title}</h1>
+            <p className="text-base text-[#545454] mt-3 font-medium">{period}</p>
           </div>
-          <AppMark size={48} />
+          <div className="flex-shrink-0">
+            <AppMark size={56} />
+          </div>
         </div>
-        <div className="mt-4">
-          <p className="text-sm text-support-1">{subtitle}</p>
+
+        <div className="mb-8 border-b border-pink-100/50 pb-6">
+          <p className="text-base text-[#545454] leading-relaxed max-w-2xl">{subtitle}</p>
         </div>
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {kpis.map((k) => (
-            <div key={k.label} className="rounded-xl border border-white/60 bg-white/90 p-3 shadow-soft">
-              <div className="text-xs text-support-2">{k.label}</div>
-              <div className="text-xl font-bold text-primary mt-2">{k.value}</div>
+            <div key={k.label} className="rounded-2xl border border-pink-100/60 bg-gradient-to-br from-white to-pink-50/40 p-4 shadow-[0_4px_12px_rgba(255,0,94,0.04)]">
+              <div className="text-xs font-semibold text-[#545454] uppercase tracking-wide">{k.label}</div>
+              <div className="text-2xl font-bold text-[#ff005e] mt-3">{k.value}</div>
             </div>
           ))}
         </div>

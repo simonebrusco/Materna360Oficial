@@ -828,10 +828,7 @@ export function FamilyPlanner({
       <div className="absolute inset-x-0 top-0 h-1 bg-primary hidden" />
       <div className="space-y-4 md:space-y-5">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-xl space-y-2 md:space-y-3">
-            <span className="eyebrow-capsule">
-              Equilíbrio
-            </span>
+          <div className="max-w-xl">
             <div className="space-y-1.5">
               <h2 data-testid="planner-title" className="text-[20px] font-bold leading-[1.28] text-support-1 md:text-[22px]">
                 {resolvedPlannerTitle}

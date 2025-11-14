@@ -81,8 +81,9 @@ export default function BottomNav({
     <nav
       className="
         fixed inset-x-0 bottom-0 z-50
-        border-t bg-white/90 backdrop-blur
-        shadow-[0_-2px_16px_rgba(47,58,86,0.06)]
+        bg-white/95 backdrop-blur-md
+        border-t border-neutral-200/60
+        shadow-[0_-4px_12px_rgba(0,0,0,0.04)]
         safe-area pb-[env(safe-area-inset-bottom,0.75rem)]
       "
       role="navigation"
@@ -95,39 +96,75 @@ export default function BottomNav({
           const isActive = it.match
             ? it.match(pathname)
             : pathname === it.href;
-          const isCenter = it.center ?? false;
+          const isMaternar = it.href === '/maternar';
 
-          // Icon size: base size + 2px if active, capped at max if center
-          const baseIconSize = isCenter ? 28 : 22;
-          const iconSize = isActive && !isCenter ? baseIconSize + 2 : baseIconSize;
+          // Maternar tab styling (floating pill hub)
+          if (isMaternar) {
+            return (
+              <li key={it.href} className="flex items-end justify-center">
+                <Link
+                  href={it.href}
+                  onClick={() => handleNavClick(it.href)}
+                  className={`
+                    flex flex-col items-center justify-center gap-0.5
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+                    transition-all duration-200
+                    rounded-full
+                    h-14 px-6 -mt-4
+                    ${
+                      isActive
+                        ? 'bg-gradient-to-t from-[#ff005e] to-[#ff7ba8] shadow-lg text-white'
+                        : 'bg-white border border-pink-100 shadow-md'
+                    }
+                  `}
+                  aria-label={it.label}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <AppIcon
+                    name={it.icon}
+                    size={24}
+                    className={isActive ? 'text-white' : 'text-neutral-500'}
+                    decorative
+                  />
+                  <span className={`text-xs font-semibold leading-tight ${
+                    isActive ? 'text-white tracking-wide' : 'text-[11px] text-neutral-600 font-medium'
+                  }`}>
+                    {it.label}
+                  </span>
+                </Link>
+              </li>
+            );
+          }
 
+          // Other tabs (Meu Dia, Cuidar, Descobrir, Eu360)
           return (
             <li key={it.href} className="flex">
               <Link
                 href={it.href}
                 onClick={() => handleNavClick(it.href)}
                 className={`
-                  flex flex-col items-center justify-center
+                  flex flex-col items-center justify-center gap-0.5
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                   transition-all duration-200
                   flex-1
-                  ui-press ui-ring
-                  ${isCenter ? 'py-1 -mt-2 h-16' : 'py-1.5 h-14'}
+                  h-12 px-2
                 `}
                 aria-label={it.label}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <AppIcon
                   name={it.icon}
-                  size={iconSize}
+                  size={24}
                   className={
                     isActive
-                      ? 'text-primary'
-                      : 'text-support-2'
+                      ? 'text-[#ff005e]'
+                      : 'text-neutral-400'
                   }
                   decorative
                 />
-                <span className="block mt-0.5 text-[10px] leading-tight text-support-3">
+                <span className={`text-[11px] font-medium leading-tight ${
+                  isActive ? 'text-[#ff005e]' : 'text-neutral-500'
+                }`}>
                   {it.label}
                 </span>
               </Link>
