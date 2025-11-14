@@ -27,7 +27,9 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
     const loadProfile = async () => {
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+        const timeoutId = setTimeout(() => {
+          controller.abort(new DOMException('Request timeout', 'TimeoutError'))
+        }, 5000)
 
         const response = await fetch('/api/profile', {
           credentials: 'include',
