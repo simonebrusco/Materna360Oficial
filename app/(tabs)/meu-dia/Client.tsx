@@ -550,7 +550,7 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
                   </span>
                   {notesLabel}
                 </h3>
-                <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
+                <p className="notesCard-meta meta text-xs text-support-2/70">Anote <strong>pensamentos</strong>, ideias ou momentos importantes para lembrar depois.</p>
               </div>
               <Button
                 variant="primary"
