@@ -270,6 +270,9 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     >
       {/* MACRO BLOCK 1: EMOTIONAL HEADER (Hoje) */}
       <div className="mb-8">
+        <h2 className="text-2xl font-bold text-support-1 mb-2">Hoje</h2>
+        <p className="text-xs text-support-2/70 mb-4">Comece registrando como você está se sentindo hoje.</p>
+
         {/* Message of the Day Card */}
         <SoftCard className="mb-4">
           <Reveal delay={100}>
