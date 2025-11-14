@@ -293,7 +293,8 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           <Reveal delay={160}>
             <div>
               <Badge className="mb-2">Humor e Energia</Badge>
-              <h3 className="m360-card-title">Registre seu humor e energia de hoje.</h3>
+              <h3 className="m360-card-title">Registre seu <strong>humor</strong> e <strong>energia</strong> de hoje.</h3>
+              <p className="text-xs text-support-2/70 mt-1">Escolha como você está se sentindo agora. Isso vai ajudar a acompanhar sua semana.</p>
               <div className="mt-4 space-y-6">
                 <MoodQuickSelector />
                 <div className="border-t border-white/40 pt-4">
