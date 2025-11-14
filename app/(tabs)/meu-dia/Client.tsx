@@ -565,7 +565,17 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
                 ))}
               </div>
             ) : (
-              <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
+              <div className="notesCard-empty rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
+                    <AppIcon name="edit" size={24} className="text-primary" decorative />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
+                    <p className="mt-1 text-xs text-support-2">Use este espaço para registrar pensamentos, ideias ou momentos especiais.</p>
+                  </div>
+                </div>
+              </div>
             )}
           </Reveal>
         </SoftCard>
