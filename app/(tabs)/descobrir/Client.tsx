@@ -267,6 +267,7 @@ export default function DiscoverClient() {
 
   return (
     <PageTemplate
+      label="DESCOBRIR"
       title={personalizedTitle}
       subtitle={personalizedSubtitle}
     >
