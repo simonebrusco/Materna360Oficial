@@ -316,42 +316,41 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
           <InactivityReminder />
         </div>
 
-        {/* Mood & Energy Card */}
-        <SoftCard className="mb-4" data-section="mood">
-          <Reveal delay={160}>
-            <div>
-              <Badge className="mb-2">Humor e Energia</Badge>
-              <h3 className="m360-card-title">Registre seu <strong>humor</strong> e <strong>energia</strong> de hoje.</h3>
-              <p className="text-xs text-support-2/70 mt-1">Escolha como você está se sentindo agora. Isso vai ajudar a acompanhar sua semana.</p>
-              <div className="mt-4 space-y-6">
-                <MoodQuickSelector />
-                <div className="border-t border-white/40 pt-4">
-                  <MoodSparkline />
-                </div>
-              </div>
+        {/* Humor & Energia - Premium Card */}
+        <Reveal delay={160}>
+          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-6">
+            {/* Header */}
+            <div className="flex flex-col gap-1">
+              <h3 className="m360-subtitle">Humor e Energia</h3>
+              <p className="m360-label-sm text-gray-600">
+                Registre seu humor e energia de hoje. Isso vai ajudar a acompanhar sua semana.
+              </p>
             </div>
-          </Reveal>
-        </SoftCard>
 
-        {/* Weekly Mood Summary */}
-        <SoftCard className="mb-4">
-          <Reveal delay={210}>
-            <div className="flex items-center justify-between">
-              <div>
-                <Badge className="mb-2">Resumo da semana</Badge>
-                <p className="m360-body">Humor diário registrado — 3× Feliz · 2× Neutra · 2× Cansada</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTrendOpen(true)}
-                className="rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all whitespace-nowrap ml-4"
-                data-event="meu-dia.trend_view"
-              >
-                Ver tendência
-              </button>
+            {/* Mood Pills */}
+            <div>
+              <MoodQuickSelector />
             </div>
-          </Reveal>
-        </SoftCard>
+
+            {/* Weekly Summary Analytics Card */}
+            <div className="mt-4 rounded-2xl bg-gray-50/80 px-4 py-3 flex flex-col gap-2">
+              <p className="m360-label-sm text-gray-600">Sua semana até agora</p>
+              <div>
+                <MoodSparkline />
+              </div>
+            </div>
+
+            {/* View Trend Button */}
+            <button
+              type="button"
+              onClick={() => setTrendOpen(true)}
+              className="mt-2 w-full rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all"
+              data-event="meu-dia.trend_view"
+            >
+              Ver tendência
+            </button>
+          </div>
+        </Reveal>
       </div>
 
       {/* Coach Suggestion Card */}
