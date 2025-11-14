@@ -6,6 +6,9 @@ import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { isEnabled } from '@/app/lib/flags'
 import AppIcon from '@/components/ui/AppIcon'
+import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getDayIndex } from '@/app/lib/dailyMessage'
 
 import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
 import { CheckInCard } from '@/components/blocks/CheckInCard'
@@ -119,9 +122,11 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
   }, [])
 
   // Use fallbacks in builder mode, otherwise use provided props
+  const dateKeyForMessage = getBrazilDateKey()
+  const dayIndex = getDayIndex(dateKeyForMessage, DAILY_MESSAGES.length)
   const dailyGreeting = isBuilder
-    ? props?.__fallbackGreeting__ || 'Olá, Mãe!'
-    : props?.dailyGreeting || 'Olá, Mãe!'
+    ? props?.__fallbackGreeting__ || DAILY_MESSAGES[dayIndex] || 'Olá, Mãe!'
+    : props?.dailyGreeting || DAILY_MESSAGES[dayIndex] || 'Olá, Mãe!'
   const currentDateKey = isBuilder
     ? props?.__fallbackCurrentDateKey__ || ssrDateKey
     : props?.currentDateKey || ssrDateKey
