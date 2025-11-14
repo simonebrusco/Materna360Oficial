@@ -252,11 +252,24 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
     })
   }
 
-  const personalizedTitle = name ? `${name}, como está seu dia hoje?` : 'Seu dia, no seu ritmo.';
+  const firstName = name ? name.split(' ')[0] : '';
   const personalizedSubtitle = 'Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.';
 
   return (
-    <PageTemplate title={personalizedTitle} subtitle={personalizedSubtitle}>
+    <>
+      {firstName && (
+        <div className="px-4 py-6 border-b border-white/20">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70 mb-2">
+              Meu dia
+            </p>
+            <p className="text-base text-support-1">
+              {firstName}, como está seu dia hoje?
+            </p>
+          </div>
+        </div>
+      )}
+      <PageTemplate title="" subtitle={personalizedSubtitle}>
       <SoftCard className="mb-4">
         <Reveal delay={100}>
           <DailyMessageCard greeting={dailyGreeting} />
@@ -527,5 +540,6 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         )}
       </ClientOnly>
     </PageTemplate>
+    </>
   )
 }
