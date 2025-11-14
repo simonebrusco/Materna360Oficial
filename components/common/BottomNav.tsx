@@ -96,8 +96,48 @@ export default function BottomNav({
           const isActive = it.match
             ? it.match(pathname)
             : pathname === it.href;
-          const isCenter = it.center ?? false;
+          const isMaternar = it.href === '/maternar';
 
+          // Maternar tab styling (floating pill hub)
+          if (isMaternar) {
+            return (
+              <li key={it.href} className="flex items-end justify-center">
+                <Link
+                  href={it.href}
+                  onClick={() => handleNavClick(it.href)}
+                  className={`
+                    flex flex-col items-center justify-center
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+                    transition-all duration-200
+                    rounded-full
+                    h-12 min-w-[88px] px-4 py-2
+                    -mt-3
+                    ${
+                      isActive
+                        ? 'bg-gradient-to-t from-[#ff005e] to-[#ff6f9d] text-white shadow-lg'
+                        : 'bg-white shadow-md border border-pink-100'
+                    }
+                  `}
+                  aria-label={it.label}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <AppIcon
+                    name={it.icon}
+                    size={24}
+                    className={isActive ? 'text-white' : 'text-neutral-500'}
+                    decorative
+                  />
+                  <span className={`block mt-0.5 text-xs font-medium leading-tight ${
+                    isActive ? 'text-white' : 'text-neutral-600'
+                  }`}>
+                    {it.label}
+                  </span>
+                </Link>
+              </li>
+            );
+          }
+
+          // Other tabs (Meu Dia, Cuidar, Descobrir, Eu360)
           return (
             <li key={it.href} className="flex">
               <Link
@@ -108,12 +148,7 @@ export default function BottomNav({
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                   transition-all duration-200
                   flex-1
-                  ${isCenter ? 'py-1 -mt-2 h-16' : 'py-1.5 h-14'}
-                  ${
-                    isActive
-                      ? 'rounded-full bg-white/90 shadow-sm px-3 py-1'
-                      : ''
-                  }
+                  py-1.5 h-14
                 `}
                 aria-label={it.label}
                 aria-current={isActive ? 'page' : undefined}
