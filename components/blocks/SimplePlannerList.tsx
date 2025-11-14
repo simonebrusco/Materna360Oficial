@@ -2,6 +2,7 @@
 
 import React from 'react';
 import AppIcon from '@/components/ui/AppIcon';
+import { CheckCircle2 } from 'lucide-react';
 import type { PlannerItem } from './SimplePlannerSheet';
 
 interface SimplePlannerListProps {
