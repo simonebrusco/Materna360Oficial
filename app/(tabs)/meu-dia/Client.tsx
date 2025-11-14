@@ -282,15 +282,29 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         <h2 className="text-2xl font-bold text-support-1 mb-2">Hoje</h2>
         <p className="text-xs text-support-2/70 mb-4">Comece registrando como você está se sentindo hoje.</p>
 
-        {/* Message of the Day Card */}
-        <SoftCard className="mb-4">
-          <Reveal delay={100}>
-            <div>
-              <Badge className="mb-2">Mensagem de Hoje</Badge>
-              <DailyMessageCard greeting={dailyGreeting} />
+        {/* Message of the Day - Premium Hero Card */}
+        <Reveal delay={100}>
+          <div className="w-full rounded-3xl shadow-soft p-6 md:p-8 bg-gradient-to-b from-primary/10 to-white relative overflow-hidden mb-8 md:mb-10">
+            {/* Subtle illustration - top-right */}
+            <div className="absolute top-4 right-4 opacity-20 pointer-events-none select-none">
+              <MaternaHeroDecoration />
             </div>
-          </Reveal>
-        </SoftCard>
+
+            {/* Pill header */}
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-4">
+              Mensagem de Hoje
+            </span>
+
+            {/* Content wrapper */}
+            <div>
+              <h2 className="m360-title mb-2">"{dailyGreeting}"</h2>
+              <p className="text-support-2/80 m360-body-sm">
+                Uma mensagem especial para começar seu dia com leveza.
+              </p>
+              <span className="text-support-2/60 text-xs mt-4 block">Atualizada automaticamente a cada novo dia.</span>
+            </div>
+          </div>
+        </Reveal>
 
         {/* Greeting Text */}
         <div className="mb-4">
