@@ -330,6 +330,7 @@ export function FamilyPlanner({
 
   const loadWeek = useCallback(
     async (targetWeekStart: string, options: { preserveSelection?: boolean } = {}) => {
+      setIsLoadingWeek(true)
       try {
         const response = await fetch(
           `/api/planner/week-labels?weekStart=${encodeURIComponent(targetWeekStart)}`,
@@ -360,6 +361,8 @@ export function FamilyPlanner({
         })
       } catch (error) {
         console.error('Falha ao carregar rótulos da semana:', error)
+      } finally {
+        setIsLoadingWeek(false)
       }
     },
     [todayKey]
