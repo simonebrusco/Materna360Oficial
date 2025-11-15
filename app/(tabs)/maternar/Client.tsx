@@ -1,126 +1,84 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
+import * as React from 'react';
+import { useEffect } from 'react';
+import HubHeader from '@/components/maternar/HubHeader';
+import CardHub from '@/components/maternar/CardHub';
+import { ContinueCard } from './components/ContinueCard';
+import DestaquesDodia from '@/components/maternar/DestaquesDodia';
+import { HighlightsSection } from './components/HighlightsSection';
+import { PageTemplate } from '@/components/common/PageTemplate';
+import { Reveal } from '@/components/ui/Reveal';
+import { track } from '@/app/lib/telemetry';
+import { getBrazilDateKey } from '@/app/lib/dateKey';
+import { useProfile } from '@/app/hooks/useProfile';
+import { getTimeGreeting } from '@/app/lib/greetings';
+import { isPremium } from '@/app/lib/plan';
+import SoftCard from '@/components/ui/SoftCard';
+import { Button } from '@/components/ui/Button';
+import AppIcon from '@/components/ui/AppIcon';
 
-import { HeroSection } from './components/HeroSection'
-import { WeeklySummary } from './components/WeeklySummary'
-import { MomentsWithKids } from './components/MomentsWithKids'
-import { EmotionalAnalytics } from './components/EmotionalAnalytics'
-import { MothersDiary } from './components/MothersDiary'
-import { NavigationHub } from './components/NavigationHub'
-import { PremiumTrails } from './components/PremiumTrails'
-import { HabitosMaternos } from './components/HabitosMaternos'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import { ClientOnly } from '@/components/common/ClientOnly'
+export default function MaternarClient() {
+  const [dateKey, setDateKey] = React.useState('2025-01-01');
+  const { name } = useProfile();
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+  useEffect(() => {
+    // Set today's date on client side only
+    setDateKey(getBrazilDateKey(new Date()));
 
-function scrollToSection(id: string) {
-  if (typeof window === 'undefined') return
-  const el = document.getElementById(id)
-  if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
+    track('nav.click', {
+      tab: 'maternar',
+      timestamp: new Date().toISOString(),
+    });
+  }, []);
 
-export function MaternarClient() {
-  const router = useRouter()
-
-  const handleCuidarDeMim = () => {
-    scrollToSection('maternar-habitos')
-  }
-
-  const handleCuidarDoFilho = () => {
-    scrollToSection('maternar-momentos')
-  }
-
-  const handleOrganizarRotina = () => {
-    router.push('/meu-dia')
-  }
-
-  const handleAprenderEBrincar = () => {
-    router.push('/descobrir')
-  }
-
-  const handleMinhasConquistas = () => {
-    scrollToSection('maternar-evolucao')
-  }
-
-  const handlePlanosPremium = () => {
-    router.push('/eu360')
-  }
+  const firstName = name ? name.split(' ')[0] : '';
+  const pageTitle = firstName ? `Bom dia, ${firstName}` : 'Bem-vinda ao Maternar';
+  const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
 
   return (
-    <div className="flex flex-col gap-6 p-4 pb-24">
-      <HeroSection />
-
-      <NavigationHub
-        onCuidarDeMim={handleCuidarDeMim}
-        onCuidarDoFilho={handleCuidarDoFilho}
-        onOrganizarRotina={handleOrganizarRotina}
-        onAprenderEBrincar={handleAprenderEBrincar}
-        onMinhasConquistas={handleMinhasConquistas}
-        onPlanosPremium={handlePlanosPremium}
-      />
-
-      <div id="maternar-resumo">
-        <SectionWrapper
-          title="Resumo da sua semana"
-          description="Um olhar carinhoso sobre como você tem se sentido."
-        >
-          <ClientOnly>
-            <WeeklySummary />
-          </ClientOnly>
-        </SectionWrapper>
-      </div>
-
-      <div id="maternar-habitos">
-        <SectionWrapper
-          title="Hábitos maternos"
-          description="Pequenas práticas que sustentam uma rotina mais leve e consciente."
-        >
-          <HabitosMaternos />
-        </SectionWrapper>
-      </div>
-
-      <div id="maternar-momentos">
-        <SectionWrapper
-          title="Momentos com os filhos"
-          description="Pequenas memórias que contam a grande história da sua maternidade."
-        >
-          <MomentsWithKids />
-        </SectionWrapper>
-      </div>
-
-      <div id="maternar-evolucao">
-        <SectionWrapper
-          title="Sua evolução emocional"
-          description="Acompanhe padrões, mudanças e conquistas ao longo dos dias."
-        >
-          <ClientOnly>
-            <EmotionalAnalytics />
-          </ClientOnly>
-        </SectionWrapper>
-      </div>
-
-      <SectionWrapper
-        title="Diário da mãe"
-        description="Um espaço seguro para colocar em palavras aquilo que você sente."
-      >
-        <ClientOnly>
-          <MothersDiary />
-        </ClientOnly>
-      </SectionWrapper>
-
-      <SectionWrapper
-        title="Trilhas premium"
-        description="Caminhos guiados para semanas mais leves e conscientes."
-      >
-        <ClientOnly>
-          <PremiumTrails />
-        </ClientOnly>
-      </SectionWrapper>
-    </div>
-  )
+    <PageTemplate
+      label="MATERNAR"
+      title={pageTitle}
+      subtitle={pageSubtitle}
+    >
+        <DestaquesDodia />
+        <Reveal delay={200}>
+          <HighlightsSection />
+        </Reveal>
+        <Reveal delay={240}>
+          <ContinueCard dateKey={dateKey} />
+        </Reveal>
+        {!isPremium() && (
+          <Reveal delay={260}>
+            <SoftCard className="mb-4 border-primary/30 bg-gradient-to-br from-primary/8 to-white">
+              <div className="flex items-start gap-4 sm:items-center sm:justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-2">
+                    <AppIcon name="sparkles" size={12} decorative />
+                    Premium
+                  </div>
+                  <h3 className="font-semibold text-support-1">Recursos premium disponíveis</h3>
+                  <p className="text-xs text-support-2 mt-1">
+                    Desbloqueie PDF avançado e insights detalhados.
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    track('paywall_banner_click', { source: 'maternar', feature: 'premium_features' })
+                    window.location.href = '/planos'
+                  }}
+                  className="flex-shrink-0 whitespace-nowrap"
+                >
+                  Ver planos
+                </Button>
+              </div>
+            </SoftCard>
+          </Reveal>
+        )}
+        <CardHub />
+    </PageTemplate>
+  );
 }
