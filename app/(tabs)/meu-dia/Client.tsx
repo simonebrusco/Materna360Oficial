@@ -154,7 +154,7 @@ export function MeuDiaClient({
   }, [])
 
   useEffect(() => {
-    const storageKey = `meu-dia:${dateKey}:notes`
+    const storageKey = `meu-dia:${finalCurrentDateKey}:notes`
     const savedNotes = load(storageKey)
     if (Array.isArray(savedNotes)) {
       setNotes(savedNotes)
@@ -270,7 +270,7 @@ export function MeuDiaClient({
                 </div>
 
                 {/* Message title */}
-                <h2 className="m360-title">"{dailyGreeting}"</h2>
+                <h2 className="m360-title">"{finalDailyGreeting}"{dailyGreeting}"</h2>
 
                 {/* Subtitle */}
                 <p className="text-gray-600 m360-body-sm">
@@ -375,7 +375,7 @@ export function MeuDiaClient({
                 <h3 className="m360-subtitle">Organize as tarefas do lar</h3>
               </div>
               <div>
-                <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
+                <MomInMotion enabled storageKey={`meu-dia:${finalCurrentDateKey}:todos`} />
               </div>
             </div>
           </Reveal>
@@ -422,7 +422,7 @@ export function MeuDiaClient({
                 <h3 className="m360-subtitle">Avisos suaves para o seu dia</h3>
               </div>
               <div>
-                <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+                <Reminders storageKey={`meu-dia:${finalCurrentDateKey}:reminders`} />
               </div>
             </div>
           </Reveal>
@@ -451,12 +451,12 @@ export function MeuDiaClient({
                 </div>
                 <div>
                   <FamilyPlanner
-                    currentDateKey={currentDateKey}
-                    weekStartKey={weekStartKey}
-                    weekLabels={weekLabels}
-                    plannerTitle={plannerTitle}
-                    profile={profile}
-                    dateKey={dateKey}
+                  currentDateKey={finalCurrentDateKey}
+                  weekStartKey={finalWeekStartKey}
+                  weekLabels={finalWeekLabels}
+                  plannerTitle={finalPlannerTitle}
+                  profile={finalProfile}
+                  dateKey={finalCurrentDateKey}
                     recommendations={recommendations}
                     initialBuckets={initialBuckets}
                   />
@@ -510,7 +510,7 @@ export function MeuDiaClient({
                     Marque o que você já fez e celebre cada avanço.
                   </p>
                 </div>
-                <Checklist currentDateKey={currentDateKey} />
+                <Checklist currentDateKey={finalCurrentDateKey} />
               </div>
             </Reveal>
 
@@ -579,7 +579,7 @@ export function MeuDiaClient({
                 <h3 className="m360-subtitle">Uma ideia para hoje</h3>
                 <p className="m360-label-sm text-gray-600">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
               </div>
-              <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+              <ActivityOfDay dateKey={finalCurrentDateKey} profile={finalProfile} activities={allActivities} />
             </div>
           </Reveal>
 
