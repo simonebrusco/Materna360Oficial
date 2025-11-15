@@ -4,18 +4,11 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
-import DestaquesDodia from '@/components/maternar/DestaquesDodia';
-import { HighlightsSection } from './components/HighlightsSection';
 import { PageTemplate } from '@/components/common/PageTemplate';
-import { Reveal } from '@/components/ui/Reveal';
 import { track } from '@/app/lib/telemetry';
 import { getBrazilDateKey } from '@/app/lib/dateKey';
 import { useProfile } from '@/app/hooks/useProfile';
 import { getTimeGreeting } from '@/app/lib/greetings';
-import { isPremium } from '@/app/lib/plan';
-import SoftCard from '@/components/ui/SoftCard';
-import { Button } from '@/components/ui/Button';
-import AppIcon from '@/components/ui/AppIcon';
 
 export default function MaternarClient() {
   const [dateKey, setDateKey] = React.useState('2025-01-01');
