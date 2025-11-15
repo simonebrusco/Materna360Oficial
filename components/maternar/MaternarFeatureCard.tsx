@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
 
 type MaternarFeatureCardProps = {
-  icon: AppIconName
+  icon: KnownIconName
   title: string
   subtitle: string
   href: string
