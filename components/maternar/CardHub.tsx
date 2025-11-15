@@ -34,7 +34,7 @@ const HUB_CARDS: Omit<HubCardProps, 'cardId'>[] = [
     href: '/meu-dia',
   },
   {
-    icon: 'lightbulb',
+    icon: 'idea',
     title: 'Aprender & Brincar',
     subtitle: 'Ideias criativas e atividades',
     href: '/descobrir',
