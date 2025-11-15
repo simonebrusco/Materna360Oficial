@@ -36,7 +36,7 @@ const SCROLL_CARDS: ScrollCard[] = [
   },
   {
     id: 'evolucao',
-    icon: 'trending',
+    icon: 'target',
     title: 'Sua evolução emocional',
     subtitle: 'Acompanhe seu crescimento',
     targetId: 'maternar-evolucao-emocional',
