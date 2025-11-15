@@ -101,146 +101,103 @@ const DEFAULT_PROFILE: Profile = {
   children: [{ name: 'Seu filho' } as any], // age in months
 }
 
-const DEFAULT_ACTIVITIES: ChildActivity[] = []
-const DEFAULT_RECOMMENDATIONS: ChildRecommendation[] = []
-const DEFAULT_BUCKETS: AgeRange[] = [] as any;
+export function MeuDiaClient({
+  dailyGreeting,
+  currentDateKey,
+  weekStartKey,
+  weekLabels,
+  plannerTitle,
+  profile,
+  dateKey,
+  allActivities = [],
+  recommendations = [],
+  initialBuckets = [],
+  __builderPreview__ = false,
+  __fallbackProfile__ = DEFAULT_PROFILE,
+  __fallbackGreeting__ = 'Today is a gift to yourself.',
+  __fallbackWeekLabels__ = [],
+  __fallbackCurrentDateKey__ = getBrazilDateKey(),
+  __fallbackWeekStartKey__ = getWeekStartKey(new Date()),
+  __fallbackPlannerTitle__ = 'Semana',
+  __disableHeavy__ = false,
+}: MeuDiaClientProps) {
+  const builderMode = __builderPreview__
+  const finalProfile = profile || __fallbackProfile__
+  const final DailyGreeting = safeUtf(dailyGreeting) || __fallbackGreeting__
+  const finalCurrentDateKey = currentDateKey || __fallbackCurrentDateKey__
+  const finalWeekStartKey = weekStartKey || __fallbackWeekStartKey__
+  const finalWeekLabels = weekLabels || __fallbackWeekLabels__
+  const finalPlannerTitle = plannerTitle || __fallbackPlannerTitle__
 
-export function MeuDiaClient(props?: MeuDiaClientProps) {
-  const isBuilder = props?.__builderPreview__ === true
-  const { name } = useProfile()
+  const [trendOpen, setTrendOpen] = useState(false)
+  const [showPlannerSheet, setShowPlannerSheet] = useState(false)
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
+  const [notes, setNotes] = useState<string[]>([])
+  const [canShowTrends, setCanShowTrends] = useState(false)
 
-  // Hard disable heavy features (charts/pdf/timers/observers) in iframe
-  const builderMode =
-    props?.__disableHeavy__ === true ||
-    (typeof window !== 'undefined' && (window as any).__BUILDER_MODE__)
+  const { name } = useProfile() || { name: finalProfile.motherName }
 
-  // SSR-stable date defaults (compute in useEffect)
-  const [ssrDateKey, setSsrDateKey] = useState('2025-01-01')
-  const [ssrWeekKey, setSsrWeekKey] = useState('2025-01-01')
-  const [ssrWeekLabels, setSsrWeekLabels] = useState<{ key: string; shortLabel: string; longLabel: string; chipLabel: string }[]>([])
+  const dateKey = finalCurrentDateKey
+  const weekStartKey = finalWeekStartKey
+  const weekLabels = finalWeekLabels
+  const plannerTitle = finalPlannerTitle
+  const profile = finalProfile
+  const currentDateKey = finalCurrentDateKey
+  const dailyGreeting = finalDailyGreeting
 
   useEffect(() => {
-    try {
-      const dateKey = getBrazilDateKey()
-      setSsrDateKey(dateKey)
-      const weekStart = getWeekStartKey(dateKey)
-      setSsrWeekKey(weekStart)
-      const { labels } = buildWeekLabels(weekStart)
-      setSsrWeekLabels(labels)
-    } catch (error) {
-      console.error('Failed to compute week labels on mount:', error)
+    setCanShowTrends(!__disableHeavy__ && isClientFlagEnabled('FF_EMOTION_TRENDS'))
+  }, [__disableHeavy__])
+
+  useEffect(() => {
+    seedIfEmpty()
+    const weekKey = getCurrentWeekKey()
+    const persistKey = `planner:${weekKey}`
+    const saved = load(persistKey)
+    if (Array.isArray(saved)) {
+      setPlannerItems(saved)
     }
   }, [])
 
-  // Use fallbacks in builder mode, otherwise use provided props
-  const dateKeyForMessage = getBrazilDateKey()
-  const dayIndex = getDayIndex(dateKeyForMessage, DAILY_MESSAGES.length)
-  const dailyGreeting = isBuilder
-    ? props?.__fallbackGreeting__ || DAILY_MESSAGES[dayIndex] || 'Olá, Mãe!'
-    : props?.dailyGreeting || DAILY_MESSAGES[dayIndex] || 'Olá, Mãe!'
-  const currentDateKey = isBuilder
-    ? props?.__fallbackCurrentDateKey__ || ssrDateKey
-    : props?.currentDateKey || ssrDateKey
-  const weekStartKey = isBuilder
-    ? props?.__fallbackWeekStartKey__ || ssrWeekKey
-    : props?.weekStartKey || ssrWeekKey
-  const weekLabels = isBuilder
-    ? props?.__fallbackWeekLabels__ || []
-    : props?.weekLabels || ssrWeekLabels
-  const plannerTitle = isBuilder
-    ? props?.__fallbackPlannerTitle__ || 'Planner'
-    : props?.plannerTitle || 'Planner'
-  const profile = isBuilder
-    ? props?.__fallbackProfile__ || DEFAULT_PROFILE
-    : props?.profile || DEFAULT_PROFILE
-  const dateKey = currentDateKey
-  const allActivities = props?.allActivities || DEFAULT_ACTIVITIES
-  const recommendations = props?.recommendations || DEFAULT_RECOMMENDATIONS
-  const initialBuckets = props?.initialBuckets || DEFAULT_BUCKETS
-
-  const [showNoteModal, setShowNoteModal] = useState(false)
-  const [noteText, setNoteText] = useState('')
-  const [notes, setNotes] = useState<string[]>([])
-
-  const [showPlannerSheet, setShowPlannerSheet] = useState(false)
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
-
-  const [trendOpen, setTrendOpen] = useState(false)
-  const canShowTrends = builderMode ? false : (isBuilder ? false : isClientFlagEnabled('FF_EMOTION_TRENDS'))
-
-  const notesLabel = safeUtf(NOTES_LABEL)
-  const notesDescription = safeUtf(NOTES_DESCRIPTION)
-
-  // Page-view telemetry on mount (guarded for iframe)
   useEffect(() => {
-    if (builderMode) return
-    try {
-      track('nav.click', { tab: 'meu-dia', dest: '/meu-dia' })
-    } catch {
-      // Silently fail if telemetry unavailable
+    const storageKey = `meu-dia:${dateKey}:notes`
+    const savedNotes = load(storageKey)
+    if (Array.isArray(savedNotes)) {
+      setNotes(savedNotes)
     }
-  }, [builderMode])
-
-  // Seed demo mood data in dev/preview mode (guarded for iframe)
-  useEffect(() => {
-    if (builderMode) return
-    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      try {
-        seedIfEmpty()
-      } catch {
-        // silently fail
-      }
-    }
-  }, [builderMode])
-
-  // Load planner items from persistence on mount (guarded for iframe)
-  useEffect(() => {
-    if (builderMode) return // Skip heavy operations in builder mode
-    try {
-      const weekKey = getCurrentWeekKey()
-      const persistKey = `planner:${weekKey}`
-      const savedItems = load<PlannerItem[]>(persistKey, [])
-      setPlannerItems(savedItems || [])
-    } catch {
-      // Silently fail if localStorage unavailable
-    }
-  }, [builderMode])
-
-  const handleAddNote = () => {
-    if (noteText.trim()) {
-      setNotes([noteText, ...notes])
-      setNoteText('')
-      setShowNoteModal(false)
-    }
-  }
+  }, [dateKey])
 
   const handleAddPlannerItem = (draft: PlannerDraft) => {
     const newItem: PlannerItem = {
-      id: globalThis.crypto?.randomUUID?.() ?? `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-      createdAt: Date.now(),
-      title: draft.title,
+      id: Date.now().toString(),
+      text: draft.text,
+      category: draft.category,
+      done: false,
+      createdAt: new Date().toISOString(),
+      dueDate: draft.dueDate || null,
       note: draft.note,
-      time: draft.time,
-      done: draft.done ?? false,
     }
 
     const updated = [...plannerItems, newItem]
     setPlannerItems(updated)
 
-    // Persist the updated list
+    // Persist
     const weekKey = getCurrentWeekKey()
     const persistKey = `planner:${weekKey}`
     save(persistKey, updated)
 
     // Fire telemetry
-    track('planner.item_add', {
-      tab: 'meu-dia',
-      component: 'SimplePlannerSheet',
-      action: 'add',
-      title: draft.title,
-      hasNote: !!draft.note,
-      hasTime: !!draft.time,
-    })
+    try {
+      track('planner.item_added', {
+        tab: 'meu-dia',
+        component: 'SimplePlannerSheet',
+        category: draft.category,
+        hasNote: !!draft.note,
+        hasTime: !!draft.time,
+      })
+    } catch {}
 
     // Show toast
     toast.success('Alterações salvas!')
@@ -277,370 +234,372 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
       title={pageTitle}
       subtitle={pageSubtitle}
     >
-      {/* MACRO BLOCK 1: EMOTIONAL HEADER (Hoje) */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-support-1 mb-2">Hoje</h2>
-        <p className="text-xs text-support-2/70 mb-4">Comece registrando como você está se sentindo hoje.</p>
+      <div className="max-w-[1160px] mx-auto px-4 md:px-6">
+        {/* MACRO BLOCK 1: EMOTIONAL HEADER (Hoje) */}
+        <div className="mb-16">
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Hoje</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Start the day with calm. This space is here to support you.</p>
 
-        {/* Message of the Day - Premium Hero Card */}
-        <Reveal delay={100}>
-          <div className="w-full rounded-3xl shadow-soft bg-white px-6 py-6 md:px-8 md:py-8 relative overflow-hidden mb-8 md:mb-10">
-            {/* Subtle gradient accent blob - top-right corner */}
-            <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full" />
+          {/* Message of the Day - Premium Hero Card */}
+          <Reveal delay={100}>
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] relative overflow-hidden mb-6">
+              {/* Subtle gradient accent blob - top-right corner */}
+              <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full" />
 
-            {/* Content wrapper with tight spacing - positioned above accent */}
-            <div className="flex flex-col gap-2 md:gap-3 relative z-10">
-              {/* Pill header */}
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm w-fit">
-                Mensagem de Hoje
-              </span>
-
-              {/* Message title */}
-              <h2 className="m360-title">"{dailyGreeting}"</h2>
-
-              {/* Subtitle */}
-              <p className="text-gray-600 m360-body-sm">
-                Uma mensagem especial para começar seu dia com leveza.
-              </p>
-
-              {/* Helper text */}
-              <p className="m360-label-sm text-gray-500">
-                Atualizada automaticamente a cada novo dia.
-              </p>
-            </div>
-          </div>
-        </Reveal>
-
-        {/* Greeting Text */}
-        <div className="mb-4">
-          <InactivityReminder />
-        </div>
-
-        {/* Humor & Energia - Premium Card */}
-        <Reveal delay={160}>
-          {/* Pink pill label above the card */}
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-            Humor e Energia
-          </span>
-          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-6">
-            {/* Header */}
-            <div className="flex flex-col gap-1">
-              <h3 className="m360-subtitle">Como você está hoje?</h3>
-              <p className="m360-label-sm text-gray-600">
-                Registre seu humor e energia de hoje. Isso vai ajudar a acompanhar sua semana.
-              </p>
-            </div>
-
-            {/* Mood Pills */}
-            <div>
-              <MoodQuickSelector />
-            </div>
-
-            {/* Weekly Summary Analytics Card */}
-            <div className="mt-4 rounded-2xl bg-gray-50/80 px-4 py-3 flex flex-col gap-2">
-              <p className="m360-label-sm text-gray-600">Sua semana até agora</p>
-              <div>
-                <MoodSparkline />
-              </div>
-            </div>
-
-            {/* View Trend Button */}
-            <button
-              type="button"
-              onClick={() => setTrendOpen(true)}
-              className="mt-2 w-full rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all"
-              data-event="meu-dia.trend_view"
-            >
-              Ver tendência
-            </button>
-          </div>
-        </Reveal>
-      </div>
-
-      {/* Coach Suggestion Card */}
-      <ClientOnly>
-        {isClientFlagEnabled('FF_COACH_V1') && (
-          <CoachSuggestionCard
-            resolve={() => Promise.resolve(generateCoachSuggestion())}
-            onView={(id: string) => {
-              try {
-                trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
-              } catch {}
-            }}
-            onApply={(id: string) => {
-              try {
-                trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
-              } catch {}
-            }}
-            onSave={(id: string) => {
-              try {
-                trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
-              } catch {}
-            }}
-            onWhyOpen={(id: string) => {
-              try {
-                trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
-              } catch {}
-            }}
-          />
-        )}
-      </ClientOnly>
-
-      {/* MACRO BLOCK 2: ROUTINE & ORGANIZATION (Rotina & Organização) */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-support-1 mb-2">Rotina & Organização</h2>
-        <p className="m360-label-sm text-gray-600 mb-4">Organize as tarefas da casa, compromissos e o que é prioridade hoje.</p>
-
-        {/* House Routine Card */}
-        <Reveal delay={230}>
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-            Rotina da Casa
-          </span>
-          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-            <div className="flex flex-col gap-1">
-              <h3 className="m360-subtitle">Organize as tarefas do lar</h3>
-            </div>
-            <div>
-              <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
-            </div>
-          </div>
-        </Reveal>
-
-        {/* Export Planner & Wellness Card */}
-        {!builderMode && (
-          <Reveal delay={240}>
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-              Exportar Planos
-            </span>
-            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-              <div className="space-y-3">
-                <ExportPlanner />
-                <div className="border-t border-white/60 pt-3">
-                  <ExportButton variant="wellness" />
+              {/* Content wrapper with tight spacing - positioned above accent */}
+              <div className="flex flex-col gap-2 md:gap-3 relative z-10">
+                {/* Pill header */}
+                <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm w-fit">
+                  Mensagem de Hoje
                 </div>
+
+                {/* Message title */}
+                <h2 className="m360-title">"{dailyGreeting}"</h2>
+
+                {/* Subtitle */}
+                <p className="text-gray-600 m360-body-sm">
+                  Uma mensagem especial para começar seu dia com leveza.
+                </p>
+
+                {/* Helper text */}
+                <p className="m360-label-sm text-gray-500">
+                  Atualizada automaticamente a cada novo dia.
+                </p>
               </div>
             </div>
           </Reveal>
-        )}
 
-        {/* Premium Banner Card */}
-        {!isPremium() && (
-          <Reveal delay={245}>
-            <PremiumPaywallCard
-              title="Desbloqueie recursos premium"
-              description="Exportar PDFs, insights avançados e muito mais."
-              ctaLabel="Ver planos"
-              onClick={() => {
-                track('paywall_banner_click', { source: 'meu-dia', feature: 'premium_features' })
-                window.location.href = '/planos'
+          {/* Greeting Text */}
+          <div className="mb-6">
+            <InactivityReminder />
+          </div>
+
+          {/* Humor & Energia - Premium Card */}
+          <Reveal delay={160}>
+            {/* Pink pill label above the card */}
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+              Humor e Energia
+            </div>
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-6">
+              {/* Header */}
+              <div className="flex flex-col gap-1 mb-4">
+                <h3 className="m360-subtitle">Como você está hoje?</h3>
+                <p className="m360-label-sm text-gray-600">
+                  Tracking your mood is a small act of self-care.
+                </p>
+              </div>
+
+              {/* Mood Pills */}
+              <div className="mb-4">
+                <MoodQuickSelector />
+              </div>
+
+              {/* Weekly Summary Analytics Card */}
+              <div className="mt-4 rounded-2xl bg-gray-50/80 px-4 py-3 flex flex-col gap-2 mb-4">
+                <p className="m360-label-sm text-gray-600">Sua semana até agora</p>
+                <div>
+                  <MoodSparkline />
+                </div>
+              </div>
+
+              {/* View Trend Button */}
+              <button
+                type="button"
+                onClick={() => setTrendOpen(true)}
+                className="mt-2 w-full rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all"
+                data-event="meu-dia.trend_view"
+              >
+                Ver tendência
+              </button>
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Coach Suggestion Card */}
+        <ClientOnly>
+          {isClientFlagEnabled('FF_COACH_V1') && (
+            <CoachSuggestionCard
+              resolve={() => Promise.resolve(generateCoachSuggestion())}
+              onView={(id: string) => {
+                try {
+                  trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
+                } catch {}
+              }}
+              onApply={(id: string) => {
+                try {
+                  trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
+                } catch {}
+              }}
+              onSave={(id: string) => {
+                try {
+                  trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
+                } catch {}
+              }}
+              onWhyOpen={(id: string) => {
+                try {
+                  trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
+                } catch {}
               }}
             />
-          </Reveal>
-        )}
+          )}
+        </ClientOnly>
 
-        {/* Reminders Card */}
-        <Reveal delay={250}>
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-            Lembretes
-          </span>
-          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-            <div className="flex flex-col gap-1">
-              <h3 className="m360-subtitle">Avisos suaves para o seu dia</h3>
+        {/* MACRO BLOCK 2: ROUTINE & ORGANIZATION (Rotina & Organização) */}
+        <div className="mb-16">
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Routine & Organization</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Organize your day gently — one step at a time.</p>
+
+          {/* House Routine Card */}
+          <Reveal delay={230}>
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+              Rotina da Casa
             </div>
-            <div>
-              <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
-            </div>
-          </div>
-        </Reveal>
-      </div>
-
-      {/* MACRO BLOCK 2.5: BALANCE (Equilíbrio) */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-support-1 mb-2">Equilíbrio</h2>
-        <p className="m360-label-sm text-gray-600 mb-4">
-          Organize compromissos, tarefas e notas em um só lugar.
-        </p>
-
-        {/* Family Planner / Balance Card */}
-        <div id="meu-dia-print-area" className="print-card space-y-4">
-          {/* Planner da Mãe Card */}
-          <Reveal delay={280}>
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-              Planner da Mãe
-            </span>
-            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-              <div className="flex flex-col gap-1">
-                <h3 className="m360-subtitle">O que é prioridade hoje?</h3>
-                <p className="m360-label-sm text-gray-600">
-                  Veja seus compromissos do dia e ajuste o que for necessário.
-                </p>
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
+              <div className="flex flex-col gap-1 mb-4">
+                <h3 className="m360-subtitle">Organize as tarefas do lar</h3>
               </div>
               <div>
-                <FamilyPlanner
-                  currentDateKey={currentDateKey}
-                  weekStartKey={weekStartKey}
-                  weekLabels={weekLabels}
-                  plannerTitle={plannerTitle}
-                  profile={profile}
-                  dateKey={dateKey}
-                  recommendations={recommendations}
-                  initialBuckets={initialBuckets}
-                />
+                <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
               </div>
             </div>
           </Reveal>
 
-          {/* Weekly Items / Planner Card */}
-          <Reveal delay={300}>
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-              Itens da Semana
-            </span>
-            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-              <div className="flex flex-col gap-1">
-                <h3 className="m360-subtitle">O que você não quer esquecer esta semana?</h3>
-                <p className="m360-label-sm text-gray-600">
-                  Mantenha visíveis os itens importantes da sua semana.
-                </p>
+          {/* Export Planner & Wellness Card */}
+          {!builderMode && (
+            <Reveal delay={240}>
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+                Exportar Planos
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex-1" />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setShowPlannerSheet(true)}
-                  className="flex items-center gap-1"
-                >
-                  <AppIcon name="plus" size={16} decorative />
-                  Adicionar item
-                </Button>
-              </div>
-              <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
-            </div>
-          </Reveal>
-
-          <SimplePlannerSheet
-            isOpen={showPlannerSheet}
-            onClose={() => setShowPlannerSheet(false)}
-            onAdd={handleAddPlannerItem}
-          />
-
-          {/* Checklist Card */}
-          <Reveal delay={320}>
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-              Checklist da Mãe
-            </span>
-            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-              <div className="flex flex-col gap-1">
-                <h3 className="m360-subtitle">Pequenas tarefas, grandes conquistas.</h3>
-                <p className="m360-label-sm text-gray-600">
-                  Marque o que você já fez e celebre cada avanço.
-                </p>
-              </div>
-              <Checklist currentDateKey={currentDateKey} />
-            </div>
-          </Reveal>
-
-          {/* Notes Card */}
-          <Reveal delay={330}>
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-              Notas Rápidas
-            </span>
-            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4 notesCard">
-              <div className="flex flex-col gap-1">
-                <h3 className="m360-subtitle">Um espaço só seu para anotar o que importa.</h3>
-                <p className="m360-label-sm text-gray-600">
-                  Anote pensamentos, ideias ou momentos especiais para lembrar depois.
-                </p>
-              </div>
-              <div className="notesCard-header flex items-start justify-between gap-4">
-                <div className="notesCard-text flex-1" />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setShowNoteModal(true)}
-                  className="notesCard-action flex-shrink-0"
-                >
-                  + Adicionar
-                </Button>
-              </div>
-
-              {notes.length > 0 ? (
-                <div className="notesCard-list space-y-2">
-                  {notes.map((note, idx) => (
-                    <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
-                      {note}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="notesCard-empty rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
-                      <AppIcon name="edit" size={24} className="text-primary" decorative />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
-                      <p className="mt-1 text-xs text-support-2">Use este espaço para registrar pensamentos, ideias ou momentos especiais.</p>
-                    </div>
+              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
+                <div className="space-y-3">
+                  <ExportPlanner />
+                  <div className="border-t border-white/60 pt-3">
+                    <ExportButton variant="wellness" />
                   </div>
                 </div>
-              )}
+              </div>
+            </Reveal>
+          )}
+
+          {/* Premium Banner Card */}
+          {!isPremium() && (
+            <Reveal delay={245}>
+              <PremiumPaywallCard
+                title="Desbloqueie recursos premium"
+                description="Exportar PDFs, insights avançados e muito mais."
+                ctaLabel="Ver planos"
+                onClick={() => {
+                  track('paywall_banner_click', { source: 'meu-dia', feature: 'premium_features' })
+                  window.location.href = '/planos'
+                }}
+              />
+            </Reveal>
+          )}
+
+          {/* Reminders Card */}
+          <Reveal delay={250}>
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+              Lembretes
+            </div>
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
+              <div className="flex flex-col gap-1 mb-4">
+                <h3 className="m360-subtitle">Avisos suaves para o seu dia</h3>
+              </div>
+              <div>
+                <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+              </div>
             </div>
           </Reveal>
         </div>
-      </div>
 
-      {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-support-1 mb-2">Conexão & Cuidado</h2>
-        <p className="m360-label-sm text-gray-600 mb-4">Encontre momentos de conexão com seu filho e cuide também de você.</p>
+        {/* MACRO BLOCK 2.5: BALANCE (Equilíbrio) */}
+        <div className="mb-16">
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Balance</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
+            Plan with care what truly matters for you and your family.
+          </p>
 
-        {/* Activity of the Day Card */}
-        <Reveal delay={270}>
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-            Atividade do Dia
-          </span>
-          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-            <div className="flex flex-col gap-1">
-              <h3 className="m360-subtitle">Uma ideia para hoje</h3>
-              <p className="m360-label-sm text-gray-600">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
-            </div>
-            <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+          {/* Family Planner / Balance Card */}
+          <div id="meu-dia-print-area" className="print-card space-y-8">
+            {/* Planner da Mãe Card */}
+            <Reveal delay={280}>
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+                Planner da Mãe
+              </div>
+              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015]">
+                <div className="flex flex-col gap-1 mb-4">
+                  <h3 className="m360-subtitle">O que é prioridade hoje?</h3>
+                  <p className="m360-label-sm text-gray-600">
+                    Veja seus compromissos do dia e ajuste o que for necessário.
+                  </p>
+                </div>
+                <div>
+                  <FamilyPlanner
+                    currentDateKey={currentDateKey}
+                    weekStartKey={weekStartKey}
+                    weekLabels={weekLabels}
+                    plannerTitle={plannerTitle}
+                    profile={profile}
+                    dateKey={dateKey}
+                    recommendations={recommendations}
+                    initialBuckets={initialBuckets}
+                  />
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Weekly Items / Planner Card */}
+            <Reveal delay={300}>
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+                Itens da Semana
+              </div>
+              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015]">
+                <div className="flex flex-col gap-1 mb-4">
+                  <h3 className="m360-subtitle">O que você não quer esquecer esta semana?</h3>
+                  <p className="m360-label-sm text-gray-600">
+                    Mantenha visíveis os itens importantes da sua semana.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex-1" />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setShowPlannerSheet(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <AppIcon name="plus" size={16} decorative />
+                    Adicionar item
+                  </Button>
+                </div>
+                <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
+              </div>
+            </Reveal>
+
+            <SimplePlannerSheet
+              isOpen={showPlannerSheet}
+              onClose={() => setShowPlannerSheet(false)}
+              onAdd={handleAddPlannerItem}
+            />
+
+            {/* Checklist Card */}
+            <Reveal delay={320}>
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+                Checklist da Mãe
+              </div>
+              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015]">
+                <div className="flex flex-col gap-1 mb-4">
+                  <h3 className="m360-subtitle">Pequenas tarefas, grandes conquistas.</h3>
+                  <p className="m360-label-sm text-gray-600">
+                    Marque o que você já fez e celebre cada avanço.
+                  </p>
+                </div>
+                <Checklist currentDateKey={currentDateKey} />
+              </div>
+            </Reveal>
+
+            {/* Notes Card */}
+            <Reveal delay={330}>
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+                Notas Rápidas
+              </div>
+              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] notesCard">
+                <div className="flex flex-col gap-1 mb-4">
+                  <h3 className="m360-subtitle">Um espaço só seu para anotar o que importa.</h3>
+                  <p className="m360-label-sm text-gray-600">
+                    A safe place to keep important thoughts and moments.
+                  </p>
+                </div>
+                <div className="notesCard-header flex items-start justify-between gap-4 mb-4">
+                  <div className="notesCard-text flex-1" />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setShowNoteModal(true)}
+                    className="notesCard-action flex-shrink-0"
+                  >
+                    + Adicionar
+                  </Button>
+                </div>
+
+                {notes.length > 0 ? (
+                  <div className="notesCard-list space-y-2">
+                    {notes.map((note, idx) => (
+                      <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                        {note}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="notesCard-empty rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
+                        <AppIcon name="edit" size={24} className="text-primary" decorative />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
+                        <p className="mt-1 text-xs text-support-2">Use este espaço para registrar pensamentos, ideias ou momentos especiais.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Reveal>
           </div>
-        </Reveal>
+        </div>
 
-        {/* Quick Actions Grid */}
-        <Reveal delay={260}>
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
-            Ações Rápidas
-          </span>
-          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
-            <div className="flex flex-col gap-1">
-              <h3 className="m360-subtitle">Acesso rápido a suas funções favoritas</h3>
+        {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
+        <div className="mb-16">
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Connection & Care</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Simple ideas to make the day feel more special.</p>
+
+          {/* Activity of the Day Card */}
+          <Reveal delay={270}>
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+              Atividade do Dia
             </div>
-            <div className="w-full md:max-w-[900px] lg:max-w-[1280px] mx-auto">
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-4 items-stretch">
-                {quickActions.map((action, index) => (
-                  <Reveal key={action.title} delay={index * 80} className="h-full">
-                    <button
-                      type="button"
-                      className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 md:min-w-[220px] lg:min-w-[240px] shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                      aria-label={`${action.title} - ${action.description}`}
-                    >
-                      <div className="flex-shrink-0">
-                        <AppIcon name={action.iconName as any} size={24} decorative className="text-primary" />
-                      </div>
-                      <div className="flex-1 w-full text-left">
-                        <p className="font-semibold text-sm text-support-1">{action.title}</p>
-                        <p className="mt-1 text-xs text-support-2">{action.description}</p>
-                      </div>
-                    </button>
-                  </Reveal>
-                ))}
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
+              <div className="flex flex-col gap-1 mb-4">
+                <h3 className="m360-subtitle">Uma ideia para hoje</h3>
+                <p className="m360-label-sm text-gray-600">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
+              </div>
+              <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+            </div>
+          </Reveal>
+
+          {/* Quick Actions Grid */}
+          <Reveal delay={260}>
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
+              Ações Rápidas
+            </div>
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
+              <div className="flex flex-col gap-1 mb-6">
+                <h3 className="m360-subtitle">Acesso rápido a suas funções favoritas</h3>
+              </div>
+              <div className="w-full md:max-w-[900px] lg:max-w-[1280px] mx-auto">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-4 items-stretch">
+                  {quickActions.map((action, index) => (
+                    <Reveal key={action.title} delay={index * 80} className="h-full">
+                      <button
+                        type="button"
+                        className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 md:min-w-[220px] lg:min-w-[240px] shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                        aria-label={`${action.title} - ${action.description}`}
+                      >
+                        <div className="flex-shrink-0">
+                          <AppIcon name={action.iconName as any} size={24} decorative className="text-primary hover:opacity-80 transition-opacity" />
+                        </div>
+                        <div className="flex-1 w-full text-left">
+                          <p className="font-semibold text-sm text-support-1">{action.title}</p>
+                          <p className="mt-1 text-xs text-support-2">{action.description}</p>
+                        </div>
+                      </button>
+                    </Reveal>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </div>
 
       {/* Note Modal */}
