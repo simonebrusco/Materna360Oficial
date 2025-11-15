@@ -592,50 +592,55 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
       <div className="mb-8">
-        <SectionH2 className="mb-2">Conexão & Cuidado</SectionH2>
-        <p className="text-xs text-support-2/70 mb-4">Encontre momentos de conexão com seu filho e cuide também de você.</p>
+        <h2 className="text-2xl font-bold text-support-1 mb-2">Conexão & Cuidado</h2>
+        <p className="m360-label-sm text-gray-600 mb-4">Encontre momentos de conexão com seu filho e cuide também de você.</p>
 
         {/* Activity of the Day Card */}
-        <SoftCard className="mb-4">
-          <Reveal delay={270}>
-            <div>
-              <Badge className="mb-2">Atividade do dia</Badge>
-              <h3 className="m360-card-title">Uma ideia para <strong>hoje</strong></h3>
-              <p className="text-xs text-support-2/70 mt-1 mb-4">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
-              <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+        <Reveal delay={270}>
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+            Atividade do Dia
+          </span>
+          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+            <div className="flex flex-col gap-1">
+              <h3 className="m360-subtitle">Uma ideia para hoje</h3>
+              <p className="m360-label-sm text-gray-600">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
             </div>
-          </Reveal>
-        </SoftCard>
+            <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
+          </div>
+        </Reveal>
 
         {/* Quick Actions Grid */}
-        <SoftCard className="mb-4">
-          <Reveal delay={260}>
-            <div>
-              <Badge className="mb-4">Ações Rápidas</Badge>
-              <div className="w-full md:max-w-[900px] lg:max-w-[1280px] mx-auto">
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-4 mb-8 items-stretch">
-                  {quickActions.map((action, index) => (
-                    <Reveal key={action.title} delay={index * 80} className="h-full">
-                      <button
-                        type="button"
-                        className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 md:min-w-[220px] lg:min-w-[240px] shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                        aria-label={`${action.title} - ${action.description}`}
-                      >
-                        <div className="flex-shrink-0">
-                          <AppIcon name={action.iconName as any} size={24} decorative className="text-primary" />
-                        </div>
-                        <div className="flex-1 w-full text-left">
-                          <p className="font-semibold text-sm text-support-1">{action.title}</p>
-                          <p className="mt-1 text-xs text-support-2">{action.description}</p>
-                        </div>
-                      </button>
-                    </Reveal>
-                  ))}
-                </div>
+        <Reveal delay={260}>
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+            Ações Rápidas
+          </span>
+          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+            <div className="flex flex-col gap-1">
+              <h3 className="m360-subtitle">Acesso rápido a suas funções favoritas</h3>
+            </div>
+            <div className="w-full md:max-w-[900px] lg:max-w-[1280px] mx-auto">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-4 items-stretch">
+                {quickActions.map((action, index) => (
+                  <Reveal key={action.title} delay={index * 80} className="h-full">
+                    <button
+                      type="button"
+                      className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 md:min-w-[220px] lg:min-w-[240px] shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
+                      aria-label={`${action.title} - ${action.description}`}
+                    >
+                      <div className="flex-shrink-0">
+                        <AppIcon name={action.iconName as any} size={24} decorative className="text-primary" />
+                      </div>
+                      <div className="flex-1 w-full text-left">
+                        <p className="font-semibold text-sm text-support-1">{action.title}</p>
+                        <p className="mt-1 text-xs text-support-2">{action.description}</p>
+                      </div>
+                    </button>
+                  </Reveal>
+                ))}
               </div>
             </div>
-          </Reveal>
-        </SoftCard>
+          </div>
+        </Reveal>
       </div>
 
       {/* Note Modal */}
