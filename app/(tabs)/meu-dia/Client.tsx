@@ -251,10 +251,10 @@ export function MeuDiaClient({
       subtitle={pageSubtitle}
     >
       <div className="max-w-[1160px] mx-auto px-4 md:px-6">
-        {/* MACRO BLOCK 1: EMOTIONAL HEADER (Hoje) */}
+        {/* MACRO BLOCK 1: EMOTIONAL START */}
         <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Hoje</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Start the day with calm. This space is here to support you.</p>
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Começar com Leveza</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Comece o dia com calma. Este espaço está aqui para apoiar você.</p>
 
           {/* Message of the Day - Premium Hero Card */}
           <Reveal delay={100}>
@@ -360,10 +360,10 @@ export function MeuDiaClient({
           )}
         </ClientOnly>
 
-        {/* MACRO BLOCK 2: ROUTINE & ORGANIZATION (Rotina & Organização) */}
+        {/* MACRO BLOCK 2: DAILY ORGANIZATION */}
         <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Routine & Organization</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Organize your day gently — one step at a time.</p>
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Organização do Dia</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Organize seu dia com leveza — um passo de cada vez.</p>
 
           {/* House Routine Card */}
           <Reveal delay={230}>
@@ -380,65 +380,12 @@ export function MeuDiaClient({
             </div>
           </Reveal>
 
-          {/* Export Planner & Wellness Card */}
-          {!builderMode && (
-            <Reveal delay={240}>
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-                Exportar Planos
-              </div>
-              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
-                <div className="space-y-3">
-                  <ExportPlanner />
-                  <div className="border-t border-white/60 pt-3">
-                    <ExportButton variant="wellness" />
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          )}
 
-          {/* Premium Banner Card */}
-          {!isPremium() && (
-            <Reveal delay={245}>
-              <PremiumPaywallCard
-                title="Desbloqueie recursos premium"
-                description="Exportar PDFs, insights avançados e muito mais."
-                ctaLabel="Ver planos"
-                onClick={() => {
-                  track('paywall_banner_click', { source: 'meu-dia', feature: 'premium_features' })
-                  window.location.href = '/planos'
-                }}
-              />
-            </Reveal>
-          )}
-
-          {/* Reminders Card */}
-          <Reveal delay={250}>
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-              Lembretes
-            </div>
-            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
-              <div className="flex flex-col gap-1 mb-4">
-                <h3 className="m360-subtitle">Avisos suaves para o seu dia</h3>
-              </div>
-              <div>
-                <Reminders storageKey={`meu-dia:${finalCurrentDateKey}:reminders`} />
-              </div>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* MACRO BLOCK 2.5: BALANCE (Equilíbrio) */}
-        <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Balance</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
-            Plan with care what truly matters for you and your family.
-          </p>
 
           {/* Family Planner / Balance Card */}
           <div id="meu-dia-print-area" className="print-card space-y-8">
             {/* Planner da Mãe Card */}
-            <Reveal delay={280}>
+            <Reveal delay={250}>
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
                 Planner da Mãe
               </div>
@@ -465,7 +412,7 @@ export function MeuDiaClient({
             </Reveal>
 
             {/* Weekly Items / Planner Card */}
-            <Reveal delay={300}>
+            <Reveal delay={270}>
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
                 Itens da Semana
               </div>
@@ -499,7 +446,7 @@ export function MeuDiaClient({
             />
 
             {/* Checklist Card */}
-            <Reveal delay={320}>
+            <Reveal delay={290}>
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
                 Checklist da Mãe
               </div>
@@ -515,7 +462,7 @@ export function MeuDiaClient({
             </Reveal>
 
             {/* Notes Card */}
-            <Reveal delay={330}>
+            <Reveal delay={310}>
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
                 Notas Rápidas
               </div>
@@ -566,11 +513,11 @@ export function MeuDiaClient({
 
         {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
         <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Connection & Care</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Simple ideas to make the day feel more special.</p>
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Conexão & Cuidado</h2>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Ideias simples para tornar o dia mais especial.</p>
 
           {/* Activity of the Day Card */}
-          <Reveal delay={270}>
+          <Reveal delay={330}>
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
               Atividade do Dia
             </div>
@@ -584,7 +531,7 @@ export function MeuDiaClient({
           </Reveal>
 
           {/* Quick Actions Grid */}
-          <Reveal delay={260}>
+          <Reveal delay={350}>
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
               Ações Rápidas
             </div>
