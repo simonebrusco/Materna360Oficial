@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { useEffect } from 'react';
-import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
 import { ContinueCard } from './components/ContinueCard';
 import DestaquesDodia from '@/components/maternar/DestaquesDodia';
@@ -12,7 +11,6 @@ import { Reveal } from '@/components/ui/Reveal';
 import { track } from '@/app/lib/telemetry';
 import { getBrazilDateKey } from '@/app/lib/dateKey';
 import { useProfile } from '@/app/hooks/useProfile';
-import { getTimeGreeting } from '@/app/lib/greetings';
 import { isPremium } from '@/app/lib/plan';
 import SoftCard from '@/components/ui/SoftCard';
 import { Button } from '@/components/ui/Button';
