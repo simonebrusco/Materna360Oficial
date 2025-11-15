@@ -118,15 +118,19 @@ export default function MaternarClient() {
         </div>
 
         <div id="maternar-diario-mae" className="px-4 py-6 sm:px-6 md:py-8">
-          <h2 className="text-xl font-semibold text-support-1 mb-4">Diário da mãe</h2>
           <SoftCard>
-            <div className="space-y-3">
-              <p className="text-sm text-support-2">
-                Um espaço seguro para colocar em palavras aquilo que você sente.
-              </p>
-              <p className="text-xs text-gray-500">
-                Expresse-se livremente e guarde seus pensamentos em um diário privado e seguro.
-              </p>
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                <AppIcon name="edit" variant="brand" decorative className="h-7 w-7" />
+                <div>
+                  <p className="text-base font-semibold text-support-1 leading-snug">
+                    Diário da mãe
+                  </p>
+                  <p className="text-sm text-support-2 leading-snug">
+                    Um espaço seguro para colocar em palavras aquilo que você sente.
+                  </p>
+                </div>
+              </div>
             </div>
           </SoftCard>
         </div>
