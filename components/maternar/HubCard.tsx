@@ -41,8 +41,8 @@ export default function HubCard({
         hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]
         transition-all duration-200
         focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
-        p-5 sm:p-6
-        min-h-[160px] sm:min-h-[180px]
+        p-3 md:p-5
+        min-h-[140px] md:min-h-[160px]
         ui-press ui-ring
       "
       aria-label={subtitle ? `${title}: ${subtitle}` : title}
