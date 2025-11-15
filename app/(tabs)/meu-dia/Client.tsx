@@ -123,7 +123,7 @@ export function MeuDiaClient({
 }: MeuDiaClientProps) {
   const builderMode = __builderPreview__
   const finalProfile = profile || __fallbackProfile__
-  const final DailyGreeting = safeUtf(dailyGreeting) || __fallbackGreeting__
+  const finalDailyGreeting = safeUtf(dailyGreeting) || __fallbackGreeting__
   const finalCurrentDateKey = currentDateKey || __fallbackCurrentDateKey__
   const finalWeekStartKey = weekStartKey || __fallbackWeekStartKey__
   const finalWeekLabels = weekLabels || __fallbackWeekLabels__
