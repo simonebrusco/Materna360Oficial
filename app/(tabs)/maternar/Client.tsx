@@ -46,15 +46,19 @@ export default function MaternarClient() {
         <MaternarScrollHub />
 
         <div id="maternar-resumo-semana" className="px-4 py-6 sm:px-6 md:py-8">
-          <h2 className="text-xl font-semibold text-support-1 mb-4">Resumo da sua semana</h2>
           <SoftCard>
-            <div className="space-y-3">
-              <p className="text-sm text-support-2">
-                Um olhar carinhoso sobre como você tem se sentido nos últimos dias.
-              </p>
-              <p className="text-xs text-gray-500">
-                Esta seção será expandida em breve com análises detalhadas do seu progresso semanal.
-              </p>
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                <AppIcon name="calendar" variant="brand" decorative className="h-7 w-7" />
+                <div>
+                  <p className="text-base font-semibold text-support-1 leading-snug">
+                    Resumo da sua semana
+                  </p>
+                  <p className="text-sm text-support-2 leading-snug">
+                    Um olhar carinhoso sobre como você tem se sentido nos últimos dias.
+                  </p>
+                </div>
+              </div>
             </div>
           </SoftCard>
         </div>
