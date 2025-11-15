@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
+import MaternarScrollHub from '@/components/maternar/MaternarScrollHub';
 import { ContinueCard } from './components/ContinueCard';
 import DestaquesDodia from '@/components/maternar/DestaquesDodia';
 import { HighlightsSection } from './components/HighlightsSection';
@@ -42,42 +43,140 @@ export default function MaternarClient() {
       title={pageTitle}
       subtitle={pageSubtitle}
     >
-        <DestaquesDodia />
+        <MaternarScrollHub />
+
+        <div id="maternar-resumo-semana" className="px-4 py-6 sm:px-6 md:py-8">
+          <h2 className="text-xl font-semibold text-support-1 mb-4">Resumo da sua semana</h2>
+          <SoftCard>
+            <div className="space-y-3">
+              <p className="text-sm text-support-2">
+                Um olhar carinhoso sobre como você tem se sentido nos últimos dias.
+              </p>
+              <p className="text-xs text-gray-500">
+                Esta seção será expandida em breve com análises detalhadas do seu progresso semanal.
+              </p>
+            </div>
+          </SoftCard>
+        </div>
+
+        <div id="maternar-habitos-maternos" className="px-4 py-6 sm:px-6 md:py-8">
+          <h2 className="text-xl font-semibold text-support-1 mb-4">Hábitos maternos</h2>
+          <SoftCard>
+            <div className="space-y-3">
+              <p className="text-sm text-support-2">
+                Pequenas práticas que sustentam uma rotina mais leve e conectada com seus filhos.
+              </p>
+              <p className="text-xs text-gray-500">
+                Registre seus hábitos diários e acompanhe como eles impactam seu bem-estar.
+              </p>
+            </div>
+          </SoftCard>
+        </div>
+
+        <div id="maternar-momentos-filho" className="px-4 py-6 sm:px-6 md:py-8">
+          <h2 className="text-xl font-semibold text-support-1 mb-4">Momentos com seu filho</h2>
+          <SoftCard>
+            <div className="space-y-3">
+              <p className="text-sm text-support-2">
+                Pequenas memórias que contam a grande história da sua maternidade.
+              </p>
+              <p className="text-xs text-gray-500">
+                Capture gestos especiais, conversas marcantes e abraços que merecem ser lembrados.
+              </p>
+            </div>
+          </SoftCard>
+        </div>
+
+        <div id="maternar-evolucao-emocional" className="px-4 py-6 sm:px-6 md:py-8">
+          <h2 className="text-xl font-semibold text-support-1 mb-4">Sua evolução emocional</h2>
+          <SoftCard>
+            <div className="space-y-3">
+              <p className="text-sm text-support-2">
+                Acompanhe padrões, mudanças e conquistas ao longo dos dias.
+              </p>
+              <p className="text-xs text-gray-500">
+                Visualize seu crescimento emocional através de gráficos e insights personalizados.
+              </p>
+            </div>
+          </SoftCard>
+        </div>
+
+        <div id="maternar-diario-mae" className="px-4 py-6 sm:px-6 md:py-8">
+          <h2 className="text-xl font-semibold text-support-1 mb-4">Diário da mãe</h2>
+          <SoftCard>
+            <div className="space-y-3">
+              <p className="text-sm text-support-2">
+                Um espaço seguro para colocar em palavras aquilo que você sente.
+              </p>
+              <p className="text-xs text-gray-500">
+                Expresse-se livremente e guarde seus pensamentos em um diário privado e seguro.
+              </p>
+            </div>
+          </SoftCard>
+        </div>
+
+        <div id="maternar-trilhas-premium" className="px-4 py-6 sm:px-6 md:py-8">
+          <h2 className="text-xl font-semibold text-support-1 mb-4">Trilhas premium</h2>
+          <SoftCard>
+            <div className="space-y-3">
+              <p className="text-sm text-support-2">
+                Caminhos guiados para semanas mais leves, conscientes e transformadoras.
+              </p>
+              <p className="text-xs text-gray-500">
+                Acesse conteúdos exclusivos, meditações e jornadas personalizadas.
+              </p>
+            </div>
+          </SoftCard>
+        </div>
+
+        <div className="px-4 py-6 sm:px-6 md:py-8">
+          <DestaquesDodia />
+        </div>
+
         <Reveal delay={200}>
-          <HighlightsSection />
+          <div className="px-4 sm:px-6">
+            <HighlightsSection />
+          </div>
         </Reveal>
+
         <Reveal delay={240}>
-          <ContinueCard dateKey={dateKey} />
+          <div className="px-4 sm:px-6">
+            <ContinueCard dateKey={dateKey} />
+          </div>
         </Reveal>
+
         {!isPremium() && (
           <Reveal delay={260}>
-            <SoftCard className="mb-4 border-primary/30 bg-gradient-to-br from-primary/8 to-white">
-              <div className="flex items-start gap-4 sm:items-center sm:justify-between">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-2">
-                    <AppIcon name="sparkles" size={12} decorative />
-                    Premium
+            <div className="px-4 sm:px-6">
+              <SoftCard className="mb-4 border-primary/30 bg-gradient-to-br from-primary/8 to-white">
+                <div className="flex items-start gap-4 sm:items-center sm:justify-between">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-2">
+                      <AppIcon name="sparkles" size={12} decorative />
+                      Premium
+                    </div>
+                    <h3 className="font-semibold text-support-1">Recursos premium disponíveis</h3>
+                    <p className="text-xs text-support-2 mt-1">
+                      Desbloqueie PDF avançado e insights detalhados.
+                    </p>
                   </div>
-                  <h3 className="font-semibold text-support-1">Recursos premium disponíveis</h3>
-                  <p className="text-xs text-support-2 mt-1">
-                    Desbloqueie PDF avançado e insights detalhados.
-                  </p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      track('paywall_banner_click', { source: 'maternar', feature: 'premium_features' })
+                      window.location.href = '/planos'
+                    }}
+                    className="flex-shrink-0 whitespace-nowrap"
+                  >
+                    Ver planos
+                  </Button>
                 </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    track('paywall_banner_click', { source: 'maternar', feature: 'premium_features' })
-                    window.location.href = '/planos'
-                  }}
-                  className="flex-shrink-0 whitespace-nowrap"
-                >
-                  Ver planos
-                </Button>
-              </div>
-            </SoftCard>
+              </SoftCard>
+            </div>
           </Reveal>
         )}
+
         <CardHub />
     </PageTemplate>
   );
