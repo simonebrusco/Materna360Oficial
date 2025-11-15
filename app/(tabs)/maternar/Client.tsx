@@ -26,21 +26,34 @@ export default function MaternarClient() {
     });
   }, [profile]);
 
-  // Hero section renders the small subtitle above the main headline
-  const hero = mounted ? (
-    <p className="text-sm font-medium text-support-2">
-      Bem-vinda ao Materna360
-    </p>
+  // Complete hero section with hierarchy:
+  // 1. Overline: "MATERNAR"
+  // 2. Small subtitle: "Bem-vinda ao Materna360"
+  // 3. Main headline: "{greeting}, {firstName}. {dailyMessage}"
+  const hero = mounted && heroData ? (
+    <section className="flex flex-col gap-1">
+      {/* Overline */}
+      <p className="text-xs font-semibold tracking-[0.28em] text-primary/70 uppercase">
+        MATERNAR
+      </p>
+
+      {/* Small fixed subtitle */}
+      <p className="text-sm font-medium text-support-2">
+        Bem-vinda ao Materna360
+      </p>
+
+      {/* Main dynamic headline */}
+      <h1 className="text-2xl md:text-3xl font-semibold text-support-1 leading-snug">
+        {heroData.greeting}, {heroData.firstName}. {heroData.dailyMessage}
+      </h1>
+    </section>
   ) : null;
 
-  // Dynamic main headline: "{greeting}, {firstName}. {dailyMessage}"
-  const pageTitle = mounted && heroData
-    ? `${heroData.greeting}, ${heroData.firstName}. ${heroData.dailyMessage}`
-    : '';
+  // Use empty title since hero handles the full header
+  const pageTitle = '';
 
   return (
     <PageTemplate
-      label="MATERNAR"
       title={pageTitle}
       hero={hero}
     >
