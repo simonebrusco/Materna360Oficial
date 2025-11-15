@@ -44,10 +44,10 @@ export function MaternarFeatureCard({
         </div>
 
         <div className="flex flex-col gap-0.5 md:gap-1">
-          <p className="text-sm md:text-base font-semibold text-support-1 leading-tight">
+          <p className="text-[13px] md:text-sm font-semibold text-support-1 leading-tight">
             {title}
           </p>
-          <p className="text-xs md:text-sm text-support-2 leading-tight">
+          <p className="text-[11px] md:text-xs text-support-2 leading-tight">
             {subtitle}
           </p>
         </div>
