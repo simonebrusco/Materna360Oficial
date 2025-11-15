@@ -388,34 +388,39 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
 
       {/* MACRO BLOCK 2: ROUTINE & ORGANIZATION (Rotina & Organização) */}
       <div className="mb-8">
-        <SectionH2 className="mb-2">Rotina & Organização</SectionH2>
-        <p className="text-xs text-support-2/70 mb-4">Organize as tarefas da casa, compromissos e o que é prioridade hoje.</p>
+        <h2 className="text-2xl font-bold text-support-1 mb-2">Rotina & Organização</h2>
+        <p className="m360-label-sm text-gray-600 mb-4">Organize as tarefas da casa, compromissos e o que é prioridade hoje.</p>
 
         {/* House Routine Card */}
-        <SoftCard className="mb-4">
-          <Reveal delay={230}>
-            <div>
-              <Badge className="mb-2">Rotina da Casa</Badge>
-              <h3 className="m360-card-title">Organize as tarefas do lar</h3>
-              <div className="mt-4">
-                <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
-              </div>
+        <Reveal delay={230}>
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+            Rotina da Casa
+          </span>
+          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+            <div className="flex flex-col gap-1">
+              <h3 className="m360-subtitle">Organize as tarefas do lar</h3>
             </div>
-          </Reveal>
-        </SoftCard>
+            <div>
+              <MomInMotion enabled storageKey={`meu-dia:${dateKey}:todos`} />
+            </div>
+          </div>
+        </Reveal>
 
         {/* Export Planner & Wellness Card */}
         {!builderMode && (
-          <SoftCard className="mb-4">
-            <Reveal delay={240}>
+          <Reveal delay={240}>
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+              Exportar Planos
+            </span>
+            <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
               <div className="space-y-3">
                 <ExportPlanner />
                 <div className="border-t border-white/60 pt-3">
                   <ExportButton variant="wellness" />
                 </div>
               </div>
-            </Reveal>
-          </SoftCard>
+            </div>
+          </Reveal>
         )}
 
         {/* Premium Banner Card */}
@@ -434,17 +439,19 @@ export function MeuDiaClient(props?: MeuDiaClientProps) {
         )}
 
         {/* Reminders Card */}
-        <SoftCard className="mb-4">
-          <Reveal delay={250}>
-            <div>
-              <Badge className="mb-2">Lembretes</Badge>
-              <h3 className="m360-card-title">Avisos suaves para o seu dia</h3>
-              <div className="mt-4">
-                <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
-              </div>
+        <Reveal delay={250}>
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary m360-label-sm mb-3">
+            Lembretes
+          </span>
+          <div className="rounded-3xl shadow-soft bg-white px-6 py-6 md:px-7 md:py-7 space-y-4 mb-4">
+            <div className="flex flex-col gap-1">
+              <h3 className="m360-subtitle">Avisos suaves para o seu dia</h3>
             </div>
-          </Reveal>
-        </SoftCard>
+            <div>
+              <Reminders storageKey={`meu-dia:${dateKey}:reminders`} />
+            </div>
+          </div>
+        </Reveal>
       </div>
 
       {/* MACRO BLOCK 2.5: BALANCE (Equilíbrio) */}
