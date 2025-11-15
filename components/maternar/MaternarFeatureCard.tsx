@@ -37,9 +37,8 @@ export function MaternarFeatureCard({
         <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-2.5 md:p-3 w-fit">
           <AppIcon
             name={icon}
-            size={20}
+            size={24}
             variant="brand"
-            className="md:h-6 md:w-6"
             decorative
           />
         </div>
