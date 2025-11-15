@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 
 import { HeroSection } from './components/HeroSection'
 import { WeeklySummary } from './components/WeeklySummary'
@@ -24,6 +25,8 @@ function scrollToSection(id: string) {
 }
 
 export function MaternarClient() {
+  const router = useRouter()
+
   const handleCuidarDeMim = () => {
     scrollToSection('maternar-habitos')
   }
@@ -33,15 +36,11 @@ export function MaternarClient() {
   }
 
   const handleOrganizarRotina = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/meu-dia'
-    }
+    router.push('/meu-dia')
   }
 
   const handleAprenderEBrincar = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/descobrir'
-    }
+    router.push('/descobrir')
   }
 
   const handleMinhasConquistas = () => {
@@ -49,87 +48,79 @@ export function MaternarClient() {
   }
 
   const handlePlanosPremium = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/eu360'
-    }
+    router.push('/eu360')
   }
 
   return (
-    <div className="mx-auto max-w-[1040px] px-4 py-6 pb-24 md:px-6">
-      <ClientOnly>
-        <HeroSection />
+    <div className="flex flex-col gap-6 p-4 pb-24">
+      <HeroSection />
 
-        <NavigationHub
-          onCuidarDeMim={handleCuidarDeMim}
-          onCuidarDoFilho={handleCuidarDoFilho}
-          onOrganizarRotina={handleOrganizarRotina}
-          onAprenderEBrincar={handleAprenderEBrincar}
-          onMinhasConquistas={handleMinhasConquistas}
-          onPlanosPremium={handlePlanosPremium}
-        />
-      </ClientOnly>
+      <NavigationHub
+        onCuidarDeMim={handleCuidarDeMim}
+        onCuidarDoFilho={handleCuidarDoFilho}
+        onOrganizarRotina={handleOrganizarRotina}
+        onAprenderEBrincar={handleAprenderEBrincar}
+        onMinhasConquistas={handleMinhasConquistas}
+        onPlanosPremium={handlePlanosPremium}
+      />
 
-      <div className="space-y-6 md:space-y-8 mt-6 md:mt-8">
-        <div id="maternar-resumo">
-          <SectionWrapper
-            title="Resumo da sua semana"
-            subtitle="Um olhar carinhoso sobre como você tem se sentido."
-          >
-            <ClientOnly>
-              <WeeklySummary />
-            </ClientOnly>
-          </SectionWrapper>
-        </div>
-
-        <div id="maternar-habitos">
-          <SectionWrapper
-            title="Hábitos maternos"
-            subtitle="Pequenas práticas que sustentam uma rotina mais leve e conectada."
-          >
-            <ClientOnly>
-              <HabitosMaternos />
-            </ClientOnly>
-          </SectionWrapper>
-        </div>
-
-        <div id="maternar-momentos">
-          <SectionWrapper
-            title="Momentos com os filhos"
-            subtitle="Pequenas memórias que contam a grande história da sua maternidade."
-          >
-            <MomentsWithKids />
-          </SectionWrapper>
-        </div>
-
-        <div id="maternar-evolucao">
-          <SectionWrapper
-            title="Sua evolução emocional"
-            subtitle="Acompanhe padrões, mudanças e conquistas ao longo dos dias."
-          >
-            <ClientOnly>
-              <EmotionalAnalytics />
-            </ClientOnly>
-          </SectionWrapper>
-        </div>
-
+      <div id="maternar-resumo">
         <SectionWrapper
-          title="Diário da mãe"
-          subtitle="Um espaço seguro para colocar em palavras aquilo que você sente."
+          title="Resumo da sua semana"
+          description="Um olhar carinhoso sobre como você tem se sentido."
         >
           <ClientOnly>
-            <MothersDiary />
-          </ClientOnly>
-        </SectionWrapper>
-
-        <SectionWrapper
-          title="Trilhas premium"
-          subtitle="Caminhos guiados para semanas mais leves e conscientes."
-        >
-          <ClientOnly>
-            <PremiumTrails />
+            <WeeklySummary />
           </ClientOnly>
         </SectionWrapper>
       </div>
+
+      <div id="maternar-habitos">
+        <SectionWrapper
+          title="Hábitos maternos"
+          description="Pequenas práticas que sustentam uma rotina mais leve e consciente."
+        >
+          <HabitosMaternos />
+        </SectionWrapper>
+      </div>
+
+      <div id="maternar-momentos">
+        <SectionWrapper
+          title="Momentos com os filhos"
+          description="Pequenas memórias que contam a grande história da sua maternidade."
+        >
+          <MomentsWithKids />
+        </SectionWrapper>
+      </div>
+
+      <div id="maternar-evolucao">
+        <SectionWrapper
+          title="Sua evolução emocional"
+          description="Acompanhe padrões, mudanças e conquistas ao longo dos dias."
+        >
+          <ClientOnly>
+            <EmotionalAnalytics />
+          </ClientOnly>
+        </SectionWrapper>
+      </div>
+
+      <SectionWrapper
+        title="Diário da mãe"
+        description="Um espaço seguro para colocar em palavras aquilo que você sente."
+      >
+        <ClientOnly>
+          <MothersDiary />
+        </ClientOnly>
+      </SectionWrapper>
+
+      <SectionWrapper
+        title="Trilhas premium"
+        description="Caminhos guiados para semanas mais leves e conscientes."
+      >
+        <ClientOnly>
+          <PremiumTrails />
+        </ClientOnly>
+      </SectionWrapper>
     </div>
   )
 }
