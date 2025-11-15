@@ -122,10 +122,9 @@ export default function MaternarScrollHub() {
                 <div className="flex-shrink-0 mb-1">
                   <AppIcon
                     name={item.iconName}
-                    size={20}
                     variant="brand"
                     decorative
-                    className="md:w-7 md:h-7"
+                    className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7"
                   />
                 </div>
               )}
