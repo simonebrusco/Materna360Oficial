@@ -1,69 +1,75 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { load } from '@/app/lib/persist'
+import React from 'react'
 
-interface Moment {
-  id: string
-  date: string
-  childName?: string
-  description: string
-  emotion?: 'happy' | 'loving' | 'proud' | 'grateful'
-  createdAt: string
-}
+// In the future this component can receive a `moments` prop with real data
+// coming from the same source that currently feeds the daily timeline or
+// memories in other tabs.
+
+const MOCK_MOMENTS = [
+  {
+    id: 1,
+    weekday: 'Terça-feira',
+    dateLabel: '12 de março',
+    title: 'Leitura antes de dormir',
+    tag: 'Conexão',
+  },
+  {
+    id: 2,
+    weekday: 'Quinta-feira',
+    dateLabel: '14 de março',
+    title: 'Café da manhã sem telas',
+    tag: 'Rotina',
+  },
+  {
+    id: 3,
+    weekday: 'Domingo',
+    dateLabel: '16 de março',
+    title: 'Passeio no parque em família',
+    tag: 'Vitória do dia',
+  },
+]
 
 export function MomentsWithKids() {
-  const [moments, setMoments] = useState<Moment[]>([])
+  const moments = MOCK_MOMENTS // TODO: replace with real data binding
 
-  useEffect(() => {
-    const saved = load<Moment[]>('maternar:moments_entries')
-    if (Array.isArray(saved)) {
-      setMoments(saved)
-    }
-  }, [])
-
-  const emotionEmojis: Record<string, string> = {
-    happy: '😊',
-    loving: '💕',
-    proud: '🌟',
-    grateful: '🙏',
+  if (!moments || moments.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-600">
+        <p>
+          Aqui vão ficar os momentos especiais com seus filhos. Pequenas cenas do dia a dia
+          que você quiser registrar para não esquecer.
+        </p>
+        <p className="mt-2 text-xs text-gray-500">
+          Em breve você poderá adicionar e revisar essas memórias com um só toque.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8">
-      <div className="flex flex-col gap-1 mb-6">
-        <h2 className="text-lg md:text-xl font-semibold text-support-1">Momentos com os Filhos</h2>
-        <p className="text-sm text-support-2">
-          Celebre e registre as memórias especiais que quer guardar
-        </p>
-      </div>
-
-      {moments.length > 0 ? (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {moments.slice(0, 5).map(moment => (
-            <div key={moment.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <div className="flex gap-2 mb-2">
-                {moment.emotion && (
-                  <span className="text-lg">{emotionEmojis[moment.emotion]}</span>
-                )}
-                <div className="flex-1">
-                  {moment.childName && (
-                    <p className="text-xs font-semibold text-primary">{moment.childName}</p>
-                  )}
-                  <p className="text-xs text-support-2">
-                    {new Date(moment.date).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm text-support-1 line-clamp-2">{moment.description}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-center text-support-2 py-8">
-          Ainda sem momentos registrados. Comece a celebrar!
-        </p>
-      )}
+    <div className="flex flex-col gap-3">
+      {moments.map(moment => (
+        <article
+          key={moment.id}
+          className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+        >
+          <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+            {moment.weekday} • {moment.dateLabel}
+          </div>
+          <h3 className="text-sm font-semibold text-support-1">
+            {moment.title}
+          </h3>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <span className="inline-flex items-center rounded-full bg-complement px-3 py-1 text-[11px] font-medium text-support-1">
+              {moment.tag}
+            </span>
+            <span className="text-[11px] text-gray-400">
+              Em breve: toque para ver detalhes desse momento.
+            </span>
+          </div>
+        </article>
+      ))}
     </div>
   )
 }
