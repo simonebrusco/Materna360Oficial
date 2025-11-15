@@ -111,31 +111,31 @@ export default function MaternarScrollHub() {
               shadow-sm hover:shadow-md
               transition-all duration-200
               focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
-              p-3
+              p-2 sm:p-3 md:p-4
               aspect-square
               text-center
             "
             aria-label={item.subtitle ? `${item.title}: ${item.subtitle}` : item.title}
           >
-            <div className="flex flex-col items-center justify-center h-full gap-2">
+            <div className="flex flex-col items-center justify-center h-full gap-3 px-2 py-1">
               {item.iconName && (
-                <div className="flex-shrink-0 mb-1">
+                <div className="flex-shrink-0">
                   <AppIcon
                     name={item.iconName}
                     variant="brand"
                     decorative
-                    className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7"
+                    className="h-7 w-7 md:h-9 md:w-9"
                   />
                 </div>
               )}
 
-              <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
-                <h3 className="text-xs md:text-sm lg:text-base font-semibold text-support-1 line-clamp-1 leading-tight">
+              <div className="flex-1 flex flex-col justify-center gap-2 min-w-0">
+                <h3 className="text-sm md:text-lg font-semibold text-support-1 line-clamp-2 leading-snug">
                   {item.title}
                 </h3>
 
                 {item.subtitle && (
-                  <p className="text-[10px] md:text-xs lg:text-sm text-support-2 line-clamp-2 leading-snug">
+                  <p className="text-xs md:text-sm text-support-2 line-clamp-2 leading-snug">
                     {item.subtitle}
                   </p>
                 )}
