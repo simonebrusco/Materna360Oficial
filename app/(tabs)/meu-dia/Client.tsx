@@ -139,14 +139,6 @@ export function MeuDiaClient({
 
   const { name } = useProfile() || { name: finalProfile.motherName }
 
-  const dateKey = finalCurrentDateKey
-  const weekStartKey = finalWeekStartKey
-  const weekLabels = finalWeekLabels
-  const plannerTitle = finalPlannerTitle
-  const profile = finalProfile
-  const currentDateKey = finalCurrentDateKey
-  const dailyGreeting = finalDailyGreeting
-
   useEffect(() => {
     setCanShowTrends(!__disableHeavy__ && isClientFlagEnabled('FF_EMOTION_TRENDS'))
   }, [__disableHeavy__])
