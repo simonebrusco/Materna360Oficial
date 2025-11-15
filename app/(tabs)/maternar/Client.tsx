@@ -6,38 +6,47 @@ import CardHub from '@/components/maternar/CardHub';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
 import { useProfile } from '@/app/hooks/useProfile';
-import { getTimeGreeting } from '@/app/lib/greetings';
+import { getHeroGreetingForProfile, type HeroGreeting } from '@/app/lib/heroGreeting';
 
 export default function MaternarClient() {
-  const { name } = useProfile();
-  const [greeting, setGreeting] = useState('');
+  const profile = useProfile();
+  const [heroData, setHeroData] = useState<HeroGreeting | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Compute greeting after mount to avoid hydration mismatch
-    setGreeting(getTimeGreeting(name));
+    // Compute hero greeting after mount to avoid hydration mismatch
+    // This is client-only to ensure timezone-aware greeting and daily message
+    const data = getHeroGreetingForProfile(profile as any);
+    setHeroData(data);
     setMounted(true);
 
     track('nav.click', {
       tab: 'maternar',
       timestamp: new Date().toISOString(),
     });
-  }, [name]);
+  }, [profile]);
 
   const pageTitle = 'Bem-vinda ao Materna360';
-  const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
 
-  const hero = mounted && greeting ? (
-    <p className="text-sm text-support-2">
-      {greeting}
-    </p>
+  // Build the hero section with dynamic greeting and daily message
+  const hero = mounted && heroData ? (
+    <section className="flex flex-col gap-1">
+      {/* Small fixed subtitle */}
+      <p className="text-sm font-medium text-support-2">
+        Bem-vinda ao Materna360
+      </p>
+
+      {/* Main dynamic headline combining greeting, name, and daily message */}
+      <h1 className="text-2xl md:text-3xl font-semibold text-support-1 leading-snug">
+        {heroData.greeting}, {heroData.firstName}. {heroData.dailyMessage}
+      </h1>
+    </section>
   ) : null;
 
   return (
     <PageTemplate
       label="MATERNAR"
       title={pageTitle}
-      subtitle={pageSubtitle}
       hero={hero}
     >
         <CardHub />
