@@ -38,7 +38,7 @@ export function MomentosComOsFilhos({
 
   const handleAddMoment = () => {
     if (!momentText.trim()) {
-      toast.error('Por favor, descreva o momento antes de salvar.')
+      toast.danger('Por favor, descreva o momento antes de salvar.', 'Atenção')
       return
     }
 
