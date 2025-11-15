@@ -1,12 +1,24 @@
-import { setTelemetryProvider, type TelemetryEvent, type TelemetryContext } from './telemetry'
+'use server'
+
+import { setTelemetryProvider, type TelemetryEventName, type TelemetryPayload } from './telemetry'
 
 /**
- * Aqui você pode plugar seu provedor real (ex: enviar para uma API).
- * Por enquanto, fica no-op em produção e loga em dev.
+ * Server-side telemetry wiring (no-op by default).
+ * Plug your real provider here (e.g., send to an API or GA4 via Measurement Protocol).
  */
-setTelemetryProvider(async (event: TelemetryEvent, payload: unknown = {}, ctx: TelemetryContext = {}) => {
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
-    console.debug('[telemetry/server]', event, payload, ctx)
-  }
-})
+export function initTelemetryServer() {
+  setTelemetryProvider((name: TelemetryEventName, payload?: TelemetryPayload) => {
+    try {
+      // Example no-op (keep logs disabled in prod by default)
+      // console.log('[telemetry:server]', { event: name, ...(payload ?? {}) })
+      // TODO (P1.5/P2): send to your backend or 3rd-party service
+    } catch {
+      // swallow
+    }
+  })
+}
+
+// Optional helper to disable provider (tests, etc.)
+export function disableTelemetryServer() {
+  setTelemetryProvider(null)
+}

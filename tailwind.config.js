@@ -77,8 +77,50 @@ module.exports = {
     },
   },
   safelist: [
+    // Regex patterns for dynamic classes
     { pattern: /^(bg|text|from|via|to|shadow|rounded|border|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|grid-cols|col-span|gap)-/ },
     { pattern: /(bg|text)-[a-zA-Z0-9-]+\/[0-9]{1,3}/ },
+
+    // Explicit classes for /descobrir grid and bookmark button
+    // grid & gaps
+    'grid', 'grid-cols-1', 'sm:grid-cols-2', 'md:grid-cols-3', 'gap-4', 'md:gap-5', 'sm:gap-6',
+
+    // flex layout
+    'flex', 'flex-wrap', 'items-start', 'items-center', 'justify-between', 'justify-center', 'w-full', 'flex-1',
+
+    // bookmark button (no-shift sizing)
+    'shrink-0', 'inline-flex', 'w-10', 'h-10', 'size-10', 'rounded-xl', 'w-5', 'h-5',
+
+    // accessibility
+    'sr-only',
+
+    // wrapper spacing
+
+    'max-w-screen-md', 'max-w-screen-lg', 'max-w-screen-xl', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'min-h-[140px]', 'p-4', 'sm:p-5', 'pb-24', 'mt-6',
+
+    // background colors (opacity variants)
+    'bg-primary/10', 'bg-primary/20', 'bg-primary/5', 'hover:bg-primary/10', 'hover:bg-primary/20', 'hover:bg-primary/5',
+    'bg-gray-50', 'bg-gray-100', 'hover:bg-gray-50',
+
+    // admin insights table
+    'overflow-x-auto', 'min-w-[720px]', 'border-b', 'last:border-0', 'align-top',
+
+    // sheet / overlay utilities
+    'fixed', 'inset-0', 'inset-x-0', 'bottom-0', 'z-50', 'bg-black/50', 'backdrop-blur-sm',
+    'max-w-md', 'rounded-2xl', 'shadow-lg', 'transition', 'ease-out', 'duration-200',
+
+    // whitespace utilities
+    'whitespace-pre-wrap', 'break-all',
+
+    // text utilities
+    'text-xs', 'text-sm', 'text-2xl', 'text-center', 'text-gray-500', 'text-gray-600', 'text-gray-700', 'text-gray-900',
+    'font-mono', 'font-semibold', 'font-bold',
+
+    'max-w-screen-md', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'min-h-[140px]', 'p-4', 'sm:p-5',
+
+    // background colors (opacity variants)
+    'bg-primary/10', 'bg-primary/20', 'bg-primary/5', 'hover:bg-primary/10', 'hover:bg-primary/20', 'hover:bg-primary/5',
+
   ],
   plugins: [],
 }

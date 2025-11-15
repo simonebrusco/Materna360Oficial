@@ -29,7 +29,7 @@ export function CompleteButton({ done, onClick, className = '', ...rest }: Compl
         'px-4',
         'py-2',
         'shrink-0',
-        'shadow-soft',
+        'shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
         doneClasses,
         className,
       ]

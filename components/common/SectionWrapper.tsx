@@ -1,5 +1,14 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 
+/* Sanitize section titles to remove emoji/garbled characters */
+const stripEmoji = (s: string) =>
+  s
+    // remove most emoji/pictographs + VS-16/FE0F
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F]/gu, '')
+    // remove stray replacement chars often shown as "�"
+    .replace(/\uFFFD/g, '')
+    .trim()
+
 type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>
 
 type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside'
@@ -35,14 +44,17 @@ export function SectionWrapper({
     .filter(Boolean)
     .join(' ')
 
+  const renderedTitle = typeof title === 'string' ? stripEmoji(title) : title
+  const renderedDescription = typeof description === 'string' ? stripEmoji(description) : description
+
   const renderedHeader =
     header ??
     (eyebrow || title || description ? (
       <div className={['SectionWrapper-header', headerClassName].filter(Boolean).join(' ')}>
         {eyebrow ? <span className="SectionWrapper-eyebrow">{eyebrow}</span> : null}
-        {title ? <h2 className="SectionWrapper-title">{title}</h2> : null}
-        {description ? (
-          <p className="SectionWrapper-description">{description}</p>
+        {renderedTitle ? <h2 className="SectionWrapper-title">{renderedTitle}</h2> : null}
+        {renderedDescription ? (
+          <p className="SectionWrapper-description">{renderedDescription}</p>
         ) : null}
       </div>
     ) : null)

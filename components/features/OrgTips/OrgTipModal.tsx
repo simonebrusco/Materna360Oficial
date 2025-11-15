@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, type MouseEvent } from 'react'
 
 import type { OrgTip } from '@/data/org-tips'
 import { Button } from '@/components/ui/Button'
+import { useEscapeToClose } from '@/components/hooks/useEscapeToClose'
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -28,6 +29,9 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const previouslyFocusedElement = useRef<HTMLElement | null>(null)
 
+  // Use hook for Escape key handling
+  useEscapeToClose(open, onClose)
+
   useEffect(() => {
     if (!open) {
       return
@@ -37,12 +41,6 @@ export function OrgTipModal({ tip, open, onClose, onComplete }: OrgTipModalProps
 
     const modalNode = modalRef.current
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
-        return
-      }
-
       if (event.key === 'Tab' && modalNode) {
         const focusable = Array.from(modalNode.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
           (element) => element.offsetParent !== null || element === closeButtonRef.current

@@ -5,9 +5,10 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'rea
 
 import { resolveAgeRange, type Child, type Profile, type AgeRange } from '@/app/lib/ageRange'
 import type { ChildActivity } from '@/app/data/childContent'
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { Toast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import {
   recommendationStorage,
   RECOMMENDATIONS_UPDATED_EVENT,
@@ -19,7 +20,6 @@ const ALL_CHILDREN_ID = '__all__'
 const FALLBACK_ACTIVITY: ChildActivity = {
   id: 'contato-afetuoso',
   title: 'Momento de contato afetuoso',
-  emoji: '🤗',
   durationMin: 10,
   ageRange: '0-1',
   materials: ['Cobertor macio', 'Música calma'],
@@ -30,10 +30,6 @@ const FALLBACK_ACTIVITY: ChildActivity = {
   ],
 }
 
-type ToastState = {
-  message: string
-  type: 'success' | 'error'
-}
 
 type ActivityOfDayProps = {
   dateKey: string
@@ -127,7 +123,6 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
   )
   const [isExpanded, setIsExpanded] = useState(false)
   const [savingKey, setSavingKey] = useState<string | null>(null)
-  const [toast, setToast] = useState<ToastState | null>(null)
 
   useEffect(() => {
     if (children.length === 0) {
@@ -249,7 +244,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
       return 'Atividades personalizadas para hoje'
     }
 
-    return headlineActivity.emoji ? `${headlineActivity.emoji} ${headlineActivity.title}` : headlineActivity.title
+    return headlineActivity.title
   }, [headlineActivity, isAllMode])
 
   const ageLabel = useMemo(() => {
@@ -301,10 +296,10 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
           )
         }
 
-        setToast({ message: 'Atividade adicionada às Recomendações de hoje.', type: 'success' })
+        toast.success('Tudo certo! Atividade adicionada às suas Recomendações.')
       } catch (error) {
         console.error('Falha ao salvar atividade no Planner:', error)
-        setToast({ message: 'Não foi possível salvar agora. Tente novamente.', type: 'error' })
+        toast.danger('Algo não funcionou como esperado. Tente novamente.')
       } finally {
         setSavingKey((current) => (current === key ? null : current))
       }
@@ -319,16 +314,19 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
       <Card data-testid="activity-of-day" className="bg-gradient-to-br from-primary/12 via-white/95 to-white p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="eyebrow-capsule">
-              {badgeLabel}
-            </span>
-            <p className="mt-2 text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">
+            <p className="text-[16px] font-bold leading-[1.28] text-support-1 line-clamp-2 lg:text-[18px]">
               {headlineTitle}
             </p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs font-medium text-support-2 md:text-sm">
-              <span className="inline-flex items-center gap-1">👧 {ageLabel}</span>
+              <span className="inline-flex items-center gap-1">
+                <AppIcon name="calendar" size={12} aria-hidden />
+                {' '}{ageLabel}
+              </span>
               {!isAllMode && hasDuration && (
-                <span className="inline-flex items-center gap-1">⏱️ {headlineActivity.durationMin} min</span>
+                <span className="inline-flex items-center gap-1">
+                  <AppIcon name="time" size={12} aria-hidden />
+                  {' '}{headlineActivity.durationMin} min
+                </span>
               )}
             </div>
           </div>
@@ -361,7 +359,7 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
               const childLabel = child.name ?? `Filho ${index + 1}`
               const saveKey = `${child.id}-${activity.id}`
               const childAgeLabel = formatAgeRangeLabel(child.ageRange ?? resolveAgeRange(child))
-              const activityTitle = activity.emoji ? `${activity.emoji} ${activity.title}` : activity.title
+              const activityTitle = activity.title
 
               return (
                 <div key={child.id} className="rounded-2xl border border-white/60 bg-white/75 p-4 shadow-soft">
@@ -372,20 +370,21 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
                         {childLabel} · {childAgeLabel}
                       </p>
                       {activity.durationMin ? (
-                        <p className="mt-1 text-xs text-support-2">⏱️ {activity.durationMin} min</p>
+                        <p className="mt-1 text-xs text-support-2 inline-flex items-center gap-1">
+                          <AppIcon name="time" size={12} aria-hidden />
+                          {activity.durationMin} min
+                        </p>
                       ) : null}
                     </div>
 
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full rounded-full sm:w-auto"
                       onClick={() => void handleSaveActivity(activity, saveKey)}
                       disabled={Boolean(savingKey)}
+                      className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50 sm:w-auto"
                     >
-                      Salvar no Planner
-                    </Button>
+                      {savingKey === saveKey ? 'Salvando…' : 'Salvar no Planner'}
+                    </button>
                   </div>
                 </div>
               )
@@ -393,27 +392,26 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
           </div>
         ) : (
           <>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-2">
               <Button
                 variant="primary"
                 size="sm"
-                className="flex-1"
-                type="button"
-                onClick={handleToggleDetails}
-                aria-expanded={isExpanded}
-              >
-                {detailButtonLabel}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
+                className="w-full"
                 type="button"
                 onClick={() => void handleSaveActivity(headlineActivity, headlineActivity.id)}
                 disabled={Boolean(savingKey)}
               >
-                Salvar no Planner
+                {savingKey ? 'Salvando…' : 'Salvar no Planner'}
               </Button>
+              <button
+                type="button"
+                onClick={handleToggleDetails}
+                disabled={Boolean(savingKey)}
+                className="text-sm font-medium text-primary hover:opacity-70 disabled:opacity-50"
+                aria-expanded={isExpanded}
+              >
+                {detailButtonLabel}
+              </button>
             </div>
 
             {isExpanded && (
@@ -472,7 +470,6 @@ export function ActivityOfDay({ dateKey, profile, activities }: ActivityOfDayPro
         )}
       </Card>
 
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   )
 }

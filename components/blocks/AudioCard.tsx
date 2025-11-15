@@ -1,9 +1,8 @@
 'use client'
 
-'use client'
-
 import { useState } from 'react'
 
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
 
@@ -28,7 +27,7 @@ export function AudioCard({ title, duration, instructor, image, description }: A
           <h3 className="text-base font-semibold text-support-1 md:text-lg">{title}</h3>
           <p className="mt-1 text-xs font-medium uppercase tracking-[0.28em] text-support-2/70">{instructor}</p>
           <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-primary">
-            ⏱️ {duration}
+            <AppIcon name="time" size={14} variant="brand" /> {duration}
           </p>
         </div>
       </div>
@@ -42,7 +41,7 @@ export function AudioCard({ title, duration, instructor, image, description }: A
           onClick={() => setIsPlaying(!isPlaying)}
           className="flex-1"
         >
-          {isPlaying ? '⏸️ Pausar' : '▶️ Ouvir'}
+          {isPlaying ? <><AppIcon name="check" size={16} variant="default" /> Pausar</> : <><AppIcon name="play" size={16} variant="default" /> Ouvir</>}
         </Button>
         <Button variant="secondary" size="sm" className="flex-1">
           Salvar
