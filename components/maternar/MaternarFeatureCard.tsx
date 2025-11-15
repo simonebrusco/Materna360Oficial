@@ -31,7 +31,7 @@ export function MaternarFeatureCard({
     <Link
       href={href}
       onClick={handleClick}
-      className="flex h-full flex-col gap-2.5 rounded-3xl bg-white shadow-soft p-2.5 md:p-5 transition-all duration-200 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      className="flex h-full flex-col gap-2 rounded-3xl bg-white shadow-soft p-2.5 md:p-4 transition-all duration-200 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
     >
       <div className="flex flex-col gap-2 md:gap-3">
         <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-2 md:p-3 w-fit">
