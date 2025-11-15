@@ -117,7 +117,7 @@ export function MeuDiaClient({
   __fallbackGreeting__ = 'Today is a gift to yourself.',
   __fallbackWeekLabels__ = [],
   __fallbackCurrentDateKey__ = getBrazilDateKey(),
-  __fallbackWeekStartKey__ = getWeekStartKey(new Date()),
+  __fallbackWeekStartKey__ = getWeekStartKey(getBrazilDateKey()),
   __fallbackPlannerTitle__ = 'Semana',
   __disableHeavy__ = false,
 }: MeuDiaClientProps) {
@@ -507,7 +507,7 @@ export function MeuDiaClient({
                 <div className="flex flex-col gap-1 mb-4">
                   <h3 className="m360-subtitle">Pequenas tarefas, grandes conquistas.</h3>
                   <p className="m360-label-sm text-gray-600">
-                    Marque o que você já fez e celebre cada avanço.
+                    Marque o que você j�� fez e celebre cada avanço.
                   </p>
                 </div>
                 <Checklist currentDateKey={finalCurrentDateKey} />
