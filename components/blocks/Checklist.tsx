@@ -169,10 +169,10 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 
 const fetchMotherName = async (): Promise<string> => {
   const controller = new AbortController()
-  const TIMEOUT_MS = 5000 // 5 second timeout
+  const TIMEOUT_MS = 10000 // 10 second timeout
 
   const timeoutId = setTimeout(() => {
-    controller.abort()
+    controller.abort(new Error('Profile fetch timeout'))
   }, TIMEOUT_MS)
 
   try {
