@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { useRouter } from 'next/navigation'
 
 import { HeroSection } from './components/HeroSection'
 import { WeeklySummary } from './components/WeeklySummary'
@@ -12,6 +11,7 @@ import { NavigationHub } from './components/NavigationHub'
 import { PremiumTrails } from './components/PremiumTrails'
 import { HabitosMaternos } from './components/HabitosMaternos'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -24,8 +24,6 @@ function scrollToSection(id: string) {
 }
 
 export function MaternarClient() {
-  const router = useRouter()
-
   const handleCuidarDeMim = () => {
     scrollToSection('maternar-habitos')
   }
@@ -35,11 +33,15 @@ export function MaternarClient() {
   }
 
   const handleOrganizarRotina = () => {
-    router.push('/meu-dia')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/meu-dia'
+    }
   }
 
   const handleAprenderEBrincar = () => {
-    router.push('/descobrir')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/descobrir'
+    }
   }
 
   const handleMinhasConquistas = () => {
@@ -47,21 +49,25 @@ export function MaternarClient() {
   }
 
   const handlePlanosPremium = () => {
-    router.push('/eu360')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/eu360'
+    }
   }
 
   return (
     <div className="mx-auto max-w-[1040px] px-4 py-6 pb-24 md:px-6">
-      <HeroSection />
+      <ClientOnly>
+        <HeroSection />
 
-      <NavigationHub
-        onCuidarDeMim={handleCuidarDeMim}
-        onCuidarDoFilho={handleCuidarDoFilho}
-        onOrganizarRotina={handleOrganizarRotina}
-        onAprenderEBrincar={handleAprenderEBrincar}
-        onMinhasConquistas={handleMinhasConquistas}
-        onPlanosPremium={handlePlanosPremium}
-      />
+        <NavigationHub
+          onCuidarDeMim={handleCuidarDeMim}
+          onCuidarDoFilho={handleCuidarDoFilho}
+          onOrganizarRotina={handleOrganizarRotina}
+          onAprenderEBrincar={handleAprenderEBrincar}
+          onMinhasConquistas={handleMinhasConquistas}
+          onPlanosPremium={handlePlanosPremium}
+        />
+      </ClientOnly>
 
       <div className="space-y-6 md:space-y-8 mt-6 md:mt-8">
         <div id="maternar-resumo">
@@ -69,7 +75,9 @@ export function MaternarClient() {
             title="Resumo da sua semana"
             subtitle="Um olhar carinhoso sobre como você tem se sentido."
           >
-            <WeeklySummary />
+            <ClientOnly>
+              <WeeklySummary />
+            </ClientOnly>
           </SectionWrapper>
         </div>
 
@@ -78,7 +86,9 @@ export function MaternarClient() {
             title="Hábitos maternos"
             subtitle="Pequenas práticas que sustentam uma rotina mais leve e conectada."
           >
-            <HabitosMaternos />
+            <ClientOnly>
+              <HabitosMaternos />
+            </ClientOnly>
           </SectionWrapper>
         </div>
 
@@ -96,7 +106,9 @@ export function MaternarClient() {
             title="Sua evolução emocional"
             subtitle="Acompanhe padrões, mudanças e conquistas ao longo dos dias."
           >
-            <EmotionalAnalytics />
+            <ClientOnly>
+              <EmotionalAnalytics />
+            </ClientOnly>
           </SectionWrapper>
         </div>
 
@@ -104,14 +116,18 @@ export function MaternarClient() {
           title="Diário da mãe"
           subtitle="Um espaço seguro para colocar em palavras aquilo que você sente."
         >
-          <MothersDiary />
+          <ClientOnly>
+            <MothersDiary />
+          </ClientOnly>
         </SectionWrapper>
 
         <SectionWrapper
           title="Trilhas premium"
           subtitle="Caminhos guiados para semanas mais leves e conscientes."
         >
-          <PremiumTrails />
+          <ClientOnly>
+            <PremiumTrails />
+          </ClientOnly>
         </SectionWrapper>
       </div>
     </div>
