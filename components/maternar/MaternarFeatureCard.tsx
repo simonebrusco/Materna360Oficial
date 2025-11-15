@@ -53,7 +53,7 @@ export function MaternarFeatureCard({
         </div>
       </div>
 
-      <span className="mt-1 text-[11px] md:text-xs font-medium text-primary inline-flex items-center gap-1">
+      <span className="mt-1.5 text-[10px] md:text-xs font-medium text-primary inline-flex items-center gap-1">
         Acessar <span>→</span>
       </span>
     </Link>
