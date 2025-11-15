@@ -35,7 +35,7 @@ export default function MaternarClient() {
       title="Maternar"
       subtitle="O coração do seu dia a dia como mãe. Aqui você acompanha sua jornada, suas memórias e sua evolução."
     >
-      <div className="space-y-8 md:space-y-10">
+      <div className="space-y-6 md:space-y-8">
         {/* 6 MAIN NAVIGATION CARDS */}
         <Reveal delay={80}>
           <CardHub />
