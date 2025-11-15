@@ -26,28 +26,18 @@ export default function MaternarClient() {
     });
   }, [profile]);
 
-  const pageTitle = 'Bem-vinda ao Materna360';
+  const pageSubtitle = 'Bem-vinda ao Materna360';
 
-  // Build the hero section with dynamic greeting and daily message
-  const hero = mounted && heroData ? (
-    <section className="flex flex-col gap-1">
-      {/* Small fixed subtitle */}
-      <p className="text-sm font-medium text-support-2">
-        Bem-vinda ao Materna360
-      </p>
-
-      {/* Main dynamic headline combining greeting, name, and daily message */}
-      <h1 className="text-2xl md:text-3xl font-semibold text-support-1 leading-snug">
-        {heroData.greeting}, {heroData.firstName}. {heroData.dailyMessage}
-      </h1>
-    </section>
-  ) : null;
+  // Dynamic main headline: "{greeting}, {firstName}. {dailyMessage}"
+  const pageTitle = mounted && heroData
+    ? `${heroData.greeting}, ${heroData.firstName}. ${heroData.dailyMessage}`
+    : 'Bem-vinda ao Materna360';
 
   return (
     <PageTemplate
       label="MATERNAR"
       title={pageTitle}
-      hero={hero}
+      subtitle={pageSubtitle}
     >
         <CardHub />
     </PageTemplate>
