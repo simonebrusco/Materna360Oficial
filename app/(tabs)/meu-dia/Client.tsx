@@ -299,7 +299,7 @@ export function MeuDiaClient({
               <div className="flex flex-col gap-1 mb-4">
                 <h3 className="m360-subtitle">Como você está hoje?</h3>
                 <p className="m360-label-sm text-gray-600">
-                  Tracking your mood is a small act of self-care.
+                  Registrar seu humor é um pequeno ato de autocuidado.
                 </p>
               </div>
 
