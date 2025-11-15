@@ -92,9 +92,9 @@ export default function MaternarScrollHub() {
 
   return (
     <section className="px-4 py-6 sm:px-6 md:py-8">
-      <div className="mb-4">
-        <h2 className="text-sm font-medium text-m360-gray">
-          Por onde você quer começar?
+      <div className="mb-5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-support-2">
+          Navegação rápida
         </h2>
       </div>
 
@@ -119,10 +119,10 @@ export default function MaternarScrollHub() {
           >
             <div className="flex flex-col items-center justify-center h-full gap-2">
               {item.iconName && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 mb-0.5">
                   <AppIcon
                     name={item.iconName}
-                    size={20}
+                    size={22}
                     variant="brand"
                     decorative
                   />
@@ -130,12 +130,12 @@ export default function MaternarScrollHub() {
               )}
 
               <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
-                <h3 className="text-xs font-semibold text-support-1 line-clamp-2">
+                <h3 className="text-sm font-semibold text-support-1 line-clamp-1 leading-tight">
                   {item.title}
                 </h3>
 
                 {item.subtitle && (
-                  <p className="text-[10px] text-support-3 line-clamp-2">
+                  <p className="text-xs text-support-2 line-clamp-2 leading-snug">
                     {item.subtitle}
                   </p>
                 )}
