@@ -164,12 +164,11 @@ export function MeuDiaClient({
   const handleAddPlannerItem = (draft: PlannerDraft) => {
     const newItem: PlannerItem = {
       id: Date.now().toString(),
-      text: draft.text,
-      category: draft.category,
+      title: draft.title,
       done: false,
-      createdAt: new Date().toISOString(),
-      dueDate: draft.dueDate || null,
+      createdAt: Date.now(),
       note: draft.note,
+      time: draft.time,
     }
 
     const updated = [...plannerItems, newItem]
@@ -185,7 +184,6 @@ export function MeuDiaClient({
       track('planner.item_added', {
         tab: 'meu-dia',
         component: 'SimplePlannerSheet',
-        category: draft.category,
         hasNote: !!draft.note,
         hasTime: !!draft.time,
       })
