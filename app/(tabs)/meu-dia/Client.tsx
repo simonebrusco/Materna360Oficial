@@ -225,7 +225,7 @@ export function MeuDiaClient({
     setShowNoteModal(false)
 
     // Persist notes
-    const storageKey = `meu-dia:${dateKey}:notes`
+    const storageKey = `meu-dia:${finalCurrentDateKey}:notes`
     save(storageKey, updated)
 
     // Fire telemetry
