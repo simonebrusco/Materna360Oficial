@@ -31,29 +31,29 @@ export function MaternarFeatureCard({
     <Link
       href={href}
       onClick={handleClick}
-      className="flex h-full flex-col justify-between rounded-3xl bg-white shadow-soft p-3 md:p-4 transition-all duration-200 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      className="flex h-full flex-col justify-between rounded-3xl bg-white shadow-soft p-2.5 md:p-5 transition-all duration-200 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
     >
-      <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-2.5 md:p-3 w-fit">
+      <div className="flex flex-col gap-2.5 md:gap-3">
+        <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-2 md:p-3 w-fit">
           <AppIcon
             name={icon}
-            size={24}
+            size={20}
             variant="brand"
             decorative
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <p className="text-sm md:text-base font-semibold text-support-1 leading-snug">
+        <div className="flex flex-col gap-0.5 md:gap-1">
+          <p className="text-sm md:text-base font-semibold text-support-1 leading-tight">
             {title}
           </p>
-          <p className="text-xs md:text-sm text-support-2 leading-snug">
+          <p className="text-xs md:text-sm text-support-2 leading-tight">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <span className="mt-3 text-xs md:text-sm font-medium text-primary inline-flex items-center gap-1">
+      <span className="mt-2 md:mt-3 text-xs md:text-sm font-medium text-primary inline-flex items-center gap-1">
         Acessar <span>→</span>
       </span>
     </Link>
