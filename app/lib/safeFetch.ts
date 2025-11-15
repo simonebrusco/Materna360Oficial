@@ -16,7 +16,7 @@ function isFullStoryPresent(): boolean {
   return !!(window as any).FS
 }
 
-function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit, timeoutMs?: number): Promise<Response> {
   return new Promise((resolve, reject) => {
     try {
       const xhr = new XMLHttpRequest()
@@ -36,8 +36,25 @@ function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit): Promise<Resp
         })
       }
 
+      // Handle abort signal
+      let abortHandler: (() => void) | null = null
+      if (init?.signal) {
+        abortHandler = () => {
+          xhr.abort()
+        }
+        init.signal.addEventListener('abort', abortHandler)
+      }
+
+      // Set timeout if provided
+      if (timeoutMs) {
+        xhr.timeout = timeoutMs
+      }
+
       // Handle response
       xhr.onload = () => {
+        if (abortHandler && init?.signal) {
+          init.signal.removeEventListener('abort', abortHandler)
+        }
         const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream'
         const response = new Response(xhr.responseText || xhr.response, {
           status: xhr.status,
@@ -50,11 +67,17 @@ function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit): Promise<Resp
       }
 
       xhr.onerror = () => {
+        if (abortHandler && init?.signal) {
+          init.signal.removeEventListener('abort', abortHandler)
+        }
         reject(new TypeError('XMLHttpRequest failed'))
       }
 
       xhr.ontimeout = () => {
-        reject(new TypeError('XMLHttpRequest timeout'))
+        if (abortHandler && init?.signal) {
+          init.signal.removeEventListener('abort', abortHandler)
+        }
+        reject(new DOMException('XMLHttpRequest timeout', 'TimeoutError'))
       }
 
       xhr.withCredentials = init?.credentials === 'include'
