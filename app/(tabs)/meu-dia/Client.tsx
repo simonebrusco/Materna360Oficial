@@ -270,7 +270,7 @@ export function MeuDiaClient({
                 </div>
 
                 {/* Message title */}
-                <h2 className="m360-title">"{finalDailyGreeting}"{dailyGreeting}"</h2>
+                <h2 className="m360-title">"{finalDailyGreeting}"</h2>
 
                 {/* Subtitle */}
                 <p className="text-gray-600 m360-body-sm">
