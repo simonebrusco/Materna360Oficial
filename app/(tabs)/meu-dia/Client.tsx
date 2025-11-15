@@ -114,7 +114,7 @@ export function MeuDiaClient({
   initialBuckets = [],
   __builderPreview__ = false,
   __fallbackProfile__ = DEFAULT_PROFILE,
-  __fallbackGreeting__ = 'Today is a gift to yourself.',
+  __fallbackGreeting__ = 'Hoje é um presente para você.',
   __fallbackWeekLabels__ = [],
   __fallbackCurrentDateKey__ = getBrazilDateKey(),
   __fallbackWeekStartKey__ = getWeekStartKey(getBrazilDateKey()),
