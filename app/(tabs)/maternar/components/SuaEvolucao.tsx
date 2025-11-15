@@ -63,13 +63,19 @@ export function SuaEvolucao() {
         </div>
         <div className="rounded-2xl bg-white/50 border border-white/40 p-4 text-center shadow-soft">
           <div className="text-2xl font-semibold text-support-1 mb-1">
-            {averageMood}
+            {averageMood !== null ? averageMood : '—'}
           </div>
           <p className="text-xs text-support-2">Humor médio</p>
         </div>
         <div className="rounded-2xl bg-white/50 border border-white/40 p-4 text-center shadow-soft">
-          <div className={`text-2xl font-semibold mb-1 ${moodColors[Math.round(parseFloat(averageMood as string))]}`}>
-            {moodLabels[Math.round(parseFloat(averageMood as string))]}
+          <div className={`text-2xl font-semibold mb-1 ${
+            averageMood !== null
+              ? moodColors[Math.round(parseFloat(averageMood))]
+              : 'text-support-3'
+          }`}>
+            {averageMood !== null
+              ? moodLabels[Math.round(parseFloat(averageMood))]
+              : '—'}
           </div>
           <p className="text-xs text-support-2">Tendência</p>
         </div>
