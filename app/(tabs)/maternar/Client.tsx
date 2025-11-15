@@ -2,13 +2,11 @@
 
 import * as React from 'react';
 import { useEffect } from 'react';
-import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
 import { getBrazilDateKey } from '@/app/lib/dateKey';
 import { useProfile } from '@/app/hooks/useProfile';
-import { getTimeGreeting } from '@/app/lib/greetings';
 
 export default function MaternarClient() {
   const [dateKey, setDateKey] = React.useState('2025-01-01');
