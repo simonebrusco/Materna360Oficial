@@ -219,31 +219,41 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.7,
-        response_format: {
-          type: 'json_schema',
-          json_schema: RESPONSE_SCHEMA,
+    const controller = new AbortController()
+    const TIMEOUT_MS = 15000 // 15 second timeout for recipe generation (longer than daily message)
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${API_KEY}`,
         },
-        messages: [
-          {
-            role: 'system',
-            content: SYSTEM_PROMPT,
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: MODEL,
+          temperature: 0.7,
+          response_format: {
+            type: 'json_schema',
+            json_schema: RESPONSE_SCHEMA,
           },
-          {
-            role: 'user',
-            content: `Dados do pedido (JSON):\n${JSON.stringify(requestSummary, null, 2)}\nLembre-se: máximo de ${MAX_RECIPE_RESULTS} receitas.`,
-          },
-        ],
-      }),
-    })
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_PROMPT,
+            },
+            {
+              role: 'user',
+              content: `Dados do pedido (JSON):\n${JSON.stringify(requestSummary, null, 2)}\nLembre-se: máximo de ${MAX_RECIPE_RESULTS} receitas.`,
+            },
+          ],
+        }),
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     if (!response.ok) {
       const text = await response.text()
