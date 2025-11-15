@@ -26,36 +26,16 @@ export default function MaternarClient() {
     });
   }, [profile]);
 
-  // Complete hero section with hierarchy:
-  // 1. Overline: "MATERNAR"
-  // 2. Small subtitle: "Bem-vinda ao Materna360"
-  // 3. Main headline: "{greeting}, {firstName}. {dailyMessage}"
-  const hero = mounted && heroData ? (
-    <section className="flex flex-col gap-1">
-      {/* Overline */}
-      <p className="text-xs font-semibold tracking-[0.28em] text-primary/70 uppercase">
-        MATERNAR
-      </p>
-
-      {/* Small fixed subtitle */}
-      <p className="text-sm font-medium text-support-2">
-        Bem-vinda ao Materna360
-      </p>
-
-      {/* Main dynamic headline */}
-      <h1 className="text-2xl md:text-3xl font-semibold text-support-1 leading-snug">
-        {heroData.greeting}, {heroData.firstName}. {heroData.dailyMessage}
-      </h1>
-    </section>
-  ) : null;
-
-  // Use empty title since hero handles the full header
-  const pageTitle = '';
+  // Dynamic main headline: "{greeting}, {firstName}. {dailyMessage}"
+  const pageTitle = mounted && heroData
+    ? `${heroData.greeting}, ${heroData.firstName}. ${heroData.dailyMessage}`
+    : 'Bem-vinda ao Materna360';
 
   return (
     <PageTemplate
+      label="MATERNAR"
       title={pageTitle}
-      hero={hero}
+      subtitle="Bem-vinda ao Materna360"
     >
         <CardHub />
     </PageTemplate>
