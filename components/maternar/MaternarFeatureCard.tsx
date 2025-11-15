@@ -31,10 +31,10 @@ export function MaternarFeatureCard({
     <Link
       href={href}
       onClick={handleClick}
-      className="flex h-full flex-col justify-between rounded-3xl bg-white shadow-soft p-2.5 md:p-4 text-left"
+      className="flex h-full min-h-[150px] flex-col justify-between rounded-3xl bg-white shadow-soft p-3 text-left"
     >
-      <div className="flex flex-col gap-2 md:gap-3">
-        <div className="inline-flex items-center justify-center rounded-2xl bg-m360-pink-soft p-2.5 md:p-3 w-fit">
+      <div className="flex flex-col gap-2">
+        <div className="inline-flex items-center justify-center rounded-2xl bg-m360-pink-soft p-2.5 w-fit">
           <AppIcon
             name={icon}
             size={20}
@@ -44,16 +44,16 @@ export function MaternarFeatureCard({
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="text-sm md:text-base font-semibold text-m360-text-primary leading-snug">
+          <p className="text-sm font-semibold text-m360-text-primary leading-snug">
             {title}
           </p>
-          <p className="text-xs md:text-sm text-m360-text-muted leading-snug">
+          <p className="text-xs text-m360-text-muted leading-snug">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <span className="mt-2 text-xs md:text-sm font-medium text-m360-pink inline-flex items-center gap-1">
+      <span className="mt-2 text-xs font-medium text-m360-pink inline-flex items-center gap-1">
         Acessar <span>→</span>
       </span>
     </Link>
