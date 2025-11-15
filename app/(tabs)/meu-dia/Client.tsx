@@ -468,7 +468,7 @@ export function MeuDiaClient({
                 <div className="flex flex-col gap-1 mb-4">
                   <h3 className="m360-subtitle">Um espaço só seu para anotar o que importa.</h3>
                   <p className="m360-label-sm text-gray-600">
-                    A safe place to keep important thoughts and moments.
+                    Um lugar seguro para guardar pensamentos e momentos importantes.
                   </p>
                 </div>
                 <div className="notesCard-header flex items-start justify-between gap-4 mb-4">
