@@ -90,7 +90,7 @@ export function RotinasDaMae({ storageKey = 'maternar:routines' }: RotinasDaMaeP
 
   const handleAddRoutine = () => {
     if (!newRoutineTitle.trim()) {
-      toast.error('Por favor, digite o nome da rotina.')
+      toast.danger('Por favor, digite o nome da rotina.', 'Atenção')
       return
     }
 
