@@ -55,6 +55,13 @@ const HUB_CARDS: CardConfig[] = [
     href: '/eu360/conquistas',
   },
   {
+    id: 'comecar-com-leveza',
+    icon: 'sun',
+    title: 'Começar com leveza',
+    subtitle: 'Primeiros passos para um dia mais leve',
+    href: '/meu-dia?focus=leveza',
+  },
+  {
     id: 'planos-premium',
     icon: 'star',
     title: 'Planos & Premium',
