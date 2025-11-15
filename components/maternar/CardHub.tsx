@@ -1,11 +1,11 @@
 'use client'
 
 import { MaternarFeatureCard } from './MaternarFeatureCard'
-import type { AppIconName } from '@/components/ui/AppIcon'
+import type { KnownIconName } from '@/components/ui/AppIcon'
 
 type CardConfig = {
   id: string
-  icon: AppIconName
+  icon: KnownIconName
   title: string
   subtitle: string
   href: string
