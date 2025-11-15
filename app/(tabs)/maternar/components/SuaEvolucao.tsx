@@ -35,16 +35,23 @@ export function SuaEvolucao() {
     4: 'text-primary',
   }
 
-  const averageMood =
-    weekData.length > 0
-      ? (weekData.reduce((a, b) => a + (b || 0), 0) / Math.max(weekData.length, 1)).toFixed(1)
-      : 0
+  // Filter out null/undefined entries for safe calculation
+  const validWeekData = weekData.filter(
+    (mood): mood is MoodValue => mood != null
+  )
 
-  const highestMood = weekData.length > 0 ? Math.max(...weekData.filter((m) => m)) : 0
+  const averageMood =
+    validWeekData.length > 0
+      ? (
+          validWeekData.reduce<number>((sum, mood) => sum + mood, 0) /
+          validWeekData.length
+        ).toFixed(1)
+      : null
+
+  const highestMood =
+    validWeekData.length > 0 ? Math.max(...validWeekData) : 0
   const lowestMood =
-    weekData.filter((m) => m !== null && m !== undefined).length > 0
-      ? Math.min(...weekData.filter((m) => m !== null && m !== undefined))
-      : 0
+    validWeekData.length > 0 ? Math.min(...validWeekData) : 0
 
   return (
     <div className="space-y-6">
