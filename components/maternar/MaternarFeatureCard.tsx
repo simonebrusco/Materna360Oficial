@@ -1,63 +1,53 @@
 'use client'
 
 import Link from 'next/link'
-import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
-import { track } from '@/app/lib/telemetry'
+import type React from 'react'
 
 type MaternarFeatureCardProps = {
-  icon: KnownIconName
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
   title: string
   subtitle: string
-  href: string
-  cardId: string
+  href?: string
 }
 
 export function MaternarFeatureCard({
-  icon,
+  icon: Icon,
   title,
   subtitle,
   href,
-  cardId,
 }: MaternarFeatureCardProps) {
-  const handleClick = () => {
-    track('nav.click', {
-      tab: 'maternar',
-      card: cardId,
-      dest: href,
-    })
-  }
-
-  return (
-    <Link
-      href={href}
-      onClick={handleClick}
-      className="flex h-full flex-col gap-2 rounded-3xl bg-white shadow-soft p-2.5 md:p-4 transition-all duration-200 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-    >
-      <div className="flex flex-col gap-2 md:gap-3">
-        <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-2 md:p-3 w-fit">
-          <AppIcon
-            name={icon}
-            size={20}
-            variant="brand"
-            decorative
-          />
+  const content = (
+    <div className="flex h-full flex-col justify-between rounded-3xl bg-white shadow-soft p-3 md:p-4 text-left">
+      <div className="flex flex-col gap-3">
+        <div className="inline-flex items-center justify-center rounded-2xl bg-m360-pink-soft p-2.5 md:p-3">
+          <Icon className="h-5 w-5 md:h-6 md:w-6 text-m360-pink" />
         </div>
 
-        <div className="flex flex-col gap-0.5 md:gap-1">
-          <p className="text-[13px] md:text-sm font-semibold text-support-1 leading-tight">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm md:text-base font-semibold text-m360-text-primary leading-snug">
             {title}
           </p>
-          <p className="text-[11px] md:text-xs text-support-2 leading-tight">
+          <p className="text-xs md:text-sm text-m360-text-muted leading-snug">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <span className="mt-1.5 text-[10px] md:text-xs font-medium text-primary inline-flex items-center gap-1">
+      <span className="mt-3 text-xs md:text-sm font-medium text-m360-pink inline-flex items-center gap-1">
         Acessar <span>→</span>
       </span>
-    </Link>
+    </div>
   )
+
+  if (href) {
+    return (
+      <Link href={href} className="block h-full">
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className="h-full">{content}</div>
 }
 
 export default MaternarFeatureCard
