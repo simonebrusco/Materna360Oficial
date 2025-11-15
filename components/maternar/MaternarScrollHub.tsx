@@ -119,23 +119,24 @@ export default function MaternarScrollHub() {
           >
             <div className="flex flex-col items-center justify-center h-full gap-2">
               {item.iconName && (
-                <div className="flex-shrink-0 mb-0.5">
+                <div className="flex-shrink-0 mb-1">
                   <AppIcon
                     name={item.iconName}
-                    size={22}
+                    size={20}
                     variant="brand"
                     decorative
+                    className="md:w-7 md:h-7"
                   />
                 </div>
               )}
 
               <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
-                <h3 className="text-sm font-semibold text-support-1 line-clamp-1 leading-tight">
+                <h3 className="text-xs md:text-sm lg:text-base font-semibold text-support-1 line-clamp-1 leading-tight">
                   {item.title}
                 </h3>
 
                 {item.subtitle && (
-                  <p className="text-xs text-support-2 line-clamp-2 leading-snug">
+                  <p className="text-[10px] md:text-xs lg:text-sm text-support-2 line-clamp-2 leading-snug">
                     {item.subtitle}
                   </p>
                 )}
