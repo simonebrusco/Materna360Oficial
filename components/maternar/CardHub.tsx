@@ -1,8 +1,15 @@
-'use client';
+'use client'
 
-import HubCard, { type HubCardProps } from './HubCard';
+import { MaternarFeatureCard } from './MaternarFeatureCard'
+import type { AppIconName } from '@/components/ui/AppIcon'
 
-type CardConfig = Omit<HubCardProps, 'cardId'> & { id: string };
+type CardConfig = {
+  id: string
+  icon: AppIconName
+  title: string
+  subtitle: string
+  href: string
+}
 
 const HUB_CARDS: CardConfig[] = [
   {
@@ -68,20 +75,23 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Desbloqueie todos os recursos',
     href: '/planos',
   },
-];
+]
 
 export default function CardHub() {
   return (
-    <div className="px-4 pb-12 sm:px-6">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 max-w-6xl mx-auto">
+    <section className="mt-6">
+      <div className="grid grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
         {HUB_CARDS.map((card) => (
-          <HubCard
+          <MaternarFeatureCard
             key={card.id}
-            {...card}
+            icon={card.icon}
+            title={card.title}
+            subtitle={card.subtitle}
+            href={card.href}
             cardId={card.id}
           />
         ))}
       </div>
-    </div>
-  );
+    </section>
+  )
 }
