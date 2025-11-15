@@ -31,29 +31,26 @@ export function MaternarFeatureCard({
     <Link
       href={href}
       onClick={handleClick}
-      className="flex h-full min-h-[150px] flex-col justify-between rounded-3xl bg-white shadow-soft p-3 text-left"
+      className="relative flex h-full min-h-[150px] flex-col items-center gap-2 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60 hover:-translate-y-1"
     >
-      <div className="flex flex-col gap-2">
-        <div className="inline-flex items-center justify-center rounded-2xl bg-m360-pink-soft p-2.5 w-fit">
-          <AppIcon
-            name={icon}
-            size={20}
-            variant="brand"
-            decorative
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-semibold text-m360-text-primary leading-snug">
-            {title}
-          </p>
-          <p className="text-xs text-m360-text-muted leading-snug">
-            {subtitle}
-          </p>
-        </div>
+      <div className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
+        <AppIcon
+          name={icon}
+          size={28}
+          variant="brand"
+          decorative
+        />
       </div>
 
-      <span className="mt-2 text-xs font-medium text-m360-pink inline-flex items-center gap-1">
+      <p className="text-sm font-semibold text-support-1">
+        {title}
+      </p>
+
+      <p className="text-[11px] text-support-2">
+        {subtitle}
+      </p>
+
+      <span className="mt-2 text-[11px] font-medium text-m360-pink inline-flex items-center gap-1">
         Acessar <span>→</span>
       </span>
     </Link>
