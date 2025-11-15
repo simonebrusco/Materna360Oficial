@@ -2,6 +2,7 @@
 
 import React from 'react';
 import AppIcon from '@/components/ui/AppIcon';
+import { CheckCircle2 } from 'lucide-react';
 import type { PlannerItem } from './SimplePlannerSheet';
 
 interface SimplePlannerListProps {
@@ -12,9 +13,16 @@ interface SimplePlannerListProps {
 export function SimplePlannerList({ items, onToggleDone }: SimplePlannerListProps) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-sm text-support-2">Nenhum item adicionado ainda.</p>
-        <p className="text-xs text-support-2/60 mt-1">Use o botão "Adicionar item" para começar.</p>
+      <div className="rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
+            <CheckCircle2 className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p className="font-semibold text-support-1">Nenhum item adicionado ainda.</p>
+            <p className="mt-1 text-xs text-support-2">Use o botão "Adicionar item" para começar a organizar sua semana.</p>
+          </div>
+        </div>
       </div>
     );
   }

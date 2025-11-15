@@ -39,54 +39,40 @@ export function InactivityReminder() {
 
   return (
     <Reveal delay={130}>
-      <SoftCard className="mb-4 border-l-4 border-l-[#ff005e]/60 bg-gradient-to-r from-[#fff5f7] to-white/90">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#ff005e]/10">
-              <AppIcon name="bell" size={18} className="text-[#ff005e]" decorative />
-            </div>
+      <div className="mt-6 rounded-3xl bg-white shadow-soft px-6 py-6 md:px-7 md:py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
+        {/* Icon and text content */}
+        <div className="flex items-start gap-3 flex-1">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+            <AppIcon name="bell" size={18} className="text-primary" decorative />
           </div>
-
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-[#2f3a56] mb-1">
-              Faz alguns dias que você não registra como foi seu dia.
+          <div className="flex flex-col gap-1">
+            <h3 className="m360-subtitle">
+              Faz alguns dias que você não registra seu dia
             </h3>
-            <p className="text-sm text-[#545454] mb-4 leading-relaxed">
-              Quer retomar hoje? Pequenos registros constantes ajudam a entender melhor sua rotina e suas emoções.
+            <p className="m360-label-sm text-gray-600">
+              Que tal anotar só um momento bom de hoje? Mesmo que pequeno.
             </p>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleCtaClick}
-                className="flex items-center justify-center gap-1 sm:w-auto"
-              >
-                <AppIcon name="check-circle" size={16} decorative />
-                Registrar meu dia hoje
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={dismiss}
-                className="text-[#545454] hover:bg-white/50 border border-[#e0e0e0]"
-              >
-                Agora não
-              </Button>
-            </div>
           </div>
+        </div>
 
+        {/* Actions */}
+        <div className="flex flex-col gap-2 md:flex-col md:items-end">
+          <button
+            type="button"
+            onClick={handleCtaClick}
+            className="inline-flex items-center justify-center rounded-full bg-primary text-white px-4 py-2 m360-label-sm shadow-soft transition-all duration-150 hover:bg-primary/90"
+          >
+            Registrar meu dia
+          </button>
           <button
             type="button"
             onClick={dismiss}
-            className="flex-shrink-0 text-[#545454] hover:text-[#2f3a56] transition-colors"
-            aria-label="Fechar lembrete"
+            className="m360-label-sm text-gray-500 underline-offset-2 hover:underline"
           >
-            <AppIcon name="x" size={20} decorative />
+            Agora não
           </button>
         </div>
-      </SoftCard>
+      </div>
     </Reveal>
   )
 }

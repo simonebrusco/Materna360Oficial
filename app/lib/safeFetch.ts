@@ -16,7 +16,7 @@ function isFullStoryPresent(): boolean {
   return !!(window as any).FS
 }
 
-function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit, timeoutMs?: number): Promise<Response> {
   return new Promise((resolve, reject) => {
     try {
       const xhr = new XMLHttpRequest()
@@ -36,8 +36,25 @@ function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit): Promise<Resp
         })
       }
 
+      // Handle abort signal
+      let abortHandler: (() => void) | null = null
+      if (init?.signal) {
+        abortHandler = () => {
+          xhr.abort()
+        }
+        init.signal.addEventListener('abort', abortHandler)
+      }
+
+      // Set timeout if provided
+      if (timeoutMs) {
+        xhr.timeout = timeoutMs
+      }
+
       // Handle response
       xhr.onload = () => {
+        if (abortHandler && init?.signal) {
+          init.signal.removeEventListener('abort', abortHandler)
+        }
         const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream'
         const response = new Response(xhr.responseText || xhr.response, {
           status: xhr.status,
@@ -50,11 +67,17 @@ function fetchViaXHR(input: RequestInfo | URL, init?: RequestInit): Promise<Resp
       }
 
       xhr.onerror = () => {
+        if (abortHandler && init?.signal) {
+          init.signal.removeEventListener('abort', abortHandler)
+        }
         reject(new TypeError('XMLHttpRequest failed'))
       }
 
       xhr.ontimeout = () => {
-        reject(new TypeError('XMLHttpRequest timeout'))
+        if (abortHandler && init?.signal) {
+          init.signal.removeEventListener('abort', abortHandler)
+        }
+        reject(new DOMException('XMLHttpRequest timeout', 'TimeoutError'))
       }
 
       xhr.withCredentials = init?.credentials === 'include'
@@ -75,30 +98,14 @@ export function initSafeFetch() {
   originalFetch = window.fetch
 
   window.fetch = function safeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-    // Check for FullStory at CALL TIME (not initialization time)
-    // because it may load asynchronously
-    if (isFullStoryPresent()) {
-      return fetchViaXHR(input, init)
+    // Always use original fetch if available (do not use FullStory's broken wrapper)
+    // If original fetch is not available, fall back to XMLHttpRequest
+    if (originalFetch) {
+      return (originalFetch as typeof fetch).call(window, input, init)
     }
 
-    // Use original fetch if FullStory is not present
-    if (!originalFetch) {
-      return Promise.reject(new TypeError('Fetch is not available'))
-    }
-
-    return new Promise((resolve, reject) => {
-      (originalFetch as typeof fetch)
-        .call(window, input, init)
-        .then(resolve)
-        .catch((error: Error) => {
-          // If fetch fails unexpectedly, try XMLHttpRequest as fallback
-          if (error?.message?.includes('Failed to fetch')) {
-            fetchViaXHR(input, init).then(resolve).catch(reject)
-          } else {
-            reject(error)
-          }
-        })
-    })
+    // Fallback to XMLHttpRequest if original fetch is unavailable
+    return fetchViaXHR(input, init)
   }
 }
 
@@ -108,10 +115,21 @@ export async function safeFetch(
   timeoutMs = 8000
 ) {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  let isTimedOut = false
+  const timeoutId = setTimeout(() => {
+    isTimedOut = true
+    controller.abort()
+  }, timeoutMs)
+
   try {
     const res = await fetch(input, { ...init, signal: controller.signal })
     return res
+  } catch (error) {
+    // If timeout occurred, throw a more descriptive error
+    if (isTimedOut) {
+      throw new DOMException('Request timeout', 'TimeoutError')
+    }
+    throw error
   } finally {
     clearTimeout(timeoutId)
   }

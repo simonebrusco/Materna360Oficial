@@ -38,41 +38,41 @@ async function fetchChildrenNames(): Promise<string[]> {
       return []
     }
 
-    const abortController = new AbortController()
-    const timeoutId = setTimeout(() => abortController.abort(), 3000) // 3 second timeout for Supabase
+    const TIMEOUT_MS = 3000 // 3 second timeout for Supabase
 
-    try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser()
+    // Wrap the entire Supabase call in a Promise.race with a timeout
+    const result = await Promise.race([
+      (async () => {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
 
-      if (authError || !user) {
-        clearTimeout(timeoutId)
-        return []
-      }
+        if (authError || !user) {
+          return []
+        }
 
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('user_id', user.id)
-        .neq('name', '')
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .neq('name', '')
 
-      clearTimeout(timeoutId)
+        if (error) {
+          console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
+          return []
+        }
 
-      if (error) {
-        console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
-        return []
-      }
+        return (profiles || [])
+          .map((p: { name?: string }) => p.name?.trim())
+          .filter((name: string | undefined): name is string => !!name && name.length > 0)
+      })(),
+      new Promise<string[]>((_, reject) =>
+        setTimeout(() => reject(new Error('Children names fetch timeout')), TIMEOUT_MS)
+      ),
+    ])
 
-      return (profiles || [])
-        .map((p: { name?: string }) => p.name?.trim())
-        .filter((name: string | undefined): name is string => !!name && name.length > 0)
-    } catch (supabaseError) {
-      clearTimeout(timeoutId)
-      console.debug('[ProfileAPI] Supabase error:', supabaseError)
-      return []
-    }
+    return result
   } catch (error) {
     console.debug('[ProfileAPI] Error fetching children:', error)
     return []

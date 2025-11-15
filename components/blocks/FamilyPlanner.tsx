@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/feedback/Skeleton'
 import type { ChildRecommendation, RecommendationType } from '@/app/data/childContent'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import { Calendar as CalendarIcon, FileText as NotesIcon } from 'lucide-react'
 import { DEFAULT_AGE_BAND, mapMonthsToAgeBand } from '@/lib/dailyActivity'
 import {
   plannerApi,
@@ -305,6 +306,7 @@ export function FamilyPlanner({
   const [selectedDayKey, setSelectedDayKey] = useState(() => currentDateKey)
   const [plannerData, setPlannerData] = useState<PlannerData>({})
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isLoadingWeek, setIsLoadingWeek] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [draftType, setDraftType] = useState<(typeof TYPE_OPTIONS)[number]>('Brincadeira')
@@ -329,6 +331,7 @@ export function FamilyPlanner({
 
   const loadWeek = useCallback(
     async (targetWeekStart: string, options: { preserveSelection?: boolean } = {}) => {
+      setIsLoadingWeek(true)
       try {
         const response = await fetch(
           `/api/planner/week-labels?weekStart=${encodeURIComponent(targetWeekStart)}`,
@@ -359,6 +362,8 @@ export function FamilyPlanner({
         })
       } catch (error) {
         console.error('Falha ao carregar rótulos da semana:', error)
+      } finally {
+        setIsLoadingWeek(false)
       }
     },
     [todayKey]
@@ -427,7 +432,8 @@ export function FamilyPlanner({
     hasLoadedStoredWeek.current = true
   }, [loadWeek, weekStartKeyState])
 
-  const selectedDayItems = useMemo(() => plannerData[selectedDayKey] ?? [], [plannerData, selectedDayKey])
+  const effectiveSelectedDayKey = selectedDayKey || todayKey || weekDays[0]?.key || currentDateKey
+  const selectedDayItems = useMemo(() => plannerData[effectiveSelectedDayKey] ?? [], [plannerData, effectiveSelectedDayKey])
 
   useEffect(() => {
     let active = true
@@ -840,7 +846,11 @@ export function FamilyPlanner({
           </div>
         </div>
 
-      {weekDays.length > 0 ? (
+      {weekDays.length === 0 && !isInitialized ? (
+        <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/60 bg-white/40 p-5 text-sm text-support-2">
+          Carregando semana...
+        </div>
+      ) : (
         <div className="sticky top-[64px] z-30 flex items-center gap-3 -mx-7 px-7 md:-mx-8 md:px-8 backdrop-blur-sm">
           <button
             type="button"
@@ -855,26 +865,45 @@ export function FamilyPlanner({
             aria-label="Seletor de dias do planner"
             data-testid="planner-day-strip"
           >
-            {weekDays.map((day) => {
-              const isSelected = selectedDayKey === day.key
-              const isToday = todayKey === day.key
+            {weekDays.length > 0 ? (
+              weekDays.map((day) => {
+                const isSelected = selectedDayKey === day.key
+                const isToday = todayKey === day.key
+                const dayItems = plannerData[day.key] ?? []
+                const hasItems = dayItems.length > 0
 
-              return (
-                <button
-                  key={day.key}
-                  type="button"
-                  onClick={() => handleSelectDay(day.key)}
-                  className={`flex h-20 min-w-[88px] flex-1 items-center justify-center rounded-2xl border px-4 py-4 text-sm font-semibold transition-all duration-300 ease-gentle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-24 ${
-                    isSelected
-                      ? 'border-transparent bg-gradient-to-b from-primary to-primary/80 text-white shadow-soft ring-2 ring-primary/30 scale-[1.02]'
-                      : 'border-white/60 bg-white/70 text-support-1 shadow-soft hover:bg-white/90 hover:shadow-elevated'
-                  } ${isToday && !isSelected ? 'border-primary/40 text-primary' : ''}`}
-                  aria-current={isSelected ? 'date' : undefined}
+                return (
+                  <button
+                    key={day.key}
+                    type="button"
+                    onClick={() => handleSelectDay(day.key)}
+                    className={`flex flex-col h-20 min-w-[88px] flex-1 items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition-all duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 md:h-24 ${
+                      isSelected
+                        ? 'border-transparent bg-gradient-to-b from-primary to-primary/80 text-white shadow-soft ring-2 ring-primary/30 scale-[1.02]'
+                        : isToday
+                          ? 'border-primary/50 bg-white/90 text-primary shadow-elevated hover:bg-white hover:shadow-elevated'
+                          : 'border-white/60 bg-white/70 text-support-1 shadow-soft hover:bg-white/90 hover:shadow-elevated'
+                    } hover:shadow-elevated`}
+                    aria-current={isSelected ? 'date' : undefined}
+                  >
+                    <span className="text-[15px] font-semibold md:text-base">{day.chipLabel}</span>
+                    {hasItems && !isSelected && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1" aria-hidden="true" />
+                    )}
+                  </button>
+                )
+              })
+            ) : (
+              Array.from({ length: 7 }).map((_, i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  className="flex flex-col h-20 min-w-[88px] flex-1 items-center justify-center rounded-2xl border border-white/60 bg-white/40 px-4 py-3 md:h-24 animate-pulse"
+                  aria-hidden="true"
                 >
-                  <span className="text-[15px] font-semibold md:text-base">{day.chipLabel}</span>
-                </button>
-              )
-            })}
+                  <div className="h-4 w-8 bg-support-3/20 rounded mb-1" />
+                </div>
+              ))
+            )}
           </div>
           <button
             type="button"
@@ -884,10 +913,6 @@ export function FamilyPlanner({
           >
             ›
           </button>
-        </div>
-      ) : (
-        <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/60 bg-white/40 p-5 text-sm text-support-2">
-          Carregando semana...
         </div>
       )}
 
@@ -922,7 +947,7 @@ export function FamilyPlanner({
           </div>
 
           {selectedDayItems.length > 0 ? (
-            <div className="space-y-3">
+            <div key={effectiveSelectedDayKey} className="space-y-3 transition-all duration-200 ease-out">
               {selectedDayItems.map((item) => {
                 const isEditing = editingItemId === item.id
 
@@ -1073,8 +1098,16 @@ export function FamilyPlanner({
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-4 py-6 text-center">
-              <p className="text-sm text-support-2">Nenhum compromisso adicionado hoje. Que tal começar com algo leve?</p>
+            <div key={`empty-${effectiveSelectedDayKey}`} className="rounded-2xl border border-dashed border-support-3/40 bg-white/60 px-6 py-8 transition-all duration-200 ease-out">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
+                  <CalendarIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-support-1">Nenhum compromisso adicionado hoje.</p>
+                  <p className="mt-1 text-xs text-support-2">Que tal começar com algo leve para a família?</p>
+                </div>
+              </div>
             </div>
           )}
 

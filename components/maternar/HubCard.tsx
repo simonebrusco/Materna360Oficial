@@ -41,8 +41,8 @@ export default function HubCard({
         hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]
         transition-all duration-200
         focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
-        p-5 sm:p-6
-        min-h-[160px] sm:min-h-[180px]
+        p-3 md:p-5
+        min-h-[140px] md:min-h-[160px]
         ui-press ui-ring
       "
       aria-label={subtitle ? `${title}: ${subtitle}` : title}
@@ -61,8 +61,8 @@ export default function HubCard({
       )}
 
       <div className="flex flex-col h-full relative z-0">
-        <div className="mb-3 sm:mb-4">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+        <div className="mb-2 md:mb-3">
+          <div className="inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
             <AppIcon
               name={icon}
               size={28}
@@ -72,17 +72,17 @@ export default function HubCard({
           </div>
         </div>
 
-        <h3 className="text-lg sm:text-xl font-semibold text-support-1 mb-1 line-clamp-2">
+        <h3 className="text-base md:text-lg font-semibold text-support-1 mb-1 line-clamp-2 leading-tight">
           {title}
         </h3>
 
         {subtitle && (
-          <p className="text-sm text-support-2 line-clamp-2 flex-1">
+          <p className="text-xs md:text-sm text-support-2 line-clamp-2 flex-1 leading-tight">
             {subtitle}
           </p>
         )}
 
-        <div className="mt-auto pt-3 text-primary text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+        <div className="mt-auto pt-2 md:pt-3 text-primary text-xs md:text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
           Acessar →
           <AppIcon
             name="chevron"

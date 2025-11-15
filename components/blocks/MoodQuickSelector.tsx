@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { toast } from '@/app/lib/toast'
-import HScroll from '@/components/common/HScroll'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 
@@ -80,40 +79,31 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <div>
-        <h3 className="text-base font-semibold text-support-1">Como está seu humor?</h3>
-        <p className="text-sm text-support-2">Registre seu estado emocional diário</p>
-      </div>
-
-      <HScroll className="pt-2">
-        {MOODS.map((mood) => {
-          const isActive = selectedMood === mood.value
-          return (
-            <button
-              key={mood.value}
-              onClick={() => handleMoodSelect(mood.value)}
-              className={`snap-start shrink-0 basis-[35%] sm:basis-[28%] md:basis-[22%] flex flex-col items-center gap-2 rounded-xl px-3 py-3 transition-all duration-200 ${
-                isActive
-                  ? 'bg-primary/15 ring-2 ring-primary/40 scale-105'
-                  : 'bg-white border border-white/60 hover:bg-white/80'
-              } focus:outline-none focus:ring-2 focus:ring-primary/60 focus-visible:ring-offset-2`}
-              aria-pressed={isActive}
-              title={mood.label}
-              type="button"
-            >
-              <AppIcon
-                name={mood.iconName as any}
-                size={24}
-                variant={isActive ? 'brand' : 'default'}
-              />
-              <span className="text-center text-xs font-medium leading-tight text-support-1 line-clamp-2">
-                {mood.label}
-              </span>
-            </button>
-          )
-        })}
-      </HScroll>
+    <div className="flex flex-wrap gap-2">
+      {MOODS.map((mood) => {
+        const isActive = selectedMood === mood.value
+        return (
+          <button
+            key={mood.value}
+            onClick={() => handleMoodSelect(mood.value)}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/60 focus-visible:ring-offset-2 ${
+              isActive
+                ? 'border-primary bg-primary/10 text-primary font-semibold shadow-soft'
+                : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-white'
+            }`}
+            aria-pressed={isActive}
+            title={mood.label}
+            type="button"
+          >
+            <AppIcon
+              name={mood.iconName as any}
+              size={16}
+              variant={isActive ? 'brand' : 'default'}
+            />
+            <span className="font-medium">{mood.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
