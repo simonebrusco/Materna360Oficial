@@ -296,6 +296,11 @@ export async function POST(request: Request) {
     track('audio.select', { result: 'success', recipes: sanitized.recipes.length })
     return NextResponse.json(sanitized)
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('Recipes generation timeout:', error)
+      track('audio.end', { reason: 'timeout' })
+      return NextResponse.json({ error: 'Tempo limite de geração de receitas excedido.' }, { status: 504 })
+    }
     console.error('Recipes generation failure:', error)
     track('audio.end', { reason: 'exception' })
     return NextResponse.json({ error: 'Erro inesperado ao gerar receitas.' }, { status: 500 })
