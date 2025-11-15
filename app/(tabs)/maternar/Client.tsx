@@ -5,17 +5,12 @@ import { useEffect } from 'react';
 import CardHub from '@/components/maternar/CardHub';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
-import { getBrazilDateKey } from '@/app/lib/dateKey';
 import { useProfile } from '@/app/hooks/useProfile';
 
 export default function MaternarClient() {
-  const [dateKey, setDateKey] = React.useState('2025-01-01');
   const { name } = useProfile();
 
   useEffect(() => {
-    // Set today's date on client side only
-    setDateKey(getBrazilDateKey(new Date()));
-
     track('nav.click', {
       tab: 'maternar',
       timestamp: new Date().toISOString(),
