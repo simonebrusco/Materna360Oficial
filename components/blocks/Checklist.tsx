@@ -168,23 +168,21 @@ const cloneItemWithOrigin = (text: string, origin: ChecklistOrigin): ChecklistIt
 })
 
 const fetchMotherName = async (): Promise<string> => {
-  let timedOut = false
+  const controller = new AbortController()
+  const TIMEOUT_MS = 5000 // 5 second timeout
+
   const timeoutId = setTimeout(() => {
-    timedOut = true
-  }, 3000)
+    controller.abort()
+  }, TIMEOUT_MS)
 
   try {
     const response = await fetch('/api/profile', {
       credentials: 'include',
       cache: 'no-store',
+      signal: controller.signal,
     })
 
     clearTimeout(timeoutId)
-
-    // If we timed out, ignore the response
-    if (timedOut) {
-      return FALLBACK_NAME
-    }
 
     if (!response.ok) {
       return FALLBACK_NAME
