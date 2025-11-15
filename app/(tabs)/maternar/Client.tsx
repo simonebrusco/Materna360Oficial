@@ -136,15 +136,19 @@ export default function MaternarClient() {
         </div>
 
         <div id="maternar-trilhas-premium" className="px-4 py-6 sm:px-6 md:py-8">
-          <h2 className="text-xl font-semibold text-support-1 mb-4">Trilhas premium</h2>
           <SoftCard>
-            <div className="space-y-3">
-              <p className="text-sm text-support-2">
-                Caminhos guiados para semanas mais leves, conscientes e transformadoras.
-              </p>
-              <p className="text-xs text-gray-500">
-                Acesse conteúdos exclusivos, meditações e jornadas personalizadas.
-              </p>
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                <AppIcon name="crown" variant="brand" decorative className="h-7 w-7" />
+                <div>
+                  <p className="text-base font-semibold text-support-1 leading-snug">
+                    Trilhas premium
+                  </p>
+                  <p className="text-sm text-support-2 leading-snug">
+                    Caminhos guiados para semanas mais leves, conscientes e transformadoras.
+                  </p>
+                </div>
+              </div>
             </div>
           </SoftCard>
         </div>
