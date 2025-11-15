@@ -82,15 +82,19 @@ export default function MaternarClient() {
         </div>
 
         <div id="maternar-momentos-filho" className="px-4 py-6 sm:px-6 md:py-8">
-          <h2 className="text-xl font-semibold text-support-1 mb-4">Momentos com seu filho</h2>
           <SoftCard>
-            <div className="space-y-3">
-              <p className="text-sm text-support-2">
-                Pequenas memórias que contam a grande história da sua maternidade.
-              </p>
-              <p className="text-xs text-gray-500">
-                Capture gestos especiais, conversas marcantes e abraços que merecem ser lembrados.
-              </p>
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                <AppIcon name="sparkles" variant="brand" decorative className="h-7 w-7" />
+                <div>
+                  <p className="text-base font-semibold text-support-1 leading-snug">
+                    Momentos com seu filho
+                  </p>
+                  <p className="text-sm text-support-2 leading-snug">
+                    Pequenas memórias que contam a grande história da sua maternidade.
+                  </p>
+                </div>
+              </div>
             </div>
           </SoftCard>
         </div>
