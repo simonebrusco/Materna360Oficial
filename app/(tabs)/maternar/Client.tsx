@@ -4,8 +4,6 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import HubHeader from '@/components/maternar/HubHeader';
 import CardHub from '@/components/maternar/CardHub';
-import MaternarScrollHub from '@/components/maternar/MaternarScrollHub';
-import { ContinueCard } from './components/ContinueCard';
 import DestaquesDodia from '@/components/maternar/DestaquesDodia';
 import { HighlightsSection } from './components/HighlightsSection';
 import { PageTemplate } from '@/components/common/PageTemplate';
