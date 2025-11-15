@@ -98,30 +98,14 @@ export function initSafeFetch() {
   originalFetch = window.fetch
 
   window.fetch = function safeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-    // Check for FullStory at CALL TIME (not initialization time)
-    // because it may load asynchronously
-    if (isFullStoryPresent()) {
-      return fetchViaXHR(input, init)
+    // Always use original fetch if available (do not use FullStory's broken wrapper)
+    // If original fetch is not available, fall back to XMLHttpRequest
+    if (originalFetch) {
+      return (originalFetch as typeof fetch).call(window, input, init)
     }
 
-    // Use original fetch if FullStory is not present
-    if (!originalFetch) {
-      return Promise.reject(new TypeError('Fetch is not available'))
-    }
-
-    return new Promise((resolve, reject) => {
-      (originalFetch as typeof fetch)
-        .call(window, input, init)
-        .then(resolve)
-        .catch((error: Error) => {
-          // If fetch fails unexpectedly, try XMLHttpRequest as fallback
-          if (error?.message?.includes('Failed to fetch')) {
-            fetchViaXHR(input, init).then(resolve).catch(reject)
-          } else {
-            reject(error)
-          }
-        })
-    })
+    // Fallback to XMLHttpRequest if original fetch is unavailable
+    return fetchViaXHR(input, init)
   }
 }
 
