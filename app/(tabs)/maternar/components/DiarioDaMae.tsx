@@ -36,7 +36,7 @@ export function DiarioDaMae({ storageKey = 'maternar:diary_entries' }: DiarioDaM
 
   const handleAddEntry = () => {
     if (!entryText.trim()) {
-      toast.error('Por favor, escreva algo antes de salvar.')
+      toast.danger('Por favor, escreva algo antes de salvar.', 'Atenção')
       return
     }
 
