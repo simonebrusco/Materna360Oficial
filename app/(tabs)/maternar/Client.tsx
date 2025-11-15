@@ -26,9 +26,7 @@ export default function MaternarClient() {
   const { name } = useProfile();
 
   useEffect(() => {
-    // Set today's date on client side only
     setDateKey(getBrazilDateKey(new Date()));
-
     track('nav.click', {
       tab: 'maternar',
       timestamp: new Date().toISOString(),
@@ -45,8 +43,8 @@ export default function MaternarClient() {
       title={pageTitle}
       subtitle={pageSubtitle}
     >
-      <div className="max-w-[1160px] mx-auto px-4 md:px-6">
-        {/* HIGHLIGHTS SECTION */}
+      <div className="max-w-[1160px] mx-auto px-4 md:px-6 pb-20">
+        {/* HIGHLIGHTS */}
         <Reveal delay={100}>
           <DestaquesDodia />
         </Reveal>
@@ -61,7 +59,9 @@ export default function MaternarClient() {
 
         {/* SECTION 1: EMOTIONAL JOURNEY */}
         <div className="mb-16 mt-12">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Jornada Emocional</h2>
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">
+            Jornada Emocional
+          </h2>
           <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
             Espaço para reflexões, memórias e conexões com seus filhos.
           </p>
@@ -105,12 +105,13 @@ export default function MaternarClient() {
 
         {/* SECTION 2: EVOLUTION & ANALYTICS */}
         <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Sua Evolução</h2>
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">
+            Sua Evolução
+          </h2>
           <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
             Acompanhe seu progresso, humor e bem-estar ao longo do tempo.
           </p>
 
-          {/* Expanded Weekly Summary */}
           <ClientOnly>
             <Reveal delay={300}>
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
@@ -131,7 +132,9 @@ export default function MaternarClient() {
 
         {/* SECTION 3: MATERNAL ROUTINES */}
         <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Rotinas da Mãe</h2>
+          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">
+            Rotinas da Mãe
+          </h2>
           <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
             Suas rotinas diárias e hábitos que sustentam seu bem-estar.
           </p>
@@ -185,10 +188,12 @@ export default function MaternarClient() {
           </Reveal>
         )}
 
-        {/* SECTION 4: ACCESS HUB */}
+        {/* ACCESS HUB */}
         <Reveal delay={360}>
           <div className="mb-8">
-            <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Acesso Rápido</h2>
+            <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">
+              Acesso Rápido
+            </h2>
             <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
               Navigate easily to all features and resources.
             </p>
