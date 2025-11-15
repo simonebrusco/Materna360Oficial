@@ -64,15 +64,19 @@ export default function MaternarClient() {
         </div>
 
         <div id="maternar-habitos-maternos" className="px-4 py-6 sm:px-6 md:py-8">
-          <h2 className="text-xl font-semibold text-support-1 mb-4">Hábitos maternos</h2>
           <SoftCard>
-            <div className="space-y-3">
-              <p className="text-sm text-support-2">
-                Pequenas práticas que sustentam uma rotina mais leve e conectada com seus filhos.
-              </p>
-              <p className="text-xs text-gray-500">
-                Registre seus hábitos diários e acompanhe como eles impactam seu bem-estar.
-              </p>
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                <AppIcon name="heart" variant="brand" decorative className="h-7 w-7" />
+                <div>
+                  <p className="text-base font-semibold text-support-1 leading-snug">
+                    Hábitos maternos
+                  </p>
+                  <p className="text-sm text-support-2 leading-snug">
+                    Pequenas práticas que sustentam uma rotina mais leve e conectada com seus filhos.
+                  </p>
+                </div>
+              </div>
             </div>
           </SoftCard>
         </div>
