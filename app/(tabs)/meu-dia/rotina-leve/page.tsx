@@ -4,13 +4,8 @@ import { PageTemplate } from "@/components/common/PageTemplate";
 
 export default function Page() {
   return (
-    <PageTemplate>
+    <PageTemplate title="Rotina Leve" subtitle="Organize o seu dia">
       <div className="flex flex-col gap-4 px-4 py-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Rotina Leve</h1>
-          <p className="text-gray-600 mt-1">Organize o seu dia</p>
-        </div>
-
         <p className="text-gray-700 text-sm leading-relaxed">
           Aqui você poderá organizar o dia de forma leve e prática. Em breve adicionaremos ferramentas e rotinas diárias.
         </p>

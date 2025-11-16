@@ -4,13 +4,8 @@ import { PageTemplate } from "@/components/common/PageTemplate";
 
 export default function Page() {
   return (
-    <PageTemplate>
+    <PageTemplate title="Como Estou Hoje" subtitle="Humor & energia">
       <div className="flex flex-col gap-4 px-4 py-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Como Estou Hoje</h1>
-          <p className="text-gray-600 mt-1">Humor & energia</p>
-        </div>
-
         <p className="text-gray-700 text-sm leading-relaxed">
           Este será o seu espaço para registrar e acompanhar seu humor e energia ao longo do dia.
         </p>
