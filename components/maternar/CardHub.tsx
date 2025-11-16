@@ -35,7 +35,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'calendar',
     title: 'Rotina Leve',
     subtitle: 'Organize o dia',
-    href: '/meu-dia?focus=planner',
+    href: '/meu-dia/rotina-leve',
     ctaText: 'Organizar',
   },
   {
