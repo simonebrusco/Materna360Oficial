@@ -15,6 +15,7 @@ import { ChildDiaryCard } from './components/ChildDiaryCard'
 import { AppointmentsMVP } from './components/AppointmentsMVP'
 import { BreathAudios } from './components/BreathAudios'
 import { SectionH2 } from '@/components/common/Headings'
+import { CareHub } from '@/components/cuidar/CareHub'
 
 type Props = {
   recipesSection?: React.ReactNode
