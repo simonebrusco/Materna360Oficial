@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
