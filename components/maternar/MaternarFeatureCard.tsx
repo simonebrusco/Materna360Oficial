@@ -1,118 +1,71 @@
 'use client'
 
-import { clsx } from 'clsx'
-import { MaternarFeatureCard } from './MaternarFeatureCard'
-import type { KnownIconName } from '@/components/ui/AppIcon'
+import Link from 'next/link'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
+import { track } from '@/app/lib/telemetry'
 
-type CardConfig = {
-  id: string
+type MaternarFeatureCardProps = {
   icon: KnownIconName
   title: string
   subtitle: string
   href: string
+  cardId: string
   ctaText?: string
 }
 
-const HUB_CARDS: CardConfig[] = [
-  {
-    id: 'cuidar-de-mim',
-    icon: 'heart',
-    title: 'Meu Bem-estar',
-    subtitle: 'Seu momento',
-    href: '/cuidar/meu-bem-estar',
-    ctaText: 'Explorar',
-  },
-  {
-    id: 'cuidar-do-meu-filho',
-    icon: 'care',
-    title: 'Cuidar com Amor',
-    subtitle: 'Para o seu filho',
-    href: '/cuidar/cuidar-com-amor',
-    ctaText: 'Explorar',
-  },
-  {
-    id: 'organizar-minha-rotina',
-    icon: 'calendar',
-    title: 'Rotina Leve',
-    subtitle: 'Organize o dia',
-    href: '/meu-dia/rotina-leve',
-    ctaText: 'Organizar',
-  },
-  {
-    id: 'humor-energia',
-    icon: 'smile',
-    title: 'Como Estou Hoje',
-    subtitle: 'Humor & energia',
-    href: '/meu-dia/como-estou-hoje',
-    ctaText: 'Ver agora',
-  },
-  {
-    id: 'conexao-com-meu-filho',
-    icon: 'sparkles',
-    title: 'Momentos que Contam',
-    subtitle: 'Conexão diária',
-    href: '/meu-dia/momentos-que-contam',
-    ctaText: 'Explorar',
-  },
-  {
-    id: 'aprender-brincar',
-    icon: 'idea',
-    title: 'Aprender Brincando',
-    subtitle: 'Ideias rápidas',
-    href: '/descobrir/aprender-brincar',
-    ctaText: 'Descobrir',
-  },
-  {
-    id: 'minha-evolucao',
-    icon: 'crown',
-    title: 'Minha Jornada',
-    subtitle: 'Seu progresso',
-    href: '/eu360/minha-jornada',
-    ctaText: 'Ver progresso',
-  },
-  {
-    id: 'comecar-com-leveza',
-    icon: 'clock',
-    title: 'Meu Dia em 1 Minuto',
-    subtitle: 'Resumo rápido',
-    href: '/meu-dia/meu-dia-em-1-minuto',
-    ctaText: 'Resumo',
-  },
-  {
-    id: 'planos-premium',
-    icon: 'star',
-    title: 'Materna+',
-    subtitle: 'Acesso premium',
-    href: '/planos',
-    ctaText: 'Acessar',
-  },
-]
+export function MaternarFeatureCard({
+  icon,
+  title,
+  subtitle,
+  href,
+  cardId,
+  ctaText = 'Acessar',
+}: MaternarFeatureCardProps) {
+  const handleClick = () => {
+    track('nav.click', {
+      tab: 'maternar',
+      card: cardId,
+      dest: href,
+    })
+  }
 
-export default function CardHub() {
-  return (
-    <section className="mt-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
-        {HUB_CARDS.map((card, index) => (
-          <div
-            key={card.id}
-            className={clsx(
-              'h-full',
-              index === HUB_CARDS.length - 1 && 'col-span-2 md:col-span-1'
-            )}
-          >
-            <MaternarFeatureCard
-              icon={card.icon}
-              title={card.title}
-              subtitle={card.subtitle}
-              href={card.href}
-              cardId={card.id}
-              ctaText={card.ctaText}
-            />
-          </div>
-        ))}
+  const content = (
+    <div className="flex h-full min-h-[180px] flex-col items-center justify-between rounded-3xl bg-white shadow-soft px-4 py-4 text-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-m360-pink-soft">
+          <AppIcon
+            name={icon}
+            size={24}
+            variant="brand"
+            decorative
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold text-m360-text-primary leading-snug">
+            {title}
+          </p>
+          <p className="text-xs text-m360-text-muted leading-snug">
+            {subtitle}
+          </p>
+        </div>
       </div>
-    </section>
+
+      <span className="mt-2 text-[11px] font-medium text-m360-pink inline-flex items-center gap-1">
+        {ctaText} <span>→</span>
+      </span>
+    </div>
   )
+
+  if (href) {
+    return (
+      <Link href={href} onClick={handleClick} className="block h-full">
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className="h-full">{content}</div>
 }
 
 export default MaternarFeatureCard
