@@ -45,7 +45,8 @@ export function MaternarFeatureCard({
       data-card-id={cardId}
       className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-3xl"
     >
-      <motion.article
+      <motion.div
+        role="article"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
@@ -84,7 +85,7 @@ export function MaternarFeatureCard({
             <span aria-hidden="true">→</span>
           </button>
         </div>
-      </motion.article>
+      </motion.div>
     </Link>
   )
 }
