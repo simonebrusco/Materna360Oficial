@@ -30,28 +30,28 @@ export function MaternarFeatureCard({
   }
 
   const content = (
-    <div className="flex h-full min-h-[200px] flex-col items-center justify-between rounded-3xl bg-white shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] px-4 py-6 text-center transition-shadow duration-200">
+    <div className="flex h-full min-h-[200px] flex-col items-center justify-between rounded-[24px] bg-white border border-black/4 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.03)] px-4 py-8 text-center transition-all duration-200">
       <div className="flex flex-col items-center gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-m360-pink-soft">
           <AppIcon
             name={icon}
-            size={20}
+            size={18}
             variant="brand"
             decorative
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold text-m360-text-primary leading-tight">
+          <p className="text-sm font-semibold tracking-tighter text-m360-text-primary leading-tight">
             {title}
           </p>
-          <p className="text-xs text-m360-text-muted leading-relaxed">
+          <p className="text-xs text-gray-700/85 leading-relaxed">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <span className="mt-3 text-xs font-medium text-m360-pink inline-flex items-center gap-0.5">
+      <span className="mt-3 text-[12px] font-medium text-m360-pink inline-flex items-center gap-0.5 hover:scale-[1.02] transition-transform">
         {ctaText}
       </span>
     </div>
