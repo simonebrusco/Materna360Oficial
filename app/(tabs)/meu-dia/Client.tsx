@@ -138,6 +138,7 @@ export function MeuDiaClient({
   const finalWeekLabels = weekLabels || __fallbackWeekLabels__
   const finalPlannerTitle = plannerTitle || __fallbackPlannerTitle__
 
+  const searchParams = useSearchParams()
   const [trendOpen, setTrendOpen] = useState(false)
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [showNoteModal, setShowNoteModal] = useState(false)
@@ -147,6 +148,25 @@ export function MeuDiaClient({
   const [canShowTrends, setCanShowTrends] = useState(false)
 
   const { name } = useProfile() || { name: finalProfile.motherName }
+
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
 
   useEffect(() => {
     setCanShowTrends(!__disableHeavy__ && isClientFlagEnabled('FF_EMOTION_TRENDS'))
