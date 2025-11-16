@@ -1,18 +1,39 @@
 'use client'
 
-import { clsx } from 'clsx'
+import {
+  Heart,
+  Hands,
+  Calendar,
+  Smile,
+  Sparkles,
+  Lightbulb,
+  Crown,
+  Sun,
+  Star,
+} from 'lucide-react'
 import { MaternarFeatureCard } from './MaternarFeatureCard'
-import type { KnownIconName } from '@/components/ui/AppIcon'
 
 type CardConfig = {
   id: string
-  icon: KnownIconName
+  icon: string
   title: string
   subtitle: string
   href: string
 }
 
-const HUB_CARDS: CardConfig[] = [
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  heart: Heart,
+  care: Hands,
+  calendar: Calendar,
+  smile: Smile,
+  sparkles: Sparkles,
+  idea: Lightbulb,
+  crown: Crown,
+  sun: Sun,
+  star: Star,
+}
+
+const MATERNAR_FEATURES: CardConfig[] = [
   {
     id: 'cuidar-de-mim',
     icon: 'heart',
@@ -78,28 +99,22 @@ const HUB_CARDS: CardConfig[] = [
   },
 ]
 
-export default function CardHub() {
+export function CardHub() {
   return (
     <section className="mt-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
-        {HUB_CARDS.map((card, index) => (
-          <div
-            key={card.id}
-            className={clsx(
-              'h-full',
-              index === HUB_CARDS.length - 1 && 'col-span-2 md:col-span-1'
-            )}
-          >
-            <MaternarFeatureCard
-              icon={card.icon}
-              title={card.title}
-              subtitle={card.subtitle}
-              href={card.href}
-              cardId={card.id}
-            />
-          </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        {MATERNAR_FEATURES.map((feature) => (
+          <MaternarFeatureCard
+            key={feature.id}
+            title={feature.title}
+            subtitle={feature.subtitle}
+            icon={ICON_MAP[feature.icon] || Heart}
+            href={feature.href}
+          />
         ))}
       </div>
     </section>
   )
 }
+
+export default CardHub
