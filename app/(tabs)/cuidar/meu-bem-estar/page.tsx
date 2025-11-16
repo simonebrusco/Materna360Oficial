@@ -1,49 +1,57 @@
 'use client'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { CuidarFeatureCard } from '@/components/cuidar/CuidarFeatureCard'
+
+const SELF_CARE_CARDS = [
+  {
+    id: 'hoje',
+    icon: 'heart' as const,
+    title: 'Hoje',
+    subtitle: 'O que seu corpo pede agora',
+    href: '/cuidar?focus=hoje',
+  },
+  {
+    id: 'semana-leve',
+    icon: 'calendar-clock' as const,
+    title: 'Semana leve',
+    subtitle: 'Rotina real de autocuidado',
+    href: '/cuidar?focus=semana',
+  },
+  {
+    id: 'sono-energia',
+    icon: 'moon' as const,
+    title: 'Sono & energia',
+    subtitle: 'Rituais para descansar de verdade',
+    href: '/cuidar?focus=sono',
+  },
+  {
+    id: 'consultas',
+    icon: 'stethoscope' as const,
+    title: 'Consultas em dia',
+    subtitle: 'Acompanhe sua saúde com calma',
+    href: '/cuidar?focus=consultas',
+  },
+]
 
 export default function MeuBemEstarPage() {
   return (
     <PageTemplate
       label="CUIDAR"
-      title="Meu Bem-estar"
-      subtitle="Seu momento de cuidado"
+      title="Meu bem-estar"
+      subtitle="Cuide de você sem culpa."
     >
-      <div className="flex justify-center px-4 py-6">
-        <div className="w-full max-w-xl space-y-6">
-          {/* Intro section */}
-          <section className="space-y-2">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Um espaço só para você
-            </h1>
-            <p className="text-sm leading-relaxed text-gray-700">
-              Aqui é o seu cantinho dentro do Materna360. Em breve, este espaço
-              vai reunir rotinas, pausas e pequenas práticas para você cuidar de
-              si com mais leveza, sem culpa e sem pressão.
-            </p>
-          </section>
-
-          {/* Highlight card */}
-          <section className="rounded-3xl bg-white shadow-soft px-4 py-5 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pink-500">
-              SUGESTÃO DO DIA
-            </p>
-            <h2 className="text-base font-semibold text-gray-900">
-              Comece com uma pausa de 3 minutos
-            </h2>
-            <p className="text-sm leading-relaxed text-gray-700">
-              Reserve um momento para respirar fundo, alongar o corpo e perceber
-              como você está se sentindo agora. Em breve, você verá aqui áudios
-              guiados e pequenas práticas para esses momentos.
-            </p>
-          </section>
-
-          {/* Future content placeholder */}
-          <section className="rounded-3xl border border-dashed border-gray-200 px-4 py-6 text-center text-xs text-gray-500">
-            Esta área será usada para rotinas, listas de autocuidado e
-            conteúdos especiais de bem-estar para você.
-          </section>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-4xl">
+        {SELF_CARE_CARDS.map((card) => (
+          <CuidarFeatureCard
+            key={card.id}
+            icon={card.icon}
+            title={card.title}
+            subtitle={card.subtitle}
+            href={card.href}
+            cardId={card.id}
+          />
+        ))}
       </div>
     </PageTemplate>
   )
