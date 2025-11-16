@@ -81,14 +81,11 @@ const HUB_CARDS: CardConfig[] = [
 export default function CardHub() {
   return (
     <section className="mt-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
+      <div className="grid grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
         {HUB_CARDS.map((card, index) => (
           <div
             key={card.id}
-            className={clsx(
-              'h-full',
-              index === HUB_CARDS.length - 1 && 'col-span-2 md:col-span-1'
-            )}
+            className="h-full"
           >
             <MaternarFeatureCard
               icon={card.icon}
