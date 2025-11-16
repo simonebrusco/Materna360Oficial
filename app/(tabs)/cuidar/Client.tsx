@@ -20,11 +20,37 @@ type Props = {
   recipesSection?: React.ReactNode
 }
 
+// Focus query param to section ID mapping
+const FOCUS_TO_ID: Record<string, string> = {
+  mae: 'cuidar-mae',
+  filho: 'cuidar-filho',
+}
+
 export default function CuidarClient({ recipesSection }: Props) {
   const { name } = useProfile();
+  const searchParams = useSearchParams()
   const firstName = name ? name.split(' ')[0] : '';
   const pageTitle = firstName ? `${firstName}, vamos cuidar do que importa agora?` : 'Cuidar';
   const pageSubtitle = 'Saúde física, emocional e segurança — no ritmo da vida real.';
+
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
 
   return (
     <PageTemplate
