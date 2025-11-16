@@ -474,9 +474,10 @@ export default function DiscoverClient() {
       )}
 
       {/* Suggestions Grid */}
-      {filteredSuggestions.length > 0 ? (
-        <PageGrid cols={2}>
-          {filteredSuggestions.map((suggestion) => {
+      <section id="descobrir-atividades">
+        {filteredSuggestions.length > 0 ? (
+          <PageGrid cols={2}>
+            {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
             const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
             const q = canSaveMore();
@@ -553,14 +554,15 @@ export default function DiscoverClient() {
               </Card>
             );
           })}
-        </PageGrid>
-      ) : (
-        <EmptyState
-          title="Nenhum resultado encontrado."
-          text="Ajuste os filtros e tente novamente."
-          cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
-        />
-      )}
+          </PageGrid>
+        ) : (
+          <EmptyState
+            title="Nenhum resultado encontrado."
+            text="Ajuste os filtros e tente novamente."
+            cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
+          />
+        )}
+      </section>
     </PageTemplate>
   );
 }
