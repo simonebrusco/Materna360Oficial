@@ -59,7 +59,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'idea',
     title: 'Aprender Brincando',
     subtitle: 'Ideias rápidas',
-    href: '/descobrir?focus=atividades',
+    href: '/descobrir/aprender-brincando',
     ctaText: 'Descobrir',
   },
   {
