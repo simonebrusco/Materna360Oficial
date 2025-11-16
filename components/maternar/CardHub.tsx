@@ -43,7 +43,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'smile',
     title: 'Como Estou Hoje',
     subtitle: 'Humor & energia',
-    href: '/meu-dia?focus=humor',
+    href: '/meu-dia/como-estou-hoje',
     ctaText: 'Ver agora',
   },
   {
