@@ -10,7 +10,7 @@ type CardConfig = {
   title: string
   subtitle: string
   href: string
-  ctaText: string
+  ctaText?: string
 }
 
 const HUB_CARDS: CardConfig[] = [
