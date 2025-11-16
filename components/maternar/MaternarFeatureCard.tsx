@@ -1,42 +1,26 @@
 'use client'
 
 import Link from 'next/link'
-import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
-import { track } from '@/app/lib/telemetry'
+import type React from 'react'
 
 type MaternarFeatureCardProps = {
-  icon: KnownIconName
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | React.ComponentType<any>
   title: string
   subtitle: string
   href: string
-  cardId: string
 }
 
 export function MaternarFeatureCard({
-  icon,
+  icon: Icon,
   title,
   subtitle,
   href,
-  cardId,
 }: MaternarFeatureCardProps) {
-  const handleClick = () => {
-    track('nav.click', {
-      tab: 'maternar',
-      card: cardId,
-      dest: href,
-    })
-  }
-
   const content = (
     <div className="flex h-full min-h-[180px] flex-col items-center justify-between rounded-3xl bg-white shadow-soft px-4 py-4 text-center">
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-m360-pink-soft">
-          <AppIcon
-            name={icon}
-            size={24}
-            variant="brand"
-            decorative
-          />
+          <Icon className="h-6 w-6 text-m360-pink" />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -55,15 +39,11 @@ export function MaternarFeatureCard({
     </div>
   )
 
-  if (href) {
-    return (
-      <Link href={href} onClick={handleClick} className="block h-full">
-        {content}
-      </Link>
-    )
-  }
-
-  return <div className="h-full">{content}</div>
+  return (
+    <Link href={href} className="block h-full">
+      {content}
+    </Link>
+  )
 }
 
 export default MaternarFeatureCard
