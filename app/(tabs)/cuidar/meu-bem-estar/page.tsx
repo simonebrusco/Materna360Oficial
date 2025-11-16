@@ -2,32 +2,41 @@
 
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { CuidarFeatureCard } from '@/components/cuidar/CuidarFeatureCard'
+import type { KnownIconName } from '@/components/ui/AppIcon'
 
-const SELF_CARE_CARDS = [
+interface SelfCareCard {
+  id: string
+  icon: KnownIconName
+  title: string
+  subtitle: string
+  href: string
+}
+
+const SELF_CARE_CARDS: SelfCareCard[] = [
   {
     id: 'hoje',
-    icon: 'heart' as const,
+    icon: 'heart',
     title: 'Hoje',
     subtitle: 'O que seu corpo pede agora',
     href: '/cuidar?focus=hoje',
   },
   {
     id: 'semana-leve',
-    icon: 'calendar-clock' as const,
+    icon: 'calendar-clock',
     title: 'Semana leve',
     subtitle: 'Rotina real de autocuidado',
     href: '/cuidar?focus=semana',
   },
   {
     id: 'sono-energia',
-    icon: 'moon' as const,
+    icon: 'moon',
     title: 'Sono & energia',
     subtitle: 'Rituais para descansar de verdade',
     href: '/cuidar?focus=sono',
   },
   {
     id: 'consultas',
-    icon: 'stethoscope' as const,
+    icon: 'stethoscope',
     title: 'Consultas em dia',
     subtitle: 'Acompanhe sua saúde com calma',
     href: '/cuidar?focus=consultas',
