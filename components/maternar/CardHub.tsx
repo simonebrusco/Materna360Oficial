@@ -90,8 +90,8 @@ const HUB_CARDS: CardConfig[] = [
 
 export default function CardHub() {
   return (
-    <section className="mt-6 space-y-10">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 px-2 md:px-4 max-w-7xl mx-auto">
+    <section className="mt-6 space-y-12">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 md:gap-y-8 px-2 md:px-4 max-w-7xl mx-auto">
         {HUB_CARDS.map((card, index) => (
           <div
             key={card.id}
@@ -113,8 +113,8 @@ export default function CardHub() {
       </div>
 
       {/* Emotional closing message */}
-      <div className="text-center px-4 md:px-6 max-w-2xl mx-auto pt-4 md:pt-6">
-        <p className="text-sm md:text-base text-m360-text-muted leading-relaxed">
+      <div className="text-center px-4 md:px-6 max-w-2xl mx-auto pt-8 md:pt-10">
+        <p className="text-[14px] text-gray-700/70 leading-[1.4]">
           Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
         </p>
       </div>
