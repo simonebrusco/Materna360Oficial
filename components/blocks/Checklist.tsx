@@ -512,7 +512,6 @@ export function Checklist({ currentDateKey }: ChecklistProps) {
           )
         })}
       </div>
-
     </Card>
   )
 }
