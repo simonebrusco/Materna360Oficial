@@ -20,7 +20,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Meu Bem-estar',
     subtitle: 'Seu momento de respirar sem culpa.',
     href: '/cuidar/meu-bem-estar',
-    ctaText: 'Explorar →',
+    ctaText: 'Explorar',
   },
   {
     id: 'cuidar-do-meu-filho',
@@ -28,7 +28,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Cuidar com Amor',
     subtitle: 'Para o seu filho, no ritmo da vida real.',
     href: '/cuidar/cuidar-com-amor',
-    ctaText: 'Explorar →',
+    ctaText: 'Explorar',
   },
   {
     id: 'organizar-minha-rotina',
@@ -36,7 +36,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Rotina Leve',
     subtitle: 'Organize o dia sem se sobrecarregar.',
     href: '/meu-dia/rotina-leve',
-    ctaText: 'Começar →',
+    ctaText: 'Começar',
   },
   {
     id: 'humor-energia',
@@ -44,7 +44,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Como Estou Hoje',
     subtitle: 'Um check-in honesto com você mesma.',
     href: '/meu-dia/como-estou-hoje',
-    ctaText: 'Começar →',
+    ctaText: 'Começar',
   },
   {
     id: 'conexao-com-meu-filho',
@@ -52,7 +52,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Momentos que Contam',
     subtitle: 'Guarde as pequenas grandes memórias.',
     href: '/meu-dia/momentos-que-contam',
-    ctaText: 'Explorar →',
+    ctaText: 'Explorar',
   },
   {
     id: 'aprender-brincar',
@@ -60,7 +60,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Aprender Brincando',
     subtitle: 'Ideias rápidas de brincar e ensinar.',
     href: '/descobrir/aprender-brincar',
-    ctaText: 'Explorar →',
+    ctaText: 'Explorar',
   },
   {
     id: 'minha-evolucao',
@@ -68,7 +68,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Minha Jornada',
     subtitle: 'Veja o quanto vocês já caminharam.',
     href: '/eu360/minha-jornada',
-    ctaText: 'Explorar →',
+    ctaText: 'Explorar',
   },
   {
     id: 'comecar-com-leveza',
@@ -76,7 +76,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Meu Dia em 1 Minuto',
     subtitle: 'Feche o dia com um resumo leve.',
     href: '/meu-dia/meu-dia-em-1-minuto',
-    ctaText: 'Começar →',
+    ctaText: 'Começar',
   },
   {
     id: 'planos-premium',
@@ -84,14 +84,14 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Materna+',
     subtitle: 'Conteúdos guiados para ir mais fundo.',
     href: '/planos',
-    ctaText: 'Ver planos →',
+    ctaText: 'Ver planos',
   },
 ]
 
 export default function CardHub() {
   return (
     <section className="mt-6 space-y-12">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 md:gap-y-8 px-2 md:px-4 max-w-7xl mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 md:gap-x-4 md:gap-y-6 px-2 md:px-4 max-w-7xl mx-auto">
         {HUB_CARDS.map((card, index) => (
           <div
             key={card.id}
