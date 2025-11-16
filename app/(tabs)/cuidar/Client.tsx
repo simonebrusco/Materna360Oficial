@@ -59,6 +59,8 @@ export default function CuidarClient({ recipesSection }: Props) {
       title={pageTitle}
       subtitle={pageSubtitle}
     >
+      <CareHub />
+
       <Card>
         <div className="flex flex-wrap gap-2">
           <FilterPill active>Hoje</FilterPill>
