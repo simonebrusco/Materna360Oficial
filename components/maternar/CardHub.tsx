@@ -10,6 +10,7 @@ type CardConfig = {
   title: string
   subtitle: string
   href: string
+  ctaText: string
 }
 
 const HUB_CARDS: CardConfig[] = [
@@ -19,6 +20,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Meu Bem-estar',
     subtitle: 'Seu momento',
     href: '/cuidar?focus=mae',
+    ctaText: 'Explorar',
   },
   {
     id: 'cuidar-do-meu-filho',
@@ -26,6 +28,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Cuidar com Amor',
     subtitle: 'Para o seu filho',
     href: '/cuidar?focus=filho',
+    ctaText: 'Explorar',
   },
   {
     id: 'organizar-minha-rotina',
@@ -33,6 +36,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Rotina Leve',
     subtitle: 'Organize o dia',
     href: '/meu-dia?focus=planner',
+    ctaText: 'Organizar',
   },
   {
     id: 'humor-energia',
@@ -40,6 +44,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Como Estou Hoje',
     subtitle: 'Humor & energia',
     href: '/meu-dia?focus=humor',
+    ctaText: 'Ver agora',
   },
   {
     id: 'conexao-com-meu-filho',
@@ -47,6 +52,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Momentos que Contam',
     subtitle: 'Conexão diária',
     href: '/meu-dia?focus=conexao',
+    ctaText: 'Explorar',
   },
   {
     id: 'aprender-brincar',
@@ -54,6 +60,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Aprender Brincando',
     subtitle: 'Ideias rápidas',
     href: '/descobrir?focus=atividades',
+    ctaText: 'Descobrir',
   },
   {
     id: 'minha-evolucao',
@@ -61,6 +68,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Minha Jornada',
     subtitle: 'Seu progresso',
     href: '/eu360?focus=evolucao',
+    ctaText: 'Ver progresso',
   },
   {
     id: 'comecar-com-leveza',
@@ -68,6 +76,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Meu Dia em 1 Minuto',
     subtitle: 'Resumo rápido',
     href: '/meu-dia',
+    ctaText: 'Resumo',
   },
   {
     id: 'planos-premium',
@@ -75,6 +84,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Materna+',
     subtitle: 'Acesso premium',
     href: '/planos',
+    ctaText: 'Acessar',
   },
 ]
 
@@ -96,6 +106,7 @@ export default function CardHub() {
               subtitle={card.subtitle}
               href={card.href}
               cardId={card.id}
+              ctaText={card.ctaText}
             />
           </div>
         ))}
