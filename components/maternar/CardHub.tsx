@@ -51,7 +51,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'sparkles',
     title: 'Momentos que Contam',
     subtitle: 'Conexão diária',
-    href: '/meu-dia?focus=conexao',
+    href: '/meu-dia/momentos-que-contam',
     ctaText: 'Explorar',
   },
   {
