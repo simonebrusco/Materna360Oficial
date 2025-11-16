@@ -70,30 +70,38 @@ export default function CuidarClient({ recipesSection }: Props) {
 
       <ChildDiaryCard />
 
-      <PageGrid>
+      <section id="cuidar-mae">
+        <PageGrid>
+          <Card>
+            <Badge className="mb-2">Bem-estar</Badge>
+            <EmptyState
+              title="Check-in de bem-estar"
+              text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+            />
+          </Card>
+        </PageGrid>
+      </section>
+
+      <section id="cuidar-filho">
+        <PageGrid>
+          <ChildDiary />
+
+          <Card>
+            <Badge className="mb-2">Saúde</Badge>
+            <EmptyState
+              title="Saúde & Vacinas"
+              text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+            />
+          </Card>
+        </PageGrid>
+      </section>
+
+      <section id="cuidar-filho-consultas">
         <Card>
-          <Badge className="mb-2">Bem-estar</Badge>
-          <EmptyState
-            title="Check-in de bem-estar"
-            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
-          />
+          <Badge className="mb-2">Consultas</Badge>
+          <AppointmentsMVP storageKey="cuidar:appointments" />
         </Card>
-
-        <ChildDiary />
-
-        <Card>
-          <Badge className="mb-2">Saúde</Badge>
-          <EmptyState
-            title="Saúde & Vacinas"
-            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
-          />
-        </Card>
-      </PageGrid>
-
-      <Card>
-        <Badge className="mb-2">Consultas</Badge>
-        <AppointmentsMVP storageKey="cuidar:appointments" />
-      </Card>
+      </section>
 
       <Card>
         <Badge className="mb-2">Receitas</Badge>
