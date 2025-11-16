@@ -102,6 +102,14 @@ const DEFAULT_PROFILE: Profile = {
   children: [{ name: 'Seu filho' } as any], // age in months
 }
 
+// Focus query param to section ID mapping
+const FOCUS_TO_ID: Record<string, string> = {
+  planner: 'meu-dia-planner',
+  humor: 'meu-dia-humor',
+  conexao: 'meu-dia-conexao',
+  resumo: 'meu-dia-resumo',
+}
+
 export function MeuDiaClient({
   dailyGreeting,
   currentDateKey,
