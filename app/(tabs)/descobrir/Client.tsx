@@ -147,6 +147,25 @@ export default function DiscoverClient() {
     setSavedCount(saved.length);
   }, [saved]);
 
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = DISC_FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
+
   // Compute filtered suggestions in real time
   const filters: FilterInputs = {
     childAgeMonths,
