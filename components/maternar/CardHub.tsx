@@ -67,7 +67,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'crown',
     title: 'Minha Jornada',
     subtitle: 'Seu progresso',
-    href: '/eu360?focus=evolucao',
+    href: '/eu360/minha-jornada',
     ctaText: 'Ver progresso',
   },
   {
