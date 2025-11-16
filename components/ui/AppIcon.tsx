@@ -53,6 +53,8 @@ const ICON_MAP = {
   plus: Icons.Plus,
   clock: Icons.Clock,
   'dollar-sign': Icons.DollarSign,
+  'calendar-clock': Icons.Clock,
+  stethoscope: Icons.Stethoscope,
 } as const;
 
 const DEFAULT_ICON = Icons.Info;
