@@ -111,13 +111,6 @@ export default function CardHub() {
           </div>
         ))}
       </div>
-
-      {/* Emotional closing message */}
-      <div className="text-center px-4 md:px-6 max-w-2xl mx-auto pt-8 md:pt-10">
-        <p className="text-[14px] text-gray-700/70 leading-[1.4]">
-          Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-        </p>
-      </div>
     </section>
   )
 }
