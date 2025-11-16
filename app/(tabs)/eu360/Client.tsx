@@ -249,13 +249,14 @@ export default function Eu360Client() {
         )}
       </ClientOnly>
 
-      <ClientOnly>
-        {isEnabled('FF_LAYOUT_V1') && (
-          <Card>
-            <Reveal delay={80}>
-              <div>
-                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
-                <div className="space-y-5">
+      <section id="eu360-evolucao">
+        <ClientOnly>
+          {isEnabled('FF_LAYOUT_V1') && (
+            <Card>
+              <Reveal delay={80}>
+                <div>
+                  <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
+                  <div className="space-y-5">
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-support-1">Nível {gamification.level}</span>
@@ -276,12 +277,13 @@ export default function Eu360Client() {
                       <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
                     </div>
                   </div>
+                  </div>
                 </div>
-              </div>
-            </Reveal>
-          </Card>
-        )}
-      </ClientOnly>
+              </Reveal>
+            </Card>
+          )}
+        </ClientOnly>
+      </section>
 
       {/* Plan Card Section - P2 */}
       <ClientOnly>
