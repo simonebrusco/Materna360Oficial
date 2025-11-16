@@ -10,6 +10,7 @@ type MaternarFeatureCardProps = {
   subtitle: string
   href: string
   cardId: string
+  ctaText?: string
 }
 
 export function MaternarFeatureCard({
@@ -18,6 +19,7 @@ export function MaternarFeatureCard({
   subtitle,
   href,
   cardId,
+  ctaText = 'Acessar',
 }: MaternarFeatureCardProps) {
   const handleClick = () => {
     track('nav.click', {
@@ -27,17 +29,13 @@ export function MaternarFeatureCard({
     })
   }
 
-  return (
-    <Link
-      href={href}
-      onClick={handleClick}
-      className="flex h-full min-h-[150px] flex-col justify-between rounded-3xl bg-white shadow-soft p-3 text-left"
-    >
-      <div className="flex flex-col gap-2">
-        <div className="inline-flex items-center justify-center rounded-2xl bg-m360-pink-soft p-2.5 w-fit">
+  const content = (
+    <div className="flex h-full min-h-[180px] flex-col items-center justify-between rounded-3xl bg-white shadow-soft px-4 py-4 text-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-m360-pink-soft">
           <AppIcon
             name={icon}
-            size={20}
+            size={24}
             variant="brand"
             decorative
           />
@@ -53,11 +51,21 @@ export function MaternarFeatureCard({
         </div>
       </div>
 
-      <span className="mt-2 text-xs font-medium text-m360-pink inline-flex items-center gap-1">
-        Acessar <span>→</span>
+      <span className="mt-2 text-[11px] font-medium text-m360-pink inline-flex items-center gap-1">
+        {ctaText} <span>→</span>
       </span>
-    </Link>
+    </div>
   )
+
+  if (href) {
+    return (
+      <Link href={href} onClick={handleClick} className="block h-full">
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className="h-full">{content}</div>
 }
 
 export default MaternarFeatureCard

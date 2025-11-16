@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 import HScroll from '@/components/common/HScroll';
 import AppIcon from '@/components/ui/AppIcon';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
@@ -62,8 +63,14 @@ const LOCATION_OPTIONS: { id: Location; label: string; icon: 'place' | 'leaf' }[
 
 const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
+// Focus query param to section ID mapping
+const DISC_FOCUS_TO_ID: Record<string, string> = {
+  atividades: 'descobrir-atividades',
+}
+
 export default function DiscoverClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { name, children } = useProfile();
   const { saved } = useSavedSuggestions();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
@@ -139,6 +146,25 @@ export default function DiscoverClient() {
   React.useEffect(() => {
     setSavedCount(saved.length);
   }, [saved]);
+
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = DISC_FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
 
   // Compute filtered suggestions in real time
   const filters: FilterInputs = {
@@ -448,9 +474,10 @@ export default function DiscoverClient() {
       )}
 
       {/* Suggestions Grid */}
-      {filteredSuggestions.length > 0 ? (
-        <PageGrid cols={2}>
-          {filteredSuggestions.map((suggestion) => {
+      <section id="descobrir-atividades">
+        {filteredSuggestions.length > 0 ? (
+          <PageGrid cols={2}>
+            {filteredSuggestions.map((suggestion) => {
             const isSaved = savedItems.has(suggestion.id);
             const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
             const q = canSaveMore();
@@ -527,14 +554,15 @@ export default function DiscoverClient() {
               </Card>
             );
           })}
-        </PageGrid>
-      ) : (
-        <EmptyState
-          title="Nenhum resultado encontrado."
-          text="Ajuste os filtros e tente novamente."
-          cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
-        />
-      )}
+          </PageGrid>
+        ) : (
+          <EmptyState
+            title="Nenhum resultado encontrado."
+            text="Ajuste os filtros e tente novamente."
+            cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
+          />
+        )}
+      </section>
     </PageTemplate>
   );
 }

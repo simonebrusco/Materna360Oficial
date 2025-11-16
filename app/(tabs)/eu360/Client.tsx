@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import GridRhythm from '@/components/common/GridRhythm'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
@@ -50,6 +51,12 @@ type MoodHistory = {
 
 const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
 const MOODS = ['frown', 'meh', 'smile', 'smile-plus', 'sparkles'] as const
+
+// Focus query param to section ID mapping
+const EU360_FOCUS_TO_ID: Record<string, string> = {
+  evolucao: 'eu360-evolucao',
+}
+
 const ACHIEVEMENTS = [
   { icon: 'footprints', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
   { icon: 'sparkles', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
@@ -66,10 +73,31 @@ const WEEKLY_SUMMARY = [
 ] as const
 
 export default function Eu360Client() {
+  const searchParams = useSearchParams()
+
   // Page-view telemetry on mount
   useEffect(() => {
     track('nav.click', { tab: 'eu360', dest: '/eu360' })
   }, [])
+
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = EU360_FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
 
   const [gratitude, setGratitude] = useState('')
   const [gratitudes, setGratitudes] = useState<string[]>([
@@ -221,13 +249,14 @@ export default function Eu360Client() {
         )}
       </ClientOnly>
 
-      <ClientOnly>
-        {isEnabled('FF_LAYOUT_V1') && (
-          <Card>
-            <Reveal delay={80}>
-              <div>
-                <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
-                <div className="space-y-5">
+      <section id="eu360-evolucao">
+        <ClientOnly>
+          {isEnabled('FF_LAYOUT_V1') && (
+            <Card>
+              <Reveal delay={80}>
+                <div>
+                  <SectionH2 className="mb-4 inline-flex items-center gap-2"><AppIcon name="crown" className="text-primary" size={20} /><span>Sua Jornada Gamificada</span></SectionH2>
+                  <div className="space-y-5">
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-support-1">Nível {gamification.level}</span>
@@ -248,12 +277,13 @@ export default function Eu360Client() {
                       <p className="mt-1 text-sm font-semibold text-primary">{gamification.badges.length} conquistas</p>
                     </div>
                   </div>
+                  </div>
                 </div>
-              </div>
-            </Reveal>
-          </Card>
-        )}
-      </ClientOnly>
+              </Reveal>
+            </Card>
+          )}
+        </ClientOnly>
+      </section>
 
       {/* Plan Card Section - P2 */}
       <ClientOnly>

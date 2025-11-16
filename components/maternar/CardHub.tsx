@@ -1,5 +1,6 @@
 'use client'
 
+import { clsx } from 'clsx'
 import { MaternarFeatureCard } from './MaternarFeatureCard'
 import type { KnownIconName } from '@/components/ui/AppIcon'
 
@@ -9,87 +10,105 @@ type CardConfig = {
   title: string
   subtitle: string
   href: string
+  ctaText?: string
 }
 
 const HUB_CARDS: CardConfig[] = [
   {
     id: 'cuidar-de-mim',
     icon: 'heart',
-    title: 'Meu bem-estar',
-    subtitle: 'Cuidar de você sem culpa',
-    href: '/cuidar?focus=mae',
+    title: 'Meu Bem-estar',
+    subtitle: 'Seu momento',
+    href: '/cuidar/meu-bem-estar',
+    ctaText: 'Explorar',
   },
   {
     id: 'cuidar-do-meu-filho',
     icon: 'care',
-    title: 'Cuidar do meu filho',
-    subtitle: 'Saúde e desenvolvimento',
-    href: '/cuidar?focus=filho',
+    title: 'Cuidar com Amor',
+    subtitle: 'Para o seu filho',
+    href: '/cuidar/cuidar-com-amor',
+    ctaText: 'Explorar',
   },
   {
     id: 'organizar-minha-rotina',
     icon: 'calendar',
-    title: 'Organizar minha rotina',
-    subtitle: 'Planejamento diário',
-    href: '/meu-dia?focus=planner',
+    title: 'Rotina Leve',
+    subtitle: 'Organize o dia',
+    href: '/meu-dia/rotina-leve',
+    ctaText: 'Organizar',
   },
   {
     id: 'humor-energia',
     icon: 'smile',
-    title: 'Humor & energia',
-    subtitle: 'Como você está se sentindo hoje',
-    href: '/meu-dia?focus=humor',
+    title: 'Como Estou Hoje',
+    subtitle: 'Humor & energia',
+    href: '/meu-dia/como-estou-hoje',
+    ctaText: 'Ver agora',
   },
   {
     id: 'conexao-com-meu-filho',
     icon: 'sparkles',
-    title: 'Momentos com meu filho',
-    subtitle: 'Momentos especiais que importam',
-    href: '/meu-dia?focus=conexao',
+    title: 'Momentos que Contam',
+    subtitle: 'Conexão diária',
+    href: '/meu-dia/momentos-que-contam',
+    ctaText: 'Explorar',
   },
   {
     id: 'aprender-brincar',
     icon: 'idea',
-    title: 'Aprender & brincar',
-    subtitle: 'Ideias criativas e atividades',
-    href: '/descobrir?focus=atividades',
+    title: 'Aprender Brincando',
+    subtitle: 'Ideias rápidas',
+    href: '/descobrir/aprender-brincar',
+    ctaText: 'Descobrir',
   },
   {
     id: 'minha-evolucao',
     icon: 'crown',
-    title: 'Minha evolução',
-    subtitle: 'Conquistas e progresso',
-    href: '/eu360?focus=evolucao',
+    title: 'Minha Jornada',
+    subtitle: 'Seu progresso',
+    href: '/eu360/minha-jornada',
+    ctaText: 'Ver progresso',
   },
   {
     id: 'comecar-com-leveza',
-    icon: 'sun',
-    title: 'Meu dia em resumo',
-    subtitle: 'Veja rapidamente o que importa hoje',
-    href: '/meu-dia',
+    icon: 'clock',
+    title: 'Meu Dia em 1 Minuto',
+    subtitle: 'Resumo rápido',
+    href: '/meu-dia/meu-dia-em-1-minuto',
+    ctaText: 'Resumo',
   },
   {
     id: 'planos-premium',
     icon: 'star',
-    title: 'Planos & Premium',
-    subtitle: 'Desbloqueie todos os recursos',
+    title: 'Materna+',
+    subtitle: 'Acesso premium',
     href: '/planos',
+    ctaText: 'Acessar',
   },
 ]
 
 export default function CardHub() {
   return (
     <section className="mt-6">
-      <div className="grid grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
-        {HUB_CARDS.map((card) => (
-          <MaternarFeatureCard
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
+        {HUB_CARDS.map((card, index) => (
+          <div
             key={card.id}
-            icon={card.icon}
-            title={card.title}
-            subtitle={card.subtitle}
-            href={card.href}
-            cardId={card.id}
-          />
+            className={clsx(
+              'h-full',
+              index === HUB_CARDS.length - 1 && 'col-span-2 md:col-span-1'
+            )}
+          >
+            <MaternarFeatureCard
+              icon={card.icon}
+              title={card.title}
+              subtitle={card.subtitle}
+              href={card.href}
+              cardId={card.id}
+              ctaText={card.ctaText}
+            />
+          </div>
         ))}
       </div>
     </section>
