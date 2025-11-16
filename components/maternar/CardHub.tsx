@@ -19,7 +19,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'heart',
     title: 'Meu Bem-estar',
     subtitle: 'Seu momento',
-    href: '/cuidar?focus=mae',
+    href: '/cuidar/meu-bem-estar',
     ctaText: 'Explorar',
   },
   {
