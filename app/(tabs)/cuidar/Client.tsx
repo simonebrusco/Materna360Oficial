@@ -1,6 +1,8 @@
 'use client'
 
 import * as React from 'react'
+import { useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useProfile } from '@/app/hooks/useProfile'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard as Card } from '@/components/ui/card'
