@@ -63,8 +63,14 @@ const LOCATION_OPTIONS: { id: Location; label: string; icon: 'place' | 'leaf' }[
 
 const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
 
+// Focus query param to section ID mapping
+const DISC_FOCUS_TO_ID: Record<string, string> = {
+  atividades: 'descobrir-atividades',
+}
+
 export default function DiscoverClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { name, children } = useProfile();
   const { saved } = useSavedSuggestions();
   const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
