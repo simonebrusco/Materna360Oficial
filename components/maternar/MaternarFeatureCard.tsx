@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import { motion } from 'framer-motion'
 import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 
 type MaternarFeatureCardProps = {
