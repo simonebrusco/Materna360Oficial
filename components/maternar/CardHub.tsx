@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react'
-import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
+import { clsx } from 'clsx'
 import { MaternarFeatureCard } from './MaternarFeatureCard'
+import type { KnownIconName } from '@/components/ui/AppIcon'
 
 type CardConfig = {
   id: string
@@ -12,7 +12,7 @@ type CardConfig = {
   href: string
 }
 
-const MATERNAR_FEATURES: CardConfig[] = [
+const HUB_CARDS: CardConfig[] = [
   {
     id: 'cuidar-de-mim',
     icon: 'heart',
@@ -78,31 +78,28 @@ const MATERNAR_FEATURES: CardConfig[] = [
   },
 ]
 
-function createIconComponent(iconName: KnownIconName) {
-  return React.forwardRef<SVGSVGElement>((props, ref) => (
-    <AppIcon name={iconName} size={24} variant="brand" decorative {...props} />
-  ))
-}
-
-export function CardHub() {
+export default function CardHub() {
   return (
     <section className="mt-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {MATERNAR_FEATURES.map((feature) => {
-          const IconComponent = createIconComponent(feature.icon)
-          return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 px-2 md:px-4 max-w-7xl mx-auto">
+        {HUB_CARDS.map((card, index) => (
+          <div
+            key={card.id}
+            className={clsx(
+              'h-full',
+              index === HUB_CARDS.length - 1 && 'col-span-2 md:col-span-1'
+            )}
+          >
             <MaternarFeatureCard
-              key={feature.id}
-              title={feature.title}
-              subtitle={feature.subtitle}
-              icon={IconComponent}
-              href={feature.href}
+              icon={card.icon}
+              title={card.title}
+              subtitle={card.subtitle}
+              href={card.href}
+              cardId={card.id}
             />
-          )
-        })}
+          </div>
+        ))}
       </div>
     </section>
   )
 }
-
-export default CardHub
