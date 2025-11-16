@@ -75,7 +75,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'clock',
     title: 'Meu Dia em 1 Minuto',
     subtitle: 'Resumo rápido',
-    href: '/meu-dia',
+    href: '/meu-dia/meu-dia-em-1-minuto',
     ctaText: 'Resumo',
   },
   {
