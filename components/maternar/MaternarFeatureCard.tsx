@@ -44,16 +44,8 @@ export function MaternarFeatureCard({
       data-card-id={cardId}
       className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-3xl"
     >
-      <motion.div
+      <div
         role="article"
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{
-          duration: 0.35,
-          delay: 0.03 * index,
-          ease: [0.22, 0.61, 0.36, 1],
-        }}
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
         <div className="flex flex-col gap-3">
@@ -84,7 +76,7 @@ export function MaternarFeatureCard({
             <span aria-hidden="true">→</span>
           </button>
         </div>
-      </motion.div>
+      </div>
     </Link>
   )
 }
