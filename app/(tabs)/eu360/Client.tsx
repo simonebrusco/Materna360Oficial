@@ -73,10 +73,31 @@ const WEEKLY_SUMMARY = [
 ] as const
 
 export default function Eu360Client() {
+  const searchParams = useSearchParams()
+
   // Page-view telemetry on mount
   useEffect(() => {
     track('nav.click', { tab: 'eu360', dest: '/eu360' })
   }, [])
+
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = EU360_FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
 
   const [gratitude, setGratitude] = useState('')
   const [gratitudes, setGratitudes] = useState<string[]>([
