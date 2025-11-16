@@ -1,17 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import type React from 'react'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 
 type MaternarFeatureCardProps = {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | React.ComponentType<any>
+  icon: KnownIconName
   title: string
   subtitle: string
   href: string
 }
 
 export function MaternarFeatureCard({
-  icon: Icon,
+  icon,
   title,
   subtitle,
   href,
@@ -20,7 +20,12 @@ export function MaternarFeatureCard({
     <div className="flex h-full min-h-[180px] flex-col items-center justify-between rounded-3xl bg-white shadow-soft px-4 py-4 text-center">
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-m360-pink-soft">
-          <Icon className="h-6 w-6 text-m360-pink" />
+          <AppIcon
+            name={icon}
+            size={24}
+            variant="brand"
+            decorative
+          />
         </div>
 
         <div className="flex flex-col gap-1">
