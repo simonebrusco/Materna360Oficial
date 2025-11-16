@@ -30,6 +30,8 @@ export function MaternarFeatureCard({
     })
   }
 
+  const isPremium = cardId === 'planos-premium';
+
   return (
     <Link
       href={href}
@@ -41,22 +43,22 @@ export function MaternarFeatureCard({
       <article
         className={clsx(
           'flex h-full flex-col justify-between',
-          'rounded-3xl border border-black/5 bg-white/90',
-          'shadow-[0_6px_22px_rgba(0,0,0,0.06)] backdrop-blur-sm',
+          'rounded-3xl border bg-white/90 backdrop-blur-sm',
           'px-4 py-4 md:px-5 md:py-5',
           'transition-transform transition-shadow duration-200 ease-out',
-          'group-hover:-translate-y-0.5 group-hover:shadow-[0_10px_28px_rgba(0,0,0,0.08)]',
-          'group-active:translate-y-0 group-active:shadow-[0_4px_14px_rgba(0,0,0,0.05)]'
+          'group-hover:-translate-y-0.5',
+          'group-active:translate-y-0',
+          isPremium
+            ? 'border-transparent bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] shadow-[0_10px_32px_rgba(255,0,94,0.16)] group-hover:shadow-[0_14px_40px_rgba(255,0,94,0.20)]'
+            : 'border-black/5 shadow-[0_6px_22px_rgba(0,0,0,0.06)] group-hover:shadow-[0_10px_28px_rgba(0,0,0,0.08)]'
         )}
       >
         {/* Icon */}
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/70">
           <AppIcon
             name={icon}
-            size={16}
-            variant="brand"
+            className="h-4 w-4 text-[#ff005e]"
             aria-hidden="true"
-            decorative
           />
         </div>
 
