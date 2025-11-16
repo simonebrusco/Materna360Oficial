@@ -51,6 +51,12 @@ type MoodHistory = {
 
 const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
 const MOODS = ['frown', 'meh', 'smile', 'smile-plus', 'sparkles'] as const
+
+// Focus query param to section ID mapping
+const EU360_FOCUS_TO_ID: Record<string, string> = {
+  evolucao: 'eu360-evolucao',
+}
+
 const ACHIEVEMENTS = [
   { icon: 'footprints', title: 'Primeiro Passo', desc: 'Complete uma atividade' },
   { icon: 'sparkles', title: 'Mestre da Meditação', desc: 'Meditou 10x' },
