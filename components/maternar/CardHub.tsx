@@ -1,10 +1,12 @@
 'use client'
 
+import React from 'react'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 import { MaternarFeatureCard } from './MaternarFeatureCard'
 
 type CardConfig = {
   id: string
-  icon: string
+  icon: KnownIconName
   title: string
   subtitle: string
   href: string
@@ -76,19 +78,28 @@ const MATERNAR_FEATURES: CardConfig[] = [
   },
 ]
 
+function createIconComponent(iconName: KnownIconName) {
+  return React.forwardRef<SVGSVGElement>((props, ref) => (
+    <AppIcon name={iconName} size={24} variant="brand" decorative {...props} />
+  ))
+}
+
 export function CardHub() {
   return (
     <section className="mt-6">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {MATERNAR_FEATURES.map((feature) => (
-          <MaternarFeatureCard
-            key={feature.id}
-            title={feature.title}
-            subtitle={feature.subtitle}
-            icon={feature.icon as any}
-            href={feature.href}
-          />
-        ))}
+        {MATERNAR_FEATURES.map((feature) => {
+          const IconComponent = createIconComponent(feature.icon)
+          return (
+            <MaternarFeatureCard
+              key={feature.id}
+              title={feature.title}
+              subtitle={feature.subtitle}
+              icon={IconComponent}
+              href={feature.href}
+            />
+          )
+        })}
       </div>
     </section>
   )
