@@ -2,12 +2,14 @@
 
 import Link from 'next/link'
 import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
+import { track } from '@/app/lib/telemetry'
 
 type MaternarFeatureCardProps = {
   icon: KnownIconName
   title: string
   subtitle: string
   href: string
+  cardId: string
 }
 
 export function MaternarFeatureCard({
@@ -15,7 +17,16 @@ export function MaternarFeatureCard({
   title,
   subtitle,
   href,
+  cardId,
 }: MaternarFeatureCardProps) {
+  const handleClick = () => {
+    track('nav.click', {
+      tab: 'maternar',
+      card: cardId,
+      dest: href,
+    })
+  }
+
   const content = (
     <div className="flex h-full min-h-[180px] flex-col items-center justify-between rounded-3xl bg-white shadow-soft px-4 py-4 text-center">
       <div className="flex flex-col items-center gap-3">
@@ -44,11 +55,15 @@ export function MaternarFeatureCard({
     </div>
   )
 
-  return (
-    <Link href={href} className="block h-full">
-      {content}
-    </Link>
-  )
+  if (href) {
+    return (
+      <Link href={href} onClick={handleClick} className="block h-full">
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className="h-full">{content}</div>
 }
 
 export default MaternarFeatureCard
