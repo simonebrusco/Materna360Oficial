@@ -27,7 +27,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'care',
     title: 'Cuidar com Amor',
     subtitle: 'Para o seu filho',
-    href: '/cuidar?focus=filho',
+    href: '/cuidar/cuidar-com-amor',
     ctaText: 'Explorar',
   },
   {
