@@ -10,6 +10,7 @@ type MaternarFeatureCardProps = {
   subtitle: string
   href: string
   cardId: string
+  ctaText: string
 }
 
 export function MaternarFeatureCard({
@@ -18,6 +19,7 @@ export function MaternarFeatureCard({
   subtitle,
   href,
   cardId,
+  ctaText,
 }: MaternarFeatureCardProps) {
   const handleClick = () => {
     track('nav.click', {
@@ -50,7 +52,7 @@ export function MaternarFeatureCard({
       </div>
 
       <span className="mt-2 text-[11px] font-medium text-m360-pink inline-flex items-center gap-1">
-        Acessar <span>→</span>
+        {ctaText} <span>→</span>
       </span>
     </div>
   )
