@@ -1,16 +1,5 @@
 'use client'
 
-import {
-  Heart,
-  Hands,
-  Calendar,
-  Smile,
-  Sparkles,
-  Lightbulb,
-  Crown,
-  Sun,
-  Star,
-} from 'lucide-react'
 import { MaternarFeatureCard } from './MaternarFeatureCard'
 
 type CardConfig = {
@@ -19,18 +8,6 @@ type CardConfig = {
   title: string
   subtitle: string
   href: string
-}
-
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  heart: Heart,
-  care: Hands,
-  calendar: Calendar,
-  smile: Smile,
-  sparkles: Sparkles,
-  idea: Lightbulb,
-  crown: Crown,
-  sun: Sun,
-  star: Star,
 }
 
 const MATERNAR_FEATURES: CardConfig[] = [
@@ -108,7 +85,7 @@ export function CardHub() {
             key={feature.id}
             title={feature.title}
             subtitle={feature.subtitle}
-            icon={ICON_MAP[feature.icon] || Heart}
+            icon={feature.icon as any}
             href={feature.href}
           />
         ))}
