@@ -90,7 +90,7 @@ const HUB_CARDS: CardConfig[] = [
 
 export default function CardHub() {
   return (
-    <section className="mt-6 space-y-12">
+    <section className="mt-6">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 md:gap-x-4 md:gap-y-6 px-2 md:px-4 max-w-7xl mx-auto">
         {HUB_CARDS.map((card, index) => (
           <div
@@ -107,6 +107,7 @@ export default function CardHub() {
               href={card.href}
               cardId={card.id}
               ctaText={card.ctaText}
+              index={index}
             />
           </div>
         ))}
