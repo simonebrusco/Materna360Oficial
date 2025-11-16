@@ -139,6 +139,7 @@ export function MeuDiaClient({
   const finalPlannerTitle = plannerTitle || __fallbackPlannerTitle__
 
   const searchParams = useSearchParams()
+
   const [trendOpen, setTrendOpen] = useState(false)
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [showNoteModal, setShowNoteModal] = useState(false)
@@ -267,9 +268,10 @@ export function MeuDiaClient({
     toast.success('Nota salva!')
   }
 
-  const firstName = name ? name.split(' ')[0] : '';
-  const pageTitle = firstName ? `${firstName}, como está seu dia hoje?` : 'Meu dia';
-  const pageSubtitle = 'Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.';
+  const firstName = name ? name.split(' ')[0] : ''
+  const pageTitle = firstName ? `${firstName}, como está seu dia hoje?` : 'Meu dia'
+  const pageSubtitle =
+    'Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.'
 
   return (
     <PageTemplate
@@ -281,7 +283,9 @@ export function MeuDiaClient({
         {/* MACRO BLOCK 1: EMOTIONAL START */}
         <div className="mb-16">
           <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Começar com Leveza</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Comece o dia com calma. Este espaço está aqui para apoiar você.</p>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
+            Comece o dia com calma. Este espaço está aqui para apoiar você.
+          </p>
 
           {/* Message of the Day - Premium Hero Card */}
           <Reveal delay={100}>
@@ -339,7 +343,10 @@ export function MeuDiaClient({
                 </div>
 
                 {/* Weekly Summary Analytics Card */}
-                <section id="meu-dia-resumo" className="mt-4 rounded-2xl bg-gray-50/80 px-4 py-3 flex flex-col gap-2 mb-4">
+                <section
+                  id="meu-dia-resumo"
+                  className="mt-4 rounded-2xl bg-gray-50/80 px-4 py-3 flex flex-col gap-2 mb-4"
+                >
                   <p className="m360-label-sm text-gray-600">Sua semana até agora</p>
                   <div>
                     <MoodSparkline />
@@ -367,22 +374,22 @@ export function MeuDiaClient({
               resolve={() => Promise.resolve(generateCoachSuggestion())}
               onView={(id: string) => {
                 try {
-                  trackTelemetry('coach.card_view', { id, tab: 'meu-dia' });
+                  trackTelemetry('coach.card_view', { id, tab: 'meu-dia' })
                 } catch {}
               }}
               onApply={(id: string) => {
                 try {
-                  trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' });
+                  trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' })
                 } catch {}
               }}
               onSave={(id: string) => {
                 try {
-                  trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' });
+                  trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' })
                 } catch {}
               }}
               onWhyOpen={(id: string) => {
                 try {
-                  trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' });
+                  trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' })
                 } catch {}
               }}
             />
@@ -392,7 +399,9 @@ export function MeuDiaClient({
         {/* MACRO BLOCK 2: DAILY ORGANIZATION */}
         <section id="meu-dia-planner" className="mb-16">
           <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Organização do Dia</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Organize seu dia com leveza — um passo de cada vez.</p>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
+            Organize seu dia com leveza — um passo de cada vez.
+          </p>
 
           {/* House Routine Card */}
           <Reveal delay={230}>
@@ -409,10 +418,8 @@ export function MeuDiaClient({
             </div>
           </Reveal>
 
-
-
           {/* Family Planner / Balance Card */}
-          <div className="print-card space-y-8">
+          <div id="meu-dia-print-area" className="print-card space-y-8">
             {/* Planner da Mãe Card */}
             <Reveal delay={250}>
               <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
@@ -427,12 +434,12 @@ export function MeuDiaClient({
                 </div>
                 <div>
                   <FamilyPlanner
-                  currentDateKey={finalCurrentDateKey}
-                  weekStartKey={finalWeekStartKey}
-                  weekLabels={finalWeekLabels}
-                  plannerTitle={finalPlannerTitle}
-                  profile={finalProfile}
-                  dateKey={finalCurrentDateKey}
+                    currentDateKey={finalCurrentDateKey}
+                    weekStartKey={finalWeekStartKey}
+                    weekLabels={finalWeekLabels}
+                    plannerTitle={finalPlannerTitle}
+                    profile={finalProfile}
+                    dateKey={finalCurrentDateKey}
                     recommendations={recommendations}
                     initialBuckets={initialBuckets}
                   />
@@ -517,7 +524,10 @@ export function MeuDiaClient({
                 {notes.length > 0 ? (
                   <div className="notesCard-list space-y-2">
                     {notes.map((note, idx) => (
-                      <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
+                      <div
+                        key={idx}
+                        className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft"
+                      >
                         {note}
                       </div>
                     ))}
@@ -530,7 +540,9 @@ export function MeuDiaClient({
                       </div>
                       <div>
                         <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
-                        <p className="mt-1 text-xs text-support-2">Use este espaço para registrar pensamentos, ideias ou momentos especiais.</p>
+                        <p className="mt-1 text-xs text-support-2">
+                          Use este espaço para registrar pensamentos, ideias ou momentos especiais.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -543,7 +555,9 @@ export function MeuDiaClient({
         {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
         <section id="meu-dia-conexao" className="mb-16">
           <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Conexão & Cuidado</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">Ideias simples para tornar o dia mais especial.</p>
+          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
+            Ideias simples para tornar o dia mais especial.
+          </p>
 
           {/* Activity of the Day Card */}
           <Reveal delay={330}>
@@ -553,7 +567,9 @@ export function MeuDiaClient({
             <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
               <div className="flex flex-col gap-1 mb-4">
                 <h3 className="m360-subtitle">Uma ideia para hoje</h3>
-                <p className="m360-label-sm text-gray-600">Uma sugestão simples para criar um momento especial com seu filho hoje.</p>
+                <p className="m360-label-sm text-gray-600">
+                  Uma sugestão simples para criar um momento especial com seu filho hoje.
+                </p>
               </div>
               <ActivityOfDay dateKey={finalCurrentDateKey} profile={finalProfile} activities={allActivities} />
             </div>
@@ -578,7 +594,12 @@ export function MeuDiaClient({
                         aria-label={`${action.title} - ${action.description}`}
                       >
                         <div className="flex-shrink-0">
-                          <AppIcon name={action.iconName as any} size={24} decorative className="text-primary hover:opacity-80 transition-opacity" />
+                          <AppIcon
+                            name={action.iconName as any}
+                            size={24}
+                            decorative
+                            className="text-primary hover:opacity-80 transition-opacity"
+                          />
                         </div>
                         <div className="flex-1 w-full text-left">
                           <p className="font-semibold text-sm text-support-1">{action.title}</p>
@@ -600,10 +621,12 @@ export function MeuDiaClient({
           <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
             <SoftCard className="w-full notesCard-modal">
               <h3 className="m360-card-title mb-2">Adicionar Nota</h3>
-              <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
+              <p className="mb-4 text-sm text-support-2">
+                Anote um pensamento, uma tarefa ou uma gratidão.
+              </p>
               <textarea
                 value={noteText}
-                onChange={(event) => setNoteText(event.target.value)}
+                onChange={event => setNoteText(event.target.value)}
                 placeholder="Escreva sua nota aqui..."
                 className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 rows={4}
