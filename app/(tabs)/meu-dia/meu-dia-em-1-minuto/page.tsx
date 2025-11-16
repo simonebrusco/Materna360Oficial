@@ -1,100 +1,102 @@
 'use client'
 
+import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { SoftCard } from '@/components/ui/card'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
+import { track } from '@/app/lib/telemetry'
+
+interface MeuDiaCard {
+  id: string
+  icon: KnownIconName
+  title: string
+  subtitle: string
+  href: string
+}
+
+const MEU_DIA_CARDS: MeuDiaCard[] = [
+  {
+    id: 'como-foi-meu-dia',
+    icon: 'heart',
+    title: 'Como foi meu dia',
+    subtitle: 'Uma visão geral do dia.',
+    href: '#',
+  },
+  {
+    id: 'momentos-importantes',
+    icon: 'calendar',
+    title: 'Momentos importantes',
+    subtitle: 'Seu dia em destaques.',
+    href: '#',
+  },
+  {
+    id: 'como-me-senti',
+    icon: 'smile',
+    title: 'Como me senti',
+    subtitle: 'Entenda seu humor.',
+    href: '#',
+  },
+  {
+    id: 'o-que-quero-levar',
+    icon: 'star',
+    title: 'O que quero levar',
+    subtitle: 'Pequenas vitórias do dia.',
+    href: '#',
+  },
+]
 
 export default function MeuDiaEm1MinutoPage() {
+  const handleCardClick = (cardId: string, href: string) => {
+    track('nav.click', {
+      tab: 'meu-dia',
+      section: 'meu-dia-em-1-minuto',
+      card: cardId,
+      dest: href,
+    })
+  }
+
   return (
     <PageTemplate
       label="MEU DIA"
       title="Meu Dia em 1 Minuto"
-      subtitle="Um resumo rápido do que realmente importou."
+      subtitle="Um resumo rápido que realmente importa."
     >
-      <div className="px-4 py-6 flex justify-center">
-        <div className="w-full max-w-xl space-y-6">
-          {/* Intro */}
-          <section className="space-y-2">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Veja o dia com mais leveza
-            </h1>
-            <p className="text-sm leading-relaxed text-gray-700">
-              Esta página será o seu resumo diário: um jeito simples de enxergar
-              como foi o dia, sem cobranças, sem perfeccionismo e sem listas
-              infinitas. Em breve, cada card aqui vai trazer um pedacinho desse
-              resumo.
-            </p>
-          </section>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-4xl">
+        {MEU_DIA_CARDS.map((card) => (
+          <Link
+            key={card.id}
+            href={card.href}
+            onClick={() => handleCardClick(card.id, card.href)}
+            className="block h-full"
+          >
+            <SoftCard className="h-full rounded-3xl p-5 sm:p-6 flex flex-col">
+              {/* Icon */}
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                <AppIcon
+                  name={card.icon}
+                  size={24}
+                  variant="brand"
+                  decorative
+                />
+              </div>
 
-          {/* Cards grid */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Card 1 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Como foi meu dia
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Uma visão geral do dia em poucas palavras.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
+              {/* Content */}
+              <div className="flex-1 flex flex-col">
+                <h3 className="text-base sm:text-lg font-semibold text-support-1 mb-1">
+                  {card.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-support-2 mb-4">
+                  {card.subtitle}
+                </p>
+              </div>
 
-            {/* Card 2 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Momentos importantes
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Destaques que você quer guardar da sua rotina de hoje.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-
-            {/* Card 3 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Como eu me senti
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Um retrato rápido das emoções que mais apareceram hoje.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-
-            {/* Card 4 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                O que quero levar de hoje
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Um espaço para registrar o que você quer levar como aprendizado.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-          </section>
-        </div>
+              {/* CTA */}
+              <span className="text-xs sm:text-sm font-medium text-primary inline-flex items-center gap-1 mt-auto">
+                Acessar <span>→</span>
+              </span>
+            </SoftCard>
+          </Link>
+        ))}
       </div>
     </PageTemplate>
   )
