@@ -439,7 +439,7 @@ export default function DiscoverClient() {
         <div className="mb-4">
           <Badge className="mb-2">Humor</Badge>
           <SectionH2 className="mb-1">Como você está agora?</SectionH2>
-          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugest��es.</p>
+          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugestões��es.</p>
         </div>
         <HScroll aria-label="Opções de humor">
           {MOODS.map((m) => (
