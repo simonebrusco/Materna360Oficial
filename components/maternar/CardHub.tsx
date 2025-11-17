@@ -82,7 +82,7 @@ const HUB_CARDS: CardConfig[] = [
     id: 'minha-evolucao',
     icon: 'crown',
     title: 'Minha Jornada',
-    subtitle: 'Veja o quanto vocês já caminharam.',
+    subtitle: 'Acompanhe sua evolução e os momentos especiais da sua maternidade.',
     href: '/eu360/minha-jornada',
     ctaText: 'Explorar',
     tag: 'Você',
