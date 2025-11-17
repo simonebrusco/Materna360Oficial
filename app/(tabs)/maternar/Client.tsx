@@ -20,8 +20,10 @@ export default function MaternarClient() {
   }, []);
 
   const firstName = name ? name.split(' ')[0] : '';
-  const pageTitle = firstName ? `Bom dia, ${firstName}` : 'Bem-vinda ao Maternar';
   const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
+
+  // Use consistent title on server and client to avoid hydration mismatch
+  const pageTitle = isMounted && firstName ? `Bom dia, ${firstName}` : 'Bem-vinda ao Maternar';
 
   return (
     <div className="relative">
