@@ -164,10 +164,6 @@ export function MeuDiaClient({
   }, [searchParams])
 
   useEffect(() => {
-    setCanShowTrends(!__disableHeavy__ && isClientFlagEnabled('FF_EMOTION_TRENDS'))
-  }, [__disableHeavy__])
-
-  useEffect(() => {
     seedIfEmpty()
     const weekKey = getCurrentWeekKey()
     const persistKey = `planner:${weekKey}`
