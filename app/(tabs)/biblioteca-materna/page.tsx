@@ -222,7 +222,7 @@ export default function BibliotecaMaternaPage() {
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <AppIcon
-                    name="lightbulb"
+                    name="idea"
                     size={24}
                     className="text-primary"
                     decorative
