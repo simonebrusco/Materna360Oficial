@@ -7,248 +7,512 @@ import { FilterPill } from '@/components/ui/FilterPill'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
+import { useProfile } from '@/app/hooks/useProfile'
 
-interface FilterGroup {
+interface PlayIdea {
   id: string
-  label: string
-  options: string[]
+  title: string
+  description: string
+  materials: string[]
+  steps: string[]
+  duration: string
+  benefits: string[]
 }
 
-const FILTER_GROUPS: FilterGroup[] = [
-  {
-    id: 'tempo',
-    label: 'Tempo disponível',
-    options: ['5 min', '10 min', '15 min', '20+ min'],
-  },
-  {
-    id: 'objetivo',
-    label: 'Objetivo da brincadeira',
-    options: [
-      'Foco',
-      'Energia',
-      'Criatividade',
-      'Calma',
-      'Movimento',
-      'Exploração sensorial',
-      'Linguagem',
-      'Imaginação',
-    ],
-  },
-  {
-    id: 'espaco',
-    label: 'Espaço disponível',
-    options: ['Em casa', 'Ao ar livre', 'Pouca bagunça', 'Materiais simples'],
-  },
+interface RecipeResult {
+  title: string
+  description: string
+  ingredients: string[]
+  steps: string[]
+  ageNote: string
+}
+
+interface Product {
+  id: string
+  name: string
+  benefit: string
+  ageRange: string
+}
+
+const TIME_OPTIONS = ['5 min', '10 min', '15 min', '20 min', '30+ min']
+const LOCATION_OPTIONS = ['Em casa', 'Ao ar livre']
+const MOOD_OPTIONS = ['Calma', 'Foco', 'Leve', 'Energia']
+const LEARNING_OPTIONS = [
+  'Motricidade fina',
+  'Motricidade grossa',
+  'Sensorial',
+  'Linguagem',
+  'Criatividade',
+  'Conexão',
 ]
 
-const RESULT_PLACEHOLDERS = [
+const SAMPLE_TOYS: Product[] = [
   {
-    id: 'resultado-1',
-    title: 'Sugestão personalizada 1',
-    subtitle:
-      'Quando a IA estiver ativada, você verá aqui uma brincadeira criada especialmente para o seu filho.',
+    id: 'toy-1',
+    name: 'Blocos de Construção',
+    benefit: 'Estimula criatividade e motricidade grossa',
+    ageRange: '2+ anos',
   },
   {
-    id: 'resultado-2',
-    title: 'Sugestão personalizada 2',
-    subtitle:
-      'Quando a IA estiver ativada, você verá aqui uma brincadeira criada especialmente para o seu filho.',
-  },
-]
-
-const RECOMMENDATIONS = [
-  {
-    id: 'produto-1',
-    title: 'Produto recomendado 1',
-    subtitle: 'Aqui aparecerá uma recomendação com link de afiliado.',
+    id: 'toy-2',
+    name: 'Livros Interativos',
+    benefit: 'Desenvolve linguagem e imaginação',
+    ageRange: '1+ anos',
   },
   {
-    id: 'produto-2',
-    title: 'Produto recomendado 2',
-    subtitle: 'Sugestão baseada na idade do seu filho.',
+    id: 'toy-3',
+    name: 'Instrumentos Musicais',
+    benefit: 'Explora sons e desenvolve ritmo',
+    ageRange: '1+ anos',
   },
   {
-    id: 'produto-3',
-    title: 'Produto recomendado 3',
-    subtitle: 'Recomendação personalizada para desenvolvimento.',
+    id: 'toy-4',
+    name: 'Brinquedos Sensoriais',
+    benefit: 'Estimula exploração sensorial e tato',
+    ageRange: '0+ meses',
   },
 ]
 
 export default function AprenderBrincandoPage() {
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>(
-    {}
-  )
+  const { children, name } = useProfile()
+  const [selectedTime, setSelectedTime] = useState<string[]>([])
+  const [selectedLocation, setSelectedLocation] = useState<string[]>([])
+  const [selectedMood, setSelectedMood] = useState<string[]>([])
+  const [selectedAge, setSelectedAge] = useState<string[]>([])
+  const [selectedLearning, setSelectedLearning] = useState<string[]>([])
+  const [ingredient, setIngredient] = useState('')
+  const [showRecipeResult, setShowRecipeResult] = useState(false)
+  const [showPlayResults, setShowPlayResults] = useState(false)
 
-  const toggleFilter = (groupId: string, option: string) => {
-    setSelectedFilters((prev) => {
-      const groupFilters = prev[groupId] || []
-      const isSelected = groupFilters.includes(option)
-
-      return {
-        ...prev,
-        [groupId]: isSelected
-          ? groupFilters.filter((f) => f !== option)
-          : [...groupFilters, option],
-      }
-    })
+  const toggleFilter = (option: string, state: string[], setState: (s: string[]) => void) => {
+    if (state.includes(option)) {
+      setState(state.filter((s) => s !== option))
+    } else {
+      setState([...state, option])
+    }
   }
 
-  const isFilterActive = (groupId: string, option: string) => {
-    return (selectedFilters[groupId] || []).includes(option)
+  const handleGenerateIdeas = () => {
+    setShowPlayResults(true)
   }
+
+  const handleGenerateRecipe = () => {
+    if (ingredient.trim()) {
+      setShowRecipeResult(true)
+    }
+  }
+
+  const childName = children && children.length > 0 ? children[0] : 'seu filho'
 
   return (
     <PageTemplate
       label="DESCOBRIR"
       title="Aprender Brincando"
-      subtitle="Ideias inteligentes e personalizadas para o seu filho."
+      subtitle="Ideias rápidas, personalizadas e inteligentes para o dia a dia."
     >
-      <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8">
-        {/* FILTERS SECTION */}
-        <Reveal delay={100}>
-          <SoftCard className="rounded-3xl p-5 sm:p-6 md:p-8">
-            <div className="mb-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#2f3a56] mb-1">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-10">
+        {/* SECTION 2: SMART FILTERS */}
+        <Reveal delay={80}>
+          <SoftCard className="rounded-3xl p-6 md:p-8">
+            <div className="mb-8">
+              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mb-2">
                 Filtros Inteligentes
               </h2>
               <p className="text-sm text-[#545454]">
-                Personalize as ideias de brincadeiras para suas necessidades.
+                Personalize as brincadeiras de acordo com suas necessidades.
               </p>
             </div>
 
             <div className="space-y-6">
-              {FILTER_GROUPS.map((group) => (
-                <div key={group.id} className="space-y-3">
-                  <label className="block text-sm font-semibold text-[#2f3a56]">
-                    {group.label}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {group.options.map((option) => (
-                      <FilterPill
-                        key={`${group.id}-${option}`}
-                        active={isFilterActive(group.id, option)}
-                        onClick={() => toggleFilter(group.id, option)}
-                      >
-                        {option}
-                      </FilterPill>
-                    ))}
-                  </div>
+              {/* Time Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  Tempo disponível
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TIME_OPTIONS.map((time) => (
+                    <FilterPill
+                      key={time}
+                      active={selectedTime.includes(time)}
+                      onClick={() => toggleFilter(time, selectedTime, setSelectedTime)}
+                    >
+                      {time}
+                    </FilterPill>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Location Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  Local
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {LOCATION_OPTIONS.map((loc) => (
+                    <FilterPill
+                      key={loc}
+                      active={selectedLocation.includes(loc)}
+                      onClick={() =>
+                        toggleFilter(loc, selectedLocation, setSelectedLocation)
+                      }
+                    >
+                      {loc}
+                    </FilterPill>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mood Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  Tipo de atividade
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {MOOD_OPTIONS.map((mood) => (
+                    <FilterPill
+                      key={mood}
+                      active={selectedMood.includes(mood)}
+                      onClick={() => toggleFilter(mood, selectedMood, setSelectedMood)}
+                    >
+                      {mood}
+                    </FilterPill>
+                  ))}
+                </div>
+              </div>
+
+              {/* Learning Objectives */}
+              <div>
+                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  Objetivo de aprendizado
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {LEARNING_OPTIONS.map((obj) => (
+                    <FilterPill
+                      key={obj}
+                      active={selectedLearning.includes(obj)}
+                      onClick={() =>
+                        toggleFilter(obj, selectedLearning, setSelectedLearning)
+                      }
+                    >
+                      {obj}
+                    </FilterPill>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center sm:justify-end">
               <Button
                 variant="primary"
                 size="lg"
-                className="px-8 py-3 rounded-full font-semibold"
+                onClick={handleGenerateIdeas}
+                className="rounded-full px-8 py-3"
               >
-                Buscar ideias
+                <AppIcon name="sparkles" size={18} decorative className="mr-2" />
+                Gerar Ideias
               </Button>
             </div>
           </SoftCard>
         </Reveal>
 
-        {/* RESULTS SECTION */}
-        <Reveal delay={150}>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#2f3a56]">
-                Sugestões para Hoje
+        {/* SECTION 3: AI RESULTS BLOCK */}
+        {showPlayResults && (
+          <Reveal delay={120}>
+            <div className="space-y-4 mb-8">
+              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+                Resultados Personalizados
               </h2>
+              <p className="text-sm text-[#545454]">
+                Ideias baseadas nos seus filtros.
+              </p>
             </div>
-            <p className="text-sm text-[#545454]">
-              Aqui aparecerão suas ideias personalizadas.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {RESULT_PLACEHOLDERS.map((result) => (
-              <SoftCard
-                key={result.id}
-                className="rounded-3xl p-5 sm:p-6 flex flex-col h-full"
-              >
-                {/* Icon placeholder */}
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] mb-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Play Idea Card 1 */}
+              <SoftCard className="rounded-3xl p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#2f3a56] mb-1">
+                        Corrida do Travesseiro
+                      </h3>
+                      <p className="text-sm text-[#545454]">
+                        Uma brincadeira cheia de movimento e risadas.
+                      </p>
+                    </div>
+                    <div className="text-xs font-semibold text-primary bg-[#FFE5EF] px-3 py-1 rounded-full whitespace-nowrap">
+                      15 min
+                    </div>
+                  </div>
 
-                {/* Content */}
-                <div className="flex-1 flex flex-col">
-                  <h3 className="text-base sm:text-lg font-semibold text-[#2f3a56] mb-2">
-                    {result.title}
-                  </h3>
-                  <p className="text-sm text-[#545454] mb-6">
-                    {result.subtitle}
-                  </p>
-                </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Materiais necessários:
+                      </p>
+                      <p className="text-sm text-[#545454]">Travesseiros, almofadas</p>
+                    </div>
 
-                {/* Action buttons */}
-                <div className="flex flex-col gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Passos:
+                      </p>
+                      <ol className="text-sm text-[#545454] list-decimal list-inside space-y-1">
+                        <li>Organize um espaço seguro</li>
+                        <li>Faça uma linha de largada</li>
+                        <li>Ao sinal, todos correm com travesseiros até a meta</li>
+                      </ol>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Benefício do desenvolvimento:
+                      </p>
+                      <p className="text-sm text-[#545454]">
+                        Motricidade grossa, coordenação
+                      </p>
+                    </div>
+                  </div>
+
                   <Button
                     variant="primary"
                     size="sm"
-                    className="w-full rounded-full"
+                    className="w-full rounded-full mt-4"
                   >
                     Salvar no Planner
                   </Button>
+                </div>
+              </SoftCard>
+
+              {/* Play Idea Card 2 */}
+              <SoftCard className="rounded-3xl p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#2f3a56] mb-1">
+                        Caça ao Tesouro Sensorial
+                      </h3>
+                      <p className="text-sm text-[#545454]">
+                        Explore texturas e descobertas táteis.
+                      </p>
+                    </div>
+                    <div className="text-xs font-semibold text-primary bg-[#FFE5EF] px-3 py-1 rounded-full whitespace-nowrap">
+                      10 min
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Materiais necessários:
+                      </p>
+                      <p className="text-sm text-[#545454]">
+                        Objetos com diferentes texturas (lã, papel, plástico)
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Passos:
+                      </p>
+                      <ol className="text-sm text-[#545454] list-decimal list-inside space-y-1">
+                        <li>Reúna objetos com texturas variadas</li>
+                        <li>Esconda-os pela casa ou quintal</li>
+                        <li>Seu filho encontra e explora cada um</li>
+                      </ol>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Benefício do desenvolvimento:
+                      </p>
+                      <p className="text-sm text-[#545454]">
+                        Exploração sensorial, descoberta
+                      </p>
+                    </div>
+                  </div>
+
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="sm"
-                    className="w-full rounded-full"
+                    className="w-full rounded-full mt-4"
                   >
-                    Começar agora
+                    Salvar no Planner
                   </Button>
                 </div>
               </SoftCard>
-            ))}
-          </div>
+            </div>
+          </Reveal>
+        )}
+
+        {/* SECTION 4: HEALTHY RECIPES */}
+        <Reveal delay={160}>
+          <SoftCard className="rounded-3xl p-6 md:p-8">
+            <div className="mb-6">
+              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mb-1">
+                Receitas Saudáveis Inteligentes
+              </h2>
+              <p className="text-sm text-[#545454]">
+                Ideias de refeições nutritivas geradas por IA.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                value={ingredient}
+                onChange={(e) => setIngredient(e.target.value)}
+                placeholder="Digite um ingrediente (ex: abóbora)"
+                className="flex-1 rounded-full border border-white/60 bg-white/80 px-5 py-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleGenerateRecipe}
+                className="rounded-full px-8"
+              >
+                Gerar Receita
+              </Button>
+            </div>
+
+            {showRecipeResult && (
+              <div className="mt-8 pt-8 border-t border-white/60">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-1">
+                      Purê Cremoso de Abóbora
+                    </h3>
+                    <p className="text-sm text-[#545454]">
+                      Uma receita nutritiva e prática para bebês e crianças pequenas.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Ingredientes:
+                      </p>
+                      <ul className="text-sm text-[#545454] space-y-1 list-disc list-inside">
+                        <li>500g de abóbora</li>
+                        <li>100ml de leite materno ou fórmula</li>
+                        <li>1 colher de azeite</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        Modo de preparo:
+                      </p>
+                      <ol className="text-sm text-[#545454] list-decimal list-inside space-y-1">
+                        <li>Cozinhe a abóbora</li>
+                        <li>Amasse bem</li>
+                        <li>Adicione o leite e azeite</li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FFE5EF]/40 rounded-2xl px-4 py-3">
+                    <p className="text-xs text-[#2f3a56] font-medium">
+                      <span className="font-semibold">Recomendado para:</span> A partir dos
+                      6 meses (primeira introdução alimentar)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SoftCard>
         </Reveal>
 
-        {/* RECOMMENDATIONS SECTION */}
+        {/* SECTION 5: RECOMMENDED TOYS & PRODUCTS */}
         <Reveal delay={200}>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold text-[#2f3a56]">
-                Recomendações Inteligentes
-              </h2>
-            </div>
+          <div className="space-y-4 mb-6">
+            <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+              Brinquedos Recomendados
+            </h2>
             <p className="text-sm text-[#545454]">
-              Brinquedos e materiais que combinam com a idade do seu filho.
+              Produtos que combinam com a idade do seu filho e estimulam seu desenvolvimento.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {RECOMMENDATIONS.map((product) => (
-              <SoftCard
-                key={product.id}
-                className="rounded-3xl p-5 sm:p-6 flex flex-col h-full"
-              >
-                {/* Product image placeholder */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {SAMPLE_TOYS.map((toy) => (
+              <SoftCard key={toy.id} className="rounded-3xl p-5 md:p-6 flex flex-col h-full">
                 <div className="h-32 sm:h-40 w-full rounded-2xl bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] mb-4 flex items-center justify-center">
                   <AppIcon
-                    name="shopping-bag"
+                    name="gift"
                     size={32}
                     className="text-primary opacity-40"
                     decorative
                   />
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 flex flex-col">
-                  <h3 className="text-base sm:text-lg font-semibold text-[#2f3a56] mb-2">
-                    {product.title}
+                  <h3 className="text-base font-semibold text-[#2f3a56] mb-1">
+                    {toy.name}
                   </h3>
-                  <p className="text-sm text-[#545454]">
-                    {product.subtitle}
+                  <p className="text-sm text-[#545454] mb-3">{toy.benefit}</p>
+                  <p className="text-xs text-primary font-semibold">
+                    Idade: {toy.ageRange}
                   </p>
                 </div>
 
-                {/* CTA */}
-                <span className="text-sm font-medium text-primary inline-flex items-center gap-1 mt-4">
-                  Ver detalhes <span>→</span>
-                </span>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="w-full rounded-full mt-4"
+                >
+                  Ver produto
+                </Button>
               </SoftCard>
             ))}
           </div>
+        </Reveal>
+
+        {/* SECTION 6: CHILD DEVELOPMENT GUIDE */}
+        <Reveal delay={240}>
+          <SoftCard className="rounded-3xl p-6 md:p-8">
+            <div className="mb-6">
+              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mb-1">
+                Guia do Desenvolvimento
+              </h2>
+              <p className="text-sm text-[#545454]">
+                Insights personalizados sobre a fase atual do seu filho.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6]/50 rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-[#2f3a56] mb-3">
+                  O que esperar nesta fase de {childName}
+                </h3>
+
+                <div className="space-y-4 text-sm text-[#545454]">
+                  <p>
+                    Cada criança se desenvolve ao seu próprio ritmo. Nesta fase, você pode esperar
+                    avanços significativos em áreas como:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2">
+                    <li>Desenvolvimento motor (movimentos mais coordenados)</li>
+                    <li>Comunicação e linguagem</li>
+                    <li>Habilidades sociais e emocionais</li>
+                    <li>Pensamento criativo e resolução de problemas</li>
+                  </ul>
+                  <p className="italic">
+                    Lembre-se: comparações com outras crianças não são úteis. Cada pequeno passo
+                    é uma vitória!
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full rounded-full"
+              >
+                Ver detalhes completos
+              </Button>
+            </div>
+          </SoftCard>
         </Reveal>
       </div>
     </PageTemplate>
