@@ -16,8 +16,6 @@ export default function Eu360Client() {
   }, [])
 
   const { name } = useProfile();
-  const personalizedTitle = name ? `Seu equilíbrio emocional, ${name.split(' ')[0]}` : 'Eu360';
-  const personalizedSubtitle = 'Autocuidado, propósito e rede de apoio';
 
   const content = (
     <PageTemplate
