@@ -12,33 +12,11 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 
-type FilterType = 'humor' | 'energia' | 'notas' | 'resumo' | 'semana'
-
-interface HumorEntry {
-  date: string
-  emoji: string
-  notes?: string
-}
-
-interface EnergyEntry {
-  date: string
-  level: 'baixa' | 'media' | 'alta'
-}
-
-const HUMOR_EMOJIS = ['😢', '😐', '🙂', '😊', '😄']
-const HUMOR_LABELS = ['Muito ruim', 'Ruim', 'Neutro', 'Bom', 'Excelente']
-
 export default function ComoEstouHojePage() {
-  const [activeFilter, setActiveFilter] = useState<FilterType>('humor')
   const [isHydrated, setIsHydrated] = useState(false)
-  const [humorEntries, setHumorEntries] = useState<HumorEntry[]>([])
-  const [energyEntries, setEnergyEntries] = useState<EnergyEntry[]>([])
-  const [notes, setNotes] = useState<string[]>([])
-  const [noteText, setNoteText] = useState('')
-  const [selectedHumor, setSelectedHumor] = useState<number | null>(null)
-  const [selectedEnergy, setSelectedEnergy] = useState<'baixa' | 'media' | 'alta' | null>(null)
+  const [selectedHumor, setSelectedHumor] = useState<string | null>(null)
+  const [selectedEnergy, setSelectedEnergy] = useState<string | null>(null)
   const [dayNotes, setDayNotes] = useState('')
-  const [showNoteModal, setShowNoteModal] = useState(false)
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
@@ -51,485 +29,271 @@ export default function ComoEstouHojePage() {
   useEffect(() => {
     if (!isHydrated) return
 
-    const humorKey = 'como-estou-hoje:humor-entries'
-    const energyKey = 'como-estou-hoje:energy-entries'
-    const notesKey = 'como-estou-hoje:notes'
-    const dayNotesKey = `como-estou-hoje:${currentDateKey}:day-notes`
+    const humorKey = `como-estou-hoje:${currentDateKey}:humor`
+    const energyKey = `como-estou-hoje:${currentDateKey}:energy`
+    const notesKey = `como-estou-hoje:${currentDateKey}:notes`
 
     const savedHumor = load(humorKey)
     const savedEnergy = load(energyKey)
     const savedNotes = load(notesKey)
-    const savedDayNotes = load(dayNotesKey)
 
-    if (Array.isArray(savedHumor)) setHumorEntries(savedHumor)
-    if (Array.isArray(savedEnergy)) setEnergyEntries(savedEnergy)
-    if (Array.isArray(savedNotes)) setNotes(savedNotes)
-    if (typeof savedDayNotes === 'string') setDayNotes(savedDayNotes)
+    if (typeof savedHumor === 'string') setSelectedHumor(savedHumor)
+    if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
+    if (typeof savedNotes === 'string') setDayNotes(savedNotes)
   }, [isHydrated, currentDateKey])
 
-  const handleRegisterHumor = () => {
-    if (selectedHumor === null) return
-
-    const newEntry: HumorEntry = {
-      date: currentDateKey,
-      emoji: HUMOR_EMOJIS[selectedHumor],
+  const handleHumorSelect = (humor: string) => {
+    setSelectedHumor(selectedHumor === humor ? null : humor)
+    if (selectedHumor !== humor) {
+      const humorKey = `como-estou-hoje:${currentDateKey}:humor`
+      save(humorKey, humor)
+      try {
+        track('mood.registered', {
+          tab: 'como-estou-hoje',
+          mood: humor,
+        })
+      } catch {}
+      toast.success('Humor registrado!')
     }
-
-    const updated = [newEntry, ...humorEntries.filter(e => e.date !== currentDateKey)]
-    setHumorEntries(updated)
-    save('como-estou-hoje:humor-entries', updated)
-
-    try {
-      track('mood.registered', {
-        tab: 'como-estou-hoje',
-        mood_level: selectedHumor,
-      })
-    } catch {}
-
-    setSelectedHumor(null)
-    toast.success('Humor registrado!')
   }
 
-  const handleRegisterEnergy = () => {
-    if (!selectedEnergy) return
-
-    const newEntry: EnergyEntry = {
-      date: currentDateKey,
-      level: selectedEnergy,
+  const handleEnergySelect = (energy: string) => {
+    setSelectedEnergy(selectedEnergy === energy ? null : energy)
+    if (selectedEnergy !== energy) {
+      const energyKey = `como-estou-hoje:${currentDateKey}:energy`
+      save(energyKey, energy)
+      try {
+        track('energy.registered', {
+          tab: 'como-estou-hoje',
+          energy: energy,
+        })
+      } catch {}
+      toast.success('Energia registrada!')
     }
-
-    const updated = [newEntry, ...energyEntries.filter(e => e.date !== currentDateKey)]
-    setEnergyEntries(updated)
-    save('como-estou-hoje:energy-entries', updated)
-
-    try {
-      track('energy.registered', {
-        tab: 'como-estou-hoje',
-        energy_level: selectedEnergy,
-      })
-    } catch {}
-
-    setSelectedEnergy(null)
-    toast.success('Energia registrada!')
   }
 
-  const handleAddNote = () => {
-    if (!noteText.trim()) return
-
-    const updated = [...notes, noteText]
-    setNotes(updated)
-    setNoteText('')
-    setShowNoteModal(false)
-
-    save('como-estou-hoje:notes', updated)
-
-    try {
-      track('note.added', {
-        tab: 'como-estou-hoje',
-      })
-    } catch {}
-
-    toast.success('Nota salva!')
-  }
-
-  const handleSaveDayNotes = () => {
+  const handleSaveNotes = () => {
     if (!dayNotes.trim()) return
-
-    const dayNotesKey = `como-estou-hoje:${currentDateKey}:day-notes`
-    save(dayNotesKey, dayNotes)
-
+    const notesKey = `como-estou-hoje:${currentDateKey}:notes`
+    save(notesKey, dayNotes)
     try {
       track('day_notes.saved', {
         tab: 'como-estou-hoje',
       })
     } catch {}
-
-    toast.success('Registro do dia salvo!')
+    toast.success('Notas salvas!')
   }
-
-  // Get this week's entries (last 7 days)
-  const getWeekEntries = () => {
-    const today = new Date(currentDateKey)
-    const weekStart = new Date(today)
-    weekStart.setDate(today.getDate() - 7)
-
-    return humorEntries.filter(entry => new Date(entry.date) >= weekStart)
-  }
-
-  const weekEntries = getWeekEntries()
 
   return (
     <PageTemplate
       label="MEU DIA"
       title="Como Estou Hoje"
-      subtitle="Humor e energia com mais consciência."
+      subtitle="Entenda seu dia com clareza, leveza e acolhimento."
     >
       <ClientOnly>
-        <div className="max-w-4xl">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+          {/* BLOCK 1 — Meu Humor & Minha Energia */}
           <Reveal delay={0}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
-              {/* FILTER BUTTONS */}
-              <div className="flex flex-wrap gap-2 mb-8 pb-6 border-b border-white/60">
-                {(
-                  [
-                    { id: 'humor', label: 'Humor' },
-                    { id: 'energia', label: 'Energia' },
-                    { id: 'notas', label: 'Notas' },
-                    { id: 'resumo', label: 'Resumo do Dia' },
-                    { id: 'semana', label: 'Semana' },
-                  ] as const
-                ).map(filter => (
-                  <button
-                    key={filter.id}
-                    onClick={() => setActiveFilter(filter.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                      activeFilter === filter.id
-                        ? 'bg-primary text-white shadow-md'
-                        : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+              <div className="mb-6">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  Meu Humor & Minha Energia
+                </h3>
+                <p className="text-sm text-[#545454]">
+                  Registre como você se sente agora.
+                </p>
               </div>
 
-              {/* CONTENT BASED ON FILTER */}
+              {/* Humor Section */}
+              <div className="mb-8">
+                <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                  Meu Humor
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Muito bem', 'Bem', 'Neutro', 'Cansada', 'Exausta'].map((humor) => (
+                    <button
+                      key={humor}
+                      onClick={() => handleHumorSelect(humor)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                        selectedHumor === humor
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
+                      }`}
+                    >
+                      {humor}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {/* HUMOR FILTER */}
-              {activeFilter === 'humor' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-2">
-                      Registre seu Humor
-                    </h3>
-                    <p className="text-sm text-[#545454] mb-4">
-                      Como você está se sentindo agora?
-                    </p>
+              {/* Energy Section */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                  Minha Energia
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Alta', 'Média', 'Baixa'].map((energy) => (
+                    <button
+                      key={energy}
+                      onClick={() => handleEnergySelect(energy)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                        selectedEnergy === energy
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
+                      }`}
+                    >
+                      {energy}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                    <div className="flex justify-center gap-4 mb-4">
-                      {HUMOR_EMOJIS.map((emoji, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedHumor(idx)}
-                          className={`text-4xl p-2 rounded-xl transition-all duration-200 ${
-                            selectedHumor === idx
-                              ? 'bg-primary/20 scale-110'
-                              : 'hover:bg-white/60'
-                          }`}
-                          title={HUMOR_LABELS[idx]}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
+              {/* Confirmation Note */}
+              <div className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#545454]">
+                Seus registros ajudam você a entender seus padrões.
+              </div>
+            </SoftCard>
+          </Reveal>
 
-                    {selectedHumor !== null && (
-                      <div className="text-center mb-4">
-                        <p className="text-sm text-[#545454]">
-                          {HUMOR_LABELS[selectedHumor]}
-                        </p>
-                      </div>
-                    )}
+          {/* BLOCK 2 — Como foi meu dia? */}
+          <Reveal delay={50}>
+            <SoftCard className="rounded-3xl p-6 md:p-8">
+              <div className="mb-6">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  Como foi meu dia?
+                </h3>
+                <p className="text-sm text-[#545454]">
+                  Um olhar rápido sobre o que realmente importa.
+                </p>
+              </div>
 
-                    <div className="flex justify-center mb-6">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleRegisterHumor}
-                        disabled={selectedHumor === null}
-                      >
-                        Registrar
-                      </Button>
-                    </div>
-                  </div>
+              {/* Notes Section */}
+              <div className="mb-6">
+                <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
+                  Notas do dia
+                </label>
+                <textarea
+                  value={dayNotes}
+                  onChange={(e) => setDayNotes(e.target.value)}
+                  placeholder="Escreva algumas linhas sobre seu dia…"
+                  className="w-full min-h-[100px] rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-[#2f3a56] shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <div className="flex justify-end mt-3">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSaveNotes}
+                    disabled={!dayNotes.trim()}
+                  >
+                    Salvar
+                  </Button>
+                </div>
+              </div>
 
-                  {/* Humor da Semana */}
-                  {weekEntries.length > 0 && (
-                    <div className="pt-6 border-t border-white/60">
-                      <h4 className="text-base font-semibold text-[#2f3a56] mb-4">
-                        Humor da Semana
-                      </h4>
-                      <div className="space-y-2">
-                        {weekEntries.map((entry, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-3 rounded-2xl bg-[#FFE5EF]/40"
-                          >
-                            <span className="text-sm text-[#545454]">
-                              {new Date(entry.date).toLocaleDateString('pt-BR', {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </span>
-                            <span className="text-2xl">{entry.emoji}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Smart Summary Section */}
+              <div className="rounded-2xl bg-gradient-to-br from-[#FFE5EF]/40 to-white p-4 border border-primary/10">
+                <h4 className="text-sm font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                  <AppIcon name="idea" size={16} className="text-primary" decorative />
+                  Insight do Dia (IA)
+                </h4>
+                <p className="text-sm text-[#545454]">
+                  Aqui você verá um resumo inteligente do seu dia (placeholder).
+                </p>
+              </div>
+            </SoftCard>
+          </Reveal>
 
-                  {/* Tendências Emocionais Placeholder */}
-                  <div className="pt-6 border-t border-white/60">
-                    <h4 className="text-base font-semibold text-[#2f3a56] mb-3">
-                      Tendências Emocionais
+          {/* BLOCK 3 — Minha Semana Emocional */}
+          <Reveal delay={100}>
+            <SoftCard className="rounded-3xl p-6 md:p-8">
+              <div className="mb-6">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  Minha Semana Emocional
+                </h3>
+                <p className="text-sm text-[#545454]">
+                  Enxergue seu padrão emocional ao longo da semana.
+                </p>
+              </div>
+
+              {/* Mood Trend Placeholder */}
+              <div className="mb-6 p-6 rounded-2xl bg-[#FFE5EF]/40 flex items-center justify-center h-40">
+                <div className="text-center">
+                  <AppIcon
+                    name="chart"
+                    size={32}
+                    className="text-primary/40 mx-auto mb-2"
+                    decorative
+                  />
+                  <p className="text-sm text-[#545454]">
+                    Gráfico de tendências da semana
+                  </p>
+                </div>
+              </div>
+
+              {/* Highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-[#FFE5EF]/40 p-4">
+                  <p className="text-xs text-[#545454] font-medium mb-1">
+                    Melhor dia da semana
+                  </p>
+                  <p className="text-sm font-semibold text-[#2f3a56]">
+                    — (placeholder)
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-[#FFE5EF]/40 p-4">
+                  <p className="text-xs text-[#545454] font-medium mb-1">
+                    Dias mais desafiadores
+                  </p>
+                  <p className="text-sm font-semibold text-[#2f3a56]">
+                    — (placeholder)
+                  </p>
+                </div>
+              </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* BLOCK 4 — Recomendações Inteligentes */}
+          <Reveal delay={150}>
+            <SoftCard className="rounded-3xl p-6 md:p-8">
+              <div className="mb-6">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  Para você hoje
+                </h3>
+                <p className="text-sm text-[#545454]">
+                  Pequenas sugestões que fazem diferença.
+                </p>
+              </div>
+
+              {/* Suggestion Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  {
+                    title: 'Pausa para Respirar',
+                    description: 'Uma pausa de 5 minutos pode recarregar sua energia.',
+                  },
+                  {
+                    title: 'Moment com seu Filho',
+                    description: 'Um pequeno gesto de conexão fortalece o vínculo.',
+                  },
+                ].map((suggestion, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-2xl border border-white/60 bg-white/60 p-4 flex flex-col"
+                  >
+                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                      {suggestion.title}
                     </h4>
-                    <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#545454]">
-                      <p className="mb-2 font-medium">Análise em breve:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Padrões de humor na semana</li>
-                        <li>Momentos de maior bem-estar</li>
-                        <li>Insights personalizados</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ENERGIA FILTER */}
-              {activeFilter === 'energia' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-2">
-                      Registre sua Energia
-                    </h3>
-                    <p className="text-sm text-[#545454] mb-6">
-                      Registre se está esgotada ou recarregada.
+                    <p className="text-xs text-[#545454] mb-3 flex-1">
+                      {suggestion.description}
                     </p>
-
-                    <div className="space-y-3 mb-6">
-                      {(['baixa', 'media', 'alta'] as const).map(level => (
-                        <button
-                          key={level}
-                          onClick={() => setSelectedEnergy(level)}
-                          className={`w-full p-4 rounded-2xl text-left transition-all duration-200 ${
-                            selectedEnergy === level
-                              ? 'bg-primary text-white shadow-md'
-                              : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <AppIcon
-                              name={
-                                level === 'baixa'
-                                  ? 'battery-low'
-                                  : level === 'media'
-                                    ? 'battery'
-                                    : 'zap'
-                              }
-                              size={20}
-                              decorative
-                            />
-                            <div>
-                              <p className="font-semibold capitalize">
-                                {level === 'baixa'
-                                  ? 'Esgotada'
-                                  : level === 'media'
-                                    ? 'Equilibrada'
-                                    : 'Recarregada'}
-                              </p>
-                              <p className="text-xs opacity-75">
-                                {level === 'baixa'
-                                  ? 'Preciso de descanso'
-                                  : level === 'media'
-                                    ? 'No meu ritmo'
-                                    : 'Cheia de energia'}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex justify-center mb-6">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleRegisterEnergy}
-                        disabled={!selectedEnergy}
-                      >
-                        Registrar
-                      </Button>
+                    <div className="flex justify-end">
+                      <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
+                        Ver mais →
+                      </span>
                     </div>
                   </div>
-
-                  {/* Resumo da Energia Placeholder */}
-                  <div className="pt-6 border-t border-white/60">
-                    <h4 className="text-base font-semibold text-[#2f3a56] mb-3">
-                      Resumo da Energia na Semana
-                    </h4>
-                    <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#545454]">
-                      <p className="mb-2 font-medium">Análise em breve:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Padrões de energia na semana</li>
-                        <li>Momentos de maior disposição</li>
-                        <li>Recomendações de descanso</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* NOTAS FILTER */}
-              {activeFilter === 'notas' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-2">
-                      Registre suas Notas
-                    </h3>
-                    <p className="text-sm text-[#545454] mb-4">
-                      Escreva aqui como se sente hoje…
-                    </p>
-
-                    <div className="flex gap-3">
-                      <textarea
-                        value={noteText}
-                        onChange={e => setNoteText(e.target.value)}
-                        placeholder="Desabafe em poucas palavras..."
-                        className="flex-1 min-h-[100px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
-
-                    <div className="flex justify-end mt-3 mb-6">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleAddNote}
-                        disabled={!noteText.trim()}
-                      >
-                        Salvar Registro
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Notas Anteriores */}
-                  {notes.length > 0 && (
-                    <div className="pt-6 border-t border-white/60">
-                      <h4 className="text-base font-semibold text-[#2f3a56] mb-3">
-                        Registros Anteriores
-                      </h4>
-                      <div className="space-y-2">
-                        {notes.map((note, idx) => (
-                          <div
-                            key={idx}
-                            className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#2f3a56]"
-                          >
-                            {note}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* RESUMO DO DIA FILTER */}
-              {activeFilter === 'resumo' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-2">
-                      O que Quero Levar do Dia
-                    </h3>
-                    <p className="text-sm text-[#545454] mb-4">
-                      Registre os momentos importantes e o aprendizado de hoje.
-                    </p>
-
-                    <textarea
-                      value={dayNotes}
-                      onChange={e => setDayNotes(e.target.value)}
-                      placeholder="Pequenas vitórias, gratidões, aprendizados..."
-                      className="w-full min-h-[120px] rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-[#2f3a56] shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-
-                    <div className="flex justify-end mt-3 mb-6">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSaveDayNotes}
-                        disabled={!dayNotes.trim()}
-                      >
-                        Salvar
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Momentos Importantes Placeholder */}
-                  <div className="pt-6 border-t border-white/60">
-                    <h4 className="text-base font-semibold text-[#2f3a56] mb-3">
-                      Momentos Importantes
-                    </h4>
-                    <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#545454]">
-                      <p className="mb-2 font-medium">Histórico em breve:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Registro dos momentos do dia</li>
-                        <li>Fotos e memórias conectadas</li>
-                        <li>Linha do tempo de alegrias</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SEMANA FILTER */}
-              {activeFilter === 'semana' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-4">
-                      Resumo Emocional da Semana
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-center">
-                        <p className="text-xs text-[#545454] mb-1">Humor Médio</p>
-                        <p className="text-2xl">
-                          {weekEntries.length > 0
-                            ? HUMOR_EMOJIS[
-                                Math.floor(
-                                  weekEntries.reduce((sum, e) => {
-                                    const idx = HUMOR_EMOJIS.indexOf(e.emoji)
-                                    return sum + idx
-                                  }, 0) / weekEntries.length
-                                )
-                              ]
-                            : '—'}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-center">
-                        <p className="text-xs text-[#545454] mb-1">Energia Média</p>
-                        <p className="text-2xl">
-                          {energyEntries.length > 0 ? '⚡' : '—'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {weekEntries.length > 0 && (
-                      <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 mb-6">
-                        <p className="text-sm font-semibold text-[#2f3a56] mb-2">
-                          Dia Mais Positivo
-                        </p>
-                        <p className="text-sm text-[#545454]">
-                          {new Date(weekEntries[0].date).toLocaleDateString('pt-BR', {
-                            weekday: 'long',
-                            month: 'long',
-                            day: 'numeric',
-                          })}{' '}
-                          {weekEntries[0].emoji}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#545454]">
-                      <p className="mb-2 font-medium">Observações da Semana:</p>
-                      <p className="italic">
-                        {weekEntries.length > 0
-                          ? `Você registrou seu humor ${weekEntries.length} vezes esta semana. Continue monitorando seus padrões emocionais!`
-                          : 'Comece registrando seu humor para ver análises desta semana.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                ))}
+              </div>
             </SoftCard>
           </Reveal>
         </div>
