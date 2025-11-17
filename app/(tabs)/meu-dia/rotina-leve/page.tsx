@@ -188,7 +188,8 @@ export default function RotatinaLevePage() {
       title="Rotina Leve"
       subtitle="Organize o seu dia com leveza e clareza."
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-6xl">
+      <ClientOnly>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-6xl">
         {ROUTINE_CARDS.map((card, index) => (
           <Reveal key={card.id} delay={index * 50}>
             <SoftCard
@@ -411,7 +412,8 @@ export default function RotatinaLevePage() {
             </SoftCard>
           </Reveal>
         ))}
-      </div>
+        </div>
+      </ClientOnly>
 
       {/* Note Modal */}
       {showNoteModal && (
