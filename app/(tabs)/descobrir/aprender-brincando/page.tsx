@@ -74,14 +74,10 @@ const SAMPLE_TOYS: Product[] = [
 ]
 
 export default function AprenderBrincandoPage() {
-  const { children, name } = useProfile()
   const [selectedTime, setSelectedTime] = useState<string[]>([])
   const [selectedLocation, setSelectedLocation] = useState<string[]>([])
   const [selectedMood, setSelectedMood] = useState<string[]>([])
-  const [selectedAge, setSelectedAge] = useState<string[]>([])
   const [selectedLearning, setSelectedLearning] = useState<string[]>([])
-  const [ingredient, setIngredient] = useState('')
-  const [showRecipeResult, setShowRecipeResult] = useState(false)
   const [showPlayResults, setShowPlayResults] = useState(false)
 
   const toggleFilter = (option: string, state: string[], setState: (s: string[]) => void) => {
@@ -95,14 +91,6 @@ export default function AprenderBrincandoPage() {
   const handleGenerateIdeas = () => {
     setShowPlayResults(true)
   }
-
-  const handleGenerateRecipe = () => {
-    if (ingredient.trim()) {
-      setShowRecipeResult(true)
-    }
-  }
-
-  const childName = children && children.length > 0 ? children[0] : 'seu filho'
 
   return (
     <PageTemplate
