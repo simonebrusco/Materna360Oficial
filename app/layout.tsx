@@ -5,8 +5,17 @@ import { ToastHost } from '@/components/ui/toast/ToastHost'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Soft luxury experience for conscious parenting',
+  description: 'Uma plataforma acolhedora para apoiar você em cada etapa da maternidade',
   icons: { icon: '/favicon.ico' },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Materna360',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
