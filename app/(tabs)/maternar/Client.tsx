@@ -79,8 +79,8 @@ export default function MaternarClient() {
 
           {/* Daily Message Card */}
           <Reveal delay={100}>
-            <div className="mt-6 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
-              <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-3xl border border-white/60 shadow-[0_10px_32px_rgba(255,0,94,0.16)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
+            <div className="mt-2 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
+              <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[20px] border border-white/60 shadow-[0_10px_32px_rgba(255,0,94,0.16)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
                 {/* Subtle gradient accent blob - top-right corner */}
                 <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/15 to-transparent rounded-full" />
 
@@ -92,7 +92,7 @@ export default function MaternarClient() {
                   </div>
 
                   {/* Message title */}
-                  <h3 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight">
+                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight">
                     "{dailyMessage}"
                   </h3>
 
