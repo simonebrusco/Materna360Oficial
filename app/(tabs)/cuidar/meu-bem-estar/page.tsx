@@ -18,28 +18,28 @@ const SELF_CARE_CARDS: SelfCareCard[] = [
     icon: 'heart',
     title: 'Hoje',
     subtitle: 'O que seu corpo pede agora',
-    href: '/cuidar?focus=hoje',
+    href: '/cuidar/meu-bem-estar/hoje',
   },
   {
     id: 'semana-leve',
     icon: 'calendar-clock',
     title: 'Semana leve',
     subtitle: 'Rotina real de autocuidado',
-    href: '/cuidar?focus=semana',
+    href: '/cuidar/meu-bem-estar/semana-leve',
   },
   {
     id: 'sono-energia',
     icon: 'moon',
     title: 'Sono & energia',
     subtitle: 'Rituais para descansar de verdade',
-    href: '/cuidar?focus=sono',
+    href: '/cuidar/meu-bem-estar/sono-energia',
   },
   {
     id: 'consultas',
     icon: 'stethoscope',
     title: 'Consultas em dia',
     subtitle: 'Acompanhe sua saúde com calma',
-    href: '/cuidar?focus=consultas',
+    href: '/cuidar/meu-bem-estar/consultas',
   },
 ]
 
