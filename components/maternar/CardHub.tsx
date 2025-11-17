@@ -100,7 +100,7 @@ const HUB_CARDS: CardConfig[] = [
     id: 'planos-premium',
     icon: 'star',
     title: 'Materna+',
-    subtitle: 'Conte��dos guiados para ir mais fundo.',
+    subtitle: 'Conteúdos guiados para ir mais fundo.',
     href: '/planos',
     ctaText: 'Ver planos',
     tag: 'Premium',
