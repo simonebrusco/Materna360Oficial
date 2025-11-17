@@ -235,9 +235,6 @@ export function ProfileForm() {
     setSaving(true)
 
     try {
-      const profileController = new AbortController();
-      const profileTimeoutId = setTimeout(() => profileController.abort(), 5000);
-
       const profileResponse = await fetch('/api/profile', {
         method: 'POST',
         headers: {
@@ -245,15 +242,12 @@ export function ProfileForm() {
         },
         credentials: 'include',
         cache: 'no-store',
-        signal: profileController.signal,
         body: JSON.stringify({
           motherName: trimmedState.nomeMae,
           nomeMae: trimmedState.nomeMae,
           figurinha: figurinhaToPersist,
         }),
       })
-
-      clearTimeout(profileTimeoutId);
 
       if (!profileResponse.ok) {
         throw new Error('Failed to save profile')
