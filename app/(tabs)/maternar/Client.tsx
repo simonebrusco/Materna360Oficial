@@ -46,49 +46,57 @@ export default function MaternarClient() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
 
       <div className="relative z-10">
-        <PageTemplate
-          label="MATERNAR"
-          title="Bem-vinda ao Maternar"
-          subtitle="Juntas vamos fazer de hoje um dia leve."
-        >
-          {/* Custom greeting header with avatar and profile button */}
-          <div className="flex items-center justify-between mb-6 -mt-6">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#2f3a56]">
-                Bom dia{firstName ? ', ' : ''}{firstName}
-              </h1>
-              {name && (
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center flex-shrink-0 border border-white/60 shadow-sm">
-                  <span className="text-sm md:text-base font-semibold text-[#ff005e]">
-                    {firstName.charAt(0).toUpperCase()}
-                  </span>
+        <main data-layout="page-template-v1" className="bg-soft-page min-h-[100dvh] pb-24">
+          <div className="mx-auto max-w-[1040px] px-4 md:px-6">
+            {/* Premium Hero Header - matching redesigned hubs */}
+            <header className="pt-6 md:pt-8 mb-4 md:mb-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  {/* Subtitle/Label */}
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70 mb-2">
+                    MEU DIA
+                  </p>
+                  {/* Main Title */}
+                  <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56]">
+                    Bom dia{firstName ? ', ' : ''}{firstName}
+                  </h1>
+                  {/* Subtitle */}
+                  <p className="mt-4 md:mt-5 text-sm text-neutral-600">
+                    Seu dia começa aqui.
+                  </p>
                 </div>
-              )}
-            </div>
-            {isProfileIncomplete && (
-              <Link
-                href="/eu360?focus=perfil"
-                onClick={() => {
-                  track('maternar.profile_premium_button_click', {
-                    timestamp: new Date().toISOString(),
-                  });
-                }}
-                className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[rgba(255,0,94,0.45)] bg-[rgba(255,0,94,0.04)] text-[rgba(255,0,94,0.85)] text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,0,94,0.04)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,0,94,0.06)] active:scale-[0.99] transition-all duration-150"
-                aria-label="Completar perfil"
-              >
-                <AppIcon
-                  name="hand-heart"
-                  className="w-[14px] h-[14px]"
-                  style={{ color: 'rgba(255, 0, 94, 0.6)' }}
-                  decorative
-                />
-                <span>Completar perfil</span>
-              </Link>
-            )}
-          </div>
 
-          {/* Daily Message Card */}
-          <Reveal delay={100}>
+                {/* Profile Button on Right */}
+                {isProfileIncomplete && (
+                  <div className="flex-shrink-0">
+                    <Link
+                      href="/eu360?focus=perfil"
+                      onClick={() => {
+                        track('maternar.profile_premium_button_click', {
+                          timestamp: new Date().toISOString(),
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[rgba(255,0,94,0.45)] bg-[rgba(255,0,94,0.04)] text-[rgba(255,0,94,0.85)] text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,0,94,0.04)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,0,94,0.06)] active:scale-[0.99] transition-all duration-150"
+                      aria-label="Completar perfil"
+                    >
+                      <AppIcon
+                        name="hand-heart"
+                        className="w-[14px] h-[14px]"
+                        style={{ color: 'rgba(255, 0, 94, 0.6)' }}
+                        decorative
+                      />
+                      <span>Completar perfil</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </header>
+
+            {/* Page Content */}
+            <div className="space-y-4 md:space-y-5">
+
+              {/* Daily Message Card */}
+              <Reveal delay={100}>
             <div className="mt-2 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
               <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[20px] border border-white/60 shadow-[0_10px_40px_rgba(255,0,94,0.08)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
                 {/* Subtle gradient accent blob - top-right corner */}
@@ -118,17 +126,19 @@ export default function MaternarClient() {
                 </div>
               </div>
             </div>
-          </Reveal>
+              </Reveal>
 
-          <CardHub />
+              <CardHub />
 
-          {/* Emotional closing text */}
-          <div className="mt-6 px-6 md:px-8 max-w-2xl mx-auto text-center pb-12">
-            <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
-              Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-            </p>
+              {/* Emotional closing text */}
+              <div className="mt-6 text-center pb-12">
+                <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
+                  Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
+                </p>
+              </div>
+            </div>
           </div>
-        </PageTemplate>
+        </main>
       </div>
     </div>
   );
