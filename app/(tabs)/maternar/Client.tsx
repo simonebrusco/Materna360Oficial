@@ -2,10 +2,12 @@
 
 import * as React from 'react';
 import { useEffect } from 'react';
+import Link from 'next/link';
 import CardHub from '@/components/maternar/CardHub';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
 import { useProfile } from '@/app/hooks/useProfile';
+import AppIcon from '@/components/ui/AppIcon';
 
 export default function MaternarClient() {
   const { name } = useProfile();
@@ -20,6 +22,7 @@ export default function MaternarClient() {
   const firstName = name ? name.split(' ')[0] : '';
   const pageTitle = 'Bem-vinda ao Maternar';
   const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
+  const isProfileIncomplete = !name || name.trim() === '';
 
   return (
     <div className="relative">

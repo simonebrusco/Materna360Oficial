@@ -55,6 +55,7 @@ const ICON_MAP = {
   'dollar-sign': Icons.DollarSign,
   'calendar-clock': Icons.Calendar,
   stethoscope: Icons.Stethoscope,
+  user: Icons.User,
 } as const;
 
 const DEFAULT_ICON = Icons.Info;
