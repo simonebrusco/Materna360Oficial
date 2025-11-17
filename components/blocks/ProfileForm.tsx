@@ -100,11 +100,16 @@ export function ProfileForm() {
       }
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const eu360Response = await fetch('/api/eu360/profile', {
           credentials: 'include',
           cache: 'no-store',
-          signal: AbortSignal.timeout(5000),
+          signal: controller.signal,
         })
+
+        clearTimeout(timeoutId);
 
         if (eu360Response.ok && isMounted) {
           const eu360Data = (await eu360Response.json()) as { name?: string; birthdate?: string | null }
