@@ -79,6 +79,15 @@ const HUB_CARDS: CardConfig[] = [
     tag: 'Seu filho',
   },
   {
+    id: 'biblioteca-materna',
+    icon: 'book-open',
+    title: 'Biblioteca Materna',
+    subtitle: 'Conteúdos inteligentes para sua jornada.',
+    href: '/biblioteca-materna',
+    ctaText: 'Explorar',
+    tag: 'Aprender',
+  },
+  {
     id: 'minha-evolucao',
     icon: 'crown',
     title: 'Minha Jornada',
