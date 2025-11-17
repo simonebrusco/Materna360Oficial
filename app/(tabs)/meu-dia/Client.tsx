@@ -136,13 +136,11 @@ export function MeuDiaClient({
 
   const searchParams = useSearchParams()
 
-  const [trendOpen, setTrendOpen] = useState(false)
   const [showPlannerSheet, setShowPlannerSheet] = useState(false)
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
   const [notes, setNotes] = useState<string[]>([])
-  const [canShowTrends, setCanShowTrends] = useState(false)
 
   const { name } = useProfile() || { name: finalProfile.motherName }
 
