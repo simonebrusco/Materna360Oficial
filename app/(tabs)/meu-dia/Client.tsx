@@ -78,7 +78,7 @@ export function MeuDiaClient({
   const firstName = name ? name.split(' ')[0] : ''
   const pageTitle = firstName ? `${firstName}, como está seu dia hoje?` : 'Meu dia'
   const pageSubtitle =
-    'Planeje pequenas tarefas, acompanhe o humor e celebre suas conquistas. Cada marca registrada aqui é um lembrete: você está fazendo o melhor possível.'
+    'Organize seu dia com leveza. Planeje suas prioridades e celebre cada passo realizado.'
 
   return (
     <PageTemplate
