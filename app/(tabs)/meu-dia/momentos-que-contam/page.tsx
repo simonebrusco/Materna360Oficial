@@ -19,7 +19,7 @@ interface ConnectionCard {
 const CONNECTION_CARDS: ConnectionCard[] = [
   {
     id: 'conexao-afetuosa',
-    icon: 'heart-handshake',
+    icon: 'hand-heart',
     title: 'Conexão Afetuosa',
     subtitle: 'Pequenos rituais de carinho para fortalecer o vínculo.',
     cta: 'Ver ideias →',
