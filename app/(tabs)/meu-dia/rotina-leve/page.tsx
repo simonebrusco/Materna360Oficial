@@ -4,101 +4,85 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 
-interface Card {
+interface CardItem {
   id: string
-  icon: string
   title: string
   description: string
   href: string
 }
 
-const CARDS: Card[] = [
+interface CardGroup {
+  label: string
+  cards: CardItem[]
+}
+
+const CARD_GROUPS: CardGroup[] = [
   {
-    id: 'planejar-dia',
-    icon: 'calendar',
-    title: 'Planejar o Dia',
-    description: 'Comece organizando o essencial.',
-    href: '/meu-dia/rotina-leve/planejar-o-dia',
+    label: 'ORGANIZAÇÃO DO DIA',
+    cards: [
+      {
+        id: 'planejar-dia',
+        title: 'Planejar o Dia',
+        description: 'Comece organizando o essencial.',
+        href: '/meu-dia?focus=planejar-o-dia',
+      },
+      {
+        id: 'rotina-casa',
+        title: 'Rotina da Casa',
+        description: 'Tarefas do lar com praticidade.',
+        href: '/meu-dia?focus=rotina-da-casa',
+      },
+    ],
   },
   {
-    id: 'rotina-casa',
-    icon: 'home',
-    title: 'Rotina da Casa',
-    description: 'Tarefas do lar com praticidade.',
-    href: '/meu-dia/rotina-leve/rotina-da-casa',
+    label: 'ROTINA DA FAMÍLIA',
+    cards: [
+      {
+        id: 'rotina-filho',
+        title: 'Rotina do Filho',
+        description: 'Organização do dia da criança.',
+        href: '/meu-dia?focus=rotina-do-filho',
+      },
+      {
+        id: 'prioridades-semana',
+        title: 'Prioridades da Semana',
+        description: 'O que realmente importa nesta semana.',
+        href: '/meu-dia?focus=prioridades-da-semana',
+      },
+    ],
   },
   {
-    id: 'rotina-filho',
-    icon: 'heart',
-    title: 'Rotina do Filho',
-    description: 'Organização do dia da criança.',
-    href: '/meu-dia/rotina-leve/rotina-do-filho',
+    label: 'FERRAMENTAS DA MÃE',
+    cards: [
+      {
+        id: 'checklist-mae',
+        title: 'Checklist da Mãe',
+        description: 'Pequenas ações que fazem diferença.',
+        href: '/meu-dia?focus=checklist-da-mae',
+      },
+      {
+        id: 'notas-listas',
+        title: 'Notas & Listas',
+        description: 'Anotações rápidas e listas essenciais.',
+        href: '/meu-dia?focus=notas-e-listas',
+      },
+    ],
   },
   {
-    id: 'prioridades-semana',
-    icon: 'star',
-    title: 'Prioridades da Semana',
-    description: 'O que realmente importa nesta semana.',
-    href: '/meu-dia/rotina-leve/prioridades-da-semana',
-  },
-  {
-    id: 'checklist-mae',
-    icon: 'check-circle',
-    title: 'Checklist da Mãe',
-    description: 'Pequenas ações que fazem diferença.',
-    href: '/meu-dia/rotina-leve/checklist-da-mae',
-  },
-  {
-    id: 'notas-listas',
-    icon: 'edit',
-    title: 'Notas & Listas',
-    description: 'Anotações rápidas e listas essenciais.',
-    href: '/meu-dia/rotina-leve/notas-e-listas',
-  },
-  {
-    id: 'receitas-saudaveis',
-    icon: 'leaf',
-    title: 'Receitas Saudáveis',
-    description: 'Ideias rápidas com o que você tem em casa.',
-    href: '/cuidar/receitas-saudaveis',
+    label: 'IDEIAS RÁPIDAS',
+    cards: [
+      {
+        id: 'receitas-saudaveis',
+        title: 'Receitas Saudáveis',
+        description: 'Ideias rápidas com o que você tem em casa.',
+        href: '/cuidar/receitas-saudaveis',
+      },
+    ],
   },
 ]
-
-function CardLink({ card, index }: { card: Card; index: number }) {
-  return (
-    <Reveal key={card.id} delay={index * 50}>
-      <Link href={card.href}>
-        <SoftCard className="flex h-full flex-col justify-between rounded-3xl border border-black/5 bg-white/90 p-6 md:p-8 shadow-[0_6px_22px_rgba(0,0,0,0.06)] backdrop-blur cursor-pointer transition-all duration-200 hover:shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0">
-              <AppIcon
-                name={card.icon as any}
-                size={24}
-                className="text-primary"
-                decorative
-              />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-1">
-                {card.title}
-              </h3>
-              <p className="text-sm text-[#545454] mb-4">
-                {card.description}
-              </p>
-              <span className="text-sm font-semibold text-primary inline-flex items-center gap-1">
-                Acessar →
-              </span>
-            </div>
-          </div>
-        </SoftCard>
-      </Link>
-    </Reveal>
-  )
-}
 
 export default function RotinaLevePage() {
   const [isHydrated, setIsHydrated] = useState(false)
@@ -111,6 +95,8 @@ export default function RotinaLevePage() {
     return null
   }
 
+  let cardIndex = 0
+
   return (
     <PageTemplate
       label="MEU DIA"
@@ -118,13 +104,44 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
-          {/* Premium 2-Column Grid — Materna360 Standard Mini-Hub Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {CARDS.map((card, idx) => (
-              <CardLink key={card.id} card={card} index={idx} />
-            ))}
-          </div>
+        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+          {CARD_GROUPS.map((group, groupIdx) => (
+            <Reveal key={group.label} delay={groupIdx * 50}>
+              <SoftCard className="rounded-3xl p-6 md:p-8">
+                <div className="mb-6">
+                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                    {group.label}
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {group.cards.map((card) => {
+                    const currentIndex = cardIndex
+                    cardIndex += 1
+                    return (
+                      <Reveal key={card.id} delay={currentIndex * 25}>
+                        <Link href={card.href}>
+                          <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 hover:bg-white/80 transition-all duration-200 cursor-pointer">
+                            <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                              {card.title}
+                            </h4>
+                            <p className="text-xs text-[#545454] mb-3 flex-1">
+                              {card.description}
+                            </p>
+                            <div className="flex justify-end">
+                              <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
+                                Ver mais →
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      </Reveal>
+                    )
+                  })}
+                </div>
+              </SoftCard>
+            </Reveal>
+          ))}
         </div>
       </ClientOnly>
     </PageTemplate>
