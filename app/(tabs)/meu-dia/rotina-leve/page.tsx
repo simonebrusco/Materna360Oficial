@@ -38,7 +38,7 @@ const SECTION_2: Card[] = [
     id: 'rotina-filho',
     icon: 'heart',
     title: 'Rotina do Filho',
-    description: 'Organização do dia da criança.',
+    description: 'A rotina diária da criança.',
     href: '/meu-dia/rotina-leve/rotina-do-filho',
   },
   {
