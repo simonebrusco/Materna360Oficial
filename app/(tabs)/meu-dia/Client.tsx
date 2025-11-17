@@ -68,22 +68,20 @@ export function MeuDiaClient({
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
-          {/* Premium Planner Card */}
+          {/* Premium Planner */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8" suppressHydrationWarning>
-              <div id="meu-dia-print-area" className="print-card">
-                <FamilyPlanner
-                  currentDateKey={finalCurrentDateKey}
-                  weekStartKey={finalWeekStartKey}
-                  weekLabels={finalWeekLabels}
-                  plannerTitle={finalPlannerTitle}
-                  profile={finalProfile}
-                  dateKey={finalCurrentDateKey}
-                  recommendations={recommendations}
-                  initialBuckets={initialBuckets}
-                />
-              </div>
-            </SoftCard>
+            <div id="meu-dia-print-area" className="print-card" suppressHydrationWarning>
+              <FamilyPlanner
+                currentDateKey={finalCurrentDateKey}
+                weekStartKey={finalWeekStartKey}
+                weekLabels={finalWeekLabels}
+                plannerTitle={finalPlannerTitle}
+                profile={finalProfile}
+                dateKey={finalCurrentDateKey}
+                recommendations={recommendations}
+                initialBuckets={initialBuckets}
+              />
+            </div>
           </Reveal>
         </div>
       </ClientOnly>
