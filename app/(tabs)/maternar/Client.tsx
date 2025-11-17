@@ -46,14 +46,17 @@ export default function MaternarClient() {
                     timestamp: new Date().toISOString(),
                   });
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-[#ff005e] text-[#ff005e] bg-white font-medium text-sm tracking-tight shadow-sm hover:bg-[#ffd8e6]/20 active:scale-[0.98] transition-all duration-150"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-[1.5px] border-[#ff005e]/85 text-[#ff005e] bg-[rgba(255,0,94,0.05)] font-medium text-sm tracking-wide shadow-[0_2px_6px_rgba(255,0,94,0.08)] hover:translate-y-0.5 hover:shadow-[0_4px_12px_rgba(255,0,94,0.12)] active:scale-[0.98] transition-all duration-150"
                 aria-label="Completar perfil"
               >
-                <AppIcon
-                  name="user"
-                  className="h-4 w-4"
-                  decorative
-                />
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-[rgba(255,0,94,0.12)] scale-[2.5] pointer-events-none" />
+                  <AppIcon
+                    name="hand-heart"
+                    className="h-4 w-4 relative z-10"
+                    decorative
+                  />
+                </div>
                 <span>Completar perfil</span>
               </Link>
             </div>
@@ -64,7 +67,7 @@ export default function MaternarClient() {
           {/* Emotional closing text */}
           <div className="mt-8 px-6 md:px-8 max-w-2xl mx-auto text-center">
             <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
-              Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
+              Você n��o precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
             </p>
           </div>
         </PageTemplate>
