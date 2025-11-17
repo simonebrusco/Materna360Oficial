@@ -2,7 +2,6 @@
 
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -36,7 +35,7 @@ export default function MinhasConquistasPage() {
               </p>
               <div className="flex justify-end">
                 <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
-                  Ver detalhes →
+                  Ver detalhes ���
                 </span>
               </div>
             </SoftCard>
