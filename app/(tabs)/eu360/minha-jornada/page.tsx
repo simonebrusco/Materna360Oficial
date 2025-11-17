@@ -92,6 +92,23 @@ export default function MinhaJornadaPage() {
                 Acessar →
               </button>
             </div>
+
+            {/* Card 5 */}
+            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
+              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
+              <h2 className="text-sm font-semibold text-gray-900">
+                Guia do Desenvolvimento
+              </h2>
+              <p className="text-xs text-gray-700 mt-1">
+                Acompanhe as fases do seu filho com mais clareza.
+              </p>
+              <button
+                type="button"
+                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
+              >
+                Ver etapas →
+              </button>
+            </div>
           </section>
         </div>
       </div>
