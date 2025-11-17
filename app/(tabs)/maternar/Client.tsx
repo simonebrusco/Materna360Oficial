@@ -50,7 +50,7 @@ export default function MaternarClient() {
 
                 {/* Title */}
                 <h3 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight mb-2">
-                  Personalize your journey, mãe
+                  Personalize your journey, {firstName || 'mãe'}
                 </h3>
 
                 {/* Subtitle */}
