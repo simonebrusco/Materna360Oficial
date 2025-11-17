@@ -63,7 +63,7 @@ export default function MaternarClient() {
                     timestamp: new Date().toISOString(),
                   });
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-2xl border-[0.75px] border-[rgba(255,0,94,0.45)] bg-[rgba(255,0,94,0.04)] text-[rgba(255,0,94,0.85)] text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,0,94,0.04)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,0,94,0.06)] active:scale-[0.99] transition-all duration-150"
+                className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[rgba(255,0,94,0.45)] bg-[rgba(255,0,94,0.04)] text-[rgba(255,0,94,0.85)] text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,0,94,0.04)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,0,94,0.06)] active:scale-[0.99] transition-all duration-150"
                 aria-label="Completar perfil"
               >
                 <AppIcon
@@ -79,8 +79,8 @@ export default function MaternarClient() {
 
           {/* Daily Message Card */}
           <Reveal delay={100}>
-            <div className="mt-4 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
-              <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[20px] border border-white/60 shadow-[0_10px_32px_rgba(255,0,94,0.16)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
+            <div className="mt-2 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
+              <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[20px] border border-white/60 shadow-[0_10px_40px_rgba(255,0,94,0.08)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
                 {/* Subtle gradient accent blob - top-right corner */}
                 <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/15 to-transparent rounded-full" />
 
