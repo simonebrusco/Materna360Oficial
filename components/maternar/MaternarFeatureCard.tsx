@@ -25,7 +25,7 @@ export function MaternarFeatureCard({
   index = 0,
   tag,
 }: MaternarFeatureCardProps) {
-  const isPremium = cardId === 'planos-premium'
+  const isPremium = cardId === 'planos-premium' || cardId === 'planner-do-dia'
 
   const baseCardClasses =
     'flex h-full flex-col justify-between rounded-3xl border border-black/5 bg-white/90 ' +
