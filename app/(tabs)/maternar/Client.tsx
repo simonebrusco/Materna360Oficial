@@ -122,7 +122,7 @@ export default function MaternarClient() {
           {/* Emotional closing text */}
           <div className="mt-6 px-6 md:px-8 max-w-2xl mx-auto text-center">
             <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
-              Você n����o precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
+              Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
             </p>
           </div>
         </PageTemplate>
