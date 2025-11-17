@@ -22,7 +22,7 @@ const REGISTRO_CARDS: RegistroCard[] = [
   },
   {
     id: 'frases-lembrar',
-    icon: 'quote',
+    icon: 'bookmark',
     title: 'Frases para lembrar',
     subtitle: 'Aquelas coisas que você quer guardar para sempre.',
     href: '#',
