@@ -35,16 +35,6 @@ type MeuDiaClientProps = {
   __disableHeavy__?: boolean
 }
 
-const quickActions = [
-  { iconName: 'place', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
-  { iconName: 'books', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
-  { iconName: 'star', title: 'Atividade do Dia', description: 'Faça com as crianças' },
-  { iconName: 'care', title: 'Pausa para Mim', description: 'Seu momento especial' },
-] as const
-
-const NOTES_LABEL = 'Notas Rápidas'
-const NOTES_DESCRIPTION = 'Capture ideias e lembretes em instantes.'
-
 const safeUtf = (value?: string | null): string => {
   if (!value) {
     return ''
