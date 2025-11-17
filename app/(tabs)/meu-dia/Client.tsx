@@ -1,14 +1,15 @@
 'use client'
 
-
 import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
 import type { Profile, AgeRange } from '@/app/lib/ageRange'
 import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { SoftCard } from '@/components/ui/card'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getWeekStartKey, buildWeekLabels } from '@/app/lib/weekLabels'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 type MeuDiaClientProps = {
   dailyGreeting?: string
@@ -21,7 +22,6 @@ type MeuDiaClientProps = {
   allActivities?: ChildActivity[]
   recommendations?: ChildRecommendation[]
   initialBuckets?: AgeRange[]
-  // Builder preview fallbacks
   __builderPreview__?: boolean
   __fallbackProfile__?: Profile
   __fallbackGreeting__?: string
@@ -29,26 +29,12 @@ type MeuDiaClientProps = {
   __fallbackCurrentDateKey__?: string
   __fallbackWeekStartKey__?: string
   __fallbackPlannerTitle__?: string
-  // Hard disable heavy features (charts/pdf/timers) in iframe
   __disableHeavy__?: boolean
 }
 
-const safeUtf = (value?: string | null): string => {
-  if (!value) {
-    return ''
-  }
-
-  try {
-    return decodeURIComponent(escape(value))
-  } catch {
-    return value ?? ''
-  }
-}
-
-// Default values for Builder preview
 const DEFAULT_PROFILE: Profile = {
   motherName: 'Mãe',
-  children: [{ name: 'Seu filho' } as any], // age in months
+  children: [{ name: 'Seu filho' } as any],
 }
 
 export function MeuDiaClient({
@@ -75,29 +61,18 @@ export function MeuDiaClient({
 
   const { name } = useProfile() || { name: finalProfile.motherName }
 
-  const firstName = name ? name.split(' ')[0] : ''
-  const pageTitle = firstName ? `${firstName}, como está seu dia hoje?` : 'Meu dia'
-  const pageSubtitle =
-    'Organize seu dia com leveza. Planeje suas prioridades e celebre cada passo realizado.'
-
   return (
     <PageTemplate
       label="MEU DIA"
-      title={pageTitle}
-      subtitle={pageSubtitle}
+      title="Seu Dia Organizado"
+      subtitle="Um espaço para planejar com leveza e clareza."
     >
-      <div className="max-w-[1160px] mx-auto px-4 md:px-6 space-y-4 md:space-y-5">
-        {/* Daily Planner - Only Component */}
-        <div id="meu-dia-print-area" className="print-card">
+      <ClientOnly>
+        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+          {/* Premium Planner Card */}
           <Reveal delay={0}>
-            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)]">
-              <div className="flex flex-col gap-1 mb-4">
-                <h3 className="m360-subtitle">O que é prioridade hoje?</h3>
-                <p className="m360-label-sm text-gray-600">
-                  Veja seus compromissos do dia e ajuste o que for necessário.
-                </p>
-              </div>
-              <div>
+            <SoftCard className="rounded-3xl p-6 md:p-8" suppressHydrationWarning>
+              <div id="meu-dia-print-area" className="print-card">
                 <FamilyPlanner
                   currentDateKey={finalCurrentDateKey}
                   weekStartKey={finalWeekStartKey}
@@ -109,10 +84,10 @@ export function MeuDiaClient({
                   initialBuckets={initialBuckets}
                 />
               </div>
-            </div>
+            </SoftCard>
           </Reveal>
         </div>
-      </div>
+      </ClientOnly>
     </PageTemplate>
   )
 }
