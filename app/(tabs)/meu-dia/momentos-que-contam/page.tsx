@@ -23,7 +23,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Conexão Afetuosa',
     subtitle: 'Pequenos rituais de carinho para fortalecer o vínculo.',
     cta: 'Ver ideias →',
-    href: '/meu-dia/momentos-que-contam/conexao-afetuosa',
+    href: '#',
   },
   {
     id: 'atividades-curtinhas',
@@ -31,7 +31,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Atividades Curtinhas',
     subtitle: 'Brincadeiras rapidinhas para momentos do dia.',
     cta: 'Explorar →',
-    href: '/meu-dia/momentos-que-contam/atividades-curtinhas',
+    href: '#',
   },
   {
     id: 'registro-momentos',
@@ -39,7 +39,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Registro de Momentos',
     subtitle: 'Guarde memórias especiais do seu dia com seu filho.',
     cta: 'Registrar →',
-    href: '/meu-dia/momentos-que-contam/registro-de-momentos',
+    href: '#',
   },
   {
     id: 'guia-desenvolvimento',
@@ -47,7 +47,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Guia do Desenvolvimento',
     subtitle: 'Acompanhe a fase do seu filho com orientações personalizadas.',
     cta: 'Ver guia →',
-    href: '/eu360/guia-desenvolvimento',
+    href: '#',
   },
 ]
 
