@@ -7,7 +7,6 @@ import { FilterPill } from '@/components/ui/FilterPill'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
-import { useProfile } from '@/app/hooks/useProfile'
 
 interface Product {
   id: string
