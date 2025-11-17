@@ -553,15 +553,6 @@ export function MeuDiaClient({
       )}
 
       {/* Emotion Trend Drawer */}
-      <ClientOnly>
-        {canShowTrends && (
-          <EmotionTrendDrawer
-            open={trendOpen}
-            onClose={() => setTrendOpen(false)}
-            resolveData={() => getMoodEntries()}
-          />
-        )}
-      </ClientOnly>
     </PageTemplate>
   )
 }
