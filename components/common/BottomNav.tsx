@@ -50,7 +50,7 @@ export default function BottomNav({
   ...props
 }: BottomNavProps) {
   const pathname = usePathname();
-  const items = ITEMS_FORCED; // Always 5 items, always center-highlighted
+  const items = ITEMS_FORCED; // Always 3 items, always center-highlighted
 
   const getTabFromHref = (href: string): string => {
     // Map href to tab name (e.g., '/meu-dia' -> 'meu-dia')
