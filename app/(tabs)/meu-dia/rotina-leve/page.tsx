@@ -35,7 +35,7 @@ const CARDS: Card[] = [
     id: 'rotina-filho',
     icon: 'heart',
     title: 'Rotina do Filho',
-    description: 'A rotina diária da criança.',
+    description: 'Organização do dia da criança.',
     href: '/meu-dia/rotina-leve/rotina-do-filho',
   },
   {
@@ -58,6 +58,13 @@ const CARDS: Card[] = [
     title: 'Notas & Listas',
     description: 'Anotações rápidas e listas essenciais.',
     href: '/meu-dia/rotina-leve/notas-e-listas',
+  },
+  {
+    id: 'receitas-saudaveis',
+    icon: 'leaf',
+    title: 'Receitas Saudáveis',
+    description: 'Ideias rápidas com o que você tem em casa.',
+    href: '/cuidar/receitas-saudaveis',
   },
 ]
 
@@ -93,7 +100,7 @@ function CardLink({ card, index }: { card: Card; index: number }) {
   )
 }
 
-export default function RotatinaLevePage() {
+export default function Rotina LevePage() {
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
@@ -112,7 +119,7 @@ export default function RotatinaLevePage() {
     >
       <ClientOnly>
         <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
-          {/* Premium 2x3 Grid */}
+          {/* Premium 2-Column Grid — Materna360 Standard Mini-Hub Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {CARDS.map((card, idx) => (
               <CardLink key={card.id} card={card} index={idx} />
