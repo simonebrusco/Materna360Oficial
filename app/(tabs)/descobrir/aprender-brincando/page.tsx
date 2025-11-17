@@ -345,83 +345,6 @@ export default function AprenderBrincandoPage() {
           </Reveal>
         )}
 
-        {/* SECTION 4: HEALTHY RECIPES */}
-        <Reveal delay={160}>
-          <SoftCard className="rounded-3xl p-6 md:p-8">
-            <div className="mb-6">
-              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mb-1">
-                Receitas Saudáveis Inteligentes
-              </h2>
-              <p className="text-sm text-[#545454]">
-                Ideias de refeições nutritivas geradas por IA.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={ingredient}
-                onChange={(e) => setIngredient(e.target.value)}
-                placeholder="Digite um ingrediente (ex: abóbora)"
-                className="flex-1 rounded-full border border-white/60 bg-white/80 px-5 py-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleGenerateRecipe}
-                className="rounded-full px-8"
-              >
-                Gerar Receita
-              </Button>
-            </div>
-
-            {showRecipeResult && (
-              <div className="mt-8 pt-8 border-t border-white/60">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#2f3a56] mb-1">
-                      Purê Cremoso de Abóbora
-                    </h3>
-                    <p className="text-sm text-[#545454]">
-                      Uma receita nutritiva e prática para bebês e crianças pequenas.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
-                        Ingredientes:
-                      </p>
-                      <ul className="text-sm text-[#545454] space-y-1 list-disc list-inside">
-                        <li>500g de abóbora</li>
-                        <li>100ml de leite materno ou fórmula</li>
-                        <li>1 colher de azeite</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-[#2f3a56] mb-2">
-                        Modo de preparo:
-                      </p>
-                      <ol className="text-sm text-[#545454] list-decimal list-inside space-y-1">
-                        <li>Cozinhe a abóbora</li>
-                        <li>Amasse bem</li>
-                        <li>Adicione o leite e azeite</li>
-                      </ol>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#FFE5EF]/40 rounded-2xl px-4 py-3">
-                    <p className="text-xs text-[#2f3a56] font-medium">
-                      <span className="font-semibold">Recomendado para:</span> A partir dos
-                      6 meses (primeira introdução alimentar)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </SoftCard>
-        </Reveal>
 
         {/* SECTION 5: RECOMMENDED TOYS & PRODUCTS */}
         <Reveal delay={200}>
@@ -468,52 +391,6 @@ export default function AprenderBrincandoPage() {
           </div>
         </Reveal>
 
-        {/* SECTION 6: CHILD DEVELOPMENT GUIDE */}
-        <Reveal delay={240}>
-          <SoftCard className="rounded-3xl p-6 md:p-8">
-            <div className="mb-6">
-              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mb-1">
-                Guia do Desenvolvimento
-              </h2>
-              <p className="text-sm text-[#545454]">
-                Insights personalizados sobre a fase atual do seu filho.
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6]/50 rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-[#2f3a56] mb-3">
-                  O que esperar nesta fase de {childName}
-                </h3>
-
-                <div className="space-y-4 text-sm text-[#545454]">
-                  <p>
-                    Cada criança se desenvolve ao seu próprio ritmo. Nesta fase, você pode esperar
-                    avanços significativos em áreas como:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2">
-                    <li>Desenvolvimento motor (movimentos mais coordenados)</li>
-                    <li>Comunicação e linguagem</li>
-                    <li>Habilidades sociais e emocionais</li>
-                    <li>Pensamento criativo e resolução de problemas</li>
-                  </ul>
-                  <p className="italic">
-                    Lembre-se: comparações com outras crianças não são úteis. Cada pequeno passo
-                    é uma vitória!
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full rounded-full"
-              >
-                Ver detalhes completos
-              </Button>
-            </div>
-          </SoftCard>
-        </Reveal>
       </div>
     </PageTemplate>
   )
