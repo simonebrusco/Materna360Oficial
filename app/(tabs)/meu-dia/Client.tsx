@@ -287,35 +287,6 @@ export function MeuDiaClient({
             Comece o dia com calma. Este espaço está aqui para apoiar você.
           </p>
 
-          {/* Message of the Day - Premium Hero Card */}
-          <Reveal delay={100}>
-            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] relative overflow-hidden mb-6">
-              {/* Subtle gradient accent blob - top-right corner */}
-              <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full" />
-
-              {/* Content wrapper with tight spacing - positioned above accent */}
-              <div className="flex flex-col gap-2 md:gap-3 relative z-10">
-                {/* Pill header */}
-                <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm w-fit">
-                  Mensagem de Hoje
-                </div>
-
-                {/* Message title */}
-                <h2 className="m360-title">"{finalDailyGreeting}"</h2>
-
-                {/* Subtitle */}
-                <p className="text-gray-600 m360-body-sm">
-                  Uma mensagem especial para começar seu dia com leveza.
-                </p>
-
-                {/* Helper text */}
-                <p className="m360-label-sm text-gray-500">
-                  Atualizada automaticamente a cada novo dia.
-                </p>
-              </div>
-            </div>
-          </Reveal>
-
           {/* Greeting Text */}
           <div className="mb-6">
             <InactivityReminder />
