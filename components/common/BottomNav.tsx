@@ -8,45 +8,33 @@ import { track } from '@/app/lib/telemetry';
 type Item = {
   href: string;
   label: string;
-  icon: 'star' | 'care' | 'books' | 'crown' | 'home';
+  icon: 'calendar' | 'heart' | 'user';
   center?: boolean;
   match?: (pathname: string) => boolean;
 };
 
 /**
- * 5-item bottom navigation with active state, telemetry, and accessibility
+ * 3-item bottom navigation with active state, telemetry, and accessibility
  * Center Maternar tab always visible and highlighted
  */
 const ITEMS_FORCED: Item[] = [
   {
     href: '/meu-dia',
     label: 'Meu Dia',
-    icon: 'star',
+    icon: 'calendar',
     match: (p: string) => p === '/meu-dia',
-  },
-  {
-    href: '/cuidar',
-    label: 'Cuidar',
-    icon: 'care',
-    match: (p: string) => p === '/cuidar',
   },
   {
     href: '/maternar',
     label: 'Maternar',
-    icon: 'home',
+    icon: 'heart',
     center: true,
     match: (p: string) => p.startsWith('/maternar'),
   },
   {
-    href: '/descobrir',
-    label: 'Descobrir',
-    icon: 'books',
-    match: (p: string) => p.startsWith('/descobrir'),
-  },
-  {
     href: '/eu360',
     label: 'Eu360',
-    icon: 'crown',
+    icon: 'user',
     match: (p: string) => p === '/eu360' || p.startsWith('/eu360/'),
   },
 ];
