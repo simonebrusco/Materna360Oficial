@@ -33,8 +33,6 @@ export default function MaternarClient() {
   }, []);
 
   const firstName = name ? name.split(' ')[0] : '';
-  const pageTitle = 'Bem-vinda ao Maternar';
-  const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
   const isProfileIncomplete = !name || name.trim() === '';
 
   // Get the current daily message
@@ -48,11 +46,20 @@ export default function MaternarClient() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
 
       <div className="relative z-10">
-        <PageTemplate
-          label="MATERNAR"
-          title={pageTitle}
-          subtitle={pageSubtitle}
-        >
+        <PageTemplate>
+          {/* Custom greeting header with avatar */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#2f3a56]">
+              Bom dia{firstName ? ', ' : ''}{firstName}
+            </h1>
+            {name && (
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center flex-shrink-0 border border-white/60 shadow-sm">
+                <span className="text-sm md:text-base font-semibold text-[#ff005e]">
+                  {firstName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
           {/* Profile Completion Premium Button */}
           {isProfileIncomplete && (
             <div className="mt-6 mb-6 px-4 md:px-6 max-w-7xl mx-auto flex justify-end">
