@@ -12,6 +12,7 @@ type MaternarFeatureCardProps = {
   cardId: string
   ctaText?: string
   index?: number
+  tag?: string
 }
 
 export function MaternarFeatureCard({
@@ -22,6 +23,7 @@ export function MaternarFeatureCard({
   cardId,
   ctaText = 'Explorar',
   index = 0,
+  tag,
 }: MaternarFeatureCardProps) {
   const isPremium = cardId === 'planos-premium'
 
@@ -58,6 +60,11 @@ export function MaternarFeatureCard({
           </div>
 
           <div className="space-y-1">
+            {tag && (
+              <span className="inline-flex items-center rounded-full bg-[#ffe3f0] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#ff005e]/90">
+                {tag}
+              </span>
+            )}
             <h3 className="text-sm md:text-base font-semibold text-[#2f3a56] tracking-tight">
               {title}
             </h3>
