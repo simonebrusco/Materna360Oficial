@@ -87,3 +87,5 @@ export function MaternarFeatureCard({
     </Link>
   )
 }
+
+export default MaternarFeatureCard
