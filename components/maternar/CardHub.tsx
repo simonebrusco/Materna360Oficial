@@ -74,7 +74,7 @@ const HUB_CARDS: CardConfig[] = [
     icon: 'idea',
     title: 'Aprender Brincando',
     subtitle: 'Ideias rápidas de brincar e ensinar.',
-    href: '/descobrir/aprender-brincar',
+    href: '/descobrir/aprender-brincando',
     ctaText: 'Explorar',
     tag: 'Seu filho',
   },
