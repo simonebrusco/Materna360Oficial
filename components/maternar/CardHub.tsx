@@ -21,7 +21,7 @@ const HUB_CARDS: CardConfig[] = [
     title: 'Planner do Dia',
     subtitle: 'Organize suas tarefas sem se sobrecarregar.',
     href: '/meu-dia',
-    ctaText: 'Planejar agora →',
+    ctaText: 'Planejar agora',
     tag: 'Você',
   },
   {
