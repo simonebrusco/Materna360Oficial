@@ -9,15 +9,14 @@ type Item = {
   href: string;
   label: string;
   icon: 'calendar' | 'heart' | 'user';
-  center?: boolean;
   match?: (pathname: string) => boolean;
 };
 
 /**
- * 3-item bottom navigation with active state, telemetry, and accessibility
- * Center Maternar tab always visible and highlighted
+ * 3-item premium floating dock navigation
+ * Mobile-first design with floating pill bar style
  */
-const ITEMS_FORCED: Item[] = [
+const ITEMS: Item[] = [
   {
     href: '/meu-dia',
     label: 'Meu Dia',
@@ -28,7 +27,6 @@ const ITEMS_FORCED: Item[] = [
     href: '/maternar',
     label: 'Maternar',
     icon: 'heart',
-    center: true,
     match: (p: string) => p.startsWith('/maternar'),
   },
   {
@@ -40,7 +38,7 @@ const ITEMS_FORCED: Item[] = [
 ];
 
 interface BottomNavProps {
-  flags?: any; // Ignored; kept for backward compat with layout
+  flags?: any;
   'data-debug-nav'?: string;
   [key: string]: any;
 }
@@ -50,10 +48,8 @@ export default function BottomNav({
   ...props
 }: BottomNavProps) {
   const pathname = usePathname();
-  const items = ITEMS_FORCED; // Always 3 items, always center-highlighted
 
   const getTabFromHref = (href: string): string => {
-    // Map href to tab name (e.g., '/meu-dia' -> 'meu-dia')
     return href.split('/')[1] || href;
   };
 
@@ -68,92 +64,65 @@ export default function BottomNav({
   return (
     <nav
       className="
-        fixed inset-x-0 bottom-0 z-50
-        bg-white/95 backdrop-blur-md
-        border-t border-neutral-200/60
-        shadow-[0_-4px_12px_rgba(0,0,0,0.04)]
-        safe-area pb-[env(safe-area-inset-bottom,0.75rem)]
+        fixed bottom-4 inset-x-4
+        z-50
+        bg-white/90 backdrop-blur-xl
+        border border-black/5
+        rounded-3xl
+        shadow-[0_10px_40px_rgba(0,0,0,0.18)]
       "
       role="navigation"
-      aria-label="Main"
-      data-debug-nav={debugNav ?? 'count:3;forced:yes'}
+      aria-label="Main navigation"
+      data-debug-nav={debugNav ?? 'count:3;floating-dock'}
     >
-      <ul className="mx-auto grid max-w-screen-md grid-cols-3 gap-1">
-        {items.map((it) => {
-          // Determine active state using custom match function or equality
-          const isActive = it.match
-            ? it.match(pathname)
-            : pathname === it.href;
-          const isMaternar = it.href === '/maternar';
+      <ul className="flex items-center justify-between gap-2 px-4 py-3 max-w-4xl mx-auto">
+        {ITEMS.map((item) => {
+          const isActive = item.match
+            ? item.match(pathname)
+            : pathname === item.href;
 
-          // Maternar tab styling (floating pill hub)
-          if (isMaternar) {
-            return (
-              <li key={it.href} className="flex items-end justify-center">
-                <Link
-                  href={it.href}
-                  onClick={() => handleNavClick(it.href)}
-                  className={`
-                    flex flex-col items-center justify-center gap-0.5
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
-                    transition-all duration-200
-                    rounded-full
-                    h-14 px-6 -mt-4
-                    ${
-                      isActive
-                        ? 'bg-gradient-to-t from-[#ff005e] to-[#ff7ba8] shadow-lg text-white'
-                        : 'bg-white border border-pink-100 shadow-md'
-                    }
-                  `}
-                  aria-label={it.label}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <AppIcon
-                    name={it.icon}
-                    size={24}
-                    className={isActive ? 'text-white' : 'text-neutral-500'}
-                    decorative
-                  />
-                  <span className={`text-xs font-semibold leading-tight ${
-                    isActive ? 'text-white tracking-wide' : 'text-[11px] text-neutral-600 font-medium'
-                  }`}>
-                    {it.label}
-                  </span>
-                </Link>
-              </li>
-            );
-          }
-
-          // Other tabs (Meu Dia, Eu360)
           return (
-            <li key={it.href} className="flex">
+            <li key={item.href} className="flex-1 flex justify-center">
               <Link
-                href={it.href}
-                onClick={() => handleNavClick(it.href)}
+                href={item.href}
+                onClick={() => handleNavClick(item.href)}
                 className={`
-                  flex flex-col items-center justify-center gap-0.5
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+                  flex flex-col items-center justify-center gap-1
+                  px-3 py-2
+                  rounded-2xl
                   transition-all duration-200
-                  flex-1
-                  h-12 px-2
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+                  active:scale-95
+                  ${
+                    isActive
+                      ? 'bg-[#ff005e]/10 border border-[#ff005e]/40 shadow-[0_0_18px_rgba(255,0,94,0.35)]'
+                      : 'bg-transparent border border-transparent hover:opacity-80'
+                  }
                 `}
-                aria-label={it.label}
+                aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <AppIcon
-                  name={it.icon}
-                  size={24}
+                  name={item.icon}
+                  size={isActive ? 18 : 16}
                   className={
                     isActive
-                      ? 'text-[#ff005e]'
-                      : 'text-neutral-400'
+                      ? 'text-[#ff005e] transition-all duration-200'
+                      : 'text-[#545454]/70 transition-all duration-200'
                   }
                   decorative
                 />
-                <span className={`text-[11px] font-medium leading-tight ${
-                  isActive ? 'text-[#ff005e]' : 'text-neutral-500'
-                }`}>
-                  {it.label}
+                <span
+                  className={`
+                    text-[11px] leading-tight transition-all duration-200
+                    ${
+                      isActive
+                        ? 'font-semibold text-[#ff005e]'
+                        : 'font-medium text-[#545454] opacity-80'
+                    }
+                  `}
+                >
+                  {item.label}
                 </span>
               </Link>
             </li>
