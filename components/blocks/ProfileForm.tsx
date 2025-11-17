@@ -280,9 +280,6 @@ export function ProfileForm() {
             ? Math.floor(firstChildAge)
             : null
 
-      const eu360Controller = new AbortController();
-      const eu360TimeoutId = setTimeout(() => eu360Controller.abort(), 5000);
-
       const eu360Response = await fetch('/api/eu360/profile', {
         method: 'POST',
         headers: {
@@ -290,15 +287,12 @@ export function ProfileForm() {
         },
         credentials: 'include',
         cache: 'no-store',
-        signal: eu360Controller.signal,
         body: JSON.stringify({
           name: trimmedState.nomeMae,
           birthdate: normalizedBirthdate,
           age_months: normalizedAgeMonths,
         }),
       })
-
-      clearTimeout(eu360TimeoutId);
 
       const eu360Payload = await eu360Response.json().catch(() => null)
 
