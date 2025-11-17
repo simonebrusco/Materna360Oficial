@@ -6,7 +6,6 @@ import Image from 'next/image'
 
 import { DEFAULT_STICKER_ID, STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
 const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
@@ -59,7 +58,6 @@ export function ProfileForm() {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [statusMessage, setStatusMessage] = useState('')
-
 
   useEffect(() => {
     let isMounted = true
@@ -340,7 +338,6 @@ export function ProfileForm() {
 
   const inputClasses = 'w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft transition-all duration-300 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30'
 
-  // SSR-safe date computation (avoid new Date() at render time)
   const [todayISO, setTodayISO] = useState<string>('')
 
   useEffect(() => {
@@ -350,210 +347,228 @@ export function ProfileForm() {
 
   return (
     <Reveal>
-      <Card className="p-7" suppressHydrationWarning>
-        <form className="space-y-7" onSubmit={handleSubmit} noValidate>
+      <form className="space-y-8" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
+            boas-vindas
+          </p>
+          <h2 className="text-xl font-semibold text-support-1 md:text-2xl">
+            Antes de começarmos, me conte um pouquinho sobre você
+          </h2>
+          <p className="text-sm text-support-2 md:text-base">
+            Isso personaliza sua experiência e deixa tudo mais prático no dia a dia.
+          </p>
+        </div>
+
+        {/* SECTION A — Sobre Você */}
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+              Sobre você
+            </h3>
+            <p className="text-sm text-[#545454]">
+              Informações pessoais para personalizar sua experiência.
+            </p>
+          </div>
+
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-              boas-vindas
-            </p>
-            <h2 className="text-xl font-semibold text-support-1 md:text-2xl">
-              Antes de começarmos, me conte um pouquinho sobre você
-            </h2>
-            <p className="text-sm text-support-2 md:text-base">
-              Isso personaliza sua experiência e deixa tudo mais prático no dia a dia.
+            <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
+              Seu nome
+            </label>
+            <input
+              id="mother-name"
+              name="nomeMae"
+              type="text"
+              required
+              value={form.nomeMae}
+              onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
+              className={`${inputClasses} ${errors.nomeMae ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
+              aria-invalid={Boolean(errors.nomeMae)}
+              aria-describedby={errors.nomeMae ? 'mother-name-error' : undefined}
+            />
+            {errors.nomeMae && (
+              <p id="mother-name-error" className="text-xs font-medium text-primary">
+                {errors.nomeMae}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* SECTION B — Filhos */}
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+              Filhos
+            </h3>
+            <p className="text-sm text-[#545454]">
+              Adicione cada filho para personalizar atividades e dicas.
             </p>
           </div>
 
-          <div className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
-                  Seu nome
-                </label>
-                <input
-                  id="mother-name"
-                  name="nomeMae"
-                  type="text"
-                  required
-                  value={form.nomeMae}
-                  onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
-                  className={`${inputClasses} ${errors.nomeMae ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
-                  aria-invalid={Boolean(errors.nomeMae)}
-                  aria-describedby={errors.nomeMae ? 'mother-name-error' : undefined}
-                />
-                {errors.nomeMae && (
-                  <p id="mother-name-error" className="text-xs font-medium text-primary">
-                    {errors.nomeMae}
-                  </p>
-                )}
-              </div>
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" size="sm" onClick={addChild}>
+              ➕ Adicionar outro filho
+            </Button>
+          </div>
 
-              <div className="space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-support-1">Filhos</h3>
-                    <p className="text-xs text-support-2">
-                      Adicione cada filho para personalizar atividades e dicas.
-                    </p>
+          <div className="space-y-4">
+            {form.filhos.map((child, index) => (
+              <div key={child.id} className="rounded-2xl border border-white/50 bg-white/75 p-4 shadow-soft">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold text-support-1">Filho {index + 1}</h4>
+                  {form.filhos.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeChild(child.id)}
+                      className="text-xs font-semibold text-primary transition hover:text-primary/80"
+                    >
+                      Remover filho
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <label htmlFor={`child-gender-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                      Gênero
+                    </label>
+                    <select
+                      id={`child-gender-${index}`}
+                      value={child.genero}
+                      onChange={(event) => updateChild(child.id, 'genero', event.target.value)}
+                      className={`${inputClasses} appearance-none`}
+                    >
+                      <option value="menino">Menino</option>
+                      <option value="menina">Menina</option>
+                    </select>
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={addChild}>
-                    �� Adicionar outro filho
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {form.filhos.map((child, index) => (
-                    <div key={child.id} className="rounded-2xl border border-white/50 bg-white/75 p-4 shadow-soft">
-                      <div className="flex items-center justify-between gap-3">
-                        <h4 className="text-sm font-semibold text-support-1">Filho {index + 1}</h4>
-                        {form.filhos.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeChild(child.id)}
-                            className="text-xs font-semibold text-primary transition hover:text-primary/80"
-                          >
-                            Remover filho
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <div className="space-y-2">
-                          <label htmlFor={`child-gender-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Gênero
-                          </label>
-                          <select
-                            id={`child-gender-${index}`}
-                            value={child.genero}
-                            onChange={(event) => updateChild(child.id, 'genero', event.target.value)}
-                            className={`${inputClasses} appearance-none`}
-                          >
-                            <option value="menino">Menino</option>
-                            <option value="menina">Menina</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <label htmlFor={`child-age-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Idade (em meses)
-                          </label>
-                          <input
-                            id={`child-age-${index}`}
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
-                            value={child.idadeMeses}
-                            onChange={(event) => updateChild(child.id, 'idadeMeses', event.target.value)}
-                            className={`${inputClasses} ${errors.filhos?.[child.id] ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
-                            aria-invalid={Boolean(errors.filhos?.[child.id])}
-                            aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${index}` : undefined}
-                          />
-                          {errors.filhos?.[child.id] && (
-                            <p id={`child-age-error-${index}`} className="text-xs font-medium text-primary">
-                              {errors.filhos[child.id]}
-                            </p>
-                          )}
-                        </div>
-                        {index === 0 && (
-                          <div className="space-y-2 sm:col-span-3">
-                            <label htmlFor="baby-birthdate" className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                              Data de nascimento do bebê
-                            </label>
-                            <input
-                              id="baby-birthdate"
-                              type="date"
-                              value={babyBirthdate}
-                              onChange={(event) => setBabyBirthdate(event.target.value)}
-                              max={todayISO}
-                              className={inputClasses}
-                            />
-                            <p className="text-xs text-support-2/80">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
-                          </div>
-                        )}
-                        <div className="space-y-2">
-                          <label htmlFor={`child-name-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Nome (opcional)
-                          </label>
-                          <input
-                            id={`child-name-${index}`}
-                            type="text"
-                            value={child.nome}
-                            onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
-                            className={inputClasses}
-                          />
-                        </div>
-                        <div className="space-y-2 sm:col-span-3">
-                          <label htmlFor={`child-allergies-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                            Alergias (separe por vírgula)
-                          </label>
-                          <input
-                            id={`child-allergies-${index}`}
-                            type="text"
-                            value={child.alergias.join(', ')}
-                            onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
-                            className={inputClasses}
-                            placeholder="Ex.: leite, ovo, amendoim"
-                          />
-                        </div>
-                      </div>
+                  <div className="space-y-2">
+                    <label htmlFor={`child-age-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                      Idade (em meses)
+                    </label>
+                    <input
+                      id={`child-age-${index}`}
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={child.idadeMeses}
+                      onChange={(event) => updateChild(child.id, 'idadeMeses', event.target.value)}
+                      className={`${inputClasses} ${errors.filhos?.[child.id] ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
+                      aria-invalid={Boolean(errors.filhos?.[child.id])}
+                      aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${index}` : undefined}
+                    />
+                    {errors.filhos?.[child.id] && (
+                      <p id={`child-age-error-${index}`} className="text-xs font-medium text-primary">
+                        {errors.filhos[child.id]}
+                      </p>
+                    )}
+                  </div>
+                  {index === 0 && (
+                    <div className="space-y-2 sm:col-span-3">
+                      <label htmlFor="baby-birthdate" className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                        Data de nascimento do bebê
+                      </label>
+                      <input
+                        id="baby-birthdate"
+                        type="date"
+                        value={babyBirthdate}
+                        onChange={(event) => setBabyBirthdate(event.target.value)}
+                        max={todayISO}
+                        className={inputClasses}
+                      />
+                      <p className="text-xs text-support-2/80">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
                     </div>
-                  ))}
-                </div>
-
-                {errors.general && (
-                  <p className="text-xs font-medium text-primary">{errors.general}</p>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-support-1">Escolha uma figurinha de perfil</h3>
-                <p className="text-xs text-support-2">
-                  Escolha a vibe que mais combina com você hoje.
-                </p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  {STICKER_OPTIONS.map((sticker) => {
-                    const isActive = form.figurinha === sticker.id
-                    return (
-                      <button
-                        key={sticker.id}
-                        type="button"
-                        onClick={() => setForm((previous) => ({ ...previous, figurinha: sticker.id }))}
-                        className={`group relative flex flex-col items-center gap-2 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60 ${
-                          isActive ? 'scale-[1.02] ring-2 ring-primary/50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : 'hover:-translate-y-1'
-                        }`}
-                        aria-pressed={isActive}
-                        aria-label={`Selecionar figurinha ${sticker.label}`}
-                      >
-                        <span className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 group-hover:scale-105 ${
-                          isActive ? 'ring-2 ring-primary/40' : ''
-                        }`}>
-                          <Image
-                            src={sticker.asset}
-                            alt={sticker.label}
-                            width={128}
-                            height={128}
-                            className="h-11 w-11 object-contain"
-                            loading="lazy"
-                          />
-                        </span>
-                        <span className="text-sm font-semibold text-support-1">{sticker.label}</span>
-                        <span className="text-[11px] text-support-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
-                      </button>
-                    )
-                  })}
+                  )}
+                  <div className="space-y-2">
+                    <label htmlFor={`child-name-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                      Nome (opcional)
+                    </label>
+                    <input
+                      id={`child-name-${index}`}
+                      type="text"
+                      value={child.nome}
+                      onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-3">
+                    <label htmlFor={`child-allergies-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                      Alergias (separe por vírgula)
+                    </label>
+                    <input
+                      id={`child-allergies-${index}`}
+                      type="text"
+                      value={child.alergias.join(', ')}
+                      onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
+                      className={inputClasses}
+                      placeholder="Ex.: leite, ovo, amendoim"
+                    />
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-3">
-                <Button type="submit" variant="primary" disabled={saving} className="w-full">
-                  {saving ? 'Salvando...' : 'Salvar e continuar'}
-                </Button>
-                <p className="text-center text-xs text-support-2">Você poderá editar essas informações no seu Perfil.</p>
-                {statusMessage && (
-                  <p className="text-center text-xs font-semibold text-support-1">{statusMessage}</p>
-                )}
-              </div>
+            ))}
           </div>
-        </form>
-      </Card>
+
+          {errors.general && (
+            <p className="text-xs font-medium text-primary">{errors.general}</p>
+          )}
+        </section>
+
+        {/* SECTION D — Escolha sua figurinha de perfil */}
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+              Escolha sua figurinha de perfil
+            </h3>
+            <p className="text-sm text-[#545454]">
+              Escolha a vibe que mais combina com você hoje.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {STICKER_OPTIONS.map((sticker) => {
+              const isActive = form.figurinha === sticker.id
+              return (
+                <button
+                  key={sticker.id}
+                  type="button"
+                  onClick={() => setForm((previous) => ({ ...previous, figurinha: sticker.id }))}
+                  className={`group relative flex flex-col items-center gap-2 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60 ${
+                    isActive ? 'scale-[1.02] ring-2 ring-primary/50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : 'hover:-translate-y-1'
+                  }`}
+                  aria-pressed={isActive}
+                  aria-label={`Selecionar figurinha ${sticker.label}`}
+                >
+                  <span className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 group-hover:scale-105 ${
+                    isActive ? 'ring-2 ring-primary/40' : ''
+                  }`}>
+                    <Image
+                      src={sticker.asset}
+                      alt={sticker.label}
+                      width={128}
+                      height={128}
+                      className="h-11 w-11 object-contain"
+                      loading="lazy"
+                    />
+                  </span>
+                  <span className="text-sm font-semibold text-support-1">{sticker.label}</span>
+                  <span className="text-[11px] text-support-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <div className="space-y-3 pt-4 border-t border-black/5">
+          <Button type="submit" variant="primary" disabled={saving} className="w-full">
+            {saving ? 'Salvando...' : 'Salvar e continuar'}
+          </Button>
+          <p className="text-center text-xs text-support-2">Você poderá editar essas informações no seu Perfil.</p>
+          {statusMessage && (
+            <p className="text-center text-xs font-semibold text-support-1">{statusMessage}</p>
+          )}
+        </div>
+      </form>
     </Reveal>
   )
 }
