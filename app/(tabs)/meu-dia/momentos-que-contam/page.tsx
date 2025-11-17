@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -12,6 +13,7 @@ interface ConnectionCard {
   title: string
   subtitle: string
   cta: string
+  href: string
 }
 
 const CONNECTION_CARDS: ConnectionCard[] = [
@@ -21,6 +23,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Conexão Afetuosa',
     subtitle: 'Pequenos rituais de carinho para fortalecer o vínculo.',
     cta: 'Ver ideias →',
+    href: '/meu-dia/momentos-que-contam/conexao-afetuosa',
   },
   {
     id: 'atividades-curtinhas',
@@ -28,6 +31,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Atividades Curtinhas',
     subtitle: 'Brincadeiras rapidinhas para momentos do dia.',
     cta: 'Explorar →',
+    href: '/meu-dia/momentos-que-contam/atividades-curtinhas',
   },
   {
     id: 'registro-momentos',
@@ -35,6 +39,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Registro de Momentos',
     subtitle: 'Guarde memórias especiais do seu dia com seu filho.',
     cta: 'Registrar →',
+    href: '/meu-dia/momentos-que-contam/registro-de-momentos',
   },
   {
     id: 'guia-desenvolvimento',
@@ -42,6 +47,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
     title: 'Guia do Desenvolvimento',
     subtitle: 'Acompanhe a fase do seu filho com orientações personalizadas.',
     cta: 'Ver guia →',
+    href: '/eu360/guia-desenvolvimento',
   },
 ]
 
