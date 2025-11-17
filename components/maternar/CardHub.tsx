@@ -114,7 +114,10 @@ export default function CardHub() {
         {HUB_CARDS.map((card, index) => (
           <div
             key={card.id}
-            className="h-full"
+            className={clsx(
+              'h-full',
+              card.id === 'planos-premium' && 'md:order-10'
+            )}
           >
             <MaternarFeatureCard
               icon={card.icon}
