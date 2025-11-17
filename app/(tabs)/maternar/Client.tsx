@@ -8,6 +8,9 @@ import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
 import { useProfile } from '@/app/hooks/useProfile';
 import AppIcon from '@/components/ui/AppIcon';
+import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
+import { getDailyIndex } from '@/app/lib/dailyMessage';
+import { Reveal } from '@/components/ui/Reveal';
 
 export default function MaternarClient() {
   const { name } = useProfile();
