@@ -19,8 +19,9 @@ export default function MaternarClient() {
     });
   }, []);
 
-  const firstName = name ? name.split(' ')[0] : '';
-  const pageTitle = firstName ? `Bom dia, ${firstName}` : 'Bem-vinda ao Maternar';
+  // Server renders with empty name, client updates after profile loads
+  const firstName = isMounted ? (name ? name.split(' ')[0] : '') : '';
+  const pageTitle = 'Bem-vinda ao Maternar';
   const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
 
   return (
@@ -29,7 +30,7 @@ export default function MaternarClient() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#FFF0F6] to-white pointer-events-none" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
 
-      <div className="relative z-10" suppressHydrationWarning={true}>
+      <div className="relative z-10">
         <PageTemplate
           label="MATERNAR"
           title={pageTitle}
