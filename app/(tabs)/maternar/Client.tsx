@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import CardHub from '@/components/maternar/CardHub';
 import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
@@ -9,18 +9,15 @@ import { useProfile } from '@/app/hooks/useProfile';
 
 export default function MaternarClient() {
   const { name } = useProfile();
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
     track('nav.click', {
       tab: 'maternar',
       timestamp: new Date().toISOString(),
     });
   }, []);
 
-  // Server renders with empty name, client updates after profile loads
-  const firstName = isMounted ? (name ? name.split(' ')[0] : '') : '';
+  const firstName = name ? name.split(' ')[0] : '';
   const pageTitle = 'Bem-vinda ao Maternar';
   const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
 
