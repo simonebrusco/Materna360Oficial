@@ -189,113 +189,49 @@ export default function RotatinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-6xl">
-        {ROUTINE_CARDS.map((card, index) => (
-          <Reveal key={card.id} delay={index * 50}>
-            <SoftCard
-              className={`rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 ${
-                expandedCard === card.id ? 'ring-2 ring-primary' : 'hover:shadow-lg'
-              }`}
-              onClick={() => toggleCard(card.id)}
-            >
-              {/* Header */}
-              <div className="flex items-start gap-4 mb-4">
-                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center">
-                  <AppIcon
-                    name={card.icon as any}
-                    size={24}
-                    className="text-primary"
-                    decorative
-                  />
+        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+          {ROUTINE_CARDS.map((card, index) => (
+            <Reveal key={card.id} delay={index * 50}>
+              <SoftCard
+                className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
+                onClick={() => toggleCard(card.id)}
+              >
+                {/* Header with icon, title, subtitle, and CTA */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="flex-shrink-0">
+                      <AppIcon
+                        name={card.icon as any}
+                        size={24}
+                        className="text-primary"
+                        decorative
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-1">
+                        {card.title}
+                      </h3>
+                      <p className="text-sm text-[#545454]">
+                        {card.subtitle}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Arrow CTA */}
+                  <div className="flex-shrink-0">
+                    <span className="text-lg font-semibold text-primary">→</span>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-semibold text-[#2f3a56] mb-1">
-                    {card.title}
-                  </h3>
-                  <p className="text-sm text-[#545454]">
-                    {card.subtitle}
-                  </p>
-                </div>
-              </div>
 
-              {/* Expand/Collapse Indicator */}
-              <div className="flex justify-end mt-auto">
-                <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
-                  {expandedCard === card.id ? 'Fechar' : 'Acessar'}{' '}
-                  <AppIcon
-                    name={expandedCard === card.id ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    decorative
-                  />
-                </span>
-              </div>
-
-              {/* Expanded Content */}
-              {expandedCard === card.id && (
-                <div className="mt-6 pt-6 border-t border-white/60 space-y-4" onClick={(e) => e.stopPropagation()}>
-                  {card.id === 'planejar-dia' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-[#545454] font-medium">
-                        Organize seu plano para o dia
-                      </p>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex-1" />
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setShowPlannerSheet(true)}
-                            className="flex items-center gap-1"
-                          >
-                            <AppIcon name="plus" size={16} decorative />
-                            Adicionar
-                          </Button>
-                        </div>
-                        <SimplePlannerList
-                          items={plannerItems}
-                          onToggleDone={handleTogglePlannerItem}
-                        />
-                      </div>
-
-                      <SimplePlannerSheet
-                        isOpen={showPlannerSheet}
-                        onClose={() => setShowPlannerSheet(false)}
-                        onAdd={handleAddPlannerItem}
-                      />
-                    </div>
-                  )}
-
-                  {card.id === 'rotina-casa' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-[#545454] font-medium">
-                        Gerenciamento de tarefas do lar
-                      </p>
-                      <MomInMotion
-                        enabled
-                        storageKey={`meu-dia:${currentDateKey}:todos`}
-                      />
-                    </div>
-                  )}
-
-                  {card.id === 'rotina-filho' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-[#545454] font-medium">
-                        Acompanhe a rotina de sua criança
-                      </p>
-                      <MomInMotion
-                        enabled
-                        storageKey={`meu-dia:${currentDateKey}:filho-todos`}
-                      />
-                    </div>
-                  )}
-
-                  {card.id === 'prioridades-semana' && (
-                    <div className="space-y-4">
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
-                            Itens da Semana
-                          </h4>
+                {/* Expanded Content */}
+                {expandedCard === card.id && (
+                  <div className="mt-6 pt-6 border-t border-white/60 space-y-4" onClick={(e) => e.stopPropagation()}>
+                    {card.id === 'planejar-dia' && (
+                      <div className="space-y-4">
+                        <p className="text-sm text-[#545454] font-medium">
+                          Organize seu plano para o dia
+                        </p>
+                        <div className="space-y-3">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex-1" />
                             <Button
@@ -313,105 +249,162 @@ export default function RotatinaLevePage() {
                             onToggleDone={handleTogglePlannerItem}
                           />
                         </div>
-                      </div>
 
-                      <SimplePlannerSheet
-                        isOpen={showPlannerSheet}
-                        onClose={() => setShowPlannerSheet(false)}
-                        onAdd={handleAddPlannerItem}
-                      />
-                    </div>
-                  )}
-
-                  {card.id === 'checklist-mae' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-[#545454] font-medium">
-                        Pequenas tarefas, grandes conquistas
-                      </p>
-                      <Checklist currentDateKey={currentDateKey} />
-                    </div>
-                  )}
-
-                  {card.id === 'notas-listas' && (
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
-                          Notas Rápidas
-                        </h4>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex-1" />
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setShowNoteModal(true)}
-                          >
-                            + Adicionar
-                          </Button>
-                        </div>
-
-                        {notes.length > 0 ? (
-                          <div className="space-y-2">
-                            {notes.map((note, idx) => (
-                              <div
-                                key={idx}
-                                className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#2f3a56]"
-                              >
-                                {note}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="rounded-2xl border border-dashed border-[#545454]/20 bg-white/40 px-4 py-6">
-                            <div className="flex flex-col items-center gap-2 text-center">
-                              <AppIcon
-                                name="edit"
-                                size={24}
-                                className="text-primary"
-                                decorative
-                              />
-                              <p className="text-xs text-[#545454]">
-                                Use este espaço para registrar pensamentos e ideias.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
-                          Mãe em Movimento
-                        </h4>
-                        <MomInMotion
-                          enabled
-                          storageKey={`meu-dia:${currentDateKey}:mom-motion`}
+                        <SimplePlannerSheet
+                          isOpen={showPlannerSheet}
+                          onClose={() => setShowPlannerSheet(false)}
+                          onAdd={handleAddPlannerItem}
                         />
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {card.id === 'receitas-saudaveis' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-[#545454] font-medium">
-                        Ideias rápidas e nutritivas para sua família
-                      </p>
-                      <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#2f3a56] space-y-2">
-                        <p className="font-semibold">Receitas em breve:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>Receitas com ingredientes simples</li>
-                          <li>Adaptadas para a idade da criança</li>
-                          <li>Rápidas e práticas</li>
-                        </ul>
+                    {card.id === 'rotina-casa' && (
+                      <div className="space-y-4">
+                        <p className="text-sm text-[#545454] font-medium">
+                          Gerenciamento de tarefas do lar
+                        </p>
+                        <MomInMotion
+                          enabled
+                          storageKey={`meu-dia:${currentDateKey}:todos`}
+                        />
                       </div>
-                      <p className="text-xs text-[#545454] italic">
-                        Esta seção será preenchida com receitas inteligentes em breve.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </SoftCard>
-          </Reveal>
-        ))}
+                    )}
+
+                    {card.id === 'rotina-filho' && (
+                      <div className="space-y-4">
+                        <p className="text-sm text-[#545454] font-medium">
+                          Acompanhe a rotina de sua criança
+                        </p>
+                        <MomInMotion
+                          enabled
+                          storageKey={`meu-dia:${currentDateKey}:filho-todos`}
+                        />
+                      </div>
+                    )}
+
+                    {card.id === 'prioridades-semana' && (
+                      <div className="space-y-4">
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                              Itens da Semana
+                            </h4>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex-1" />
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => setShowPlannerSheet(true)}
+                                className="flex items-center gap-1"
+                              >
+                                <AppIcon name="plus" size={16} decorative />
+                                Adicionar
+                              </Button>
+                            </div>
+                            <SimplePlannerList
+                              items={plannerItems}
+                              onToggleDone={handleTogglePlannerItem}
+                            />
+                          </div>
+                        </div>
+
+                        <SimplePlannerSheet
+                          isOpen={showPlannerSheet}
+                          onClose={() => setShowPlannerSheet(false)}
+                          onAdd={handleAddPlannerItem}
+                        />
+                      </div>
+                    )}
+
+                    {card.id === 'checklist-mae' && (
+                      <div className="space-y-4">
+                        <p className="text-sm text-[#545454] font-medium">
+                          Pequenas tarefas, grandes conquistas
+                        </p>
+                        <Checklist currentDateKey={currentDateKey} />
+                      </div>
+                    )}
+
+                    {card.id === 'notas-listas' && (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                            Notas Rápidas
+                          </h4>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex-1" />
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => setShowNoteModal(true)}
+                            >
+                              + Adicionar
+                            </Button>
+                          </div>
+
+                          {notes.length > 0 ? (
+                            <div className="space-y-2">
+                              {notes.map((note, idx) => (
+                                <div
+                                  key={idx}
+                                  className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#2f3a56]"
+                                >
+                                  {note}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-[#545454]/20 bg-white/40 px-4 py-6">
+                              <div className="flex flex-col items-center gap-2 text-center">
+                                <AppIcon
+                                  name="edit"
+                                  size={24}
+                                  className="text-primary"
+                                  decorative
+                                />
+                                <p className="text-xs text-[#545454]">
+                                  Use este espaço para registrar pensamentos e ideias.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                            Mãe em Movimento
+                          </h4>
+                          <MomInMotion
+                            enabled
+                            storageKey={`meu-dia:${currentDateKey}:mom-motion`}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {card.id === 'receitas-saudaveis' && (
+                      <div className="space-y-4">
+                        <p className="text-sm text-[#545454] font-medium">
+                          Ideias rápidas e nutritivas para sua família
+                        </p>
+                        <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#2f3a56] space-y-2">
+                          <p className="font-semibold">Receitas em breve:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li>Receitas com ingredientes simples</li>
+                            <li>Adaptadas para a idade da criança</li>
+                            <li>Rápidas e práticas</li>
+                          </ul>
+                        </div>
+                        <p className="text-xs text-[#545454] italic">
+                          Esta seção será preenchida com receitas inteligentes em breve.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </SoftCard>
+            </Reveal>
+          ))}
         </div>
       </ClientOnly>
 
