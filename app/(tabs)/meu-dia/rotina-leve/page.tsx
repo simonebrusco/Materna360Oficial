@@ -61,6 +61,12 @@ const ROUTINE_CARDS: RoutineCard[] = [
     title: 'Notas & Listas',
     subtitle: 'Anotações rápidas e listas essenciais.',
   },
+  {
+    id: 'receitas-saudaveis',
+    icon: 'leaf',
+    title: 'Receitas Saudáveis',
+    subtitle: 'Ideias rápidas com o que você tem em casa.',
+  },
 ]
 
 export default function RotatinaLevePage() {
