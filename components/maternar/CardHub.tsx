@@ -118,6 +118,7 @@ export default function CardHub() {
               'h-full',
               card.id === 'planos-premium' && 'md:order-10'
             )}
+            suppressHydrationWarning
           >
             <MaternarFeatureCard
               icon={card.icon}
