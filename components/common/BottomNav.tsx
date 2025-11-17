@@ -67,7 +67,7 @@ export default function BottomNav({
         fixed bottom-4 inset-x-4
         z-50
         bg-white/90 backdrop-blur-xl
-        border border-black/5
+        border border-black/5 border-t-2 border-t-[#ffd8e6]
         rounded-3xl
         shadow-[0_10px_40px_rgba(0,0,0,0.18)]
       "
