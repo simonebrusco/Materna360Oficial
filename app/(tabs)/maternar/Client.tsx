@@ -29,15 +29,14 @@ export default function MaternarClient() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#FFF0F6] to-white pointer-events-none" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
 
-      <div className="relative z-10">
+      <div className="relative z-10" suppressHydrationWarning={true}>
         <PageTemplate
           label="MATERNAR"
           title={pageTitle}
           subtitle={pageSubtitle}
-          suppressHydrationWarning
         >
           {/* Profile Completion Banner */}
-          <div className="mt-6 mb-8 px-4 md:px-6 max-w-7xl mx-auto" suppressHydrationWarning>
+          <div className="mt-6 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
             <div className="relative overflow-hidden rounded-3xl bg-white shadow-[0_12px_32px_rgba(255,0,94,0.05)] transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] p-6 md:p-8">
               {/* Accent Bubble - Top Right */}
               <div className="absolute -top-6 right-0 h-24 w-24 rounded-full bg-[#ff005e]/10 pointer-events-none" />
@@ -50,8 +49,8 @@ export default function MaternarClient() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight mb-2" suppressHydrationWarning>
-                  Personalize your journey, {firstName || 'mãe'}
+                <h3 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight mb-2">
+                  Personalize your journey, mãe
                 </h3>
 
                 {/* Subtitle */}
