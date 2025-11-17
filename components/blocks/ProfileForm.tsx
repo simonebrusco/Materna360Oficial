@@ -323,13 +323,19 @@ export function ProfileForm() {
       router.refresh()
       return
     } catch (error) {
-      console.error(error)
-      const message =
-        error instanceof Error && error.message === 'Failed to save profile'
-          ? 'Não foi possível salvar agora. Tente novamente em instantes.'
-          : error instanceof Error && error.message
-            ? error.message
-            : 'Não foi possível salvar agora. Tente novamente em instantes.'
+      console.error('ProfileForm submit error:', error)
+      let message = 'Não foi possível salvar agora. Tente novamente em instantes.'
+
+      if (error instanceof Error) {
+        if (error.message === 'Failed to save profile' || error.message.includes('fetch')) {
+          message = 'Erro de conexão. Verifique sua internet e tente novamente.'
+        } else if (error.message.includes('timeout')) {
+          message = 'A operação demorou muito. Tente novamente.'
+        } else {
+          message = error.message
+        }
+      }
+
       setStatusMessage(message)
     } finally {
       setSaving(false)
