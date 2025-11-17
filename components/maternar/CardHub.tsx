@@ -11,6 +11,7 @@ type CardConfig = {
   subtitle: string
   href: string
   ctaText?: string
+  tag: string
 }
 
 const HUB_CARDS: CardConfig[] = [
@@ -21,6 +22,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Seu momento de respirar sem culpa.',
     href: '/cuidar/meu-bem-estar',
     ctaText: 'Explorar',
+    tag: 'Você',
   },
   {
     id: 'cuidar-do-meu-filho',
@@ -29,6 +31,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Para o seu filho, no ritmo da vida real.',
     href: '/cuidar/cuidar-com-amor',
     ctaText: 'Explorar',
+    tag: 'Seu filho',
   },
   {
     id: 'organizar-minha-rotina',
@@ -37,6 +40,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Organize o dia sem se sobrecarregar.',
     href: '/meu-dia/rotina-leve',
     ctaText: 'Começar',
+    tag: 'Rotina',
   },
   {
     id: 'humor-energia',
@@ -45,6 +49,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Um check-in honesto com você mesma.',
     href: '/meu-dia/como-estou-hoje',
     ctaText: 'Começar',
+    tag: 'Você',
   },
   {
     id: 'conexao-com-meu-filho',
@@ -53,6 +58,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Guarde as pequenas grandes memórias.',
     href: '/meu-dia/momentos-que-contam',
     ctaText: 'Explorar',
+    tag: 'Seu filho',
   },
   {
     id: 'aprender-brincar',
@@ -61,6 +67,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Ideias rápidas de brincar e ensinar.',
     href: '/descobrir/aprender-brincar',
     ctaText: 'Explorar',
+    tag: 'Seu filho',
   },
   {
     id: 'minha-evolucao',
@@ -69,6 +76,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Veja o quanto vocês já caminharam.',
     href: '/eu360/minha-jornada',
     ctaText: 'Explorar',
+    tag: 'Você',
   },
   {
     id: 'comecar-com-leveza',
@@ -77,6 +85,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Feche o dia com um resumo leve.',
     href: '/meu-dia/meu-dia-em-1-minuto',
     ctaText: 'Começar',
+    tag: 'Você',
   },
   {
     id: 'planos-premium',
@@ -85,6 +94,7 @@ const HUB_CARDS: CardConfig[] = [
     subtitle: 'Conteúdos guiados para ir mais fundo.',
     href: '/planos',
     ctaText: 'Ver planos',
+    tag: 'Premium',
   },
 ]
 
@@ -108,6 +118,7 @@ export default function CardHub() {
               cardId={card.id}
               ctaText={card.ctaText}
               index={index}
+              tag={card.tag}
             />
           </div>
         ))}
