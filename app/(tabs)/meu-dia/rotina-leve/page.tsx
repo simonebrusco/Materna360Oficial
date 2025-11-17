@@ -100,7 +100,7 @@ function CardLink({ card, index }: { card: Card; index: number }) {
   )
 }
 
-export default function Rotina LevePage() {
+export default function RotinaLevePage() {
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
