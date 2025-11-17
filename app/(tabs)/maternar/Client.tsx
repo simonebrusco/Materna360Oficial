@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import CardHub from '@/components/maternar/CardHub';
 import { track } from '@/app/lib/telemetry';
@@ -9,10 +9,12 @@ import { useProfile } from '@/app/hooks/useProfile';
 import AppIcon from '@/components/ui/AppIcon';
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
 import { getDailyIndex } from '@/app/lib/dailyMessage';
+import { getTimeGreeting } from '@/app/lib/greetings';
 import { Reveal } from '@/components/ui/Reveal';
 
 export default function MaternarClient() {
   const { name } = useProfile();
+  const [greeting, setGreeting] = useState<string>('');
 
   useEffect(() => {
     track('nav.click', {
@@ -20,6 +22,21 @@ export default function MaternarClient() {
       timestamp: new Date().toISOString(),
     });
   }, []);
+
+  // Update greeting based on time
+  useEffect(() => {
+    const firstName = name ? name.split(' ')[0] : '';
+    const timeGreeting = getTimeGreeting(firstName);
+    setGreeting(timeGreeting);
+
+    // Update greeting every minute to reflect time changes
+    const interval = setInterval(() => {
+      const updatedGreeting = getTimeGreeting(firstName);
+      setGreeting(updatedGreeting);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [name]);
 
   // Daily message reload at midnight
   useEffect(() => {
@@ -57,7 +74,7 @@ export default function MaternarClient() {
                   </p>
                   {/* Main Title */}
                   <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56]">
-                    Bom dia{firstName ? ', ' : ''}{firstName}
+                    {greeting}
                   </h1>
                   {/* Subtitle */}
                   <p className="mt-4 md:mt-5 text-sm text-neutral-600">
