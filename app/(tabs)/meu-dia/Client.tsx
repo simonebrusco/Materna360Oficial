@@ -53,165 +53,29 @@ const DEFAULT_PROFILE: Profile = {
   children: [{ name: 'Seu filho' } as any], // age in months
 }
 
-// Focus query param to section ID mapping
-const FOCUS_TO_ID: Record<string, string> = {
-  planner: 'meu-dia-planner',
-  humor: 'meu-dia-humor',
-  conexao: 'meu-dia-conexao',
-  resumo: 'meu-dia-resumo',
-}
-
 export function MeuDiaClient({
-  dailyGreeting,
   currentDateKey,
   weekStartKey,
   weekLabels,
   plannerTitle,
   profile,
-  dateKey,
   allActivities = [],
   recommendations = [],
   initialBuckets = [],
   __builderPreview__ = false,
   __fallbackProfile__ = DEFAULT_PROFILE,
-  __fallbackGreeting__ = 'Hoje é um presente para você.',
   __fallbackWeekLabels__ = [],
   __fallbackCurrentDateKey__ = getBrazilDateKey(),
   __fallbackWeekStartKey__ = getWeekStartKey(getBrazilDateKey()),
   __fallbackPlannerTitle__ = 'Semana',
-  __disableHeavy__ = false,
 }: MeuDiaClientProps) {
-  const builderMode = __builderPreview__
   const finalProfile = profile || __fallbackProfile__
-  const finalDailyGreeting = safeUtf(dailyGreeting) || __fallbackGreeting__
   const finalCurrentDateKey = currentDateKey || __fallbackCurrentDateKey__
   const finalWeekStartKey = weekStartKey || __fallbackWeekStartKey__
   const finalWeekLabels = weekLabels || __fallbackWeekLabels__
   const finalPlannerTitle = plannerTitle || __fallbackPlannerTitle__
 
-  const searchParams = useSearchParams()
-
-  const [showPlannerSheet, setShowPlannerSheet] = useState(false)
-  const [showNoteModal, setShowNoteModal] = useState(false)
-  const [noteText, setNoteText] = useState('')
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
-  const [notes, setNotes] = useState<string[]>([])
-
   const { name } = useProfile() || { name: finalProfile.motherName }
-
-  // Handle focus query param and smooth scroll
-  useEffect(() => {
-    const focus = searchParams.get('focus')
-    if (!focus) return
-
-    const targetId = FOCUS_TO_ID[focus]
-    if (!targetId) return
-
-    // Small timeout to ensure layout is ready before scrolling
-    const timeout = setTimeout(() => {
-      const el = document.getElementById(targetId)
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }, 150)
-
-    return () => clearTimeout(timeout)
-  }, [searchParams])
-
-  useEffect(() => {
-    seedIfEmpty()
-    const weekKey = getCurrentWeekKey()
-    const persistKey = `planner:${weekKey}`
-    const saved = load(persistKey)
-    if (Array.isArray(saved)) {
-      setPlannerItems(saved)
-    }
-  }, [])
-
-  useEffect(() => {
-    const storageKey = `meu-dia:${finalCurrentDateKey}:notes`
-    const savedNotes = load(storageKey)
-    if (Array.isArray(savedNotes)) {
-      setNotes(savedNotes)
-    }
-  }, [dateKey])
-
-  const handleAddPlannerItem = (draft: PlannerDraft) => {
-    const newItem: PlannerItem = {
-      id: Date.now().toString(),
-      title: draft.title,
-      done: false,
-      createdAt: Date.now(),
-      note: draft.note,
-      time: draft.time,
-    }
-
-    const updated = [...plannerItems, newItem]
-    setPlannerItems(updated)
-
-    // Persist
-    const weekKey = getCurrentWeekKey()
-    const persistKey = `planner:${weekKey}`
-    save(persistKey, updated)
-
-    // Fire telemetry
-    try {
-      track('planner.item_added', {
-        tab: 'meu-dia',
-        component: 'SimplePlannerSheet',
-        hasNote: !!draft.note,
-        hasTime: !!draft.time,
-      })
-    } catch {}
-
-    // Show toast
-    toast.success('Alterações salvas!')
-  }
-
-  const handleTogglePlannerItem = (id: string) => {
-    const updated = plannerItems.map(item =>
-      item.id === id ? { ...item, done: !item.done } : item
-    )
-    setPlannerItems(updated)
-
-    // Persist the updated list
-    const weekKey = getCurrentWeekKey()
-    const persistKey = `planner:${weekKey}`
-    save(persistKey, updated)
-
-    // Fire telemetry
-    const item = plannerItems.find(i => i.id === id)
-    track('planner.item_done', {
-      tab: 'meu-dia',
-      component: 'SimplePlannerList',
-      action: 'toggle',
-      done: !item?.done,
-    })
-  }
-
-  const handleAddNote = () => {
-    if (!noteText.trim()) return
-
-    const updated = [...notes, noteText]
-    setNotes(updated)
-    setNoteText('')
-    setShowNoteModal(false)
-
-    // Persist notes
-    const storageKey = `meu-dia:${finalCurrentDateKey}:notes`
-    save(storageKey, updated)
-
-    // Fire telemetry
-    try {
-      track('notes.note_added', {
-        tab: 'meu-dia',
-        component: 'NoteModal',
-      })
-    } catch {}
-
-    // Show toast
-    toast.success('Nota salva!')
-  }
 
   const firstName = name ? name.split(' ')[0] : ''
   const pageTitle = firstName ? `${firstName}, como está seu dia hoje?` : 'Meu dia'
