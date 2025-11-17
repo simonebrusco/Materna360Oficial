@@ -16,6 +16,15 @@ type CardConfig = {
 
 const HUB_CARDS: CardConfig[] = [
   {
+    id: 'planner-do-dia',
+    icon: 'calendar',
+    title: 'Planner do Dia',
+    subtitle: 'Organize suas tarefas sem se sobrecarregar.',
+    href: '/meu-dia',
+    ctaText: 'Planejar agora →',
+    tag: 'Você',
+  },
+  {
     id: 'cuidar-de-mim',
     icon: 'heart',
     title: 'Meu Bem-estar',
