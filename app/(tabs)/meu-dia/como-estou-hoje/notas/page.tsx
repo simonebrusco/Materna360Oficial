@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
-import { save, load, getBrazilDateKey } from '@/app/lib/persist'
+import { save, load } from '@/app/lib/persist'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { trackTelemetry } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 
