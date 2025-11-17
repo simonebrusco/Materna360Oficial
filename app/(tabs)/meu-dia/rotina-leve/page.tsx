@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Card } from '@/components/ui/card'
@@ -16,6 +16,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 interface RoutineCard {
   id: string
@@ -77,27 +78,35 @@ export default function RotatinaLevePage() {
   const [notes, setNotes] = useState<string[]>([])
   const [noteText, setNoteText] = useState('')
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
-  const currentDateKey = getBrazilDateKey()
+  const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+
+  // Mark as hydrated on mount
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   // Load planner items
   useEffect(() => {
+    if (!isHydrated) return
     const weekKey = getCurrentWeekKey()
     const persistKey = `planner:${weekKey}`
     const saved = load(persistKey)
     if (Array.isArray(saved)) {
       setPlannerItems(saved)
     }
-  }, [])
+  }, [isHydrated])
 
   // Load notes
   useEffect(() => {
+    if (!isHydrated) return
     const storageKey = `meu-dia:${currentDateKey}:notes`
     const savedNotes = load(storageKey)
     if (Array.isArray(savedNotes)) {
       setNotes(savedNotes)
     }
-  }, [currentDateKey])
+  }, [isHydrated, currentDateKey])
 
   const handleAddPlannerItem = (draft: PlannerDraft) => {
     const newItem: PlannerItem = {
