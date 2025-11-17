@@ -51,16 +51,13 @@ const TIME_OPTIONS: { value: RecipeTimeOption; label: string }[] = [
 const AGE_BAND_LABEL: Record<string, string> = {
   '6-8m': '6–8 meses',
   '9-12m': '9–12 meses',
-
-  '1-2y': '1��2 anos',
-
-
+  '1-2y': '1–2 anos',
   '2-6y': '2–6 anos',
 }
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: '�',
+    emoji: '🍠',
     title: 'Purê cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
@@ -843,7 +840,7 @@ const childAgeBand = useMemo(
               <div>
                 <h3 className="text-lg font-semibold text-support-1">Salvar no Planner</h3>
                 <p className="mt-1 text-xs text-support-2">
-                  Defina quando você quer preparar “{plannerModal.recipe.title}”.
+                  Defina quando você quer preparar "{plannerModal.recipe.title}".
                 </p>
               </div>
               <button

@@ -310,7 +310,7 @@ export function Mindfulness() {
       }
       window.localStorage.removeItem(LEGACY_LAST_TRACK_KEY)
     } catch (error) {
-      console.error('N��o foi possível salvar o último áudio do mindfulness.', error)
+      console.error('Não��o foi possível salvar o último áudio do mindfulness.', error)
     }
   }, [])
 

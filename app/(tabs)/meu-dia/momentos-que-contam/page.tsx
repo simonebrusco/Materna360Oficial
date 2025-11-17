@@ -1,100 +1,101 @@
 'use client'
 
+import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { SoftCard } from '@/components/ui/card'
+import AppIcon from '@/components/ui/AppIcon'
+import { Reveal } from '@/components/ui/Reveal'
+import { ClientOnly } from '@/components/common/ClientOnly'
+
+interface ConnectionCard {
+  id: string
+  icon: string
+  title: string
+  subtitle: string
+  cta: string
+  href: string
+}
+
+const CONNECTION_CARDS: ConnectionCard[] = [
+  {
+    id: 'conexao-afetuosa',
+    icon: 'hand-heart',
+    title: 'Conexão Afetuosa',
+    subtitle: 'Pequenos rituais de carinho para fortalecer o vínculo.',
+    cta: 'Ver ideias →',
+    href: '/descobrir/aprender-brincando',
+  },
+  {
+    id: 'atividades-curtinhas',
+    icon: 'sparkles',
+    title: 'Atividades Curtinhas',
+    subtitle: 'Brincadeiras rapidinhas para momentos do dia.',
+    cta: 'Explorar →',
+    href: '/descobrir/aprender-brincando',
+  },
+  {
+    id: 'registro-momentos',
+    icon: 'camera',
+    title: 'Registro de Momentos',
+    subtitle: 'Guarde memórias especiais do seu dia com seu filho.',
+    cta: 'Registrar →',
+    href: '/eu360/minha-jornada',
+  },
+  {
+    id: 'guia-desenvolvimento',
+    icon: 'book-open',
+    title: 'Guia do Desenvolvimento',
+    subtitle: 'Acompanhe a fase do seu filho com orientações personalizadas.',
+    cta: 'Ver guia →',
+    href: '/eu360/minha-jornada?focus=guia-desenvolvimento',
+  },
+]
 
 export default function MomentosQueContamPage() {
   return (
     <PageTemplate
       label="MEU DIA"
       title="Momentos que Contam"
-      subtitle="Conexão diária em pequenos gestos."
+      subtitle="Pequenos gestos que criam memórias para a vida toda."
     >
-      <div className="px-4 py-6 flex justify-center">
-        <div className="w-full max-w-xl space-y-6">
-          {/* intro text */}
-          <section className="space-y-2">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Presença que faz diferença
-            </h1>
-            <p className="text-sm leading-relaxed text-gray-700">
-              Aqui é o espaço para você cuidar dos momentos de conexão com seu filho.
-              Em breve, este mini hub vai reunir ideias simples para estar junto,
-              mesmo nos dias corridos.
-            </p>
-          </section>
+      <ClientOnly>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-6xl">
+          {CONNECTION_CARDS.map((card, index) => (
+            <Reveal key={card.id} delay={index * 50}>
+              <Link href={card.href} className="block h-full">
+                <SoftCard
+                  className="rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg"
+                >
+                  {/* Header */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center">
+                      <AppIcon
+                        name={card.icon as any}
+                        size={24}
+                        className="text-primary"
+                        decorative
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-semibold text-[#2f3a56] mb-1">
+                        {card.title}
+                      </h3>
+                      <p className="text-sm text-[#545454]">{card.subtitle}</p>
+                    </div>
+                  </div>
 
-          {/* cards grid */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Card 1 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Momento 1 a 1
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Alguns minutos só voc��s dois, sem distrações.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-
-            {/* Card 2 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Pequenos gestos
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Abraços, olhares e palavras que acolhem.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-
-            {/* Card 3 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Conversas do dia
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Perguntas simples para saber como ele está.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-
-            {/* Card 4 */}
-            <div className="rounded-3xl bg-white shadow-soft px-4 py-4 flex flex-col">
-              <div className="h-10 w-10 rounded-full bg-m360-pink-soft mb-3" />
-              <h2 className="text-sm font-semibold text-gray-900">
-                Memórias do dia
-              </h2>
-              <p className="text-xs text-gray-700 mt-1">
-                Um lugar para registrar o que marcou vocês hoje.
-              </p>
-              <button
-                type="button"
-                className="mt-3 text-xs font-semibold text-m360-pink-primary self-start"
-              >
-                Acessar →
-              </button>
-            </div>
-          </section>
+                  {/* CTA Button */}
+                  <div className="flex justify-end mt-auto">
+                    <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
+                      {card.cta}
+                    </span>
+                  </div>
+                </SoftCard>
+              </Link>
+            </Reveal>
+          ))}
         </div>
-      </div>
+      </ClientOnly>
     </PageTemplate>
   )
 }

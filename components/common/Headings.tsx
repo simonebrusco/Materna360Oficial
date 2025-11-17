@@ -6,7 +6,7 @@ export function PageH1({ className, children }: React.PropsWithChildren<{ classN
   return (
     <h1
       className={clsx(
-        'text-[22px]/[28px] md:text-[28px]/[34px] font-semibold tracking-[-0.01em]',
+        'text-3xl md:text-4xl font-bold text-[#2f3a56]',
         className
       )}
     >
