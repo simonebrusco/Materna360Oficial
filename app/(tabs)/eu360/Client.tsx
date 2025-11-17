@@ -20,8 +20,8 @@ export default function Eu360Client() {
   const content = (
     <PageTemplate
       label="EU360"
-      title={personalizedTitle}
-      subtitle={personalizedSubtitle}
+      title="Seu perfil Materna360"
+      subtitle="Ajudamos você com base nas suas necessidades e da sua família."
     >
       <Card suppressHydrationWarning>
         <ProfileForm />
