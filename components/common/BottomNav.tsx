@@ -124,7 +124,7 @@ export default function BottomNav({
             );
           }
 
-          // Other tabs (Meu Dia, Cuidar, Descobrir, Eu360)
+          // Other tabs (Meu Dia, Eu360)
           return (
             <li key={it.href} className="flex">
               <Link
