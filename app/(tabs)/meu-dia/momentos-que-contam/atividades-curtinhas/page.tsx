@@ -15,7 +15,7 @@ interface AtividadeCard {
 const ATIVIDADE_CARDS: AtividadeCard[] = [
   {
     id: 'ideias-5-minutos',
-    icon: 'zap',
+    icon: 'star',
     title: 'Ideias em 5 minutos',
     subtitle: 'Brincadeiras super rápidas que divertem na hora.',
     href: '#',
