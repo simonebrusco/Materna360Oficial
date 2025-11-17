@@ -62,34 +62,36 @@ export default function MomentosQueContamPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-6xl">
           {CONNECTION_CARDS.map((card, index) => (
             <Reveal key={card.id} delay={index * 50}>
-              <SoftCard
-                className="rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg"
-              >
-                {/* Header */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center">
-                    <AppIcon
-                      name={card.icon as any}
-                      size={24}
-                      className="text-primary"
-                      decorative
-                    />
+              <Link href={card.href} className="block h-full">
+                <SoftCard
+                  className="rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg"
+                >
+                  {/* Header */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center">
+                      <AppIcon
+                        name={card.icon as any}
+                        size={24}
+                        className="text-primary"
+                        decorative
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-semibold text-[#2f3a56] mb-1">
+                        {card.title}
+                      </h3>
+                      <p className="text-sm text-[#545454]">{card.subtitle}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-[#2f3a56] mb-1">
-                      {card.title}
-                    </h3>
-                    <p className="text-sm text-[#545454]">{card.subtitle}</p>
-                  </div>
-                </div>
 
-                {/* CTA Button */}
-                <div className="flex justify-end mt-auto">
-                  <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
-                    {card.cta}
-                  </span>
-                </div>
-              </SoftCard>
+                  {/* CTA Button */}
+                  <div className="flex justify-end mt-auto">
+                    <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
+                      {card.cta}
+                    </span>
+                  </div>
+                </SoftCard>
+              </Link>
             </Reveal>
           ))}
         </div>
