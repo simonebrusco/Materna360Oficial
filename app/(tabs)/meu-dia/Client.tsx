@@ -268,290 +268,33 @@ export function MeuDiaClient({
       title={pageTitle}
       subtitle={pageSubtitle}
     >
-      <div className="max-w-[1160px] mx-auto px-4 md:px-6">
-
-        {/* Coach Suggestion Card */}
-        <ClientOnly>
-          {isClientFlagEnabled('FF_COACH_V1') && (
-            <CoachSuggestionCard
-              resolve={() => Promise.resolve(generateCoachSuggestion())}
-              onView={(id: string) => {
-                try {
-                  trackTelemetry('coach.card_view', { id, tab: 'meu-dia' })
-                } catch {}
-              }}
-              onApply={(id: string) => {
-                try {
-                  trackTelemetry('coach.suggestion_apply', { id, tab: 'meu-dia' })
-                } catch {}
-              }}
-              onSave={(id: string) => {
-                try {
-                  trackTelemetry('coach.save_for_later', { id, tab: 'meu-dia' })
-                } catch {}
-              }}
-              onWhyOpen={(id: string) => {
-                try {
-                  trackTelemetry('coach.why_seen_open', { id, tab: 'meu-dia' })
-                } catch {}
-              }}
-            />
-          )}
-        </ClientOnly>
-
-        {/* MACRO BLOCK 2: DAILY ORGANIZATION */}
-        <section id="meu-dia-planner" className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Organização do Dia</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
-            Organize seu dia com leveza — um passo de cada vez.
-          </p>
-
-          {/* House Routine Card */}
-          <Reveal delay={230}>
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-              Rotina da Casa
-            </div>
-            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
+      <div className="max-w-[1160px] mx-auto px-4 md:px-6 space-y-4 md:space-y-5">
+        {/* Daily Planner - Only Component */}
+        <div id="meu-dia-print-area" className="print-card">
+          <Reveal delay={0}>
+            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)]">
               <div className="flex flex-col gap-1 mb-4">
-                <h3 className="m360-subtitle">Organize as tarefas do lar</h3>
-              </div>
-              <div>
-                <MomInMotion enabled storageKey={`meu-dia:${finalCurrentDateKey}:todos`} />
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Family Planner / Balance Card */}
-          <div id="meu-dia-print-area" className="print-card space-y-8">
-            {/* Planner da Mãe Card */}
-            <Reveal delay={250}>
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-                Planner da Mãe
-              </div>
-              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015]">
-                <div className="flex flex-col gap-1 mb-4">
-                  <h3 className="m360-subtitle">O que é prioridade hoje?</h3>
-                  <p className="m360-label-sm text-gray-600">
-                    Veja seus compromissos do dia e ajuste o que for necessário.
-                  </p>
-                </div>
-                <div>
-                  <FamilyPlanner
-                    currentDateKey={finalCurrentDateKey}
-                    weekStartKey={finalWeekStartKey}
-                    weekLabels={finalWeekLabels}
-                    plannerTitle={finalPlannerTitle}
-                    profile={finalProfile}
-                    dateKey={finalCurrentDateKey}
-                    recommendations={recommendations}
-                    initialBuckets={initialBuckets}
-                  />
-                </div>
-              </div>
-            </Reveal>
-
-            {/* Weekly Items / Planner Card */}
-            <Reveal delay={270}>
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-                Itens da Semana
-              </div>
-              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015]">
-                <div className="flex flex-col gap-1 mb-4">
-                  <h3 className="m360-subtitle">O que você não quer esquecer esta semana?</h3>
-                  <p className="m360-label-sm text-gray-600">
-                    Mantenha visíveis os itens importantes da sua semana.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1" />
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setShowPlannerSheet(true)}
-                    className="flex items-center gap-1"
-                  >
-                    <AppIcon name="plus" size={16} decorative />
-                    Adicionar item
-                  </Button>
-                </div>
-                <SimplePlannerList items={plannerItems} onToggleDone={handleTogglePlannerItem} />
-              </div>
-            </Reveal>
-
-            <SimplePlannerSheet
-              isOpen={showPlannerSheet}
-              onClose={() => setShowPlannerSheet(false)}
-              onAdd={handleAddPlannerItem}
-            />
-
-            {/* Checklist Card */}
-            <Reveal delay={290}>
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-                Checklist da Mãe
-              </div>
-              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015]">
-                <div className="flex flex-col gap-1 mb-4">
-                  <h3 className="m360-subtitle">Pequenas tarefas, grandes conquistas.</h3>
-                  <p className="m360-label-sm text-gray-600">
-                    Marque o que você j�� fez e celebre cada avanço.
-                  </p>
-                </div>
-                <Checklist currentDateKey={finalCurrentDateKey} />
-              </div>
-            </Reveal>
-
-            {/* Notes Card */}
-            <Reveal delay={310}>
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-                Notas Rápidas
-              </div>
-              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] notesCard">
-                <div className="flex flex-col gap-1 mb-4">
-                  <h3 className="m360-subtitle">Um espaço só seu para anotar o que importa.</h3>
-                  <p className="m360-label-sm text-gray-600">
-                    Um lugar seguro para guardar pensamentos e momentos importantes.
-                  </p>
-                </div>
-                <div className="notesCard-header flex items-start justify-between gap-4 mb-4">
-                  <div className="notesCard-text flex-1" />
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setShowNoteModal(true)}
-                    className="notesCard-action flex-shrink-0"
-                  >
-                    + Adicionar
-                  </Button>
-                </div>
-
-                {notes.length > 0 ? (
-                  <div className="notesCard-list space-y-2">
-                    {notes.map((note, idx) => (
-                      <div
-                        key={idx}
-                        className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft"
-                      >
-                        {note}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="notesCard-empty rounded-2xl border border-dashed border-support-3/40 bg-white/40 px-6 py-8">
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <div className="flex items-center justify-center h-12 w-12 rounded-full bg-secondary/30">
-                        <AppIcon name="edit" size={24} className="text-primary" decorative />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-support-1">Nenhuma anotação ainda.</p>
-                        <p className="mt-1 text-xs text-support-2">
-                          Use este espaço para registrar pensamentos, ideias ou momentos especiais.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* MACRO BLOCK 3: CONNECTION & CARE (Conexão & Cuidado) */}
-        <section id="meu-dia-conexao" className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Conexão & Cuidado</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
-            Ideias simples para tornar o dia mais especial.
-          </p>
-
-          {/* Activity of the Day Card */}
-          <Reveal delay={330}>
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-              Atividade do Dia
-            </div>
-            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
-              <div className="flex flex-col gap-1 mb-4">
-                <h3 className="m360-subtitle">Uma ideia para hoje</h3>
+                <h3 className="m360-subtitle">O que é prioridade hoje?</h3>
                 <p className="m360-label-sm text-gray-600">
-                  Uma sugestão simples para criar um momento especial com seu filho hoje.
+                  Veja seus compromissos do dia e ajuste o que for necessário.
                 </p>
               </div>
-              <ActivityOfDay dateKey={finalCurrentDateKey} profile={finalProfile} activities={allActivities} />
-            </div>
-          </Reveal>
-
-          {/* Quick Actions Grid */}
-          <Reveal delay={350}>
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-              Ações Rápidas
-            </div>
-            <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-8">
-              <div className="flex flex-col gap-1 mb-6">
-                <h3 className="m360-subtitle">Acesso rápido a suas funções favoritas</h3>
-              </div>
-              <div className="w-full md:max-w-[900px] lg:max-w-[1280px] mx-auto">
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-4 items-stretch">
-                  {quickActions.map((action, index) => (
-                    <Reveal key={action.title} delay={index * 80} className="h-full">
-                      <button
-                        type="button"
-                        className="h-full flex flex-col items-start gap-2 rounded-2xl bg-white border border-white/60 p-4 md:p-2 md:min-w-[220px] lg:min-w-[240px] shadow-soft transition-all duration-150 ease-out hover:shadow-elevated hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                        aria-label={`${action.title} - ${action.description}`}
-                      >
-                        <div className="flex-shrink-0">
-                          <AppIcon
-                            name={action.iconName as any}
-                            size={24}
-                            decorative
-                            className="text-primary hover:opacity-80 transition-opacity"
-                          />
-                        </div>
-                        <div className="flex-1 w-full text-left">
-                          <p className="font-semibold text-sm text-support-1">{action.title}</p>
-                          <p className="mt-1 text-xs text-support-2">{action.description}</p>
-                        </div>
-                      </button>
-                    </Reveal>
-                  ))}
-                </div>
+              <div>
+                <FamilyPlanner
+                  currentDateKey={finalCurrentDateKey}
+                  weekStartKey={finalWeekStartKey}
+                  weekLabels={finalWeekLabels}
+                  plannerTitle={finalPlannerTitle}
+                  profile={finalProfile}
+                  dateKey={finalCurrentDateKey}
+                  recommendations={recommendations}
+                  initialBuckets={initialBuckets}
+                />
               </div>
             </div>
           </Reveal>
-        </section>
-      </div>
-
-      {/* Note Modal */}
-      {showNoteModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
-          <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
-            <SoftCard className="w-full notesCard-modal">
-              <h3 className="m360-card-title mb-2">Adicionar Nota</h3>
-              <p className="mb-4 text-sm text-support-2">
-                Anote um pensamento, uma tarefa ou uma gratidão.
-              </p>
-              <textarea
-                value={noteText}
-                onChange={event => setNoteText(event.target.value)}
-                placeholder="Escreva sua nota aqui..."
-                className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                rows={4}
-              />
-              <div className="mt-4 flex items-center gap-3">
-                <Button variant="primary" size="sm" onClick={handleAddNote} className="flex-1">
-                  Salvar
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setShowNoteModal(false)}
-                  className="text-sm font-medium text-primary underline hover:opacity-70"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </SoftCard>
-          </div>
         </div>
-      )}
-
-      {/* Emotion Trend Drawer */}
+      </div>
     </PageTemplate>
   )
 }
