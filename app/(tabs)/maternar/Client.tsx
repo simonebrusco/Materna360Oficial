@@ -22,10 +22,24 @@ export default function MaternarClient() {
     });
   }, []);
 
+  // Daily message reload at midnight
+  useEffect(() => {
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0);
+    const timeoutId = window.setTimeout(() => window.location.reload(), delay);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
   const firstName = name ? name.split(' ')[0] : '';
   const pageTitle = 'Bem-vinda ao Maternar';
   const pageSubtitle = 'Juntas vamos fazer de hoje um dia leve.';
   const isProfileIncomplete = !name || name.trim() === '';
+
+  // Get the current daily message
+  const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length);
+  const dailyMessage = DAILY_MESSAGES[dayIndex];
 
   return (
     <div className="relative">
