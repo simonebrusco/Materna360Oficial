@@ -244,6 +244,7 @@ export function ProfileForm() {
         },
         credentials: 'include',
         cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
         body: JSON.stringify({
           motherName: trimmedState.nomeMae,
           nomeMae: trimmedState.nomeMae,
