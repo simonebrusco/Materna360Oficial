@@ -1,5 +1,3 @@
-'use client'
-
 import { PageTemplate } from '@/components/common/PageTemplate'
 
 export default function MinhaJornadaPage() {
