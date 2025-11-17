@@ -89,7 +89,7 @@ const HUB_CARDS: CardConfig[] = [
   },
   {
     id: 'minhas-conquistas-hub',
-    icon: 'trophy',
+    icon: 'star',
     title: 'Minhas Conquistas',
     subtitle: 'Celebre seus pequenos progressos todos os dias.',
     href: '/meu-dia/minhas-conquistas',
