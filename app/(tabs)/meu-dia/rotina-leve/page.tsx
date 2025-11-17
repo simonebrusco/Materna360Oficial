@@ -378,6 +378,25 @@ export default function RotatinaLevePage() {
                       </div>
                     </div>
                   )}
+
+                  {card.id === 'receitas-saudaveis' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-[#545454] font-medium">
+                        Ideias rápidas e nutritivas para sua família
+                      </p>
+                      <div className="rounded-2xl bg-[#FFE5EF]/40 p-4 text-sm text-[#2f3a56] space-y-2">
+                        <p className="font-semibold">Receitas em breve:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Receitas com ingredientes simples</li>
+                          <li>Adaptadas para a idade da criança</li>
+                          <li>Rápidas e práticas</li>
+                        </ul>
+                      </div>
+                      <p className="text-xs text-[#545454] italic">
+                        Esta seção será preenchida com receitas inteligentes em breve.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </SoftCard>
