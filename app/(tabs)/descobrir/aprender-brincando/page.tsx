@@ -9,24 +9,6 @@ import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { useProfile } from '@/app/hooks/useProfile'
 
-interface PlayIdea {
-  id: string
-  title: string
-  description: string
-  materials: string[]
-  steps: string[]
-  duration: string
-  benefits: string[]
-}
-
-interface RecipeResult {
-  title: string
-  description: string
-  ingredients: string[]
-  steps: string[]
-  ageNote: string
-}
-
 interface Product {
   id: string
   name: string
