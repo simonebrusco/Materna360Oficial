@@ -66,16 +66,10 @@ export function ProfileForm() {
 
     const loadProfile = async () => {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
         const response = await fetch('/api/profile', {
           credentials: 'include',
           cache: 'no-store',
-          signal: controller.signal,
         })
-
-        clearTimeout(timeoutId);
 
         if (response.ok && isMounted) {
           const data = await response.json()
