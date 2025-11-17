@@ -86,7 +86,7 @@ export default function BibliotecaMaternaPage() {
       subtitle="Conteúdos inteligentes para apoiar você e o desenvolvimento do seu filho."
     >
       <ClientOnly>
-        <div className="max-w-4xl space-y-10">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-10">
           {/* INTRO TEXT */}
           <Reveal delay={0}>
             <div className="max-w-2xl">
