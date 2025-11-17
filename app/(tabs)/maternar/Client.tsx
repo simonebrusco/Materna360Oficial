@@ -94,38 +94,37 @@ export default function MaternarClient() {
 
             {/* Page Content */}
             <div className="space-y-4 md:space-y-5">
-
               {/* Daily Message Card */}
               <Reveal delay={100}>
-            <div className="mt-2 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
-              <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[20px] border border-white/60 shadow-[0_10px_40px_rgba(255,0,94,0.08)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
-                {/* Subtle gradient accent blob - top-right corner */}
-                <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/15 to-transparent rounded-full" />
+                <div className="mt-2 mb-8 px-4 md:px-6 max-w-7xl mx-auto">
+                  <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[20px] border border-white/60 shadow-[0_10px_40px_rgba(255,0,94,0.08)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200">
+                    {/* Subtle gradient accent blob - top-right corner */}
+                    <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/15 to-transparent rounded-full" />
 
-                {/* Content wrapper */}
-                <div className="flex flex-col gap-3 relative z-10">
-                  {/* Pill header */}
-                  <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#ffe3f0] text-[#ff005e] font-medium text-sm tracking-tight shadow-sm w-fit">
-                    Mensagem de Hoje
+                    {/* Content wrapper */}
+                    <div className="flex flex-col gap-3 relative z-10">
+                      {/* Pill header */}
+                      <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#ffe3f0] text-[#ff005e] font-medium text-sm tracking-tight shadow-sm w-fit">
+                        Mensagem de Hoje
+                      </div>
+
+                      {/* Message title */}
+                      <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight">
+                        "{dailyMessage}"
+                      </h3>
+
+                      {/* Subtitle */}
+                      <p className="text-sm md:text-base text-[#545454]/85 leading-relaxed">
+                        Uma mensagem especial para começar seu dia com leveza.
+                      </p>
+
+                      {/* Helper text */}
+                      <p className="text-xs text-[#545454]/60">
+                        Atualizada automaticamente a cada novo dia.
+                      </p>
+                    </div>
                   </div>
-
-                  {/* Message title */}
-                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight">
-                    "{dailyMessage}"
-                  </h3>
-
-                  {/* Subtitle */}
-                  <p className="text-sm md:text-base text-[#545454]/85 leading-relaxed">
-                    Uma mensagem especial para começar seu dia com leveza.
-                  </p>
-
-                  {/* Helper text */}
-                  <p className="text-xs text-[#545454]/60">
-                    Atualizada automaticamente a cada novo dia.
-                  </p>
                 </div>
-              </div>
-            </div>
               </Reveal>
 
               <CardHub />
