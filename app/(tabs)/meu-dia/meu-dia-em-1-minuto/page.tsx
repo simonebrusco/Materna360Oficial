@@ -41,6 +41,13 @@ const MEU_DIA_CARDS: MeuDiaCard[] = [
     subtitle: 'Pequenas vitórias e aprendizados do dia.',
     href: '#',
   },
+  {
+    id: 'minhas-conquistas',
+    icon: 'trophy',
+    title: 'Minhas Conquistas',
+    subtitle: 'Celebre seu progresso e seus avanços.',
+    href: '/meu-dia/minhas-conquistas',
+  },
 ]
 
 export default function MeuDiaEm1MinutoPage() {
