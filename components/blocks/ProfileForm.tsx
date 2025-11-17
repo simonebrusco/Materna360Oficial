@@ -69,6 +69,7 @@ export function ProfileForm() {
         const response = await fetch('/api/profile', {
           credentials: 'include',
           cache: 'no-store',
+          signal: AbortSignal.timeout(5000),
         })
 
         if (response.ok && isMounted) {
@@ -88,7 +89,7 @@ export function ProfileForm() {
       } catch (error) {
         if (isMounted) {
           const errorMsg = error instanceof Error ? error.message : String(error)
-          console.error('Falha ao carregar nome do perfil:', errorMsg)
+          console.warn('Falha ao carregar nome do perfil:', errorMsg)
           setForm((previous) => ({ ...previous, nomeMae: '' }))
         }
       }
@@ -97,6 +98,7 @@ export function ProfileForm() {
         const eu360Response = await fetch('/api/eu360/profile', {
           credentials: 'include',
           cache: 'no-store',
+          signal: AbortSignal.timeout(5000),
         })
 
         if (eu360Response.ok && isMounted) {
@@ -110,7 +112,7 @@ export function ProfileForm() {
       } catch (error) {
         if (isMounted) {
           const errorMsg = error instanceof Error ? error.message : String(error)
-          console.error('Falha ao carregar perfil eu360:', errorMsg)
+          console.warn('Falha ao carregar perfil eu360:', errorMsg)
         }
       }
     }
