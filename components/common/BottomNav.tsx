@@ -76,9 +76,9 @@ export default function BottomNav({
       "
       role="navigation"
       aria-label="Main"
-      data-debug-nav={debugNav ?? 'count:5;forced:yes'}
+      data-debug-nav={debugNav ?? 'count:3;forced:yes'}
     >
-      <ul className="mx-auto grid max-w-screen-md grid-cols-5 gap-1">
+      <ul className="mx-auto grid max-w-screen-md grid-cols-3 gap-1">
         {items.map((it) => {
           // Determine active state using custom match function or equality
           const isActive = it.match
