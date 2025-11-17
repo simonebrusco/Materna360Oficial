@@ -24,7 +24,7 @@ const CONEXAO_CARDS: ConexaoCard[] = [
   },
   {
     id: 'momento-afetuoso',
-    icon: 'sparkle',
+    icon: 'sparkles',
     title: 'Momento Afetuoso',
     subtitle: 'Pequenos toques e olhares que criam presença real.',
     ctaText: 'Explorar',
@@ -32,7 +32,7 @@ const CONEXAO_CARDS: ConexaoCard[] = [
   },
   {
     id: 'toque-conforta',
-    icon: 'baby',
+    icon: 'smile',
     title: 'Toque que Conforta',
     subtitle: 'Maneiras de acalmar, acolher e transmitir segurança.',
     ctaText: 'Ver sugestões',
