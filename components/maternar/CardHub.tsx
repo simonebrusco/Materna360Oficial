@@ -61,15 +61,6 @@ const HUB_CARDS: CardConfig[] = [
     tag: 'Você',
   },
   {
-    id: 'conexao-com-meu-filho',
-    icon: 'sparkles',
-    title: 'Momentos que Contam',
-    subtitle: 'Guarde as pequenas grandes memórias.',
-    href: '/meu-dia/momentos-que-contam',
-    ctaText: 'Explorar',
-    tag: 'Seu filho',
-  },
-  {
     id: 'aprender-brincar',
     icon: 'idea',
     title: 'Aprender Brincando',
