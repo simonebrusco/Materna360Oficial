@@ -31,6 +31,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="Materna360" />
         <link rel="apple-touch-icon" href="/images/logo.png" />
         <link rel="manifest" href="/manifest.json" />
+        {/* Service Worker registration for PWA */}
+        <Script id="sw-register" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('/sw.js').catch((err) => {
+                console.log('Service Worker registration failed:', err);
+              });
+            }
+          `}
+        </Script>
         {/* FullStory fetch interception fix: capture native fetch before FullStory wraps it */}
         <Script id="fullstory-fetch-fix" strategy="beforeInteractive">
           {`
