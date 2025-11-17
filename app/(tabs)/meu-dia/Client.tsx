@@ -280,63 +280,6 @@ export function MeuDiaClient({
       subtitle={pageSubtitle}
     >
       <div className="max-w-[1160px] mx-auto px-4 md:px-6">
-        {/* MACRO BLOCK 1: EMOTIONAL START */}
-        <div className="mb-16">
-          <h2 className="text-[22px] font-semibold text-gray-800 tracking-tight mb-2">Começar com Leveza</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
-            Comece o dia com calma. Este espaço está aqui para apoiar você.
-          </p>
-
-          {/* Greeting Text */}
-          <div className="mb-6">
-            <InactivityReminder />
-          </div>
-
-          {/* Humor & Energia - Premium Card */}
-          <section id="meu-dia-humor">
-            <Reveal delay={160}>
-              {/* Pink pill label above the card */}
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm tracking-tight shadow-sm mb-6">
-                Humor e Energia
-              </div>
-              <div className="bg-white rounded-3xl shadow-[0_12px_32px_rgba(255,0,94,0.05)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_16px_40px_rgba(255,0,94,0.08)] hover:scale-[1.015] mb-6">
-                {/* Header */}
-                <div className="flex flex-col gap-1 mb-4">
-                  <h3 className="m360-subtitle">Como você está hoje?</h3>
-                  <p className="m360-label-sm text-gray-600">
-                    Registrar seu humor é um pequeno ato de autocuidado.
-                  </p>
-                </div>
-
-                {/* Mood Pills */}
-                <div className="mb-4">
-                  <MoodQuickSelector />
-                </div>
-
-                {/* Weekly Summary Analytics Card */}
-                <section
-                  id="meu-dia-resumo"
-                  className="mt-4 rounded-2xl bg-gray-50/80 px-4 py-3 flex flex-col gap-2 mb-4"
-                >
-                  <p className="m360-label-sm text-gray-600">Sua semana até agora</p>
-                  <div>
-                    <MoodSparkline />
-                  </div>
-                </section>
-
-                {/* View Trend Button */}
-                <button
-                  type="button"
-                  onClick={() => setTrendOpen(true)}
-                  className="mt-2 w-full rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium text-sm hover:opacity-95 active:scale-[0.99] transition-all"
-                  data-event="meu-dia.trend_view"
-                >
-                  Ver tendência
-                </button>
-              </div>
-            </Reveal>
-          </section>
-        </div>
 
         {/* Coach Suggestion Card */}
         <ClientOnly>
