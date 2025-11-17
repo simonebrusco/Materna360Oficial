@@ -47,42 +47,6 @@ export default function MaternarClient() {
 
       <div className="relative z-10 flex flex-col min-h-[100dvh]">
         <main className="bg-soft-page flex-1">
-          {/* Custom greeting header with avatar and profile button */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#2f3a56]">
-                Bom dia{firstName ? ', ' : ''}{firstName}
-              </h1>
-              {name && (
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center flex-shrink-0 border border-white/60 shadow-sm">
-                  <span className="text-sm md:text-base font-semibold text-[#ff005e]">
-                    {firstName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-            </div>
-            {isProfileIncomplete && (
-              <Link
-                href="/eu360?focus=perfil"
-                onClick={() => {
-                  track('maternar.profile_premium_button_click', {
-                    timestamp: new Date().toISOString(),
-                  });
-                }}
-                className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[rgba(255,0,94,0.45)] bg-[rgba(255,0,94,0.04)] text-[rgba(255,0,94,0.85)] text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,0,94,0.04)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,0,94,0.06)] active:scale-[0.99] transition-all duration-150"
-                aria-label="Completar perfil"
-              >
-                <AppIcon
-                  name="hand-heart"
-                  className="w-[14px] h-[14px]"
-                  style={{ color: 'rgba(255, 0, 94, 0.6)' }}
-                  decorative
-                />
-                <span>Completar perfil</span>
-              </Link>
-            )}
-          </div>
-
           <div className="mx-auto max-w-[1040px] px-4 md:px-6 w-full">
             {/* Greeting header with avatar and profile button */}
             <header className="pt-6 md:pt-8 mb-8">
