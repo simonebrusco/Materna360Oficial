@@ -9,12 +9,10 @@ import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { MomInMotion } from '../components/MomInMotion'
 import { Checklist } from '@/components/blocks/Checklist'
-import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
 import { SimplePlannerSheet, type PlannerItem, type PlannerDraft } from '@/components/blocks/SimplePlannerSheet'
 import { SimplePlannerList } from '@/components/blocks/SimplePlannerList'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
-import { getWeekStartKey, buildWeekLabels } from '@/app/lib/weekLabels'
 import { save, load, getCurrentWeekKey } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -75,8 +73,6 @@ export default function RotatinaLevePage() {
   const [showNoteModal, setShowNoteModal] = useState(false)
 
   const currentDateKey = getBrazilDateKey()
-  const weekStartKey = getWeekStartKey(currentDateKey)
-  const weekLabels = buildWeekLabels(weekStartKey)
 
   // Load planner items
   useEffect(() => {
@@ -226,18 +222,30 @@ export default function RotatinaLevePage() {
                       <p className="text-sm text-[#545454] font-medium">
                         Organize seu plano para o dia
                       </p>
-                      <div className="rounded-2xl bg-gray-50/80 p-4">
-                        <FamilyPlanner
-                          currentDateKey={currentDateKey}
-                          weekStartKey={weekStartKey}
-                          weekLabels={weekLabels}
-                          plannerTitle="Dia"
-                          profile={{}}
-                          dateKey={currentDateKey}
-                          recommendations={[]}
-                          initialBuckets={[]}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex-1" />
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setShowPlannerSheet(true)}
+                            className="flex items-center gap-1"
+                          >
+                            <AppIcon name="plus" size={16} decorative />
+                            Adicionar
+                          </Button>
+                        </div>
+                        <SimplePlannerList
+                          items={plannerItems}
+                          onToggleDone={handleTogglePlannerItem}
                         />
                       </div>
+
+                      <SimplePlannerSheet
+                        isOpen={showPlannerSheet}
+                        onClose={() => setShowPlannerSheet(false)}
+                        onAdd={handleAddPlannerItem}
+                      />
                     </div>
                   )}
 
