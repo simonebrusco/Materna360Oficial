@@ -4,7 +4,6 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import CardHub from '@/components/maternar/CardHub';
-import { PageTemplate } from '@/components/common/PageTemplate';
 import { track } from '@/app/lib/telemetry';
 import { useProfile } from '@/app/hooks/useProfile';
 import AppIcon from '@/components/ui/AppIcon';
