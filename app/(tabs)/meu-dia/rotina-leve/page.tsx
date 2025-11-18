@@ -1146,9 +1146,71 @@ export default function RotinaLevePage() {
 
                               {isNotasOpen && (
                                 <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
-                                  <p className="text-sm text-[#545454]/85 leading-relaxed">
-                                    Adicione anotações rápidas e crie listas essenciais para sua semana.
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                    Anote tarefas importantes e crie listas essenciais para sua semana.
                                   </p>
+
+                                  {/* Textarea for notes */}
+                                  <div className="mb-6">
+                                    <textarea
+                                      value={notasText}
+                                      onChange={(e) => setNotasText(e.target.value)}
+                                      placeholder="Escreva suas anotações…"
+                                      className="w-full px-4 py-3 rounded-2xl border border-[#e0e0e0] bg-[#f8f8f8] text-[#545454] text-sm placeholder-[#999] focus:outline-none focus:border-primary focus:bg-white transition-all duration-150 resize-none"
+                                      rows={3}
+                                    />
+                                  </div>
+
+                                  {/* Add item input + button */}
+                                  <div className="flex gap-2 mb-6">
+                                    <input
+                                      type="text"
+                                      value={notasNewItem}
+                                      onChange={(e) => setNotasNewItem(e.target.value)}
+                                      onKeyPress={(e) => e.key === 'Enter' && handleAddNotasItem()}
+                                      placeholder="Digite um item…"
+                                      className="flex-1 rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                    />
+                                    <button
+                                      onClick={handleAddNotasItem}
+                                      className="px-4 py-2.5 rounded-2xl bg-[#f0f0f0] text-[#2f3a56] text-sm font-medium hover:bg-[#e8e8e8] transition-all duration-150"
+                                    >
+                                      Adicionar
+                                    </button>
+                                  </div>
+
+                                  {/* List items */}
+                                  {notasItems.length > 0 && (
+                                    <div className="mb-6 space-y-2">
+                                      {notasItems.map((item) => (
+                                        <div key={item.id} className="flex items-start gap-2 text-sm text-[#545454]">
+                                          <span className="text-primary font-bold mt-0.5">•</span>
+                                          <span className="flex-1">{item.text}</span>
+                                          <button
+                                            onClick={() => handleRemoveNotasItem(item.id)}
+                                            className="text-[#999] hover:text-[#545454] text-xs transition-colors"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Save button */}
+                                  <button
+                                    onClick={handleSaveNotas}
+                                    className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150"
+                                  >
+                                    Salvar no planner
+                                  </button>
+
+                                  {/* Confirmation message */}
+                                  {notasSaved && (
+                                    <p className="text-xs text-[#545454]/60 mt-3 text-center">
+                                      Notas salvas no planner!
+                                    </p>
+                                  )}
                                 </div>
                               )}
                             </SoftCard>
