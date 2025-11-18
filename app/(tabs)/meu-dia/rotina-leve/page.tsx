@@ -18,34 +18,29 @@ interface CardItem {
 
 interface CardGroup {
   label: string
-  subtitle?: string
   cards: CardItem[]
 }
 
-const INSPIRATION_CARDS: CardGroup = {
-  label: 'INSPIRE O SEU DIA',
-  subtitle: 'Comece trazendo leveza antes de organizar tudo.',
-  cards: [
-    {
-      id: 'ideias-rapidas',
-      title: 'Ideias Rápidas',
-      description: 'Inspirações simples para deixar o dia mais leve.',
-      icon: 'idea',
-    },
-    {
-      id: 'receitas-inteligentes',
-      title: 'Receitas Inteligentes',
-      description: 'Você diz o ingrediente, eu te ajudo com o resto.',
-      icon: 'sparkles',
-    },
-    {
-      id: 'inspiracoes-do-dia',
-      title: 'Inspirações do Dia',
-      description: 'Uma frase e um pequeno cuidado para hoje.',
-      icon: 'heart',
-    },
-  ],
-}
+const INSPIRATION_CARDS: CardItem[] = [
+  {
+    id: 'ideias-rapidas',
+    title: 'Ideias Rápidas',
+    description: 'Inspirações simples para deixar o dia mais leve.',
+    icon: 'idea',
+  },
+  {
+    id: 'receitas-inteligentes',
+    title: 'Receitas Inteligentes',
+    description: 'Você diz o ingrediente, eu te ajudo com o resto.',
+    icon: 'sparkles',
+  },
+  {
+    id: 'inspiracoes-do-dia',
+    title: 'Inspirações do Dia',
+    description: 'Uma frase e um pequeno cuidado para hoje.',
+    icon: 'heart',
+  },
+]
 
 const CARD_GROUPS: CardGroup[] = [
   {
@@ -132,28 +127,6 @@ export default function RotinaLevePage() {
 
   let cardIndex = 0
 
-  const renderCardContent = (card: CardItem, hasLink: boolean) => {
-    const cardContent = (
-      <div className={`flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 ${hasLink ? 'hover:bg-white/80 transition-all duration-200 cursor-pointer' : ''}`}>
-        <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
-          {card.title}
-        </h4>
-        <p className="text-xs text-[#545454] mb-3 flex-1">
-          {card.description}
-        </p>
-        {hasLink && (
-          <div className="flex justify-end">
-            <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-              Ver mais →
-            </span>
-          </div>
-        )}
-      </div>
-    )
-
-    return hasLink && card.href ? <Link href={card.href}>{cardContent}</Link> : cardContent
-  }
-
   return (
     <PageTemplate
       label="MEU DIA"
@@ -166,15 +139,22 @@ export default function RotinaLevePage() {
           <Reveal delay={0}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
               <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-6">
-                {INSPIRATION_CARDS.label}
+                INSPIRE O SEU DIA
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {INSPIRATION_CARDS.cards.map((card) => {
+                {INSPIRATION_CARDS.map((card) => {
                   const currentIndex = cardIndex
                   cardIndex += 1
                   return (
                     <Reveal key={card.id} delay={currentIndex * 25}>
-                      {renderCardContent(card, false)}
+                      <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4">
+                        <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                          {card.title}
+                        </h4>
+                        <p className="text-xs text-[#545454] mb-3 flex-1">
+                          {card.description}
+                        </p>
+                      </div>
                     </Reveal>
                   )
                 })}
@@ -195,7 +175,21 @@ export default function RotinaLevePage() {
                     cardIndex += 1
                     return (
                       <Reveal key={card.id} delay={currentIndex * 25}>
-                        {renderCardContent(card, !!card.href)}
+                        <Link href={card.href || '#'}>
+                          <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 hover:bg-white/80 transition-all duration-200 cursor-pointer">
+                            <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                              {card.title}
+                            </h4>
+                            <p className="text-xs text-[#545454] mb-3 flex-1">
+                              {card.description}
+                            </p>
+                            <div className="flex justify-end">
+                              <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
+                                Ver mais →
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
                       </Reveal>
                     )
                   })}
