@@ -30,7 +30,7 @@ export function MaternarFeatureCard({
   const baseCardClasses =
     'flex h-full md:min-h-[220px] flex-col justify-between rounded-[26px] md:rounded-[20px] border border-black/5 bg-white/90 ' +
     'shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-sm ' +
-    'mb-7 md:mb-0 p-4 md:p-6 ' +
+    'mb-7 md:mb-0 px-4 md:px-6 py-4 md:py-8 ' +
     'transition-transform transition-shadow duration-200 ease-out ' +
     'group-hover:-translate-y-1 group-hover:shadow-[0_6px_16px_rgba(0,0,0,0.07),0_10px_28px_rgba(0,0,0,0.1),0_14px_40px_rgba(0,0,0,0.1)] ' +
     'group-active:translate-y-0 group-active:shadow-[0_4px_14px_rgba(0,0,0,0.06)]'
@@ -68,13 +68,13 @@ export function MaternarFeatureCard({
             <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] tracking-tight">
               {title}
             </h3>
-            <p className="text-xs md:text-sm text-[#545454]/85 leading-relaxed">
+            <p className="text-xs md:text-sm text-[#545454]/85 leading-relaxed line-clamp-3 md:line-clamp-none">
               {subtitle}
             </p>
           </div>
         </div>
 
-        <div className="mt-3 md:mt-4 flex items-center justify-between">
+        <div className="mt-4 md:mt-6 flex items-center justify-between">
           <button
             type="button"
             className="inline-flex items-center gap-0.5 md:gap-1 text-xs md:text-sm font-medium text-[#ff005e] transition-transform duration-150 group-hover:translate-x-0.5"
