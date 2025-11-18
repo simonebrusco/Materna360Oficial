@@ -672,26 +672,67 @@ export default function RotinaLevePage() {
 
       case 'inspiracoes-do-dia':
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFE5EF]/40 to-white mb-3">
-              <p className="text-sm italic text-[#545454] leading-relaxed">
-                "A maternidade é uma jornada de amor, paciência e pequenas vitórias. Celebre cada momento."
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Um lembrete rápido para você respirar e seguir com mais leveza.
+            </p>
+
+            {/* Daily Quote Display Box */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFE5EF]/40 to-white border border-white/40">
+              <p className="text-sm italic text-[#2f3a56] leading-relaxed text-center">
+                "Você não precisa dar conta de tudo para ser uma mãe incrível."
               </p>
             </div>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Como essa inspiração te toca hoje?"
-              className="w-full h-20 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
-            />
+
+            {/* Self-Care Checklist */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Meu pequeno cuidado de hoje:
+              </label>
+              <div className="space-y-2">
+                {[
+                  { id: 'agua-em-paz', label: 'Beber água em paz' },
+                  { id: 'pausa-silencio', label: 'Pausa de 5 min em silêncio' },
+                  { id: 'conversa-olhos', label: 'Uma conversa olhando nos olhos do meu filho' },
+                ].map((item) => (
+                  <label key={item.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selfCareChecklist[item.id as keyof typeof selfCareChecklist]}
+                      onChange={(e) =>
+                        setSelfCareChecklist({
+                          ...selfCareChecklist,
+                          [item.id]: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 rounded accent-primary cursor-pointer"
+                    />
+                    <span className="text-sm text-[#2f3a56] font-medium">
+                      {item.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Primary Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleSaveCard(cardId)
+                try {
+                  track('inspiracoes_do_dia.saved_reminder', {
+                    selfCareChecks: Object.entries(selfCareChecklist)
+                      .filter(([_, checked]) => checked)
+                      .map(([key, _]) => key),
+                    tab: 'meu-dia-rotina-leve',
+                  })
+                } catch {}
+                toast.success('Lembrete salvo para hoje!')
               }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
             >
-              Salvar no Planner
+              Salvar no planner como lembrete de hoje
             </button>
           </div>
         )
