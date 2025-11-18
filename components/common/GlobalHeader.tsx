@@ -21,6 +21,7 @@ export function GlobalHeader() {
             src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
             className="h-8 w-auto max-w-[160px] object-contain"
+            suppressHydrationWarning
           />
         </div>
 
