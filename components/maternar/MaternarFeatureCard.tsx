@@ -50,22 +50,22 @@ export function MaternarFeatureCard({
         role="article"
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
-        <div className="flex flex-col gap-3">
-          <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/70">
+        <div className="flex flex-col gap-2 md:gap-3">
+          <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#ffd8e6]/70">
             <AppIcon
               name={icon}
-              className="h-4 w-4 text-[#ff005e]"
+              className="h-3.5 w-3.5 md:h-4 md:w-4 text-[#ff005e]"
               aria-hidden="true"
             />
           </div>
 
           <div className="space-y-1">
             {tag && (
-              <span className="inline-flex items-center rounded-full bg-[#ffe3f0] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#ff005e]/90">
+              <span className="inline-flex items-center rounded-full bg-[#ffe3f0] px-2 py-0.5 text-[11px] md:text-xs font-medium uppercase tracking-wide text-[#ff005e]/90">
                 {tag}
               </span>
             )}
-            <h3 className="text-sm md:text-base font-semibold text-[#2f3a56] tracking-tight">
+            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] tracking-tight">
               {title}
             </h3>
             <p className="text-xs md:text-sm text-[#545454]/85 leading-relaxed">
