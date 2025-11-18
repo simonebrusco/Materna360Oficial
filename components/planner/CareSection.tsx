@@ -53,9 +53,13 @@ export default function CareSection({
       </div>
 
       <SoftCard className="p-4 md:p-5 space-y-2">
-        {items.length === 0 ? (
+        {items.length === 0 && !isAddingForm ? (
           <div className="text-center py-6">
-            <p className="text-sm text-[#545454]/60">Nenhuma ação ainda</p>
+            <p className="text-sm text-[#545454]/60">
+              {title === 'Cuidar de mim'
+                ? 'Use este espaço para registrar pequenas pausas, respirações e gestos por você.'
+                : 'Tarefas que aproximam sua família e organizam a rotina.'}
+            </p>
           </div>
         ) : (
           items.map(item => (
