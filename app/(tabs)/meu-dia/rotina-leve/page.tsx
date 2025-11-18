@@ -73,7 +73,7 @@ const CARD_GROUPS: CardGroup[] = [
       {
         id: 'rotina-filho',
         title: 'Rotina do Filho',
-        description: 'Organiza��ão do dia da criança com cuidado.',
+        description: 'Organização do dia da criança com cuidado.',
         href: '/meu-dia',
         icon: 'heart',
       },
@@ -1169,11 +1169,11 @@ export default function RotinaLevePage() {
                                       onChange={(e) => setNotasNewItem(e.target.value)}
                                       onKeyPress={(e) => e.key === 'Enter' && handleAddNotasItem()}
                                       placeholder="Digite um item…"
-                                      className="flex-1 rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                      className="flex-1 rounded-[16px] bg-[#f9f9f9] text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#eaeaea] px-4 py-3 transition duration-300 focus:border-primary focus:ring-1 focus:ring-primary/30 focus:outline-none"
                                     />
                                     <button
                                       onClick={handleAddNotasItem}
-                                      className="px-4 py-2.5 rounded-2xl bg-[#f0f0f0] text-[#2f3a56] text-sm font-medium hover:bg-[#e8e8e8] transition-all duration-150"
+                                      className="px-5 py-3 rounded-[16px] bg-[#f0f0f0] text-[#2f3a56] text-sm font-semibold hover:bg-[#e8e8e8] transition-all duration-150"
                                     >
                                       Adicionar
                                     </button>
