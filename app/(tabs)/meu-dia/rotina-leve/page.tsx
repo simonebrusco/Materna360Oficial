@@ -1008,29 +1008,22 @@ export default function RotinaLevePage() {
                       if (card.id === 'checklist-mae') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <div>
-                              <div style={{ pointerEvents: 'none' }}>
-                                <SoftCard>
-                                  <div className="flex flex-col gap-2">
-                                    <h3 className="text-base font-semibold text-[#2f3a56]">
-                                      Checklist da Mãe
-                                    </h3>
-                                    <p className="text-sm text-[#545454]/85">
-                                      Ações que fortalecem seu dia e sua família.
-                                    </p>
-                                  </div>
-                                </SoftCard>
-                              </div>
-
-                              <div className="text-right mt-3" style={{ pointerEvents: 'auto' }}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                Checklist da Mãe
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                Ações que fortalecem seu dia e sua família.
+                              </p>
+                              <div className="flex justify-end mt-2">
                                 <Link
-                                  href="/meu-dia"
-                                  className="text-sm font-medium text-primary hover:underline"
+                                  href="/maternar/checklist-da-mae"
+                                  className="text-xs font-semibold text-primary/85 tracking-wide hover:underline"
                                 >
                                   Ver mais →
                                 </Link>
                               </div>
-                            </div>
+                            </SoftCard>
                           </Reveal>
                         )
                       }
@@ -1039,29 +1032,22 @@ export default function RotinaLevePage() {
                       if (card.id === 'notas-listas') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <div>
-                              <div style={{ pointerEvents: 'none' }}>
-                                <SoftCard>
-                                  <div className="flex flex-col gap-2">
-                                    <h3 className="text-base font-semibold text-[#2f3a56]">
-                                      Notas & Listas
-                                    </h3>
-                                    <p className="text-sm text-[#545454]/85">
-                                      Anotações rápidas e listas essenciais.
-                                    </p>
-                                  </div>
-                                </SoftCard>
-                              </div>
-
-                              <div className="text-right mt-3" style={{ pointerEvents: 'auto' }}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                Notas & Listas
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                Anotações rápidas e listas essenciais.
+                              </p>
+                              <div className="flex justify-end mt-2">
                                 <Link
-                                  href="/meu-dia"
-                                  className="text-sm font-medium text-primary hover:underline"
+                                  href="/maternar/notas-e-listas"
+                                  className="text-xs font-semibold text-primary/85 tracking-wide hover:underline"
                                 >
                                   Ver mais →
                                 </Link>
                               </div>
-                            </div>
+                            </SoftCard>
                           </Reveal>
                         )
                       }
