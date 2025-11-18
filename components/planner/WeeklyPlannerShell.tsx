@@ -237,9 +237,9 @@ export default function WeeklyPlannerShell() {
 
   return (
     <Reveal delay={200}>
-      <SoftCard className="p-0 flex flex-col max-h-[calc(100vh-300px)] md:max-h-none">
-        {/* Sticky Planner Header */}
-        <div className="sticky top-0 z-10 bg-white rounded-t-[26px] md:rounded-t-[22px] p-4 md:p-6 space-y-4 border-b border-[#f0f0f0]">
+      <SoftCard className="p-4 md:p-6 space-y-6">
+        {/* Planner Header */}
+        <div className="space-y-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56]">
