@@ -50,7 +50,7 @@ const ORGANIZATION_CARDS: CardItem[] = [
   {
     id: 'rotina-da-casa',
     title: 'Rotina da Casa',
-    description: 'Manage home tasks with clarity.',
+    description: 'Tarefas do lar com mais praticidade.',
     icon: 'home',
   },
   {
