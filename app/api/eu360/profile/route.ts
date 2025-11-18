@@ -77,7 +77,7 @@ export async function GET() {
     const supabase = tryCreateServerSupabase()
     if (!supabase) {
       console.error('[Eu360] Supabase client unavailable. Returning empty profile.')
-      return successResponse({ name: '', birthdate: null, age_months: null })
+      return successResponse({ name: '', birthdate: null, age_months: null }, true)
     }
 
     const {
@@ -90,7 +90,7 @@ export async function GET() {
     }
 
     if (!user) {
-      return successResponse({ name: '', birthdate: null, age_months: null })
+      return successResponse({ name: '', birthdate: null, age_months: null }, true)
     }
 
     const [profileResult, babyResult] = await Promise.all([
@@ -116,10 +116,10 @@ export async function GET() {
           ? babyResult.data.age_months
           : null
 
-    return successResponse({ name, birthdate, age_months: ageMonths })
+    return successResponse({ name, birthdate, age_months: ageMonths }, true)
   } catch (error) {
     console.error('[Eu360] Unexpected error in GET:', error)
-    return successResponse({ name: '', birthdate: null, age_months: null })
+    return successResponse({ name: '', birthdate: null, age_months: null }, true)
   }
 }
 
