@@ -65,7 +65,7 @@ const TOOLS_CARDS: CardItem[] = [
   {
     id: 'prioridades-semana',
     title: 'Prioridades da Semana',
-    description: 'What really matters this week.',
+    description: 'O que realmente importa nos próximos dias.',
     icon: 'star',
   },
   {
