@@ -247,20 +247,20 @@ export default function RotinaLevePage() {
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
-          {/* SECTION 1 — Para começar o dia mais leve */}
+          {/* SECTION 1 — Organização do Dia */}
           <Reveal delay={0}>
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                Para começar o dia mais leve
+                Organização do Dia
               </h2>
               <p className="text-sm text-[#545454]">
-                Inspire-se com ideias, receitas e mensagens para começar bem.
+                Comece planejando sua rotina com clareza e leveza.
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            {QUICK_ACCESS_CARDS.map((card, index) => (
+            {ESSENTIAL_DAY_CARDS.map((card, index) => (
               <Reveal key={card.id} delay={50 + index * 25}>
                 <Link href={card.href}>
                   <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
@@ -284,20 +284,20 @@ export default function RotinaLevePage() {
             ))}
           </div>
 
-          {/* SECTION 2 — Meu Dia Essencial */}
+          {/* SECTION 2 — Rotina da Família */}
           <Reveal delay={100}>
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                Meu Dia Essencial
+                Rotina da Família
               </h2>
               <p className="text-sm text-[#545454]">
-                Organize suas prioridades com foco e leveza.
+                Acompanhe a rotina de sua família com harmonia.
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            {ESSENTIAL_DAY_CARDS.map((card, index) => (
+            {FAMILY_ROUTINE_CARDS.map((card, index) => (
               <Reveal key={card.id} delay={150 + index * 25}>
                 <Link href={card.href}>
                   <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
@@ -321,21 +321,21 @@ export default function RotinaLevePage() {
             ))}
           </div>
 
-          {/* SECTION 3 — Rotina da Família */}
-          <Reveal delay={225}>
+          {/* SECTION 3 — Ferramentas da Mãe */}
+          <Reveal delay={200}>
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                Rotina da Família
+                Ferramentas da Mãe
               </h2>
               <p className="text-sm text-[#545454]">
-                Organize a rotina de toda a família com harmonia.
+                Pequenas ações que fazem uma grande diferença.
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            {FAMILY_ROUTINE_CARDS.map((card, index) => (
-              <Reveal key={card.id} delay={275 + index * 25}>
+            {TOOLS_CARDS.map((card, index) => (
+              <Reveal key={card.id} delay={250 + index * 25}>
                 <Link href={card.href}>
                   <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
                     <div className="flex items-start gap-3 mb-3">
@@ -358,21 +358,21 @@ export default function RotinaLevePage() {
             ))}
           </div>
 
-          {/* SECTION 4 — Ferramentas da Mãe */}
-          <Reveal delay={325}>
+          {/* SECTION 4 — Ideias Rápidas */}
+          <Reveal delay={300}>
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                Ferramentas da Mãe
+                Ideias Rápidas
               </h2>
               <p className="text-sm text-[#545454]">
-                Recursos para apoiar sua rotina e bem-estar.
+                Inspire-se com receitas rápidas e práticas.
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            {TOOLS_CARDS.map((card, index) => (
-              <Reveal key={card.id} delay={375 + index * 25}>
+            {QUICK_ACCESS_CARDS.map((card, index) => (
+              <Reveal key={card.id} delay={350 + index * 25}>
                 <Link href={card.href}>
                   <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
                     <div className="flex items-start gap-3 mb-3">
