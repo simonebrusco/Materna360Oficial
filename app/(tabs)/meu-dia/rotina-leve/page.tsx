@@ -180,34 +180,194 @@ export default function RotinaLevePage() {
     switch (cardId) {
       case 'ideias-rapidas':
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 space-y-2">
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Escolha algumas opções abaixo e eu te sugiro ideias rápidas para você e sua família.
+            </p>
+
+            {/* Filter Section 1: Time Available */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Quanto tempo você tem hoje?
+              </label>
               <div className="flex flex-wrap gap-2">
-                {['Diversão', 'Aprendizado', 'Relaxamento', 'Movimento'].map((filter) => (
+                {['5 min', '15 min', '30 min', '1h+'].map((time) => (
                   <button
-                    key={filter}
-                    className="px-3 py-1 rounded-full text-xs font-medium bg-white/60 text-[#2f3a56] hover:bg-white/80 border border-white/40 transition-all duration-200"
+                    key={time}
+                    onClick={() =>
+                      setIdeiasFilters({
+                        ...ideiasFilters,
+                        timeAvailable: ideiasFilters.timeAvailable === time ? null : time,
+                      })
+                    }
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      ideiasFilters.timeAvailable === time
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
                   >
-                    {filter}
+                    {time}
                   </button>
                 ))}
               </div>
             </div>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Escreva as ideias rápidas que você quer experimentar..."
-              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-            />
+
+            {/* Filter Section 2: How You Feel */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Como você está se sentindo?
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Cansada', 'Neutra', 'Animada'].map((feeling) => (
+                  <button
+                    key={feeling}
+                    onClick={() =>
+                      setIdeiasFilters({
+                        ...ideiasFilters,
+                        feeling: ideiasFilters.feeling === feeling ? null : feeling,
+                      })
+                    }
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      ideiasFilters.feeling === feeling
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {feeling}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filter Section 3: Who Participates */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Quem participa?
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Só eu', 'Eu e meu filho', 'Família toda'].map((participant) => (
+                  <button
+                    key={participant}
+                    onClick={() =>
+                      setIdeiasFilters({
+                        ...ideiasFilters,
+                        participates: ideiasFilters.participates === participant ? null : participant,
+                      })
+                    }
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      ideiasFilters.participates === participant
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {participant}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filter Section 4: Child Age */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Idade do seu filho (principal):
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['0–2', '3–5', '6–8', '9+'].map((age) => (
+                  <button
+                    key={age}
+                    onClick={() =>
+                      setIdeiasFilters({
+                        ...ideiasFilters,
+                        childAge: ideiasFilters.childAge === age ? null : age,
+                      })
+                    }
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      ideiasFilters.childAge === age
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {age}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Generate Ideas Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleSaveCard(cardId)
+                setShowIdeiasResults(true)
+                try {
+                  track('ideias_rapidas.generated', {
+                    filters: ideiasFilters,
+                    tab: 'meu-dia-rotina-leve',
+                  })
+                } catch {}
               }}
-              className="mt-3 w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
             >
-              Salvar no Planner
+              Gerar ideias para hoje
             </button>
+
+            {/* Results Section */}
+            {showIdeiasResults && (
+              <div className="space-y-3 pt-4 border-t border-white/40">
+                <h4 className="text-sm font-semibold text-[#2f3a56]">
+                  Sugestões para você agora:
+                </h4>
+                <div className="space-y-2">
+                  {[
+                    'Momento abraço: 5 minutos em silêncio com seu filho no colo.',
+                    'Caça ao tesouro rápida pela casa com 3 objetos.',
+                    'Um café em silêncio só seu, sem culpa.',
+                  ].map((suggestion, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-2xl bg-white/60 border border-white/40"
+                    >
+                      <p className="text-sm text-[#2f3a56] leading-relaxed">
+                        {suggestion}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bottom Action Buttons */}
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      try {
+                        track('ideias_rapidas.saved_idea', {
+                          tab: 'meu-dia-rotina-leve',
+                        })
+                      } catch {}
+                      toast.success('Ideia salva no Planner!')
+                    }}
+                    className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+                  >
+                    Salvar ideia no planner
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIdeiasFilters({
+                        timeAvailable: null,
+                        feeling: null,
+                        participates: null,
+                        childAge: null,
+                      })
+                      setShowIdeiasResults(false)
+                    }}
+                    className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+                  >
+                    Limpar filtros
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )
 
