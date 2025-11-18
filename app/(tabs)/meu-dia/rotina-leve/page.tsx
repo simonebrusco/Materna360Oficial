@@ -1010,6 +1010,75 @@ export default function RotinaLevePage() {
                         )
                       }
 
+                      // Special handling for Checklist da Mãe
+                      if (card.id === 'checklist-mae') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              <button
+                                onClick={() => setIsChecklistOpen(!isChecklistOpen)}
+                                className="w-full text-left focus:outline-none flex flex-col"
+                              >
+                                <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                  {card.description}
+                                </p>
+                              </button>
+
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                  Ver mais →
+                                </span>
+                              </div>
+
+                              {isChecklistOpen && (
+                                <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                    Crie seu checklist diário com as ações que fortalecem seu dia e sua família.
+                                  </p>
+                                </div>
+                              )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
+                      // Special handling for Notas & Listas
+                      if (card.id === 'notas-listas') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              <button
+                                onClick={() => setIsNotasOpen(!isNotasOpen)}
+                                className="w-full text-left focus:outline-none flex flex-col"
+                              >
+                                <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                  {card.description}
+                                </p>
+                              </button>
+
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                  Ver mais →
+                                </span>
+                              </div>
+
+                              {isNotasOpen && (
+                                <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                    Adicione anotações rápidas e crie listas essenciais para sua semana.
+                                  </p>
+                                </div>
+                              )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
 
                       // Default card rendering for other cards
                       return (
