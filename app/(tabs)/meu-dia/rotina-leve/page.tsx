@@ -122,6 +122,17 @@ export default function RotinaLevePage() {
   const [planejarTasks, setPlanejarTasks] = useState<string[]>([])
   const [planejarTaskInput, setPlanejarTaskInput] = useState('')
 
+  // Rotina da Casa
+  const [rotinaCasaDays, setRotinaCasaDays] = useState<string[]>([])
+  const [rotinaCasaTasks, setRotinaCasaTasks] = useState({
+    'lavar-louça': false,
+    'cozinha': false,
+    'roupa': false,
+    'organizar-brinquedos': false,
+  })
+  const [rotinaCasaNewTask, setRotinaCasaNewTask] = useState('')
+  const [rotinaCasaCustomTasks, setRotinaCasaCustomTasks] = useState<{ id: string; label: string; checked: boolean }[]>([])
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
@@ -1160,7 +1171,7 @@ export default function RotinaLevePage() {
                       expandedAccordion === 'tarefas-recorrentes' ? 'rotate-180' : ''
                     }`}
                   >
-                    ��
+                    ▼
                   </span>
                 </div>
 
