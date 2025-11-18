@@ -132,6 +132,31 @@ export default function RotinaLevePage() {
 
   let cardIndex = 0
 
+  const renderCardContent = (card: CardItem, hasLink: boolean) => {
+    const cardContent = (
+      <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 hover:bg-white/80 transition-all duration-200 cursor-pointer">
+        <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+          {card.title}
+        </h4>
+        <p className="text-xs text-[#545454] mb-3 flex-1">
+          {card.description}
+        </p>
+        {hasLink && (
+          <div className="flex justify-end">
+            <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
+              Ver mais →
+            </span>
+          </div>
+        )}
+      </div>
+    )
+
+    if (hasLink && card.href) {
+      return <Link href={card.href}>{cardContent}</Link>
+    }
+    return cardContent
+  }
+
   return (
     <PageTemplate
       label="MEU DIA"
@@ -140,13 +165,47 @@ export default function RotinaLevePage() {
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+          {/* Inspire section */}
+          <Reveal delay={0}>
+            <SoftCard className="rounded-3xl p-6 md:p-8">
+              <div className="mb-6">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  {INSPIRATION_CARDS.label}
+                </h3>
+                {INSPIRATION_CARDS.subtitle && (
+                  <p className="text-sm text-[#545454] mb-2">
+                    {INSPIRATION_CARDS.subtitle}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {INSPIRATION_CARDS.cards.map((card) => {
+                  const currentIndex = cardIndex
+                  cardIndex += 1
+                  return (
+                    <Reveal key={card.id} delay={currentIndex * 25}>
+                      {renderCardContent(card, false)}
+                    </Reveal>
+                  )
+                })}
+              </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* Main card groups */}
           {CARD_GROUPS.map((group, groupIdx) => (
-            <Reveal key={group.label} delay={groupIdx * 50}>
+            <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
               <SoftCard className="rounded-3xl p-6 md:p-8">
                 <div className="mb-6">
                   <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                     {group.label}
                   </h3>
+                  {group.subtitle && (
+                    <p className="text-sm text-[#545454] mb-2">
+                      {group.subtitle}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -155,21 +214,7 @@ export default function RotinaLevePage() {
                     cardIndex += 1
                     return (
                       <Reveal key={card.id} delay={currentIndex * 25}>
-                        <Link href={card.href}>
-                          <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 hover:bg-white/80 transition-all duration-200 cursor-pointer">
-                            <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
-                              {card.title}
-                            </h4>
-                            <p className="text-xs text-[#545454] mb-3 flex-1">
-                              {card.description}
-                            </p>
-                            <div className="flex justify-end">
-                              <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-                                Ver mais →
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
+                        {renderCardContent(card, !!card.href)}
                       </Reveal>
                     )
                   })}
