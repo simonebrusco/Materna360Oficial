@@ -28,7 +28,10 @@ export function GlobalHeader() {
         <div className="flex items-center gap-4">
           {!isLoading && name && (
             <div className="hidden sm:block text-right">
-              <p className="m360-micro font-medium">
+              <p
+                className="m360-micro font-medium"
+                suppressHydrationWarning
+              >
                 {getTimeGreeting(name)}
               </p>
               <p className="text-[12px] text-[#545454] truncate max-w-[120px]">
