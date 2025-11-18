@@ -133,6 +133,22 @@ export default function RotinaLevePage() {
   const [rotinaCasaNewTask, setRotinaCasaNewTask] = useState('')
   const [rotinaCasaCustomTasks, setRotinaCasaCustomTasks] = useState<{ id: string; label: string; checked: boolean }[]>([])
 
+  // Rotina da Família
+  const [rotinaFamiliaTimeframe, setRotinaFamiliaTimeframe] = useState<'today' | 'week'>('today')
+  const [rotinaFamiliaCommitments, setRotinaFamiliaCommitments] = useState<
+    { id: string; time: string; description: string; participants: string }[]
+  >([])
+  const [rotinaFamiliaNewCommitment, setRotinaFamiliaNewCommitment] = useState({
+    time: '',
+    description: '',
+    participants: 'Só eu',
+  })
+
+  // Prioridades da Semana
+  const [prioridadesWeek, setPrioridadesWeek] = useState('')
+  const [prioridadesList, setPrioridadesList] = useState<{ id: string; text: string }[]>([])
+  const [prioridadesInput, setPrioridadesInput] = useState('')
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
