@@ -12,7 +12,7 @@ import { getDailyIndex } from '@/app/lib/dailyMessage';
 import { getTimeGreeting } from '@/app/lib/greetings';
 import { Reveal } from '@/components/ui/Reveal';
 
-export default function MaternarClient() {
+export function MaternarClient() {
   const { name } = useProfile();
   const [greeting, setGreeting] = useState<string>('');
 

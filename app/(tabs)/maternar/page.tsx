@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import MaternarClient from './Client';
+import { MaternarClient } from './Client';
 
 const toBool = (v: string | undefined, fallback: boolean) => {
   if (v === '1' || v === 'true') return true;
