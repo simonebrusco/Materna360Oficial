@@ -337,9 +337,14 @@ export default function RotinaLevePage() {
                               onClick={() => setIsRecipesOpen(!isRecipesOpen)}
                               className="w-full text-left focus:outline-none"
                             >
-                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                                {card.title}
-                              </h3>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <h3 className="text-base font-semibold text-[#2f3a56]">
+                                  {card.title}
+                                </h3>
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide whitespace-nowrap mt-0.5">
+                                  Ver mais →
+                                </span>
+                              </div>
                               <p className="text-sm text-[#545454]/85 leading-relaxed">
                                 {card.description}
                               </p>
