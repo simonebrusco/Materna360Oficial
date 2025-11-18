@@ -308,6 +308,136 @@ export default function RotinaLevePage() {
                       )
                     }
 
+                    // Special handling for Receitas Inteligentes - make it expandable
+                    if (card.id === 'receitas-inteligentes') {
+                      return (
+                        <Reveal key={card.id} delay={currentIndex * 25}>
+                          <SoftCard className="rounded-2xl p-4 md:p-6">
+                            {/* Header - clickable */}
+                            <button
+                              onClick={() => setIsRecipesOpen(!isRecipesOpen)}
+                              className="w-full text-left focus:outline-none"
+                            >
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                {card.description}
+                              </p>
+                            </button>
+
+                            {/* Expanded content */}
+                            {isRecipesOpen && (
+                              <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                {/* Ingredientes input */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Digite seus ingredientes
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="Digite 1 ou mais ingredientes…"
+                                    value={ingredients}
+                                    onChange={(e) => setIngredients(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-2xl border border-[#e0e0e0] bg-[#f8f8f8] text-[#545454] text-sm placeholder-[#999] focus:outline-none focus:border-primary focus:bg-white transition-all duration-150"
+                                  />
+                                </div>
+
+                                {/* Filter: Tempo de preparo */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Tempo de preparo
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {PREP_TIME_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedPrepTime(selectedPrepTime === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedPrepTime === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Filter: Dificuldade */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Dificuldade
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {DIFFICULTY_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedDifficulty(selectedDifficulty === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedDifficulty === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Filter: Faixa etária */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Faixa etária
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {CHILD_AGE_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedChildAge(selectedChildAge === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedChildAge === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Suggest button */}
+                                <button className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150 mb-6">
+                                  Sugerir receitas
+                                </button>
+
+                                {/* Recipes suggestions */}
+                                <div className="bg-[#f8f8f8] rounded-2xl p-4">
+                                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                                    Sugestões de hoje:
+                                  </h4>
+                                  <ul className="space-y-3">
+                                    {RECIPE_SUGGESTIONS.map((recipe, idx) => (
+                                      <li key={idx} className="text-sm text-[#545454]/85 flex items-start gap-2">
+                                        <span className="text-primary font-bold mt-0.5">•</span>
+                                        <div className="flex-1">
+                                          <p className="font-medium text-[#2f3a56]">{recipe.name}</p>
+                                          <p className="text-xs text-[#545454]/70 mt-0.5">{recipe.time} — {recipe.age}</p>
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+                          </SoftCard>
+                        </Reveal>
+                      )
+                    }
+
                     // Regular cards for other inspiration items
                     return (
                       <Reveal key={card.id} delay={currentIndex * 25}>
