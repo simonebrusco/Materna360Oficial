@@ -29,7 +29,7 @@ const INSPIRATION_CARDS: CardItem[] = [
   {
     id: 'receitas-inteligentes',
     title: 'Receitas Inteligentes',
-    description: 'Type an ingredient and get a smart recipe suggestion.',
+    description: 'Você diz o ingrediente, eu te ajudo com o resto.',
     icon: 'leaf',
   },
   {
