@@ -4,11 +4,7 @@ import * as React from 'react';
 import BuilderErrorBoundary from '@/components/dev/BuilderErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import BottomNav from '@/components/common/BottomNav';
-
-// Lazy import MeuDiaClient only after mount (prevents SSR/hydration traps in iframe)
-const LazyMeuDia = React.lazy(() =>
-  import('@/app/(tabs)/meu-dia/Client').then((m) => ({ default: m.MeuDiaClient }))
-);
+import { MeuDiaClient } from '@/app/(tabs)/meu-dia/Client';
 
 const fallbackProfile: any = {
   motherName: 'Mãe',
