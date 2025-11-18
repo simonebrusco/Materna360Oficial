@@ -60,7 +60,7 @@ export default function AgendaSection({
         {sortedItems.length === 0 ? (
           <div className="text-center py-6">
             <AppIcon name="calendar" className="w-8 h-8 text-[#ddd] mx-auto mb-2" />
-            <p className="text-sm text-[#545454]/60">Nenhum compromisso ainda</p>
+            <p className="text-sm text-[#545454]/60">Ainda não há compromissos para hoje. Que tal adicionar o primeiro?</p>
           </div>
         ) : (
           sortedItems.map(item => (
