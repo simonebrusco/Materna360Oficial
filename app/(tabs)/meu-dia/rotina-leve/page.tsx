@@ -109,6 +109,13 @@ export default function RotinaLevePage() {
   const [receitasRestrictions, setReceitasRestrictions] = useState<string[]>([])
   const [showReceitasResults, setShowReceitasResults] = useState(false)
 
+  // Inspirações do Dia self-care checklist
+  const [selfCareChecklist, setSelfCareChecklist] = useState({
+    'agua-em-paz': false,
+    'pausa-silencio': false,
+    'conversa-olhos': false,
+  })
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
