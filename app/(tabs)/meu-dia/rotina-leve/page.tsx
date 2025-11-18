@@ -744,30 +744,152 @@ export default function RotinaLevePage() {
         )
 
       case 'planejar-o-dia':
+        const handleAddPlanejarTask = () => {
+          if (planejarTaskInput.trim() && planejarTasks.length < 5) {
+            setPlanejarTasks([...planejarTasks, planejarTaskInput.trim()])
+            setPlanejarTaskInput('')
+          }
+        }
+
+        const handleRemovePlanejarTask = (index: number) => {
+          setPlanejarTasks(planejarTasks.filter((_, i) => i !== index))
+        }
+
+        const handleClearPlanejarList = () => {
+          setPlanejarPriority('')
+          setPlanejarTasks([])
+          setPlanejarTaskInput('')
+        }
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <div className="space-y-3 mb-3">
-              <div>
-                <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
-                  Manhã
-                </label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-                  placeholder="O que você quer fazer de manhã?"
-                  className="w-full h-16 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-                />
-              </div>
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Escolha o que realmente importa hoje. O resto pode ficar para depois.
+            </p>
+
+            {/* Date Field */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                Dia que você quer organizar
+              </label>
+              <input
+                type="date"
+                value={planejarDate}
+                onChange={(e) => setPlanejarDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSaveCard(cardId)
-              }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
-            >
-              Salvar no Planner
-            </button>
+
+            {/* Priority Field */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                Prioridade do dia
+              </label>
+              <input
+                type="text"
+                value={planejarPriority}
+                onChange={(e) => setPlanejarPriority(e.target.value)}
+                placeholder="Ex.: Dedicar tempo de qualidade com meu filho"
+                className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* Essential Tasks List */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Tarefas essenciais
+              </label>
+
+              {/* Task Input */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={planejarTaskInput}
+                  onChange={(e) => setPlanejarTaskInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && planejarTasks.length < 5) {
+                      e.preventDefault()
+                      handleAddPlanejarTask()
+                    }
+                  }}
+                  placeholder="Digite uma tarefa essencial…"
+                  disabled={planejarTasks.length >= 5}
+                  className="flex-1 px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddPlanejarTask()
+                  }}
+                  disabled={planejarTasks.length >= 5}
+                  className="px-4 py-2 rounded-full bg-primary/20 text-primary font-medium text-sm hover:bg-primary/30 transition-all duration-200 disabled:opacity-50"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Tasks List */}
+              {planejarTasks.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {planejarTasks.map((task, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200"
+                    >
+                      <span className="text-sm text-[#2f3a56]">
+                        {index + 1}. {task}
+                      </span>
+                      <button
+                        onClick={() => handleRemovePlanejarTask(index)}
+                        className="text-primary hover:text-primary/70 font-medium text-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Task Count Indicator */}
+              {planejarTasks.length > 0 && (
+                <p className="text-xs text-[#545454] mb-3">
+                  {planejarTasks.length} de 5 tarefas adicionadas
+                </p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (planejarPriority.trim() && planejarTasks.length > 0) {
+                    try {
+                      track('planejar_o_dia.saved', {
+                        priority: planejarPriority,
+                        tasksCount: planejarTasks.length,
+                        date: planejarDate,
+                        tab: 'meu-dia-rotina-leve',
+                      })
+                    } catch {}
+                    toast.success('Plano do dia salvo!')
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md disabled:opacity-50"
+              >
+                Salvar no planner
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClearPlanejarList()
+                }}
+                className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+              >
+                Limpar lista
+              </button>
+            </div>
           </div>
         )
 
@@ -1038,7 +1160,7 @@ export default function RotinaLevePage() {
                       expandedAccordion === 'tarefas-recorrentes' ? 'rotate-180' : ''
                     }`}
                   >
-                    ▼
+                    ��
                   </span>
                 </div>
 
