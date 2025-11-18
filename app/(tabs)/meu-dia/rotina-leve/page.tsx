@@ -115,84 +115,88 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        <div className="space-y-8 md:space-y-10">
+        <div className="space-y-10 md:space-y-12">
           {/* Inspire Section */}
           <Reveal delay={0}>
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight">
-                  INSPIRE O SEU DIA
-                </h2>
-                <p className="text-sm md:text-base text-[#545454]/75 mt-1">
-                  Comece trazendo leveza antes de organizar tudo.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {INSPIRATION_CARDS.map((card) => {
-                  const currentIndex = cardIndex
-                  cardIndex += 1
-                  return (
-                    <Reveal key={card.id} delay={currentIndex * 25}>
-                      <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm p-5 md:p-6 transition-all duration-200 hover:bg-white/70">
-                        <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                          {card.title}
-                        </h3>
-                        <p className="text-sm text-[#545454]/85 flex-1 leading-relaxed">
-                          {card.description}
-                        </p>
-                      </div>
-                    </Reveal>
-                  )
-                })}
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Main Card Groups */}
-          {CARD_GROUPS.map((group, groupIdx) => (
-            <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
-              <div className="space-y-4">
+            <SoftCard className="rounded-3xl p-6 md:p-8">
+              <div className="space-y-6">
                 <div>
                   <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight">
-                    {group.label}
+                    INSPIRE O SEU DIA
                   </h2>
-                  {group.subtitle && (
-                    <p className="text-sm md:text-base text-[#545454]/75 mt-1">
-                      {group.subtitle}
-                    </p>
-                  )}
+                  <p className="text-sm md:text-base text-[#545454]/75 mt-2">
+                    Comece trazendo leveza antes de organizar tudo.
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {group.cards.map((card) => {
+                  {INSPIRATION_CARDS.map((card) => {
                     const currentIndex = cardIndex
                     cardIndex += 1
                     return (
                       <Reveal key={card.id} delay={currentIndex * 25}>
-                        <Link href={card.href || '#'}>
-                          <div className="flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm p-5 md:p-6 hover:bg-white/80 hover:shadow-[0_8px_24px_rgba(47,58,86,0.12)] active:scale-95 transition-all duration-200 cursor-pointer">
-                            <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                              {card.title}
-                            </h3>
-                            <p className="text-sm text-[#545454]/85 mb-4 flex-1 leading-relaxed">
-                              {card.description}
-                            </p>
-                            <div className="flex justify-end">
-                              <span className="text-xs font-semibold text-primary/85 tracking-wide inline-flex items-center gap-1">
-                                Ver mais →
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
+                        <SoftCard className="rounded-2xl p-4 md:p-6">
+                          <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                            {card.title}
+                          </h3>
+                          <p className="text-sm text-[#545454]/85 flex-1 leading-relaxed">
+                            {card.description}
+                          </p>
+                        </SoftCard>
                       </Reveal>
                     )
                   })}
                 </div>
               </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* Main Card Groups */}
+          {CARD_GROUPS.map((group, groupIdx) => (
+            <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
+              <SoftCard className="rounded-3xl p-6 md:p-8">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight">
+                      {group.label}
+                    </h2>
+                    {group.subtitle && (
+                      <p className="text-sm md:text-base text-[#545454]/75 mt-2">
+                        {group.subtitle}
+                      </p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {group.cards.map((card) => {
+                      const currentIndex = cardIndex
+                      cardIndex += 1
+                      return (
+                        <Reveal key={card.id} delay={currentIndex * 25}>
+                          <Link href={card.href || '#'}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] active:scale-95 cursor-pointer">
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 mb-4 flex-1 leading-relaxed">
+                                {card.description}
+                              </p>
+                              <div className="flex justify-end">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide inline-flex items-center gap-1">
+                                  Ver mais →
+                                </span>
+                              </div>
+                            </SoftCard>
+                          </Link>
+                        </Reveal>
+                      )
+                    })}
+                  </div>
+                </div>
+              </SoftCard>
             </Reveal>
           ))}
 
           {/* Closing message */}
-          <div className="mt-8 pt-4 border-t border-white/40">
+          <div className="mt-4 pt-6 border-t border-white/40">
             <p className="text-center text-sm text-[#545454]/70 leading-relaxed">
               Organize seu dia com leveza. Pequenos passos fazem a grande diferença. 💚
             </p>
