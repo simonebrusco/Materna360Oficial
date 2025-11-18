@@ -1073,9 +1073,47 @@ export default function RotinaLevePage() {
 
                               {isChecklistOpen && (
                                 <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
-                                  <p className="text-sm text-[#545454]/85 leading-relaxed">
-                                    Crie seu checklist diário com as ações que fortalecem seu dia e sua família.
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                    Monte seu checklist diário com ações que fortalecem você e sua família.
                                   </p>
+
+                                  {/* Checklist items */}
+                                  <div className="space-y-3 mb-6">
+                                    {checklistItems.map((item) => (
+                                      <label key={item.id} className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={item.done}
+                                          onChange={() => handleToggleChecklistItem(item.id)}
+                                          className="w-4 h-4 rounded border-[#ddd] text-primary focus:ring-primary/50"
+                                        />
+                                        <span
+                                          className={`text-sm transition-all ${
+                                            item.done
+                                              ? 'line-through text-[#545454]/50'
+                                              : 'text-[#545454]'
+                                          }`}
+                                        >
+                                          {item.text}
+                                        </span>
+                                      </label>
+                                    ))}
+                                  </div>
+
+                                  {/* Save button */}
+                                  <button
+                                    onClick={handleSaveChecklist}
+                                    className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150"
+                                  >
+                                    Salvar no planner
+                                  </button>
+
+                                  {/* Confirmation message */}
+                                  {checklistSaved && (
+                                    <p className="text-xs text-[#545454]/60 mt-3 text-center">
+                                      Checklist salvo no planner!
+                                    </p>
+                                  )}
                                 </div>
                               )}
                             </SoftCard>
