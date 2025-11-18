@@ -88,7 +88,7 @@ const CARD_GROUPS: CardGroup[] = [
   },
   {
     label: 'Ferramentas da mãe',
-    subtitle: 'Pequenas aç��es que fazem grande diferença.',
+    subtitle: 'Pequenas ações que fazem grande diferença.',
     cards: [
       {
         id: 'checklist-mae',
@@ -240,6 +240,30 @@ export default function RotinaLevePage() {
     if (!semanaNewItem.trim()) return
     setSemanaItems([...semanaItems, { id: String(Date.now()), text: semanaNewItem, done: false }])
     setSemanaNewItem('')
+  }
+
+  const handleToggleChecklistItem = (id: string) => {
+    setChecklistItems(checklistItems.map((item) => (item.id === id ? { ...item, done: !item.done } : item)))
+  }
+
+  const handleSaveChecklist = () => {
+    setChecklistSaved(true)
+    setTimeout(() => setChecklistSaved(false), 3000)
+  }
+
+  const handleAddNotasItem = () => {
+    if (!notasNewItem.trim()) return
+    setNotasItems([...notasItems, { id: String(Date.now()), text: notasNewItem }])
+    setNotasNewItem('')
+  }
+
+  const handleRemoveNotasItem = (id: string) => {
+    setNotasItems(notasItems.filter((item) => item.id !== id))
+  }
+
+  const handleSaveNotas = () => {
+    setNotasSaved(true)
+    setTimeout(() => setNotasSaved(false), 3000)
   }
 
   return (
