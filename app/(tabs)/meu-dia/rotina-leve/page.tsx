@@ -17,11 +17,6 @@ interface CardItem {
   href: string
 }
 
-interface CardGroup {
-  label: string
-  cards: CardItem[]
-}
-
 const ESSENTIAL_CARDS: CardItem[] = [
   {
     id: 'planejar-dia',
@@ -119,118 +114,110 @@ export default function RotinaLevePage() {
       subtitle="Organize seu dia com carinho, sem cobrança e sem perfeccionismo. Aqui você cria uma rotina que respeita o seu ritmo e o da sua família."
     >
       <ClientOnly>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-10">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
           {/* SECTION 1 — Comece pelo essencial */}
           <Reveal delay={0}>
-            <div>
-              <div className="mb-8">
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Comece pelo essencial
-                </h2>
-                <p className="text-sm text-[#545454]">
-                  Defina o que realmente importa hoje e alivie a sensação de estar sempre devendo.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {ESSENTIAL_CARDS.map((card, index) => (
-                  <Reveal key={card.id} delay={50 + index * 25}>
-                    <Link href={card.href}>
-                      <SoftCard className="rounded-3xl p-6 md:p-8 h-full flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200">
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="flex-shrink-0">
-                            <AppIcon
-                              name={card.icon}
-                              size={24}
-                              className="text-primary"
-                              decorative
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
-                              {card.title}
-                            </h3>
-                            <p className="text-sm text-[#545454]">
-                              {card.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex justify-end mt-auto pt-4">
-                          <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-                            Acessar →
-                          </span>
-                        </div>
-                      </SoftCard>
-                    </Link>
-                  </Reveal>
-                ))}
-              </div>
+            <div className="mb-8">
+              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                Comece pelo essencial
+              </h2>
+              <p className="text-sm text-[#545454]">
+                Defina o que realmente importa hoje e alivie a sensação de estar sempre devendo.
+              </p>
             </div>
           </Reveal>
+
+          <div className="space-y-6 md:space-y-8">
+            {ESSENTIAL_CARDS.map((card, index) => (
+              <Reveal key={card.id} delay={50 + index * 25}>
+                <Link href={card.href}>
+                  <SoftCard className="rounded-3xl p-6 md:p-8 cursor-pointer hover:shadow-lg transition-all duration-200">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0">
+                        <AppIcon
+                          name={card.icon}
+                          size={24}
+                          className="text-primary"
+                          decorative
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
+                          {card.title}
+                        </h3>
+                        <p className="text-sm text-[#545454]">
+                          {card.description}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 text-xs font-medium text-primary">
+                        →
+                      </div>
+                    </div>
+                  </SoftCard>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
 
           {/* SECTION 2 — Ferramentas da Mãe */}
           <Reveal delay={100}>
-            <div>
-              <div className="mb-8">
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Ferramentas da Mãe
-                </h2>
-                <p className="text-sm text-[#545454]">
-                  Recursos extras para apoiar sua rotina.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {TOOLS_CARDS.map((card, index) => (
-                  <Reveal key={card.id} delay={150 + index * 25}>
-                    <Link href={card.href}>
-                      <SoftCard className="rounded-3xl p-6 md:p-8 h-full flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200">
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="flex-shrink-0">
-                            <AppIcon
-                              name={card.icon}
-                              size={24}
-                              className="text-primary"
-                              decorative
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
-                              {card.title}
-                            </h3>
-                            <p className="text-sm text-[#545454]">
-                              {card.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex justify-end mt-auto pt-4">
-                          <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-                            Acessar →
-                          </span>
-                        </div>
-                      </SoftCard>
-                    </Link>
-                  </Reveal>
-                ))}
-              </div>
+            <div className="mb-8">
+              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                Ferramentas da Mãe
+              </h2>
+              <p className="text-sm text-[#545454]">
+                Recursos extras para apoiar sua rotina.
+              </p>
             </div>
           </Reveal>
+
+          <div className="space-y-6 md:space-y-8">
+            {TOOLS_CARDS.map((card, index) => (
+              <Reveal key={card.id} delay={150 + index * 25}>
+                <Link href={card.href}>
+                  <SoftCard className="rounded-3xl p-6 md:p-8 cursor-pointer hover:shadow-lg transition-all duration-200">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0">
+                        <AppIcon
+                          name={card.icon}
+                          size={24}
+                          className="text-primary"
+                          decorative
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
+                          {card.title}
+                        </h3>
+                        <p className="text-sm text-[#545454]">
+                          {card.description}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 text-xs font-medium text-primary">
+                        →
+                      </div>
+                    </div>
+                  </SoftCard>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
 
           {/* SECTION 3 — Planner Materna360 CTA */}
           <Reveal delay={200}>
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5]">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex flex-col items-start justify-between gap-6">
                 <div className="flex-1">
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                     Planner Materna360
-                  </h2>
+                  </h3>
                   <p className="text-sm text-[#545454] leading-relaxed">
                     Quando você organiza seu dia com calma, o Planner vira um aliado — não um fiscal. Explore a visão completa da sua semana e integre a Rotina Leve com seu planejamento.
                   </p>
                 </div>
                 <Link
                   href="/meu-dia"
-                  className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Ir para o Planner
                   <span>→</span>
@@ -241,51 +228,47 @@ export default function RotinaLevePage() {
 
           {/* SECTION 4 — Cuidar de mim enquanto cuido de tudo */}
           <Reveal delay={250}>
-            <div>
-              <div className="mb-8">
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Cuidar de mim enquanto cuido de tudo
-                </h2>
-                <p className="text-sm text-[#545454]">
-                  Use outras áreas do Materna360 para equilibrar emoção, rotina e autocuidado.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {DISCOVER_CARDS.map((card, index) => (
-                  <Reveal key={card.id} delay={300 + index * 25}>
-                    <Link href={card.href}>
-                      <SoftCard className="rounded-3xl p-6 md:p-8 h-full flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200">
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center">
-                            <AppIcon
-                              name={card.icon}
-                              size={20}
-                              className="text-primary"
-                              decorative
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
-                              {card.title}
-                            </h3>
-                            <p className="text-sm text-[#545454]">
-                              {card.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex justify-end mt-auto pt-4">
-                          <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-                            Explorar →
-                          </span>
-                        </div>
-                      </SoftCard>
-                    </Link>
-                  </Reveal>
-                ))}
-              </div>
+            <div className="mb-8">
+              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                Cuidar de mim enquanto cuido de tudo
+              </h2>
+              <p className="text-sm text-[#545454]">
+                Use outras áreas do Materna360 para equilibrar emoção, rotina e autocuidado.
+              </p>
             </div>
           </Reveal>
+
+          <div className="space-y-6 md:space-y-8">
+            {DISCOVER_CARDS.map((card, index) => (
+              <Reveal key={card.id} delay={300 + index * 25}>
+                <Link href={card.href}>
+                  <SoftCard className="rounded-3xl p-6 md:p-8 cursor-pointer hover:shadow-lg transition-all duration-200">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center flex-shrink-0">
+                        <AppIcon
+                          name={card.icon}
+                          size={20}
+                          className="text-primary"
+                          decorative
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
+                          {card.title}
+                        </h3>
+                        <p className="text-sm text-[#545454]">
+                          {card.description}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 text-xs font-medium text-primary">
+                        →
+                      </div>
+                    </div>
+                  </SoftCard>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </ClientOnly>
     </PageTemplate>
