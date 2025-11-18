@@ -83,35 +83,21 @@ const QUICK_ACCESS_CARDS: NavCard[] = [
     href: '/cuidar/receitas-saudaveis',
     icon: 'leaf',
   },
-  {
-    id: 'inspiracoes',
-    title: 'Inspirações do Dia',
-    description: 'Mensagens e dicas que aquecem o coração.',
-    href: '/maternar/inspiracoes',
-    icon: 'sparkles',
-  },
 ]
 
 const ESSENTIAL_DAY_CARDS: NavCard[] = [
   {
-    id: 'prioridades',
-    title: 'Minhas Prioridades do Dia',
-    description: 'Defina o que realmente importa hoje.',
-    href: '/meu-dia/prioridades',
-    icon: 'star',
-  },
-  {
-    id: 'planejar',
+    id: 'planejar-dia',
     title: 'Planejar o Dia',
-    description: 'Organize suas tarefas com clareza.',
-    href: '/meu-dia/planejar',
+    description: 'Comece organizando o essencial.',
+    href: '/meu-dia?focus=planejar-o-dia',
     icon: 'calendar',
   },
   {
-    id: 'tarefas',
-    title: 'Tarefas da Casa',
-    description: 'Organize as atividades do lar.',
-    href: '/meu-dia/tarefas',
+    id: 'rotina-casa',
+    title: 'Rotina da Casa',
+    description: 'Tarefas do lar com praticidade.',
+    href: '/meu-dia?focus=rotina-da-casa',
     icon: 'home',
   },
 ]
@@ -120,32 +106,32 @@ const FAMILY_ROUTINE_CARDS: NavCard[] = [
   {
     id: 'rotina-filho',
     title: 'Rotina do Filho',
-    description: 'Acompanhe o dia da criança.',
-    href: '/meu-dia/rotina-filho',
+    description: 'Organização do dia da criança.',
+    href: '/meu-dia?focus=rotina-do-filho',
     icon: 'heart',
   },
   {
-    id: 'semana',
+    id: 'prioridades-semana',
     title: 'Prioridades da Semana',
-    description: 'O que importa para sua família.',
-    href: '/meu-dia/semana',
-    icon: 'calendar',
+    description: 'O que realmente importa nesta semana.',
+    href: '/meu-dia?focus=prioridades-da-semana',
+    icon: 'star',
   },
 ]
 
 const TOOLS_CARDS: NavCard[] = [
   {
-    id: 'checklist',
+    id: 'checklist-mae',
     title: 'Checklist da Mãe',
     description: 'Pequenas ações que fazem diferença.',
-    href: '/meu-dia/checklist',
+    href: '/meu-dia?focus=checklist-da-mae',
     icon: 'check',
   },
   {
-    id: 'notas',
+    id: 'notas-listas',
     title: 'Notas & Listas',
     description: 'Anotações rápidas e listas essenciais.',
-    href: '/meu-dia/notas',
+    href: '/meu-dia?focus=notas-e-listas',
     icon: 'bookmark',
   },
 ]
