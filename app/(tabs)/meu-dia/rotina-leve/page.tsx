@@ -204,11 +204,11 @@ export default function RotinaLevePage() {
 
           {/* Card 1.1 — My Priorities of the Day */}
           <Reveal delay={50}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('dayPriorities')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('dayPriorities')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Minhas Prioridades do Dia
                 </h3>
@@ -218,7 +218,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['dayPriorities'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Top 3 Prioridades
@@ -273,7 +276,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Prioridades do Dia', dayPriorities)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -283,11 +286,11 @@ export default function RotinaLevePage() {
 
           {/* Card 1.2 — Plan My Day */}
           <Reveal delay={100}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('planMyDay')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('planMyDay')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Planejar o Dia
                 </h3>
@@ -297,7 +300,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['planMyDay'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Preciso me Lembrar...
@@ -336,7 +342,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Planejar o Dia', planMyDay)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -346,11 +352,11 @@ export default function RotinaLevePage() {
 
           {/* Card 1.3 — Home Tasks */}
           <Reveal delay={150}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('homeTasks')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('homeTasks')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Tarefas da Casa
                 </h3>
@@ -360,7 +366,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['homeTasks'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">Áreas</h4>
                     <div className="space-y-2">
@@ -428,7 +437,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Tarefas da Casa', homeTasks)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -450,11 +459,11 @@ export default function RotinaLevePage() {
 
           {/* Card 2.1 — Child's Routine */}
           <Reveal delay={250}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('childRoutine')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('childRoutine')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Rotina do Filho
                 </h3>
@@ -464,7 +473,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['childRoutine'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Horário Escolar
@@ -536,7 +548,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Rotina do Filho', childRoutine)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -546,11 +558,11 @@ export default function RotinaLevePage() {
 
           {/* Card 2.2 — Family Priorities of the Week */}
           <Reveal delay={300}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('familyWeekly')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('familyWeekly')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Prioridades da Semana
                 </h3>
@@ -560,7 +572,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['familyWeekly'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Top 3 Prioridades da Família
@@ -631,7 +646,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Prioridades da Semana', familyWeekly)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -653,11 +668,11 @@ export default function RotinaLevePage() {
 
           {/* Card 3.1 — Notes & Lists */}
           <Reveal delay={400}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('notesLists')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('notesLists')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Notas & Listas
                 </h3>
@@ -667,7 +682,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['notesLists'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Notas Rápidas
@@ -706,7 +724,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Notas & Listas', notesLists)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -728,11 +746,11 @@ export default function RotinaLevePage() {
 
           {/* Card 4.1 — Healthy Recipes */}
           <Reveal delay={500}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('recipes')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('recipes')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Receitas Saudáveis
                 </h3>
@@ -742,7 +760,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['recipes'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="space-y-2">
                     {[
                       { key: 'recipe1', label: 'Receita 1' },
@@ -775,7 +796,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Receitas Saudáveis', recipes)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
@@ -785,11 +806,11 @@ export default function RotinaLevePage() {
 
           {/* Card 4.2 — Inspirations of the Day */}
           <Reveal delay={550}>
-            <SoftCard
-              onClick={() => toggleCardExpanded('inspirations')}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('inspirations')}
+              >
                 <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Inspirações do Dia
                 </h3>
@@ -799,7 +820,10 @@ export default function RotinaLevePage() {
               </div>
 
               {expandedCards['inspirations'] && (
-                <div className="mt-4 space-y-3">
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Frase Motivadora
@@ -838,7 +862,7 @@ export default function RotinaLevePage() {
                       size="sm"
                       onClick={() => saveToPlanner('Inspirações do Dia', inspirations)}
                     >
-                      Salvar ao Planejador
+                      Salvar no Planner
                     </Button>
                   </div>
                 </div>
