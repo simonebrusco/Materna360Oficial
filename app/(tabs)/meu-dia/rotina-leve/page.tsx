@@ -101,6 +101,14 @@ export default function RotinaLevePage() {
   })
   const [showIdeiasResults, setShowIdeiasResults] = useState(false)
 
+  // Receitas Inteligentes filters
+  const [receitasInput, setReceitasInput] = useState('')
+  const [receitasIngredients, setReceitasIngredients] = useState<string[]>([])
+  const [receitasTime, setReceitasTime] = useState<string | null>(null)
+  const [receitasWhoEats, setReceitasWhoEats] = useState<string | null>(null)
+  const [receitasRestrictions, setReceitasRestrictions] = useState<string[]>([])
+  const [showReceitasResults, setShowReceitasResults] = useState(false)
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
