@@ -1613,22 +1613,71 @@ export default function RotinaLevePage() {
 
       case 'notas-listas':
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Anotações rápidas e listas..."
-              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
-            />
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSaveCard(cardId)
-              }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
-            >
-              Salvar no Planner
-            </button>
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Para tudo que você não quer esquecer, mas não precisa ficar na cabeça.
+            </p>
+
+            {/* Note Type Selector */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                Tipo de nota
+              </label>
+              <select
+                value={notasListasType}
+                onChange={(e) => setNotasListasType(e.target.value)}
+                className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              >
+                <option>Lista de compras</option>
+                <option>Falar com o pediatra</option>
+                <option>Ideias soltas</option>
+                <option>Outros</option>
+              </select>
+            </div>
+
+            {/* Textarea */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                Sua nota
+              </label>
+              <textarea
+                value={notasListasContent}
+                onChange={(e) => setNotasListasContent(e.target.value)}
+                placeholder="Escreva o que você precisa registrar…"
+                className="w-full h-32 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (notasListasContent.trim()) {
+                    try {
+                      track('notas_listas.saved', {
+                        type: notasListasType,
+                        tab: 'meu-dia-rotina-leve',
+                      })
+                    } catch {}
+                    toast.success('Nota salva no planner!')
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              >
+                Salvar no planner
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setNotasListasContent('')
+                }}
+                className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+              >
+                Limpar nota
+              </button>
+            </div>
           </div>
         )
 
