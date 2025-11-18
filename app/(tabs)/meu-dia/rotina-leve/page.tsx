@@ -680,13 +680,13 @@ export default function RotinaLevePage() {
           {/* Main Card Groups */}
           {CARD_GROUPS.map((group, groupIdx) => (
             <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
-              <div>
-                <div className="mb-4 md:mb-6">
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+              <div className="pt-2">
+                <div className="mb-6 md:mb-8">
+                  <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56] mb-3">
                     {group.label}
                   </h2>
                   {group.subtitle && (
-                    <p className="text-sm md:text-base text-[#545454]/75">
+                    <p className="text-base text-[#545454] leading-relaxed">
                       {group.subtitle}
                     </p>
                   )}
