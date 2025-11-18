@@ -228,20 +228,19 @@ export default function RotinaLevePage() {
       title="Rotina Leve"
       subtitle="Organize o seu dia com leveza e clareza."
     >
-      <div className="space-y-10 md:space-y-12">
+      <div className="space-y-8 md:space-y-10">
           {/* Inspire Section */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight">
-                    INSPIRE O SEU DIA
-                  </h2>
-                  <p className="text-sm md:text-base text-[#545454]/75 mt-2">
-                    Comece trazendo leveza antes de organizar tudo.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div>
+              <div className="mb-4 md:mb-6">
+                <h2 className="text-lg md:text-xl font-semibold uppercase text-[#2f3a56] tracking-[0.05em] mb-2">
+                  INSPIRE O SEU DIA
+                </h2>
+                <p className="text-sm md:text-base text-[#545454]/75">
+                  Comece trazendo leveza antes de organizar tudo.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {INSPIRATION_CARDS.map((card) => {
                     const currentIndex = cardIndex
                     cardIndex += 1
@@ -267,7 +266,7 @@ export default function RotinaLevePage() {
                             {/* Ver mais label */}
                             <div className="flex justify-end mt-2">
                               <span className="text-xs font-semibold text-primary/85 tracking-wide">
-                                Ver mais →
+                                Ver mais ��
                               </span>
                             </div>
 
@@ -631,26 +630,24 @@ export default function RotinaLevePage() {
                     )
                   })}
                 </div>
-              </div>
-            </SoftCard>
+            </div>
           </Reveal>
 
           {/* Main Card Groups */}
           {CARD_GROUPS.map((group, groupIdx) => (
             <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
-              <SoftCard className="rounded-3xl p-6 md:p-8">
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] tracking-tight">
-                      {group.label}
-                    </h2>
-                    {group.subtitle && (
-                      <p className="text-sm md:text-base text-[#545454]/75 mt-2">
-                        {group.subtitle}
-                      </p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div>
+                <div className="mb-4 md:mb-6">
+                  <h2 className="text-lg md:text-xl font-semibold uppercase text-[#2f3a56] tracking-[0.05em] mb-2">
+                    {group.label}
+                  </h2>
+                  {group.subtitle && (
+                    <p className="text-sm md:text-base text-[#545454]/75">
+                      {group.subtitle}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     {group.cards.map((card) => {
                       const currentIndex = cardIndex
                       cardIndex += 1
@@ -1028,14 +1025,13 @@ export default function RotinaLevePage() {
                         </Reveal>
                       )
                     })}
-                  </div>
                 </div>
-              </SoftCard>
+              </div>
             </Reveal>
           ))}
 
           {/* Closing message */}
-          <div className="mt-4 pt-6 border-t border-white/40">
+          <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
             <p className="text-center text-sm text-[#545454]/70 leading-relaxed">
               Organize seu dia com leveza. Pequenos passos fazem a grande diferença. 💚
             </p>
