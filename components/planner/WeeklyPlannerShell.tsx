@@ -237,116 +237,122 @@ export default function WeeklyPlannerShell() {
 
   return (
     <Reveal delay={200}>
-      <SoftCard className="p-4 md:p-6 space-y-6">
-        {/* Planner Header with Toggle */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56]">
-              Planner da semana
-            </h2>
-            <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-              Organize seus compromissos, prioridades e cuidados em um só lugar.
-            </p>
-          </div>
-
-          {/* Toggle */}
-          <div className="inline-flex bg-[#f5f5f5] rounded-full p-1 w-fit">
-            <button
-              onClick={() => setViewMode('hoje')}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all relative ${
-                viewMode === 'hoje'
-                  ? 'bg-white text-[#ff005e] shadow-sm'
-                  : 'text-[#545454] hover:text-[#2f3a56]'
-              }`}
-            >
-              Hoje
-              {totalTasksHoje > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-[#ff005e] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {totalTasksHoje}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setViewMode('semana')}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
-                viewMode === 'semana'
-                  ? 'bg-white text-[#ff005e] shadow-sm'
-                  : 'text-[#545454] hover:text-[#2f3a56]'
-              }`}
-            >
-              Semana
-            </button>
-          </div>
-        </div>
-
-        {/* Day Calendar Strip */}
-        <div>
-          <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
-            Selecione um dia
-          </p>
-          <DayCalendarStrip
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-          />
-        </div>
-
-        {/* Content based on view mode */}
-        {viewMode === 'hoje' ? (
-          <div className="space-y-6">
-            {/* Two Column Layout on Desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <AgendaSection
-                  items={data.appointments}
-                  onAddAppointment={handleAddAppointment}
-                />
-
-                <Top3Section
-                  items={data.top3}
-                  onToggle={handleToggleTop3}
-                  onAdd={handleAddTop3}
-                />
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-6">
-                <CareSection
-                  title="Cuidar de mim"
-                  subtitle="Momentos de autocuidado ao longo do dia."
-                  icon="heart"
-                  items={data.careItems}
-                  onToggle={id => handleToggleCareItem(id, 'care')}
-                  onAdd={title => handleAddCareItem(title, 'care')}
-                  placeholder="Nova ação de autocuidado..."
-                />
-
-                <CareSection
-                  title="Cuidar da família"
-                  subtitle="Tarefas importantes com e para os filhos."
-                  icon="smile"
-                  items={data.familyItems}
-                  onToggle={id => handleToggleCareItem(id, 'family')}
-                  onAdd={title => handleAddCareItem(title, 'family')}
-                  placeholder="Nova ação com a família..."
-                />
-
-                <NotesSection
-                  content={data.notes}
-                  onChange={handleNotesChange}
-                />
-              </div>
+      <SoftCard className="p-0 flex flex-col max-h-[calc(100vh-300px)] md:max-h-none">
+        {/* Sticky Planner Header */}
+        <div className="sticky top-0 z-10 bg-white rounded-t-[26px] md:rounded-t-[22px] p-4 md:p-6 space-y-4 border-b border-[#f0f0f0]">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56]">
+                Planner da semana
+              </h2>
+              <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                Organize seus compromissos, prioridades e cuidados em um só lugar.
+              </p>
             </div>
 
+            {/* Toggle */}
+            <div className="inline-flex bg-[#f5f5f5] rounded-full p-1 w-fit">
+              <button
+                onClick={() => setViewMode('hoje')}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all relative ${
+                  viewMode === 'hoje'
+                    ? 'bg-white text-[#ff005e] shadow-sm'
+                    : 'text-[#545454] hover:text-[#2f3a56]'
+                }`}
+              >
+                Hoje
+                {totalTasksHoje > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#ff005e] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {totalTasksHoje}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setViewMode('semana')}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                  viewMode === 'semana'
+                    ? 'bg-white text-[#ff005e] shadow-sm'
+                    : 'text-[#545454] hover:text-[#2f3a56]'
+                }`}
+              >
+                Semana
+              </button>
+            </div>
           </div>
-        ) : (
-          <WeekView weekData={weekData} />
-        )}
+
+          {/* Day Calendar Strip */}
+          <div>
+            <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
+              Selecione um dia
+            </p>
+            <DayCalendarStrip
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+            />
+          </div>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div className="overflow-y-auto flex-1 p-4 md:p-6 space-y-6">
+          {/* Content based on view mode */}
+          {viewMode === 'hoje' ? (
+            <div className="space-y-6">
+              {/* Two Column Layout on Desktop */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  <AgendaSection
+                    items={data.appointments}
+                    onAddAppointment={handleAddAppointment}
+                  />
+
+                  <Top3Section
+                    items={data.top3}
+                    onToggle={handleToggleTop3}
+                    onAdd={handleAddTop3}
+                  />
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  <CareSection
+                    title="Cuidar de mim"
+                    subtitle="Momentos de autocuidado ao longo do dia."
+                    icon="heart"
+                    items={data.careItems}
+                    onToggle={id => handleToggleCareItem(id, 'care')}
+                    onAdd={title => handleAddCareItem(title, 'care')}
+                    placeholder="Nova ação de autocuidado..."
+                  />
+
+                  <CareSection
+                    title="Cuidar da família"
+                    subtitle="Tarefas importantes com e para os filhos."
+                    icon="smile"
+                    items={data.familyItems}
+                    onToggle={id => handleToggleCareItem(id, 'family')}
+                    onAdd={title => handleAddCareItem(title, 'family')}
+                    placeholder="Nova ação com a família..."
+                  />
+
+                  <NotesSection
+                    content={data.notes}
+                    onChange={handleNotesChange}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <WeekView weekData={weekData} />
+          )}
+        </div>
       </SoftCard>
 
-      {/* Saved Contents - Rendered Outside Planner Card */}
+      {/* Saved Contents - Rendered Below Planner Card */}
       {data.savedContents.length > 0 && (
-        <SavedContentsSection contents={data.savedContents} />
+        <div className="mt-6">
+          <SavedContentsSection contents={data.savedContents} />
+        </div>
       )}
     </Reveal>
   )
