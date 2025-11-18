@@ -1018,7 +1018,7 @@ export default function RotinaLevePage() {
                               <div className="flex justify-end mt-2">
                                 <Link href={card.href || '#'}>
                                   <span className="text-xs font-semibold text-primary/85 tracking-wide hover:text-primary cursor-pointer transition-colors">
-                                    Abrir checklist
+                                    Ver mais →
                                   </span>
                                 </Link>
                               </div>
@@ -1041,7 +1041,7 @@ export default function RotinaLevePage() {
                               <div className="flex justify-end mt-2">
                                 <Link href={card.href || '#'}>
                                   <span className="text-xs font-semibold text-primary/85 tracking-wide hover:text-primary cursor-pointer transition-colors">
-                                    Abrir notas
+                                    Ver mais →
                                   </span>
                                 </Link>
                               </div>
