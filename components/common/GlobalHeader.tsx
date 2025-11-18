@@ -34,9 +34,6 @@ export function GlobalHeader() {
               >
                 {getTimeGreeting(name)}
               </p>
-              <p className="text-[12px] text-[#545454] truncate max-w-[120px]">
-                {name.split(' ')[0]}
-              </p>
             </div>
           )}
           {avatar ? (
