@@ -116,6 +116,12 @@ export default function RotinaLevePage() {
     'conversa-olhos': false,
   })
 
+  // Planejar o Dia
+  const [planejarDate, setPlanejarDate] = useState(getBrazilDateKey())
+  const [planejarPriority, setPlanejarPriority] = useState('')
+  const [planejarTasks, setPlanejarTasks] = useState<string[]>([])
+  const [planejarTaskInput, setPlanejarTaskInput] = useState('')
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
