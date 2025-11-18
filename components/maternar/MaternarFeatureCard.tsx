@@ -33,8 +33,7 @@ export function MaternarFeatureCard({
     'mb-7 md:mb-0 px-4 py-4 md:px-5 md:py-5 ' +
     'transition-transform transition-shadow duration-200 ease-out ' +
     'group-hover:-translate-y-1 group-hover:shadow-[0_6px_16px_rgba(0,0,0,0.07),0_10px_28px_rgba(0,0,0,0.1),0_14px_40px_rgba(0,0,0,0.1)] ' +
-    'group-active:translate-y-0 group-active:shadow-[0_4px_14px_rgba(0,0,0,0.06)] ' +
-    'filter drop-shadow-[0_12px_24px_rgba(255,0,94,0.05)]'
+    'group-active:translate-y-0 group-active:shadow-[0_4px_14px_rgba(0,0,0,0.06)]'
 
   const premiumCardClasses =
     'border-transparent bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] ' +
