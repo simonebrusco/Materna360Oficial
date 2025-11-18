@@ -36,10 +36,11 @@ export function Reveal({ children, className = '', delay = 0 }: RevealProps) {
     <div
       ref={elementRef}
       suppressHydrationWarning
+      onClick={undefined}
       className={`transition-all duration-700 ease-gentle will-change-transform ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
       } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ pointerEvents: 'auto', transitionDelay: `${delay}ms` }}
     >
       {children}
     </div>
