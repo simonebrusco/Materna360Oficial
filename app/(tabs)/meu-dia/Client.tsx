@@ -121,21 +121,8 @@ export function MeuDiaClient({
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
-          {/* Premium Planner */}
-          <Reveal delay={0}>
-            <div id="meu-dia-print-area" className="print-card" suppressHydrationWarning>
-              <FamilyPlanner
-                currentDateKey={finalCurrentDateKey}
-                weekStartKey={finalWeekStartKey}
-                weekLabels={finalWeekLabels}
-                plannerTitle={finalPlannerTitle}
-                profile={finalProfile}
-                dateKey={finalCurrentDateKey}
-                recommendations={recommendations}
-                initialBuckets={initialBuckets}
-              />
-            </div>
-          </Reveal>
+          {/* Premium Planner - New MVP Design */}
+          <MeuDiaPremium currentDateKey={finalCurrentDateKey} />
         </div>
       </ClientOnly>
     </PageTemplate>
