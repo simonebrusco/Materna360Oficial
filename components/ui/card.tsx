@@ -19,13 +19,15 @@ export function SoftCard({
   return (
     <Component
       className={clsx(
-        'rounded-[22px]',
+        'rounded-[22px] md:rounded-[22px] sm:rounded-[26px]',
         'bg-white',
-        'shadow-[0_2px_8px_rgba(0,0,0,0.03),0_4px_16px_rgba(0,0,0,0.05)]',
-        'hover:shadow-[0_4px_16px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]',
-        'hover:translate-y-[-1px]',
+        'shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)]',
+        'hover:shadow-[0_6px_16px_rgba(0,0,0,0.07),0_10px_28px_rgba(0,0,0,0.1),0_14px_40px_rgba(0,0,0,0.1)]',
+        'hover:translate-y-[-2px]',
+        'filter drop-shadow-[0_12px_24px_rgba(255,0,94,0.05)]',
         'p-6',
         'transition-all duration-150 ease-out',
+        'sm:mb-7',
         className
       )}
       {...rest}
