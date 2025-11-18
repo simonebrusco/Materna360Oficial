@@ -108,16 +108,23 @@ const HUB_CARDS: CardConfig[] = [
 ]
 
 export default function CardHub() {
+  // Reorder cards: place Materna+ first on desktop
+  const orderedCards = HUB_CARDS.map((card, index) => ({
+    ...card,
+    originalIndex: index,
+  })).sort((a, b) => {
+    if (a.id === 'planos-premium') return -1;
+    if (b.id === 'planos-premium') return 1;
+    return 0;
+  });
+
   return (
-    <section className="mt-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 md:gap-x-4 md:gap-y-6 px-2 md:px-4 max-w-7xl mx-auto">
-        {HUB_CARDS.map((card, index) => (
+    <section className="mt-8 md:mt-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 md:gap-x-6 md:gap-y-6 px-2 md:px-4 max-w-full mx-auto">
+        {orderedCards.map((card) => (
           <div
             key={card.id}
-            className={clsx(
-              'h-full',
-              card.id === 'planos-premium' && 'md:order-10'
-            )}
+            className="h-full"
             suppressHydrationWarning
           >
             <MaternarFeatureCard
@@ -127,7 +134,7 @@ export default function CardHub() {
               href={card.href}
               cardId={card.id}
               ctaText={card.ctaText}
-              index={index}
+              index={card.originalIndex}
               tag={card.tag}
             />
           </div>
