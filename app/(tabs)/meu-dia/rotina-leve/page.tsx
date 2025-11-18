@@ -92,6 +92,15 @@ export default function RotinaLevePage() {
   const [recurringTasks, setRecurringTasks] = useState('')
   const [reminders, setReminders] = useState('')
 
+  // Ideias Rápidas filters
+  const [ideiasFilters, setIdeiasFilters] = useState({
+    timeAvailable: null as string | null,
+    feeling: null as string | null,
+    participates: null as string | null,
+    childAge: null as string | null,
+  })
+  const [showIdeiasResults, setShowIdeiasResults] = useState(false)
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
