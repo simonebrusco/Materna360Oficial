@@ -979,7 +979,7 @@ export default function RotinaLevePage() {
                                       value={semanaNewItem}
                                       onChange={(e) => setSemanaNewItem(e.target.value)}
                                       onKeyPress={(e) => e.key === 'Enter' && handleAddSemanaItem()}
-                                      placeholder="Adicionar nova prioridade���"
+                                      placeholder="Adicionar nova prioridade…"
                                       className="flex-1 rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
                                     />
                                     <button
@@ -999,6 +999,52 @@ export default function RotinaLevePage() {
                                   </button>
                                 </div>
                               )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
+                      // Special handling for Checklist da Mãe
+                      if (card.id === 'checklist-mae') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                {card.description}
+                              </p>
+                              <div className="flex justify-end mt-2">
+                                <Link href={card.href || '#'}>
+                                  <span className="text-xs font-semibold text-primary/85 tracking-wide hover:text-primary cursor-pointer transition-colors">
+                                    Abrir checklist
+                                  </span>
+                                </Link>
+                              </div>
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
+                      // Special handling for Notas & Listas
+                      if (card.id === 'notas-listas') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                {card.description}
+                              </p>
+                              <div className="flex justify-end mt-2">
+                                <Link href={card.href || '#'}>
+                                  <span className="text-xs font-semibold text-primary/85 tracking-wide hover:text-primary cursor-pointer transition-colors">
+                                    Abrir notas
+                                  </span>
+                                </Link>
+                              </div>
                             </SoftCard>
                           </Reveal>
                         )
