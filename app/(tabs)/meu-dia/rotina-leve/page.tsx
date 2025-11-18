@@ -192,6 +192,12 @@ export default function RotinaLevePage() {
   ])
   const [semanaNewItem, setSemanaNewItem] = useState('')
 
+  // Checklist da Mãe state
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false)
+
+  // Notas & Listas state
+  const [isNotasOpen, setIsNotasOpen] = useState(false)
+
   let cardIndex = 0
 
   const handleAddPlannerTask = () => {
