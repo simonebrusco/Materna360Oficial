@@ -88,7 +88,7 @@ const CARD_GROUPS: CardGroup[] = [
   },
   {
     label: 'Ferramentas da mãe',
-    subtitle: 'Pequenas ações que fazem grande diferença.',
+    subtitle: 'Pequenas aç��es que fazem grande diferença.',
     cards: [
       {
         id: 'checklist-mae',
@@ -194,9 +194,23 @@ export default function RotinaLevePage() {
 
   // Checklist da Mãe state
   const [isChecklistOpen, setIsChecklistOpen] = useState(false)
+  const [checklistItems, setChecklistItems] = useState<Array<{ id: string; text: string; done: boolean }>>([
+    { id: '1', text: 'Beber água ao acordar', done: false },
+    { id: '2', text: '10 minutos para respirar', done: false },
+    { id: '3', text: 'Fazer uma refeição com calma', done: false },
+    { id: '4', text: 'Movimento leve (alongar, caminhar 5 min, respirar no sol)', done: false },
+    { id: '5', text: 'Revisar agenda do dia', done: false },
+    { id: '6', text: 'Separar 1 pequeno cuidado pessoal', done: false },
+    { id: '7', text: 'Enviar uma mensagem carinhosa para alguém', done: false },
+  ])
+  const [checklistSaved, setChecklistSaved] = useState(false)
 
   // Notas & Listas state
   const [isNotasOpen, setIsNotasOpen] = useState(false)
+  const [notasText, setNotasText] = useState('')
+  const [notasItems, setNotasItems] = useState<Array<{ id: string; text: string }>>([])
+  const [notasNewItem, setNotasNewItem] = useState('')
+  const [notasSaved, setNotasSaved] = useState(false)
 
   let cardIndex = 0
 
