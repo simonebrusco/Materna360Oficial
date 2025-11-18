@@ -232,6 +232,9 @@ export default function WeeklyPlannerShell() {
     }
   })
 
+  // Calculate total open tasks for Hoje
+  const totalTasksHoje = data.appointments.length + data.top3.filter(t => !t.done).length + data.careItems.filter(c => !c.done).length + data.familyItems.filter(f => !f.done).length
+
   return (
     <Reveal delay={200}>
       <SoftCard className="p-4 md:p-6 space-y-6">
@@ -242,7 +245,7 @@ export default function WeeklyPlannerShell() {
               Planner da semana
             </h2>
             <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-              Organize seu tempo com leveza e propósito.
+              Organize seus compromissos, prioridades e cuidados em um só lugar.
             </p>
           </div>
 
@@ -250,13 +253,18 @@ export default function WeeklyPlannerShell() {
           <div className="inline-flex bg-[#f5f5f5] rounded-full p-1 w-fit">
             <button
               onClick={() => setViewMode('hoje')}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all relative ${
                 viewMode === 'hoje'
                   ? 'bg-white text-[#ff005e] shadow-sm'
                   : 'text-[#545454] hover:text-[#2f3a56]'
               }`}
             >
               Hoje
+              {totalTasksHoje > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-[#ff005e] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalTasksHoje}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setViewMode('semana')}
