@@ -148,7 +148,40 @@ export default function RotinaLevePage() {
   // Inspirações do Dia state
   const [isInspirationOpen, setIsInspirationOpen] = useState(false)
 
+  // Planejar o Dia state
+  const [isPlannerOpen, setIsPlannerOpen] = useState(false)
+  const [plannerItems, setPlannerItems] = useState<Array<{ id: string; text: string; done: boolean }>>([
+    { id: '1', text: 'Prioridade 1', done: false },
+    { id: '2', text: 'Prioridade 2', done: false },
+    { id: '3', text: 'Prioridade 3', done: false },
+  ])
+  const [plannerNewTask, setPlannerNewTask] = useState('')
+
+  // Rotina da Casa state
+  const [isCasaOpen, setIsCasaOpen] = useState(false)
+  const [casaChips, setCasaChips] = useState<Array<{ id: string; text: string; selected: boolean }>>([
+    { id: '1', text: 'Arrumar a cama', selected: false },
+    { id: '2', text: 'Organizar a pia', selected: false },
+    { id: '3', text: 'Coletar roupas', selected: false },
+    { id: '4', text: 'Varrer o quarto', selected: false },
+    { id: '5', text: 'Limpar superfícies', selected: false },
+  ])
+
   let cardIndex = 0
+
+  const handleAddPlannerTask = () => {
+    if (!plannerNewTask.trim()) return
+    setPlannerItems([...plannerItems, { id: String(Date.now()), text: plannerNewTask, done: false }])
+    setPlannerNewTask('')
+  }
+
+  const handleTogglePlannerItem = (id: string) => {
+    setPlannerItems(plannerItems.map((item) => (item.id === id ? { ...item, done: !item.done } : item)))
+  }
+
+  const handleToggleCasaChip = (id: string) => {
+    setCasaChips(casaChips.map((chip) => (chip.id === id ? { ...chip, selected: !chip.selected } : chip)))
+  }
 
   return (
     <PageTemplate
