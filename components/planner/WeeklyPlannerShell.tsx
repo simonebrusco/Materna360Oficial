@@ -338,15 +338,16 @@ export default function WeeklyPlannerShell() {
               </div>
             </div>
 
-            {/* Saved Contents */}
-            {data.savedContents.length > 0 && (
-              <SavedContentsSection contents={data.savedContents} />
-            )}
           </div>
         ) : (
           <WeekView weekData={weekData} />
         )}
       </SoftCard>
+
+      {/* Saved Contents - Rendered Outside Planner Card */}
+      {data.savedContents.length > 0 && (
+        <SavedContentsSection contents={data.savedContents} />
+      )}
     </Reveal>
   )
 }
