@@ -87,7 +87,7 @@ const CARD_GROUPS: CardGroup[] = [
     ],
   },
   {
-    label: 'Ferramentas da mãe',
+    label: 'Ferramentas da m��e',
     subtitle: 'Pequenas ações que fazem grande diferença.',
     cards: [
       {
@@ -316,7 +316,7 @@ export default function RotinaLevePage() {
 
                             {/* Expanded content */}
                             {isIdeasOpen && (
-                              <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                              <div className="mt-8 pt-8 border-t border-[#ececec]/50">
                                 <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
                                   Escolha algumas opções e eu te sugiro ideias rápidas de conexão.
                                 </p>
