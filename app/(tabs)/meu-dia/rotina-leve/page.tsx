@@ -1008,18 +1008,22 @@ export default function RotinaLevePage() {
                       if (card.id === 'checklist-mae') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
-                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                                {card.title}
-                              </h3>
-                              <p className="text-sm text-[#545454]/85 leading-relaxed">
-                                {card.description}
-                              </p>
-                              <div className="flex justify-end mt-2">
-                                <Link href={card.href || '#'}>
-                                  <span className="text-xs font-semibold text-primary/85 tracking-wide hover:text-primary cursor-pointer transition-colors">
-                                    Ver mais →
-                                  </span>
+                            <SoftCard>
+                              <div className="flex flex-col gap-2">
+                                <h3 className="text-base font-semibold text-[#2f3a56]">
+                                  Checklist da Mãe
+                                </h3>
+                                <p className="text-sm text-[#545454]/85">
+                                  Ações que fortalecem seu dia e sua família.
+                                </p>
+                              </div>
+
+                              <div className="mt-4 text-right">
+                                <Link
+                                  href="/meu-dia?focus=checklist-da-mae"
+                                  className="text-sm font-medium text-primary hover:underline"
+                                >
+                                  Ver mais →
                                 </Link>
                               </div>
                             </SoftCard>
@@ -1031,18 +1035,22 @@ export default function RotinaLevePage() {
                       if (card.id === 'notas-listas') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
-                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                                {card.title}
-                              </h3>
-                              <p className="text-sm text-[#545454]/85 leading-relaxed">
-                                {card.description}
-                              </p>
-                              <div className="flex justify-end mt-2">
-                                <Link href={card.href || '#'}>
-                                  <span className="text-xs font-semibold text-primary/85 tracking-wide hover:text-primary cursor-pointer transition-colors">
-                                    Ver mais →
-                                  </span>
+                            <SoftCard>
+                              <div className="flex flex-col gap-2">
+                                <h3 className="text-base font-semibold text-[#2f3a56]">
+                                  Notas & Listas
+                                </h3>
+                                <p className="text-sm text-[#545454]/85">
+                                  Anotações rápidas e listas essenciais.
+                                </p>
+                              </div>
+
+                              <div className="mt-4 text-right">
+                                <Link
+                                  href="/meu-dia?focus=notas-e-listas"
+                                  className="text-sm font-medium text-primary hover:underline"
+                                >
+                                  Ver mais →
                                 </Link>
                               </div>
                             </SoftCard>
