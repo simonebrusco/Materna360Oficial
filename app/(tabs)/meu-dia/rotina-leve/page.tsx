@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -105,7 +106,24 @@ const CARD_GROUPS: CardGroup[] = [
   },
 ]
 
+const TIME_OPTIONS = ['5 min', '15 min', '30 min', '1h+']
+const MOOD_OPTIONS = ['Cansada', 'Neutra', 'Animada']
+const PARTICIPANTS_OPTIONS = ['Só eu', 'Eu e meu filho', 'Família toda']
+const AGE_OPTIONS = ['0–2', '3–5', '6–8', '9+']
+
+const SUGGESTIONS = [
+  'Momento abraço: 5 minutos de conexão.',
+  'Caça ao tesouro rápida pela casa.',
+  'Pausa de 5 minutos só para você.',
+]
+
 export default function RotinaLevePage() {
+  const [isIdeasOpen, setIsIdeasOpen] = useState(false)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [selectedMood, setSelectedMood] = useState<string | null>(null)
+  const [selectedParticipants, setSelectedParticipants] = useState<string | null>(null)
+  const [selectedAge, setSelectedAge] = useState<string | null>(null)
+
   let cardIndex = 0
 
   return (
@@ -132,6 +150,147 @@ export default function RotinaLevePage() {
                   {INSPIRATION_CARDS.map((card) => {
                     const currentIndex = cardIndex
                     cardIndex += 1
+
+                    // Special handling for Ideias Rápidas - make it expandable
+                    if (card.id === 'ideias-rapidas') {
+                      return (
+                        <Reveal key={card.id} delay={currentIndex * 25}>
+                          <SoftCard className="rounded-2xl p-4 md:p-6">
+                            {/* Header - clickable */}
+                            <button
+                              onClick={() => setIsIdeasOpen(!isIdeasOpen)}
+                              className="w-full text-left focus:outline-none"
+                            >
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                {card.description}
+                              </p>
+                            </button>
+
+                            {/* Expanded content */}
+                            {isIdeasOpen && (
+                              <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                  Escolha algumas opções abaixo e eu te sugiro ideias rápidas para você e sua família.
+                                </p>
+
+                                {/* Filter: Tempo */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Quanto tempo você tem?
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {TIME_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedTime(selectedTime === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedTime === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Filter: Humor */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Como você está se sentindo?
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {MOOD_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedMood(selectedMood === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedMood === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Filter: Participantes */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Quem participa?
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {PARTICIPANTS_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedParticipants(selectedParticipants === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedParticipants === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Filter: Idade */}
+                                <div className="mb-6">
+                                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                    Idade do seu filho
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {AGE_OPTIONS.map((option) => (
+                                      <button
+                                        key={option}
+                                        onClick={() => setSelectedAge(selectedAge === option ? null : option)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          selectedAge === option
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Generate button */}
+                                <button className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150 mb-6">
+                                  Gerar ideias
+                                </button>
+
+                                {/* Suggestions */}
+                                <div className="bg-[#f8f8f8] rounded-2xl p-4">
+                                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                                    Sugestões rápidas:
+                                  </h4>
+                                  <ul className="space-y-2">
+                                    {SUGGESTIONS.map((suggestion, idx) => (
+                                      <li key={idx} className="text-sm text-[#545454]/85 flex items-start gap-2">
+                                        <span className="text-primary font-bold mt-0.5">•</span>
+                                        <span>{suggestion}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+                          </SoftCard>
+                        </Reveal>
+                      )
+                    }
+
+                    // Regular cards for other inspiration items
                     return (
                       <Reveal key={card.id} delay={currentIndex * 25}>
                         <SoftCard className="rounded-2xl p-4 md:p-6">
