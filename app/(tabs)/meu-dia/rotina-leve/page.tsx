@@ -318,7 +318,7 @@ export default function RotinaLevePage() {
                                   onClick={() => router.push('/meu-dia?fromRotina=ideias')}
                                   className="w-full mt-6 border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
                                 >
-                                  Salvar no Planner
+                                  Abrir no Planner
                                 </button>
                               </div>
                             )}
@@ -461,7 +461,7 @@ export default function RotinaLevePage() {
                                   onClick={() => router.push('/meu-dia?fromRotina=receitas')}
                                   className="w-full mt-6 border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
                                 >
-                                  Salvar no Planner
+                                  Abrir no Planner
                                 </button>
                               </div>
                             )}
@@ -530,7 +530,7 @@ export default function RotinaLevePage() {
                                   onClick={() => router.push('/meu-dia?fromRotina=inspiracao')}
                                   className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
                                 >
-                                  Salvar no Planner
+                                  Abrir no Planner
                                 </button>
                               </div>
                             )}
