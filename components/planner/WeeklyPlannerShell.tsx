@@ -294,52 +294,52 @@ export default function WeeklyPlannerShell() {
 
         {/* Content based on view mode */}
         {viewMode === 'hoje' ? (
-            <div className="space-y-6">
-              {/* Two Column Layout on Desktop */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-6">
-                  <AgendaSection
-                    items={data.appointments}
-                    onAddAppointment={handleAddAppointment}
-                  />
+          <div className="space-y-6">
+            {/* Two Column Layout on Desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-6">
+                <AgendaSection
+                  items={data.appointments}
+                  onAddAppointment={handleAddAppointment}
+                />
 
-                  <Top3Section
-                    items={data.top3}
-                    onToggle={handleToggleTop3}
-                    onAdd={handleAddTop3}
-                  />
-                </div>
+                <Top3Section
+                  items={data.top3}
+                  onToggle={handleToggleTop3}
+                  onAdd={handleAddTop3}
+                />
+              </div>
 
-                {/* Right Column */}
-                <div className="space-y-6">
-                  <CareSection
-                    title="Cuidar de mim"
-                    subtitle="Momentos de autocuidado ao longo do dia."
-                    icon="heart"
-                    items={data.careItems}
-                    onToggle={id => handleToggleCareItem(id, 'care')}
-                    onAdd={title => handleAddCareItem(title, 'care')}
-                    placeholder="Nova ação de autocuidado..."
-                  />
+              {/* Right Column */}
+              <div className="space-y-6">
+                <CareSection
+                  title="Cuidar de mim"
+                  subtitle="Momentos de autocuidado ao longo do dia."
+                  icon="heart"
+                  items={data.careItems}
+                  onToggle={id => handleToggleCareItem(id, 'care')}
+                  onAdd={title => handleAddCareItem(title, 'care')}
+                  placeholder="Nova ação de autocuidado..."
+                />
 
-                  <CareSection
-                    title="Cuidar da família"
-                    subtitle="Tarefas importantes com e para os filhos."
-                    icon="smile"
-                    items={data.familyItems}
-                    onToggle={id => handleToggleCareItem(id, 'family')}
-                    onAdd={title => handleAddCareItem(title, 'family')}
-                    placeholder="Nova ação com a família..."
-                  />
+                <CareSection
+                  title="Cuidar da família"
+                  subtitle="Tarefas importantes com e para os filhos."
+                  icon="smile"
+                  items={data.familyItems}
+                  onToggle={id => handleToggleCareItem(id, 'family')}
+                  onAdd={title => handleAddCareItem(title, 'family')}
+                  placeholder="Nova ação com a família..."
+                />
 
-                  <NotesSection
-                    content={data.notes}
-                    onChange={handleNotesChange}
-                  />
-                </div>
+                <NotesSection
+                  content={data.notes}
+                  onChange={handleNotesChange}
+                />
               </div>
             </div>
+          </div>
         ) : (
           <WeekView weekData={weekData} />
         )}
