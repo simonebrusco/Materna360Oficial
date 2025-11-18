@@ -1460,22 +1460,149 @@ export default function RotinaLevePage() {
         )
 
       case 'checklist-mae':
+        const handleToggleChecklistMaeItem = (itemId: string) => {
+          setChecklistMaeItems({
+            ...checklistMaeItems,
+            [itemId]: !checklistMaeItems[itemId as keyof typeof checklistMaeItems],
+          })
+        }
+
+        const handleToggleChecklistMaeCustomItem = (id: string) => {
+          setChecklistMaeCustomItems(
+            checklistMaeCustomItems.map((item) =>
+              item.id === id ? { ...item, checked: !item.checked } : item,
+            ),
+          )
+        }
+
+        const handleAddChecklistMaeItem = () => {
+          if (checklistMaeNewItem.trim()) {
+            setChecklistMaeCustomItems([
+              ...checklistMaeCustomItems,
+              {
+                id: `custom-${Date.now()}`,
+                label: checklistMaeNewItem.trim(),
+                checked: false,
+              },
+            ])
+            setChecklistMaeNewItem('')
+          }
+        }
+
+        const handleRemoveChecklistMaeCustomItem = (id: string) => {
+          setChecklistMaeCustomItems(checklistMaeCustomItems.filter((item) => item.id !== id))
+        }
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Suas tarefas essenciais..."
-              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
-            />
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Use esse checklist como apoio, não como cobrança.
+            </p>
+
+            {/* Default Checklist Items */}
+            <div className="space-y-2">
+              {[
+                { id: 'beber-agua', label: 'Beber água' },
+                { id: 'comer-verdade', label: 'Comer algo de verdade' },
+                { id: 'cinco-min', label: 'Ter 5 min pra mim' },
+                { id: 'abraco-consciente', label: 'Dar um abraço consciente' },
+              ].map((item) => (
+                <label
+                  key={item.id}
+                  className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checklistMaeItems[item.id as keyof typeof checklistMaeItems]}
+                    onChange={() => handleToggleChecklistMaeItem(item.id)}
+                    className="w-4 h-4 rounded accent-primary cursor-pointer"
+                  />
+                  <span className="text-sm text-[#2f3a56] font-medium">
+                    {item.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* Add New Item Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={checklistMaeNewItem}
+                onChange={(e) => setChecklistMaeNewItem(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddChecklistMaeItem()
+                  }
+                }}
+                placeholder="Adicione um item…"
+                className="flex-1 px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleAddChecklistMaeItem()
+                }}
+                className="px-4 py-2 rounded-full bg-primary/20 text-primary font-medium text-sm hover:bg-primary/30 transition-all duration-200"
+              >
+                +
+              </button>
+            </div>
+
+            {/* Custom Items List */}
+            {checklistMaeCustomItems.length > 0 && (
+              <div className="space-y-2">
+                {checklistMaeCustomItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200"
+                  >
+                    <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={() => handleToggleChecklistMaeCustomItem(item.id)}
+                        className="w-4 h-4 rounded accent-primary cursor-pointer"
+                      />
+                      <span className="text-sm text-[#2f3a56] font-medium">
+                        {item.label}
+                      </span>
+                    </label>
+                    <button
+                      onClick={() => handleRemoveChecklistMaeCustomItem(item.id)}
+                      className="text-primary hover:text-primary/70 font-medium text-lg ml-2"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Primary Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleSaveCard(cardId)
+                const checkedItems = Object.entries(checklistMaeItems)
+                  .filter(([_, checked]) => checked)
+                  .map(([key, _]) => key)
+                  .concat(
+                    checklistMaeCustomItems.filter((item) => item.checked).map((item) => item.label),
+                  )
+
+                try {
+                  track('checklist_mae.registered', {
+                    itemsCount: checkedItems.length,
+                    tab: 'meu-dia-rotina-leve',
+                  })
+                } catch {}
+                toast.success('Checklist registrado no planner de hoje!')
               }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
             >
-              Salvar no Planner
+              Registrar no planner de hoje
             </button>
           </div>
         )
