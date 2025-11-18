@@ -77,7 +77,7 @@ const TOOLS_CARDS: CardItem[] = [
   {
     id: 'notas-listas',
     title: 'Notas & Listas',
-    description: 'Quick notes and checklists.',
+    description: 'Pensamentos, listas e lembretes em um só lugar.',
     icon: 'bookmark',
   },
 ]
