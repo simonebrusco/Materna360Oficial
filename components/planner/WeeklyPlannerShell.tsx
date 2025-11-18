@@ -292,10 +292,8 @@ export default function WeeklyPlannerShell() {
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="overflow-y-auto flex-1 p-4 md:p-6 space-y-6">
-          {/* Content based on view mode */}
-          {viewMode === 'hoje' ? (
+        {/* Content based on view mode */}
+        {viewMode === 'hoje' ? (
             <div className="space-y-6">
               {/* Two Column Layout on Desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -342,10 +340,9 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
             </div>
-          ) : (
-            <WeekView weekData={weekData} />
-          )}
-        </div>
+        ) : (
+          <WeekView weekData={weekData} />
+        )}
       </SoftCard>
 
       {/* Saved Contents - Rendered Below Planner Card */}
