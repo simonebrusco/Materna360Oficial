@@ -51,7 +51,7 @@ export function MaternarFeatureCard({
         role="article"
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
-        <div className="flex flex-col gap-1.5 md:gap-3">
+        <div className="flex flex-col gap-1 md:gap-3">
           <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#ffd8e6]/70">
             <AppIcon
               name={icon}
