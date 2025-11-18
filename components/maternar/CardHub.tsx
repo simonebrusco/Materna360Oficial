@@ -116,7 +116,7 @@ export default function CardHub() {
             key={card.id}
             className={clsx(
               'h-full',
-              card.id === 'planos-premium' && 'md:order-first'
+              card.id === 'planos-premium' && 'md:order-last'
             )}
             suppressHydrationWarning
           >
