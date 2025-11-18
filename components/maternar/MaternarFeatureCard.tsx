@@ -28,9 +28,9 @@ export function MaternarFeatureCard({
   const isPremium = cardId === 'planos-premium' || cardId === 'planner-do-dia'
 
   const baseCardClasses =
-    'flex h-full flex-col justify-between rounded-[26px] md:rounded-3xl border border-black/5 bg-white/90 ' +
+    'flex h-full max-h-[200px] md:max-h-none md:min-h-[280px] flex-col justify-between rounded-[26px] md:rounded-[20px] border border-black/5 bg-white/90 ' +
     'shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-sm ' +
-    'mb-7 md:mb-0 px-4 py-4 md:px-5 md:py-5 ' +
+    'mb-7 md:mb-0 px-4 py-4 md:px-6 md:py-6 ' +
     'transition-transform transition-shadow duration-200 ease-out ' +
     'group-hover:-translate-y-1 group-hover:shadow-[0_6px_16px_rgba(0,0,0,0.07),0_10px_28px_rgba(0,0,0,0.1),0_14px_40px_rgba(0,0,0,0.1)] ' +
     'group-active:translate-y-0 group-active:shadow-[0_4px_14px_rgba(0,0,0,0.06)]'
