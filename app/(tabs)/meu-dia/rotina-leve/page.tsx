@@ -191,8 +191,7 @@ export default function RotinaLevePage() {
       title="Rotina Leve"
       subtitle="Organize o seu dia com leveza e clareza."
     >
-      <ClientOnly>
-        <div className="space-y-10 md:space-y-12">
+      <div className="space-y-10 md:space-y-12">
           {/* Inspire Section */}
           <Reveal delay={0}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
@@ -813,7 +812,6 @@ export default function RotinaLevePage() {
             </p>
           </div>
         </div>
-      </ClientOnly>
     </PageTemplate>
   )
 }
