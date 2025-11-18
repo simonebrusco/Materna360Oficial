@@ -905,23 +905,205 @@ export default function RotinaLevePage() {
         )
 
       case 'rotina-da-casa':
+        const DAYS_WEEK = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
+        const handleToggleDay = (day: string) => {
+          if (rotinaCasaDays.includes(day)) {
+            setRotinaCasaDays(rotinaCasaDays.filter((d) => d !== day))
+          } else {
+            setRotinaCasaDays([...rotinaCasaDays, day])
+          }
+        }
+
+        const handleToggleTask = (taskId: string) => {
+          setRotinaCasaTasks({
+            ...rotinaCasaTasks,
+            [taskId]: !rotinaCasaTasks[taskId as keyof typeof rotinaCasaTasks],
+          })
+        }
+
+        const handleToggleCustomTask = (id: string) => {
+          setRotinaCasaCustomTasks(
+            rotinaCasaCustomTasks.map((task) =>
+              task.id === id ? { ...task, checked: !task.checked } : task,
+            ),
+          )
+        }
+
+        const handleAddRotinaCasaTask = () => {
+          if (rotinaCasaNewTask.trim()) {
+            setRotinaCasaCustomTasks([
+              ...rotinaCasaCustomTasks,
+              {
+                id: `custom-${Date.now()}`,
+                label: rotinaCasaNewTask.trim(),
+                checked: false,
+              },
+            ])
+            setRotinaCasaNewTask('')
+          }
+        }
+
+        const handleRemoveCustomTask = (id: string) => {
+          setRotinaCasaCustomTasks(rotinaCasaCustomTasks.filter((task) => task.id !== id))
+        }
+
+        const handleClearRotinaCasaSelection = () => {
+          setRotinaCasaDays([])
+          setRotinaCasaTasks({
+            'lavar-louça': false,
+            'cozinha': false,
+            'roupa': false,
+            'organizar-brinquedos': false,
+          })
+          setRotinaCasaNewTask('')
+          setRotinaCasaCustomTasks([])
+        }
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Tarefas da casa para hoje..."
-              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
-            />
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSaveCard(cardId)
-              }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
-            >
-              Salvar no Planner
-            </button>
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Defina o mínimo viável para a casa hoje. Está tudo bem não fazer tudo.
+            </p>
+
+            {/* Day Chips (Multi-select) */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Dias da semana
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {DAYS_WEEK.map((day) => (
+                  <button
+                    key={day}
+                    onClick={() => handleToggleDay(day)}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      rotinaCasaDays.includes(day)
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Task List with Checkboxes */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Tarefas
+              </label>
+              <div className="space-y-2 mb-3">
+                {[
+                  { id: 'lavar-louça', label: 'Lavar louça' },
+                  { id: 'cozinha', label: 'Cozinha' },
+                  { id: 'roupa', label: 'Roupa' },
+                  { id: 'organizar-brinquedos', label: 'Organizar brinquedos' },
+                ].map((task) => (
+                  <label key={task.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rotinaCasaTasks[task.id as keyof typeof rotinaCasaTasks]}
+                      onChange={() => handleToggleTask(task.id)}
+                      className="w-4 h-4 rounded accent-primary cursor-pointer"
+                    />
+                    <span className="text-sm text-[#2f3a56] font-medium">
+                      {task.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Add New Task Input */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={rotinaCasaNewTask}
+                  onChange={(e) => setRotinaCasaNewTask(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddRotinaCasaTask()
+                    }
+                  }}
+                  placeholder="Adicione uma nova tarefa…"
+                  className="flex-1 px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddRotinaCasaTask()
+                  }}
+                  className="px-4 py-2 rounded-full bg-primary/20 text-primary font-medium text-sm hover:bg-primary/30 transition-all duration-200"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Custom Tasks List */}
+              {rotinaCasaCustomTasks.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {rotinaCasaCustomTasks.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200">
+                      <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={task.checked}
+                          onChange={() => handleToggleCustomTask(task.id)}
+                          className="w-4 h-4 rounded accent-primary cursor-pointer"
+                        />
+                        <span className="text-sm text-[#2f3a56] font-medium">
+                          {task.label}
+                        </span>
+                      </label>
+                      <button
+                        onClick={() => handleRemoveCustomTask(task.id)}
+                        className="text-primary hover:text-primary/70 font-medium text-lg ml-2"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const selectedTasks = Object.entries(rotinaCasaTasks)
+                    .filter(([_, checked]) => checked)
+                    .map(([key, _]) => key)
+                    .concat(rotinaCasaCustomTasks.filter((t) => t.checked).map((t) => t.label))
+
+                  if (rotinaCasaDays.length > 0 || selectedTasks.length > 0) {
+                    try {
+                      track('rotina_casa.sent_to_planner', {
+                        daysSelected: rotinaCasaDays,
+                        tasksCount: selectedTasks.length,
+                        tab: 'meu-dia-rotina-leve',
+                      })
+                    } catch {}
+                    toast.success('Rotina da casa enviada para o planner!')
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              >
+                Enviar para o planner
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClearRotinaCasaSelection()
+                }}
+                className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+              >
+                Limpar seleção
+              </button>
+            </div>
           </div>
         )
 
