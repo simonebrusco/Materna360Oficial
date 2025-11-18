@@ -23,7 +23,7 @@ const INSPIRATION_CARDS: CardItem[] = [
   {
     id: 'ideias-rapidas',
     title: 'Ideias Rápidas',
-    description: 'Quick ideas to bring more lightness to your day.',
+    description: 'Inspirações simples para deixar o dia mais leve.',
     icon: 'lightbulb',
   },
   {
