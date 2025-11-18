@@ -161,6 +161,10 @@ export default function RotinaLevePage() {
   >([])
   const [checklistMaeNewItem, setChecklistMaeNewItem] = useState('')
 
+  // Notas & Listas
+  const [notasListasType, setNotasListasType] = useState('Lista de compras')
+  const [notasListasContent, setNotasListasContent] = useState('')
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
