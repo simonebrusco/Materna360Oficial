@@ -47,7 +47,7 @@ const INSPIRATION_CARDS: CardItem[] = [
 
 const CARD_GROUPS: CardGroup[] = [
   {
-    label: 'ORGANIZAÇÃO DO DIA',
+    label: 'Organização do dia',
     subtitle: 'Comece organizando o essencial.',
     cards: [
       {
@@ -67,7 +67,7 @@ const CARD_GROUPS: CardGroup[] = [
     ],
   },
   {
-    label: 'ROTINA DA FAMÍLIA',
+    label: 'Rotina da família',
     subtitle: 'Acompanhe a rotina com harmonia.',
     cards: [
       {
@@ -87,7 +87,7 @@ const CARD_GROUPS: CardGroup[] = [
     ],
   },
   {
-    label: 'FERRAMENTAS DA MÃE',
+    label: 'Ferramentas da mãe',
     subtitle: 'Pequenas ações que fazem grande diferença.',
     cards: [
       {
@@ -233,8 +233,8 @@ export default function RotinaLevePage() {
           <Reveal delay={0}>
             <div>
               <div className="mb-4 md:mb-6">
-                <h2 className="text-lg md:text-xl font-semibold uppercase text-[#2f3a56] tracking-[0.05em] mb-2">
-                  INSPIRE O SEU DIA
+                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  Inspire o seu dia
                 </h2>
                 <p className="text-sm md:text-base text-[#545454]/75">
                   Comece trazendo leveza antes de organizar tudo.
@@ -638,7 +638,7 @@ export default function RotinaLevePage() {
             <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
               <div>
                 <div className="mb-4 md:mb-6">
-                  <h2 className="text-lg md:text-xl font-semibold uppercase text-[#2f3a56] tracking-[0.05em] mb-2">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                     {group.label}
                   </h2>
                   {group.subtitle && (
