@@ -293,7 +293,7 @@ export default function RotinaLevePage() {
                     if (card.id === 'ideias-rapidas') {
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
-                          <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                          <SoftCard className="flex flex-col">
                             {/* Header - clickable */}
                             <button
                               onClick={() => setIsIdeasOpen(!isIdeasOpen)}
@@ -447,7 +447,7 @@ export default function RotinaLevePage() {
                     if (card.id === 'receitas-inteligentes') {
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
-                          <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                          <SoftCard className="flex flex-col">
                             {/* Header - clickable */}
                             <button
                               onClick={() => setIsRecipesOpen(!isRecipesOpen)}
@@ -592,7 +592,7 @@ export default function RotinaLevePage() {
                     if (card.id === 'inspiracoes-do-dia') {
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
-                          <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                          <SoftCard className="flex flex-col">
                             {/* Header - clickable */}
                             <button
                               onClick={() => setIsInspirationOpen(!isInspirationOpen)}
@@ -700,7 +700,7 @@ export default function RotinaLevePage() {
                       if (card.id === 'planejar-dia') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                            <SoftCard className="flex flex-col">
                               {/* Header - clickable */}
                               <button
                                 onClick={() => setIsPlannerOpen(!isPlannerOpen)}
@@ -787,7 +787,7 @@ export default function RotinaLevePage() {
                       if (card.id === 'rotina-casa') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                            <SoftCard className="flex flex-col">
                               {/* Header - clickable */}
                               <button
                                 onClick={() => setIsCasaOpen(!isCasaOpen)}
@@ -860,7 +860,7 @@ export default function RotinaLevePage() {
                       if (card.id === 'rotina-filho') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                            <SoftCard className="flex flex-col">
                               {/* Header - clickable */}
                               <button
                                 onClick={() => setIsFilhoOpen(!isFilhoOpen)}
@@ -965,7 +965,7 @@ export default function RotinaLevePage() {
                       if (card.id === 'prioridades-semana') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                            <SoftCard className="flex flex-col">
                               {/* Header - clickable */}
                               <button
                                 onClick={() => setIsSemanaOpen(!isSemanaOpen)}
@@ -1052,7 +1052,7 @@ export default function RotinaLevePage() {
                       if (card.id === 'checklist-mae') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                            <SoftCard className="flex flex-col">
                               <button
                                 onClick={() => setIsChecklistOpen(!isChecklistOpen)}
                                 className="w-full text-left focus:outline-none flex flex-col"
@@ -1125,7 +1125,7 @@ export default function RotinaLevePage() {
                       if (card.id === 'notas-listas') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                            <SoftCard className="flex flex-col">
                               <button
                                 onClick={() => setIsNotasOpen(!isNotasOpen)}
                                 className="w-full text-left focus:outline-none flex flex-col"
