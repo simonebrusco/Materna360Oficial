@@ -410,7 +410,7 @@ export default function RotinaLevePage() {
                                 </div>
 
                                 {/* Generate button */}
-                                <button className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150 mb-6">
+                                <button className="w-full bg-primary text-white py-3 px-6 rounded-full font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150 mb-6">
                                   Gerar ideias ✨
                                 </button>
 
