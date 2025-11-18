@@ -98,7 +98,7 @@ const CARD_GROUPS: CardGroup[] = [
       {
         id: 'notas-listas',
         title: 'Notas & Listas',
-        description: 'Anotações rápidas e listas essenciais.',
+        description: 'Anota��ões rápidas e listas essenciais.',
         href: '/meu-dia?focus=notas-e-listas',
         icon: 'bookmark',
       },
@@ -191,7 +191,7 @@ export default function RotinaLevePage() {
                             {isIdeasOpen && (
                               <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
                                 <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
-                                  Escolha algumas opções abaixo e eu te sugiro ideias rápidas para você e sua família.
+                                  Escolha algumas opções e eu te sugiro ideias rápidas de conexão.
                                 </p>
 
                                 {/* Filter: Tempo */}
@@ -284,13 +284,13 @@ export default function RotinaLevePage() {
 
                                 {/* Generate button */}
                                 <button className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150 mb-6">
-                                  Gerar ideias
+                                  Gerar ideias ✨
                                 </button>
 
                                 {/* Suggestions */}
                                 <div className="bg-[#f8f8f8] rounded-2xl p-4">
                                   <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
-                                    Sugestões rápidas:
+                                    Sugestões que combinam com o seu momento:
                                   </h4>
                                   <ul className="space-y-2">
                                     {SUGGESTIONS.map((suggestion, idx) => (
@@ -336,7 +336,7 @@ export default function RotinaLevePage() {
                                   </label>
                                   <input
                                     type="text"
-                                    placeholder="Digite 1 ou mais ingredientes…"
+                                    placeholder="Ex.: banana, ovo — o que tiver na geladeira"
                                     value={ingredients}
                                     onChange={(e) => setIngredients(e.target.value)}
                                     className="w-full px-4 py-2 rounded-2xl border border-[#e0e0e0] bg-[#f8f8f8] text-[#545454] text-sm placeholder-[#999] focus:outline-none focus:border-primary focus:bg-white transition-all duration-150"
@@ -368,7 +368,7 @@ export default function RotinaLevePage() {
                                 {/* Filter: Dificuldade */}
                                 <div className="mb-6">
                                   <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
-                                    Dificuldade
+                                    Nível de praticidade
                                   </label>
                                   <div className="flex flex-wrap gap-2">
                                     {DIFFICULTY_OPTIONS.map((option) => (
@@ -390,7 +390,7 @@ export default function RotinaLevePage() {
                                 {/* Filter: Faixa etária */}
                                 <div className="mb-6">
                                   <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
-                                    Faixa etária
+                                    Para qual idade?
                                   </label>
                                   <div className="flex flex-wrap gap-2">
                                     {CHILD_AGE_OPTIONS.map((option) => (
@@ -411,13 +411,13 @@ export default function RotinaLevePage() {
 
                                 {/* Suggest button */}
                                 <button className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150 mb-6">
-                                  Sugerir receitas
+                                  Gerar sugestões ✨
                                 </button>
 
                                 {/* Recipes suggestions */}
                                 <div className="bg-[#f8f8f8] rounded-2xl p-4">
                                   <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
-                                    Sugestões de hoje:
+                                    Receitas que combinam com o seu momento:
                                   </h4>
                                   <ul className="space-y-3">
                                     {RECIPE_SUGGESTIONS.map((recipe, idx) => (
