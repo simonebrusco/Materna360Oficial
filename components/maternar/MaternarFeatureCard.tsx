@@ -74,10 +74,10 @@ export function MaternarFeatureCard({
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-3 md:mt-4 flex items-center justify-between">
           <button
             type="button"
-            className="inline-flex items-center gap-1 text-xs md:text-sm font-medium text-[#ff005e] transition-transform duration-150 group-hover:translate-x-0.5"
+            className="inline-flex items-center gap-0.5 md:gap-1 text-xs md:text-sm font-medium text-[#ff005e] transition-transform duration-150 group-hover:translate-x-0.5"
           >
             <span>{ctaText}</span>
             <span aria-hidden="true">→</span>
