@@ -115,7 +115,16 @@ export async function GET() {
   try {
     const raw = cookies().get(COOKIE)?.value
     const data = safeParse(raw)
-    const childrenNames = await fetchChildrenNames()
+
+    // Add a 4-second timeout to the entire GET request
+    const timeoutPromise = new Promise<string[]>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), 4000)
+    )
+
+    const childrenNames = await Promise.race([
+      fetchChildrenNames(),
+      timeoutPromise,
+    ])
 
     return NextResponse.json(
       {
@@ -125,12 +134,12 @@ export async function GET() {
       {
         status: 200,
         headers: {
-          'Cache-Control': 'no-store',
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
         },
       }
     )
   } catch (error) {
-    console.error('[ProfileAPI] Unexpected error in GET:', error)
+    console.error('[ProfileAPI] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
     // Always return a valid response, even if something fails
     return NextResponse.json(
       {
@@ -140,7 +149,7 @@ export async function GET() {
       {
         status: 200,
         headers: {
-          'Cache-Control': 'no-store',
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
         },
       }
     )
