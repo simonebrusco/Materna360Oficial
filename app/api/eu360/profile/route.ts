@@ -5,6 +5,11 @@ import { monthsFromBirthdate } from '@/app/lib/age'
 import { tryCreateServerSupabase } from '@/app/lib/supabase'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 60
+
+const CACHE_HEADERS = {
+  'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+}
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
