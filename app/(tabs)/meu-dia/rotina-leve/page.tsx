@@ -1156,7 +1156,7 @@ export default function RotinaLevePage() {
                                       value={notasText}
                                       onChange={(e) => setNotasText(e.target.value)}
                                       placeholder="Escreva suas anotações…"
-                                      className="w-full px-4 py-3 rounded-2xl border border-[#e0e0e0] bg-[#f8f8f8] text-[#545454] text-sm placeholder-[#999] focus:outline-none focus:border-primary focus:bg-white transition-all duration-150 resize-none"
+                                      className="w-full px-4 py-3 rounded-[18px] border border-[#eaeaea] bg-[#f9f9f9] text-[#545454] text-sm placeholder-[#999] focus:outline-none focus:border-primary focus:bg-white transition-all duration-150 resize-none"
                                       rows={3}
                                     />
                                   </div>
