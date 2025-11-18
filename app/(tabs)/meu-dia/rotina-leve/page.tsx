@@ -478,24 +478,26 @@ export default function RotinaLevePage() {
                     if (card.id === 'inspiracoes-do-dia') {
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
-                          <SoftCard className="rounded-2xl p-4 md:p-6">
+                          <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
                             {/* Header - clickable */}
                             <button
                               onClick={() => setIsInspirationOpen(!isInspirationOpen)}
-                              className="w-full text-left focus:outline-none"
+                              className="w-full text-left focus:outline-none flex flex-col"
                             >
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <h3 className="text-base font-semibold text-[#2f3a56]">
-                                  {card.title}
-                                </h3>
-                                <span className="text-xs font-semibold text-primary/85 tracking-wide whitespace-nowrap mt-0.5">
-                                  Ver mais →
-                                </span>
-                              </div>
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
                               <p className="text-sm text-[#545454]/85 leading-relaxed">
                                 {card.description}
                               </p>
                             </button>
+
+                            {/* Ver mais label */}
+                            <div className="flex justify-end mt-2">
+                              <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                Ver mais →
+                              </span>
+                            </div>
 
                             {/* Expanded content */}
                             {isInspirationOpen && (
