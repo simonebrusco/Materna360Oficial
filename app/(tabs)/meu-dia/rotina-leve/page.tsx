@@ -142,6 +142,9 @@ export default function RotinaLevePage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
   const [selectedChildAge, setSelectedChildAge] = useState<string | null>(null)
 
+  // Inspirações do Dia state
+  const [isInspirationOpen, setIsInspirationOpen] = useState(false)
+
   let cardIndex = 0
 
   return (
