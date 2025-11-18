@@ -168,6 +168,30 @@ export default function RotinaLevePage() {
     { id: '5', text: 'Limpar superfícies', selected: false },
   ])
 
+  // Rotina do Filho state
+  const [isFilhoOpen, setIsFilhoOpen] = useState(false)
+  const [filhoWakeTime, setFilhoWakeTime] = useState('')
+  const [filhoRestTime, setFilhoRestTime] = useState('')
+  const [filhoActivities, setFilhoActivities] = useState<Array<{ id: string; text: string; selected: boolean }>>([
+    { id: '1', text: 'Higiene', selected: false },
+    { id: '2', text: 'Leitura', selected: false },
+    { id: '3', text: 'Brincadeira livre', selected: false },
+    { id: '4', text: 'Atividade guiada', selected: false },
+    { id: '5', text: 'Ar livre', selected: false },
+  ])
+  const [filhoNotes, setFilhoNotes] = useState('')
+
+  // Prioridades da Semana state
+  const [isSemanaOpen, setIsSemanaOpen] = useState(false)
+  const [semanaItems, setSemanaItems] = useState<Array<{ id: string; text: string; done: boolean }>>([
+    { id: '1', text: 'Prioridade 1', done: false },
+    { id: '2', text: 'Prioridade 2', done: false },
+    { id: '3', text: 'Prioridade 3', done: false },
+    { id: '4', text: 'Prioridade 4', done: false },
+    { id: '5', text: 'Prioridade 5', done: false },
+  ])
+  const [semanaNewItem, setSemanaNewItem] = useState('')
+
   let cardIndex = 0
 
   const handleAddPlannerTask = () => {
