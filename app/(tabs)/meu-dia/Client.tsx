@@ -55,6 +55,8 @@ export function MeuDiaClient({
   __fallbackWeekStartKey__ = getWeekStartKey(getBrazilDateKey()),
   __fallbackPlannerTitle__ = 'Semana',
 }: MeuDiaClientProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const finalProfile = profile || __fallbackProfile__
   const finalCurrentDateKey = currentDateKey || __fallbackCurrentDateKey__
   const finalWeekStartKey = weekStartKey || __fallbackWeekStartKey__
@@ -62,6 +64,53 @@ export function MeuDiaClient({
   const finalPlannerTitle = plannerTitle || __fallbackPlannerTitle__
 
   const { name } = useProfile() || { name: finalProfile.motherName }
+
+  useEffect(() => {
+    const fromRotina = searchParams.get('fromRotina')
+    if (!fromRotina) {
+      return
+    }
+
+    const createId = () => {
+      if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+        return crypto.randomUUID()
+      }
+      return Math.random().toString(36).slice(2, 10)
+    }
+
+    let noteTitle = ''
+    switch (fromRotina) {
+      case 'ideias':
+        noteTitle = 'Ideias rápidas salvas da Rotina Leve.'
+        break
+      case 'receitas':
+        noteTitle = 'Receitas sugeridas salvas da Rotina Leve.'
+        break
+      case 'inspiracao':
+        noteTitle = 'Inspiração do dia salva da Rotina Leve.'
+        break
+      default:
+        return
+    }
+
+    const newItem: PlannerItem = {
+      id: createId(),
+      type: 'Brincadeira',
+      title: noteTitle,
+      done: false,
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('planner:item-added', {
+        detail: {
+          dateKey: finalCurrentDateKey,
+          item: newItem,
+        },
+      })
+    )
+
+    router.replace('/meu-dia', { scroll: false } as any)
+  }, [searchParams, finalCurrentDateKey, router])
 
   return (
     <PageTemplate
