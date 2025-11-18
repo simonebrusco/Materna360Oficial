@@ -149,6 +149,18 @@ export default function RotinaLevePage() {
   const [prioridadesList, setPrioridadesList] = useState<{ id: string; text: string }[]>([])
   const [prioridadesInput, setPrioridadesInput] = useState('')
 
+  // Checklist da Mãe
+  const [checklistMaeItems, setChecklistMaeItems] = useState({
+    'beber-agua': false,
+    'comer-verdade': false,
+    'cinco-min': false,
+    'abraco-consciente': false,
+  })
+  const [checklistMaeCustomItems, setChecklistMaeCustomItems] = useState<
+    { id: string; label: string; checked: boolean }[]
+  >([])
+  const [checklistMaeNewItem, setChecklistMaeNewItem] = useState('')
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   useEffect(() => {
