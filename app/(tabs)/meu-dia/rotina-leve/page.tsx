@@ -432,7 +432,7 @@ export default function RotinaLevePage() {
                                 {/* Save to Planner button */}
                                 <button
                                   onClick={() => router.push('/meu-dia?fromRotina=ideias')}
-                                  className="w-full mt-6 border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                  className="w-full mt-6 border border-[#e0e0e0] text-[#2f3a56] py-3 px-6 rounded-full font-semibold text-sm hover:bg-[#f8f8f8] transition-all duration-150"
                                 >
                                   Abrir no Planner
                                 </button>
