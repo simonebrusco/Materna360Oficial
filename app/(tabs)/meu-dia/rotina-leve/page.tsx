@@ -441,6 +441,62 @@ export default function RotinaLevePage() {
                       )
                     }
 
+                    // Special handling for Inspirações do Dia - make it expandable
+                    if (card.id === 'inspiracoes-do-dia') {
+                      return (
+                        <Reveal key={card.id} delay={currentIndex * 25}>
+                          <SoftCard className="rounded-2xl p-4 md:p-6">
+                            {/* Header - clickable */}
+                            <button
+                              onClick={() => setIsInspirationOpen(!isInspirationOpen)}
+                              className="w-full text-left focus:outline-none"
+                            >
+                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                {card.title}
+                              </h3>
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                {card.description}
+                              </p>
+                            </button>
+
+                            {/* Expanded content */}
+                            {isInspirationOpen && (
+                              <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                  Escolhi algo especial para iluminar o seu dia.
+                                </p>
+
+                                {/* Daily Inspiration Box */}
+                                <div className="bg-[#f8f8f8] rounded-2xl p-4 mb-4">
+                                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                                    Frase do dia
+                                  </h4>
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed italic">
+                                    "Mesmo nos dias cansativos, você está fazendo o seu melhor."
+                                  </p>
+                                </div>
+
+                                {/* Self-Care Reminder Box */}
+                                <div className="bg-[#f8f8f8] rounded-2xl p-4 mb-6">
+                                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                                    Cuidado de hoje
+                                  </h4>
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                    Tire 2 minutos para respirar fundo e soltar os ombros.
+                                  </p>
+                                </div>
+
+                                {/* Generate new inspiration button */}
+                                <button className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150">
+                                  Gerar nova inspiração ✨
+                                </button>
+                              </div>
+                            )}
+                          </SoftCard>
+                        </Reveal>
+                      )
+                    }
+
                     // Regular cards for other inspiration items
                     return (
                       <Reveal key={card.id} delay={currentIndex * 25}>
