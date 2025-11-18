@@ -71,7 +71,7 @@ const TOOLS_CARDS: CardItem[] = [
   {
     id: 'checklist-mae',
     title: 'Checklist da Mãe',
-    description: 'Your essential tasks.',
+    description: 'Coisas pequenas que fazem diferença.',
     icon: 'check',
   },
   {
