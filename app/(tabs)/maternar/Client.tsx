@@ -14,7 +14,14 @@ import { Reveal } from '@/components/ui/Reveal';
 
 export default function MaternarClient() {
   const { name } = useProfile();
-  const [greeting, setGreeting] = useState<string>('');
+  const firstName = name ? name.split(' ')[0] : '';
+  const [greeting, setGreeting] = useState<string>(() => {
+    // Initialize with the actual greeting to avoid hydration mismatch
+    if (typeof window !== 'undefined') {
+      return getTimeGreeting(firstName);
+    }
+    return '';
+  });
 
   useEffect(() => {
     track('nav.click', {
