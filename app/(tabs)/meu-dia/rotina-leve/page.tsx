@@ -1124,43 +1124,325 @@ export default function RotinaLevePage() {
         )
 
       case 'rotina-da-familia':
+        const handleAddRotinaFamiliaCommitment = () => {
+          if (
+            rotinaFamiliaNewCommitment.time.trim() &&
+            rotinaFamiliaNewCommitment.description.trim()
+          ) {
+            setRotinaFamiliaCommitments([
+              ...rotinaFamiliaCommitments,
+              {
+                id: `commitment-${Date.now()}`,
+                time: rotinaFamiliaNewCommitment.time,
+                description: rotinaFamiliaNewCommitment.description,
+                participants: rotinaFamiliaNewCommitment.participants,
+              },
+            ])
+            setRotinaFamiliaNewCommitment({ time: '', description: '', participants: 'Só eu' })
+          }
+        }
+
+        const handleRemoveRotinaFamiliaCommitment = (id: string) => {
+          setRotinaFamiliaCommitments(
+            rotinaFamiliaCommitments.filter((commitment) => commitment.id !== id),
+          )
+        }
+
+        const handleClearRotinaFamilia = () => {
+          setRotinaFamiliaTimeframe('today')
+          setRotinaFamiliaCommitments([])
+          setRotinaFamiliaNewCommitment({ time: '', description: '', participants: 'Só eu' })
+        }
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Rotina e atividades da família..."
-              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
-            />
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSaveCard(cardId)
-              }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
-            >
-              Salvar no Planner
-            </button>
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Anote os compromissos importantes da família para não carregar tudo na cabeça.
+            </p>
+
+            {/* Timeframe Selector */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Período
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'today', label: 'Hoje' },
+                  { value: 'week', label: 'Esta semana' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() =>
+                      setRotinaFamiliaTimeframe(option.value as 'today' | 'week')
+                    }
+                    className={`flex-1 px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      rotinaFamiliaTimeframe === option.value
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Commitments Form */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                  Horário
+                </label>
+                <input
+                  type="time"
+                  value={rotinaFamiliaNewCommitment.time}
+                  onChange={(e) =>
+                    setRotinaFamiliaNewCommitment({
+                      ...rotinaFamiliaNewCommitment,
+                      time: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                  Descrição
+                </label>
+                <input
+                  type="text"
+                  value={rotinaFamiliaNewCommitment.description}
+                  onChange={(e) =>
+                    setRotinaFamiliaNewCommitment({
+                      ...rotinaFamiliaNewCommitment,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Ex.: Dentista da Sofia"
+                  className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                  Quem participa?
+                </label>
+                <select
+                  value={rotinaFamiliaNewCommitment.participants}
+                  onChange={(e) =>
+                    setRotinaFamiliaNewCommitment({
+                      ...rotinaFamiliaNewCommitment,
+                      participants: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                >
+                  <option>Só eu</option>
+                  <option>Eu e meu filho</option>
+                  <option>Família toda</option>
+                </select>
+              </div>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleAddRotinaFamiliaCommitment()
+                }}
+                className="w-full px-4 py-2 rounded-full bg-primary/20 text-primary font-medium text-sm hover:bg-primary/30 transition-all duration-200"
+              >
+                + Adicionar compromisso
+              </button>
+            </div>
+
+            {/* Commitments List */}
+            {rotinaFamiliaCommitments.length > 0 && (
+              <div className="space-y-2">
+                {rotinaFamiliaCommitments.map((commitment) => (
+                  <div
+                    key={commitment.id}
+                    className="p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-[#2f3a56] mb-1">
+                          {commitment.time}
+                        </p>
+                        <p className="text-sm text-[#2f3a56] font-medium mb-1">
+                          {commitment.description}
+                        </p>
+                        <p className="text-xs text-[#545454]">
+                          Participa: {commitment.participants}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveRotinaFamiliaCommitment(commitment.id)}
+                        className="text-primary hover:text-primary/70 font-medium text-lg ml-2"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (rotinaFamiliaCommitments.length > 0) {
+                    try {
+                      track('rotina_familia.saved_to_planner', {
+                        timeframe: rotinaFamiliaTimeframe,
+                        commitmentsCount: rotinaFamiliaCommitments.length,
+                        tab: 'meu-dia-rotina-leve',
+                      })
+                    } catch {}
+                    toast.success('Agenda da família salva no planner!')
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              >
+                Salvar no planner
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClearRotinaFamilia()
+                }}
+                className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+              >
+                Limpar lista
+              </button>
+            </div>
           </div>
         )
 
       case 'prioridades-semana':
+        const handleAddPrioridade = () => {
+          if (prioridadesInput.trim() && prioridadesList.length < 5) {
+            setPrioridadesList([
+              ...prioridadesList,
+              { id: `priority-${Date.now()}`, text: prioridadesInput.trim() },
+            ])
+            setPrioridadesInput('')
+          }
+        }
+
+        const handleRemovePrioridade = (id: string) => {
+          setPrioridadesList(prioridadesList.filter((p) => p.id !== id))
+        }
+
+        const handleClearPrioridades = () => {
+          setPrioridadesWeek('')
+          setPrioridadesList([])
+          setPrioridadesInput('')
+        }
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <textarea
-              value={content}
-              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-              placeholder="Minhas 3 prioridades da semana..."
-              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
-            />
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Liste o que você não quer deixar passar nesta semana.
+            </p>
+
+            {/* Week Selector */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                Semana
+              </label>
+              <input
+                type="text"
+                value={prioridadesWeek}
+                onChange={(e) => setPrioridadesWeek(e.target.value)}
+                placeholder="Ex.: 18–24 nov"
+                className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* Priorities Input */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Minhas 5 prioridades
+              </label>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={prioridadesInput}
+                  onChange={(e) => setPrioridadesInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && prioridadesList.length < 5) {
+                      e.preventDefault()
+                      handleAddPrioridade()
+                    }
+                  }}
+                  placeholder="Digite uma prioridade…"
+                  disabled={prioridadesList.length >= 5}
+                  className="flex-1 px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddPrioridade()
+                  }}
+                  disabled={prioridadesList.length >= 5}
+                  className="px-4 py-2 rounded-full bg-primary/20 text-primary font-medium text-sm hover:bg-primary/30 transition-all duration-200 disabled:opacity-50"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Priorities List */}
+              {prioridadesList.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {prioridadesList.map((priority, index) => (
+                    <div
+                      key={priority.id}
+                      className="flex items-center justify-between p-3 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200"
+                    >
+                      <span className="text-sm text-[#2f3a56]">
+                        {index + 1}. {priority.text}
+                      </span>
+                      <button
+                        onClick={() => handleRemovePrioridade(priority.id)}
+                        className="text-primary hover:text-primary/70 font-medium text-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Priority Count Indicator */}
+              {prioridadesList.length > 0 && (
+                <p className="text-xs text-[#545454] mb-3">
+                  {prioridadesList.length} de 5 prioridades adicionadas
+                </p>
+              )}
+            </div>
+
+            {/* Primary Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleSaveCard(cardId)
+                if (prioridadesList.length > 0) {
+                  try {
+                    track('prioridades_semana.saved', {
+                      week: prioridadesWeek,
+                      prioritiesCount: prioridadesList.length,
+                      tab: 'meu-dia-rotina-leve',
+                    })
+                  } catch {}
+                  toast.success('Prioridades da semana salvas!')
+                }
               }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
             >
-              Salvar no Planner
+              Salvar no planner da semana
             </button>
           </div>
         )
