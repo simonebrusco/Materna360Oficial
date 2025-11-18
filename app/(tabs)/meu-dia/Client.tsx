@@ -9,6 +9,9 @@ import { useProfile } from '@/app/hooks/useProfile'
 import { getWeekStartKey, buildWeekLabels } from '@/app/lib/weekLabels'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import type { PlannerItem } from '@/lib/plannerData'
 
 type MeuDiaClientProps = {
   dailyGreeting?: string
