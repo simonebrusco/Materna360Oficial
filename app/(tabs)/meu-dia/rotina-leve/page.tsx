@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -12,10 +11,6 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 
-interface ExpandableCardState {
-  isOpen: boolean
-}
-
 interface DayPrioritiesData {
   topThree: string
   appointments: string
@@ -23,7 +18,6 @@ interface DayPrioritiesData {
 }
 
 interface PlanMyDayData {
-  checklist: string[]
   remember: string
   quickTasks: string
 }
@@ -49,12 +43,6 @@ interface FamilyWeekData {
   weeklyNotes: string
 }
 
-interface MotherChecklistData {
-  homeItems: string[]
-  workItems: string[]
-  selfCareItems: string[]
-}
-
 interface NotesListsData {
   notes: string
   bulletList: string
@@ -64,7 +52,6 @@ interface RecipesData {
   recipe1: string
   recipe2: string
   recipe3: string
-  selectedRecipe: string | null
 }
 
 interface InspirationsData {
@@ -74,8 +61,6 @@ interface InspirationsData {
 
 export default function RotinaLevePage() {
   const [isHydrated, setIsHydrated] = useState(false)
-
-  // Expandable card states
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
 
   // Section 1 — My Essential Day
@@ -85,7 +70,6 @@ export default function RotinaLevePage() {
     minimalGoal: '',
   })
   const [planMyDay, setPlanMyDay] = useState<PlanMyDayData>({
-    checklist: [],
     remember: '',
     quickTasks: '',
   })
@@ -111,11 +95,6 @@ export default function RotinaLevePage() {
   })
 
   // Section 3 — Tools for Me
-  const [motherChecklist, setMotherChecklist] = useState<MotherChecklistData>({
-    homeItems: [],
-    workItems: [],
-    selfCareItems: [],
-  })
   const [notesLists, setNotesLists] = useState<NotesListsData>({
     notes: '',
     bulletList: '',
@@ -126,7 +105,6 @@ export default function RotinaLevePage() {
     recipe1: '',
     recipe2: '',
     recipe3: '',
-    selectedRecipe: null,
   })
   const [inspirations, setInspirations] = useState<InspirationsData>({
     motivation: '',
@@ -142,13 +120,11 @@ export default function RotinaLevePage() {
   useEffect(() => {
     if (!isHydrated) return
 
-    // Load all persisted data
     const dayPrioritiesKey = `rotina-leve:${currentDateKey}:dayPriorities`
     const planMyDayKey = `rotina-leve:${currentDateKey}:planMyDay`
     const homeTasksKey = `rotina-leve:${currentDateKey}:homeTasks`
     const childRoutineKey = `rotina-leve:${currentDateKey}:childRoutine`
     const familyWeeklyKey = `rotina-leve:${currentDateKey}:familyWeekly`
-    const motherChecklistKey = `rotina-leve:${currentDateKey}:motherChecklist`
     const notesListsKey = `rotina-leve:${currentDateKey}:notesLists`
     const recipesKey = `rotina-leve:${currentDateKey}:recipes`
     const inspirationsKey = `rotina-leve:${currentDateKey}:inspirations`
@@ -158,7 +134,6 @@ export default function RotinaLevePage() {
     const savedHomeTasks = load(homeTasksKey)
     const savedChildRoutine = load(childRoutineKey)
     const savedFamilyWeekly = load(familyWeeklyKey)
-    const savedMotherChecklist = load(motherChecklistKey)
     const savedNotesLists = load(notesListsKey)
     const savedRecipes = load(recipesKey)
     const savedInspirations = load(inspirationsKey)
@@ -173,8 +148,6 @@ export default function RotinaLevePage() {
       setChildRoutine(savedChildRoutine as ChildRoutineData)
     if (typeof savedFamilyWeekly === 'object' && savedFamilyWeekly !== null)
       setFamilyWeekly(savedFamilyWeekly as FamilyWeekData)
-    if (typeof savedMotherChecklist === 'object' && savedMotherChecklist !== null)
-      setMotherChecklist(savedMotherChecklist as MotherChecklistData)
     if (typeof savedNotesLists === 'object' && savedNotesLists !== null)
       setNotesLists(savedNotesLists as NotesListsData)
     if (typeof savedRecipes === 'object' && savedRecipes !== null)
@@ -216,14 +189,14 @@ export default function RotinaLevePage() {
       subtitle="Organize seu dia com carinho, sem cobrança e sem perfeccionismo. Aqui você cria uma rotina que respeita o seu ritmo e o da sua família."
     >
       <ClientOnly>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+        <div className="space-y-4 md:space-y-5">
           {/* SECTION 1 — My Essential Day */}
           <Reveal delay={0}>
-            <div>
+            <div className="px-0">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Meu Dia Essencial
               </h2>
-              <p className="text-sm text-[#545454] mb-6">
+              <p className="text-sm text-[#545454]">
                 Organize as prioridades do seu dia com foco e leveza.
               </p>
             </div>
@@ -232,20 +205,20 @@ export default function RotinaLevePage() {
           {/* Card 1.1 — My Priorities of the Day */}
           <Reveal delay={50}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('dayPriorities')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Minhas Prioridades do Dia
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['dayPriorities'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['dayPriorities'] && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Top 3 Prioridades
@@ -294,7 +267,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -311,37 +284,20 @@ export default function RotinaLevePage() {
           {/* Card 1.2 — Plan My Day */}
           <Reveal delay={100}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('planMyDay')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Planejar o Dia
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['planMyDay'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['planMyDay'] && (
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
-                      Checklist do Dia
-                    </label>
-                    <div className="space-y-2">
-                      {['Tarefa 1', 'Tarefa 2', 'Tarefa 3', 'Tarefa 4'].map((task, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-primary/60"
-                          />
-                          <span className="text-sm text-[#2f3a56]">{task}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Preciso me Lembrar...
@@ -374,7 +330,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -391,20 +347,20 @@ export default function RotinaLevePage() {
           {/* Card 1.3 — Home Tasks */}
           <Reveal delay={150}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('homeTasks')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Tarefas da Casa
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['homeTasks'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['homeTasks'] && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3">
                   <div>
                     <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">Áreas</h4>
                     <div className="space-y-2">
@@ -466,7 +422,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -482,11 +438,11 @@ export default function RotinaLevePage() {
 
           {/* SECTION 2 — Family Routine */}
           <Reveal delay={200}>
-            <div>
+            <div className="px-0 pt-2">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Rotina da Família
               </h2>
-              <p className="text-sm text-[#545454] mb-6">
+              <p className="text-sm text-[#545454]">
                 Organize a rotina de toda a família de forma harmoniosa.
               </p>
             </div>
@@ -495,20 +451,20 @@ export default function RotinaLevePage() {
           {/* Card 2.1 — Child's Routine */}
           <Reveal delay={250}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('childRoutine')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Rotina do Filho
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['childRoutine'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['childRoutine'] && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Horário Escolar
@@ -574,7 +530,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -591,20 +547,20 @@ export default function RotinaLevePage() {
           {/* Card 2.2 — Family Priorities of the Week */}
           <Reveal delay={300}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('familyWeekly')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Prioridades da Semana
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['familyWeekly'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['familyWeekly'] && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Top 3 Prioridades da Família
@@ -669,7 +625,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -685,113 +641,33 @@ export default function RotinaLevePage() {
 
           {/* SECTION 3 — Tools for Me */}
           <Reveal delay={350}>
-            <div>
+            <div className="px-0 pt-2">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Ferramentas da Mãe
               </h2>
-              <p className="text-sm text-[#545454] mb-6">
+              <p className="text-sm text-[#545454]">
                 Recursos para apoiar sua rotina e bem-estar.
               </p>
             </div>
           </Reveal>
 
-          {/* Card 3.1 — Mother's Checklist */}
+          {/* Card 3.1 — Notes & Lists */}
           <Reveal delay={400}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
-              onClick={() => toggleCardExpanded('motherChecklist')}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                  Checklist da Mãe
-                </h3>
-                <span className="text-primary">
-                  {expandedCards['motherChecklist'] ? '−' : '+'}
-                </span>
-              </div>
-
-              {expandedCards['motherChecklist'] && (
-                <div className="mt-6 space-y-6">
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">Casa</h4>
-                    <div className="space-y-2">
-                      {['Organizar espaços', 'Limpar cozinha', 'Guardar roupas', 'Varrer casa'].map(
-                        (item, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              className="w-4 h-4 rounded border-primary/60"
-                            />
-                            <span className="text-sm text-[#2f3a56]">{item}</span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">Trabalho</h4>
-                    <div className="space-y-2">
-                      {['Responder emails', 'Chamar clientes', 'Atualizar agenda', 'Revisar tarefas'].map(
-                        (item, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              className="w-4 h-4 rounded border-primary/60"
-                            />
-                            <span className="text-sm text-[#2f3a56]">{item}</span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">Autocuidado</h4>
-                    <div className="space-y-2">
-                      {['Beber água', 'Alongar', 'Meditação', 'Tempo para mim'].map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-primary/60"
-                          />
-                          <span className="text-sm text-[#2f3a56]">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end pt-4">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => saveToPlanner('Checklist da Mãe', motherChecklist)}
-                    >
-                      Salvar ao Planejador
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </SoftCard>
-          </Reveal>
-
-          {/* Card 3.2 — Notes & Lists */}
-          <Reveal delay={450}>
-            <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('notesLists')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Notas & Listas
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['notesLists'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['notesLists'] && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Notas Rápidas
@@ -824,7 +700,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -839,80 +715,61 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* SECTION 4 — Quick Ideas */}
-          <Reveal delay={500}>
-            <div>
+          <Reveal delay={450}>
+            <div className="px-0 pt-2">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Ideias Rápidas
               </h2>
-              <p className="text-sm text-[#545454] mb-6">
+              <p className="text-sm text-[#545454]">
                 Inspire-se com receitas e dicas para o seu dia.
               </p>
             </div>
           </Reveal>
 
           {/* Card 4.1 — Healthy Recipes */}
-          <Reveal delay={550}>
+          <Reveal delay={500}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('recipes')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Receitas Saudáveis
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['recipes'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['recipes'] && (
-                <div className="mt-6 space-y-4">
-                  <div className="space-y-3">
+                <div className="mt-4 space-y-3">
+                  <div className="space-y-2">
                     {[
                       { key: 'recipe1', label: 'Receita 1' },
                       { key: 'recipe2', label: 'Receita 2' },
                       { key: 'recipe3', label: 'Receita 3' },
                     ].map(({ key, label }) => (
-                      <div
+                      <input
                         key={key}
-                        className="p-3 rounded-2xl border border-white/60 bg-white/60 cursor-pointer hover:bg-white/80 transition-all"
-                        onClick={() =>
-                          setRecipes({ ...recipes, selectedRecipe: key })
-                        }
-                      >
-                        <input
-                          type="text"
-                          value={recipes[key as keyof RecipesData] || ''}
-                          onChange={(e) => {
-                            setRecipes({
-                              ...recipes,
-                              [key]: e.target.value,
-                            })
-                            saveCardData('recipes', {
-                              ...recipes,
-                              [key]: e.target.value,
-                            })
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          placeholder={`${label}: nome da receita (1 linha descrição)`}
-                          className="w-full bg-transparent text-sm text-[#2f3a56] placeholder-[#545454]/50 focus:outline-none"
-                        />
-                      </div>
+                        type="text"
+                        value={recipes[key as keyof RecipesData] || ''}
+                        onChange={(e) => {
+                          setRecipes({
+                            ...recipes,
+                            [key]: e.target.value,
+                          })
+                          saveCardData('recipes', {
+                            ...recipes,
+                            [key]: e.target.value,
+                          })
+                        }}
+                        placeholder={`${label}: nome da receita`}
+                        className="w-full rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
                     ))}
                   </div>
 
-                  {recipes.selectedRecipe && (
-                    <div className="mt-4 p-4 rounded-2xl bg-[#FFE5EF]/40 border border-primary/20">
-                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
-                        Detalhes da Receita
-                      </h4>
-                      <p className="text-sm text-[#545454]">
-                        Conteúdo da receita selecionada seria exibido aqui.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
@@ -927,22 +784,22 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* Card 4.2 — Inspirations of the Day */}
-          <Reveal delay={600}>
+          <Reveal delay={550}>
             <SoftCard
-              className="rounded-3xl p-6 md:p-8 cursor-pointer transition-all duration-200"
               onClick={() => toggleCardExpanded('inspirations')}
+              className="cursor-pointer"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                   Inspirações do Dia
                 </h3>
-                <span className="text-primary">
+                <span className="text-primary text-lg">
                   {expandedCards['inspirations'] ? '−' : '+'}
                 </span>
               </div>
 
               {expandedCards['inspirations'] && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
                       Frase Motivadora
@@ -975,7 +832,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-2">
                     <Button
                       variant="primary"
                       size="sm"
