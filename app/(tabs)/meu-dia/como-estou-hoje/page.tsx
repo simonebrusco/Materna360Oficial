@@ -88,7 +88,7 @@ export default function ComoEstouHojePage() {
     <PageTemplate
       label="MEU DIA"
       title="Como Estou Hoje"
-      subtitle="Humor e energia com mais consciência."
+      subtitle="Entenda seu dia com clareza, leveza e acolhimento."
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">

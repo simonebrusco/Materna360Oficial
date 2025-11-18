@@ -9,6 +9,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 
 interface CardItem {
   id: string
+  icon: string
   title: string
   description: string
   href: string
