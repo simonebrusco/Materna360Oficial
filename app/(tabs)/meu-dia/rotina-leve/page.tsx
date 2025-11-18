@@ -115,16 +115,6 @@ const CARD_GROUPS: CardGroup[] = [
 ]
 
 export default function RotinaLevePage() {
-  const [isHydrated, setIsHydrated] = useState(false)
-
-  useEffect(() => {
-    setIsHydrated(true)
-  }, [])
-
-  if (!isHydrated) {
-    return null
-  }
-
   let cardIndex = 0
 
   return (
