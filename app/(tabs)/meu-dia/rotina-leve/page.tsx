@@ -815,6 +815,198 @@ export default function RotinaLevePage() {
                         )
                       }
 
+                      // Special handling for Rotina do Filho
+                      if (card.id === 'rotina-filho') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              {/* Header - clickable */}
+                              <button
+                                onClick={() => setIsFilhoOpen(!isFilhoOpen)}
+                                className="w-full text-left focus:outline-none flex flex-col"
+                              >
+                                <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                  {card.description}
+                                </p>
+                              </button>
+
+                              {/* Ver mais label */}
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                  Ver mais →
+                                </span>
+                              </div>
+
+                              {/* Expanded content */}
+                              {isFilhoOpen && (
+                                <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                    Organize a rotina diária do seu filho.
+                                  </p>
+
+                                  {/* Horários section */}
+                                  <div className="mb-6">
+                                    <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                      Horários
+                                    </label>
+                                    <div className="space-y-3">
+                                      <input
+                                        type="time"
+                                        value={filhoWakeTime}
+                                        onChange={(e) => setFilhoWakeTime(e.target.value)}
+                                        placeholder="Horário de acordar"
+                                        className="w-full rounded-2xl bg-white/90 text-sm text-[#2f3a56] border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                      />
+                                      <input
+                                        type="time"
+                                        value={filhoRestTime}
+                                        onChange={(e) => setFilhoRestTime(e.target.value)}
+                                        placeholder="Horário de descanso"
+                                        className="w-full rounded-2xl bg-white/90 text-sm text-[#2f3a56] border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Atividades do dia section */}
+                                  <div className="mb-6">
+                                    <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                      Atividades do dia
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {filhoActivities.map((activity) => (
+                                        <button
+                                          key={activity.id}
+                                          onClick={() => handleToggleFilhoActivity(activity.id)}
+                                          className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                            activity.selected
+                                              ? 'bg-primary text-white shadow-sm'
+                                              : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                          }`}
+                                        >
+                                          {activity.text}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Observações section */}
+                                  <div className="mb-6">
+                                    <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
+                                      Observações
+                                    </label>
+                                    <textarea
+                                      value={filhoNotes}
+                                      onChange={(e) => setFilhoNotes(e.target.value)}
+                                      placeholder="Anote algo importante sobre o dia..."
+                                      className="w-full rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-3 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                      rows={4}
+                                    />
+                                  </div>
+
+                                  {/* Abrir no Planner button */}
+                                  <button
+                                    onClick={() => router.push('/meu-dia')}
+                                    className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                  >
+                                    Abrir no Planner
+                                  </button>
+                                </div>
+                              )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
+                      // Special handling for Prioridades da Semana
+                      if (card.id === 'prioridades-semana') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              {/* Header - clickable */}
+                              <button
+                                onClick={() => setIsSemanaOpen(!isSemanaOpen)}
+                                className="w-full text-left focus:outline-none flex flex-col"
+                              >
+                                <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                  {card.description}
+                                </p>
+                              </button>
+
+                              {/* Ver mais label */}
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                  Ver mais →
+                                </span>
+                              </div>
+
+                              {/* Expanded content */}
+                              {isSemanaOpen && (
+                                <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                    Defina o que realmente importa esta semana.
+                                  </p>
+
+                                  {/* Checklist */}
+                                  <div className="space-y-3 mb-6">
+                                    {semanaItems.map((item) => (
+                                      <label key={item.id} className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={item.done}
+                                          onChange={() => handleToggleSemanaItem(item.id)}
+                                          className="w-4 h-4 rounded border-[#ddd] text-primary focus:ring-primary/50"
+                                        />
+                                        <span
+                                          className={`text-sm transition-all ${
+                                            item.done
+                                              ? 'line-through text-[#545454]/50'
+                                              : 'text-[#545454]'
+                                          }`}
+                                        >
+                                          {item.text}
+                                        </span>
+                                      </label>
+                                    ))}
+                                  </div>
+
+                                  {/* Input + Add button */}
+                                  <div className="flex gap-2 mb-6">
+                                    <input
+                                      type="text"
+                                      value={semanaNewItem}
+                                      onChange={(e) => setSemanaNewItem(e.target.value)}
+                                      onKeyPress={(e) => e.key === 'Enter' && handleAddSemanaItem()}
+                                      placeholder="Adicionar nova prioridade…"
+                                      className="flex-1 rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                    />
+                                    <button
+                                      onClick={handleAddSemanaItem}
+                                      className="px-4 py-2.5 rounded-2xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity duration-150"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+
+                                  {/* Abrir no Planner button */}
+                                  <button
+                                    onClick={() => router.push('/meu-dia')}
+                                    className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                  >
+                                    Abrir no Planner
+                                  </button>
+                                </div>
+                              )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
                       // Default card rendering for other cards
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
