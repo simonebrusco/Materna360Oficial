@@ -380,35 +380,286 @@ export default function RotinaLevePage() {
         )
 
       case 'receitas-inteligentes':
+        const handleAddIngredient = () => {
+          if (receitasInput.trim() && !receitasIngredients.includes(receitasInput.trim())) {
+            setReceitasIngredients([...receitasIngredients, receitasInput.trim()])
+            setReceitasInput('')
+          }
+        }
+
+        const handleRemoveIngredient = (ingredient: string) => {
+          setReceitasIngredients(receitasIngredients.filter((ing) => ing !== ingredient))
+        }
+
+        const handleToggleRestriction = (restriction: string) => {
+          if (receitasRestrictions.includes(restriction)) {
+            setReceitasRestrictions(receitasRestrictions.filter((r) => r !== restriction))
+          } else {
+            setReceitasRestrictions([...receitasRestrictions, restriction])
+          }
+        }
+
+        const handleClearReceitasFields = () => {
+          setReceitasInput('')
+          setReceitasIngredients([])
+          setReceitasTime(null)
+          setReceitasWhoEats(null)
+          setReceitasRestrictions([])
+          setShowReceitasResults(false)
+        }
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
-                Ingrediente
+          <div onClick={(e) => e.stopPropagation()} className="space-y-4">
+            {/* Introduction Paragraph */}
+            <p className="text-sm text-[#545454] leading-relaxed">
+              Me conta o que você tem aí e eu te ajudo com opções práticas.
+            </p>
+
+            {/* Input Section 1 — Ingredients */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Ingredientes que você tem
               </label>
-              <input
-                type="text"
-                value={content}
-                onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
-                placeholder="Digite um ingrediente..."
-                className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-              />
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={receitasInput}
+                  onChange={(e) => setReceitasInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddIngredient()
+                    }
+                  }}
+                  placeholder="Ex.: frango, batata, cenoura…"
+                  className="flex-1 px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddIngredient()
+                  }}
+                  className="px-4 py-2 rounded-full bg-primary/20 text-primary font-medium text-sm hover:bg-primary/30 transition-all duration-200"
+                >
+                  +
+                </button>
+              </div>
+              {receitasIngredients.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {receitasIngredients.map((ingredient) => (
+                    <div
+                      key={ingredient}
+                      className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium flex items-center gap-2"
+                    >
+                      {ingredient}
+                      <button
+                        onClick={() => handleRemoveIngredient(ingredient)}
+                        className="hover:text-primary/70"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="p-3 rounded-2xl bg-white/60 border border-white/40 mb-3">
-              <p className="text-xs text-[#545454] mb-2">Sugestão de receita:</p>
-              <p className="text-sm text-[#2f3a56]">
-                {content ? `Receita com ${content}...` : 'Digite um ingrediente para obter sugestões'}
-              </p>
+
+            {/* Input Section 2 — Time Available */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Tempo disponível
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['15 min', '30 min', '45 min', '1h+'].map((time) => (
+                  <button
+                    key={time}
+                    onClick={() =>
+                      setReceitasTime(receitasTime === time ? null : time)
+                    }
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      receitasTime === time
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Input Section 3 — Who will eat */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Quem vai comer?
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Só adultos', 'Crianças', 'Família toda'].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() =>
+                      setReceitasWhoEats(receitasWhoEats === option ? null : option)
+                    }
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      receitasWhoEats === option
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input Section 4 — Restrictions (optional) */}
+            <div>
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-3">
+                Alguma restrição?
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Sem lactose', 'Sem glúten', 'Vegetariana', 'Nenhuma'].map((restriction) => (
+                  <button
+                    key={restriction}
+                    onClick={() => handleToggleRestriction(restriction)}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                      receitasRestrictions.includes(restriction)
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white/60 text-[#2f3a56] border border-white/40 hover:bg-white/80'
+                    }`}
+                  >
+                    {restriction}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Primary button — Sugerir receita */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleSaveCard(cardId)
+                setShowReceitasResults(true)
+                try {
+                  track('receitas_inteligentes.generated', {
+                    ingredients: receitasIngredients,
+                    time: receitasTime,
+                    whoEats: receitasWhoEats,
+                    restrictions: receitasRestrictions,
+                    tab: 'meu-dia-rotina-leve',
+                  })
+                } catch {}
               }}
-              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+              className="w-full px-4 py-3 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
             >
-              Salvar no Planner
+              Sugerir receita
             </button>
+
+            {/* Results Section */}
+            {showReceitasResults && (
+              <div className="space-y-4 pt-4 border-t border-white/40">
+                {/* Recipe Result Block */}
+                <div className="space-y-3">
+                  <h4 className="text-base font-semibold text-[#2f3a56]">
+                    Frango cremoso rápido
+                  </h4>
+
+                  {/* Data Block with vertical spacing */}
+                  <div className="p-4 rounded-2xl bg-white/60 border border-white/40 space-y-4">
+                    {/* Modo de Preparo */}
+                    <div>
+                      <p className="text-xs font-semibold text-[#545454] mb-2">
+                        Modo de preparo:
+                      </p>
+                      <p className="text-sm text-[#2f3a56] leading-relaxed">
+                        Fritar o frango em cubinhos com alho e cebola. Adicionar cenoura e batata já cozidas, depois creme de leite ou iogurte. Temperar com sal e deixar 5 minutos no fogo baixo.
+                      </p>
+                    </div>
+
+                    {/* Tempo Aproximado */}
+                    <div>
+                      <p className="text-xs font-semibold text-[#545454] mb-1">
+                        Tempo aproximado:
+                      </p>
+                      <p className="text-sm text-[#2f3a56]">
+                        30 min
+                      </p>
+                    </div>
+
+                    {/* Nível de Dificuldade */}
+                    <div>
+                      <p className="text-xs font-semibold text-[#545454] mb-1">
+                        Nível de dificuldade:
+                      </p>
+                      <p className="text-sm text-[#2f3a56]">
+                        Fácil
+                      </p>
+                    </div>
+
+                    {/* Faixa Etária */}
+                    <div>
+                      <p className="text-xs font-semibold text-[#545454] mb-1">
+                        Faixa etária:
+                      </p>
+                      <p className="text-sm text-[#2f3a56]">
+                        3+
+                      </p>
+                    </div>
+
+                    {/* Porções */}
+                    <div>
+                      <p className="text-xs font-semibold text-[#545454] mb-1">
+                        Porções:
+                      </p>
+                      <p className="text-sm text-[#2f3a56]">
+                        2–3
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Buttons */}
+                <div className="space-y-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      try {
+                        track('receitas_inteligentes.added_to_planner', {
+                          recipe: 'Frango cremoso rápido',
+                          tab: 'meu-dia-rotina-leve',
+                        })
+                      } catch {}
+                      toast.success('Receita adicionada ao planner!')
+                    }}
+                    className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+                  >
+                    Adicionar ao planner
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      try {
+                        track('receitas_inteligentes.generate_new', {
+                          tab: 'meu-dia-rotina-leve',
+                        })
+                      } catch {}
+                      setShowReceitasResults(false)
+                    }}
+                    className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+                  >
+                    Gerar outra sugestão
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleClearReceitasFields()
+                    }}
+                    className="w-full px-4 py-2 rounded-full text-[#2f3a56] font-medium text-sm hover:bg-white/60 transition-all duration-200"
+                  >
+                    Limpar campos
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )
 
