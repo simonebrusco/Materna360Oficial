@@ -12,6 +12,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { PlannerItem } from '@/lib/plannerData'
+import MeuDiaPremium from '@/components/planner/MeuDiaPremium'
 
 type MeuDiaClientProps = {
   dailyGreeting?: string
