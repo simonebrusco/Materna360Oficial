@@ -1245,9 +1245,9 @@ export default function RotinaLevePage() {
           ))}
 
           {/* Closing message */}
-          <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
-            <p className="text-center text-sm text-[#545454]/70 leading-relaxed" suppressHydrationWarning>
-              Organize seu dia com leveza. Pequenos passos fazem a grande diferença. <span className="text-[#ff005e]">&hearts;</span>
+          <div className="mt-12 pt-12 border-t border-[#ececec]/50">
+            <p className="text-center text-base text-[#545454] leading-relaxed" suppressHydrationWarning>
+              Organize seu dia com leveza. Pequenos passos fazem a grande diferença. <span className="text-[#ff005e] text-xl">❤️</span>
             </p>
           </div>
         </div>
