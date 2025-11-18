@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
+import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
@@ -43,6 +44,12 @@ interface FamilyWeekData {
   weeklyNotes: string
 }
 
+interface ChecklistData {
+  homeChecklist: string
+  workChecklist: string
+  selfCareChecklist: string
+}
+
 interface NotesListsData {
   notes: string
   bulletList: string
@@ -62,6 +69,17 @@ interface InspirationsData {
 export default function RotinaLevePage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
+
+  // Quick Access Section — Recipes & Inspirations
+  const [recipes, setRecipes] = useState<RecipesData>({
+    recipe1: '',
+    recipe2: '',
+    recipe3: '',
+  })
+  const [inspirations, setInspirations] = useState<InspirationsData>({
+    motivation: '',
+    tip: '',
+  })
 
   // Section 1 — My Essential Day
   const [dayPriorities, setDayPriorities] = useState<DayPrioritiesData>({
@@ -95,20 +113,14 @@ export default function RotinaLevePage() {
   })
 
   // Section 3 — Tools for Me
+  const [checklist, setChecklist] = useState<ChecklistData>({
+    homeChecklist: '',
+    workChecklist: '',
+    selfCareChecklist: '',
+  })
   const [notesLists, setNotesLists] = useState<NotesListsData>({
     notes: '',
     bulletList: '',
-  })
-
-  // Section 4 — Quick Ideas
-  const [recipes, setRecipes] = useState<RecipesData>({
-    recipe1: '',
-    recipe2: '',
-    recipe3: '',
-  })
-  const [inspirations, setInspirations] = useState<InspirationsData>({
-    motivation: '',
-    tip: '',
   })
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
@@ -120,24 +132,30 @@ export default function RotinaLevePage() {
   useEffect(() => {
     if (!isHydrated) return
 
+    const recipesKey = `rotina-leve:${currentDateKey}:recipes`
+    const inspirationsKey = `rotina-leve:${currentDateKey}:inspirations`
     const dayPrioritiesKey = `rotina-leve:${currentDateKey}:dayPriorities`
     const planMyDayKey = `rotina-leve:${currentDateKey}:planMyDay`
     const homeTasksKey = `rotina-leve:${currentDateKey}:homeTasks`
     const childRoutineKey = `rotina-leve:${currentDateKey}:childRoutine`
     const familyWeeklyKey = `rotina-leve:${currentDateKey}:familyWeekly`
+    const checklistKey = `rotina-leve:${currentDateKey}:checklist`
     const notesListsKey = `rotina-leve:${currentDateKey}:notesLists`
-    const recipesKey = `rotina-leve:${currentDateKey}:recipes`
-    const inspirationsKey = `rotina-leve:${currentDateKey}:inspirations`
 
+    const savedRecipes = load(recipesKey)
+    const savedInspirations = load(inspirationsKey)
     const savedDayPriorities = load(dayPrioritiesKey)
     const savedPlanMyDay = load(planMyDayKey)
     const savedHomeTasks = load(homeTasksKey)
     const savedChildRoutine = load(childRoutineKey)
     const savedFamilyWeekly = load(familyWeeklyKey)
+    const savedChecklist = load(checklistKey)
     const savedNotesLists = load(notesListsKey)
-    const savedRecipes = load(recipesKey)
-    const savedInspirations = load(inspirationsKey)
 
+    if (typeof savedRecipes === 'object' && savedRecipes !== null)
+      setRecipes(savedRecipes as RecipesData)
+    if (typeof savedInspirations === 'object' && savedInspirations !== null)
+      setInspirations(savedInspirations as InspirationsData)
     if (typeof savedDayPriorities === 'object' && savedDayPriorities !== null)
       setDayPriorities(savedDayPriorities as DayPrioritiesData)
     if (typeof savedPlanMyDay === 'object' && savedPlanMyDay !== null)
@@ -148,12 +166,10 @@ export default function RotinaLevePage() {
       setChildRoutine(savedChildRoutine as ChildRoutineData)
     if (typeof savedFamilyWeekly === 'object' && savedFamilyWeekly !== null)
       setFamilyWeekly(savedFamilyWeekly as FamilyWeekData)
+    if (typeof savedChecklist === 'object' && savedChecklist !== null)
+      setChecklist(savedChecklist as ChecklistData)
     if (typeof savedNotesLists === 'object' && savedNotesLists !== null)
       setNotesLists(savedNotesLists as NotesListsData)
-    if (typeof savedRecipes === 'object' && savedRecipes !== null)
-      setRecipes(savedRecipes as RecipesData)
-    if (typeof savedInspirations === 'object' && savedInspirations !== null)
-      setInspirations(savedInspirations as InspirationsData)
   }, [isHydrated, currentDateKey])
 
   const toggleCardExpanded = (cardId: string) => {
@@ -190,9 +206,166 @@ export default function RotinaLevePage() {
     >
       <ClientOnly>
         <div className="space-y-4 md:space-y-5">
-          {/* SECTION 1 — My Essential Day */}
+          {/* QUICK ACCESS SECTION — Para começar o dia mais leve */}
           <Reveal delay={0}>
             <div className="px-0">
+              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                Para começar o dia mais leve
+              </h2>
+              <p className="text-sm text-[#545454]">
+                Inspire-se com ideias, receitas e mensagens para começar bem.
+              </p>
+            </div>
+          </Reveal>
+
+          {/* 2-Column Grid — Only this section uses grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            {/* Quick Card 1 — Healthy Recipes */}
+            <Reveal delay={50}>
+              <SoftCard>
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => toggleCardExpanded('recipes')}
+                >
+                  <div className="flex items-center gap-3">
+                    <AppIcon
+                      name="leaf"
+                      size={20}
+                      className="text-primary"
+                      decorative
+                    />
+                    <h3 className="text-lg font-semibold text-[#2f3a56]">
+                      Receitas Saudáveis
+                    </h3>
+                  </div>
+                  <span className="text-primary text-lg">
+                    {expandedCards['recipes'] ? '−' : '+'}
+                  </span>
+                </div>
+
+                {expandedCards['recipes'] && (
+                  <div
+                    className="mt-4 space-y-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="space-y-2">
+                      {[
+                        { key: 'recipe1', label: 'Receita 1' },
+                        { key: 'recipe2', label: 'Receita 2' },
+                        { key: 'recipe3', label: 'Receita 3' },
+                      ].map(({ key, label }) => (
+                        <input
+                          key={key}
+                          type="text"
+                          value={recipes[key as keyof RecipesData] || ''}
+                          onChange={(e) => {
+                            setRecipes({
+                              ...recipes,
+                              [key]: e.target.value,
+                            })
+                            saveCardData('recipes', {
+                              ...recipes,
+                              [key]: e.target.value,
+                            })
+                          }}
+                          placeholder={`${label}: nome da receita`}
+                          className="w-full rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => saveToPlanner('Receitas Saudáveis', recipes)}
+                      >
+                        Salvar no Planner
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </SoftCard>
+            </Reveal>
+
+            {/* Quick Card 2 — Inspirations of the Day */}
+            <Reveal delay={100}>
+              <SoftCard>
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => toggleCardExpanded('inspirations')}
+                >
+                  <div className="flex items-center gap-3">
+                    <AppIcon
+                      name="sparkles"
+                      size={20}
+                      className="text-primary"
+                      decorative
+                    />
+                    <h3 className="text-lg font-semibold text-[#2f3a56]">
+                      Inspirações do Dia
+                    </h3>
+                  </div>
+                  <span className="text-primary text-lg">
+                    {expandedCards['inspirations'] ? '−' : '+'}
+                  </span>
+                </div>
+
+                {expandedCards['inspirations'] && (
+                  <div
+                    className="mt-4 space-y-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div>
+                      <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
+                        Frase Motivadora
+                      </label>
+                      <textarea
+                        value={inspirations.motivation}
+                        onChange={(e) => {
+                          const updated = { ...inspirations, motivation: e.target.value }
+                          setInspirations(updated)
+                          saveCardData('inspirations', updated)
+                        }}
+                        placeholder="Uma frase que te inspire hoje..."
+                        className="w-full min-h-[80px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
+                        Dica Rápida para Mães
+                      </label>
+                      <textarea
+                        value={inspirations.tip}
+                        onChange={(e) => {
+                          const updated = { ...inspirations, tip: e.target.value }
+                          setInspirations(updated)
+                          saveCardData('inspirations', updated)
+                        }}
+                        placeholder="Uma dica prática para seu dia..."
+                        className="w-full min-h-[80px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => saveToPlanner('Inspirações do Dia', inspirations)}
+                      >
+                        Salvar no Planner
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </SoftCard>
+            </Reveal>
+          </div>
+
+          {/* SECTION 1 — My Essential Day */}
+          <Reveal delay={150}>
+            <div className="px-0 pt-2">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Meu Dia Essencial
               </h2>
@@ -203,7 +376,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* Card 1.1 — My Priorities of the Day */}
-          <Reveal delay={50}>
+          <Reveal delay={200}>
             <SoftCard>
               <div
                 className="flex items-center justify-between cursor-pointer"
@@ -285,7 +458,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* Card 1.2 — Plan My Day */}
-          <Reveal delay={100}>
+          <Reveal delay={250}>
             <SoftCard>
               <div
                 className="flex items-center justify-between cursor-pointer"
@@ -351,7 +524,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* Card 1.3 — Home Tasks */}
-          <Reveal delay={150}>
+          <Reveal delay={300}>
             <SoftCard>
               <div
                 className="flex items-center justify-between cursor-pointer"
@@ -446,7 +619,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* SECTION 2 — Family Routine */}
-          <Reveal delay={200}>
+          <Reveal delay={350}>
             <div className="px-0 pt-2">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Rotina da Família
@@ -458,7 +631,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* Card 2.1 — Child's Routine */}
-          <Reveal delay={250}>
+          <Reveal delay={400}>
             <SoftCard>
               <div
                 className="flex items-center justify-between cursor-pointer"
@@ -557,7 +730,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* Card 2.2 — Family Priorities of the Week */}
-          <Reveal delay={300}>
+          <Reveal delay={450}>
             <SoftCard>
               <div
                 className="flex items-center justify-between cursor-pointer"
@@ -655,7 +828,7 @@ export default function RotinaLevePage() {
           </Reveal>
 
           {/* SECTION 3 — Tools for Me */}
-          <Reveal delay={350}>
+          <Reveal delay={500}>
             <div className="px-0 pt-2">
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                 Ferramentas da Mãe
@@ -666,8 +839,90 @@ export default function RotinaLevePage() {
             </div>
           </Reveal>
 
-          {/* Card 3.1 — Notes & Lists */}
-          <Reveal delay={400}>
+          {/* Card 3.1 — Mother's Checklist */}
+          <Reveal delay={550}>
+            <SoftCard>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => toggleCardExpanded('checklist')}
+              >
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  Checklist da Mãe
+                </h3>
+                <span className="text-primary text-lg">
+                  {expandedCards['checklist'] ? '−' : '+'}
+                </span>
+              </div>
+
+              {expandedCards['checklist'] && (
+                <div
+                  className="mt-4 space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div>
+                    <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
+                      Checklist da Casa
+                    </label>
+                    <textarea
+                      value={checklist.homeChecklist}
+                      onChange={(e) => {
+                        const updated = { ...checklist, homeChecklist: e.target.value }
+                        setChecklist(updated)
+                        saveCardData('checklist', updated)
+                      }}
+                      placeholder="☐ Item 1\n☐ Item 2\n☐ Item 3"
+                      className="w-full min-h-[100px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
+                      Checklist do Trabalho
+                    </label>
+                    <textarea
+                      value={checklist.workChecklist}
+                      onChange={(e) => {
+                        const updated = { ...checklist, workChecklist: e.target.value }
+                        setChecklist(updated)
+                        saveCardData('checklist', updated)
+                      }}
+                      placeholder="☐ Item 1\n☐ Item 2\n☐ Item 3"
+                      className="w-full min-h-[100px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
+                      Checklist de Autocuidado
+                    </label>
+                    <textarea
+                      value={checklist.selfCareChecklist}
+                      onChange={(e) => {
+                        const updated = { ...checklist, selfCareChecklist: e.target.value }
+                        setChecklist(updated)
+                        saveCardData('checklist', updated)
+                      }}
+                      placeholder="☐ Item 1\n☐ Item 2\n☐ Item 3"
+                      className="w-full min-h-[100px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => saveToPlanner('Checklist da Mãe', checklist)}
+                    >
+                      Salvar no Planner
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </SoftCard>
+          </Reveal>
+
+          {/* Card 3.2 — Notes & Lists */}
+          <Reveal delay={600}>
             <SoftCard>
               <div
                 className="flex items-center justify-between cursor-pointer"
@@ -723,144 +978,6 @@ export default function RotinaLevePage() {
                       variant="primary"
                       size="sm"
                       onClick={() => saveToPlanner('Notas & Listas', notesLists)}
-                    >
-                      Salvar no Planner
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </SoftCard>
-          </Reveal>
-
-          {/* SECTION 4 — Quick Ideas */}
-          <Reveal delay={450}>
-            <div className="px-0 pt-2">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                Ideias Rápidas
-              </h2>
-              <p className="text-sm text-[#545454]">
-                Inspire-se com receitas e dicas para o seu dia.
-              </p>
-            </div>
-          </Reveal>
-
-          {/* Card 4.1 — Healthy Recipes */}
-          <Reveal delay={500}>
-            <SoftCard>
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleCardExpanded('recipes')}
-              >
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-                  Receitas Saudáveis
-                </h3>
-                <span className="text-primary text-lg">
-                  {expandedCards['recipes'] ? '−' : '+'}
-                </span>
-              </div>
-
-              {expandedCards['recipes'] && (
-                <div
-                  className="mt-4 space-y-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="space-y-2">
-                    {[
-                      { key: 'recipe1', label: 'Receita 1' },
-                      { key: 'recipe2', label: 'Receita 2' },
-                      { key: 'recipe3', label: 'Receita 3' },
-                    ].map(({ key, label }) => (
-                      <input
-                        key={key}
-                        type="text"
-                        value={recipes[key as keyof RecipesData] || ''}
-                        onChange={(e) => {
-                          setRecipes({
-                            ...recipes,
-                            [key]: e.target.value,
-                          })
-                          saveCardData('recipes', {
-                            ...recipes,
-                            [key]: e.target.value,
-                          })
-                        }}
-                        placeholder={`${label}: nome da receita`}
-                        className="w-full rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    ))}
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => saveToPlanner('Receitas Saudáveis', recipes)}
-                    >
-                      Salvar no Planner
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </SoftCard>
-          </Reveal>
-
-          {/* Card 4.2 — Inspirations of the Day */}
-          <Reveal delay={550}>
-            <SoftCard>
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleCardExpanded('inspirations')}
-              >
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-                  Inspirações do Dia
-                </h3>
-                <span className="text-primary text-lg">
-                  {expandedCards['inspirations'] ? '−' : '+'}
-                </span>
-              </div>
-
-              {expandedCards['inspirations'] && (
-                <div
-                  className="mt-4 space-y-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div>
-                    <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
-                      Frase Motivadora
-                    </label>
-                    <textarea
-                      value={inspirations.motivation}
-                      onChange={(e) => {
-                        const updated = { ...inspirations, motivation: e.target.value }
-                        setInspirations(updated)
-                        saveCardData('inspirations', updated)
-                      }}
-                      placeholder="Uma frase que te inspire hoje..."
-                      className="w-full min-h-[80px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-semibold text-[#2f3a56] mb-2 block">
-                      Dica Rápida para Mães
-                    </label>
-                    <textarea
-                      value={inspirations.tip}
-                      onChange={(e) => {
-                        const updated = { ...inspirations, tip: e.target.value }
-                        setInspirations(updated)
-                        saveCardData('inspirations', updated)
-                      }}
-                      placeholder="Uma dica prática para seu dia..."
-                      className="w-full min-h-[80px] rounded-2xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] placeholder-[#545454]/50 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => saveToPlanner('Inspirações do Dia', inspirations)}
                     >
                       Salvar no Planner
                     </Button>
