@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
-import { ClientOnly } from '@/components/common/ClientOnly'
 import type { KnownIconName } from '@/components/ui/AppIcon'
 
 interface CardItem {
