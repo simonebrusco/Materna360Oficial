@@ -54,14 +54,14 @@ const CARD_GROUPS: CardGroup[] = [
         id: 'planejar-dia',
         title: 'Planejar o Dia',
         description: 'Comece organizando as tarefas mais importantes.',
-        href: '/meu-dia?focus=planejar-o-dia',
+        href: '/meu-dia',
         icon: 'calendar',
       },
       {
         id: 'rotina-casa',
         title: 'Rotina da Casa',
         description: 'Tarefas do lar com praticidade e leveza.',
-        href: '/meu-dia?focus=rotina-da-casa',
+        href: '/meu-dia',
         icon: 'home',
       },
     ],
@@ -74,14 +74,14 @@ const CARD_GROUPS: CardGroup[] = [
         id: 'rotina-filho',
         title: 'Rotina do Filho',
         description: 'Organização do dia da criança com cuidado.',
-        href: '/meu-dia?focus=rotina-do-filho',
+        href: '/meu-dia',
         icon: 'heart',
       },
       {
         id: 'prioridades-semana',
         title: 'Prioridades da Semana',
         description: 'O que realmente importa nesta semana.',
-        href: '/meu-dia?focus=prioridades-da-semana',
+        href: '/meu-dia',
         icon: 'star',
       },
     ],
@@ -94,14 +94,14 @@ const CARD_GROUPS: CardGroup[] = [
         id: 'checklist-mae',
         title: 'Checklist da Mãe',
         description: 'Ações que fortalecem seu dia e sua família.',
-        href: '/meu-dia?focus=checklist-da-mae',
+        href: '/meu-dia',
         icon: 'check',
       },
       {
         id: 'notas-listas',
         title: 'Notas & Listas',
         description: 'Anotações rápidas e listas essenciais.',
-        href: '/meu-dia?focus=notas-e-listas',
+        href: '/meu-dia',
         icon: 'bookmark',
       },
     ],
@@ -1024,7 +1024,7 @@ export default function RotinaLevePage() {
 
                               <div className="text-right mt-3" style={{ pointerEvents: 'auto' }}>
                                 <Link
-                                  href="/meu-dia?focus=checklist-da-mae"
+                                  href="/meu-dia"
                                   className="text-sm font-medium text-primary hover:underline"
                                 >
                                   Ver mais →
@@ -1055,7 +1055,7 @@ export default function RotinaLevePage() {
 
                               <div className="text-right mt-3" style={{ pointerEvents: 'auto' }}>
                                 <Link
-                                  href="/meu-dia?focus=notas-e-listas"
+                                  href="/meu-dia"
                                   className="text-sm font-medium text-primary hover:underline"
                                 >
                                   Ver mais →
