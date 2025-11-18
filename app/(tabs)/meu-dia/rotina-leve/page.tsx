@@ -35,7 +35,7 @@ const INSPIRATION_CARDS: CardItem[] = [
   {
     id: 'inspiracoes-do-dia',
     title: 'Inspirações do Dia',
-    description: 'Your daily dose of motivation.',
+    description: 'Uma frase e um pequeno cuidado para hoje.',
     icon: 'sparkles',
   },
 ]
