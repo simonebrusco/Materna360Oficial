@@ -616,6 +616,168 @@ export default function RotinaLevePage() {
                     {group.cards.map((card) => {
                       const currentIndex = cardIndex
                       cardIndex += 1
+
+                      // Special handling for Planejar o Dia
+                      if (card.id === 'planejar-dia') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              {/* Header - clickable */}
+                              <button
+                                onClick={() => setIsPlannerOpen(!isPlannerOpen)}
+                                className="w-full text-left focus:outline-none flex flex-col"
+                              >
+                                <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                  {card.description}
+                                </p>
+                              </button>
+
+                              {/* Ver mais label */}
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                  Ver mais →
+                                </span>
+                              </div>
+
+                              {/* Expanded content */}
+                              {isPlannerOpen && (
+                                <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                    Organize suas prioridades com leveza.
+                                  </p>
+
+                                  {/* Checklist */}
+                                  <div className="space-y-3 mb-6">
+                                    {plannerItems.map((item) => (
+                                      <label key={item.id} className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={item.done}
+                                          onChange={() => handleTogglePlannerItem(item.id)}
+                                          className="w-4 h-4 rounded border-[#ddd] text-primary focus:ring-primary/50"
+                                        />
+                                        <span
+                                          className={`text-sm transition-all ${
+                                            item.done
+                                              ? 'line-through text-[#545454]/50'
+                                              : 'text-[#545454]'
+                                          }`}
+                                        >
+                                          {item.text}
+                                        </span>
+                                      </label>
+                                    ))}
+                                  </div>
+
+                                  {/* Input + Add button */}
+                                  <div className="flex gap-2 mb-6">
+                                    <input
+                                      type="text"
+                                      value={plannerNewTask}
+                                      onChange={(e) => setPlannerNewTask(e.target.value)}
+                                      onKeyPress={(e) => e.key === 'Enter' && handleAddPlannerTask()}
+                                      placeholder="Adicionar nova tarefa…"
+                                      className="flex-1 rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
+                                    />
+                                    <button
+                                      onClick={handleAddPlannerTask}
+                                      className="px-4 py-2.5 rounded-2xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity duration-150"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+
+                                  {/* Abrir no Planner button */}
+                                  <button
+                                    onClick={() => router.push('/meu-dia')}
+                                    className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                  >
+                                    Abrir no Planner
+                                  </button>
+                                </div>
+                              )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
+                      // Special handling for Rotina da Casa
+                      if (card.id === 'rotina-casa') {
+                        return (
+                          <Reveal key={card.id} delay={currentIndex * 25}>
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
+                              {/* Header - clickable */}
+                              <button
+                                onClick={() => setIsCasaOpen(!isCasaOpen)}
+                                className="w-full text-left focus:outline-none flex flex-col"
+                              >
+                                <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                  {card.description}
+                                </p>
+                              </button>
+
+                              {/* Ver mais label */}
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                                  Ver mais →
+                                </span>
+                              </div>
+
+                              {/* Expanded content */}
+                              {isCasaOpen && (
+                                <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
+                                  <p className="text-sm text-[#545454]/85 leading-relaxed mb-6">
+                                    Tarefas rápidas para deixar a casa mais leve.
+                                  </p>
+
+                                  {/* Toggle chips */}
+                                  <div className="flex flex-wrap gap-2 mb-6">
+                                    {casaChips.map((chip) => (
+                                      <button
+                                        key={chip.id}
+                                        onClick={() => handleToggleCasaChip(chip.id)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-150 ${
+                                          chip.selected
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-[#f0f0f0] text-[#545454] hover:bg-[#e8e8e8]'
+                                        }`}
+                                      >
+                                        {chip.text}
+                                      </button>
+                                    ))}
+                                  </div>
+
+                                  {/* Dica do dia box */}
+                                  <div className="bg-[#f8f8f8] rounded-2xl p-4 mb-6">
+                                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
+                                      Dica do dia
+                                    </h4>
+                                    <p className="text-sm text-[#545454]/85 leading-relaxed">
+                                      Escolha apenas o essencial. O resto pode esperar.
+                                    </p>
+                                  </div>
+
+                                  {/* Abrir no Planner button */}
+                                  <button
+                                    onClick={() => router.push('/meu-dia')}
+                                    className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                  >
+                                    Abrir no Planner
+                                  </button>
+                                </div>
+                              )}
+                            </SoftCard>
+                          </Reveal>
+                        )
+                      }
+
+                      // Default card rendering for other cards
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
                           <Link href={card.href || '#'}>
