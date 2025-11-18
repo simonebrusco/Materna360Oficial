@@ -266,7 +266,7 @@ export default function RotinaLevePage() {
                             {/* Ver mais label */}
                             <div className="flex justify-end mt-2">
                               <span className="text-xs font-semibold text-primary/85 tracking-wide">
-                                Ver mais ��
+                                Ver mais →
                               </span>
                             </div>
 
@@ -979,7 +979,7 @@ export default function RotinaLevePage() {
                                       value={semanaNewItem}
                                       onChange={(e) => setSemanaNewItem(e.target.value)}
                                       onKeyPress={(e) => e.key === 'Enter' && handleAddSemanaItem()}
-                                      placeholder="Adicionar nova prioridade…"
+                                      placeholder="Adicionar nova prioridade���"
                                       className="flex-1 rounded-2xl bg-white/90 text-sm text-[#2f3a56] placeholder-[#545454]/50 border border-[#ddd] px-4 py-2.5 transition duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/25 focus:outline-none"
                                     />
                                     <button
