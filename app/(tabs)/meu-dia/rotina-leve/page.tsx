@@ -56,7 +56,7 @@ const ORGANIZATION_CARDS: CardItem[] = [
   {
     id: 'rotina-da-familia',
     title: 'Rotina da Família',
-    description: 'Keep track of the family schedule.',
+    description: 'Acompanhe a agenda da família com harmonia.',
     icon: 'heart',
   },
 ]
