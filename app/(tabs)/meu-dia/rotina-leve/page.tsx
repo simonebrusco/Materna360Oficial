@@ -506,8 +506,16 @@ export default function RotinaLevePage() {
                                 </div>
 
                                 {/* Generate new inspiration button */}
-                                <button className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150">
+                                <button className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150 mb-3">
                                   Gerar nova inspiração ✨
+                                </button>
+
+                                {/* Save to Planner button */}
+                                <button
+                                  onClick={() => router.push('/meu-dia')}
+                                  className="w-full border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                >
+                                  Salvar no Planner
                                 </button>
                               </div>
                             )}
