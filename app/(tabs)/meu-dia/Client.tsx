@@ -69,9 +69,9 @@ export function MeuDiaClient() {
                     <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Como você está?</p>
                     <div className="flex gap-2 flex-wrap">
                       {[
-                        { id: 'happy', label: 'Feliz', emoji: '😊', color: 'from-yellow-50 to-yellow-100' },
-                        { id: 'okay', label: 'Normal', emoji: '😐', color: 'from-blue-50 to-blue-100' },
-                        { id: 'stressed', label: 'Estressada', emoji: '😰', color: 'from-red-50 to-red-100' },
+                        { id: 'happy', label: 'Feliz', color: 'from-yellow-50 to-yellow-100' },
+                        { id: 'okay', label: 'Normal', color: 'from-blue-50 to-blue-100' },
+                        { id: 'stressed', label: 'Estressada', color: 'from-red-50 to-red-100' },
                       ].map(mood => (
                         <button
                           key={mood.id}
@@ -82,7 +82,6 @@ export function MeuDiaClient() {
                               : 'bg-white border border-[#ddd] hover:border-[#ff005e]/30'
                           }`}
                         >
-                          <span className="mr-1">{mood.emoji}</span>
                           {mood.label}
                         </button>
                       ))}
