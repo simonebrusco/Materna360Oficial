@@ -44,7 +44,7 @@ const ORGANIZATION_CARDS: CardItem[] = [
   {
     id: 'planejar-o-dia',
     title: 'Planejar o Dia',
-    description: 'Organize the essentials.',
+    description: 'Organize o essencial sem se sobrecarregar.',
     icon: 'calendar',
   },
   {
