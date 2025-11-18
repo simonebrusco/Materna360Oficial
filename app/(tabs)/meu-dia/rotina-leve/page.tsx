@@ -272,15 +272,15 @@ export default function RotinaLevePage() {
       title="Rotina Leve"
       subtitle="Organize o seu dia com leveza e clareza."
     >
-      <div className="space-y-8 md:space-y-10">
+      <div className="space-y-12 md:space-y-16">
           {/* Inspire Section */}
           <Reveal delay={0}>
-            <div>
-              <div className="mb-4 md:mb-6">
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+            <div className="pt-2">
+              <div className="mb-6 md:mb-8">
+                <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56] mb-3">
                   Inspire o seu dia
                 </h2>
-                <p className="text-sm md:text-base text-[#545454]/75">
+                <p className="text-base text-[#545454] leading-relaxed">
                   Comece trazendo leveza antes de organizar tudo.
                 </p>
               </div>
