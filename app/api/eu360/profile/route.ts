@@ -30,8 +30,11 @@ type Eu360ProfileResponse = {
 const invalidResponse = (message: string, status = 400) =>
   NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
 
-const successResponse = (payload: Eu360ProfileResponse) =>
-  NextResponse.json(payload, { status: 200, headers: NO_STORE_HEADERS })
+const successResponse = (payload: Eu360ProfileResponse, useCache = false) =>
+  NextResponse.json(payload, {
+    status: 200,
+    headers: useCache ? CACHE_HEADERS : NO_STORE_HEADERS
+  })
 
 function normalizeName(raw: unknown): string {
   if (typeof raw !== 'string') {
