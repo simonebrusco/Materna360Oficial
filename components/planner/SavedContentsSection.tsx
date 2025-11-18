@@ -26,8 +26,8 @@ const typeLabels: Record<SavedContent['type'], string> = {
 
 const typeIcons: Record<SavedContent['type'], string> = {
   artigo: 'book-open',
-  receita: 'utensils',
-  ideia: 'lightbulb',
+  receita: 'star',
+  ideia: 'idea',
   frase: 'sparkles',
 }
 
