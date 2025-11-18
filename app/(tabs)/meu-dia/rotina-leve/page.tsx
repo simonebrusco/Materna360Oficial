@@ -117,6 +117,16 @@ const SUGGESTIONS = [
   'Pausa de 5 minutos só para você.',
 ]
 
+const PREP_TIME_OPTIONS = ['10 min', '20 min', '30 min', '1h+']
+const DIFFICULTY_OPTIONS = ['Fácil', 'Médio', 'Elaborado']
+const CHILD_AGE_OPTIONS = ['0–2', '3–5', '6–8', '9+']
+
+const RECIPE_SUGGESTIONS = [
+  { name: 'Bolinho de Banana', time: '10 min', age: 'Ideal para 3–5 anos' },
+  { name: 'Omelete Colorido', time: '15 min', age: 'Ideal para 6–8 anos' },
+  { name: 'Creme de Frutas com Aveia', time: '5 min', age: 'Para todas as idades' },
+]
+
 export default function RotinaLevePage() {
   // Ideias Rápidas state
   const [isIdeasOpen, setIsIdeasOpen] = useState(false)
