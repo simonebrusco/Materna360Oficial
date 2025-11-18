@@ -118,11 +118,19 @@ const SUGGESTIONS = [
 ]
 
 export default function RotinaLevePage() {
+  // Ideias Rápidas state
   const [isIdeasOpen, setIsIdeasOpen] = useState(false)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [selectedMood, setSelectedMood] = useState<string | null>(null)
   const [selectedParticipants, setSelectedParticipants] = useState<string | null>(null)
   const [selectedAge, setSelectedAge] = useState<string | null>(null)
+
+  // Receitas Inteligentes state
+  const [isRecipesOpen, setIsRecipesOpen] = useState(false)
+  const [ingredients, setIngredients] = useState('')
+  const [selectedPrepTime, setSelectedPrepTime] = useState<string | null>(null)
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
+  const [selectedChildAge, setSelectedChildAge] = useState<string | null>(null)
 
   let cardIndex = 0
 
