@@ -1033,8 +1033,7 @@ export default function RotinaLevePage() {
           {/* Closing message */}
           <div className="mt-6 pt-6 border-t border-[#e0e0e0]">
             <p className="text-center text-sm text-[#545454]/70 leading-relaxed">
-              Organize seu dia com leveza. Pequenos passos fazem a grande diferença.{'\u00A0'}
-              <span className="ml-1 text-[#ff005e]">♥</span>
+              Organize seu dia com leveza. Pequenos passos fazem a grande diferença. <span className="text-[#ff005e]">♥</span>
             </p>
           </div>
         </div>
