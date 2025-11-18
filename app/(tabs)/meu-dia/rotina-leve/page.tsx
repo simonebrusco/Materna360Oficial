@@ -94,14 +94,14 @@ const CARD_GROUPS: CardGroup[] = [
         id: 'checklist-mae',
         title: 'Checklist da Mãe',
         description: 'Ações que fortalecem seu dia e sua família.',
-        href: '/meu-dia',
+        href: '/maternar/checklist-da-mae',
         icon: 'check',
       },
       {
         id: 'notas-listas',
         title: 'Notas & Listas',
         description: 'Anotações rápidas e listas essenciais.',
-        href: '/meu-dia',
+        href: '/maternar/notas-e-listas',
         icon: 'bookmark',
       },
     ],
@@ -1004,53 +1004,6 @@ export default function RotinaLevePage() {
                         )
                       }
 
-                      // Special handling for Checklist da Mãe
-                      if (card.id === 'checklist-mae') {
-                        return (
-                          <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
-                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                                Checklist da Mãe
-                              </h3>
-                              <p className="text-sm text-[#545454]/85 leading-relaxed">
-                                Ações que fortalecem seu dia e sua família.
-                              </p>
-                              <div className="flex justify-end mt-2">
-                                <Link
-                                  href="/maternar/checklist-da-mae"
-                                  className="text-xs font-semibold text-primary/85 tracking-wide hover:underline"
-                                >
-                                  Ver mais →
-                                </Link>
-                              </div>
-                            </SoftCard>
-                          </Reveal>
-                        )
-                      }
-
-                      // Special handling for Notas & Listas
-                      if (card.id === 'notas-listas') {
-                        return (
-                          <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col">
-                              <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
-                                Notas & Listas
-                              </h3>
-                              <p className="text-sm text-[#545454]/85 leading-relaxed">
-                                Anotações rápidas e listas essenciais.
-                              </p>
-                              <div className="flex justify-end mt-2">
-                                <Link
-                                  href="/maternar/notas-e-listas"
-                                  className="text-xs font-semibold text-primary/85 tracking-wide hover:underline"
-                                >
-                                  Ver mais →
-                                </Link>
-                              </div>
-                            </SoftCard>
-                          </Reveal>
-                        )
-                      }
 
                       // Default card rendering for other cards
                       return (
