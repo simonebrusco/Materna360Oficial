@@ -83,7 +83,7 @@ export default function BibliotecaMaternaPage() {
     <PageTemplate
       label="BIBLIOTECA"
       title="Biblioteca Materna"
-      subtitle="Conteúdos inteligentes para apoiar você e o desenvolvimento do seu filho."
+      subtitle="Conteúdos que apoiam sua jornada."
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-10">

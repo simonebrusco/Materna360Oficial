@@ -102,7 +102,7 @@ export default function AutocuidadoInteligentePage() {
     <PageTemplate
       label="CUIDAR"
       title="Autocuidado Inteligente"
-      subtitle="Cuidar de você também é cuidar da sua família."
+      subtitle="Cuidando de você com intenção, leveza e verdade."
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">

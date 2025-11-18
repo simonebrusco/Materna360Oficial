@@ -22,9 +22,10 @@ export function SoftCard({
         'rounded-[var(--radius-card)] border border-white/60',
         'shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
         'hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]',
+        'hover:scale-[1.02]',
         'bg-white/95 backdrop-blur-[1px]',
         'p-4 md:p-5',
-        'transition-shadow duration-200',
+        'transition-all duration-200',
         className
       )}
       {...rest}

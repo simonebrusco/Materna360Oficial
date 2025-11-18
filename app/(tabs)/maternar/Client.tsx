@@ -70,16 +70,12 @@ export default function MaternarClient() {
                 <div className="flex-1">
                   {/* Subtitle/Label */}
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70 mb-2">
-                    MEU DIA
+                    MATERNAR
                   </p>
                   {/* Main Title */}
                   <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56]">
                     {greeting}
                   </h1>
-                  {/* Subtitle */}
-                  <p className="mt-4 md:mt-5 text-sm text-neutral-600">
-                    Seu dia começa aqui.
-                  </p>
                 </div>
 
                 {/* Profile Button on Right */}
