@@ -133,12 +133,8 @@ export default function RotinaLevePage() {
   let cardIndex = 0
 
   const renderCardContent = (card: CardItem, hasLink: boolean) => {
-    const cardClasses = `flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 ${
-      hasLink ? 'hover:bg-white/80 transition-all duration-200 cursor-pointer' : ''
-    }`
-
     const cardContent = (
-      <div className={cardClasses}>
+      <div className={`flex flex-col h-full rounded-2xl border border-white/60 bg-white/60 p-4 ${hasLink ? 'hover:bg-white/80 transition-all duration-200 cursor-pointer' : ''}`}>
         <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
           {card.title}
         </h4>
@@ -155,10 +151,7 @@ export default function RotinaLevePage() {
       </div>
     )
 
-    if (hasLink && card.href) {
-      return <Link href={card.href}>{cardContent}</Link>
-    }
-    return cardContent
+    return hasLink && card.href ? <Link href={card.href}>{cardContent}</Link> : cardContent
   }
 
   return (
