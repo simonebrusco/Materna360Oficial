@@ -10,6 +10,7 @@ import type { KnownIconName } from '@/components/ui/AppIcon'
 
 interface CardItem {
   id: string
+  icon: string
   title: string
   description: string
   href: string
