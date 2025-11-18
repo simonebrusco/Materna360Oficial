@@ -1008,15 +1008,15 @@ export default function RotinaLevePage() {
                       return (
                         <Reveal key={card.id} delay={currentIndex * 25}>
                           <Link href={card.href || '#'}>
-                            <SoftCard className="rounded-2xl p-4 md:p-6 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] active:scale-95 cursor-pointer">
+                            <SoftCard className="rounded-2xl p-4 md:p-6 flex flex-col hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] active:scale-95 cursor-pointer">
                               <h3 className="text-base font-semibold text-[#2f3a56] mb-2">
                                 {card.title}
                               </h3>
-                              <p className="text-sm text-[#545454]/85 mb-4 flex-1 leading-relaxed">
+                              <p className="text-sm text-[#545454]/85 leading-relaxed">
                                 {card.description}
                               </p>
-                              <div className="flex justify-end">
-                                <span className="text-xs font-semibold text-primary/85 tracking-wide inline-flex items-center gap-1">
+                              <div className="flex justify-end mt-2">
+                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
                                   Ver mais →
                                 </span>
                               </div>
