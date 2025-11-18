@@ -208,6 +208,20 @@ export default function RotinaLevePage() {
     setCasaChips(casaChips.map((chip) => (chip.id === id ? { ...chip, selected: !chip.selected } : chip)))
   }
 
+  const handleToggleFilhoActivity = (id: string) => {
+    setFilhoActivities(filhoActivities.map((activity) => (activity.id === id ? { ...activity, selected: !activity.selected } : activity)))
+  }
+
+  const handleToggleSemanaItem = (id: string) => {
+    setSemanaItems(semanaItems.map((item) => (item.id === id ? { ...item, done: !item.done } : item)))
+  }
+
+  const handleAddSemanaItem = () => {
+    if (!semanaNewItem.trim()) return
+    setSemanaItems([...semanaItems, { id: String(Date.now()), text: semanaNewItem, done: false }])
+    setSemanaNewItem('')
+  }
+
   return (
     <PageTemplate
       label="MEU DIA"
