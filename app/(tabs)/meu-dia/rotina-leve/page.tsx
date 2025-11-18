@@ -6,12 +6,14 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import type { KnownIconName } from '@/components/ui/AppIcon'
 
 interface CardItem {
   id: string
   title: string
   description: string
   href: string
+  icon: KnownIconName
 }
 
 interface CardGroup {
@@ -72,7 +74,7 @@ const CARD_GROUPS: CardGroup[] = [
     ],
   },
   {
-    label: 'IDEIAS RÁPIDAS',
+    label: 'IDEIAS R��PIDAS',
     cards: [
       {
         id: 'receitas-saudaveis',
