@@ -1039,17 +1039,21 @@ export default function RotinaLevePage() {
                       if (card.id === 'notas-listas') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard>
-                              <div className="flex flex-col gap-2">
-                                <h3 className="text-base font-semibold text-[#2f3a56]">
-                                  Notas & Listas
-                                </h3>
-                                <p className="text-sm text-[#545454]/85">
-                                  Anotações rápidas e listas essenciais.
-                                </p>
+                            <div>
+                              <div style={{ pointerEvents: 'none' }}>
+                                <SoftCard>
+                                  <div className="flex flex-col gap-2">
+                                    <h3 className="text-base font-semibold text-[#2f3a56]">
+                                      Notas & Listas
+                                    </h3>
+                                    <p className="text-sm text-[#545454]/85">
+                                      Anotações rápidas e listas essenciais.
+                                    </p>
+                                  </div>
+                                </SoftCard>
                               </div>
 
-                              <div className="mt-4 text-right">
+                              <div className="text-right mt-3" style={{ pointerEvents: 'auto' }}>
                                 <Link
                                   href="/meu-dia?focus=notas-e-listas"
                                   className="text-sm font-medium text-primary hover:underline"
@@ -1057,7 +1061,7 @@ export default function RotinaLevePage() {
                                   Ver mais →
                                 </Link>
                               </div>
-                            </SoftCard>
+                            </div>
                           </Reveal>
                         )
                       }
