@@ -73,7 +73,7 @@ const CARD_GROUPS: CardGroup[] = [
       {
         id: 'rotina-filho',
         title: 'Rotina do Filho',
-        description: 'Organização do dia da criança com cuidado.',
+        description: 'Organiza��ão do dia da criança com cuidado.',
         href: '/meu-dia',
         icon: 'heart',
       },
@@ -1103,7 +1103,7 @@ export default function RotinaLevePage() {
                                   {/* Save button */}
                                   <button
                                     onClick={handleSaveChecklist}
-                                    className="w-full bg-primary text-white py-3 px-6 rounded-2xl font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150"
+                                    className="w-full bg-primary text-white py-3 px-6 rounded-full font-semibold text-sm hover:shadow-[0_8px_24px_rgba(255,0,94,0.2)] active:scale-95 transition-all duration-150"
                                   >
                                     Salvar no planner
                                   </button>
