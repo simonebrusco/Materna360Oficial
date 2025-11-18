@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import BuilderErrorBoundary from '@/components/dev/BuilderErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import BottomNav from '@/components/common/BottomNav';
@@ -16,7 +17,7 @@ if (typeof window !== 'undefined') {
   (window as any).__BUILDER_MODE__ = true;
 }
 
-export default function BuilderEmbedPage() {
+function BuilderEmbedInner() {
   // Force readable text (avoid theme inversion in iframe)
   const forceStyle: React.CSSProperties = {
     color: '#111',
@@ -55,5 +56,13 @@ export default function BuilderEmbedPage() {
         <BottomNav />
       </main>
     </BuilderErrorBoundary>
+  );
+}
+
+export default function BuilderEmbedPage() {
+  return (
+    <Suspense fallback={null}>
+      <BuilderEmbedInner />
+    </Suspense>
   );
 }
