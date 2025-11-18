@@ -13,12 +13,38 @@ interface CardItem {
   icon: KnownIconName
   title: string
   description: string
-  href: string
+  href?: string
 }
 
 interface CardGroup {
   label: string
+  subtitle?: string
   cards: CardItem[]
+}
+
+const INSPIRATION_CARDS: CardGroup = {
+  label: 'INSPIRE O SEU DIA',
+  subtitle: 'Comece trazendo leveza antes de organizar tudo.',
+  cards: [
+    {
+      id: 'ideias-rapidas',
+      title: 'Ideias Rápidas',
+      description: 'Inspirações simples para deixar o dia mais leve.',
+      icon: 'lightbulb',
+    },
+    {
+      id: 'receitas-inteligentes',
+      title: 'Receitas Inteligentes',
+      description: 'Você diz o ingrediente, eu te ajudo com o resto.',
+      icon: 'sparkles',
+    },
+    {
+      id: 'inspiracoes-do-dia',
+      title: 'Inspirações do Dia',
+      description: 'Uma frase e um pequeno cuidado para hoje.',
+      icon: 'heart',
+    },
+  ],
 }
 
 const CARD_GROUPS: CardGroup[] = [
