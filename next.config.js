@@ -1,11 +1,3 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  poweredByHeader: false,
-  eslint: {
-    // Do not fail the build on ESLint errors.
-    ignoreDuringBuilds: true,
-  },
-};
-
-module.exports = nextConfig;
+// This file is superseded by next.config.mjs and should not be used.
+// Please use next.config.mjs instead.
+// This file is kept for reference only and will be removed in the next update.
