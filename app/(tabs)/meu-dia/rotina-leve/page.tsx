@@ -1008,17 +1008,21 @@ export default function RotinaLevePage() {
                       if (card.id === 'checklist-mae') {
                         return (
                           <Reveal key={card.id} delay={currentIndex * 25}>
-                            <SoftCard>
-                              <div className="flex flex-col gap-2">
-                                <h3 className="text-base font-semibold text-[#2f3a56]">
-                                  Checklist da Mãe
-                                </h3>
-                                <p className="text-sm text-[#545454]/85">
-                                  Ações que fortalecem seu dia e sua família.
-                                </p>
+                            <div>
+                              <div style={{ pointerEvents: 'none' }}>
+                                <SoftCard>
+                                  <div className="flex flex-col gap-2">
+                                    <h3 className="text-base font-semibold text-[#2f3a56]">
+                                      Checklist da Mãe
+                                    </h3>
+                                    <p className="text-sm text-[#545454]/85">
+                                      Ações que fortalecem seu dia e sua família.
+                                    </p>
+                                  </div>
+                                </SoftCard>
                               </div>
 
-                              <div className="mt-4 text-right">
+                              <div className="text-right mt-3" style={{ pointerEvents: 'auto' }}>
                                 <Link
                                   href="/meu-dia?focus=checklist-da-mae"
                                   className="text-sm font-medium text-primary hover:underline"
@@ -1026,7 +1030,7 @@ export default function RotinaLevePage() {
                                   Ver mais →
                                 </Link>
                               </div>
-                            </SoftCard>
+                            </div>
                           </Reveal>
                         )
                       }
