@@ -238,65 +238,63 @@ export default function WeeklyPlannerShell() {
   return (
     <Reveal delay={200}>
       <SoftCard className="p-4 md:p-6 space-y-6">
-        {/* Planner Header */}
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56]">
-                Planner da semana
-              </h2>
-              <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                Organize seus compromissos, prioridades e cuidados em um só lugar.
-              </p>
-            </div>
-
-            {/* Toggle */}
-            <div className="inline-flex bg-[#f5f5f5] rounded-full p-1 w-fit">
-              <button
-                onClick={() => setViewMode('hoje')}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all relative ${
-                  viewMode === 'hoje'
-                    ? 'bg-white text-[#ff005e] shadow-sm'
-                    : 'text-[#545454] hover:text-[#2f3a56]'
-                }`}
-              >
-                Hoje
-                {totalTasksHoje > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#ff005e] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {totalTasksHoje}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setViewMode('semana')}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
-                  viewMode === 'semana'
-                    ? 'bg-white text-[#ff005e] shadow-sm'
-                    : 'text-[#545454] hover:text-[#2f3a56]'
-                }`}
-              >
-                Semana
-              </button>
-            </div>
-          </div>
-
-          {/* Day Calendar Strip */}
+        {/* Planner Header with Toggle */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
-              Selecione um dia
+            <h2 className="text-xl md:text-2xl font-bold text-[#2f3a56]">
+              Planner da semana
+            </h2>
+            <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+              Organize seus compromissos, prioridades e cuidados em um só lugar.
             </p>
-            <DayCalendarStrip
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-            />
           </div>
+
+          {/* Toggle */}
+          <div className="inline-flex bg-[#f5f5f5] rounded-full p-1 w-fit">
+            <button
+              onClick={() => setViewMode('hoje')}
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all relative ${
+                viewMode === 'hoje'
+                  ? 'bg-white text-[#ff005e] shadow-sm'
+                  : 'text-[#545454] hover:text-[#2f3a56]'
+              }`}
+            >
+              Hoje
+              {totalTasksHoje > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-[#ff005e] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalTasksHoje}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setViewMode('semana')}
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                viewMode === 'semana'
+                  ? 'bg-white text-[#ff005e] shadow-sm'
+                  : 'text-[#545454] hover:text-[#2f3a56]'
+              }`}
+            >
+              Semana
+            </button>
+          </div>
+        </div>
+
+        {/* Day Calendar Strip */}
+        <div>
+          <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
+            Selecione um dia
+          </p>
+          <DayCalendarStrip
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
         </div>
 
         {/* Content based on view mode */}
         {viewMode === 'hoje' ? (
           <div className="space-y-6">
             {/* Two Column Layout on Desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               {/* Left Column */}
               <div className="space-y-6">
                 <AgendaSection
@@ -339,17 +337,16 @@ export default function WeeklyPlannerShell() {
                 />
               </div>
             </div>
+
           </div>
         ) : (
           <WeekView weekData={weekData} />
         )}
       </SoftCard>
 
-      {/* Saved Contents - Rendered Below Planner Card */}
+      {/* Saved Contents - Rendered Outside Planner Card */}
       {data.savedContents.length > 0 && (
-        <div className="mt-6">
-          <SavedContentsSection contents={data.savedContents} />
-        </div>
+        <SavedContentsSection contents={data.savedContents} />
       )}
     </Reveal>
   )
