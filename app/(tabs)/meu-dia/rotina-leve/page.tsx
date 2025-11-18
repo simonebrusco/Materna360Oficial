@@ -186,17 +186,9 @@ export default function RotinaLevePage() {
           {CARD_GROUPS.map((group, groupIdx) => (
             <Reveal key={group.label} delay={(groupIdx + 1) * 50}>
               <SoftCard className="rounded-3xl p-6 md:p-8">
-                <div className="mb-6">
-                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                    {group.label}
-                  </h3>
-                  {group.subtitle && (
-                    <p className="text-sm text-[#545454] mb-2">
-                      {group.subtitle}
-                    </p>
-                  )}
-                </div>
-
+                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-6">
+                  {group.label}
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {group.cards.map((card) => {
                     const currentIndex = cardIndex
