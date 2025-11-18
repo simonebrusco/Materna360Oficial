@@ -122,9 +122,9 @@ export async function GET() {
     const raw = cookies().get(COOKIE)?.value
     const data = safeParse(raw)
 
-    // Add a 4-second timeout to the entire GET request
+    // Add a 3-second timeout to the entire GET request
     const timeoutPromise = new Promise<string[]>((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), 4000)
+      setTimeout(() => reject(new Error('Request timeout')), 3000)
     )
 
     const childrenNames = await Promise.race([
