@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -13,89 +12,72 @@ import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import type { KnownIconName } from '@/components/ui/AppIcon'
 
-interface NavCard {
+interface CardItem {
   id: string
   title: string
   description: string
-  href: string
   icon: KnownIconName
 }
 
-interface AccordionItem {
-  id: string
-  title: string
-  description: string
-  content: React.ReactNode
-}
-
-const INSPIRATION_CARDS: NavCard[] = [
+const INSPIRATION_CARDS: CardItem[] = [
   {
     id: 'ideias-rapidas',
     title: 'Ideias Rápidas',
     description: 'Quick ideas to bring more lightness to your day.',
-    href: '/descobrir',
     icon: 'lightbulb',
   },
   {
     id: 'receitas-inteligentes',
     title: 'Receitas Inteligentes',
     description: 'Type an ingredient and get a smart recipe suggestion.',
-    href: '/cuidar/receitas-saudaveis',
     icon: 'leaf',
   },
   {
     id: 'inspiracoes-do-dia',
     title: 'Inspirações do Dia',
     description: 'Your daily dose of motivation.',
-    href: '/maternar/inspiracoes',
     icon: 'sparkles',
   },
 ]
 
-const ORGANIZATION_CARDS: NavCard[] = [
+const ORGANIZATION_CARDS: CardItem[] = [
   {
     id: 'planejar-o-dia',
     title: 'Planejar o Dia',
     description: 'Organize the essentials.',
-    href: '/meu-dia?focus=planejar-o-dia',
     icon: 'calendar',
   },
   {
     id: 'rotina-da-casa',
     title: 'Rotina da Casa',
     description: 'Manage home tasks with clarity.',
-    href: '/meu-dia?focus=rotina-da-casa',
     icon: 'home',
   },
   {
     id: 'rotina-da-familia',
     title: 'Rotina da Família',
     description: 'Keep track of the family schedule.',
-    href: '/meu-dia?focus=rotina-do-filho',
     icon: 'heart',
   },
 ]
 
-const TOOLS_CARDS: NavCard[] = [
+const TOOLS_CARDS: CardItem[] = [
   {
     id: 'prioridades-semana',
     title: 'Prioridades da Semana',
     description: 'What really matters this week.',
-    href: '/meu-dia?focus=prioridades-da-semana',
     icon: 'star',
   },
   {
     id: 'checklist-mae',
     title: 'Checklist da Mãe',
     description: 'Your essential tasks.',
-    href: '/meu-dia?focus=checklist-da-mae',
     icon: 'check',
   },
   {
     id: 'notas-listas',
     title: 'Notas & Listas',
     description: 'Quick notes and checklists.',
-    href: '/meu-dia?focus=notas-e-listas',
     icon: 'bookmark',
   },
 ]
@@ -106,6 +88,7 @@ export default function RotinaLevePage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [activeFilter, setActiveFilter] = useState('Hoje')
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null)
+  const [cardData, setCardData] = useState<Record<string, string>>({})
   const [recurringTasks, setRecurringTasks] = useState('')
   const [reminders, setReminders] = useState('')
 
@@ -117,6 +100,22 @@ export default function RotinaLevePage() {
 
   useEffect(() => {
     if (!isHydrated) return
+
+    // Load all card data
+    const cardIds = [
+      ...INSPIRATION_CARDS.map((c) => c.id),
+      ...ORGANIZATION_CARDS.map((c) => c.id),
+      ...TOOLS_CARDS.map((c) => c.id),
+    ]
+
+    const loadedData: Record<string, string> = {}
+    cardIds.forEach((id) => {
+      const key = `rotina-leve:${currentDateKey}:${id}`
+      const saved = load(key)
+      if (typeof saved === 'string') loadedData[id] = saved
+    })
+
+    setCardData(loadedData)
 
     const recurringTasksKey = `rotina-leve:${currentDateKey}:recurringTasks`
     const remindersKey = `rotina-leve:${currentDateKey}:reminders`
@@ -130,6 +129,20 @@ export default function RotinaLevePage() {
 
   const toggleAccordion = (id: string) => {
     setExpandedAccordion(expandedAccordion === id ? null : id)
+  }
+
+  const handleSaveCard = (id: string) => {
+    const content = cardData[id]
+    if (!content?.trim()) return
+
+    const key = `rotina-leve:${currentDateKey}:${id}`
+    save(key, content)
+
+    try {
+      track('rotina_leve.card_saved', { cardId: id, tab: 'meu-dia-rotina-leve' })
+    } catch {}
+
+    toast.success('Salvo no Planner!')
   }
 
   const handleSaveRecurringTasks = () => {
@@ -151,6 +164,279 @@ export default function RotinaLevePage() {
     } catch {}
     toast.success('Lembretes salvos!')
   }
+
+  const renderCardContent = (cardId: string) => {
+    const content = cardData[cardId] || ''
+
+    switch (cardId) {
+      case 'ideias-rapidas':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {['Diversão', 'Aprendizado', 'Relaxamento', 'Movimento'].map((filter) => (
+                  <button
+                    key={filter}
+                    className="px-3 py-1 rounded-full text-xs font-medium bg-white/60 text-[#2f3a56] hover:bg-white/80 border border-white/40 transition-all duration-200"
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Escreva as ideias rápidas que você quer experimentar..."
+              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="mt-3 w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'receitas-inteligentes':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                Ingrediente
+              </label>
+              <input
+                type="text"
+                value={content}
+                onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+                placeholder="Digite um ingrediente..."
+                className="w-full px-3 py-2 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+            <div className="p-3 rounded-2xl bg-white/60 border border-white/40 mb-3">
+              <p className="text-xs text-[#545454] mb-2">Sugestão de receita:</p>
+              <p className="text-sm text-[#2f3a56]">
+                {content ? `Receita com ${content}...` : 'Digite um ingrediente para obter sugestões'}
+              </p>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'inspiracoes-do-dia':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFE5EF]/40 to-white mb-3">
+              <p className="text-sm italic text-[#545454] leading-relaxed">
+                "A maternidade é uma jornada de amor, paciência e pequenas vitórias. Celebre cada momento."
+              </p>
+            </div>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Como essa inspiração te toca hoje?"
+              className="w-full h-20 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'planejar-o-dia':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-3 mb-3">
+              <div>
+                <label className="text-xs font-semibold text-[#2f3a56] block mb-2">
+                  Manhã
+                </label>
+                <textarea
+                  value={content}
+                  onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+                  placeholder="O que você quer fazer de manhã?"
+                  className="w-full h-16 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'rotina-da-casa':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Tarefas da casa para hoje..."
+              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'rotina-da-familia':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Rotina e atividades da família..."
+              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'prioridades-semana':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Minhas 3 prioridades da semana..."
+              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'checklist-mae':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Suas tarefas essenciais..."
+              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      case 'notas-listas':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={content}
+              onChange={(e) => setCardData({ ...cardData, [cardId]: e.target.value })}
+              placeholder="Anotações rápidas e listas..."
+              className="w-full h-24 p-3 rounded-2xl bg-white/60 border border-white/40 text-[#2f3a56] placeholder-[#545454] text-sm resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 mb-3"
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSaveCard(cardId)
+              }}
+              className="w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              Salvar no Planner
+            </button>
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  const renderExpandableCard = (card: CardItem, index: number, delay: number) => (
+    <Reveal key={card.id} delay={delay}>
+      <div
+        className="rounded-3xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer overflow-hidden"
+        onClick={() => toggleAccordion(card.id)}
+      >
+        <div className="flex items-start gap-3 p-6 md:p-8">
+          <AppIcon
+            name={card.icon}
+            size={24}
+            className="text-primary flex-shrink-0 mt-1"
+            decorative
+          />
+          <div className="flex-1">
+            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1">
+              {card.title}
+            </h3>
+            <p className="text-sm text-[#545454] leading-relaxed">
+              {card.description}
+            </p>
+          </div>
+          <span
+            className={`text-lg font-semibold text-primary ml-3 transition-transform duration-200 flex-shrink-0 ${
+              expandedAccordion === card.id ? 'rotate-180' : ''
+            }`}
+          >
+            ▼
+          </span>
+        </div>
+
+        {expandedAccordion === card.id && (
+          <div className="border-t border-white/40 p-6 md:p-8 bg-white/30">
+            {renderCardContent(card.id)}
+          </div>
+        )}
+      </div>
+    </Reveal>
+  )
 
   if (!isHydrated) {
     return null
@@ -177,30 +463,9 @@ export default function RotinaLevePage() {
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {INSPIRATION_CARDS.map((card, index) => (
-              <Reveal key={card.id} delay={50 + index * 25}>
-                <Link href={card.href}>
-                  <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
-                    <div className="flex items-start gap-3 mb-3">
-                      <AppIcon
-                        name={card.icon}
-                        size={24}
-                        className="text-primary flex-shrink-0"
-                        decorative
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                          {card.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <p className="text-sm text-[#545454] leading-relaxed">
-                      {card.description}
-                    </p>
-                  </SoftCard>
-                </Link>
-              </Reveal>
-            ))}
+            {INSPIRATION_CARDS.map((card, index) =>
+              renderExpandableCard(card, index, 50 + index * 25),
+            )}
           </div>
 
           {/* SECTION 2 — Organização do Dia */}
@@ -235,30 +500,9 @@ export default function RotinaLevePage() {
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {ORGANIZATION_CARDS.map((card, index) => (
-              <Reveal key={card.id} delay={200 + index * 25}>
-                <Link href={card.href}>
-                  <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
-                    <div className="flex items-start gap-3 mb-3">
-                      <AppIcon
-                        name={card.icon}
-                        size={24}
-                        className="text-primary flex-shrink-0"
-                        decorative
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                          {card.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <p className="text-sm text-[#545454] leading-relaxed">
-                      {card.description}
-                    </p>
-                  </SoftCard>
-                </Link>
-              </Reveal>
-            ))}
+            {ORGANIZATION_CARDS.map((card, index) =>
+              renderExpandableCard(card, index, 200 + index * 25),
+            )}
           </div>
 
           {/* SECTION 3 — Ferramentas da Mãe */}
@@ -274,30 +518,9 @@ export default function RotinaLevePage() {
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {TOOLS_CARDS.map((card, index) => (
-              <Reveal key={card.id} delay={325 + index * 25}>
-                <Link href={card.href}>
-                  <SoftCard className="rounded-3xl p-6 md:p-8 h-full cursor-pointer hover:shadow-lg transition-all duration-200">
-                    <div className="flex items-start gap-3 mb-3">
-                      <AppIcon
-                        name={card.icon}
-                        size={24}
-                        className="text-primary flex-shrink-0"
-                        decorative
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                          {card.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <p className="text-sm text-[#545454] leading-relaxed">
-                      {card.description}
-                    </p>
-                  </SoftCard>
-                </Link>
-              </Reveal>
-            ))}
+            {TOOLS_CARDS.map((card, index) =>
+              renderExpandableCard(card, index, 325 + index * 25),
+            )}
           </div>
 
           {/* SECTION 4 — Extras Inteligentes (Accordion) */}
@@ -328,9 +551,11 @@ export default function RotinaLevePage() {
                       Suas tarefas que se repetem regularmente.
                     </p>
                   </div>
-                  <span className={`text-lg font-semibold text-primary ml-3 transition-transform duration-200 ${
-                    expandedAccordion === 'tarefas-recorrentes' ? 'rotate-180' : ''
-                  }`}>
+                  <span
+                    className={`text-lg font-semibold text-primary ml-3 transition-transform duration-200 ${
+                      expandedAccordion === 'tarefas-recorrentes' ? 'rotate-180' : ''
+                    }`}
+                  >
                     ▼
                   </span>
                 </div>
@@ -350,7 +575,7 @@ export default function RotinaLevePage() {
                       }}
                       className="mt-3 w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
                     >
-                      Salvar Tarefas
+                      Salvar no Planner
                     </button>
                   </div>
                 )}
@@ -372,9 +597,11 @@ export default function RotinaLevePage() {
                       Lembretes personalizados para seu dia.
                     </p>
                   </div>
-                  <span className={`text-lg font-semibold text-primary ml-3 transition-transform duration-200 ${
-                    expandedAccordion === 'lembretes-inteligentes' ? 'rotate-180' : ''
-                  }`}>
+                  <span
+                    className={`text-lg font-semibold text-primary ml-3 transition-transform duration-200 ${
+                      expandedAccordion === 'lembretes-inteligentes' ? 'rotate-180' : ''
+                    }`}
+                  >
                     ▼
                   </span>
                 </div>
@@ -394,7 +621,7 @@ export default function RotinaLevePage() {
                       }}
                       className="mt-3 w-full px-4 py-2 rounded-full bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-all duration-200 shadow-md"
                     >
-                      Salvar Lembretes
+                      Salvar no Planner
                     </button>
                   </div>
                 )}
