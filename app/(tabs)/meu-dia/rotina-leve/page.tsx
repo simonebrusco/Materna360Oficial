@@ -129,6 +129,8 @@ const RECIPE_SUGGESTIONS = [
 ]
 
 export default function RotinaLevePage() {
+  const router = useRouter()
+
   // Ideias Rápidas state
   const [isIdeasOpen, setIsIdeasOpen] = useState(false)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
