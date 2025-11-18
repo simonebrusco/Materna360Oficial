@@ -308,8 +308,8 @@ export default function RotinaLevePage() {
                             </button>
 
                             {/* Ver mais label */}
-                            <div className="flex justify-end mt-2">
-                              <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
                                 Ver mais →
                               </span>
                             </div>
@@ -462,8 +462,8 @@ export default function RotinaLevePage() {
                             </button>
 
                             {/* Ver mais label */}
-                            <div className="flex justify-end mt-2">
-                              <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
                                 Ver mais →
                               </span>
                             </div>
@@ -607,8 +607,8 @@ export default function RotinaLevePage() {
                             </button>
 
                             {/* Ver mais label */}
-                            <div className="flex justify-end mt-2">
-                              <span className="text-xs font-semibold text-primary/85 tracking-wide">
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
                                 Ver mais →
                               </span>
                             </div>
@@ -715,11 +715,11 @@ export default function RotinaLevePage() {
                               </button>
 
                               {/* Ver mais label */}
-                              <div className="flex justify-end mt-2">
-                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
-                                  Ver mais →
-                                </span>
-                              </div>
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
+                                Ver mais →
+                              </span>
+                            </div>
 
                               {/* Expanded content */}
                               {isPlannerOpen && (
@@ -802,11 +802,11 @@ export default function RotinaLevePage() {
                               </button>
 
                               {/* Ver mais label */}
-                              <div className="flex justify-end mt-2">
-                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
-                                  Ver mais →
-                                </span>
-                              </div>
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
+                                Ver mais →
+                              </span>
+                            </div>
 
                               {/* Expanded content */}
                               {isCasaOpen && (
@@ -875,11 +875,11 @@ export default function RotinaLevePage() {
                               </button>
 
                               {/* Ver mais label */}
-                              <div className="flex justify-end mt-2">
-                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
-                                  Ver mais →
-                                </span>
-                              </div>
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
+                                Ver mais →
+                              </span>
+                            </div>
 
                               {/* Expanded content */}
                               {isFilhoOpen && (
@@ -980,11 +980,11 @@ export default function RotinaLevePage() {
                               </button>
 
                               {/* Ver mais label */}
-                              <div className="flex justify-end mt-2">
-                                <span className="text-xs font-semibold text-primary/85 tracking-wide">
-                                  Ver mais →
-                                </span>
-                              </div>
+                            <div className="flex justify-end mt-4">
+                              <span className="text-sm font-semibold text-primary tracking-wide">
+                                Ver mais →
+                              </span>
+                            </div>
 
                               {/* Expanded content */}
                               {isSemanaOpen && (
