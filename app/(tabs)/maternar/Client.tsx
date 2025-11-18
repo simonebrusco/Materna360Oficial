@@ -73,7 +73,10 @@ export default function MaternarClient() {
                     MATERNAR
                   </p>
                   {/* Main Title */}
-                  <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight">
+                  <h1
+                    className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight"
+                    suppressHydrationWarning
+                  >
                     {greeting}
                   </h1>
                 </div>
