@@ -87,7 +87,7 @@ const CARD_GROUPS: CardGroup[] = [
     ],
   },
   {
-    label: 'Ferramentas da m��e',
+    label: 'Ferramentas da mãe',
     subtitle: 'Pequenas ações que fazem grande diferença.',
     cards: [
       {
@@ -284,7 +284,7 @@ export default function RotinaLevePage() {
                   Comece trazendo leveza antes de organizar tudo.
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   {INSPIRATION_CARDS.map((card) => {
                     const currentIndex = cardIndex
                     cardIndex += 1
@@ -691,7 +691,7 @@ export default function RotinaLevePage() {
                     </p>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     {group.cards.map((card) => {
                       const currentIndex = cardIndex
                       cardIndex += 1
