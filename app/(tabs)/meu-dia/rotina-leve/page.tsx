@@ -165,17 +165,9 @@ export default function RotinaLevePage() {
           {/* Inspire section */}
           <Reveal delay={0}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  {INSPIRATION_CARDS.label}
-                </h3>
-                {INSPIRATION_CARDS.subtitle && (
-                  <p className="text-sm text-[#545454] mb-2">
-                    {INSPIRATION_CARDS.subtitle}
-                  </p>
-                )}
-              </div>
-
+              <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-6">
+                {INSPIRATION_CARDS.label}
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {INSPIRATION_CARDS.cards.map((card) => {
                   const currentIndex = cardIndex
