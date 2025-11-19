@@ -10,6 +10,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
+import IntelligentSuggestionsSection from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 
 const MOOD_LABELS: Record<string, string> = {
@@ -200,6 +201,11 @@ export function MeuDiaClient() {
                   </div>
                 </div>
               </div>
+            </Reveal>
+
+            {/* INTELLIGENT SUGGESTIONS */}
+            <Reveal delay={200}>
+              <IntelligentSuggestionsSection mood={selectedMood} intention={selectedDay} />
             </Reveal>
 
             {/* WEEKLY PLANNER SHELL */}
