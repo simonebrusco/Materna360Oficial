@@ -261,16 +261,14 @@ export default function WeeklyPlannerShell() {
               <div className="space-y-6 md:space-y-8">
                 {/* 1. Prioridades do dia */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                      VOCÊ
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    VOCÊ
+                  </span>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Prioridades do dia
                     </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                    <p className="text-sm text-[#545454] mt-1">
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
@@ -352,16 +350,14 @@ export default function WeeklyPlannerShell() {
 
                 {/* 3. Cuidar de mim */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                      VOCÊ
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    VOCÊ
+                  </span>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Cuidar de mim
                     </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                    <p className="text-sm text-[#545454] mt-1">
                       Pequenos gestos que cuidam da sua energia.
                     </p>
                   </div>
@@ -379,16 +375,14 @@ export default function WeeklyPlannerShell() {
 
                 {/* 5. Lembretes rápidos */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                      LEMBRETES
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    LEMBRETES
+                  </span>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Lembretes rápidos
                     </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                    <p className="text-sm text-[#545454] mt-1">
                       Anotações soltas para não esquecer.
                     </p>
                   </div>
@@ -417,16 +411,14 @@ export default function WeeklyPlannerShell() {
               <div className="space-y-6 md:space-y-8">
                 {/* 2. Casa & rotina */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                      ROTINA
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    ROTINA
+                  </span>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Casa &amp; rotina
                     </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                    <p className="text-sm text-[#545454] mt-1">
                       Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
@@ -439,16 +431,14 @@ export default function WeeklyPlannerShell() {
 
                 {/* 4. Cuidar do meu filho */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                      SEU FILHO
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    SEU FILHO
+                  </span>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Cuidar do meu filho
                     </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                    <p className="text-sm text-[#545454] mt-1">
                       Um momento de conexão faz diferença no dia.
                     </p>
                   </div>
@@ -466,16 +456,14 @@ export default function WeeklyPlannerShell() {
 
                 {/* 6. Inspirações & conteúdos salvos */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                      INSPIRAÇÕES
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    INSPIRAÇÕES
+                  </span>
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Inspirações &amp; conteúdos salvos
                     </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                    <p className="text-sm text-[#545454] mt-1">
                       Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                     </p>
                   </div>
