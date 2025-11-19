@@ -41,11 +41,11 @@ export default function Top3Section({
     <div className="space-y-3 flex-1 flex flex-col">
       {!hideTitle && (
         <div>
-          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
+          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2 font-poppins">
             <AppIcon name="target" className="w-4 h-4 text-[#ff005e]" />
             Top 3 do dia
           </h3>
-          <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
+          <p className="text-xs md:text-sm text-[#545454] mt-0.5 font-poppins">
             As três coisas que realmente importam hoje.
           </p>
         </div>

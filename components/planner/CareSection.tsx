@@ -48,11 +48,11 @@ export default function CareSection({
     <div className="space-y-3 flex-1 flex flex-col">
       {!hideTitle && (
         <div>
-          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
+          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2 font-poppins">
             <AppIcon name={icon as any} className="w-4 h-4 text-[#ff005e]" />
             {title}
           </h3>
-          <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">{subtitle}</p>
+          <p className="text-xs md:text-sm text-[#545454] mt-0.5 font-poppins">{subtitle}</p>
         </div>
       )}
 
