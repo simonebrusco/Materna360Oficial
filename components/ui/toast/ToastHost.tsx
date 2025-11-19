@@ -31,7 +31,7 @@ export function ToastHost() {
       case 'warning':
         return <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
       default:
-        return <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
+        return <Info className="h-5 w-5 text-[#ff005e] flex-shrink-0" />
     }
   }
 
@@ -45,7 +45,7 @@ export function ToastHost() {
       case 'warning':
         return 'bg-gradient-to-r from-amber-50 to-white border-amber-200'
       default:
-        return 'bg-gradient-to-r from-blue-50 to-white border-blue-200'
+        return 'bg-gradient-to-r from-[#ffd8e6] to-white border-[#ffb3d9]'
     }
   }
 
