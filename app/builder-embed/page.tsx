@@ -44,14 +44,7 @@ function BuilderEmbedInner() {
           subtitle="Safe embed mode for Builder editor"
         />
 
-        <MeuDiaClient
-          __builderPreview__={true}
-          __fallbackProfile__={fallbackProfile}
-          __fallbackGreeting__="Olá, Mãe!"
-          __fallbackCurrentDateKey__={dateKey}
-          __fallbackWeekStartKey__={weekKey}
-          __disableHeavy__={true}
-        />
+        <MeuDiaClient />
 
         <BottomNav />
       </main>
