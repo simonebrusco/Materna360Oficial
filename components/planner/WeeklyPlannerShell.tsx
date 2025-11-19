@@ -330,14 +330,14 @@ export default function WeeklyPlannerShell() {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
                     VOCÊ
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
                       Prioridades do dia
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
+                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
@@ -351,14 +351,14 @@ export default function WeeklyPlannerShell() {
               </div>
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
                     ROTINA
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
                       Casa &amp; rotina
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
+                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
                       Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
@@ -375,14 +375,14 @@ export default function WeeklyPlannerShell() {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
                     VOCÊ
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
                       Cuidar de mim
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
+                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
                       Pequenos gestos que cuidam da sua energia.
                     </p>
                   </div>
@@ -400,14 +400,14 @@ export default function WeeklyPlannerShell() {
               </div>
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
                     SEU FILHO
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
                       Cuidar do meu filho
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
+                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
                       Um momento de conexão faz diferença no dia.
                     </p>
                   </div>
