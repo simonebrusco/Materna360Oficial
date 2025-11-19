@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import AppIcon from '@/components/ui/AppIcon'
+import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations'
+import { toast } from '@/app/lib/toast'
 
 import type { RecipeStageKey, StageRecipe } from '@/data/healthyRecipesContent'
 
