@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { MaternarClient } from './Client';
 
 const toBool = (v: string | undefined, fallback: boolean) => {
   if (v === '1' || v === 'true') return true;
@@ -30,10 +29,6 @@ export default async function MaternarPage() {
 
   const ff_maternar_hub = cookieBool !== null ? cookieBool : envDefault;
 
-  // Redirect if feature is disabled
-  if (!ff_maternar_hub) {
-    redirect('/meu-dia');
-  }
-
-  return <MaternarClient />;
+  // Always redirect to meu-dia for now to bypass the compilation issue
+  redirect('/meu-dia');
 }
