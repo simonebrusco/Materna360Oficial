@@ -172,6 +172,13 @@ export default function WeeklyPlannerShell() {
     year: 'numeric',
   })
 
+  // Format selected date for contextual text
+  const selectedDateFormatted = selectedDate.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+
   // Generate week data for WeekView
   const getMonday = (date: Date) => {
     const d = new Date(date)
