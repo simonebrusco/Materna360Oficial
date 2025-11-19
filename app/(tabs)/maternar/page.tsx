@@ -16,7 +16,9 @@ export const metadata = {
   description: 'Central hub para acessar todos os recursos do Maternar',
 };
 
-export default async function MaternarPage() {
+export default async function MaternarPage(props: {
+  searchParams?: Record<string, string | string[]>;
+}) {
   // Check if Maternar Hub is enabled
   const cookieVal = cookies().get('ff_maternar')?.value ?? null;
   const cookieBool =
@@ -30,8 +32,12 @@ export default async function MaternarPage() {
 
   const ff_maternar_hub = cookieBool !== null ? cookieBool : envDefault;
 
-  // Redirect if feature is disabled
-  if (!ff_maternar_hub) {
+  // Allow Builder preview to bypass the feature flag check
+  const searchParams = props.searchParams || {};
+  const isBuilderPreview = searchParams['builder.preview'] === '1';
+
+  // Redirect if feature is disabled (unless in Builder preview mode)
+  if (!ff_maternar_hub && !isBuilderPreview) {
     redirect('/meu-dia');
   }
 
