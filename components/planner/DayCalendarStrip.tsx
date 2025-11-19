@@ -1,14 +1,17 @@
 'use client'
 
 import React from 'react'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
 
 type DayCalendarStripProps = {
   selectedDate: Date
+  selectedDateKey: string
   onDateSelect: (date: Date) => void
 }
 
 export default function DayCalendarStrip({
   selectedDate,
+  selectedDateKey,
   onDateSelect,
 }: DayCalendarStripProps) {
   // Get the start of the current week (Monday)
@@ -37,11 +40,8 @@ export default function DayCalendarStrip({
   }
 
   const isSelected = (date: Date) => {
-    return (
-      date.getDate() === selectedDate.getDate() &&
-      date.getMonth() === selectedDate.getMonth() &&
-      date.getFullYear() === selectedDate.getFullYear()
-    )
+    const dateKey = getBrazilDateKey(date)
+    return dateKey === selectedDateKey
   }
 
   return (
