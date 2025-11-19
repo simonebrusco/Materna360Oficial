@@ -142,7 +142,7 @@ export function MaternarClient() {
                 </div>
               </Reveal>
 
-              {/* <CardHub /> */}
+              <CardHub />
 
               {/* Emotional closing text */}
               <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
