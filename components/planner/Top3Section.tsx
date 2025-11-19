@@ -51,7 +51,7 @@ export default function Top3Section({
         </div>
       )}
 
-      <SoftCard className="p-4 md:p-5 space-y-3">
+      <SoftCard className="p-5 md:p-6 space-y-3">
         {items.map((item, idx) => (
           <div
             key={item.id}
