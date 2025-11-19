@@ -27,7 +27,6 @@ export function createServerSupabase(serviceKey?: string): Client {
 
   // Import cookies from next/headers here to avoid module-level server-only imports
   // that would break client component compatibility
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { cookies } = require('next/headers')
   const cookieStore = cookies()
 
