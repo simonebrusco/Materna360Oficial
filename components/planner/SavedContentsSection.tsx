@@ -42,15 +42,17 @@ export default function SavedContentsSection({
 
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
-          <AppIcon name="bookmark" className="w-4 h-4 text-[#ff005e]" />
-          Inspirações & conteúdos salvos
-        </h3>
-        <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
-          Receitas, ideias e frases que você guardou para usar no seu dia.
-        </p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
+            <AppIcon name="bookmark" className="w-4 h-4 text-[#ff005e]" />
+            Inspirações & conteúdos salvos
+          </h3>
+          <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
+            Receitas, ideias e frases que você guardou para usar no seu dia.
+          </p>
+        </div>
+      )}
 
       <SoftCard className="p-4 md:p-5">
         <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 pb-2">
