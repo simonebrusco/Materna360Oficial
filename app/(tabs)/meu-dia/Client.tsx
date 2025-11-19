@@ -157,6 +157,16 @@ export function MeuDiaClient() {
                     ))}
                   </div>
                 </div>
+
+                {/* Summary Block */}
+                {(() => {
+                  const summary = generateSummaryText(selectedMood, selectedDay)
+                  return (
+                    <div className="mt-4 text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
+                      {summary.main}
+                    </div>
+                  )
+                })()}
               </section>
             </Reveal>
 
