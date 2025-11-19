@@ -58,6 +58,25 @@ export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
     }
 
     toggleSave(savedContent)
+
+    if (saved) {
+      track('inspiration.unsaved', {
+        id: recipeId,
+        title: item.title || 'Receita',
+        type: 'receita',
+        origin: 'Receitas',
+        timestamp: new Date().toISOString(),
+      })
+    } else {
+      track('inspiration.saved', {
+        id: recipeId,
+        title: item.title || 'Receita',
+        type: 'receita',
+        origin: 'Receitas',
+        timestamp: new Date().toISOString(),
+      })
+    }
+
     toast.success(saved ? 'Receita removida' : 'Receita salva!')
 
     if (onSave && item) onSave(item)
