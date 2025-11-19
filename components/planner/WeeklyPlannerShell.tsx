@@ -478,7 +478,7 @@ export default function WeeklyPlannerShell() {
                   {plannerData.savedContents.length > 0 ? (
                     <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
                   ) : (
-                    <SoftCard className="p-4 md:p-5 text-center py-6">
+                    <SoftCard className="p-5 md:p-6 text-center py-6">
                       <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
                       <p className="text-sm text-[#545454]/70 mb-3">
                         Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
