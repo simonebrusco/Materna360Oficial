@@ -18,9 +18,9 @@ export default function DailyMessageCard({ greeting }: GreetingProps) {
 
   return (
     <>
-      <h2 className="m360-card-title mb-3">Mensagem de Hoje</h2>
-      <p className="text-neutral-600 text-sm italic leading-relaxed" data-testid="message-of-day">&quot;{greeting}&quot;</p>
-      <span className="text-neutral-400 text-xs mt-2 block">Atualizada automaticamente a cada novo dia.</span>
+      <h2 className="m360-card-title mb-3 font-poppins">Mensagem de Hoje</h2>
+      <p className="text-[#2f3a56] text-sm italic leading-relaxed font-poppins" data-testid="message-of-day">&quot;{greeting}&quot;</p>
+      <span className="text-[#545454] text-xs mt-2 block font-poppins">Atualizada automaticamente a cada novo dia.</span>
     </>
   )
 }
