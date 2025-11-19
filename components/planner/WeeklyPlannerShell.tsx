@@ -254,7 +254,7 @@ export default function WeeklyPlannerShell() {
 
         {/* DAY VIEW */}
         {viewMode === 'day' && (
-          <div className="space-y-6 md:space-y-8">
+          <div className="space-y-6 md:space-y-8 pb-12">
             {/* Two-column grid on desktop, single column on mobile */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               {/* LEFT COLUMN */}
@@ -271,18 +271,86 @@ export default function WeeklyPlannerShell() {
                       Prioridades do dia
                     </h3>
                     <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                      Escolha até 3 coisas que realmente importam hoje.
+                      Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
-                  <Top3Section
-                    items={plannerData.top3}
-                    onToggle={handleToggleTop3}
-                    onAdd={handleAddTop3}
-                    hideTitle={true}
-                  />
+                  <SoftCard className="p-4 md:p-5 space-y-3">
+                    {plannerData.top3.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
+                          item.done
+                            ? 'bg-[#f5f5f5] border-[#ddd]'
+                            : 'bg-white border-[#f0f0f0] hover:border-[#ff005e]/20'
+                        }`}
+                      >
+                        <button
+                          onClick={() => handleToggleTop3(item.id)}
+                          className="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all mt-0.5"
+                          style={{
+                            borderColor: item.done ? '#ff005e' : '#ddd',
+                            backgroundColor: item.done ? '#ff005e' : 'transparent',
+                          }}
+                        >
+                          {item.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
+                        </button>
+                        <span
+                          className={`flex-1 text-sm font-medium ${
+                            item.done
+                              ? 'text-[#545454]/50 line-through'
+                              : 'text-[#2f3a56]'
+                          }`}
+                        >
+                          {item.title}
+                        </span>
+                        <span className="text-xs font-bold text-[#ff005e]/60">{idx + 1}.</span>
+                      </div>
+                    ))}
+
+                    {plannerData.top3.length < 3 &&
+                      Array.from({ length: 3 - plannerData.top3.length }).map((_, idx) => (
+                        <div
+                          key={`empty-${idx}`}
+                          className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[#ddd] bg-[#fafafa]"
+                        >
+                          <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[#ddd] opacity-40" />
+                          <span className="flex-1 text-sm text-[#545454]/40">
+                            {idx === 0
+                              ? 'Primeiro foco de hoje…'
+                              : idx === 1
+                                ? 'Segundo foco…'
+                                : 'Terceiro foco…'}
+                          </span>
+                          <span className="text-xs font-bold text-[#545454]/20">
+                            {plannerData.top3.length + idx + 1}.
+                          </span>
+                        </div>
+                      ))}
+
+                    {plannerData.top3.length === 3 && plannerData.top3.every(item => item.done) && (
+                      <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-[#ffe3f0] to-[#fff] border border-[#ff005e]/20 text-center">
+                        <p className="text-sm font-semibold text-[#ff005e]">
+                          Parabéns! Você concluiu seus 3 focos principais
+                        </p>
+                      </div>
+                    )}
+
+                    {plannerData.top3.length < 3 && (
+                      <button
+                        onClick={() => {
+                          const newTitle = `Foco ${plannerData.top3.length + 1}`
+                          handleAddTop3(newTitle)
+                        }}
+                        className="mt-2 pt-3 border-t border-[#f0f0f0] inline-flex items-center gap-2 text-sm font-medium text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
+                      >
+                        <AppIcon name="plus" className="w-4 h-4" />
+                        Adicionar foco
+                      </button>
+                    )}
+                  </SoftCard>
                 </div>
 
-                {/* 2. Cuidar de mim */}
+                {/* 3. Cuidar de mim */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#ffe3f0] text-[#ff005e]">
@@ -294,7 +362,7 @@ export default function WeeklyPlannerShell() {
                       Cuidar de mim
                     </h3>
                     <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                      Momentos para recarregar a sua energia.
+                      Pequenos gestos que cuidam da sua energia.
                     </p>
                   </div>
                   <CareSection
@@ -304,59 +372,7 @@ export default function WeeklyPlannerShell() {
                     items={plannerData.careItems}
                     onToggle={id => handleToggleCareItem(id, 'care')}
                     onAdd={title => handleAddCareItem(title, 'care')}
-                    placeholder="Nova ação de autocuidado..."
-                    hideTitle={true}
-                  />
-                </div>
-
-                {/* 3. Cuidar do meu filho */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#e3f0ff] text-[#0066ff]">
-                      Seu filho
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
-                      Cuidar do meu filho
-                    </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                      Gestos simples para fortalecer o vínculo.
-                    </p>
-                  </div>
-                  <CareSection
-                    title="Cuidar da família"
-                    subtitle="Tarefas com os filhos."
-                    icon="smile"
-                    items={plannerData.familyItems}
-                    onToggle={id => handleToggleCareItem(id, 'family')}
-                    onAdd={title => handleAddCareItem(title, 'family')}
-                    placeholder="Nova ação com a família..."
-                    hideTitle={true}
-                  />
-                </div>
-              </div>
-
-              {/* RIGHT COLUMN */}
-              <div className="space-y-6 md:space-y-8">
-                {/* 4. Casa & rotina */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#f0e3ff] text-[#6600ff]">
-                      Rotina
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
-                      Casa &amp; rotina
-                    </h3>
-                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                      Tarefas da casa e organização do dia.
-                    </p>
-                  </div>
-                  <AgendaSection
-                    items={plannerData.appointments}
-                    onAddAppointment={handleAddAppointment}
+                    placeholder="Novo gesto de autocuidado…"
                     hideTitle={true}
                   />
                 </div>
@@ -376,59 +392,113 @@ export default function WeeklyPlannerShell() {
                       Anotações soltas para não esquecer.
                     </p>
                   </div>
-                  <NotesSection
-                    content={plannerData.notes}
-                    onChange={handleNotesChange}
+                  <SoftCard className="p-4 md:p-5">
+                    {plannerData.notes.length === 0 ? (
+                      <div className="text-center py-6">
+                        <p className="text-sm text-[#545454]/60">
+                          Ainda não tem nada por aqui — e está tudo bem.
+                        </p>
+                      </div>
+                    ) : null}
+                    <textarea
+                      value={plannerData.notes}
+                      onChange={e => handleNotesChange(e.target.value)}
+                      placeholder="Quer tirar algo da cabeça? Anote aqui."
+                      className="w-full h-32 md:h-40 px-4 py-3 rounded-lg border border-[#ddd] text-sm font-medium text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
+                    />
+                    <p className="text-xs text-[#545454]/50 mt-2">
+                      {plannerData.notes.length} caracteres
+                    </p>
+                  </SoftCard>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN */}
+              <div className="space-y-6 md:space-y-8">
+                {/* 2. Casa & rotina */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#f0e3ff] text-[#6600ff]">
+                      Rotina
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
+                      Casa &amp; rotina
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                      Compromissos com horário, para enxergar seu dia com clareza.
+                    </p>
+                  </div>
+                  <AgendaSection
+                    items={plannerData.appointments}
+                    onAddAppointment={handleAddAppointment}
+                    hideTitle={true}
+                  />
+                </div>
+
+                {/* 4. Cuidar do meu filho */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#e3f0ff] text-[#0066ff]">
+                      Seu filho
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
+                      Cuidar do meu filho
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                      Um momento de conexão faz diferença no dia.
+                    </p>
+                  </div>
+                  <CareSection
+                    title="Cuidar da família"
+                    subtitle="Tarefas com os filhos."
+                    icon="smile"
+                    items={plannerData.familyItems}
+                    onToggle={id => handleToggleCareItem(id, 'family')}
+                    onAdd={title => handleAddCareItem(title, 'family')}
+                    placeholder="Novo momento com a família…"
                     hideTitle={true}
                   />
                 </div>
 
                 {/* 6. Inspirações & conteúdos salvos */}
-                {plannerData.savedContents.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#f0fff0] text-[#00cc44]">
-                        Inspirações
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
-                        Inspirações &amp; conteúdos salvos
-                      </h3>
-                      <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                        Receitas, ideias e conteúdos para seu dia a dia.
-                      </p>
-                    </div>
-                    <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#f0fff0] text-[#00cc44]">
+                      Inspirações
+                    </span>
                   </div>
-                )}
+                  <div>
+                    <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
+                      Inspirações &amp; conteúdos salvos
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
+                      Receitas, ideias e conteúdos que você salvou para usar quando precisar.
+                    </p>
+                  </div>
+                  {plannerData.savedContents.length > 0 ? (
+                    <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
+                  ) : (
+                    <SoftCard className="p-4 md:p-5 text-center py-6">
+                      <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
+                      <p className="text-sm text-[#545454]/70 mb-3">
+                        Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
+                      </p>
+                      <a
+                        href="/biblioteca-materna"
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
+                      >
+                        Ver tudo na Biblioteca Materna
+                        <AppIcon name="arrow-right" className="w-4 h-4" />
+                      </a>
+                    </SoftCard>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Inspirações - show on mobile if empty (visual placeholder) */}
-            {plannerData.savedContents.length === 0 && (
-              <div className="lg:hidden space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-[#f0fff0] text-[#00cc44]">
-                    Inspirações
-                  </span>
-                </div>
-                <div>
-                  <h3 className="text-lg md:text-xl font-bold text-[#2f3a56]">
-                    Inspirações &amp; conteúdos salvos
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#545454]/70 mt-1">
-                    Receitas, ideias e conteúdos para seu dia a dia.
-                  </p>
-                </div>
-                <SoftCard className="p-5 md:p-6 text-center py-8">
-                  <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
-                  <p className="text-sm text-[#545454]/70">
-                    Quando você salvar receitas, ideias e conteúdos de outras seções, eles aparecerão aqui.
-                  </p>
-                </SoftCard>
-              </div>
-            )}
           </div>
         )}
 
