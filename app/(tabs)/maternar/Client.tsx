@@ -125,7 +125,7 @@ export default function MaternarClient() {
 
                       {/* Message title */}
                       <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight" suppressHydrationWarning>
-                        "{dailyMessage}"
+                        &quot;{dailyMessage}&quot;
                       </h3>
 
                       {/* Subtitle */}

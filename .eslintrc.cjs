@@ -5,6 +5,5 @@ module.exports = {
   parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
   rules: {
     'no-console': 'off',
-    '@typescript-eslint/no-var-requires': 'off',
   },
 };

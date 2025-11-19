@@ -132,7 +132,7 @@ export function MeuDiaClient() {
                     <AppIcon name="sparkles" className="w-8 h-8 text-[#ff005e] flex-shrink-0" />
                     <div>
                       <p className="text-xs font-semibold text-[#ff005e] uppercase tracking-wide mb-1">Frase do Dia</p>
-                      <p className="text-sm md:text-base font-medium text-[#2f3a56] leading-relaxed">"{dailyMessage}"</p>
+                      <p className="text-sm md:text-base font-medium text-[#2f3a56] leading-relaxed">&quot;{dailyMessage}&quot;</p>
                     </div>
                   </div>
                 </div>
