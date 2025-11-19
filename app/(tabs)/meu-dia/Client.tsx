@@ -53,8 +53,8 @@ export function MeuDiaClient() {
       <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza.">
         <ClientOnly>
           <div className="mx-auto max-w-[1040px] px-4 md:px-6">
-          {/* GREETING SECTION */}
-          <Reveal delay={0}>
+            {/* GREETING SECTION */}
+            <Reveal delay={0}>
             <section className="space-y-4 mb-6 md:mb-8" suppressHydrationWarning>
               <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-snug">
                 {greeting}
