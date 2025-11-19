@@ -280,7 +280,7 @@ export default function WeeklyPlannerShell() {
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
-                  <SoftCard className="p-4 md:p-5 space-y-3">
+                  <SoftCard className="p-5 md:p-6 space-y-3">
                     {plannerData.top3.map((item, idx) => (
                       <div
                         key={item.id}
