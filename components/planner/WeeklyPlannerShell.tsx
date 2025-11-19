@@ -256,7 +256,7 @@ export default function WeeklyPlannerShell() {
         {viewMode === 'day' && (
           <div className="space-y-6 md:space-y-8 pb-12">
             {/* Two-column grid on desktop, single column on mobile */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
               {/* LEFT COLUMN */}
               <div className="space-y-6 md:space-y-8">
                 {/* 1. Prioridades do dia */}
