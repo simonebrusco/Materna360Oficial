@@ -49,6 +49,9 @@ export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
+  // Load global saved inspirations
+  const { savedItems: savedContents } = useSavedInspirations()
+
   // Initialize per-day planner data
   const [plannerData, setPlannerData] = useState<PlannerData>({
     appointments: [],
@@ -56,7 +59,6 @@ export default function WeeklyPlannerShell() {
     careItems: [],
     familyItems: [],
     notes: '',
-    savedContents: [],
   })
 
   // View mode state
