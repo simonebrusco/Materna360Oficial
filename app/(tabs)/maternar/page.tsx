@@ -28,12 +28,8 @@ export default async function MaternarPage() {
     isPreview
   );
 
-  const ff_maternar_hub = cookieBool !== null ? cookieBool : envDefault;
-
-  // Redirect if feature is disabled
-  if (!ff_maternar_hub) {
-    redirect('/meu-dia');
-  }
+  // Temporarily disable maternar hub to fix compilation issues
+  redirect('/meu-dia');
 
   return <MaternarClient />;
 }
