@@ -15,6 +15,7 @@ type SavedContent = {
 
 type SavedContentsSectionProps = {
   contents: SavedContent[]
+  hideTitle?: boolean
 }
 
 const typeLabels: Record<SavedContent['type'], string> = {
@@ -33,6 +34,7 @@ const typeIcons: Record<SavedContent['type'], string> = {
 
 export default function SavedContentsSection({
   contents,
+  hideTitle = false,
 }: SavedContentsSectionProps) {
   if (contents.length === 0) {
     return null
