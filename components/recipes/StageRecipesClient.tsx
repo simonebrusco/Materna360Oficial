@@ -20,6 +20,8 @@ type StageRecipesClientProps = {
 }
 
 export function StageRecipesClient({ stages, initialStage }: StageRecipesClientProps) {
+  const { toggleSave, isSaved, isHydrated } = useSavedInspirations()
+
   const stageKeys = useMemo<RecipeStageKey[]>(() => stages.map((stage) => stage.key), [stages])
 
   const defaultStage = useMemo<RecipeStageKey | null>(() => {
