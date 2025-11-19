@@ -427,14 +427,14 @@ export default function WeeklyPlannerShell() {
 
             {/* Lembretes rápidos */}
             <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
                 LEMBRETES
               </span>
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
                   Lembretes rápidos
                 </h2>
-                <p className="mt-1 mb-4 text-sm text-[#545454]">
+                <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
                   Anotações soltas para não esquecer.
                 </p>
               </div>
@@ -447,14 +447,14 @@ export default function WeeklyPlannerShell() {
 
             {/* Inspirações & conteúdos salvos */}
             <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
                 INSPIRAÇÕES
               </span>
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
                   Inspirações &amp; conteúdos salvos
                 </h2>
-                <p className="mt-1 mb-4 text-sm text-[#545454]">
+                <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
                   Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                 </p>
               </div>
