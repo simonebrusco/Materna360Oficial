@@ -15,11 +15,13 @@ type Appointment = {
 type AgendaSectionProps = {
   items: Appointment[]
   onAddAppointment: (appointment: Omit<Appointment, 'id'>) => void
+  hideTitle?: boolean
 }
 
 export default function AgendaSection({
   items,
   onAddAppointment,
+  hideTitle = false,
 }: AgendaSectionProps) {
   const [isAddingForm, setIsAddingForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -46,15 +48,17 @@ export default function AgendaSection({
 
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
-          <AppIcon name="clock" className="w-4 h-4 text-[#ff005e]" />
-          Agenda & compromissos
-        </h3>
-        <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
-          Horários importantes do seu dia.
-        </p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
+            <AppIcon name="clock" className="w-4 h-4 text-[#ff005e]" />
+            Agenda & compromissos
+          </h3>
+          <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
+            Horários importantes do seu dia.
+          </p>
+        </div>
+      )}
 
       <SoftCard className="space-y-3 p-4 md:p-5">
         {sortedItems.length === 0 ? (
