@@ -245,6 +245,11 @@ export default function WeeklyPlannerShell() {
 
           {/* Day Calendar Strip */}
           <DayCalendarStrip selectedDate={selectedDate} onDateSelect={handleDateSelect} />
+
+          {/* Contextual date caption */}
+          <p className="text-xs text-[#545454]/60 text-center capitalize">
+            Tudo aqui vale para: {selectedDateFormatted}
+          </p>
         </SoftCard>
 
         {/* DAY VIEW */}
