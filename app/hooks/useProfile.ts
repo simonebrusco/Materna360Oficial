@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useEffect, useState } from 'react'
 import { resolveSticker, isProfileStickerId, DEFAULT_STICKER_ID } from '@/app/lib/stickers'
 
