@@ -14,12 +14,14 @@ type Top3SectionProps = {
   items: Top3Item[]
   onToggle: (id: string) => void
   onAdd: (title: string) => void
+  hideTitle?: boolean
 }
 
 export default function Top3Section({
   items,
   onToggle,
   onAdd,
+  hideTitle = false,
 }: Top3SectionProps) {
   const [isAddingForm, setIsAddingForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -37,15 +39,17 @@ export default function Top3Section({
 
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
-          <AppIcon name="target" className="w-4 h-4 text-[#ff005e]" />
-          Top 3 do dia
-        </h3>
-        <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
-          As três coisas que realmente importam hoje.
-        </p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
+            <AppIcon name="target" className="w-4 h-4 text-[#ff005e]" />
+            Top 3 do dia
+          </h3>
+          <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">
+            As três coisas que realmente importam hoje.
+          </p>
+        </div>
+      )}
 
       <SoftCard className="p-4 md:p-5 space-y-3">
         {items.map((item, idx) => (
