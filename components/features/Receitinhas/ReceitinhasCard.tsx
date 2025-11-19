@@ -1,8 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations'
+import { toast } from '@/app/lib/toast'
 
 /** Tipo mínimo local, suficiente para este card (evita dependência de tipos não exportados) */
 type RecipeLike = {
