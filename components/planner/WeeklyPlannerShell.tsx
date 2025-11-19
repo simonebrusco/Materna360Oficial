@@ -82,12 +82,12 @@ export default function WeeklyPlannerShell() {
     if (!isHydrated || !selectedDateKey) return
 
     const loadedData: PlannerData = {
-      appointments: load(`planner/appointments/${selectedDateKey}`, []),
-      top3: load(`planner/top3/${selectedDateKey}`, []),
-      careItems: load(`planner/careItems/${selectedDateKey}`, []),
-      familyItems: load(`planner/familyItems/${selectedDateKey}`, []),
-      notes: load(`planner/notes/${selectedDateKey}`, ''),
-      savedContents: load(`planner/savedContents/${selectedDateKey}`, []),
+      appointments: load<Appointment[]>(`planner/appointments/${selectedDateKey}`, []) ?? [],
+      top3: load<Top3Item[]>(`planner/top3/${selectedDateKey}`, []) ?? [],
+      careItems: load<CareItem[]>(`planner/careItems/${selectedDateKey}`, []) ?? [],
+      familyItems: load<CareItem[]>(`planner/familyItems/${selectedDateKey}`, []) ?? [],
+      notes: load<string>(`planner/notes/${selectedDateKey}`, '') ?? '',
+      savedContents: load<SavedContent[]>(`planner/savedContents/${selectedDateKey}`, []) ?? [],
     }
 
     setPlannerData(loadedData)
