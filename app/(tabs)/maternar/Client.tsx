@@ -8,7 +8,6 @@ import { useProfile } from '@/app/hooks/useProfile';
 
 export function MaternarClient() {
   const { name } = useProfile();
-  const [greeting, setGreeting] = useState<string>('');
 
   useEffect(() => {
     track('nav.click', {
@@ -17,137 +16,10 @@ export function MaternarClient() {
     });
   }, []);
 
-  // Update greeting based on time
-  useEffect(() => {
-    const firstName = name ? name.split(' ')[0] : '';
-    const timeGreeting = getTimeGreeting(firstName);
-    setGreeting(timeGreeting);
-
-    // Update greeting every minute to reflect time changes
-    const interval = setInterval(() => {
-      const updatedGreeting = getTimeGreeting(firstName);
-      setGreeting(updatedGreeting);
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [name]);
-
-  // Daily message reload at midnight
-  useEffect(() => {
-    const now = new Date();
-    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0);
-    const timeoutId = window.setTimeout(() => window.location.reload(), delay);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  const firstName = name ? name.split(' ')[0] : '';
-  const isProfileIncomplete = !name || name.trim() === '';
-
-  // Get the current daily message
-  const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length);
-  const dailyMessage = DAILY_MESSAGES[dayIndex];
-
   return (
-    <div className="relative">
-      {/* Soft pink gradient background with hero glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FFF0F6] to-white pointer-events-none" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
-
-      <div className="relative z-10">
-        <main data-layout="page-template-v1" className="bg-soft-page min-h-[100dvh] pb-24">
-          <div className="mx-auto max-w-[1040px] px-4 md:px-6">
-            {/* Premium Hero Header - matching redesigned hubs */}
-            <header className="pt-8 md:pt-10 mb-8 md:mb-10" suppressHydrationWarning>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  {/* Subtitle/Label - increased size for visual balance */}
-                  <p className="text-sm md:text-base font-semibold uppercase tracking-[0.28em] text-primary/70 mb-3">
-                    MATERNAR
-                  </p>
-                  {/* Main Title */}
-                  <h1
-                    className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight"
-                    suppressHydrationWarning
-                  >
-                    {greeting}
-                  </h1>
-                </div>
-
-                {/* Profile Button on Right */}
-                {isProfileIncomplete && (
-                  <div className="flex-shrink-0">
-                    <Link
-                      href="/eu360?focus=perfil"
-                      onClick={() => {
-                        track('maternar.profile_premium_button_click', {
-                          timestamp: new Date().toISOString(),
-                        });
-                      }}
-                      className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[rgba(255,0,94,0.45)] bg-[rgba(255,0,94,0.04)] text-[rgba(255,0,94,0.85)] text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,0,94,0.04)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,0,94,0.06)] active:scale-[0.99] transition-all duration-150"
-                      aria-label="Completar perfil"
-                    >
-                      <AppIcon
-                        name="hand-heart"
-                        className="w-[14px] h-[14px]"
-                        style={{ color: 'rgba(255, 0, 94, 0.6)' }}
-                        decorative
-                      />
-                      <span>Completar perfil</span>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </header>
-
-            {/* Page Content */}
-            <div className="space-y-6 md:space-y-8">
-              {/* Daily Message Card */}
-              <Reveal delay={100}>
-                <div className="mt-0 mb-0 px-4 md:px-6 max-w-7xl mx-auto">
-                  <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[26px] md:rounded-[20px] border border-white/60 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200 halo-glow" suppressHydrationWarning>
-                    {/* Subtle gradient accent blob - top-right corner */}
-                    <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/15 to-transparent rounded-full" />
-
-                    {/* Content wrapper */}
-                    <div className="flex flex-col gap-3 relative z-10">
-                      {/* Pill header */}
-                      <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#ffe3f0] text-[#ff005e] font-medium text-sm tracking-tight shadow-sm w-fit">
-                        Mensagem de Hoje
-                      </div>
-
-                      {/* Message title */}
-                      <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight" suppressHydrationWarning>
-                        "{dailyMessage}"
-                      </h3>
-
-                      {/* Subtitle */}
-                      <p className="text-sm md:text-base text-[#545454]/85 leading-relaxed">
-                        Uma mensagem especial para começar seu dia com leveza.
-                      </p>
-
-                      {/* Helper text */}
-                      <p className="text-xs text-[#545454]/60">
-                        Atualizada automaticamente a cada novo dia.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-
-              <CardHub />
-
-              {/* Emotional closing text */}
-              <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-                <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
-                  Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
+    <div className="p-4 text-center">
+      <h1>Maternar Hub</h1>
+      <p>Hello, {name || 'Guest'}!</p>
     </div>
   );
 }
