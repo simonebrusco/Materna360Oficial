@@ -36,10 +36,31 @@ interface ReceitinhasCardProps {
 
 export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
   // Hooks sempre no topo
+  const { toggleSave, isSaved, isHydrated } = useSavedInspirations()
   const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
 
   // Early return após hooks
   if (!item) return null
+
+  const recipeId = `recipe-${computedId}`
+  const saved = isHydrated ? isSaved(recipeId) : false
+
+  const handleSaveRecipe = () => {
+    if (!isHydrated) return
+
+    const savedContent: SavedContent = {
+      id: recipeId,
+      title: item.title || 'Receita',
+      type: 'receita',
+      origin: 'Receitas',
+      href: '#',
+    }
+
+    toggleSave(savedContent)
+    toast.success(saved ? 'Receita removida' : 'Receita salva!')
+
+    if (onSave && item) onSave(item)
+  }
 
   return (
     <Card className="flex flex-col gap-3" data-computed-id={computedId}>
@@ -52,16 +73,24 @@ export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
         <Button
           size="sm"
           variant="primary"
-          onClick={() => {
-
-            if (onSave) onSave(item)
-
-            if (onSave && item) onSave(item)
-
-          }}
+          onClick={handleSaveRecipe}
+          className="flex-1"
         >
-          Salvar
+          {saved ? '✓ Salvo' : 'Salvar'}
         </Button>
+        <button
+          onClick={handleSaveRecipe}
+          className="p-2 rounded-lg hover:bg-primary/10 transition-colors flex-shrink-0"
+          aria-label={saved ? 'Remover dos salvos' : 'Salvar receita'}
+          title={saved ? 'Remover dos salvos' : 'Salvar receita'}
+        >
+          <AppIcon
+            name="bookmark"
+            className={`w-5 h-5 ${
+              saved ? 'text-[#ff005e] fill-current' : 'text-[#ddd]'
+            }`}
+          />
+        </button>
       </div>
     </Card>
   )
