@@ -114,7 +114,7 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       },
       {
         id: 'happy-generic-2',
-        title: 'Questo um bom momento para tentar algo novo hoje?',
+        title: 'Que tal tentar algo novo hoje com essa disposição?',
         description: '',
       },
     ]
