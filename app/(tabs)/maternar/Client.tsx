@@ -69,12 +69,12 @@ export default function MaternarClient() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   {/* Subtitle/Label - increased size for visual balance */}
-                  <p className="text-sm md:text-base font-semibold uppercase tracking-[0.28em] text-primary/70 mb-3">
+                  <p className="text-sm md:text-base font-semibold uppercase tracking-[0.28em] text-[#ff005e] mb-3 font-poppins">
                     MATERNAR
                   </p>
                   {/* Main Title */}
                   <h1
-                    className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight"
+                    className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight font-poppins"
                     suppressHydrationWarning
                   >
                     {greeting}
@@ -119,12 +119,12 @@ export default function MaternarClient() {
                     {/* Content wrapper */}
                     <div className="flex flex-col gap-3 relative z-10">
                       {/* Pill header */}
-                      <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#ffe3f0] text-[#ff005e] font-medium text-sm tracking-tight shadow-sm w-fit">
+                      <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#ffe3f0] text-[#ff005e] font-medium text-sm tracking-tight shadow-sm w-fit font-poppins">
                         Mensagem de Hoje
                       </div>
 
                       {/* Message title */}
-                      <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight" suppressHydrationWarning>
+                      <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight font-poppins" suppressHydrationWarning>
                         &quot;{dailyMessage}&quot;
                       </h3>
 
