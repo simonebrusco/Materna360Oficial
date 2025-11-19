@@ -326,12 +326,10 @@ export default function WeeklyPlannerShell() {
         {/* DAY VIEW */}
         {viewMode === 'day' && (
           <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
-            {/* Two-column grid on desktop, single column on mobile */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
-              {/* LEFT COLUMN */}
-              <div className="space-y-10">
-                {/* 1. Prioridades do dia */}
-                <div className="space-y-3">
+            {/* PAIR 1: Prioridades do dia + Casa & rotina */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     VOCÊ
                   </span>
@@ -350,9 +348,33 @@ export default function WeeklyPlannerShell() {
                     hideTitle={true}
                   />
                 </div>
+              </div>
+              <div className="flex h-full">
+                <div className="space-y-3 w-full">
+                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                    ROTINA
+                  </span>
+                  <div>
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                      Casa &amp; rotina
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
+                      Compromissos com horário, para enxergar seu dia com clareza.
+                    </p>
+                  </div>
+                  <AgendaSection
+                    items={plannerData.appointments}
+                    onAddAppointment={handleAddAppointment}
+                    hideTitle={true}
+                  />
+                </div>
+              </div>
+            </section>
 
-                {/* 3. Cuidar de mim */}
-                <div className="space-y-3">
+            {/* PAIR 2: Cuidar de mim + Cuidar do meu filho */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     VOCÊ
                   </span>
@@ -375,52 +397,9 @@ export default function WeeklyPlannerShell() {
                     hideTitle={true}
                   />
                 </div>
-
-                {/* 5. Lembretes rápidos */}
-                <div className="space-y-3">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                    LEMBRETES
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-                      Lembretes rápidos
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
-                      Anotações soltas para não esquecer.
-                    </p>
-                  </div>
-                  <NotesSection
-                    content={plannerData.notes}
-                    onChange={handleNotesChange}
-                    hideTitle={true}
-                  />
-                </div>
               </div>
-
-              {/* RIGHT COLUMN */}
-              <div className="space-y-10">
-                {/* 2. Casa & rotina */}
-                <div className="space-y-3">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                    ROTINA
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-                      Casa &amp; rotina
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
-                      Compromissos com horário, para enxergar seu dia com clareza.
-                    </p>
-                  </div>
-                  <AgendaSection
-                    items={plannerData.appointments}
-                    onAddAppointment={handleAddAppointment}
-                    hideTitle={true}
-                  />
-                </div>
-
-                {/* 4. Cuidar do meu filho */}
-                <div className="space-y-3">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     SEU FILHO
                   </span>
@@ -443,39 +422,59 @@ export default function WeeklyPlannerShell() {
                     hideTitle={true}
                   />
                 </div>
-
-                {/* 6. Inspirações & conteúdos salvos */}
-                <div className="space-y-3">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
-                    INSPIRAÇÕES
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-                      Inspirações &amp; conteúdos salvos
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454]">
-                      Receitas, ideias e conteúdos que você salvou para usar quando precisar.
-                    </p>
-                  </div>
-                  {plannerData.savedContents.length > 0 ? (
-                    <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
-                  ) : (
-                    <SoftCard className="p-5 md:p-6 text-center py-6">
-                      <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
-                      <p className="text-sm text-[#545454]/70 mb-3">
-                        Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
-                      </p>
-                      <a
-                        href="/biblioteca-materna"
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
-                      >
-                        Ver tudo na Biblioteca Materna
-                        <AppIcon name="arrow-right" className="w-4 h-4" />
-                      </a>
-                    </SoftCard>
-                  )}
-                </div>
               </div>
+            </section>
+
+            {/* Lembretes rápidos */}
+            <div className="space-y-3">
+              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                LEMBRETES
+              </span>
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  Lembretes rápidos
+                </h2>
+                <p className="mt-1 mb-4 text-sm text-[#545454]">
+                  Anotações soltas para não esquecer.
+                </p>
+              </div>
+              <NotesSection
+                content={plannerData.notes}
+                onChange={handleNotesChange}
+                hideTitle={true}
+              />
+            </div>
+
+            {/* Inspirações & conteúdos salvos */}
+            <div className="space-y-3">
+              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
+                INSPIRAÇÕES
+              </span>
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  Inspirações &amp; conteúdos salvos
+                </h2>
+                <p className="mt-1 mb-4 text-sm text-[#545454]">
+                  Receitas, ideias e conteúdos que você salvou para usar quando precisar.
+                </p>
+              </div>
+              {plannerData.savedContents.length > 0 ? (
+                <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
+              ) : (
+                <SoftCard className="p-5 md:p-6 text-center py-6">
+                  <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
+                  <p className="text-sm text-[#545454]/70 mb-3">
+                    Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
+                  </p>
+                  <a
+                    href="/biblioteca-materna"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
+                  >
+                    Ver tudo na Biblioteca Materna
+                    <AppIcon name="arrow-right" className="w-4 h-4" />
+                  </a>
+                </SoftCard>
+              )}
             </div>
           </div>
         )}
