@@ -54,8 +54,8 @@ export default function SavedContentsSection({
         </div>
       )}
 
-      <SoftCard className="p-4 md:p-5">
-        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 pb-2">
+      <SoftCard className="p-5 md:p-6">
+        <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 pb-2">
           <div className="flex gap-3 min-w-min">
             {contents.map(content => (
               <Link
