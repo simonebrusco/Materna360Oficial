@@ -6,7 +6,7 @@ export function PageH1({ className, children }: React.PropsWithChildren<{ classN
   return (
     <h1
       className={clsx(
-        'text-3xl md:text-4xl font-bold text-[#2f3a56]',
+        'text-3xl md:text-4xl font-bold text-[#2f3a56] font-poppins',
         className
       )}
     >
@@ -15,8 +15,8 @@ export function PageH1({ className, children }: React.PropsWithChildren<{ classN
   )
 }
 export function SectionH2({ className, children }: React.PropsWithChildren<{ className?: string }>) {
-  return <h2 className={clsx('text-[16px] font-semibold', className)}>{children}</h2>
+  return <h2 className={clsx('text-[16px] font-semibold text-[#2f3a56] font-poppins', className)}>{children}</h2>
 }
 export function BlockH3({ className, children }: React.PropsWithChildren<{ className?: string }>) {
-  return <h3 className={clsx('text-[16px] font-semibold', className)}>{children}</h3>
+  return <h3 className={clsx('text-[16px] font-semibold text-[#2f3a56] font-poppins', className)}>{children}</h3>
 }
