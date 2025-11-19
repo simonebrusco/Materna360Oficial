@@ -60,7 +60,7 @@ export default function AgendaSection({
         </div>
       )}
 
-      <SoftCard className="space-y-3 p-4 md:p-5">
+      <SoftCard className="space-y-3 p-5 md:p-6">
         {sortedItems.length === 0 ? (
           <div className="text-center py-6">
             <AppIcon name="calendar" className="w-8 h-8 text-[#ddd] mx-auto mb-2" />
