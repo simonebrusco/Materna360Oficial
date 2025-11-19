@@ -134,6 +134,25 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
               }
 
               toggleSave(savedContent)
+
+              if (saved) {
+                track('inspiration.unsaved', {
+                  id: ideaId,
+                  title: idea.title,
+                  type: 'ideia',
+                  origin: 'Ideias rápidas',
+                  timestamp: new Date().toISOString(),
+                })
+              } else {
+                track('inspiration.saved', {
+                  id: ideaId,
+                  title: idea.title,
+                  type: 'ideia',
+                  origin: 'Ideias rápidas',
+                  timestamp: new Date().toISOString(),
+                })
+              }
+
               toast.success(saved ? 'Ideia removida' : 'Ideia salva!')
             }
 
