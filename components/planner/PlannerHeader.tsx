@@ -10,7 +10,7 @@ interface PlannerHeaderProps {
 
 const MOOD_OPTIONS = [
   { id: 'happy', label: 'Feliz', icon: 'smile' as const, color: 'text-yellow-500' },
-  { id: 'okay', label: 'Normal', icon: 'meh' as const, color: 'text-blue-500' },
+  { id: 'okay', label: 'Normal', icon: 'meh' as const, color: 'text-[#ff005e]' },
   { id: 'stressed', label: 'Estressada', icon: 'frown' as const, color: 'text-red-500' },
 ]
 
