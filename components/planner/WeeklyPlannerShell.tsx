@@ -266,7 +266,7 @@ export default function WeeklyPlannerShell() {
             {/* Two-column grid on desktop, single column on mobile */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
               {/* LEFT COLUMN */}
-              <div className="space-y-6 md:space-y-8">
+              <div className="space-y-10">
                 {/* 1. Prioridades do dia */}
                 <div className="space-y-3">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
