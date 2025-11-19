@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { load, save } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry'
 
 export type SavedContent = {
   id: string
@@ -35,23 +34,9 @@ export function useSavedInspirations() {
         if (isSaved) {
           // Remove from saved
           updated = prev.filter(saved => saved.id !== item.id)
-          track('inspiration.unsaved', {
-            id: item.id,
-            title: item.title,
-            type: item.type,
-            origin: item.origin,
-            timestamp: new Date().toISOString(),
-          })
         } else {
           // Add to saved
           updated = [...prev, item]
-          track('inspiration.saved', {
-            id: item.id,
-            title: item.title,
-            type: item.type,
-            origin: item.origin,
-            timestamp: new Date().toISOString(),
-          })
         }
 
         // Persist to localStorage
