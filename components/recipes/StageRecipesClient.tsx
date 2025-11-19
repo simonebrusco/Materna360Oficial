@@ -105,6 +105,25 @@ export function StageRecipesClient({ stages, initialStage }: StageRecipesClientP
             }
 
             toggleSave(savedContent)
+
+            if (saved) {
+              track('inspiration.unsaved', {
+                id: recipeId,
+                title: recipe.title,
+                type: 'receita',
+                origin: 'Receitas',
+                timestamp: new Date().toISOString(),
+              })
+            } else {
+              track('inspiration.saved', {
+                id: recipeId,
+                title: recipe.title,
+                type: 'receita',
+                origin: 'Receitas',
+                timestamp: new Date().toISOString(),
+              })
+            }
+
             toast.success(saved ? 'Receita removida' : 'Receita salva!')
           }
 
