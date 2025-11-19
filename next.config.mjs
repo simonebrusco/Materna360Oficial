@@ -26,10 +26,24 @@ const nextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
-    // Enable webpack caching with proper versioning
+    // Configure webpack caching with proper versioning
     if (config.cache) {
       config.cache.version = `${isServer ? 'server' : 'client'}-${process.env.NODE_ENV || 'production'}`;
     }
+
+    // Ensure webpack properly handles module resolution and chunking
+    if (config.optimization && config.optimization.splitChunks) {
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        chunks: 'all',
+        cacheGroups: {
+          ...config.optimization.splitChunks.cacheGroups,
+          default: false,
+          vendors: false,
+        },
+      };
+    }
+
     return config;
   },
 };
