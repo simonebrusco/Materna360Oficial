@@ -7,6 +7,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/app/lib/toast';
+import { track } from '@/app/lib/telemetry';
 import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations';
 import { useIdeasQuota, type PlanTier } from './useIdeasQuota';
 
