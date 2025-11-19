@@ -49,105 +49,100 @@ export function MeuDiaClient() {
   const dailyMessage = DAILY_MESSAGES[getDailyIndex(new Date(), DAILY_MESSAGES.length)]
 
   return (
-    <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza.">
+    <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza." className="bg-gradient-to-b from-[#FFF0F6] via-[#FFF8FC] to-white">
       <ClientOnly>
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#FFF0F6] to-white pointer-events-none" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
+        <div className="mx-auto max-w-[1040px] px-4 md:px-6">
+          {/* GREETING SECTION */}
+          <Reveal delay={0}>
+            <section className="space-y-4 mb-6 md:mb-8" suppressHydrationWarning>
+              <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-snug">
+                {greeting}
+              </h2>
 
-          <div className="relative z-10">
-            <div className="mx-auto max-w-[1040px] px-4 md:px-6 space-y-6 md:space-y-8">
-              {/* HEADER SUPER PREMIUM */}
-              <Reveal delay={0}>
-                <header className="pt-6 md:pt-8" suppressHydrationWarning>
-                  <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight mb-6" suppressHydrationWarning>
-                    {greeting}
-                  </h1>
+              {/* Mood Pills */}
+              <div className="space-y-3">
+                <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Como você está?</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { id: 'happy', label: 'Feliz', color: 'from-yellow-50 to-yellow-100' },
+                    { id: 'okay', label: 'Normal', color: 'from-blue-50 to-blue-100' },
+                    { id: 'stressed', label: 'Estressada', color: 'from-red-50 to-red-100' },
+                  ].map(mood => (
+                    <button
+                      key={mood.id}
+                      onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedMood === mood.id
+                          ? `bg-gradient-to-r ${mood.color} border-2 border-[#ff005e] scale-105`
+                          : 'bg-white border border-[#ddd] hover:border-[#ff005e]/30'
+                      }`}
+                    >
+                      {mood.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  {/* Mood Pills */}
-                  <div className="space-y-3 mb-6">
-                    <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Como você está?</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {[
-                        { id: 'happy', label: 'Feliz', color: 'from-yellow-50 to-yellow-100' },
-                        { id: 'okay', label: 'Normal', color: 'from-blue-50 to-blue-100' },
-                        { id: 'stressed', label: 'Estressada', color: 'from-red-50 to-red-100' },
-                      ].map(mood => (
-                        <button
-                          key={mood.id}
-                          onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                            selectedMood === mood.id
-                              ? `bg-gradient-to-r ${mood.color} border-2 border-[#ff005e] scale-105`
-                              : 'bg-white border border-[#ddd] hover:border-[#ff005e]/30'
-                          }`}
-                        >
-                          {mood.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {/* Day Tags */}
+              <div className="space-y-3">
+                <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Hoje eu quero um dia...</p>
+                <div className="flex gap-2 flex-wrap">
+                  {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => setSelectedDay(selectedDay === tag ? null : tag)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedDay === tag
+                          ? 'bg-[#ff005e] text-white shadow-md scale-105'
+                          : 'bg-white border border-[#ddd] text-[#545454] hover:border-[#ff005e]'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </Reveal>
 
-                  {/* Day Tags */}
-                  <div className="space-y-3">
-                    <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Hoje eu quero um dia...</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedDay(selectedDay === tag ? null : tag)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                            selectedDay === tag
-                              ? 'bg-[#ff005e] text-white shadow-md scale-105'
-                              : 'bg-white border border-[#ddd] text-[#545454] hover:border-[#ff005e]'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </header>
-              </Reveal>
-
-              {/* RESUMO DO DIA */}
-              <Reveal delay={100}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="rounded-[22px] border border-black/5 bg-gradient-to-br from-pink-50 to-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6">
-                    <div className="space-y-3">
-                      <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide">Meu Dia em 1 Minuto</p>
-                      <div className="space-y-2">
-                        <p className="text-sm text-[#545454]/80">
-                          Você tem tudo que precisa dentro de você. Hoje é um novo dia para honrar seu tempo.
-                        </p>
-                        <div className="flex items-center gap-3 pt-2">
-                          <AppIcon name="heart" className="w-5 h-5 text-[#ff005e]" />
-                          <span className="text-xs font-semibold text-[#ff005e]">Sempre no seu tempo</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[22px] border border-black/5 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6 flex items-center gap-4">
-                    <AppIcon name="sparkles" className="w-8 h-8 text-[#ff005e] flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-[#ff005e] uppercase tracking-wide mb-1">Frase do Dia</p>
-                      <p className="text-sm md:text-base font-medium text-[#2f3a56] leading-relaxed">&quot;{dailyMessage}&quot;</p>
+          {/* RESUMO DO DIA */}
+          <Reveal delay={100}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 space-y-6 md:space-y-0">
+              <div className="rounded-[22px] border border-black/5 bg-gradient-to-br from-pink-50 to-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6">
+                <div className="space-y-3">
+                  <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide">Meu Dia em 1 Minuto</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-[#545454]/80">
+                      Você tem tudo que precisa dentro de você. Hoje é um novo dia para honrar seu tempo.
+                    </p>
+                    <div className="flex items-center gap-3 pt-2">
+                      <AppIcon name="heart" className="w-5 h-5 text-[#ff005e]" />
+                      <span className="text-xs font-semibold text-[#ff005e]">Sempre no seu tempo</span>
                     </div>
                   </div>
                 </div>
-              </Reveal>
+              </div>
 
-              {/* WEEKLY PLANNER SHELL */}
-              <WeeklyPlannerShell />
-
-              {/* Footer message */}
-              <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-                <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
-                  Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-                </p>
+              <div className="rounded-[22px] border border-black/5 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6 flex items-center gap-4">
+                <AppIcon name="sparkles" className="w-8 h-8 text-[#ff005e] flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-[#ff005e] uppercase tracking-wide mb-1">Frase do Dia</p>
+                  <p className="text-sm md:text-base font-medium text-[#2f3a56] leading-relaxed">&quot;{dailyMessage}&quot;</p>
+                </div>
               </div>
             </div>
+          </Reveal>
+
+          {/* WEEKLY PLANNER SHELL */}
+          <div className="space-y-6 md:space-y-8">
+            <WeeklyPlannerShell />
+          </div>
+
+          {/* Footer message */}
+          <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
+            <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
+              Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
+            </p>
           </div>
         </div>
       </ClientOnly>
