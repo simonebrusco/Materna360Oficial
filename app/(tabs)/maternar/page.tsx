@@ -6,6 +6,10 @@ export const metadata = {
 };
 
 export default function MaternarPage() {
-  // Inline redirect to bypass any compilation issues
-  throw new Error('Maternar feature is temporarily disabled. Please use Meu Dia instead.');
+  return (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <h1>Maternar Hub</h1>
+      <p>This feature is currently being restored. Please use Meu Dia instead.</p>
+    </div>
+  );
 }
