@@ -88,35 +88,68 @@ export function StageRecipesClient({ stages, initialStage }: StageRecipesClientP
       </div>
       <p className="mt-3 text-sm text-support-2/80">{currentStage.tagline}</p>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {currentStage.recipes.map((recipe) => (
-          <article
-            key={recipe.id}
-            className="h-full rounded-3xl border border-white/60 bg-white/90 p-5 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]"
-          >
-            <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-support-1">{recipe.title}</h3>
-                <p className="mt-2 text-sm text-support-2/80">{recipe.summary}</p>
-              </div>
-              <div className="flex items-center gap-2 self-start">
-                <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold text-support-1">
-                  {recipe.prepTime}
-                </span>
-                <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                  {stageLabelMap.get(recipe.stage) ?? currentStage.label}
-                </span>
-              </div>
-            </header>
-            <ul className="mt-4 space-y-1.5 text-sm text-support-2/80">
-              {recipe.keyIngredients.map((ingredient) => (
-                <li key={ingredient} className="flex items-start gap-2">
-                  <span aria-hidden className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-primary/70" />
-                  <span>{ingredient}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
+        {currentStage.recipes.map((recipe) => {
+          const recipeId = `recipe-${recipe.id}`
+          const saved = isHydrated ? isSaved(recipeId) : false
+
+          const handleSaveRecipe = () => {
+            if (!isHydrated) return
+
+            const savedContent: SavedContent = {
+              id: recipeId,
+              title: recipe.title,
+              type: 'receita',
+              origin: 'Receitas',
+              href: '#',
+            }
+
+            toggleSave(savedContent)
+            toast.success(saved ? 'Receita removida' : 'Receita salva!')
+          }
+
+          return (
+            <article
+              key={recipe.id}
+              className="h-full rounded-3xl border border-white/60 bg-white/90 p-5 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)]"
+            >
+              <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-support-1">{recipe.title}</h3>
+                  <p className="mt-2 text-sm text-support-2/80">{recipe.summary}</p>
+                </div>
+                <div className="flex items-center gap-2 self-start flex-shrink-0">
+                  <span className="rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold text-support-1">
+                    {recipe.prepTime}
+                  </span>
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    {stageLabelMap.get(recipe.stage) ?? currentStage.label}
+                  </span>
+                  <button
+                    onClick={handleSaveRecipe}
+                    className="ml-2 p-2 rounded-full hover:bg-primary/10 transition-colors"
+                    aria-label={saved ? 'Remover dos salvos' : 'Salvar receita'}
+                    title={saved ? 'Remover dos salvos' : 'Salvar receita'}
+                  >
+                    <AppIcon
+                      name="bookmark"
+                      className={`w-5 h-5 ${
+                        saved ? 'text-[#ff005e] fill-current' : 'text-[#ddd]'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </header>
+              <ul className="mt-4 space-y-1.5 text-sm text-support-2/80">
+                {recipe.keyIngredients.map((ingredient) => (
+                  <li key={ingredient} className="flex items-start gap-2">
+                    <span aria-hidden className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-primary/70" />
+                    <span>{ingredient}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          )
+        })}
       </div>
     </div>
   )
