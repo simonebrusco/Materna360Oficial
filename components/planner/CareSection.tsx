@@ -45,7 +45,7 @@ export default function CareSection({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 flex-1 flex flex-col">
       {!hideTitle && (
         <div>
           <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
@@ -56,9 +56,9 @@ export default function CareSection({
         </div>
       )}
 
-      <SoftCard className="p-5 md:p-6 space-y-2">
+      <SoftCard className="p-5 md:p-6 space-y-2 h-full flex flex-col">
         {items.length === 0 && !isAddingForm ? (
-          <div className="text-center py-6">
+          <div className="text-center py-6 flex-1 flex flex-col justify-center">
             <p className="text-sm text-[#545454]/60">
               {title === 'Cuidar de mim'
                 ? 'Use este espaço para registrar pequenas pausas, respirações e gestos por você.'
@@ -66,7 +66,8 @@ export default function CareSection({
             </p>
           </div>
         ) : (
-          items.map(item => (
+          <div className="flex-1 flex flex-col space-y-0">
+            {items.map(item => (
             <div
               key={item.id}
               className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all ${
@@ -101,8 +102,9 @@ export default function CareSection({
                   </p>
                 )}
               </div>
-            </div>
-          ))
+              </div>
+            ))}
+          </div>
         )}
 
         {!isAddingForm ? (

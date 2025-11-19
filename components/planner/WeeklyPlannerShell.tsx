@@ -329,7 +329,7 @@ export default function WeeklyPlannerShell() {
             {/* PAIR 1: Prioridades do dia + Casa & rotina */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
-                <div className="space-y-3 w-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     VOCÊ
                   </span>
@@ -350,7 +350,7 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
               <div className="flex h-full">
-                <div className="space-y-3 w-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     ROTINA
                   </span>
@@ -374,7 +374,7 @@ export default function WeeklyPlannerShell() {
             {/* PAIR 2: Cuidar de mim + Cuidar do meu filho */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
-                <div className="space-y-3 w-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     VOCÊ
                   </span>
@@ -399,7 +399,7 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
               <div className="flex h-full">
-                <div className="space-y-3 w-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
                     SEU FILHO
                   </span>
