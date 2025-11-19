@@ -116,12 +116,6 @@ export default function WeeklyPlannerShell() {
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
-  // Save saved contents whenever they change
-  useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
-    save(`planner/savedContents/${selectedDateKey}`, plannerData.savedContents)
-  }, [plannerData.savedContents, selectedDateKey, isHydrated])
-
   // Handlers for each section
   const handleAddAppointment = useCallback(
     (appointment: Omit<Appointment, 'id'>) => {
