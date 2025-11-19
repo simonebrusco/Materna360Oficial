@@ -103,7 +103,7 @@ export function MeuDiaClient() {
                   ))}
                 </div>
               </div>
-            </section>
+              </section>
             </Reveal>
 
             {/* RESUMO DO DIA */}
