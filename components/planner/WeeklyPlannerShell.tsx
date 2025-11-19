@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { save, load } from '@/app/lib/persist'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import Top3Section from './Top3Section'
@@ -51,46 +53,81 @@ type PlannerData = {
 }
 
 export default function WeeklyPlannerShell() {
-  // Initialize planner state with mock data
+  // Initialize selected date key (single source of truth)
+  const [selectedDateKey, setSelectedDateKey] = useState<string>('')
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Initialize per-day planner data
   const [plannerData, setPlannerData] = useState<PlannerData>({
-    appointments: [
-      { id: '1', time: '09:00', title: 'Consulta pediatra', tag: 'Filho' },
-      { id: '2', time: '14:30', title: 'Reunião trabalho', tag: 'Trabalho' },
-    ],
-    top3: [
-      { id: '1', title: 'Finalizar projeto', done: false },
-      { id: '2', title: 'Fazer compras', done: true },
-    ],
-    careItems: [
-      { id: '1', title: 'Meditação de 10 minutos', done: false },
-      { id: '2', title: 'Tomar café com calma', done: true },
-    ],
-    familyItems: [
-      { id: '1', title: 'Brincadeira com o filho', done: false },
-      { id: '2', title: 'Ler história antes de dormir', done: false },
-    ],
+    appointments: [],
+    top3: [],
+    careItems: [],
+    familyItems: [],
     notes: '',
-    savedContents: [
-      {
-        id: 'c1',
-        title: 'Receita: Bolo de cenoura saudável',
-        type: 'receita',
-        origin: 'Biblioteca',
-        href: '/biblioteca-materna',
-      },
-      {
-        id: 'c2',
-        title: 'Ideias para brincadeiras divertidas',
-        type: 'ideia',
-        origin: 'Descobrir',
-        href: '/descobrir',
-      },
-    ],
+    savedContents: [],
   })
 
-  // Calendar and view state
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  // View mode state
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+
+  // Hydrate selected date on client side only
+  useEffect(() => {
+    const dateKey = getBrazilDateKey(new Date())
+    setSelectedDateKey(dateKey)
+    setIsHydrated(true)
+  }, [])
+
+  // Load planner data for the selected date whenever selectedDateKey changes
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+
+    const loadedData: PlannerData = {
+      appointments: load(`planner/appointments/${selectedDateKey}`, []),
+      top3: load(`planner/top3/${selectedDateKey}`, []),
+      careItems: load(`planner/careItems/${selectedDateKey}`, []),
+      familyItems: load(`planner/familyItems/${selectedDateKey}`, []),
+      notes: load(`planner/notes/${selectedDateKey}`, ''),
+      savedContents: load(`planner/savedContents/${selectedDateKey}`, []),
+    }
+
+    setPlannerData(loadedData)
+  }, [selectedDateKey, isHydrated])
+
+  // Save appointments whenever they change
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+    save(`planner/appointments/${selectedDateKey}`, plannerData.appointments)
+  }, [plannerData.appointments, selectedDateKey, isHydrated])
+
+  // Save top3 whenever they change
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+    save(`planner/top3/${selectedDateKey}`, plannerData.top3)
+  }, [plannerData.top3, selectedDateKey, isHydrated])
+
+  // Save care items whenever they change
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+    save(`planner/careItems/${selectedDateKey}`, plannerData.careItems)
+  }, [plannerData.careItems, selectedDateKey, isHydrated])
+
+  // Save family items whenever they change
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+    save(`planner/familyItems/${selectedDateKey}`, plannerData.familyItems)
+  }, [plannerData.familyItems, selectedDateKey, isHydrated])
+
+  // Save notes whenever they change
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+    save(`planner/notes/${selectedDateKey}`, plannerData.notes)
+  }, [plannerData.notes, selectedDateKey, isHydrated])
+
+  // Save saved contents whenever they change
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+    save(`planner/savedContents/${selectedDateKey}`, plannerData.savedContents)
+  }, [plannerData.savedContents, selectedDateKey, isHydrated])
 
   // Handlers for each section
   const handleAddAppointment = useCallback(
@@ -163,24 +200,42 @@ export default function WeeklyPlannerShell() {
   }, [])
 
   const handleDateSelect = useCallback((date: Date) => {
-    setSelectedDate(date)
+    const newDateKey = getBrazilDateKey(date)
+    setSelectedDateKey(newDateKey)
   }, [])
 
   // Get current month and year for display
-  const monthYear = selectedDate.toLocaleDateString('pt-BR', {
-    month: 'long',
-    year: 'numeric',
-  })
+  const monthYear = useMemo(() => {
+    if (!isHydrated || !selectedDateKey) return ''
+    // Parse the date key (YYYY-MM-DD format)
+    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.toLocaleDateString('pt-BR', {
+      month: 'long',
+      year: 'numeric',
+    })
+  }, [selectedDateKey, isHydrated])
 
   // Format selected date for contextual text
-  const selectedDateFormatted = selectedDate.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+  const capitalizedDateFormatted = useMemo(() => {
+    if (!isHydrated || !selectedDateKey) return ''
+    // Parse the date key (YYYY-MM-DD format)
+    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    const selectedDateFormatted = date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    })
+    return selectedDateFormatted.charAt(0).toUpperCase() + selectedDateFormatted.slice(1)
+  }, [selectedDateKey, isHydrated])
 
-  // Capitalize first letter for proper Portuguese formatting
-  const capitalizedDateFormatted = selectedDateFormatted.charAt(0).toUpperCase() + selectedDateFormatted.slice(1)
+  // Get selected date for calendar
+  const selectedDate = useMemo(() => {
+    if (!isHydrated || !selectedDateKey) return new Date()
+    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }, [selectedDateKey, isHydrated])
 
   // Generate week data for WeekView
   const getMonday = (date: Date) => {
@@ -206,6 +261,10 @@ export default function WeeklyPlannerShell() {
       familyCount: Math.floor(Math.random() * 2),
     }
   })
+
+  if (!isHydrated) {
+    return null
+  }
 
   return (
     <Reveal delay={200}>
@@ -247,7 +306,11 @@ export default function WeeklyPlannerShell() {
           </div>
 
           {/* Day Calendar Strip */}
-          <DayCalendarStrip selectedDate={selectedDate} onDateSelect={handleDateSelect} />
+          <DayCalendarStrip
+            selectedDate={selectedDate}
+            selectedDateKey={selectedDateKey}
+            onDateSelect={handleDateSelect}
+          />
 
           {/* Contextual date caption */}
           <div className="space-y-1">
@@ -280,80 +343,12 @@ export default function WeeklyPlannerShell() {
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
-                  <SoftCard className="p-5 md:p-6 space-y-3">
-                    {plannerData.top3.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
-                          item.done
-                            ? 'bg-[#f5f5f5] border-[#ddd]'
-                            : 'bg-white border-[#f0f0f0] hover:border-[#ff005e]/20'
-                        }`}
-                      >
-                        <button
-                          onClick={() => handleToggleTop3(item.id)}
-                          className="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all mt-0.5"
-                          style={{
-                            borderColor: item.done ? '#ff005e' : '#ddd',
-                            backgroundColor: item.done ? '#ff005e' : 'transparent',
-                          }}
-                        >
-                          {item.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
-                        </button>
-                        <span
-                          className={`flex-1 text-sm font-medium ${
-                            item.done
-                              ? 'text-[#545454]/50 line-through'
-                              : 'text-[#2f3a56]'
-                          }`}
-                        >
-                          {item.title}
-                        </span>
-                        <span className="text-xs font-bold text-[#ff005e]/60">{idx + 1}.</span>
-                      </div>
-                    ))}
-
-                    {plannerData.top3.length < 3 &&
-                      Array.from({ length: 3 - plannerData.top3.length }).map((_, idx) => (
-                        <div
-                          key={`empty-${idx}`}
-                          className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[#ddd] bg-[#fafafa]"
-                        >
-                          <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[#ddd] opacity-40" />
-                          <span className="flex-1 text-sm text-[#545454]/40">
-                            {idx === 0
-                              ? 'Primeiro foco de hoje…'
-                              : idx === 1
-                                ? 'Segundo foco…'
-                                : 'Terceiro foco…'}
-                          </span>
-                          <span className="text-xs font-bold text-[#545454]/20">
-                            {plannerData.top3.length + idx + 1}.
-                          </span>
-                        </div>
-                      ))}
-
-                    {plannerData.top3.length === 3 && plannerData.top3.every(item => item.done) && (
-                      <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-[#ffe3f0] to-[#fff] border border-[#ff005e]/20 text-center">
-                        <p className="text-sm font-semibold text-[#ff005e]">
-                          Parabéns! Você concluiu seus 3 focos principais
-                        </p>
-                      </div>
-                    )}
-
-                    {plannerData.top3.length < 3 && (
-                      <button
-                        onClick={() => {
-                          const newTitle = `Foco ${plannerData.top3.length + 1}`
-                          handleAddTop3(newTitle)
-                        }}
-                        className="mt-2 pt-3 border-t border-[#f0f0f0] inline-flex items-center gap-2 text-sm font-medium text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
-                      >
-                        <AppIcon name="plus" className="w-4 h-4" />
-                        Adicionar foco
-                      </button>
-                    )}
-                  </SoftCard>
+                  <Top3Section
+                    items={plannerData.top3}
+                    onToggle={handleToggleTop3}
+                    onAdd={handleAddTop3}
+                    hideTitle={true}
+                  />
                 </div>
 
                 {/* 3. Cuidar de mim */}
@@ -394,24 +389,11 @@ export default function WeeklyPlannerShell() {
                       Anotações soltas para não esquecer.
                     </p>
                   </div>
-                  <SoftCard className="p-5 md:p-6">
-                    {plannerData.notes.length === 0 ? (
-                      <div className="text-center py-6">
-                        <p className="text-sm text-[#545454]/60">
-                          Ainda não tem nada por aqui — e está tudo bem.
-                        </p>
-                      </div>
-                    ) : null}
-                    <textarea
-                      value={plannerData.notes}
-                      onChange={e => handleNotesChange(e.target.value)}
-                      placeholder="Quer tirar algo da cabeça? Anote aqui."
-                      className="w-full h-32 md:h-40 px-4 py-3 rounded-lg border border-[#ddd] text-sm font-medium text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
-                    />
-                    <p className="text-xs text-[#545454]/50 mt-2">
-                      {plannerData.notes.length} caracteres
-                    </p>
-                  </SoftCard>
+                  <NotesSection
+                    content={plannerData.notes}
+                    onChange={handleNotesChange}
+                    hideTitle={true}
+                  />
                 </div>
               </div>
 
