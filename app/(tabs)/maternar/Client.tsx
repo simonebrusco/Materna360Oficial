@@ -1,5 +1,1 @@
-'use client';
-
-export function MaternarClient() {
-  return <div>Maternar Hub Coming Soon</div>;
-}
+// This file is unused - see page.tsx for the temporary implementation
