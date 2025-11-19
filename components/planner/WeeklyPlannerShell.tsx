@@ -181,6 +181,7 @@ export default function WeeklyPlannerShell() {
                 items={plannerData.top3}
                 onToggle={handleToggleTop3}
                 onAdd={handleAddTop3}
+                hideTitle={true}
               />
             </div>
 
@@ -207,6 +208,7 @@ export default function WeeklyPlannerShell() {
                 onToggle={id => handleToggleCareItem(id, 'care')}
                 onAdd={title => handleAddCareItem(title, 'care')}
                 placeholder="Nova ação de autocuidado..."
+                hideTitle={true}
               />
             </div>
 
@@ -233,6 +235,7 @@ export default function WeeklyPlannerShell() {
                 onToggle={id => handleToggleCareItem(id, 'family')}
                 onAdd={title => handleAddCareItem(title, 'family')}
                 placeholder="Nova ação com a família..."
+                hideTitle={true}
               />
             </div>
           </div>
@@ -257,6 +260,7 @@ export default function WeeklyPlannerShell() {
               <AgendaSection
                 items={plannerData.appointments}
                 onAddAppointment={handleAddAppointment}
+                hideTitle={true}
               />
             </div>
 
@@ -278,6 +282,7 @@ export default function WeeklyPlannerShell() {
               <NotesSection
                 content={plannerData.notes}
                 onChange={handleNotesChange}
+                hideTitle={true}
               />
             </div>
 
@@ -297,7 +302,7 @@ export default function WeeklyPlannerShell() {
                     Receitas, ideias e conteúdos para seu dia a dia.
                   </p>
                 </div>
-                <SavedContentsSection contents={plannerData.savedContents} />
+                <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
               </div>
             )}
           </div>
