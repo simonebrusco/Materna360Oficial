@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
+import { useSavedInspirations } from '@/app/hooks/useSavedInspirations'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import Top3Section from './Top3Section'
@@ -35,21 +36,12 @@ type CareItem = {
   origin?: string
 }
 
-type SavedContent = {
-  id: string
-  title: string
-  type: 'artigo' | 'receita' | 'ideia' | 'frase'
-  origin: string
-  href?: string
-}
-
 type PlannerData = {
   appointments: Appointment[]
   top3: Top3Item[]
   careItems: CareItem[]
   familyItems: CareItem[]
   notes: string
-  savedContents: SavedContent[]
 }
 
 export default function WeeklyPlannerShell() {
