@@ -30,6 +30,4 @@ export default async function MaternarPage() {
 
   // Temporarily disable maternar hub to fix compilation issues
   redirect('/meu-dia');
-
-  return <MaternarClient />;
 }
