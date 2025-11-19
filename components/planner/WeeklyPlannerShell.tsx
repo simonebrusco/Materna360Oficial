@@ -179,6 +179,9 @@ export default function WeeklyPlannerShell() {
     month: 'long',
   })
 
+  // Capitalize first letter for proper Portuguese formatting
+  const capitalizedDateFormatted = selectedDateFormatted.charAt(0).toUpperCase() + selectedDateFormatted.slice(1)
+
   // Generate week data for WeekView
   const getMonday = (date: Date) => {
     const d = new Date(date)
