@@ -45,7 +45,7 @@ export default function PlannerSummary({ completedCount, totalCount, dailyMessag
           </div>
           <div className="flex-1">
             <p className="text-xs md:text-sm font-medium text-[#ff005e] uppercase tracking-wide mb-2">Sua mensagem</p>
-            <p className="text-sm md:text-base text-[#2f3a56] font-medium leading-relaxed">"{dailyMessage}"</p>
+            <p className="text-sm md:text-base text-[#2f3a56] font-medium leading-relaxed">&quot;{dailyMessage}&quot;</p>
           </div>
         </div>
       </div>
