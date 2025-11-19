@@ -20,6 +20,7 @@ type CareSectionProps = {
   onToggle: (id: string) => void
   onAdd: (title: string) => void
   placeholder?: string
+  hideTitle?: boolean
 }
 
 export default function CareSection({
@@ -30,6 +31,7 @@ export default function CareSection({
   onToggle,
   onAdd,
   placeholder = 'Nova ação...',
+  hideTitle = false,
 }: CareSectionProps) {
   const [isAddingForm, setIsAddingForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -44,13 +46,15 @@ export default function CareSection({
 
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
-          <AppIcon name={icon as any} className="w-4 h-4 text-[#ff005e]" />
-          {title}
-        </h3>
-        <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">{subtitle}</p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
+            <AppIcon name={icon as any} className="w-4 h-4 text-[#ff005e]" />
+            {title}
+          </h3>
+          <p className="text-xs md:text-sm text-[#545454]/70 mt-0.5">{subtitle}</p>
+        </div>
+      )}
 
       <SoftCard className="p-4 md:p-5 space-y-2">
         {items.length === 0 && !isAddingForm ? (
