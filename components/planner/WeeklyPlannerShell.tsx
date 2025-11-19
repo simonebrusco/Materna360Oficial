@@ -445,8 +445,8 @@ export default function WeeklyPlannerShell() {
                   Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                 </p>
               </div>
-              {plannerData.savedContents.length > 0 ? (
-                <SavedContentsSection contents={plannerData.savedContents} hideTitle={true} />
+              {savedContents.length > 0 ? (
+                <SavedContentsSection contents={savedContents} hideTitle={true} />
               ) : (
                 <SoftCard className="p-5 md:p-6 text-center py-6">
                   <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
