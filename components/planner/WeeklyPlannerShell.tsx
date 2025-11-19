@@ -273,10 +273,10 @@ export default function WeeklyPlannerShell() {
                     VOCÊ
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Prioridades do dia
-                    </h3>
-                    <p className="text-sm text-[#545454] mt-1">
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
@@ -362,10 +362,10 @@ export default function WeeklyPlannerShell() {
                     VOCÊ
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Cuidar de mim
-                    </h3>
-                    <p className="text-sm text-[#545454] mt-1">
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
                       Pequenos gestos que cuidam da sua energia.
                     </p>
                   </div>
@@ -387,10 +387,10 @@ export default function WeeklyPlannerShell() {
                     LEMBRETES
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Lembretes rápidos
-                    </h3>
-                    <p className="text-sm text-[#545454] mt-1">
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
                       Anotações soltas para não esquecer.
                     </p>
                   </div>
@@ -423,10 +423,10 @@ export default function WeeklyPlannerShell() {
                     ROTINA
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Casa &amp; rotina
-                    </h3>
-                    <p className="text-sm text-[#545454] mt-1">
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
                       Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
@@ -443,10 +443,10 @@ export default function WeeklyPlannerShell() {
                     SEU FILHO
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Cuidar do meu filho
-                    </h3>
-                    <p className="text-sm text-[#545454] mt-1">
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
                       Um momento de conexão faz diferença no dia.
                     </p>
                   </div>
@@ -468,10 +468,10 @@ export default function WeeklyPlannerShell() {
                     INSPIRAÇÕES
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                       Inspirações &amp; conteúdos salvos
-                    </h3>
-                    <p className="text-sm text-[#545454] mt-1">
+                    </h2>
+                    <p className="mt-1 mb-4 text-sm text-[#545454]">
                       Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                     </p>
                   </div>
