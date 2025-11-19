@@ -26,14 +26,9 @@ const nextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
-    // Configure webpack caching to avoid cache-related issues
+    // Enable webpack caching with proper versioning
     if (config.cache) {
-      config.cache = {
-        type: 'filesystem',
-        cacheDirectory: '.next/cache/webpack',
-        version: process.env.NEXT_PUBLIC_SITE_URL || 'default',
-        name: `${isServer ? 'server' : 'client'}-${process.env.NODE_ENV}`,
-      };
+      config.cache.version = `${isServer ? 'server' : 'client'}-${process.env.NODE_ENV || 'production'}`;
     }
     return config;
   },
