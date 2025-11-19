@@ -117,19 +117,56 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
       {ideas.length > 0 && (
         <div className="space-y-4">
           <p className="text-sm font-medium text-support-1">Suas ideias ({ideas.length})</p>
-          {ideas.map((idea) => (
-            <Card
-              key={idea.id}
-              className="rounded-2xl bg-white border border-white/60 shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5"
-            >
-              <h4 className="text-base font-semibold text-support-1 mb-2">{idea.title}</h4>
-              <p className="text-sm text-support-2 mb-3">{idea.description}</p>
-              <div className="flex flex-wrap gap-3 text-xs text-support-3">
-                <span>⏱️ {idea.duration}</span>
-                <span>👶 {idea.age_range}</span>
-              </div>
-            </Card>
-          ))}
+          {ideas.map((idea) => {
+            const ideaId = `idea-${idea.id}`
+            const saved = isHydrated ? isSaved(ideaId) : false
+
+            const handleSaveIdea = () => {
+              if (!isHydrated) return
+
+              const savedContent: SavedContent = {
+                id: ideaId,
+                title: idea.title,
+                type: 'ideia',
+                origin: 'Ideias rápidas',
+                href: '#',
+              }
+
+              toggleSave(savedContent)
+              toast.success(saved ? 'Ideia removida' : 'Ideia salva!')
+            }
+
+            return (
+              <Card
+                key={idea.id}
+                className="rounded-2xl bg-white border border-white/60 shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <h4 className="text-base font-semibold text-support-1 mb-2">{idea.title}</h4>
+                    <p className="text-sm text-support-2 mb-3">{idea.description}</p>
+                    <div className="flex flex-wrap gap-3 text-xs text-support-3">
+                      <span>⏱️ {idea.duration}</span>
+                      <span>👶 {idea.age_range}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSaveIdea}
+                    className="p-2 rounded-full hover:bg-primary/10 transition-colors flex-shrink-0"
+                    aria-label={saved ? 'Remover dos salvos' : 'Salvar ideia'}
+                    title={saved ? 'Remover dos salvos' : 'Salvar ideia'}
+                  >
+                    <AppIcon
+                      name="bookmark"
+                      className={`w-5 h-5 ${
+                        saved ? 'text-[#ff005e] fill-current' : 'text-[#ddd]'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       )}
 
