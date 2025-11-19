@@ -25,6 +25,11 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config, { isServer }) => {
+    // Disable webpack cache to prevent cache corruption issues
+    config.cache = false;
+    return config;
+  },
 };
 
 export default nextConfig;
