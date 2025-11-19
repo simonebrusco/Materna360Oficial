@@ -56,7 +56,7 @@ export function MeuDiaClient() {
             {/* GREETING SECTION */}
             <Reveal delay={0}>
               <section className="space-y-4 mb-6 md:mb-8" suppressHydrationWarning>
-                <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-snug">
+                <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-snug font-poppins">
                   {greeting}
                 </h2>
 
@@ -151,7 +151,7 @@ export function MeuDiaClient() {
 
             {/* Footer message */}
             <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-              <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed font-poppins">
                 Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
               </p>
             </div>
