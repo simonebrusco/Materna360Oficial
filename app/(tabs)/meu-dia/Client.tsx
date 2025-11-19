@@ -61,21 +61,24 @@ export function MeuDiaClient() {
                 </h2>
 
                 {/* Mood Pills */}
-                <div className="space-y-3">
-                  <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Como você está?</p>
+                <div className="space-y-4 md:space-y-5">
+                  <div>
+                    <p className="text-xs md:text-sm font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">Como você está?</p>
+                    <p className="text-xs md:text-sm text-[#545454]/70 font-poppins">Escolha como você se sente agora.</p>
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {[
-                      { id: 'happy', label: 'Feliz', color: 'from-yellow-50 to-yellow-100' },
-                      { id: 'okay', label: 'Normal', color: 'from-blue-50 to-blue-100' },
-                      { id: 'stressed', label: 'Estressada', color: 'from-red-50 to-red-100' },
+                      { id: 'happy', label: 'Feliz' },
+                      { id: 'okay', label: 'Normal' },
+                      { id: 'stressed', label: 'Estressada' },
                     ].map(mood => (
                       <button
                         key={mood.id}
                         onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                           selectedMood === mood.id
-                            ? `bg-gradient-to-r ${mood.color} border-2 border-[#ff005e] scale-105`
-                            : 'bg-white border border-[#ddd] hover:border-[#ff005e]/30'
+                            ? 'bg-[#ffd8e6] border-[1.5px] border-[#ff005e] text-[#ff005e] shadow-sm'
+                            : 'bg-white border border-[#e5e5e5] text-[#2f3a56] hover:border-[#ff005e]/30'
                         }`}
                       >
                         {mood.label}
@@ -85,17 +88,20 @@ export function MeuDiaClient() {
                 </div>
 
                 {/* Day Tags */}
-                <div className="space-y-3">
-                  <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide">Hoje eu quero um dia...</p>
+                <div className="space-y-4 md:space-y-5">
+                  <div>
+                    <p className="text-xs md:text-sm font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">Hoje eu quero um dia...</p>
+                    <p className="text-xs md:text-sm text-[#545454]/70 font-poppins">Selecione o estilo do seu dia.</p>
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(tag => (
                       <button
                         key={tag}
                         onClick={() => setSelectedDay(selectedDay === tag ? null : tag)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                           selectedDay === tag
-                            ? 'bg-[#ff005e] text-white shadow-md scale-105'
-                            : 'bg-white border border-[#ddd] text-[#545454] hover:border-[#ff005e]'
+                            ? 'bg-[#ffd8e6] border-[1.5px] border-[#ff005e] text-[#ff005e] shadow-sm'
+                            : 'bg-white border border-[#e5e5e5] text-[#2f3a56] hover:border-[#ff005e]/30'
                         }`}
                       >
                         {tag}
