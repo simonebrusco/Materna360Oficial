@@ -38,7 +38,7 @@ export default function Top3Section({
   const emptySlots = 3 - items.length
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 flex-1 flex flex-col">
       {!hideTitle && (
         <div>
           <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
@@ -51,57 +51,59 @@ export default function Top3Section({
         </div>
       )}
 
-      <SoftCard className="p-5 md:p-6 space-y-3">
-        {items.map((item, idx) => (
-          <div
-            key={item.id}
-            className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
-              item.done
-                ? 'bg-[#f5f5f5] border-[#ddd]'
-                : 'bg-white border-[#f0f0f0] hover:border-[#ff005e]/20'
-            }`}
-          >
-            <button
-              onClick={() => onToggle(item.id)}
-              className="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all mt-0.5"
-              style={{
-                borderColor: item.done ? '#ff005e' : '#ddd',
-                backgroundColor: item.done ? '#ff005e' : 'transparent',
-              }}
-            >
-              {item.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
-            </button>
-            <span
-              className={`flex-1 text-sm font-medium ${
+      <SoftCard className="p-5 md:p-6 space-y-3 h-full flex flex-col">
+        <div className="flex-1 flex flex-col space-y-3">
+          {items.map((item, idx) => (
+            <div
+              key={item.id}
+              className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
                 item.done
-                  ? 'text-[#545454]/50 line-through'
-                  : 'text-[#2f3a56]'
+                  ? 'bg-[#f5f5f5] border-[#ddd]'
+                  : 'bg-white border-[#f0f0f0] hover:border-[#ff005e]/20'
               }`}
             >
-              {item.title}
-            </span>
-            <span className="text-xs font-bold text-[#ff005e]/60">{idx + 1}.</span>
-          </div>
-        ))}
-
-        {emptySlots > 0 &&
-          Array.from({ length: emptySlots }).map((_, idx) => (
-            <div
-              key={`empty-${idx}`}
-              className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[#ddd] bg-[#fafafa]"
-            >
-              <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[#ddd] opacity-40" />
-              <span className="flex-1 text-sm text-[#545454]/40">
-                Espaço {items.length + idx + 1}
+              <button
+                onClick={() => onToggle(item.id)}
+                className="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all mt-0.5"
+                style={{
+                  borderColor: item.done ? '#ff005e' : '#ddd',
+                  backgroundColor: item.done ? '#ff005e' : 'transparent',
+                }}
+              >
+                {item.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
+              </button>
+              <span
+                className={`flex-1 text-sm font-medium ${
+                  item.done
+                    ? 'text-[#545454]/50 line-through'
+                    : 'text-[#2f3a56]'
+                }`}
+              >
+                {item.title}
               </span>
-              <span className="text-xs font-bold text-[#545454]/20">
-                {items.length + idx + 1}.
-              </span>
+              <span className="text-xs font-bold text-[#ff005e]/60">{idx + 1}.</span>
             </div>
           ))}
 
+          {emptySlots > 0 &&
+            Array.from({ length: emptySlots }).map((_, idx) => (
+              <div
+                key={`empty-${idx}`}
+                className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[#ddd] bg-[#fafafa]"
+              >
+                <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[#ddd] opacity-40" />
+                <span className="flex-1 text-sm text-[#545454]/40">
+                  Espaço {items.length + idx + 1}
+                </span>
+                <span className="text-xs font-bold text-[#545454]/20">
+                  {items.length + idx + 1}.
+                </span>
+              </div>
+            ))}
+        </div>
+
         {allComplete && (
-          <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-[#ffe3f0] to-[#fff] border border-[#ff005e]/20 text-center">
+          <div className="mt-auto p-3 rounded-lg bg-gradient-to-r from-[#ffe3f0] to-[#fff] border border-[#ff005e]/20 text-center">
             <p className="text-sm font-semibold text-[#ff005e]">
               Parabéns! Você concluiu seus 3 focos principais
             </p>
