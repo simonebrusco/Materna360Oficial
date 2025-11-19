@@ -2,15 +2,9 @@
 
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import CardHub from '@/components/maternar/CardHub';
+// Minimal imports to test compilation
 import { track } from '@/app/lib/telemetry';
 import { useProfile } from '@/app/hooks/useProfile';
-import AppIcon from '@/components/ui/AppIcon';
-import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
-import { getDailyIndex } from '@/app/lib/dailyMessage';
-import { getTimeGreeting } from '@/app/lib/greetings';
-import { Reveal } from '@/components/ui/Reveal';
 
 export function MaternarClient() {
   const { name } = useProfile();
