@@ -12,6 +12,54 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 
+const MOOD_LABELS: Record<string, string> = {
+  happy: 'Feliz',
+  okay: 'Normal',
+  stressed: 'Estressada',
+}
+
+function generateSummaryText(mood: string | null, day: string | null): { main: React.ReactNode; show: boolean } {
+  if (mood && day) {
+    return {
+      show: true,
+      main: (
+        <>
+          Hoje você está <span className="font-semibold text-[#ff005e]">{MOOD_LABELS[mood]}</span> e escolheu um dia{' '}
+          <span className="font-semibold text-[#ff005e]">{day}</span>. Que tal começar definindo suas três prioridades?
+        </>
+      ),
+    }
+  }
+
+  if (mood) {
+    return {
+      show: true,
+      main: (
+        <>
+          Hoje você está <span className="font-semibold text-[#ff005e]">{MOOD_LABELS[mood]}</span>. Agora escolha que tipo de
+          dia você quer ter.
+        </>
+      ),
+    }
+  }
+
+  if (day) {
+    return {
+      show: true,
+      main: (
+        <>
+          Você escolheu um dia <span className="font-semibold text-[#ff005e]">{day}</span>. Conte pra gente como você está agora.
+        </>
+      ),
+    }
+  }
+
+  return {
+    show: true,
+    main: 'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.',
+  }
+}
+
 export function MeuDiaClient() {
   const { name } = useProfile()
   const [greeting, setGreeting] = useState<string>('')
