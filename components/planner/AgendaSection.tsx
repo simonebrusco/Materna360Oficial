@@ -47,7 +47,7 @@ export default function AgendaSection({
   const sortedItems = [...items].sort((a, b) => a.time.localeCompare(b.time))
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 flex-1 flex flex-col">
       {!hideTitle && (
         <div>
           <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2">
@@ -60,28 +60,30 @@ export default function AgendaSection({
         </div>
       )}
 
-      <SoftCard className="space-y-3 p-5 md:p-6">
+      <SoftCard className="space-y-3 p-5 md:p-6 h-full flex flex-col">
         {sortedItems.length === 0 ? (
-          <div className="text-center py-6">
+          <div className="text-center py-6 flex-1 flex flex-col justify-center">
             <AppIcon name="calendar" className="w-8 h-8 text-[#ddd] mx-auto mb-2" />
             <p className="text-sm text-[#545454]/60">Ainda não há compromissos para hoje. Que tal adicionar o primeiro?</p>
           </div>
         ) : (
-          sortedItems.map(item => (
-            <div key={item.id} className="flex gap-3 py-2.5 border-b border-[#f0f0f0] last:border-0">
-              <div className="flex-shrink-0 w-12 py-1">
-                <span className="text-xs font-bold text-[#ff005e]">{item.time}</span>
+          <div className="flex-1 flex flex-col space-y-0">
+            {sortedItems.map(item => (
+              <div key={item.id} className="flex gap-3 py-2.5 border-b border-[#f0f0f0] last:border-0">
+                <div className="flex-shrink-0 w-12 py-1">
+                  <span className="text-xs font-bold text-[#ff005e]">{item.time}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#2f3a56]">{item.title}</p>
+                  {item.tag && (
+                    <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#f5f5f5] text-[#545454]/70">
+                      {item.tag}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-[#2f3a56]">{item.title}</p>
-                {item.tag && (
-                  <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#f5f5f5] text-[#545454]/70">
-                    {item.tag}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
 
         {!isAddingForm ? (
