@@ -132,19 +132,19 @@ export function MeuDiaClient() {
                 </div>
               </div>
             </div>
-          </Reveal>
+            </Reveal>
 
-          {/* WEEKLY PLANNER SHELL */}
-          <div className="space-y-6 md:space-y-8">
-            <WeeklyPlannerShell />
-          </div>
+            {/* WEEKLY PLANNER SHELL */}
+            <div className="space-y-6 md:space-y-8">
+              <WeeklyPlannerShell />
+            </div>
 
-          {/* Footer message */}
-          <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-            <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
-              Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-            </p>
-          </div>
+            {/* Footer message */}
+            <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
+              <p className="text-xs md:text-sm text-[#545454]/75 leading-relaxed">
+                Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
+              </p>
+            </div>
         </div>
       </ClientOnly>
       </PageTemplate>
