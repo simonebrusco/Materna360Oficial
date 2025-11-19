@@ -135,7 +135,7 @@ export function MeuDiaClient() {
             </Reveal>
 
             {/* WEEKLY PLANNER SHELL */}
-            <div className="space-y-6 md:space-y-8">
+            <div className="mt-6 md:mt-8 space-y-6 md:space-y-8">
               <WeeklyPlannerShell />
             </div>
 
