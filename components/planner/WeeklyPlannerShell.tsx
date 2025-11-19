@@ -416,7 +416,7 @@ export default function WeeklyPlannerShell() {
               </div>
 
               {/* RIGHT COLUMN */}
-              <div className="space-y-6 md:space-y-8">
+              <div className="space-y-10">
                 {/* 2. Casa & rotina */}
                 <div className="space-y-3">
                   <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#ff005e] uppercase">
