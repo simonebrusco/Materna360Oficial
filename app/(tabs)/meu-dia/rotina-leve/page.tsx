@@ -626,7 +626,7 @@ export default function RotinaLevePage() {
                                     Frase do dia
                                   </h4>
                                   <p className="text-sm text-[#545454]/85 leading-relaxed italic">
-                                    "Mesmo nos dias cansativos, você está fazendo o seu melhor."
+                                    &quot;Mesmo nos dias cansativos, você está fazendo o seu melhor.&quot;
                                   </p>
                                 </div>
 

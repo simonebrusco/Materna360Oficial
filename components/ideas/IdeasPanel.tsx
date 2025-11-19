@@ -133,7 +133,7 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
       {/* Empty State */}
       {!isGenerating && ideas.length === 0 && (
         <p className="text-center text-sm text-support-2 py-6">
-          Clique em "Gerar Ideia" para descobrir atividades personalizadas.
+          Clique em &quot;Gerar Ideia&quot; para descobrir atividades personalizadas.
         </p>
       )}
     </div>
