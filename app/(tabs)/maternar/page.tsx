@@ -1,12 +1,13 @@
+import { MaternarClient } from './Client';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata = {
   title: 'Maternar Hub',
+  description: 'Central hub para acessar todos os recursos do Maternar',
 };
 
-export default async function MaternarPage() {
-  // Redirect to meu-dia as maternar is temporarily disabled
-  const { redirect } = await import('next/navigation');
-  redirect('/meu-dia');
+export default function MaternarPage() {
+  return <MaternarClient />;
 }
