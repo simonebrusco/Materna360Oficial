@@ -108,8 +108,8 @@ export function MeuDiaClient() {
 
             {/* RESUMO DO DIA */}
             <Reveal delay={100}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 space-y-6 md:space-y-0">
-              <div className="rounded-[22px] border border-black/5 bg-gradient-to-br from-pink-50 to-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 space-y-6 md:space-y-0">
+                <div className="rounded-[22px] border border-black/5 bg-gradient-to-br from-pink-50 to-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6">
                 <div className="space-y-3">
                   <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide">Meu Dia em 1 Minuto</p>
                   <div className="space-y-2">
