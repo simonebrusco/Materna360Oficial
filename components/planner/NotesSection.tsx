@@ -25,7 +25,7 @@ export default function NotesSection({ content, onChange, hideTitle = false }: N
         </div>
       )}
 
-      <SoftCard className="p-4 md:p-5">
+      <SoftCard className="p-5 md:p-6">
         <textarea
           value={content}
           onChange={e => onChange(e.target.value)}
