@@ -394,7 +394,7 @@ export default function WeeklyPlannerShell() {
                       Anotações soltas para não esquecer.
                     </p>
                   </div>
-                  <SoftCard className="p-4 md:p-5">
+                  <SoftCard className="p-5 md:p-6">
                     {plannerData.notes.length === 0 ? (
                       <div className="text-center py-6">
                         <p className="text-sm text-[#545454]/60">
