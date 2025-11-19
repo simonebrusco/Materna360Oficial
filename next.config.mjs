@@ -26,8 +26,15 @@ const nextConfig = {
     ];
   },
   webpack: (config, { isServer }) => {
-    // Disable webpack cache to prevent cache corruption issues
-    config.cache = false;
+    // Configure webpack caching to avoid cache-related issues
+    if (config.cache) {
+      config.cache = {
+        type: 'filesystem',
+        cacheDirectory: '.next/cache/webpack',
+        version: process.env.NEXT_PUBLIC_SITE_URL || 'default',
+        name: `${isServer ? 'server' : 'client'}-${process.env.NODE_ENV}`,
+      };
+    }
     return config;
   },
 };
