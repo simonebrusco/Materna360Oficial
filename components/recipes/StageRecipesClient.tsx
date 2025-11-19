@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations'
 import { toast } from '@/app/lib/toast'
+import { track } from '@/app/lib/telemetry'
 
 import type { RecipeStageKey, StageRecipe } from '@/data/healthyRecipesContent'
 
