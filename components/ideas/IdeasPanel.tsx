@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import AppIcon from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/app/lib/toast';
+import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations';
 import { useIdeasQuota, type PlanTier } from './useIdeasQuota';
 
 interface IdeaCard {
@@ -26,7 +28,7 @@ const MOCK_IDEAS: Record<number, IdeaCard> = {
   },
   1: {
     id: 'idea-2',
-    title: 'Respiração em 4 Tempos',
+    title: 'Respiraç��o em 4 Tempos',
     description: 'Técnica simples para acalmar você e as crianças. Inspire por 4, segure por 4, expire por 4.',
     duration: '5 minutos',
     age_range: '12+ meses',
