@@ -81,7 +81,6 @@ export default function WeeklyPlannerShell() {
       careItems: load<CareItem[]>(`planner/careItems/${selectedDateKey}`, []) ?? [],
       familyItems: load<CareItem[]>(`planner/familyItems/${selectedDateKey}`, []) ?? [],
       notes: load<string>(`planner/notes/${selectedDateKey}`, '') ?? '',
-      savedContents: load<SavedContent[]>(`planner/savedContents/${selectedDateKey}`, []) ?? [],
     }
 
     setPlannerData(loadedData)
