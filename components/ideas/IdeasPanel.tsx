@@ -28,7 +28,7 @@ const MOCK_IDEAS: Record<number, IdeaCard> = {
   },
   1: {
     id: 'idea-2',
-    title: 'Respiraç��o em 4 Tempos',
+    title: 'Respiração em 4 Tempos',
     description: 'Técnica simples para acalmar você e as crianças. Inspire por 4, segure por 4, expire por 4.',
     duration: '5 minutos',
     age_range: '12+ meses',
@@ -48,6 +48,7 @@ interface IdeasPanelProps {
 
 export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
   const quota = useIdeasQuota(initialPlan);
+  const { toggleSave, isSaved, isHydrated } = useSavedInspirations();
   const [ideas, setIdeas] = useState<IdeaCard[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [buttonDisabled, setButtonDisabled] = useState(false);
