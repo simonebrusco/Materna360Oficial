@@ -218,7 +218,7 @@ export default function IntelligentSuggestionsSection({
               {suggestions.map(suggestion => (
                 <div key={suggestion.id} className="flex gap-3">
                   <div className="flex-shrink-0 pt-1">
-                    <AppIcon name="lightbulb" className="w-4 h-4 md:w-5 md:h-5 text-[#ff005e]" />
+                    <AppIcon name="idea" className="w-4 h-4 md:w-5 md:h-5 text-[#ff005e]" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm md:text-base font-semibold text-[#2f3a56] font-poppins">
