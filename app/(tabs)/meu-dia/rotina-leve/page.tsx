@@ -628,10 +628,11 @@ export default function RotinaLevePage() {
 
                                 {/* Save to Planner button */}
                                 <button
-                                  onClick={() => router.push('/meu-dia?fromRotina=receitas')}
-                                  className="w-full mt-6 border border-[#ddd] text-[#2f3a56] py-2.5 px-6 rounded-2xl font-medium text-sm hover:bg-[#f0f0f0] transition-all duration-150"
+                                  onClick={handleSaveRecipe}
+                                  disabled={!selectedPrepTime || !selectedDifficulty}
+                                  className="w-full mt-6 rounded-full bg-primary-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  Abrir no Planner
+                                  Salvar no planner
                                 </button>
                               </div>
                             )}
