@@ -78,6 +78,17 @@ export default function ComoEstouHojePage() {
     if (!dayNotes.trim()) return
     const notesKey = `como-estou-hoje:${currentDateKey}:notes`
     save(notesKey, dayNotes)
+
+    // Also save to Planner
+    addItem({
+      origin: 'como-estou-hoje',
+      type: 'note',
+      title: 'Nota do dia',
+      payload: {
+        text: dayNotes.trim(),
+      },
+    })
+
     try {
       track('day_notes.saved', {
         tab: 'como-estou-hoje',
