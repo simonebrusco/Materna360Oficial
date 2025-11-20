@@ -16,11 +16,18 @@ export const metadata = {
   description: 'Central hub para acessar todos os recursos do Maternar',
 };
 
-export default async function MaternarPage() {
-  // Detect Builder preview mode via header (most reliable method)
+export default async function MaternarPage(props: {
+  searchParams?: Promise<Record<string, string | string[]>>;
+}) {
+  // Detect Builder preview mode via header OR query parameter
   const headerValue = headers().get('x-builder-preview');
-  const isBuilderPreview =
-    headerValue === '1' || headerValue === 'true';
+  let isBuilderPreview = headerValue === '1' || headerValue === 'true';
+
+  // Also check query parameter if header not set
+  if (!isBuilderPreview && props.searchParams) {
+    const params = await props.searchParams;
+    isBuilderPreview = params['builder.preview'] === '1';
+  }
 
   // Check if Maternar Hub is enabled
   const cookieVal = cookies().get('ff_maternar')?.value ?? null;
