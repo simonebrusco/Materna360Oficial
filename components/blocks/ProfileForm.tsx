@@ -347,104 +347,87 @@ export function ProfileForm() {
 
   return (
     <Reveal>
-      <form className="space-y-8" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
-            boas-vindas
+      <form className="space-y-6" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
+        {/* About You Card */}
+        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+          <h3 className="text-base font-semibold text-gray-900">Sobre você</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Informações pessoais para personalizar sua experiência.
           </p>
-          <h2 className="text-xl font-semibold text-support-1 md:text-2xl">
-            Antes de começarmos, me conte um pouquinho sobre você
-          </h2>
-          <p className="text-sm text-support-2 md:text-base">
-            Isso personaliza sua experiência e deixa tudo mais prático no dia a dia.
-          </p>
+
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="mother-name" className="text-xs font-medium text-gray-800">
+                Seu nome
+              </label>
+              <input
+                id="mother-name"
+                name="nomeMae"
+                type="text"
+                required
+                value={form.nomeMae}
+                onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
+                className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 ${errors.nomeMae ? 'border-primary-400 ring-1 ring-primary-300' : ''}`}
+                aria-invalid={Boolean(errors.nomeMae)}
+                aria-describedby={errors.nomeMae ? 'mother-name-error' : undefined}
+              />
+              {errors.nomeMae && (
+                <p id="mother-name-error" className="text-[11px] text-primary-600 font-medium">
+                  {errors.nomeMae}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* SECTION A — Sobre Você */}
-        <section className="space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-              Sobre você
-            </h3>
-            <p className="text-sm text-[#545454]">
-              Informações pessoais para personalizar sua experiência.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="mother-name" className="text-sm font-semibold text-support-1">
-              Seu nome
-            </label>
-            <input
-              id="mother-name"
-              name="nomeMae"
-              type="text"
-              required
-              value={form.nomeMae}
-              onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
-              className={`${inputClasses} ${errors.nomeMae ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
-              aria-invalid={Boolean(errors.nomeMae)}
-              aria-describedby={errors.nomeMae ? 'mother-name-error' : undefined}
-            />
-            {errors.nomeMae && (
-              <p id="mother-name-error" className="text-xs font-medium text-primary">
-                {errors.nomeMae}
+        {/* Children Card */}
+        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Filhos</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Adicione cada filho para personalizar atividades e dicas.
               </p>
-            )}
-          </div>
-        </section>
-
-        {/* SECTION B — Filhos */}
-        <section className="space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-              Filhos
-            </h3>
-            <p className="text-sm text-[#545454]">
-              Adicione cada filho para personalizar atividades e dicas.
-            </p>
-          </div>
-
-          <div className="flex justify-end">
-            <Button type="button" variant="outline" size="sm" onClick={addChild}>
-              ➕ Adicionar outro filho
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={addChild} className="flex-shrink-0">
+              ➕ Adicionar
             </Button>
           </div>
 
-          <div className="space-y-4">
+          <div className="mt-4 space-y-4">
             {form.filhos.map((child, index) => (
-              <div key={child.id} className="rounded-2xl border border-white/50 bg-white/75 p-4 shadow-soft">
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-sm font-semibold text-support-1">Filho {index + 1}</h4>
+              <div key={child.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <h4 className="text-xs font-semibold text-gray-900">Filho {index + 1}</h4>
                   {form.filhos.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeChild(child.id)}
-                      className="text-xs font-semibold text-primary transition hover:text-primary/80"
+                      className="text-xs font-semibold text-primary-500 transition hover:text-primary-600"
                     >
-                      Remover filho
+                      Remover
                     </button>
                   )}
                 </div>
 
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div className="space-y-2">
-                    <label htmlFor={`child-gender-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                    <label htmlFor={`child-gender-${index}`} className="text-xs font-medium text-gray-800">
                       Gênero
                     </label>
                     <select
                       id={`child-gender-${index}`}
                       value={child.genero}
                       onChange={(event) => updateChild(child.id, 'genero', event.target.value)}
-                      className={`${inputClasses} appearance-none`}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
                     >
                       <option value="menino">Menino</option>
                       <option value="menina">Menina</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor={`child-age-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                      Idade (em meses)
+                    <label htmlFor={`child-age-${index}`} className="text-xs font-medium text-gray-800">
+                      Idade (meses)
                     </label>
                     <input
                       id={`child-age-${index}`}
@@ -453,19 +436,31 @@ export function ProfileForm() {
                       inputMode="numeric"
                       value={child.idadeMeses}
                       onChange={(event) => updateChild(child.id, 'idadeMeses', event.target.value)}
-                      className={`${inputClasses} ${errors.filhos?.[child.id] ? 'border-primary/80 ring-2 ring-primary/40' : ''}`}
+                      className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 ${errors.filhos?.[child.id] ? 'border-primary-400 ring-1 ring-primary-300' : ''}`}
                       aria-invalid={Boolean(errors.filhos?.[child.id])}
                       aria-describedby={errors.filhos?.[child.id] ? `child-age-error-${index}` : undefined}
                     />
                     {errors.filhos?.[child.id] && (
-                      <p id={`child-age-error-${index}`} className="text-xs font-medium text-primary">
+                      <p id={`child-age-error-${index}`} className="text-[11px] text-primary-600 font-medium">
                         {errors.filhos[child.id]}
                       </p>
                     )}
                   </div>
+                  <div className="space-y-2">
+                    <label htmlFor={`child-name-${index}`} className="text-xs font-medium text-gray-800">
+                      Nome (opcional)
+                    </label>
+                    <input
+                      id={`child-name-${index}`}
+                      type="text"
+                      value={child.nome}
+                      onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
+                    />
+                  </div>
                   {index === 0 && (
-                    <div className="space-y-2 sm:col-span-3">
-                      <label htmlFor="baby-birthdate" className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                    <div className="space-y-2 md:col-span-3">
+                      <label htmlFor="baby-birthdate" className="text-xs font-medium text-gray-800">
                         Data de nascimento do bebê
                       </label>
                       <input
@@ -474,25 +469,13 @@ export function ProfileForm() {
                         value={babyBirthdate}
                         onChange={(event) => setBabyBirthdate(event.target.value)}
                         max={todayISO}
-                        className={inputClasses}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
                       />
-                      <p className="text-xs text-support-2/80">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
+                      <p className="text-[11px] text-gray-500">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
                     </div>
                   )}
-                  <div className="space-y-2">
-                    <label htmlFor={`child-name-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
-                      Nome (opcional)
-                    </label>
-                    <input
-                      id={`child-name-${index}`}
-                      type="text"
-                      value={child.nome}
-                      onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
-                      className={inputClasses}
-                    />
-                  </div>
-                  <div className="space-y-2 sm:col-span-3">
-                    <label htmlFor={`child-allergies-${index}`} className="text-xs font-semibold uppercase tracking-[0.1em] text-support-2/80">
+                  <div className="space-y-2 md:col-span-3">
+                    <label htmlFor={`child-allergies-${index}`} className="text-xs font-medium text-gray-800">
                       Alergias (separe por vírgula)
                     </label>
                     <input
@@ -500,32 +483,28 @@ export function ProfileForm() {
                       type="text"
                       value={child.alergias.join(', ')}
                       onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
-                      className={inputClasses}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
                       placeholder="Ex.: leite, ovo, amendoim"
                     />
                   </div>
                 </div>
               </div>
             ))}
+
+            {errors.general && (
+              <p className="text-[11px] text-primary-600 font-medium">{errors.general}</p>
+            )}
           </div>
+        </div>
 
-          {errors.general && (
-            <p className="text-xs font-medium text-primary">{errors.general}</p>
-          )}
-        </section>
+        {/* Profile Sticker Card */}
+        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+          <h3 className="text-base font-semibold text-gray-900">Escolha sua figurinha de perfil</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Escolha a vibe que mais combina com você hoje.
+          </p>
 
-        {/* SECTION D — Escolha sua figurinha de perfil */}
-        <section className="space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-              Escolha sua figurinha de perfil
-            </h3>
-            <p className="text-sm text-[#545454]">
-              Escolha a vibe que mais combina com você hoje.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
             {STICKER_OPTIONS.map((sticker) => {
               const isActive = form.figurinha === sticker.id
               return (
@@ -533,39 +512,44 @@ export function ProfileForm() {
                   key={sticker.id}
                   type="button"
                   onClick={() => setForm((previous) => ({ ...previous, figurinha: sticker.id }))}
-                  className={`group relative flex flex-col items-center gap-2 rounded-3xl border border-white/60 bg-white/80 px-4 py-4 text-center shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/60 ${
-                    isActive ? 'scale-[1.02] ring-2 ring-primary/50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : 'hover:-translate-y-1'
+                  className={`group relative flex flex-col items-center gap-2 rounded-2xl border px-3 py-3 text-center transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${
+                    isActive
+                      ? 'border-primary-300 bg-primary-50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
+                      : 'border-gray-200 bg-white hover:border-primary-200 shadow-sm'
                   }`}
                   aria-pressed={isActive}
                   aria-label={`Selecionar figurinha ${sticker.label}`}
                 >
-                  <span className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-300 group-hover:scale-105 ${
-                    isActive ? 'ring-2 ring-primary/40' : ''
+                  <span className={`inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full transition-all duration-300 ${
+                    isActive
+                      ? 'bg-primary-100 ring-2 ring-primary-200'
+                      : 'bg-gray-100'
                   }`}>
                     <Image
                       src={sticker.asset}
                       alt={sticker.label}
                       width={128}
                       height={128}
-                      className="h-11 w-11 object-contain"
+                      className="h-9 w-9 object-contain"
                       loading="lazy"
                     />
                   </span>
-                  <span className="text-sm font-semibold text-support-1">{sticker.label}</span>
-                  <span className="text-[11px] text-support-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
+                  <span className="text-xs font-semibold text-gray-900">{sticker.label}</span>
+                  <span className="text-[10px] text-gray-500 line-clamp-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
                 </button>
               )
             })}
           </div>
-        </section>
+        </div>
 
-        <div className="space-y-3 pt-4 border-t border-black/5">
+        {/* Submit Section */}
+        <div className="space-y-3 pt-4">
           <Button type="submit" variant="primary" disabled={saving} className="w-full">
             {saving ? 'Salvando...' : 'Salvar e continuar'}
           </Button>
-          <p className="text-center text-xs text-support-2">Você poderá editar essas informações no seu Perfil.</p>
+          <p className="text-center text-[11px] text-gray-500">Você poderá editar essas informações no seu Perfil.</p>
           {statusMessage && (
-            <p className="text-center text-xs font-semibold text-support-1">{statusMessage}</p>
+            <p className="text-center text-xs font-semibold text-gray-900">{statusMessage}</p>
           )}
         </div>
       </form>
