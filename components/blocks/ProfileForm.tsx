@@ -277,6 +277,19 @@ export function ProfileForm() {
 
       if (eu360Response.ok) {
         setStatusMessage('Salvo com carinho!')
+
+        if (typeof window !== 'undefined') {
+          const figurinhaToPersist = isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID
+          window.dispatchEvent(
+            new CustomEvent('materna:profile-updated', {
+              detail: {
+                figurinha: figurinhaToPersist,
+                nomeMae: form.nomeMae,
+              },
+            })
+          )
+        }
+
         router.push('/meu-dia')
         router.refresh()
       } else {
