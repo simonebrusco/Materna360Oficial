@@ -220,7 +220,7 @@ export default function RotinaLevePage() {
                 disabled={recipesLoading}
                 className="mt-4 w-full"
               >
-                <AppIcon name="utensils" size={18} decorative />
+                <AppIcon name="palette" size={18} decorative />
                 {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
               </Button>
 
@@ -421,7 +421,7 @@ export default function RotinaLevePage() {
                       disabled={inspirationLoading}
                       className="mt-3 w-full"
                     >
-                      <AppIcon name="lightbulb" size={18} decorative />
+                      <AppIcon name="idea" size={18} decorative />
                       {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
                     </Button>
 
