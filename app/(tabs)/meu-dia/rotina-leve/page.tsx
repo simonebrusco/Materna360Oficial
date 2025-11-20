@@ -52,7 +52,7 @@ export default function RotinaLevePage() {
     >
       <ClientOnly>
         {/* SectionWrapper */}
-        <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="mx-auto max-w-5xl px-4 py-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
             <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] transition-all duration-200">
