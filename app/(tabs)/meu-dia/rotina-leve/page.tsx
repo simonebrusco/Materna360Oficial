@@ -281,7 +281,7 @@ export default function RotinaLevePage() {
                 <button
                   type="button"
                   onClick={() => setOpenIdeas((prev) => !prev)}
-                  className="mt-2 text-xs font-medium text-primary-500"
+                  className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600"
                 >
                   {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
                 </button>
