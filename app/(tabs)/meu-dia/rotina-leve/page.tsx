@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import clsx from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
@@ -9,6 +10,31 @@ type QuickIdea = {
   id: string
   text: string
 }
+
+type FilterOption = {
+  id: string
+  label: string
+}
+
+const TEMPO_OPTIONS: FilterOption[] = [
+  { id: '5', label: '5 min' },
+  { id: '10', label: '10 min' },
+  { id: '20', label: '20 min' },
+  { id: '30+', label: '30+' },
+]
+
+const QUEM_OPTIONS: FilterOption[] = [
+  { id: 'so-eu', label: 'Só eu' },
+  { id: 'eu-e-meu-filho', label: 'Eu e meu filho' },
+  { id: 'familia-toda', label: 'Família toda' },
+]
+
+const TIPO_OPTIONS: FilterOption[] = [
+  { id: 'brincadeira', label: 'Brincadeira' },
+  { id: 'organizacao', label: 'Organização da casa' },
+  { id: 'autocuidado', label: 'Autocuidado' },
+  { id: 'receita-rapida', label: 'Receita rápida' },
+]
 
 type RecipeSuggestion = {
   id: string
