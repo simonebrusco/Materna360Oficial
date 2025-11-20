@@ -86,7 +86,7 @@ export default function RotinaLevePage() {
 
         {/* Closing message */}
         <div className="mt-12 pt-12 border-t border-[#ececec]/50">
-          <p className="text-center text-base text-[#545454] leading-relaxed" suppressHydrationWarning>
+          <p className="text-center text-base text-[#545454] leading-relaxed">
             Organize seu dia com leveza. Pequenos passos fazem a grande diferença. <span className="text-[#ff005e] text-xl">❤️</span>
           </p>
         </div>
