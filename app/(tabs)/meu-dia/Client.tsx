@@ -101,7 +101,7 @@ export function MeuDiaClient() {
     <div className="bg-gradient-to-b from-[#FFF0F6] via-[#FFF8FC] to-white min-h-[100dvh]">
       <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza.">
         <ClientOnly>
-          <div className="mx-auto max-w-[1040px] px-4 md:px-6">
+          <div className="mx-auto max-w-5xl px-4 py-8">
             {/* GREETING SECTION */}
             <Reveal delay={0}>
               <section className="space-y-4 mb-6 md:mb-8" suppressHydrationWarning>
