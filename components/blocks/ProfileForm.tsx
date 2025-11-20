@@ -935,7 +935,7 @@ export function ProfileForm() {
             </p>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {STICKER_OPTIONS.map((sticker) => {
               const isActive = form.figurinha === sticker.id
               return (
