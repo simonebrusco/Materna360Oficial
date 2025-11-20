@@ -223,27 +223,36 @@ export default function RotinaLevePage() {
                 Hoje você já usou <span className="font-semibold text-gray-700">1 de 3</span> sugestões do seu plano.
               </p>
 
-              {/* Static Recipes List */}
+              {/* Recipes Results */}
               <div className="mt-4 rounded-2xl bg-gray-50 p-3">
-                <p className="text-xs font-medium text-gray-800 mb-2">
-                  Sugestões de hoje
-                </p>
-                <ul className="space-y-2 text-xs text-gray-700">
-                  <li>
-                    <p className="font-semibold text-gray-900">Creminho de aveia rápida</p>
-                    <p className="text-[11px] text-gray-600">
-                      Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.
+                {recipesLoading && (
+                  <p className="text-[11px] text-gray-500">
+                    Estou pensando nas melhores opções pra hoje…
+                  </p>
+                )}
+
+                {!recipesLoading && recipes && (
+                  <>
+                    <p className="text-xs font-medium text-gray-800 mb-2">
+                      Sugestões de hoje
                     </p>
-                    <p className="mt-1 text-[11px] text-gray-500">Pronto em ~10 min · a partir de 1 ano</p>
-                  </li>
-                  <li>
-                    <p className="font-semibold text-gray-900">Banana amassada com chia</p>
-                    <p className="text-[11px] text-gray-600">
-                      Combinação simples para lanches rápidos e nutritivos.
-                    </p>
-                    <p className="mt-1 text-[11px] text-gray-500">Pronto em ~5 min · a partir de 6 meses</p>
-                  </li>
-                </ul>
+                    <ul className="space-y-2 text-xs text-gray-700">
+                      {recipes.map((recipe) => (
+                        <li key={recipe.id}>
+                          <p className="font-semibold text-gray-900">{recipe.title}</p>
+                          <p className="text-[11px] text-gray-600">{recipe.description}</p>
+                          <p className="mt-1 text-[11px] text-gray-500">{recipe.meta}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {!recipesLoading && !recipes && (
+                  <p className="text-[11px] text-gray-500">
+                    Clique em "Gerar receitas" para receber sugestões adaptadas à idade do seu filho.
+                  </p>
+                )}
 
                 <button
                   type="button"
