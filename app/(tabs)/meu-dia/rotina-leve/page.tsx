@@ -212,9 +212,11 @@ export default function RotinaLevePage() {
               {/* Generate Button + Plan Counter */}
               <button
                 type="button"
-                className="mt-4 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
+                onClick={handleGenerateRecipes}
+                disabled={recipesLoading}
+                className="mt-4 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Gerar receitas 🍽️
+                {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas 🍽️'}
               </button>
 
               <p className="mt-2 text-[11px] text-gray-500">
