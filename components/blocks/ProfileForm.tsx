@@ -558,21 +558,21 @@ export function ProfileForm() {
           </div>
         </div>
 
-        {/* Children Card */}
-        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+        {/* BLOCO 2: SOBRE SEU(S) FILHO(S) */}
+        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Filhos</h3>
-              <p className="mt-1 text-sm text-gray-600">
-                Adicione cada filho para personalizar atividades e dicas.
+              <h2 className="text-sm font-semibold text-gray-900">Sobre seu(s) filho(s)</h2>
+              <p className="mt-1 text-xs text-gray-600">
+                Essas informações ajudam a adaptar ideias, receitas e inspirações à fase da sua família.
               </p>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={addChild} className="flex-shrink-0">
-              ➕ Adicionar
+            <Button type="button" variant="outline" size="sm" onClick={addChild} className="flex-shrink-0 whitespace-nowrap">
+              + Adicionar
             </Button>
           </div>
 
-          <div className="mt-4 space-y-4">
+          <div className="space-y-4">
             {form.filhos.map((child, index) => (
               <div key={child.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
                 <div className="flex items-center justify-between gap-3 mb-4">
@@ -588,7 +588,21 @@ export function ProfileForm() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor={`child-name-${index}`} className="text-xs font-medium text-gray-800">
+                      Nome ou apelido
+                    </label>
+                    <input
+                      id={`child-name-${index}`}
+                      type="text"
+                      value={child.nome}
+                      onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
+                      placeholder="Opcional"
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <label htmlFor={`child-gender-${index}`} className="text-xs font-medium text-gray-800">
                       Gênero
@@ -603,6 +617,7 @@ export function ProfileForm() {
                       <option value="menina">Menina</option>
                     </select>
                   </div>
+
                   <div className="space-y-2">
                     <label htmlFor={`child-age-${index}`} className="text-xs font-medium text-gray-800">
                       Idade (meses)
@@ -624,20 +639,62 @@ export function ProfileForm() {
                       </p>
                     )}
                   </div>
+
                   <div className="space-y-2">
-                    <label htmlFor={`child-name-${index}`} className="text-xs font-medium text-gray-800">
-                      Nome (opcional)
+                    <label htmlFor={`child-age-range-${index}`} className="text-xs font-medium text-gray-800">
+                      Faixa etária
                     </label>
-                    <input
-                      id={`child-name-${index}`}
-                      type="text"
-                      value={child.nome}
-                      onChange={(event) => updateChild(child.id, 'nome', event.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-                    />
+                    <select
+                      id={`child-age-range-${index}`}
+                      value={child.ageRange || ''}
+                      onChange={(event) => updateChild(child.id, 'ageRange', event.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="0-1">0–1 ano</option>
+                      <option value="1-3">1–3 anos</option>
+                      <option value="3-6">3–6 anos</option>
+                      <option value="6-8">6–8 anos</option>
+                      <option value="8+">8+ anos</option>
+                    </select>
                   </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor={`child-phase-${index}`} className="text-xs font-medium text-gray-800">
+                      Qual fase mais desafia vocês?
+                    </label>
+                    <select
+                      id={`child-phase-${index}`}
+                      value={child.currentPhase || ''}
+                      onChange={(event) => updateChild(child.id, 'currentPhase', event.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="sono">Sono</option>
+                      <option value="birras">Birras / emoções intensas</option>
+                      <option value="escolar">Rotina escolar</option>
+                      <option value="socializacao">Socialização / amizade</option>
+                      <option value="alimentacao">Alimentação</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label htmlFor={`child-notes-${index}`} className="text-xs font-medium text-gray-800">
+                      Algo importante que você acha que eu deveria saber?
+                    </label>
+                    <textarea
+                      id={`child-notes-${index}`}
+                      value={child.notes || ''}
+                      onChange={(event) => updateChild(child.id, 'notes', event.target.value)}
+                      placeholder="Escreva algo que nos ajude a entender melhor..."
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 resize-none"
+                      rows={3}
+                    />
+                    <p className="text-[11px] text-gray-500">Opcional, mas muito valioso para personalizar.</p>
+                  </div>
+
                   {index === 0 && (
-                    <div className="space-y-2 md:col-span-3">
+                    <div className="space-y-2 md:col-span-2">
                       <label htmlFor="baby-birthdate" className="text-xs font-medium text-gray-800">
                         Data de nascimento do bebê
                       </label>
@@ -652,7 +709,8 @@ export function ProfileForm() {
                       <p className="text-[11px] text-gray-500">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
                     </div>
                   )}
-                  <div className="space-y-2 md:col-span-3">
+
+                  <div className="space-y-2 md:col-span-2">
                     <label htmlFor={`child-allergies-${index}`} className="text-xs font-medium text-gray-800">
                       Alergias (separe por vírgula)
                     </label>
@@ -661,8 +719,8 @@ export function ProfileForm() {
                       type="text"
                       value={child.alergias.join(', ')}
                       onChange={(event) => updateChild(child.id, 'alergias', event.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
                       placeholder="Ex.: leite, ovo, amendoim"
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
                     />
                   </div>
                 </div>
