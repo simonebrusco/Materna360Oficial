@@ -14,6 +14,7 @@ export const STICKERS = {
   'mae-determinada': { label: 'Mãe Determinada', asset: '/stickers/mae-determinada.png' },
   'mae-criativa': { label: 'Mãe Criativa', asset: '/stickers/mae-criativa.png' },
   'mae-tranquila': { label: 'Mãe Tranquila', asset: '/stickers/mae-tranquila.png' },
+  'mae-resiliente': { label: 'Mãe Resiliente', asset: '/stickers/mae-resiliente.svg' },
   default: { label: 'Minha Figurinha', asset: '/stickers/mae-carinhosa.png' },
 } as const
 
