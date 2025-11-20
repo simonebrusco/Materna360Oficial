@@ -6,7 +6,9 @@ const nextConfig = {
   swcMinify: true,
   productionBrowserSourceMaps: false,
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' }
+    ],
   },
   onDemandEntries: {
     maxInactiveAge: 60 * 1000,
