@@ -227,7 +227,7 @@ export default function RotinaLevePage() {
               <div className="mt-4 rounded-2xl bg-gray-50 p-3 text-xs text-gray-800 space-y-3">
                 <div>
                   <p className="mb-1 text-[11px] font-medium text-gray-700">Frase de hoje</p>
-                  <p>"Você não precisa dar conta de tudo hoje."</p>
+                  <p>Você não precisa dar conta de tudo hoje.</p>
                 </div>
                 <div>
                   <p className="mb-1 text-[11px] font-medium text-gray-700">Pequeno cuidado</p>
