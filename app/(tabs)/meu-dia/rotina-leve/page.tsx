@@ -213,6 +213,7 @@ export default function RotinaLevePage() {
 
               {/* Generate Button + Plan Counter */}
               <Button
+                type="button"
                 variant="primary"
                 size="md"
                 onClick={handleGenerateRecipes}
@@ -335,6 +336,7 @@ export default function RotinaLevePage() {
                     </div>
 
                     <Button
+                      type="button"
                       variant="primary"
                       size="md"
                       onClick={handleGenerateIdeas}
@@ -412,6 +414,7 @@ export default function RotinaLevePage() {
                     </div>
 
                     <Button
+                      type="button"
                       variant="primary"
                       size="md"
                       onClick={handleGenerateInspiration}
