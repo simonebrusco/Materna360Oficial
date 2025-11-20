@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
-import { Button } from '@/components/ui/Button'
-import AppIcon from '@/components/ui/AppIcon'
 
 type QuickIdea = {
   id: string
