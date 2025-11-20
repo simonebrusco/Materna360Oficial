@@ -22,17 +22,51 @@ type ChildProfile = {
   idadeMeses: number
   nome: string
   alergias: string[]
+  ageRange?: '0-1' | '1-3' | '3-6' | '6-8' | '8+'
+  currentPhase?: 'sono' | 'birras' | 'escolar' | 'socializacao' | 'alimentacao'
+  notes?: string
 }
 
 type ProfileFormState = {
+  // Bloco 1: Sobre você
   nomeMae: string
+  userPreferredName?: string
+  userRole?: 'mae' | 'pai' | 'outro'
+  userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
+  userMainChallenges?: string[]
+  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite'
+
+  // Bloco 2: Filhos
   filhos: ChildProfile[]
+
+  // Bloco 3: Rotina & momentos críticos
+  routineChaosMoments?: string[]
+  routineScreenTime?: 'nada' | 'ate1h' | '1-2h' | 'mais2h'
+  routineDesiredSupport?: string[]
+
+  // Bloco 4: Apoio & rede de suporte
+  supportNetwork?: string[]
+  supportAvailability?: 'sempre' | 'as-vezes' | 'raramente'
+
+  // Bloco 5: Preferências no app
+  userContentPreferences?: string[]
+  userGuidanceStyle?: 'diretas' | 'explicacao' | 'motivacionais'
+  userSelfcareFrequency?: 'diario' | 'semana' | 'pedido'
+
+  // Existing
   figurinha: ProfileStickerId | ''
 }
 
 type FormErrors = {
   nomeMae?: string
+  userPreferredName?: string
+  userRole?: string
+  userMainChallenges?: string
+  userEnergyPeakTime?: string
   filhos?: Record<string, string | undefined>
+  routineChaosMoments?: string
+  routineDesiredSupport?: string
+  userContentPreferences?: string
   figurinha?: string
   general?: string
 }
