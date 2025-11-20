@@ -1,11 +1,21 @@
 'use client'
 
+import Image from 'next/image'
+import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 import { FormErrors, ProfileFormState } from '../ProfileForm'
 
 interface Props {
   form: ProfileFormState
   errors: FormErrors
   onChange: (updates: Partial<ProfileFormState>) => void
+}
+
+const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
+  'mae-carinhosa': 'Amor nos pequenos gestos.',
+  'mae-leve': 'Equilíbrio e presença.',
+  'mae-determinada': 'Força com doçura.',
+  'mae-criativa': 'Inventa e transforma.',
+  'mae-tranquila': 'Serenidade e autocuidado.',
 }
 
 export function AboutYouBlock({ form, errors, onChange }: Props) {
@@ -22,6 +32,49 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       <div>
         <h2 className="text-sm font-semibold text-gray-900">Sobre você</h2>
         <p className="mt-1 text-xs text-gray-600">Isso nos ajuda a adaptar as sugestões à sua rotina real.</p>
+      </div>
+
+      <div className="space-y-3 pt-2">
+        <div>
+          <h3 className="text-xs font-semibold text-gray-900">Escolha uma figurinha de perfil</h3>
+          <p className="mt-1 text-[11px] text-gray-600">Escolha a vibe que mais combina com você hoje.</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+          {STICKER_OPTIONS.map((sticker) => {
+            const isActive = form.figurinha === sticker.id
+            return (
+              <button
+                key={sticker.id}
+                type="button"
+                onClick={() => onChange({ figurinha: sticker.id })}
+                className={`group relative flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 text-center transition-all duration-300 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 ${
+                  isActive
+                    ? 'border-primary-300 bg-primary-50 shadow-sm'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                }`}
+                aria-pressed={isActive}
+                aria-label={`Selecionar figurinha ${sticker.label}`}
+              >
+                <span
+                  className={`inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full transition-all duration-300 ${
+                    isActive ? 'bg-primary-100' : 'bg-gray-100'
+                  }`}
+                >
+                  <Image
+                    src={sticker.asset}
+                    alt={sticker.label}
+                    width={128}
+                    height={128}
+                    className="h-9 w-9 object-contain"
+                    loading="lazy"
+                  />
+                </span>
+                <span className="text-[10px] font-semibold text-gray-900 line-clamp-2">{sticker.label}</span>
+                <span className="text-[9px] text-gray-500 line-clamp-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="space-y-2">
