@@ -171,8 +171,9 @@ export function MeuDiaClient() {
               </section>
             </Reveal>
 
-            {/* MAIN CONTENT SECTIONS - organized with consistent spacing */}
-            <div className="space-y-6 md:space-y-8">
+            {/* MAIN PLANNER CARD */}
+            <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-6">
+              {/* MAIN CONTENT SECTIONS - organized with consistent spacing */}
               {/* RESUMO DO DIA */}
               <Reveal delay={100}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
