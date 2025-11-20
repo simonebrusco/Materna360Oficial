@@ -228,6 +228,18 @@ export function ProfileForm() {
       nextErrors.nomeMae = 'Informe seu nome.'
     }
 
+    if (!state.userRole) {
+      nextErrors.userRole = 'Informe seu papel na rotina.'
+    }
+
+    if (!state.userMainChallenges || state.userMainChallenges.length === 0) {
+      nextErrors.userMainChallenges = 'Selecione pelo menos um desafio.'
+    }
+
+    if (!state.userEnergyPeakTime) {
+      nextErrors.userEnergyPeakTime = 'Informe quando você sente mais energia.'
+    }
+
     if (!state.filhos.length) {
       nextErrors.general = 'Adicione pelo menos um filho.'
     }
@@ -242,6 +254,18 @@ export function ProfileForm() {
 
     if (Object.keys(childErrors).length > 0) {
       nextErrors.filhos = childErrors
+    }
+
+    if (!state.routineChaosMoments || state.routineChaosMoments.length === 0) {
+      nextErrors.routineChaosMoments = 'Selecione pelo menos um momento crítico.'
+    }
+
+    if (!state.routineDesiredSupport || state.routineDesiredSupport.length === 0) {
+      nextErrors.routineDesiredSupport = 'Informe em que você gostaria de ajuda.'
+    }
+
+    if (!state.userContentPreferences || state.userContentPreferences.length === 0) {
+      nextErrors.userContentPreferences = 'Selecione pelo menos uma preferência de conteúdo.'
     }
 
     return nextErrors
