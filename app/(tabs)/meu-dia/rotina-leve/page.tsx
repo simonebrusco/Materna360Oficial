@@ -17,15 +17,15 @@ export default function RotinaLevePage() {
       <ClientOnly>
         {/* SectionWrapper */}
         <div className="mx-auto max-w-5xl px-4 py-8">
-          {/* 3-Card Grid */}
+            {/* 3-Card Grid */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-6">
-          {/* CARD 1: Ideias Rápidas */}
-          <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
-            <h3 className="text-base font-semibold text-gray-900">Ideias Rápidas</h3>
-            <p className="mt-1 text-sm text-gray-600">
-              Inspirações simples para deixar o dia mais leve.
-            </p>
-            <button
+            {/* CARD 1: Ideias Rápidas */}
+            <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
+              <h3 className="text-base font-semibold text-gray-900">Ideias Rápidas</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Inspirações simples para deixar o dia mais leve.
+              </p>
+              <button
               type="button"
               onClick={() => setIsIdeasOpen((v) => !v)}
               className="mt-2 text-xs font-medium text-primary-600 hover:text-primary-700"
@@ -33,8 +33,8 @@ export default function RotinaLevePage() {
               {isIdeasOpen ? 'Ver menos ↑' : 'Ver mais →'}
             </button>
 
-            {/* Static Filters Grid */}
-            <div className="mt-4 space-y-3 text-xs">
+              {/* Static Filters Grid */}
+              <div className="mt-4 space-y-3 text-xs">
               <div>
                 <p className="mb-1 font-medium text-gray-800">Tempo disponível</p>
                 <div className="flex flex-wrap gap-2">
@@ -84,8 +84,8 @@ export default function RotinaLevePage() {
               </div>
             </div>
 
-            {/* Collapsible Results Area */}
-            {isIdeasOpen && (
+              {/* Collapsible Results Area */}
+              {isIdeasOpen && (
               <div className="mt-4 rounded-2xl bg-gray-50 p-3">
                 <p className="text-xs font-medium text-gray-800 mb-2">
                   Sugestões para agora
@@ -93,7 +93,7 @@ export default function RotinaLevePage() {
                 <ul className="space-y-2 text-xs text-gray-700">
                   <li>��� Mini brincadeira sensorial com objetos da sala.</li>
                   <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
-                  <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
+                  <li>• Ritual r��pido: uma respiração profunda juntas antes de recomeçar.</li>
                 </ul>
                 <button
                   type="button"
@@ -103,10 +103,10 @@ export default function RotinaLevePage() {
                 </button>
               </div>
             )}
-          </div>
+            </div>
 
-          {/* CARD 2: Receitas Inteligentes */}
-          <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
+            {/* CARD 2: Receitas Inteligentes */}
+            <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
             <h3 className="text-base font-semibold text-gray-900">Receitas Inteligentes</h3>
             <p className="mt-1 text-sm text-gray-600">
               Você diz o ingrediente, eu te ajudo com o resto.
@@ -196,10 +196,10 @@ export default function RotinaLevePage() {
                 Salvar receitas no planner
               </button>
             </div>
-          </div>
+            </div>
 
-          {/* CARD 3: Inspirações do Dia */}
-          <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
+            {/* CARD 3: Inspirações do Dia */}
+            <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
             <h3 className="text-base font-semibold text-gray-900">Inspirações do Dia</h3>
             <p className="mt-1 text-sm text-gray-600">
               Uma frase e um pequeno cuidado para hoje.
