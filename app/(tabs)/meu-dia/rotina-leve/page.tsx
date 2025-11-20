@@ -17,12 +17,6 @@ interface CardItem {
   href?: string
 }
 
-interface CardGroup {
-  label: string
-  subtitle?: string
-  cards: CardItem[]
-}
-
 const INSPIRATION_CARDS: CardItem[] = [
   {
     id: 'ideias-rapidas',
