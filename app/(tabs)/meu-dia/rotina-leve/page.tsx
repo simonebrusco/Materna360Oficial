@@ -538,7 +538,7 @@ export default function RotinaLevePage() {
                 <button
                   type="button"
                   onClick={() => setOpenInspiration((prev) => !prev)}
-                  className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600"
+                  className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
                 >
                   {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
                 </button>
