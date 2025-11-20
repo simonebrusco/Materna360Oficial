@@ -430,35 +430,131 @@ export function ProfileForm() {
   return (
     <Reveal>
       <form className="space-y-6" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
-        {/* About You Card */}
-        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-          <h3 className="text-base font-semibold text-gray-900">Sobre você</h3>
-          <p className="mt-1 text-sm text-gray-600">
-            Informações pessoais para personalizar sua experiência.
-          </p>
+        {/* BLOCO 1: SOBRE VOCÊ */}
+        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">Sobre você</h2>
+            <p className="mt-1 text-xs text-gray-600">
+              Isso nos ajuda a adaptar as sugestões à sua rotina real.
+            </p>
+          </div>
 
-          <div className="mt-4 space-y-4">
+          {/* Seu nome */}
+          <div className="space-y-2">
+            <label htmlFor="mother-name" className="text-xs font-medium text-gray-800">
+              Seu nome
+            </label>
+            <input
+              id="mother-name"
+              type="text"
+              required
+              value={form.nomeMae}
+              onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
+              className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 ${errors.nomeMae ? 'border-primary-400 ring-1 ring-primary-300' : ''}`}
+              aria-invalid={Boolean(errors.nomeMae)}
+              aria-describedby={errors.nomeMae ? 'mother-name-error' : undefined}
+            />
+            {errors.nomeMae && (
+              <p id="mother-name-error" className="text-[11px] text-primary-600 font-medium">
+                {errors.nomeMae}
+              </p>
+            )}
+          </div>
+
+          {/* Como prefere ser chamada */}
+          <div className="space-y-2">
+            <label htmlFor="preferred-name" className="text-xs font-medium text-gray-800">
+              Como você prefere ser chamada?
+            </label>
+            <input
+              id="preferred-name"
+              type="text"
+              value={form.userPreferredName || ''}
+              onChange={(event) => setForm((previous) => ({ ...previous, userPreferredName: event.target.value }))}
+              placeholder="Ex.: Ju, Mãe, Simone..."
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
+            />
+            <p className="text-[11px] text-gray-500">Opcional, mas faz tudo mais pessoal.</p>
+          </div>
+
+          {/* Você é */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-800">Você é:</label>
+            <select
+              value={form.userRole || ''}
+              onChange={(event) => setForm((previous) => ({ ...previous, userRole: event.target.value as any }))}
+              className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none ${errors.userRole ? 'border-primary-400 ring-1 ring-primary-300' : ''}`}
+              aria-invalid={Boolean(errors.userRole)}
+            >
+              <option value="">Selecione...</option>
+              <option value="mae">Mãe</option>
+              <option value="pai">Pai</option>
+              <option value="outro">Outro cuidador</option>
+            </select>
+            {errors.userRole && (
+              <p className="text-[11px] text-primary-600 font-medium">{errors.userRole}</p>
+            )}
+          </div>
+
+          {/* Como você se sente */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-800">
+              Como você se sente na maior parte dos dias com a maternidade?
+            </label>
+            <select
+              value={form.userEmotionalBaseline || ''}
+              onChange={(event) => setForm((previous) => ({ ...previous, userEmotionalBaseline: event.target.value as any }))}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
+            >
+              <option value="">Selecione...</option>
+              <option value="sobrecarregada">Muito sobrecarregada</option>
+              <option value="cansada">Cansada, mas dando conta</option>
+              <option value="equilibrada">Equilibrada na maior parte do tempo</option>
+              <option value="leve">Em uma fase mais leve</option>
+            </select>
+            <p className="text-[11px] text-gray-500">Opcional, mas ajuda a personalizar sugestões.</p>
+          </div>
+
+          {/* Maiores desafios */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-800">Qual é o seu maior desafio hoje?</label>
             <div className="space-y-2">
-              <label htmlFor="mother-name" className="text-xs font-medium text-gray-800">
-                Seu nome
-              </label>
-              <input
-                id="mother-name"
-                name="nomeMae"
-                type="text"
-                required
-                value={form.nomeMae}
-                onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
-                className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 ${errors.nomeMae ? 'border-primary-400 ring-1 ring-primary-300' : ''}`}
-                aria-invalid={Boolean(errors.nomeMae)}
-                aria-describedby={errors.nomeMae ? 'mother-name-error' : undefined}
-              />
-              {errors.nomeMae && (
-                <p id="mother-name-error" className="text-[11px] text-primary-600 font-medium">
-                  {errors.nomeMae}
-                </p>
-              )}
+              {['Falta de tempo', 'Culpa', 'Organização da rotina', 'Comportamento do filho', 'Cansaço físico', 'Relação com parceiro(a) / família'].map((challenge) => (
+                <label key={challenge} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={(form.userMainChallenges || []).includes(challenge)}
+                    onChange={() => toggleArrayField('userMainChallenges', challenge)}
+                    className="h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-200"
+                  />
+                  <span className="text-xs text-gray-800">{challenge}</span>
+                </label>
+              ))}
             </div>
+            {errors.userMainChallenges && (
+              <p className="text-[11px] text-primary-600 font-medium">{errors.userMainChallenges}</p>
+            )}
+          </div>
+
+          {/* Pico de energia */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-800">
+              Em que período do dia você sente mais energia?
+            </label>
+            <select
+              value={form.userEnergyPeakTime || ''}
+              onChange={(event) => setForm((previous) => ({ ...previous, userEnergyPeakTime: event.target.value as any }))}
+              className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none ${errors.userEnergyPeakTime ? 'border-primary-400 ring-1 ring-primary-300' : ''}`}
+              aria-invalid={Boolean(errors.userEnergyPeakTime)}
+            >
+              <option value="">Selecione...</option>
+              <option value="manha">Manhã</option>
+              <option value="tarde">Tarde</option>
+              <option value="noite">Noite</option>
+            </select>
+            {errors.userEnergyPeakTime && (
+              <p className="text-[11px] text-primary-600 font-medium">{errors.userEnergyPeakTime}</p>
+            )}
           </div>
         </div>
 
