@@ -7,6 +7,7 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import type { KnownIconName } from '@/components/ui/AppIcon'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 interface CardItem {
   id: string
