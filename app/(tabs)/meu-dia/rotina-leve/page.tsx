@@ -250,7 +250,7 @@ export default function RotinaLevePage() {
 
                 {!recipesLoading && !recipes && (
                   <p className="text-[11px] text-gray-500">
-                    Clique em "Gerar receitas" para receber sugestões adaptadas à idade do seu filho.
+                    Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
                   </p>
                 )}
 
