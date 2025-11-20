@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 export default function RotinaLevePage() {
   const [isIdeasOpen, setIsIdeasOpen] = useState(true)
@@ -89,7 +90,7 @@ export default function RotinaLevePage() {
                   Sugestões para agora
                 </p>
                 <ul className="space-y-2 text-xs text-gray-700">
-                  <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                  <li>��� Mini brincadeira sensorial com objetos da sala.</li>
                   <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
                   <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
                 </ul>
