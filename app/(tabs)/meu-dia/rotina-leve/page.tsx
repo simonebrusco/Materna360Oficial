@@ -81,6 +81,18 @@ export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
 
+  // Receitas Inteligentes
+  const [recipesLoading, setRecipesLoading] = useState(false)
+  const [recipes, setRecipes] = useState<RecipeSuggestion[] | null>(null)
+
+  // Ideias Rápidas
+  const [ideasLoading, setIdeasLoading] = useState(false)
+  const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
+
+  // Inspirações do Dia
+  const [inspirationLoading, setInspirationLoading] = useState(false)
+  const [inspiration, setInspiration] = useState<Inspiration | null>(null)
+
   const { addItem } = usePlannerSavedContents()
 
   const handleSaveIdeia = () => {
