@@ -208,18 +208,20 @@ export default function RotinaLevePage() {
 
               {/* Age Rule Message */}
               <p className="mt-3 text-[11px] text-gray-500">
-                Para bebês menores de 6 meses, o ideal é manter o foco no aleitamento materno e seguir sempre a orientação do pediatra. 💗
+                Para bebês menores de 6 meses, o ideal é manter o foco no aleitamento materno e seguir sempre a orientação do pediatra.
               </p>
 
               {/* Generate Button + Plan Counter */}
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="md"
                 onClick={handleGenerateRecipes}
                 disabled={recipesLoading}
-                className="mt-4 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="mt-4 w-full"
               >
-                {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas 🍽️'}
-              </button>
+                <AppIcon name="utensils" size={16} decorative />
+                {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
+              </Button>
 
               <p className="mt-2 text-[11px] text-gray-500">
                 Hoje você já usou <span className="font-semibold text-gray-700">1 de 3</span> sugestões do seu plano.
