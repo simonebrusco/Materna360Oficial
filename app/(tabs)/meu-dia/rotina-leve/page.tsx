@@ -1,249 +1,257 @@
 'use client'
 
+import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
-import { SoftCard } from '@/components/ui/card'
-import { Reveal } from '@/components/ui/Reveal'
 
 export default function RotinaLevePage() {
+  const [isIdeasOpen, setIsIdeasOpen] = useState(true)
+  const [isInspirationOpen, setIsInspirationOpen] = useState(true)
+
   return (
     <PageTemplate
       label="MEU DIA"
       title="Rotina Leve"
       subtitle="Organize o seu dia com leveza e clareza."
     >
-      <div className="space-y-16 md:space-y-20">
-        <Reveal delay={0}>
-          <div className="pt-4">
-            <div className="mb-10 md:mb-14">
-              <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] mb-2 font-poppins">
-                Inspire o seu dia
-              </h2>
-              <p className="text-base text-[#545454] leading-relaxed font-poppins">
-                Comece trazendo leveza antes de organizar tudo.
-              </p>
+      {/* SectionWrapper */}
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        {/* 3-Card Grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-6">
+          {/* CARD 1: Ideias Rápidas */}
+          <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
+            <h3 className="text-base font-semibold text-gray-900">Ideias Rápidas</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Inspirações simples para deixar o dia mais leve.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsIdeasOpen((v) => !v)}
+              className="mt-2 text-xs font-medium text-primary-600 hover:text-primary-700"
+            >
+              {isIdeasOpen ? 'Ver menos ↑' : 'Ver mais →'}
+            </button>
+
+            {/* Static Filters Grid */}
+            <div className="mt-4 space-y-3 text-xs">
+              <div>
+                <p className="mb-1 font-medium text-gray-800">Tempo disponível</p>
+                <div className="flex flex-wrap gap-2">
+                  {['5 min', '10 min', '20 min', '30+'].map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      disabled
+                      className="rounded-full border border-gray-200 px-3 py-1 text-[11px] text-gray-700 cursor-default"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-1 font-medium text-gray-800">Com quem</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Só eu', 'Eu e meu filho', 'Família toda'].map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      disabled
+                      className="rounded-full border border-gray-200 px-3 py-1 text-[11px] text-gray-700 cursor-default"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-1 font-medium text-gray-800">Tipo de ideia</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Brincadeira', 'Organização da casa', 'Autocuidado', 'Receita rápida'].map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      disabled
+                      className="rounded-full border border-gray-200 px-3 py-1 text-[11px] text-gray-700 cursor-default"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* 3-Column Grid with Uniform Height */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-              {/* CARD 1: Ideias Rápidas */}
-              <Reveal delay={25}>
-                <SoftCard className="bg-[#fffefe] shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full flex flex-col p-7 md:p-8 rounded-2xl">
-                  <div className="flex-shrink-0">
-                    <h3 className="text-base font-semibold text-[#2f3a56] mb-2 font-poppins">
-                      Ideias Rápidas
-                    </h3>
-                    <p className="text-sm text-[#545454]/85 leading-relaxed font-poppins mb-5">
-                      Inspirações simples para deixar o dia mais leve.
-                    </p>
-                  </div>
+            {/* Collapsible Results Area */}
+            {isIdeasOpen && (
+              <div className="mt-4 rounded-2xl bg-gray-50 p-3">
+                <p className="text-xs font-medium text-gray-800 mb-2">
+                  Sugestões para agora
+                </p>
+                <ul className="space-y-2 text-xs text-gray-700">
+                  <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                  <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
+                  <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
+                </ul>
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
+                >
+                  Salvar no planner
+                </button>
+              </div>
+            )}
+          </div>
 
-                  {/* Filtros Rápidos */}
-                  <div className="flex-shrink-0 mb-6">
-                    <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
-                      Filtros rápidos
-                    </p>
+          {/* CARD 2: Receitas Inteligentes */}
+          <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
+            <h3 className="text-base font-semibold text-gray-900">Receitas Inteligentes</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Você diz o ingrediente, eu te ajudo com o resto.
+            </p>
 
-                    {/* Tempo */}
-                    <div className="mb-4">
-                      <p className="text-xs text-[#545454] font-medium mb-2">Tempo</p>
-                      <div className="flex flex-wrap gap-2">
-                        {['5 min', '10 min', '20 min'].map((time) => (
-                          <button
-                            key={time}
-                            disabled
-                            className="px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-[#ececec] text-[#545454] cursor-default"
-                          >
-                            {time}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+            {/* Form Inputs */}
+            <div className="mt-4 space-y-3 text-xs">
+              <div className="space-y-1">
+                <p className="font-medium text-gray-800">Ingrediente principal</p>
+                <input
+                  type="text"
+                  placeholder="Ex.: banana, aveia, frango..."
+                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-xs text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-600"
+                />
+              </div>
 
-                    {/* Energia */}
-                    <div className="mb-4">
-                      <p className="text-xs text-[#545454] font-medium mb-2">Energia</p>
-                      <div className="flex flex-wrap gap-2">
-                        {['Baixa', 'Média', 'Alta'].map((level) => (
-                          <button
-                            key={level}
-                            disabled
-                            className="px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-[#ececec] text-[#545454] cursor-default"
-                          >
-                            {level}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-1">
+                  <p className="font-medium text-gray-800">Tipo de refeição</p>
+                  <select className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-primary-600">
+                    <option>Lanche</option>
+                    <option>Almoço / Jantar</option>
+                    <option>Café da manhã</option>
+                    <option>Sobremesa leve</option>
+                  </select>
+                </div>
 
-                    {/* Quem Participa */}
-                    <div>
-                      <p className="text-xs text-[#545454] font-medium mb-2">Quem participa</p>
-                      <div className="flex flex-wrap gap-2">
-                        {['Só eu', 'Eu + filho', 'Família'].map((person) => (
-                          <button
-                            key={person}
-                            disabled
-                            className="px-3 py-1.5 text-xs font-medium rounded-full bg-white border border-[#ececec] text-[#545454] cursor-default"
-                          >
-                            {person}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex-1 space-y-1">
+                  <p className="font-medium text-gray-800">Tempo de preparo</p>
+                  <select className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-primary-600">
+                    <option>10 min</option>
+                    <option>20 min</option>
+                    <option>30 min</option>
+                    <option>40+ min</option>
+                  </select>
+                </div>
+              </div>
 
-                  {/* Sugestões Iniciais */}
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
-                      Sugestões iniciais
-                    </p>
-                    <div className="space-y-3">
-                      <div className="bg-[#f9f9f9] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#2f3a56] font-poppins mb-1">
-                          🧩 Mini brincadeira sensorial
-                        </p>
-                        <p className="text-xs text-[#545454]/80">(5 min)</p>
-                      </div>
-                      <div className="bg-[#f9f9f9] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#2f3a56] font-poppins mb-1">
-                          🫁 Conexão de 3 minutos
-                        </p>
-                        <p className="text-xs text-[#545454]/80">Respirem juntos</p>
-                      </div>
-                      <div className="bg-[#f9f9f9] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#2f3a56] font-poppins mb-1">
-                          😊 Ritual do sorriso
-                        </p>
-                        <p className="text-xs text-[#545454]/80">1 minuto para começar bem</p>
-                      </div>
-                    </div>
-                  </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-pink-50 px-3 py-1 text-[11px] text-primary-600">
+                <span>Idade principal: 2 anos</span>
+              </div>
+            </div>
 
-                  {/* CTA */}
-                  <div className="flex justify-end mt-6 pt-5 border-t border-[#ececec]/30">
-                    <span className="text-xs font-semibold text-primary tracking-wide font-poppins cursor-default">
-                      Ver mais →
-                    </span>
-                  </div>
-                </SoftCard>
-              </Reveal>
+            {/* Age Rule Message */}
+            <p className="mt-3 text-[11px] text-gray-500">
+              Para bebês menores de 6 meses, o ideal é manter o foco no aleitamento materno e seguir sempre a orientação do pediatra. 💗
+            </p>
 
-              {/* CARD 2: Receitas Inteligentes */}
-              <Reveal delay={50}>
-                <SoftCard className="bg-[#fffefe] shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full flex flex-col p-7 md:p-8 rounded-2xl">
-                  <div className="flex-shrink-0">
-                    <h3 className="text-base font-semibold text-[#2f3a56] mb-2 font-poppins">
-                      Receitas Inteligentes
-                    </h3>
-                    <p className="text-sm text-[#545454]/85 leading-relaxed font-poppins mb-5">
-                      Você diz o ingrediente, eu te ajudo com o resto.
-                    </p>
-                  </div>
+            {/* Generate Button + Plan Counter */}
+            <button
+              type="button"
+              className="mt-4 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
+            >
+              Gerar receitas 🍽️
+            </button>
 
-                  {/* Sugestões Iniciais */}
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
-                      Sugestões iniciais
-                    </p>
-                    <div className="space-y-3 mb-5">
-                      <div className="bg-[#f9f9f9] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#2f3a56] font-poppins">
-                          🥣 Creminho de Aveia Express
-                        </p>
-                        <p className="text-xs text-[#ff005e] font-poppins mt-1">ideal 1+ ano</p>
-                      </div>
-                      <div className="bg-[#f9f9f9] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#2f3a56] font-poppins">
-                          🍌 Banana amassada com chia
-                        </p>
-                        <p className="text-xs text-[#ff005e] font-poppins mt-1">ideal 6+ meses</p>
-                      </div>
-                      <div className="bg-[#f9f9f9] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#2f3a56] font-poppins">
-                          🥞 Panquequinha de banana
-                        </p>
-                        <p className="text-xs text-[#ff005e] font-poppins mt-1">ideal 1+ ano</p>
-                      </div>
-                    </div>
+            <p className="mt-2 text-[11px] text-gray-500">
+              Hoje você já usou <span className="font-semibold text-gray-700">1 de 3</span> sugestões do seu plano.
+            </p>
 
-                    {/* Nota Educativa */}
-                    <div className="bg-[#fff0f6] border border-[#ffd8e6] rounded-lg p-3 text-xs text-[#545454] leading-relaxed font-poppins">
-                      💡 Receitas personalizadas por IA serão filtradas pela idade do seu filho. Crianças abaixo de 6 meses não recebem sugestões (foco no aleitamento materno).
-                    </div>
-                  </div>
+            {/* Static Recipes List */}
+            <div className="mt-4 rounded-2xl bg-gray-50 p-3">
+              <p className="text-xs font-medium text-gray-800 mb-2">
+                Sugestões de hoje
+              </p>
+              <ul className="space-y-2 text-xs text-gray-700">
+                <li>
+                  <p className="font-semibold text-gray-900">Creminho de aveia rápida</p>
+                  <p className="text-[11px] text-gray-600">
+                    Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.
+                  </p>
+                  <p className="mt-1 text-[11px] text-gray-500">Pronto em ~10 min · a partir de 1 ano</p>
+                </li>
+                <li>
+                  <p className="font-semibold text-gray-900">Banana amassada com chia</p>
+                  <p className="text-[11px] text-gray-600">
+                    Combinação simples para lanches rápidos e nutritivos.
+                  </p>
+                  <p className="mt-1 text-[11px] text-gray-500">Pronto em ~5 min · a partir de 6 meses</p>
+                </li>
+              </ul>
 
-                  {/* CTA */}
-                  <div className="flex justify-end mt-6 pt-5 border-t border-[#ececec]/30">
-                    <span className="text-xs font-semibold text-primary tracking-wide font-poppins cursor-default">
-                      Ver mais →
-                    </span>
-                  </div>
-                </SoftCard>
-              </Reveal>
-
-              {/* CARD 3: Inspirações do Dia */}
-              <Reveal delay={75}>
-                <SoftCard className="bg-[#fffefe] shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full flex flex-col p-7 md:p-8 rounded-2xl">
-                  <div className="flex-shrink-0">
-                    <h3 className="text-base font-semibold text-[#2f3a56] mb-2 font-poppins">
-                      Inspirações do Dia
-                    </h3>
-                    <p className="text-sm text-[#545454]/85 leading-relaxed font-poppins mb-5">
-                      Uma frase e um pequeno cuidado para hoje.
-                    </p>
-                  </div>
-
-                  {/* Static Content */}
-                  <div className="flex-1 space-y-4">
-                    {/* Frase do Dia */}
-                    <div>
-                      <p className="text-xs font-semibold text-[#ff005e] uppercase tracking-wide mb-2">
-                        Frase do dia
-                      </p>
-                      <p className="text-sm italic text-[#2f3a56] leading-relaxed font-poppins">
-                        "Você não precisa dar conta de tudo hoje."
-                      </p>
-                    </div>
-
-                    {/* Pequeno Cuidado */}
-                    <div className="border-t border-[#ececec]/30 pt-4">
-                      <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
-                        Pequeno cuidado
-                      </p>
-                      <p className="text-sm text-[#545454] leading-relaxed font-poppins">
-                        1 minuto de respiração consciente.
-                      </p>
-                    </div>
-
-                    {/* Mini Ritual */}
-                    <div className="border-t border-[#ececec]/30 pt-4">
-                      <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
-                        Mini ritual
-                      </p>
-                      <p className="text-sm text-[#545454] leading-relaxed font-poppins">
-                        Envie uma mensagem carinhosa para alguém importante.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <div className="flex justify-end mt-6 pt-5 border-t border-[#ececec]/30">
-                    <span className="text-xs font-semibold text-primary tracking-wide font-poppins cursor-default">
-                      Ver mais →
-                    </span>
-                  </div>
-                </SoftCard>
-              </Reveal>
+              <button
+                type="button"
+                className="mt-3 w-full rounded-full bg-white px-4 py-2 text-xs font-semibold text-primary-600 shadow-sm border border-primary-200 hover:bg-primary-50 transition-colors"
+              >
+                Salvar receitas no planner
+              </button>
             </div>
           </div>
-        </Reveal>
 
-        {/* Closing Message */}
-        <div className="mt-8 pt-12 border-t border-[#ececec]/50">
-          <p className="text-center text-base text-[#545454] leading-relaxed font-poppins">
-            Organize seu dia com leveza. Pequenos passos fazem a grande diferença. <span className="text-[#ff005e] text-xl">❤️</span>
-          </p>
+          {/* CARD 3: Inspirações do Dia */}
+          <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
+            <h3 className="text-base font-semibold text-gray-900">Inspirações do Dia</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Uma frase e um pequeno cuidado para hoje.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setIsInspirationOpen((v) => !v)}
+              className="mt-2 text-xs font-medium text-primary-600 hover:text-primary-700"
+            >
+              {isInspirationOpen ? 'Ver menos ↑' : 'Ver mais →'}
+            </button>
+
+            {/* Focus Select */}
+            <div className="mt-4 space-y-1 text-xs">
+              <p className="font-medium text-gray-800">Foco de hoje</p>
+              <select className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-primary-600">
+                <option>Cansaço</option>
+                <option>Culpa</option>
+                <option>Organização</option>
+                <option>Conexão com o filho</option>
+              </select>
+            </div>
+
+            {/* Collapsible Result Area */}
+            {isInspirationOpen && (
+              <div className="mt-4 rounded-2xl bg-gray-50 p-3 text-xs text-gray-800 space-y-3">
+                <div>
+                  <p className="mb-1 text-[11px] font-medium text-gray-700">Frase de hoje</p>
+                  <p>"Você não precisa dar conta de tudo hoje."</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-[11px] font-medium text-gray-700">Pequeno cuidado</p>
+                  <p>1 minuto de respiração consciente antes de retomar a próxima tarefa.</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-[11px] font-medium text-gray-700">Mini ritual</p>
+                  <p>Envie uma mensagem carinhosa para alguém que te apoia.</p>
+                </div>
+                <button
+                  type="button"
+                  className="mt-2 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
+                >
+                  Salvar inspiração no planner
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Local Mini-Footer */}
+        <p className="mt-8 text-center text-[11px] text-gray-500">
+          Organize seu dia com leveza. Você merece. 💗
+        </p>
       </div>
     </PageTemplate>
   )
