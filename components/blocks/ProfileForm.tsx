@@ -375,6 +375,21 @@ export function ProfileForm() {
           name: trimmedState.nomeMae,
           birthdate: normalizedBirthdate,
           age_months: normalizedAgeMonths,
+          // EU360 2.0 Fields
+          userPreferredName: trimmedState.userPreferredName,
+          userRole: trimmedState.userRole,
+          userEmotionalBaseline: trimmedState.userEmotionalBaseline,
+          userMainChallenges: trimmedState.userMainChallenges,
+          userEnergyPeakTime: trimmedState.userEnergyPeakTime,
+          routineChaosMoments: trimmedState.routineChaosMoments,
+          routineScreenTime: trimmedState.routineScreenTime,
+          routineDesiredSupport: trimmedState.routineDesiredSupport,
+          supportNetwork: trimmedState.supportNetwork,
+          supportAvailability: trimmedState.supportAvailability,
+          userContentPreferences: trimmedState.userContentPreferences,
+          userGuidanceStyle: trimmedState.userGuidanceStyle,
+          userSelfcareFrequency: trimmedState.userSelfcareFrequency,
+          children: trimmedState.filhos,
         }),
       })
 
