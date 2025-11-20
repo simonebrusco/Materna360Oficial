@@ -20,6 +20,7 @@ export default function ComoEstouHojePage() {
   const [dayNotes, setDayNotes] = useState('')
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+  const { addItem, getByOrigin } = usePlannerSavedContents()
 
   // Mark as hydrated on mount
   useEffect(() => {
