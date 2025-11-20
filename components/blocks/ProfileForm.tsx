@@ -4,20 +4,93 @@ import { FormEvent, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
+import {
+  AboutYouBlock,
+  ChildrenBlock,
+  RoutineBlock,
+  SupportBlock,
+  PreferencesBlock,
+} from './ProfileFormBlocks'
 
-type ProfileFormState = {
+export type ProfileStickerId = 'mae-carinhosa' | 'mae-leve' | 'mae-determinada' | 'mae-criativa' | 'mae-tranquila'
+
+export type ChildProfile = {
+  id: string
+  genero: 'menino' | 'menina'
+  idadeMeses: number
+  nome: string
+  alergias: string[]
+  ageRange?: '0-1' | '1-3' | '3-6' | '6-8' | '8+'
+  currentPhase?: 'sono' | 'birras' | 'escolar' | 'socializacao' | 'alimentacao'
+  notes?: string
+}
+
+export type ProfileFormState = {
   nomeMae: string
+  userPreferredName?: string
+  userRole?: 'mae' | 'pai' | 'outro'
+  userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
+  userMainChallenges?: string[]
+  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite'
+  filhos: ChildProfile[]
+  routineChaosMoments?: string[]
+  routineScreenTime?: 'nada' | 'ate1h' | '1-2h' | 'mais2h'
+  routineDesiredSupport?: string[]
+  supportNetwork?: string[]
+  supportAvailability?: 'sempre' | 'as-vezes' | 'raramente'
+  userContentPreferences?: string[]
+  userGuidanceStyle?: 'diretas' | 'explicacao' | 'motivacionais'
+  userSelfcareFrequency?: 'diario' | 'semana' | 'pedido'
   figurinha: string
 }
 
+export type FormErrors = {
+  nomeMae?: string
+  userPreferredName?: string
+  userRole?: string
+  userMainChallenges?: string
+  userEnergyPeakTime?: string
+  filhos?: Record<string, string | undefined>
+  routineChaosMoments?: string
+  routineDesiredSupport?: string
+  userContentPreferences?: string
+  figurinha?: string
+  general?: string
+}
+
+const createEmptyChild = (index: number): ChildProfile => ({
+  id: `child-${index}`,
+  genero: 'menino',
+  idadeMeses: 0,
+  nome: '',
+  alergias: [],
+})
+
+const defaultState = (): ProfileFormState => ({
+  nomeMae: '',
+  userRole: undefined,
+  userMainChallenges: [],
+  filhos: [createEmptyChild(0)],
+  routineChaosMoments: [],
+  routineDesiredSupport: [],
+  supportNetwork: [],
+  userContentPreferences: [],
+  figurinha: '',
+})
+
 export function ProfileForm() {
   const router = useRouter()
-  const [form, setForm] = useState<ProfileFormState>({
-    nomeMae: '',
-    figurinha: '',
-  })
+  const [form, setForm] = useState<ProfileFormState>(() => defaultState())
+  const [babyBirthdate, setBabyBirthdate] = useState('')
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
   const [statusMessage, setStatusMessage] = useState('')
+  const [todayISO, setTodayISO] = useState<string>('')
+
+  useEffect(() => {
+    const date = new Date().toISOString().split('T')[0]
+    setTodayISO(date)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -35,6 +108,7 @@ export function ProfileForm() {
             ...previous,
             nomeMae: data?.name || '',
           }))
+          setBabyBirthdate(data?.birthdate || '')
         }
       } catch (error) {
         console.warn('Failed to load profile:', error)
@@ -47,65 +121,203 @@ export function ProfileForm() {
     }
   }, [])
 
+  const updateChild = (id: string, key: keyof ChildProfile, value: string | number | string[]) => {
+    setForm((previous) => ({
+      ...previous,
+      filhos: previous.filhos.map((child) => {
+        if (child.id !== id) return child
+
+        if (key === 'idadeMeses') {
+          const parsed = Math.max(0, Number(value))
+          return { ...child, idadeMeses: Number.isFinite(parsed) ? parsed : 0 }
+        }
+
+        if (key === 'genero') {
+          return { ...child, genero: value === 'menina' ? 'menina' : 'menino' }
+        }
+
+        if (key === 'alergias') {
+          const base = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []
+          const normalized = base
+            .map((item) => (typeof item === 'string' ? item.trim() : ''))
+            .filter((item) => item.length > 0)
+          const unique = Array.from(
+            new Set(normalized.map((item) => item.toLocaleLowerCase('pt-BR')))
+          )
+            .map((keyName) => normalized.find((item) => item.toLocaleLowerCase('pt-BR') === keyName) ?? '')
+            .filter((item) => item.length > 0)
+          return { ...child, alergias: unique }
+        }
+
+        return { ...child, [key]: typeof value === 'string' ? value : child[key] }
+      }),
+    }))
+  }
+
+  const addChild = () => {
+    setForm((previous) => ({
+      ...previous,
+      filhos: [...previous.filhos, createEmptyChild(previous.filhos.length)],
+    }))
+  }
+
+  const removeChild = (id: string) => {
+    setForm((previous) => ({
+      ...previous,
+      filhos:
+        previous.filhos.length > 1 ? previous.filhos.filter((child) => child.id !== id) : previous.filhos,
+    }))
+  }
+
+  const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
+    setForm((previous) => {
+      const current = previous[fieldName] as string[] | undefined
+      const updated = (current || []).includes(value)
+        ? (current || []).filter((item) => item !== value)
+        : [...(current || []), value]
+      return { ...previous, [fieldName]: updated }
+    })
+  }
+
+  const validateForm = (state: ProfileFormState) => {
+    const nextErrors: FormErrors = {}
+
+    if (!state.nomeMae.trim()) {
+      nextErrors.nomeMae = 'Informe seu nome.'
+    }
+
+    if (!state.userRole) {
+      nextErrors.userRole = 'Informe seu papel na rotina.'
+    }
+
+    if (!state.userMainChallenges || state.userMainChallenges.length === 0) {
+      nextErrors.userMainChallenges = 'Selecione pelo menos um desafio.'
+    }
+
+    if (!state.userEnergyPeakTime) {
+      nextErrors.userEnergyPeakTime = 'Informe quando você sente mais energia.'
+    }
+
+    if (!state.filhos.length) {
+      nextErrors.general = 'Adicione pelo menos um filho.'
+    }
+
+    if (!state.routineChaosMoments || state.routineChaosMoments.length === 0) {
+      nextErrors.routineChaosMoments = 'Selecione pelo menos um momento crítico.'
+    }
+
+    if (!state.routineDesiredSupport || state.routineDesiredSupport.length === 0) {
+      nextErrors.routineDesiredSupport = 'Informe em que você gostaria de ajuda.'
+    }
+
+    if (!state.userContentPreferences || state.userContentPreferences.length === 0) {
+      nextErrors.userContentPreferences = 'Selecione pelo menos uma preferência de conteúdo.'
+    }
+
+    return nextErrors
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setStatusMessage('')
+
+    const validationErrors = validateForm(form)
+    setErrors(validationErrors)
+
+    if (Object.keys(validationErrors).length > 0) {
+      return
+    }
+
     setSaving(true)
 
     try {
-      const response = await fetch('/api/eu360/profile', {
+      const normalizedBirthdate = babyBirthdate || null
+      const firstChildAge = form.filhos[0]?.idadeMeses
+      const normalizedAgeMonths =
+        normalizedBirthdate !== null
+          ? null
+          : typeof firstChildAge === 'number' && Number.isFinite(firstChildAge) && firstChildAge >= 0
+            ? Math.floor(firstChildAge)
+            : null
+
+      const eu360Response = await fetch('/api/eu360/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         cache: 'no-store',
         body: JSON.stringify({
           name: form.nomeMae,
-          birthdate: null,
-          age_months: null,
+          birthdate: normalizedBirthdate,
+          age_months: normalizedAgeMonths,
+          userPreferredName: form.userPreferredName,
+          userRole: form.userRole,
+          userEmotionalBaseline: form.userEmotionalBaseline,
+          userMainChallenges: form.userMainChallenges,
+          userEnergyPeakTime: form.userEnergyPeakTime,
+          routineChaosMoments: form.routineChaosMoments,
+          routineScreenTime: form.routineScreenTime,
+          routineDesiredSupport: form.routineDesiredSupport,
+          supportNetwork: form.supportNetwork,
+          supportAvailability: form.supportAvailability,
+          userContentPreferences: form.userContentPreferences,
+          userGuidanceStyle: form.userGuidanceStyle,
+          userSelfcareFrequency: form.userSelfcareFrequency,
+          children: form.filhos,
         }),
       })
 
-      if (response.ok) {
+      if (eu360Response.ok) {
         setStatusMessage('Salvo com carinho!')
         router.push('/meu-dia')
         router.refresh()
       } else {
-        setStatusMessage('Não foi possível salvar. Tente novamente.')
+        const data = await eu360Response.json().catch(() => ({}))
+        const message =
+          data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+            ? data.error
+            : 'Não foi possível salvar agora. Tente novamente em instantes.'
+        setStatusMessage(message)
       }
     } catch (error) {
-      console.error('Submit error:', error)
+      console.error('ProfileForm submit error:', error)
       setStatusMessage('Erro ao processar. Tente novamente.')
     } finally {
       setSaving(false)
     }
   }
 
+  const handleChange = (updates: Partial<ProfileFormState>) => {
+    setForm((previous) => ({ ...previous, ...updates }))
+  }
+
   return (
     <Reveal>
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">Seu Perfil</h2>
-          
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-xs font-medium text-gray-800">
-              Seu nome
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={form.nomeMae}
-              onChange={(event) => setForm((previous) => ({ ...previous, nomeMae: event.target.value }))}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-            />
-          </div>
-        </div>
+      <form className="space-y-6" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
+        <AboutYouBlock form={form} errors={errors} onChange={handleChange} />
+
+        <ChildrenBlock
+          form={form}
+          errors={errors}
+          babyBirthdate={babyBirthdate}
+          todayISO={todayISO}
+          onBirthdateChange={setBabyBirthdate}
+          onUpdateChild={updateChild}
+          onAddChild={addChild}
+          onRemoveChild={removeChild}
+        />
+
+        <RoutineBlock form={form} errors={errors} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+
+        <SupportBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+
+        <PreferencesBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
 
         <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-3">
           <Button type="submit" variant="primary" disabled={saving} className="w-full">
             {saving ? 'Salvando...' : 'Salvar e continuar'}
           </Button>
-          {statusMessage && (
-            <p className="text-center text-xs font-semibold text-gray-900">{statusMessage}</p>
-          )}
+          <p className="text-center text-[11px] text-gray-500">Você poderá editar essas informações no seu Perfil.</p>
+          {statusMessage && <p className="text-center text-xs font-semibold text-gray-900">{statusMessage}</p>}
         </div>
       </form>
     </Reveal>
