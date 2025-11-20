@@ -14,9 +14,9 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       {/* SectionWrapper */}
-      <div className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8">
         {/* 3-Card Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-6">
           {/* CARD 1: Ideias Rápidas */}
           <div className="h-full rounded-3xl bg-white shadow-[0_4px_18px_rgba(0,0,0,0.05)] p-6 transition-all duration-200">
             <h3 className="text-base font-semibold text-gray-900">Ideias Rápidas</h3>
