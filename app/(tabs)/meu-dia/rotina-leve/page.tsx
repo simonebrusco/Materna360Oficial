@@ -3,10 +3,46 @@
 import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 export default function RotinaLevePage() {
   const [isIdeasOpen, setIsIdeasOpen] = useState(true)
   const [isInspirationOpen, setIsInspirationOpen] = useState(true)
+
+  const { addItem } = usePlannerSavedContents()
+
+  const handleSaveIdeia = () => {
+    addItem({
+      origin: 'rotina-leve',
+      type: 'insight',
+      title: 'Ideia rápida para agora',
+      payload: {
+        description: 'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+      },
+    })
+  }
+
+  const handleSaveRecipe = () => {
+    addItem({
+      origin: 'rotina-leve',
+      type: 'recipe',
+      title: 'Sugestões de receitas de hoje',
+      payload: {
+        description: 'Creminho de aveia rápida e banana com chia.',
+      },
+    })
+  }
+
+  const handleSaveInspiracao = () => {
+    addItem({
+      origin: 'rotina-leve',
+      type: 'insight',
+      title: 'Inspiração do dia',
+      payload: {
+        description: 'Você não precisa dar conta de tudo hoje. Pequeno cuidado: 1 minuto de respiração consciente antes de retomar a próxima tarefa. Mini ritual: envie uma mensagem carinhosa para alguém que te apoia.',
+      },
+    })
+  }
 
   return (
     <PageTemplate
