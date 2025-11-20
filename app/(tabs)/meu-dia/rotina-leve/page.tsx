@@ -66,7 +66,7 @@ export default function RotinaLevePage() {
                           <h3 className="text-base font-semibold text-[#2f3a56] mb-3 font-poppins">
                             {card.title}
                           </h3>
-                          <p className="text-sm md:text-sm text-[#545454]/85 leading-relaxed font-poppins">
+                          <p className="text-sm text-[#545454]/85 leading-relaxed font-poppins">
                             {card.subtitle}
                           </p>
                         </div>
