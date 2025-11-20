@@ -12,7 +12,7 @@ import {
   PreferencesBlock,
 } from './ProfileFormBlocks'
 
-export type ProfileStickerId = 'mae-carinhosa' | 'mae-leve' | 'mae-determinada' | 'mae-criativa' | 'mae-tranquila'
+import { DEFAULT_STICKER_ID, STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
 export type ChildProfile = {
   id: string
@@ -41,7 +41,7 @@ export type ProfileFormState = {
   userContentPreferences?: string[]
   userGuidanceStyle?: 'diretas' | 'explicacao' | 'motivacionais'
   userSelfcareFrequency?: 'diario' | 'semana' | 'pedido'
-  figurinha: string
+  figurinha: ProfileStickerId | ''
 }
 
 export type FormErrors = {
@@ -56,6 +56,14 @@ export type FormErrors = {
   userContentPreferences?: string
   figurinha?: string
   general?: string
+}
+
+const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
+  'mae-carinhosa': 'Amor nos pequenos gestos.',
+  'mae-leve': 'Equilíbrio e presença.',
+  'mae-determinada': 'Força com doçura.',
+  'mae-criativa': 'Inventa e transforma.',
+  'mae-tranquila': 'Serenidade e autocuidado.',
 }
 
 const createEmptyChild = (index: number): ChildProfile => ({
@@ -262,6 +270,7 @@ export function ProfileForm() {
           userContentPreferences: form.userContentPreferences,
           userGuidanceStyle: form.userGuidanceStyle,
           userSelfcareFrequency: form.userSelfcareFrequency,
+          figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID,
           children: form.filhos,
         }),
       })
