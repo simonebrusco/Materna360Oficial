@@ -198,9 +198,30 @@ export default function ComoEstouHojePage() {
                     onClick={handleSaveNotes}
                     disabled={!dayNotes.trim()}
                   >
-                    Salvar
+                    Salvar no planner
                   </Button>
                 </div>
+
+                {/* Today's notes history from Planner */}
+                {getByOrigin('como-estou-hoje').filter((item) => item.type === 'note').length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-white/30">
+                    <p className="text-xs font-semibold text-[#545454] mb-3 uppercase tracking-wide">
+                      Notas de hoje no planner
+                    </p>
+                    <ul className="space-y-2">
+                      {getByOrigin('como-estou-hoje')
+                        .filter((item) => item.type === 'note')
+                        .map((item) => (
+                          <li
+                            key={item.id}
+                            className="rounded-2xl bg-[#FFE5EF]/60 px-4 py-3 text-sm text-[#545454]"
+                          >
+                            {item.payload?.text}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Smart Summary Section */}
