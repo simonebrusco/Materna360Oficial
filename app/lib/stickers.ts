@@ -4,6 +4,7 @@ export type ProfileStickerId =
   | 'mae-determinada'
   | 'mae-criativa'
   | 'mae-tranquila'
+  | 'mae-resiliente'
 
 export type StickerInfo = { label: string; asset: string }
 
