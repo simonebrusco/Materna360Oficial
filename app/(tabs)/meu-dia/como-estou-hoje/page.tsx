@@ -11,6 +11,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 export default function ComoEstouHojePage() {
   const [isHydrated, setIsHydrated] = useState(false)
