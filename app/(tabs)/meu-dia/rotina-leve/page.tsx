@@ -14,8 +14,9 @@ export default function RotinaLevePage() {
       title="Rotina Leve"
       subtitle="Organize o seu dia com leveza e clareza."
     >
-      {/* SectionWrapper */}
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <ClientOnly>
+        {/* SectionWrapper */}
+        <div className="mx-auto max-w-5xl px-4 py-8">
         {/* 3-Card Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-6">
           {/* CARD 1: Ideias Rápidas */}
@@ -249,11 +250,12 @@ export default function RotinaLevePage() {
           </div>
         </div>
 
-        {/* Local Mini-Footer */}
-        <p className="mt-8 text-center text-[11px] text-gray-500">
-          Organize seu dia com leveza. Você merece. 💗
-        </p>
-      </div>
+          {/* Local Mini-Footer */}
+          <p className="mt-8 text-center text-[11px] text-gray-500">
+            Organize seu dia com leveza. Você merece. 💗
+          </p>
+        </div>
+      </ClientOnly>
     </PageTemplate>
   )
 }
