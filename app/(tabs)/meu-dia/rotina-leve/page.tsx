@@ -71,7 +71,7 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        phrase: 'Você não precisa dar conta de tudo hoje.',
+        phrase: 'Você n��o precisa dar conta de tudo hoje.',
         care: '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
         ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
       })
@@ -334,14 +334,16 @@ export default function RotinaLevePage() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      size="md"
                       onClick={handleGenerateIdeas}
                       disabled={ideasLoading}
-                      className="mt-3 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="mt-3 w-full"
                     >
-                      {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias ✨'}
-                    </button>
+                      <AppIcon name="sparkles" size={16} decorative />
+                      {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
+                    </Button>
 
                     <div className="rounded-2xl bg-gray-50 p-3">
                       <p className="text-xs font-medium text-gray-800 mb-2">
