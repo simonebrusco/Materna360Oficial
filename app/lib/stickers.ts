@@ -14,7 +14,7 @@ export const STICKERS = {
   'mae-determinada': { label: 'Mãe Determinada', asset: '/stickers/mae-determinada.png' },
   'mae-criativa': { label: 'Mãe Criativa', asset: '/stickers/mae-criativa.png' },
   'mae-tranquila': { label: 'Mãe Tranquila', asset: '/stickers/mae-tranquila.png' },
-  'mae-resiliente': { label: 'Mãe Resiliente', asset: '/stickers/mae-resiliente.svg' },
+  'mae-resiliente': { label: 'Mãe Resiliente', asset: 'https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2Fda732dab355d499a9c4818dab2d98009' },
   default: { label: 'Minha Figurinha', asset: '/stickers/mae-carinhosa.png' },
 } as const
 
