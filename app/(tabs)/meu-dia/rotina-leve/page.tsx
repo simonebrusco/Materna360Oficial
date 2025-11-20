@@ -83,7 +83,7 @@ function mockGenerateRecipes(): Promise<RecipeSuggestion[]> {
         {
           id: 'recipe-2',
           title: 'Banana amassada com chia',
-          description: 'Combina��ão simples para lanches rápidos e nutritivos.',
+          description: 'Combinação simples para lanches rápidos e nutritivos.',
           meta: 'Pronto em ~5 min · a partir de 6 meses',
         },
       ])
@@ -381,28 +381,54 @@ export default function RotinaLevePage() {
                     <div>
                       <p className="mb-1 font-medium text-gray-800">Com quem</p>
                       <div className="flex flex-wrap gap-2">
-                        {QUEM_OPTIONS.map((option) => {
-                          const isActive = quemSelecionado === option.id
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              onClick={() =>
-                                setQuemSelecionado((current) =>
-                                  current === option.id ? null : option.id
-                                )
-                              }
-                              className={clsx(
-                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                                isActive
-                                  ? 'border-primary-300 bg-primary-50 text-primary-700'
-                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          )
-                        })}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            comQuem === 'so-eu'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          Só eu
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setComQuem((current) =>
+                              current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
+                            )
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            comQuem === 'eu-e-meu-filho'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          Eu e meu filho
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setComQuem((current) =>
+                              current === 'familia-toda' ? null : 'familia-toda'
+                            )
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            comQuem === 'familia-toda'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          Família toda
+                        </button>
                       </div>
                     </div>
 
