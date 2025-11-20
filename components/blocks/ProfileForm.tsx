@@ -77,11 +77,27 @@ const createEmptyChild = (index: number): ChildProfile => ({
   idadeMeses: 0,
   nome: '',
   alergias: [],
+  ageRange: undefined,
+  currentPhase: undefined,
+  notes: '',
 })
 
 const defaultState = (): ProfileFormState => ({
   nomeMae: '',
+  userPreferredName: '',
+  userRole: undefined,
+  userEmotionalBaseline: undefined,
+  userMainChallenges: [],
+  userEnergyPeakTime: undefined,
   filhos: [createEmptyChild(0)],
+  routineChaosMoments: [],
+  routineScreenTime: undefined,
+  routineDesiredSupport: [],
+  supportNetwork: [],
+  supportAvailability: undefined,
+  userContentPreferences: [],
+  userGuidanceStyle: undefined,
+  userSelfcareFrequency: undefined,
   figurinha: '',
 })
 
