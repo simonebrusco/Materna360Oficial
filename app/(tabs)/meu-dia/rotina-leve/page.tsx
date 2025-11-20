@@ -115,6 +115,11 @@ export default function RotinaLevePage() {
   const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
+  // Ideias Rápidas - Filter State
+  const [tempoSelecionado, setTempoSelecionado] = useState<string | null>(null)
+  const [quemSelecionado, setQuemSelecionado] = useState<string | null>(null)
+  const [tiposSelecionados, setTiposSelecionados] = useState<string[]>([])
+
   // Inspirações do Dia
   const [inspirationLoading, setInspirationLoading] = useState(false)
   const [inspiration, setInspiration] = useState<Inspiration | null>(null)
