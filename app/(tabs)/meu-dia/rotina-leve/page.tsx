@@ -212,17 +212,14 @@ export default function RotinaLevePage() {
               </p>
 
               {/* Generate Button + Plan Counter */}
-              <Button
+              <button
                 type="button"
-                variant="primary"
-                size="md"
                 onClick={handleGenerateRecipes}
                 disabled={recipesLoading}
-                className="mt-4 w-full"
+                className="mt-4 w-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-6 py-2.5 text-base font-semibold text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
               >
-                <AppIcon name="palette" size={18} decorative />
                 {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
-              </Button>
+              </button>
 
               <p className="mt-2 text-[11px] text-gray-500">
                 Hoje você já usou <span className="font-semibold text-gray-700">1 de 3</span> sugestões do seu plano.
@@ -335,17 +332,14 @@ export default function RotinaLevePage() {
                       </div>
                     </div>
 
-                    <Button
+                    <button
                       type="button"
-                      variant="primary"
-                      size="md"
                       onClick={handleGenerateIdeas}
                       disabled={ideasLoading}
-                      className="mt-3 w-full"
+                      className="mt-3 w-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-6 py-2.5 text-base font-semibold text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     >
-                      <AppIcon name="sparkles" size={18} decorative />
                       {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
-                    </Button>
+                    </button>
 
                     <div className="rounded-2xl bg-gray-50 p-3">
                       <p className="text-xs font-medium text-gray-800 mb-2">
@@ -413,17 +407,14 @@ export default function RotinaLevePage() {
                       </select>
                     </div>
 
-                    <Button
+                    <button
                       type="button"
-                      variant="primary"
-                      size="md"
                       onClick={handleGenerateInspiration}
                       disabled={inspirationLoading}
-                      className="mt-3 w-full"
+                      className="mt-3 w-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-6 py-2.5 text-base font-semibold text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     >
-                      <AppIcon name="idea" size={18} decorative />
                       {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
-                    </Button>
+                    </button>
 
                     <div className="rounded-2xl bg-gray-50 p-3 text-xs text-gray-800 space-y-3">
                       {inspirationLoading && (
