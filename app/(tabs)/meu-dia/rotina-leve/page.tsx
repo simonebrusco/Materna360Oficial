@@ -247,6 +247,14 @@ export default function RotinaLevePage() {
   }
 
   const handleSaveChecklist = () => {
+    addItem({
+      origin: 'rotina-leve',
+      type: 'checklist',
+      title: 'Checklist da Mãe',
+      payload: {
+        items: checklistItems,
+      },
+    })
     setChecklistSaved(true)
     setTimeout(() => setChecklistSaved(false), 3000)
   }
