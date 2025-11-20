@@ -288,9 +288,11 @@ export function ProfileForm() {
     const trimmedState: ProfileFormState = {
       ...form,
       nomeMae: form.nomeMae.trim(),
+      userPreferredName: form.userPreferredName?.trim(),
       filhos: form.filhos.map((child) => ({
         ...child,
         nome: child.nome.trim(),
+        notes: child.notes?.trim() || '',
         alergias: Array.from(
           new Set(
             child.alergias
