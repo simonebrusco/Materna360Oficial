@@ -128,6 +128,27 @@ export default function RotinaLevePage() {
     })
   }
 
+  const handleGenerateRecipes = async () => {
+    setRecipesLoading(true)
+    const result = await mockGenerateRecipes()
+    setRecipes(result)
+    setRecipesLoading(false)
+  }
+
+  const handleGenerateIdeas = async () => {
+    setIdeasLoading(true)
+    const result = await mockGenerateIdeas()
+    setIdeas(result)
+    setIdeasLoading(false)
+  }
+
+  const handleGenerateInspiration = async () => {
+    setInspirationLoading(true)
+    const result = await mockGenerateInspiration()
+    setInspiration(result)
+    setInspirationLoading(false)
+  }
+
   return (
     <PageTemplate
       label="MEU DIA"
