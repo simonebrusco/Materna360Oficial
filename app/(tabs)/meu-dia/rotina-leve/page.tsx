@@ -63,7 +63,7 @@ export default function RotinaLevePage() {
                     <Link href={card.href} className="h-full">
                       <SoftCard className="flex flex-col h-full hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] active:scale-95 cursor-pointer transition-all duration-200">
                         <div className="flex-1">
-                          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] mb-3 font-poppins">
+                          <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-3 font-poppins">
                             {card.title}
                           </h3>
                           <p className="text-sm md:text-sm text-[#545454]/85 leading-relaxed font-poppins">
