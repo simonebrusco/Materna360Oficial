@@ -336,8 +336,6 @@ export function ProfileForm() {
     }
   }
 
-  const inputClasses = 'w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-sm text-support-1 shadow-soft transition-all duration-300 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30'
-
   const [todayISO, setTodayISO] = useState<string>('')
 
   useEffect(() => {
