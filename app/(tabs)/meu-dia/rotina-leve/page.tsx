@@ -149,6 +149,49 @@ export default function RotinaLevePage() {
   // Inspirações do Dia state
   const [isInspirationOpen, setIsInspirationOpen] = useState(false)
 
+  // Handler functions for saving to Planner
+  const handleSaveIdeia = () => {
+    if (!selectedTime || !selectedMood) return
+    addItem({
+      origin: 'rotina-leve',
+      type: 'note',
+      title: 'Ideias rápidas',
+      payload: {
+        time: selectedTime,
+        mood: selectedMood,
+        participants: selectedParticipants,
+        age: selectedAge,
+      },
+    })
+  }
+
+  const handleSaveRecipe = () => {
+    if (!selectedPrepTime || !selectedDifficulty) return
+    addItem({
+      origin: 'rotina-leve',
+      type: 'recipe',
+      title: 'Receita do dia',
+      payload: {
+        ingredients: ingredients || 'não especificado',
+        prepTime: selectedPrepTime,
+        difficulty: selectedDifficulty,
+        childAge: selectedChildAge,
+      },
+    })
+  }
+
+  const handleSaveInspiracoes = () => {
+    addItem({
+      origin: 'rotina-leve',
+      type: 'insight',
+      title: 'Inspiração do dia',
+      payload: {
+        quote: 'Mesmo nos dias cansativos, você está fazendo o seu melhor.',
+        actionSuggestion: 'Tire 2 minutos para respirar fundo e soltar os ombros.',
+      },
+    })
+  }
+
   // Planejar o Dia state
   const [isPlannerOpen, setIsPlannerOpen] = useState(false)
   const [plannerItems, setPlannerItems] = useState<Array<{ id: string; text: string; done: boolean }>>([
