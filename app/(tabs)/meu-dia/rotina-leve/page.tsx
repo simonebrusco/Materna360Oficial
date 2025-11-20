@@ -6,8 +6,8 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 export default function RotinaLevePage() {
-  const [isIdeasOpen, setIsIdeasOpen] = useState(true)
-  const [isInspirationOpen, setIsInspirationOpen] = useState(true)
+  const [openIdeas, setOpenIdeas] = useState(false)
+  const [openInspiration, setOpenInspiration] = useState(false)
 
   const { addItem } = usePlannerSavedContents()
 
