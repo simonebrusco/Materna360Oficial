@@ -83,7 +83,7 @@ function mockGenerateRecipes(): Promise<RecipeSuggestion[]> {
         {
           id: 'recipe-2',
           title: 'Banana amassada com chia',
-          description: 'Combinação simples para lanches rápidos e nutritivos.',
+          description: 'Combina��ão simples para lanches rápidos e nutritivos.',
           meta: 'Pronto em ~5 min · a partir de 6 meses',
         },
       ])
@@ -316,28 +316,65 @@ export default function RotinaLevePage() {
                     <div>
                       <p className="mb-1 font-medium text-gray-800">Tempo disponível</p>
                       <div className="flex flex-wrap gap-2">
-                        {TEMPO_OPTIONS.map((option) => {
-                          const isActive = tempoSelecionado === option.id
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              onClick={() =>
-                                setTempoSelecionado((current) =>
-                                  current === option.id ? null : option.id
-                                )
-                              }
-                              className={clsx(
-                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                                isActive
-                                  ? 'border-primary-300 bg-primary-50 text-primary-700'
-                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          )
-                        })}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTempoDisponivel((current) => (current === '5' ? null : '5'))
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            tempoDisponivel === '5'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          5 min
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTempoDisponivel((current) => (current === '10' ? null : '10'))
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            tempoDisponivel === '10'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          10 min
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTempoDisponivel((current) => (current === '20' ? null : '20'))
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            tempoDisponivel === '20'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          20 min
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
+                          }
+                          className={clsx(
+                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                            tempoDisponivel === '30+'
+                              ? 'border-primary-300 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                          )}
+                        >
+                          30+
+                        </button>
                       </div>
                     </div>
 
