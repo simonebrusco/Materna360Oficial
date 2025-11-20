@@ -974,7 +974,7 @@ export function ProfileForm() {
         </div>
 
         {/* Submit Section */}
-        <div className="space-y-3 pt-4">
+        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-3">
           <Button type="submit" variant="primary" disabled={saving} className="w-full">
             {saving ? 'Salvando...' : 'Salvar e continuar'}
           </Button>
