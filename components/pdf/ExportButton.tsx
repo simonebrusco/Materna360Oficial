@@ -59,11 +59,6 @@ export default function ExportButton({
       // Track start
       trackTelemetry('pdf.export_start', { variant });
 
-      // Dynamically import PDF builder
-      const { buildReport, downloadBlob } = await import(
-        '@/app/lib/pdf/buildReport'
-      );
-
       let reportData: any;
       let filename: string;
 
@@ -129,8 +124,22 @@ export default function ExportButton({
         throw new Error(`Unknown variant: ${variant}`);
       }
 
-      // Build PDF
-      const blob = await buildReport(variant, reportData);
+      // Call server-side PDF generation API
+      const response = await fetch('/api/pdf/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ variant, data: reportData }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      // Get the PDF blob from the response
+      const blob = await response.blob();
       const bytes = blob.size;
       const durationMs = Math.round(performance.now() - startTime);
 
@@ -141,8 +150,15 @@ export default function ExportButton({
         durationMs,
       });
 
-      // Download
-      downloadBlob(blob, filename);
+      // Download the PDF
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
       const durationMs = Math.round(performance.now() - startTime);
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
