@@ -44,68 +44,6 @@ const INSPIRATION_CARDS: CardItem[] = [
   },
 ]
 
-const CARD_GROUPS: CardGroup[] = [
-  {
-    label: 'Organização do dia',
-    subtitle: 'Comece organizando o essencial.',
-    cards: [
-      {
-        id: 'planejar-dia',
-        title: 'Planejar o Dia',
-        description: 'Comece organizando as tarefas mais importantes.',
-        href: '/meu-dia',
-        icon: 'calendar',
-      },
-      {
-        id: 'rotina-casa',
-        title: 'Rotina da Casa',
-        description: 'Tarefas do lar com praticidade e leveza.',
-        href: '/meu-dia',
-        icon: 'home',
-      },
-    ],
-  },
-  {
-    label: 'Rotina da família',
-    subtitle: 'Acompanhe a rotina com harmonia.',
-    cards: [
-      {
-        id: 'rotina-filho',
-        title: 'Rotina do Filho',
-        description: 'Organização do dia da criança com cuidado.',
-        href: '/meu-dia',
-        icon: 'heart',
-      },
-      {
-        id: 'prioridades-semana',
-        title: 'Prioridades da Semana',
-        description: 'O que realmente importa nesta semana.',
-        href: '/meu-dia',
-        icon: 'star',
-      },
-    ],
-  },
-  {
-    label: 'Ferramentas da mãe',
-    subtitle: 'Pequenas ações que fazem grande diferença.',
-    cards: [
-      {
-        id: 'checklist-mae',
-        title: 'Checklist da Mãe',
-        description: 'Ações que fortalecem seu dia e sua família.',
-        href: undefined,
-        icon: 'check',
-      },
-      {
-        id: 'notas-listas',
-        title: 'Notas & Listas',
-        description: 'Anotações rápidas e listas essenciais.',
-        href: undefined,
-        icon: 'bookmark',
-      },
-    ],
-  },
-]
 
 const TIME_OPTIONS = ['5 min', '15 min', '30 min', '1h+']
 const MOOD_OPTIONS = ['Cansada', 'Neutra', 'Animada']
