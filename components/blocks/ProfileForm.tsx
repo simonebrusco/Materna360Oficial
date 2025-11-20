@@ -221,6 +221,16 @@ export function ProfileForm() {
     }))
   }
 
+  const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
+    setForm((previous) => {
+      const current = previous[fieldName] as string[] | undefined
+      const updated = (current || []).includes(value)
+        ? (current || []).filter((item) => item !== value)
+        : [...(current || []), value]
+      return { ...previous, [fieldName]: updated }
+    })
+  }
+
   const validateForm = (state: ProfileFormState) => {
     const nextErrors: FormErrors = {}
 
