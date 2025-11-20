@@ -36,5 +36,5 @@ export const isProfileStickerId = (value: unknown): value is ProfileStickerId =>
 export const getStickerInfo = (id?: string | null): StickerInfo => resolveSticker(id)
 
 export const STICKER_OPTIONS: ReadonlyArray<{ id: ProfileStickerId } & StickerInfo> = (
-  ['mae-carinhosa', 'mae-leve', 'mae-determinada', 'mae-criativa', 'mae-tranquila'] as const
+  ['mae-carinhosa', 'mae-leve', 'mae-determinada', 'mae-criativa', 'mae-tranquila', 'mae-resiliente'] as const
 ).map((id) => ({ id, ...STICKERS[id] }))
