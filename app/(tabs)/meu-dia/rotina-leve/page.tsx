@@ -5,6 +5,78 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
+type QuickIdea = {
+  id: string
+  text: string
+}
+
+type RecipeSuggestion = {
+  id: string
+  title: string
+  description: string
+  meta: string
+}
+
+type Inspiration = {
+  phrase: string
+  care: string
+  ritual: string
+}
+
+function mockGenerateIdeas(): Promise<QuickIdea[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: 'idea-1',
+          text: 'Mini brincadeira sensorial com objetos que você já tem na sala.',
+        },
+        {
+          id: 'idea-2',
+          text: 'Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.',
+        },
+        {
+          id: 'idea-3',
+          text: 'Um pequeno ritual de respiração profunda juntas antes de retomar as tarefas.',
+        },
+      ])
+    }, 800)
+  })
+}
+
+function mockGenerateRecipes(): Promise<RecipeSuggestion[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: 'recipe-1',
+          title: 'Creminho de aveia rápida',
+          description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
+          meta: 'Pronto em ~10 min · a partir de 1 ano',
+        },
+        {
+          id: 'recipe-2',
+          title: 'Banana amassada com chia',
+          description: 'Combinação simples para lanches rápidos e nutritivos.',
+          meta: 'Pronto em ~5 min · a partir de 6 meses',
+        },
+      ])
+    }, 900)
+  })
+}
+
+function mockGenerateInspiration(): Promise<Inspiration> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        phrase: 'Você não precisa dar conta de tudo hoje.',
+        care: '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
+        ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
+      })
+    }, 700)
+  })
+}
+
 export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
