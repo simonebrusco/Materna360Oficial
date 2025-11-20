@@ -330,15 +330,42 @@ export default function RotinaLevePage() {
                       </div>
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={handleGenerateIdeas}
+                      disabled={ideasLoading}
+                      className="mt-3 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias ✨'}
+                    </button>
+
                     <div className="rounded-2xl bg-gray-50 p-3">
                       <p className="text-xs font-medium text-gray-800 mb-2">
                         Sugestões para agora
                       </p>
-                      <ul className="space-y-2 text-xs text-gray-700">
-                        <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                        <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
-                        <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
-                      </ul>
+
+                      {ideasLoading && (
+                        <p className="text-[11px] text-gray-500">
+                          Pensando em pequenas ações que cabem no seu momento…
+                        </p>
+                      )}
+
+                      {!ideasLoading && ideas && (
+                        <ul className="space-y-2 text-xs text-gray-700">
+                          {ideas.map((idea) => (
+                            <li key={idea.id}>• {idea.text}</li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {!ideasLoading && !ideas && (
+                        <ul className="space-y-2 text-xs text-gray-700">
+                          <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                          <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
+                          <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
+                        </ul>
+                      )}
+
                       <button
                         type="button"
                         onClick={handleSaveIdeia}
