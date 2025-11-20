@@ -130,6 +130,7 @@ const RECIPE_SUGGESTIONS = [
 
 export default function RotinaLevePage() {
   const router = useRouter()
+  const { addItem } = usePlannerSavedContents()
 
   // Ideias Rápidas state
   const [isIdeasOpen, setIsIdeasOpen] = useState(false)
