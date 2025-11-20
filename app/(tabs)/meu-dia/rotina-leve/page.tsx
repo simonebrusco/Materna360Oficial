@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -9,27 +8,26 @@ interface Card {
   id: string
   title: string
   subtitle: string
-  href: string
 }
 
+// TODO: In the next phase, these cards will expand inline with AI-powered content
+// without navigating away from /meu-dia/rotina-leve. For now, they remain as
+// non-interactive cards to avoid 404 errors from non-existent routes.
 const CARDS: Card[] = [
   {
     id: 'ideias-rapidas',
     title: 'Ideias Rápidas',
     subtitle: 'Inspirações simples para deixar o dia mais leve.',
-    href: '/meu-dia/rotina-leve/ideias-rapidas',
   },
   {
     id: 'receitas-inteligentes',
     title: 'Receitas Inteligentes',
     subtitle: 'Você diz o ingrediente, eu te ajudo com o resto.',
-    href: '/meu-dia/rotina-leve/receitas-inteligentes',
   },
   {
     id: 'inspiracoes-do-dia',
     title: 'Inspirações do Dia',
     subtitle: 'Uma frase e um pequeno cuidado para hoje.',
-    href: '/meu-dia/rotina-leve/inspiracoes-do-dia',
   },
 ]
 
@@ -60,8 +58,8 @@ export default function RotinaLevePage() {
 
                 return (
                   <Reveal key={card.id} delay={currentIndex * 25}>
-                    <Link href={card.href} className="h-full">
-                      <SoftCard className="flex flex-col h-full hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] active:scale-95 cursor-pointer transition-all duration-200">
+                    <div className="h-full">
+                      <SoftCard className="flex flex-col h-full hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] active:scale-95 transition-all duration-200">
                         <div className="flex-1">
                           <h3 className="text-base font-semibold text-[#2f3a56] mb-3 font-poppins">
                             {card.title}
@@ -76,7 +74,7 @@ export default function RotinaLevePage() {
                           </span>
                         </div>
                       </SoftCard>
-                    </Link>
+                    </div>
                   </Reveal>
                 )
               })}
