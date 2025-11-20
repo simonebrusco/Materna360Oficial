@@ -19,15 +19,22 @@ export const metadata = {
 export default async function MaternarPage(props: {
   searchParams?: Promise<Record<string, string | string[]>>;
 }) {
-  // Detect Builder preview mode via header OR query parameter
+  // Detect Builder preview mode
   const headerValue = headers().get('x-builder-preview');
-  let isBuilderPreview = headerValue === '1' || headerValue === 'true';
+  const isHeaderPreview = headerValue === '1' || headerValue === 'true';
 
-  // Also check query parameter if header not set
-  if (!isBuilderPreview && props.searchParams) {
-    const params = await props.searchParams;
-    isBuilderPreview = params['builder.preview'] === '1';
+  // Check query parameter for builder.preview
+  let isQueryPreview = false;
+  try {
+    if (props.searchParams) {
+      const params = await props.searchParams;
+      isQueryPreview = params['builder.preview'] === '1';
+    }
+  } catch {
+    // If promise fails, continue without query param
   }
+
+  const isBuilderPreview = isHeaderPreview || isQueryPreview;
 
   // Check if Maternar Hub is enabled
   const cookieVal = cookies().get('ff_maternar')?.value ?? null;
