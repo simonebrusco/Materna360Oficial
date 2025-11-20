@@ -316,48 +316,86 @@ export default function RotinaLevePage() {
                     <div>
                       <p className="mb-1 font-medium text-gray-800">Tempo disponível</p>
                       <div className="flex flex-wrap gap-2">
-                        {['5 min', '10 min', '20 min', '30+'].map((label) => (
-                          <button
-                            key={label}
-                            type="button"
-                            disabled
-                            className="rounded-full border border-gray-200 px-3 py-1 text-[11px] text-gray-700 cursor-default"
-                          >
-                            {label}
-                          </button>
-                        ))}
+                        {TEMPO_OPTIONS.map((option) => {
+                          const isActive = tempoSelecionado === option.id
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setTempoSelecionado((current) =>
+                                  current === option.id ? null : option.id
+                                )
+                              }
+                              className={clsx(
+                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                                isActive
+                                  ? 'border-primary-300 bg-primary-50 text-primary-700'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
 
                     <div>
                       <p className="mb-1 font-medium text-gray-800">Com quem</p>
                       <div className="flex flex-wrap gap-2">
-                        {['Só eu', 'Eu e meu filho', 'Família toda'].map((label) => (
-                          <button
-                            key={label}
-                            type="button"
-                            disabled
-                            className="rounded-full border border-gray-200 px-3 py-1 text-[11px] text-gray-700 cursor-default"
-                          >
-                            {label}
-                          </button>
-                        ))}
+                        {QUEM_OPTIONS.map((option) => {
+                          const isActive = quemSelecionado === option.id
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setQuemSelecionado((current) =>
+                                  current === option.id ? null : option.id
+                                )
+                              }
+                              className={clsx(
+                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                                isActive
+                                  ? 'border-primary-300 bg-primary-50 text-primary-700'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
 
                     <div>
                       <p className="mb-1 font-medium text-gray-800">Tipo de ideia</p>
                       <div className="flex flex-wrap gap-2">
-                        {['Brincadeira', 'Organização da casa', 'Autocuidado', 'Receita rápida'].map((label) => (
-                          <button
-                            key={label}
-                            type="button"
-                            disabled
-                            className="rounded-full border border-gray-200 px-3 py-1 text-[11px] text-gray-700 cursor-default"
-                          >
-                            {label}
-                          </button>
-                        ))}
+                        {TIPO_OPTIONS.map((option) => {
+                          const isActive = tiposSelecionados.includes(option.id)
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setTiposSelecionados((current) =>
+                                  current.includes(option.id)
+                                    ? current.filter((id) => id !== option.id)
+                                    : [...current, option.id]
+                                )
+                              }
+                              className={clsx(
+                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                                isActive
+                                  ? 'border-primary-300 bg-primary-50 text-primary-700'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
 
