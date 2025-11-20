@@ -276,8 +276,8 @@ export default function RotinaLevePage() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setOpenIdeas((v) => !v)}
-                  className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600"
+                  onClick={() => setOpenIdeas((prev) => !prev)}
+                  className="mt-2 text-xs font-medium text-primary-500"
                 >
                   {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
                 </button>
@@ -389,8 +389,8 @@ export default function RotinaLevePage() {
 
                 <button
                   type="button"
-                  onClick={() => setOpenInspiration((v) => !v)}
-                  className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600"
+                  onClick={() => setOpenInspiration((prev) => !prev)}
+                  className="mt-2 text-xs font-medium text-primary-500"
                 >
                   {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
                 </button>
