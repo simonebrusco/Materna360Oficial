@@ -1,5 +1,6 @@
 'use client'
 import * as React from 'react'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 const BADGE_KEY = 'm360:badges'
 const TOTAL = 3
@@ -33,14 +34,15 @@ export function AchievementsCounter() {
   }, [count])
 
   return (
-    <div
-      className={`inline-flex items-center rounded-full border px-3 py-1 text-[12px] bg-white/80 border-[#e9ecf2] ${
-        pulse ? 'animate-pulse' : ''
-      }`}
-      aria-live="polite"
-      suppressHydrationWarning
-    >
-      Conquistas: {count}/{TOTAL}
-    </div>
+    <ClientOnly>
+      <div
+        className={`inline-flex items-center rounded-full border px-3 py-1 text-[12px] bg-white/80 border-[#e9ecf2] ${
+          pulse ? 'animate-pulse' : ''
+        }`}
+        aria-live="polite"
+      >
+        Conquistas: {count}/{TOTAL}
+      </div>
+    </ClientOnly>
   )
 }
