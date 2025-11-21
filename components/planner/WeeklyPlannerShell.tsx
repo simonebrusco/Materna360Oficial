@@ -72,8 +72,16 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
+    plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
-  }, [])
+  }, [plannerHook])
+
+  // Update planner hook date when selected date changes
+  useEffect(() => {
+    if (isHydrated && selectedDateKey) {
+      plannerHook.setDateKey(selectedDateKey)
+    }
+  }, [selectedDateKey, isHydrated, plannerHook])
 
   // Load planner data for the selected date whenever selectedDateKey changes
   useEffect(() => {
