@@ -58,9 +58,9 @@ export default function MaternarClient() {
 
   return (
     <div className="relative">
-      {/* Soft pink gradient background with hero glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-soft-bg)] to-[var(--color-page-bg)] pointer-events-none" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-96 bg-gradient-to-b from-[var(--color-soft-strong)] to-transparent opacity-70 blur-[40px] pointer-events-none" />
+      {/* Subtle editorial background */}
+      <div className="absolute inset-0 bg-[var(--color-page-bg)] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-gradient-to-b from-[var(--color-soft-strong)]/8 to-transparent blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         <main data-layout="page-template-v1" className="bg-[var(--color-page-bg)] min-h-[100dvh] pb-24">
