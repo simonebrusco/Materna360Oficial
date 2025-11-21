@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
+import { PlannerSavedContent } from '@/app/hooks/usePlannerSavedContents'
 
 type SavedContent = {
   id: string
@@ -15,6 +16,8 @@ type SavedContent = {
 
 type SavedContentsSectionProps = {
   contents: SavedContent[]
+  plannerContents?: PlannerSavedContent[]
+  onItemClick?: (item: PlannerSavedContent) => void
   hideTitle?: boolean
 }
 
@@ -30,6 +33,16 @@ const typeIcons: Record<SavedContent['type'], string> = {
   receita: 'star',
   ideia: 'idea',
   frase: 'sparkles',
+}
+
+const plannerTypeIcons: Record<string, string> = {
+  recipe: 'star',
+  checklist: 'list-check',
+  insight: 'lightbulb',
+  note: 'book-open',
+  task: 'check-square',
+  goal: 'target',
+  event: 'calendar',
 }
 
 export default function SavedContentsSection({
