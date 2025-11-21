@@ -174,37 +174,6 @@ export function MeuDiaClient() {
             {/* MAIN PLANNER CARD */}
             <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-6">
               {/* MAIN CONTENT SECTIONS - organized with consistent spacing */}
-              {/* RESUMO DO DIA */}
-              <Reveal delay={100}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="flex h-full">
-                    <div className="rounded-[22px] border border-black/5 bg-gradient-to-br from-pink-50 to-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6 w-full flex flex-col">
-                      <div className="space-y-3">
-                        <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide font-poppins">Meu Dia em 1 Minuto</p>
-                        <div className="space-y-2">
-                          <p className="text-sm text-[#545454] font-poppins">
-                            Você tem tudo que precisa dentro de você. Hoje é um novo dia para honrar seu tempo.
-                          </p>
-                          <div className="flex items-center gap-3 pt-2">
-                            <AppIcon name="heart" className="w-5 h-5 text-[#ff005e]" />
-                            <span className="text-xs font-semibold text-[#ff005e] font-poppins">Sempre no seu tempo</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex h-full">
-                    <div className="rounded-[22px] border border-black/5 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)] p-5 md:p-6 w-full flex items-center gap-4">
-                      <AppIcon name="sparkles" className="w-8 h-8 text-[#ff005e] flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-semibold text-[#ff005e] uppercase tracking-wide mb-1 font-poppins">Frase do Dia</p>
-                        <p className="text-sm md:text-base font-medium text-[#2f3a56] leading-relaxed font-poppins">&quot;{dailyMessage}&quot;</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
 
               {/* INTELLIGENT SUGGESTIONS */}
               <Reveal delay={200}>
