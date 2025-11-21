@@ -69,7 +69,7 @@ export default function AgendaSection({
         ) : (
           <div className="flex-1 flex flex-col space-y-0">
             {sortedItems.map(item => (
-              <div key={item.id} className="flex gap-3 py-2.5 border-b border-[#F0F0F0] last:border-0">
+              <div key={item.id} className="flex gap-3 py-2.5 border-b border-[var(--color-border-soft)] last:border-0">
                 <div className="flex-shrink-0 w-12 py-1">
                   <span className="text-xs font-bold text-[var(--color-brand)]">{item.time}</span>
                 </div>
