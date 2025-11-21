@@ -102,6 +102,10 @@ export default function RotinaLevePage() {
   const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
 
+  // Plan limits for Receitas Inteligentes
+  const DAILY_RECIPE_LIMIT = 3
+  const [usedRecipesToday, setUsedRecipesToday] = useState(0)
+
   // Ideias Rápidas
   const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
