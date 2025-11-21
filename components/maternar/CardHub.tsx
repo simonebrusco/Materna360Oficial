@@ -114,9 +114,9 @@ const HUB_CARDS: CardConfig[] = [
 export default function CardHub() {
   return (
     <section className="mt-8 md:mt-10">
-      {/* First 9 cards: 2 columns on mobile, 3 columns on desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-2 md:px-4 max-w-full mx-auto mb-6 md:mb-8">
-        {HUB_CARDS.slice(0, 9).map((card, index) => (
+      {/* All cards: 2 columns on mobile, 3 columns on desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-2 md:px-4 max-w-full mx-auto">
+        {HUB_CARDS.map((card, index) => (
           <div key={card.id} className="h-full" suppressHydrationWarning>
             <MaternarFeatureCard
               icon={card.icon}
@@ -131,24 +131,6 @@ export default function CardHub() {
           </div>
         ))}
       </div>
-
-      {/* Premium card (Row 4) - centered on desktop */}
-      {HUB_CARDS.length > 9 && (
-        <div className="flex justify-center md:justify-start px-2 md:px-4">
-          <div className="w-full md:w-1/3">
-            <MaternarFeatureCard
-              icon={HUB_CARDS[9].icon}
-              title={HUB_CARDS[9].title}
-              subtitle={HUB_CARDS[9].subtitle}
-              href={HUB_CARDS[9].href}
-              cardId={HUB_CARDS[9].id}
-              ctaText={HUB_CARDS[9].ctaText}
-              index={9}
-              tag={HUB_CARDS[9].tag}
-            />
-          </div>
-        </div>
-      )}
     </section>
   )
 }
