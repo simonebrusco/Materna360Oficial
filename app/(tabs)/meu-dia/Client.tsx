@@ -93,7 +93,7 @@ export function MeuDiaClient() {
   }, [])
 
   return (
-    <div className="bg-gradient-to-b from-[var(--color-soft-bg)] via-[var(--color-page-bg)] to-[var(--color-page-bg)] min-h-[100dvh]">
+    <div className="bg-[var(--color-page-bg)] min-h-[100dvh]">
       <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza.">
         <ClientOnly>
           <div className="mx-auto max-w-5xl px-4 py-8">
