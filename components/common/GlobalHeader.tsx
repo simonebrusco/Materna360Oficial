@@ -4,6 +4,7 @@ import React from 'react'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { AppLogo } from '@/components/ui/AppLogo'
 
 /**
  * Global translucent header that appears on all tabs
@@ -17,13 +18,7 @@ export function GlobalHeader() {
     <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/85 border-b border-white/50">
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
         {/* Left: Logo */}
-        <div className="flex items-center shrink-0">
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
-            alt="Materna360"
-            className="h-8 w-auto max-w-[160px] object-contain"
-          />
-        </div>
+        <AppLogo width={128} height={32} priority />
 
         {/* Right: User greeting + avatar */}
         <div className="flex items-center gap-4">
