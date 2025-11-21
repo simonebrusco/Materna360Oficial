@@ -138,7 +138,7 @@ export function SavedContentDrawer({
 
                 {/* Pediatrician note */}
                 <p className="text-xs text-[#545454] italic bg-[#f5f5f5] p-3 rounded-lg">
-                  💡 Lembre-se: adapte sempre às orientações do pediatra.
+                  💡 Lembre-se: adapte sempre ��s orientações do pediatra.
                 </p>
               </div>
             )}
@@ -181,6 +181,28 @@ export function SavedContentDrawer({
 
             {item.type === 'insight' && item.payload && (
               <div className="space-y-4">
+                {item.payload.frase && (
+                  <div>
+                    <p className="text-base text-[#2f3a56] leading-relaxed font-medium">
+                      {item.payload.frase}
+                    </p>
+                  </div>
+                )}
+
+                {item.payload.pequenoCuidado && (
+                  <div className="text-sm text-[#545454]">
+                    <p className="font-semibold text-[#2f3a56] mb-1">Pequeno cuidado:</p>
+                    <p className="leading-relaxed">{item.payload.pequenoCuidado}</p>
+                  </div>
+                )}
+
+                {item.payload.miniRitual && (
+                  <div className="text-sm text-[#545454]">
+                    <p className="font-semibold text-[#2f3a56] mb-1">Mini ritual:</p>
+                    <p className="leading-relaxed">{item.payload.miniRitual}</p>
+                  </div>
+                )}
+
                 {item.payload.description && (
                   <div>
                     <p className="text-sm text-[#545454] leading-relaxed">
