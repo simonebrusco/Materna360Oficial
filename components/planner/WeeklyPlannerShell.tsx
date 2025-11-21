@@ -338,10 +338,10 @@ export default function WeeklyPlannerShell() {
 
           {/* Contextual date caption */}
           <div className="space-y-1">
-            <p className="text-sm text-[#545454] text-center">
+            <p className="text-sm text-[var(--color-text-muted)] text-center">
               Tudo aqui vale para: <span className="font-semibold">{capitalizedDateFormatted}</span>
             </p>
-            <p className="text-xs text-[#545454]/60 text-center">
+            <p className="text-xs text-[var(--color-text-muted)]/60 text-center">
               Toque em outro dia para planejar ou rever sua semana.
             </p>
           </div>
