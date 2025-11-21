@@ -3,7 +3,6 @@
 import React from 'react'
 import Link from 'next/link'
 import AppIcon from '@/components/ui/AppIcon'
-import { SoftCard } from '@/components/ui/card'
 import { PlannerSavedContent } from '@/app/hooks/usePlannerSavedContents'
 
 type SavedContent = {
