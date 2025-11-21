@@ -194,7 +194,7 @@ export default function CuidarComAmorPage() {
       } catch {}
     } catch (error) {
       console.error('[Cuidar com Amor] Error saving bond to planner:', error)
-      toast.error('Erro ao salvar no planner.')
+      toast.danger('Erro ao salvar no planner.')
     }
   }
 
