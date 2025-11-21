@@ -24,7 +24,7 @@ type AutocuidadoDia = {
   }
   saude?: {
     hidratacao?: number | null
-    sono?: number | null
+    sono?: string | null
     alimentacao?: 'leve' | 'ok' | 'pesada' | null
     humorEmoji?: string | null
   }
