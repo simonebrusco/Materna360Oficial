@@ -102,14 +102,14 @@ export default function AgendaSection({
                 value={formData.time}
                 onChange={e => setFormData({ ...formData, time: e.target.value })}
                 placeholder="HH:MM"
-                className="col-span-1 px-3 py-2 rounded-lg border border-[#EDEDED] text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+                className="col-span-1 px-3 py-2 rounded-lg border border-[var(--color-border-soft)] bg-white text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
               />
               <input
                 type="text"
                 value={formData.title}
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Novo compromisso..."
-                className="col-span-2 px-3 py-2 rounded-lg border border-[#EDEDED] text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+                className="col-span-2 px-3 py-2 rounded-lg border border-[var(--color-border-soft)] bg-white text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
                 onKeyDown={e => e.key === 'Enter' && handleAddAppointment()}
               />
             </div>
@@ -117,7 +117,7 @@ export default function AgendaSection({
               <select
                 value={formData.tag}
                 onChange={e => setFormData({ ...formData, tag: e.target.value })}
-                className="px-3 py-2 rounded-lg border border-[#EDEDED] text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+                className="px-3 py-2 rounded-lg border border-[var(--color-border-soft)] bg-white text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
               >
                 {tagOptions.map(tag => (
                   <option key={tag} value={tag}>
