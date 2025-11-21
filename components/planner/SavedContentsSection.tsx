@@ -103,7 +103,10 @@ export default function SavedContentsSection({
             href="/descobrir/salvos"
             className="flex-shrink-0 w-[280px] h-[130px] flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-[#e8e8ec] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.09)] hover:border-[#ff005e] hover:-translate-y-0.5 transition-all cursor-pointer group"
           >
-            <AppIcon name="plus" className="w-5 h-5 text-[#545454]/50 group-hover:text-[#ff005e] transition-colors" />
+            <AppIcon
+              name="plus"
+              className="w-5 h-5 text-[#545454]/50 group-hover:text-[#ff005e] transition-colors"
+            />
             <p className="text-xs font-semibold text-[#545454]/60 group-hover:text-[#ff005e] transition-colors mt-1.5 uppercase tracking-wide">
               Ver tudo
             </p>
