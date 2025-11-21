@@ -122,7 +122,7 @@ export default function CareSection({
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               placeholder={placeholder}
-              className="w-full px-3 py-2 rounded-lg border border-[#EDEDED] text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-soft)] bg-white text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
               autoFocus
               onKeyDown={e => e.key === 'Enter' && handleAddItem()}
             />
