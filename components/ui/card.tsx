@@ -62,7 +62,12 @@ export function SoftCardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={clsx('p-5 sm:p-6 border-b border-[var(--color-border-soft)]', className)}
+      className={clsx(
+        'p-5 sm:p-6',
+        'border-b border-[var(--color-border-soft)]',
+        'bg-gradient-to-br from-[var(--color-page-bg)] to-[var(--color-soft-strong)]/5',
+        className
+      )}
       {...rest}
     >
       {children}
