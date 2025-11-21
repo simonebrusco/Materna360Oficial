@@ -65,20 +65,21 @@ export default function MaternarClient() {
         <main data-layout="page-template-v1" className="bg-soft-page min-h-[100dvh] pb-24">
           <div className="mx-auto max-w-[1040px] px-4 md:px-6">
             {/* Premium Hero Header - matching redesigned hubs */}
-            <header className="pt-8 md:pt-10 mb-8 md:mb-10" suppressHydrationWarning>
+            <header className="pt-8 md:pt-10 mb-8 md:mb-10">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   {/* Subtitle/Label - increased size for visual balance */}
                   <p className="text-sm md:text-base font-semibold uppercase tracking-[0.28em] text-[#ff005e] mb-3 font-poppins">
                     MATERNAR
                   </p>
-                  {/* Main Title */}
-                  <h1
-                    className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight font-poppins"
-                    suppressHydrationWarning
-                  >
-                    {greeting}
-                  </h1>
+                  {/* Main Title - wrapped in ClientOnly to avoid hydration mismatch */}
+                  <ClientOnly>
+                    <h1
+                      className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight font-poppins"
+                    >
+                      {greeting}
+                    </h1>
+                  </ClientOnly>
                 </div>
 
                 {/* Profile Button on Right */}
