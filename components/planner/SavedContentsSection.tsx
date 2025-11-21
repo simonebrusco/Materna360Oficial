@@ -45,6 +45,16 @@ const plannerTypeIcons: Record<string, string> = {
   event: 'calendar',
 }
 
+const plannerTypeLabels: Record<string, string> = {
+  recipe: 'RECEITA',
+  checklist: 'CHECKLIST',
+  insight: 'INSPIRAÇÃO',
+  note: 'NOTA',
+  task: 'TAREFA',
+  goal: 'META',
+  event: 'EVENTO',
+}
+
 export default function SavedContentsSection({
   contents,
   plannerContents = [],
