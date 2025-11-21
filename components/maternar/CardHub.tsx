@@ -117,7 +117,7 @@ export default function CardHub() {
       {/* All cards: 2 columns on mobile, 3 columns on desktop */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-2 md:px-4 max-w-full mx-auto">
         {HUB_CARDS.map((card, index) => (
-          <div key={card.id} className="h-full" suppressHydrationWarning>
+          <div key={card.id} className="h-full">
             <MaternarFeatureCard
               icon={card.icon}
               title={card.title}
