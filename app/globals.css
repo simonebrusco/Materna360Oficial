@@ -819,8 +819,8 @@ body {
 }
 
 .ui-ring:focus-visible {
-  box-shadow: 0 0 0 2px #ffd8e6;
-  outline: 2px solid transparent;
+  box-shadow: 0 0 0 2px #FFD3E6;
+  outline: 2px solid #FF1475;
   outline-offset: 2px;
 }
 
