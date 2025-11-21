@@ -48,7 +48,7 @@ function mockGenerateIdeas(): Promise<QuickIdea[]> {
   })
 }
 
-function mockGenerateRecipes(): Promise<RecipeSuggestion[]> {
+function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
@@ -56,13 +56,25 @@ function mockGenerateRecipes(): Promise<RecipeSuggestion[]> {
           id: 'recipe-1',
           title: 'Creminho de aveia rápida',
           description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
-          meta: 'Pronto em ~10 min · a partir de 1 ano',
+          timeLabel: 'Pronto em ~10 min',
+          ageLabel: 'a partir de 1 ano',
+          preparation: '1. Cozinhe 3 colheres de sopa de aveia em fogo baixo com 150ml de leite (ou bebida vegetal) por 5 minutos, mexendo ocasionalmente. 2. Amasse uma fruta à sua escolha (maçã, banana, pera) em um prato à parte. 3. Misture a aveia cozida com a fruta amassada. 4. Deixe esfriar um pouco antes de servir. 5. Você pode adicionar uma colher de mel ou melado se desejar mais doçura (após 1 ano).',
         },
         {
           id: 'recipe-2',
           title: 'Banana amassada com chia',
           description: 'Combinação simples para lanches rápidos e nutritivos.',
-          meta: 'Pronto em ~5 min · a partir de 6 meses',
+          timeLabel: 'Pronto em ~5 min',
+          ageLabel: 'a partir de 6 meses',
+          preparation: '1. Escolha uma banana bem madura e descasque-a. 2. Amasse a banana em um prato com um garfo até obter uma consistência cremosa. 3. Adicione 1 colher de chá de sementes de chia (se o bebê já tiver 8+ meses). 4. Misture bem os ingredientes. 5. Sirva imediatamente para evitar oxidação. Para bebês menores de 8 meses, omita a chia ou ofereça apenas a banana amassada.',
+        },
+        {
+          id: 'recipe-3',
+          title: 'Batida de iogurte com fruta',
+          description: 'Uma opção refrescante e probiótica para o seu filho.',
+          timeLabel: 'Pronto em ~3 min',
+          ageLabel: 'a partir de 9 meses',
+          preparation: '1. Coloque 100ml de iogurte natural integral em um copo. 2. Adicione uma porção de fruta fresca (morango, mirtilo ou goiaba). 3. Se preferir uma textura mais batida, use um garfo ou liquidificador por alguns segundos. 4. Sirva em seguida. Dica: você pode congelar a fruta antes para deixar a bebida bem gelada e refrescante no calor.',
         },
       ])
     }, 900)
