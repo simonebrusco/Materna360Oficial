@@ -199,6 +199,16 @@ export default function WeeklyPlannerShell() {
     })
   }, [])
 
+  const handleOpenSavedItem = useCallback((item: PlannerSavedContent) => {
+    setSelectedSavedItem(item)
+    setIsSavedItemOpen(true)
+  }, [])
+
+  const handleCloseSavedItem = useCallback(() => {
+    setIsSavedItemOpen(false)
+    setSelectedSavedItem(null)
+  }, [])
+
   const handleNotesChange = useCallback((content: string) => {
     setPlannerData(prev => ({ ...prev, notes: content }))
   }, [])
