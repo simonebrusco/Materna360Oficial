@@ -220,7 +220,26 @@ export async function GET() {
     return successResponse(result as Eu360ProfileResponse, true)
   } catch (error) {
     console.error('[Eu360] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
-    return successResponse({ name: '', birthdate: null, age_months: null }, true)
+    return successResponse({
+      name: '',
+      birthdate: null,
+      age_months: null,
+      userPreferredName: undefined,
+      userRole: undefined,
+      userEmotionalBaseline: undefined,
+      userMainChallenges: undefined,
+      userEnergyPeakTime: undefined,
+      routineChaosMoments: undefined,
+      routineScreenTime: undefined,
+      routineDesiredSupport: undefined,
+      supportNetwork: undefined,
+      supportAvailability: undefined,
+      userContentPreferences: undefined,
+      userGuidanceStyle: undefined,
+      userSelfcareFrequency: undefined,
+      figurinha: undefined,
+      children: undefined,
+    }, true)
   }
 }
 
