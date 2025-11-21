@@ -41,11 +41,11 @@ export default function Top3Section({
     <div className="space-y-3 flex-1 flex flex-col">
       {!hideTitle && (
         <div>
-          <h3 className="text-lg md:text-base font-semibold text-[#2f3a56] flex items-center gap-2 font-poppins">
-            <AppIcon name="target" className="w-4 h-4 text-[#ff005e]" />
+          <h3 className="text-lg md:text-base font-semibold text-[var(--color-text-main)] flex items-center gap-2 font-poppins">
+            <AppIcon name="target" className="w-4 h-4 text-[var(--color-brand)]" />
             Top 3 do dia
           </h3>
-          <p className="text-xs md:text-sm text-[#545454] mt-0.5 font-poppins">
+          <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-0.5 font-poppins">
             As três coisas que realmente importam hoje.
           </p>
         </div>
@@ -58,16 +58,16 @@ export default function Top3Section({
               key={item.id}
               className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
                 item.done
-                  ? 'bg-[#f5f5f5] border-[#ddd]'
-                  : 'bg-white border-[#f0f0f0] hover:border-[#ff005e]/20'
+                  ? 'bg-[var(--color-soft-bg)] border-[var(--color-border-muted)]'
+                  : 'bg-white border-[#F0F0F0] hover:border-[var(--color-brand)]/20'
               }`}
             >
               <button
                 onClick={() => onToggle(item.id)}
                 className="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all mt-0.5"
                 style={{
-                  borderColor: item.done ? '#ff005e' : '#ddd',
-                  backgroundColor: item.done ? '#ff005e' : 'transparent',
+                  borderColor: item.done ? 'var(--color-brand)' : 'var(--color-border-muted)',
+                  backgroundColor: item.done ? 'var(--color-brand)' : 'transparent',
                 }}
               >
                 {item.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
@@ -75,13 +75,13 @@ export default function Top3Section({
               <span
                 className={`flex-1 text-sm font-medium ${
                   item.done
-                    ? 'text-[#545454]/50 line-through'
-                    : 'text-[#2f3a56]'
+                    ? 'text-[var(--color-text-muted)]/50 line-through'
+                    : 'text-[var(--color-text-main)]'
                 }`}
               >
                 {item.title}
               </span>
-              <span className="text-xs font-bold text-[#ff005e]/60">{idx + 1}.</span>
+              <span className="text-xs font-bold text-[var(--color-brand)]/60">{idx + 1}.</span>
             </div>
           ))}
 
@@ -89,13 +89,13 @@ export default function Top3Section({
             Array.from({ length: emptySlots }).map((_, idx) => (
               <div
                 key={`empty-${idx}`}
-                className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[#ddd] bg-[#fafafa]"
+                className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[var(--color-border-muted)] bg-[var(--color-soft-bg)]"
               >
-                <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[#ddd] opacity-40" />
-                <span className="flex-1 text-sm text-[#545454]/40">
+                <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[var(--color-border-muted)] opacity-40" />
+                <span className="flex-1 text-sm text-[var(--color-text-muted)]/40">
                   Espaço {items.length + idx + 1}
                 </span>
-                <span className="text-xs font-bold text-[#545454]/20">
+                <span className="text-xs font-bold text-[var(--color-text-muted)]/20">
                   {items.length + idx + 1}.
                 </span>
               </div>
@@ -103,8 +103,8 @@ export default function Top3Section({
         </div>
 
         {allComplete && (
-          <div className="mt-auto p-3 rounded-lg bg-gradient-to-r from-[#ffe3f0] to-[#fff] border border-[#ff005e]/20 text-center">
-            <p className="text-sm font-semibold text-[#ff005e]">
+          <div className="mt-auto p-3 rounded-lg bg-gradient-to-r from-[var(--color-soft-strong)] to-[var(--color-page-bg)] border border-[var(--color-brand)]/20 text-center">
+            <p className="text-sm font-semibold text-[var(--color-brand)]">
               Parabéns! Você concluiu seus 3 focos principais
             </p>
           </div>
@@ -113,26 +113,26 @@ export default function Top3Section({
         {!isAddingForm && items.length < 3 ? (
           <button
             onClick={() => setIsAddingForm(true)}
-            className="mt-2 pt-3 border-t border-[#f0f0f0] inline-flex items-center gap-2 text-sm font-medium text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
+            className="mt-2 pt-3 border-t border-[#F0F0F0] inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
           >
             <AppIcon name="plus" className="w-4 h-4" />
             Adicionar foco
           </button>
         ) : isAddingForm ? (
-          <div className="mt-3 pt-3 border-t border-[#f0f0f0] space-y-2">
+          <div className="mt-3 pt-3 border-t border-[#F0F0F0] space-y-2">
             <input
               type="text"
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               placeholder="Novo foco do dia..."
-              className="w-full px-3 py-2 rounded-lg border border-[#ddd] text-sm focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30"
+              className="w-full px-3 py-2 rounded-lg border border-[#EDEDED] text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
               autoFocus
               onKeyDown={e => e.key === 'Enter' && handleAddItem()}
             />
             <div className="flex gap-2">
               <button
                 onClick={handleAddItem}
-                className="flex-1 px-3 py-2 bg-[#ff005e] text-white rounded-lg text-xs font-semibold hover:bg-[#ff005e]/90 transition-colors"
+                className="flex-1 px-3 py-2 bg-[var(--color-brand)] text-white rounded-lg text-xs font-semibold hover:bg-[var(--color-brand)]/90 transition-colors"
               >
                 Adicionar
               </button>
@@ -141,7 +141,7 @@ export default function Top3Section({
                   setIsAddingForm(false)
                   setNewTitle('')
                 }}
-                className="px-3 py-2 bg-[#f5f5f5] text-[#545454] rounded-lg text-xs font-semibold hover:bg-[#e5e5e5] transition-colors"
+                className="px-3 py-2 bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] rounded-lg text-xs font-semibold hover:bg-[var(--color-soft-bg)]/80 transition-colors"
               >
                 Cancelar
               </button>
