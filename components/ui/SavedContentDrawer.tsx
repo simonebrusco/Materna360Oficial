@@ -92,20 +92,20 @@ export function SavedContentDrawer({
                 <div className="flex flex-wrap gap-4">
                   {item.payload.timeLabel && (
                     <div>
-                      <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-1">
+                      <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
                         Tempo de preparo
                       </p>
-                      <p className="text-sm md:text-base text-[#2f3a56]">
+                      <p className="text-sm md:text-base text-[var(--color-text-main)]">
                         {item.payload.timeLabel}
                       </p>
                     </div>
                   )}
                   {item.payload.ageLabel && (
                     <div>
-                      <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-1">
+                      <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
                         Idade indicada
                       </p>
-                      <p className="text-sm md:text-base text-[#2f3a56]">
+                      <p className="text-sm md:text-base text-[var(--color-text-main)]">
                         {item.payload.ageLabel}
                       </p>
                     </div>
@@ -115,10 +115,10 @@ export function SavedContentDrawer({
                 {/* Description */}
                 {item.payload.description && (
                   <div>
-                    <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
                       Descrição
                     </p>
-                    <p className="text-sm text-[#545454] leading-relaxed">
+                    <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
                       {item.payload.description}
                     </p>
                   </div>
@@ -127,17 +127,17 @@ export function SavedContentDrawer({
                 {/* Preparation */}
                 {item.payload.preparation && (
                   <div>
-                    <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
                       Modo de preparo
                     </p>
-                    <p className="text-sm text-[#545454] leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm text-[var(--color-text-muted)] leading-relaxed whitespace-pre-wrap">
                       {item.payload.preparation}
                     </p>
                   </div>
                 )}
 
                 {/* Pediatrician note */}
-                <p className="text-xs text-[#545454] italic bg-[#f5f5f5] p-3 rounded-lg">
+                <p className="text-xs text-[var(--color-text-muted)] italic bg-[var(--color-soft-bg)] p-3 rounded-lg">
                   💡 Lembre-se: adapte sempre ��s orientações do pediatra.
                 </p>
               </div>
