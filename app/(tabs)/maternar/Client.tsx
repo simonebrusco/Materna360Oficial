@@ -111,32 +111,46 @@ export default function MaternarClient() {
             <div className="space-y-6 md:space-y-8">
               {/* Daily Message Card */}
               <Reveal delay={100}>
-                <div className="mt-0 mb-0 px-4 md:px-6 max-w-7xl mx-auto">
-                  <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[26px] md:rounded-[20px] border border-white/60 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-sm px-6 py-8 md:px-8 md:py-8 relative overflow-hidden transition-all duration-200 halo-glow" suppressHydrationWarning>
+                <div className="mt-0 mb-0 px-0 md:px-0 max-w-7xl mx-auto">
+                  <div className="bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] rounded-[26px] md:rounded-[20px] border border-white/60 shadow-[0_4px_18px_rgba(0,0,0,0.06)] backdrop-blur-sm px-4 py-4 md:px-6 md:py-5 relative overflow-hidden transition-all duration-200 halo-glow" suppressHydrationWarning>
                     {/* Subtle gradient accent blob - top-right corner */}
-                    <div className="pointer-events-none select-none absolute -top-8 right-0 h-32 w-32 bg-gradient-to-br from-primary/15 to-transparent rounded-full" />
+                    <div className="pointer-events-none select-none absolute -top-6 -right-6 h-24 w-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full" />
 
-                    {/* Content wrapper */}
-                    <div className="flex flex-col gap-3 relative z-10">
-                      {/* Pill header */}
-                      <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#ffe3f0] text-[#ff005e] font-medium text-sm tracking-tight shadow-sm w-fit font-poppins">
-                        Mensagem de Hoje
+                    {/* Content wrapper - flex with space-between to push CTA to bottom */}
+                    <div className="flex flex-col justify-between gap-2 relative z-10 min-h-[220px] md:min-h-[200px]">
+                      {/* Top content */}
+                      <div className="flex flex-col gap-1.5">
+                        {/* New title - replacing the pill header */}
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug font-poppins" suppressHydrationWarning>
+                          Um carinho pra você hoje 💗
+                        </h3>
+
+                        {/* Message text */}
+                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed font-poppins" suppressHydrationWarning>
+                          &quot;{dailyMessage}&quot;
+                        </p>
+
+                        {/* Subtitle */}
+                        <p className="text-xs text-[#545454]/70 leading-snug pt-0.5">
+                          Uma mensagem especial para começar seu dia.
+                        </p>
                       </div>
 
-                      {/* Message title */}
-                      <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] tracking-tight font-poppins" suppressHydrationWarning>
-                        &quot;{dailyMessage}&quot;
-                      </h3>
-
-                      {/* Subtitle */}
-                      <p className="text-sm md:text-base text-[#545454]/85 leading-relaxed">
-                        Uma mensagem especial para começar seu dia com leveza.
-                      </p>
-
-                      {/* Helper text */}
-                      <p className="text-xs text-[#545454]/60">
-                        Atualizada automaticamente a cada novo dia.
-                      </p>
+                      {/* Bottom CTA - micro link */}
+                      <div className="pt-1">
+                        <Link
+                          href="/meu-dia"
+                          onClick={() => {
+                            track('maternar.daily_message_cta_click', {
+                              timestamp: new Date().toISOString(),
+                            });
+                          }}
+                          className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#ff005e] transition-all duration-150 hover:gap-1"
+                        >
+                          <span>Preciso disso hoje</span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
