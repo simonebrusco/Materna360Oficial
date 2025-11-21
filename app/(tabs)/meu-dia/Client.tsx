@@ -93,8 +93,6 @@ export function MeuDiaClient() {
     return () => window.clearTimeout(timeoutId)
   }, [])
 
-  const dailyMessage = DAILY_MESSAGES[getDailyIndex(new Date(), DAILY_MESSAGES.length)]
-
   return (
     <div className="bg-gradient-to-b from-[#FFF0F6] via-[#FFF8FC] to-white min-h-[100dvh]">
       <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza.">
