@@ -54,10 +54,10 @@ export function MaternarFeatureCard({
       >
         {/* Top content: Icon, Tag, Title, Subtitle */}
         <div className="flex flex-col gap-2 md:gap-4">
-          <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)] flex-shrink-0">
+          <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#FFE8F2] flex-shrink-0">
             <AppIcon
               name={icon}
-              className="h-3.5 w-3.5 md:h-4 md:w-4 text-[var(--color-brand)]"
+              className="h-3.5 w-3.5 md:h-4 md:w-4 text-[#FF1475]"
               aria-hidden="true"
             />
           </div>
