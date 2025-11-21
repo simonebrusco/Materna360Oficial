@@ -99,7 +99,8 @@ export default function RotinaLevePage() {
 
   // Receitas Inteligentes
   const [recipesLoading, setRecipesLoading] = useState(false)
-  const [recipes, setRecipes] = useState<RecipeSuggestion[] | null>(null)
+  const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
 
   // Ideias Rápidas
   const [ideasLoading, setIdeasLoading] = useState(false)
