@@ -58,10 +58,11 @@ body {
   --border-soft-white: rgba(255, 255, 255, 0.6);
   --border-soft-gray: #e9ecf2;
 
-  --color-primary: #ff005e;
-  --color-primary-weak: #ffd8e6;
-  --color-ink-1: #2f3a56;
-  --color-ink-2: #545454;
+  /* Legacy aliases (mapped to new palette) */
+  --color-primary: #FD2597;        /* Pink Premium */
+  --color-primary-weak: #FDBED7;   /* Rosa Bebê */
+  --color-ink-1: #545454;          /* Cinza Premium */
+  --color-ink-2: #6A6A6A;          /* Cinza Neutro */
 
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
