@@ -229,6 +229,35 @@ export default function WeeklyPlannerShell() {
     return selectedDateFormatted.charAt(0).toUpperCase() + selectedDateFormatted.slice(1)
   }, [selectedDateKey, isHydrated])
 
+  // Transform PlannerSavedContent to SavedContentsSection format
+  type SavedContentDisplay = {
+    id: string
+    title: string
+    type: 'artigo' | 'receita' | 'ideia' | 'frase'
+    origin: string
+    href?: string
+  }
+
+  const transformedPlannerContents = useMemo(() => {
+    const items = plannerHook.items
+    const typeMapping: Record<string, 'artigo' | 'receita' | 'ideia' | 'frase'> = {
+      recipe: 'receita',
+      insight: 'ideia',
+      checklist: 'ideia',
+      note: 'artigo',
+      task: 'ideia',
+      goal: 'ideia',
+      event: 'artigo',
+    }
+
+    return items.map((item): SavedContentDisplay => ({
+      id: item.id,
+      title: item.title,
+      type: (typeMapping[item.type] || 'ideia') as any,
+      origin: item.origin,
+    }))
+  }, [plannerHook.items])
+
   // Get selected date for calendar
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
