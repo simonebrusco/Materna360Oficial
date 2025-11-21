@@ -114,7 +114,7 @@ export default function MaternarClient() {
               {/* Daily Message Card */}
               <Reveal delay={100}>
                 <div className="mt-0 mb-0 px-0 md:px-0 max-w-7xl mx-auto">
-                  <div className="bg-gradient-to-br from-[var(--color-soft-strong)] via-[var(--color-page-bg)] to-[var(--color-soft-bg)] rounded-[26px] md:rounded-[20px] border border-white/60 shadow-[0_4px_18px_rgba(0,0,0,0.06)] backdrop-blur-sm px-4 py-3 md:px-6 md:py-4 relative overflow-hidden transition-all duration-200 halo-glow">
+                  <div className="bg-gradient-to-br from-[var(--color-page-bg)] to-[var(--color-soft-strong)]/5 rounded-3xl border border-[var(--color-border-soft)] shadow-[var(--shadow-card-base)] hover:shadow-[var(--shadow-card-hover-neutral)] px-4 py-3 md:px-6 md:py-4 relative overflow-hidden transition-all duration-200">
                     {/* Subtle gradient accent blob - top-right corner */}
                     <div className="pointer-events-none select-none absolute -top-6 -right-6 h-24 w-24 bg-gradient-to-br from-[var(--color-brand)]/10 to-transparent rounded-full" />
 
