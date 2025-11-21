@@ -11,6 +11,7 @@ import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
 import { getDailyIndex } from '@/app/lib/dailyMessage';
 import { getTimeGreeting } from '@/app/lib/greetings';
 import { Reveal } from '@/components/ui/Reveal';
+import { ClientOnly } from '@/components/common/ClientOnly';
 
 export default function MaternarClient() {
   const { name } = useProfile();
