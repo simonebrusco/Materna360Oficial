@@ -51,9 +51,9 @@ body {
   --radius-card-lg: 24px;
   --radius-pill: 999px;
 
-  --shadow-card: 0 8px 28px rgba(47, 58, 86, 0.08);
-  --shadow-card-hover: 0 12px 40px rgba(47, 58, 86, 0.12);
-  --shadow-press: 0 4px 16px rgba(47, 58, 86, 0.1);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-press: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   --border-soft-white: rgba(255, 255, 255, 0.6);
   --border-soft-gray: #e9ecf2;
