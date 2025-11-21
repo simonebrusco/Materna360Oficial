@@ -335,6 +335,21 @@ export async function POST(request: Request) {
       name,
       birthdate,
       age_months: birthdate ? monthsFromBirthdate(birthdate) : ageMonths,
+      userPreferredName: body.userPreferredName as string | undefined,
+      userRole: body.userRole as string | undefined,
+      userEmotionalBaseline: body.userEmotionalBaseline as string | undefined,
+      userMainChallenges: body.userMainChallenges as string[] | undefined,
+      userEnergyPeakTime: body.userEnergyPeakTime as string | undefined,
+      routineChaosMoments: body.routineChaosMoments as string[] | undefined,
+      routineScreenTime: body.routineScreenTime as string | undefined,
+      routineDesiredSupport: body.routineDesiredSupport as string[] | undefined,
+      supportNetwork: body.supportNetwork as string[] | undefined,
+      supportAvailability: body.supportAvailability as string | undefined,
+      userContentPreferences: body.userContentPreferences as string[] | undefined,
+      userGuidanceStyle: body.userGuidanceStyle as string | undefined,
+      userSelfcareFrequency: body.userSelfcareFrequency as string | undefined,
+      figurinha: body.figurinha as string | undefined,
+      children: body.children as any[] | undefined,
     }
 
     return successResponse(responsePayload)
