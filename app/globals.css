@@ -782,7 +782,7 @@ body {
 /* ---- App background: gradient on the root document ---- */
 html {
   /* same gradient as before, but anchored at the document root */
-  background: linear-gradient(180deg, #ffe9f0 0%, #ffffff 80%) fixed;
+  background: linear-gradient(180deg, var(--color-soft-bg) 0%, var(--color-page-bg) 80%) fixed;
   min-height: 100%;
 }
 
