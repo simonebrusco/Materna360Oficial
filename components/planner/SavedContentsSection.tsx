@@ -65,8 +65,8 @@ export default function SavedContentsSection({
         </div>
       )}
 
-      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 pb-2">
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 min-w-min md:min-w-0 auto-cols-max md:auto-cols-fr">
+      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+        <div className="flex gap-3 min-w-min pb-2">
           {/* Legacy saved contents (from useSavedInspirations) */}
           {contents.map(content => (
             <Link
