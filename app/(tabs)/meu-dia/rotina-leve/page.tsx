@@ -264,43 +264,103 @@ export default function RotinaLevePage() {
               </p>
 
               {/* Recipes Results */}
-              <div className="mt-4 rounded-2xl bg-gray-50 p-3">
+              <div className="mt-4 space-y-3">
                 {recipesLoading && (
-                  <p className="text-[11px] text-gray-500">
-                    Estou pensando nas melhores opções pra hoje…
-                  </p>
+                  <div className="rounded-2xl bg-gray-50 p-3">
+                    <p className="text-[11px] text-gray-500">
+                      Estou pensando nas melhores opções pra hoje…
+                    </p>
+                  </div>
                 )}
 
-                {!recipesLoading && recipes && (
+                {!recipesLoading && recipes && recipes.length > 0 && (
                   <>
-                    <p className="text-xs font-medium text-gray-800 mb-2">
-                      Sugestões de hoje
+                    <p className="text-xs font-medium text-gray-800">
+                      Sugestões de hoje (até 3)
                     </p>
-                    <ul className="space-y-2 text-xs text-gray-700">
-                      {recipes.map((recipe) => (
-                        <li key={recipe.id}>
-                          <p className="font-semibold text-gray-900">{recipe.title}</p>
-                          <p className="text-[11px] text-gray-600">{recipe.description}</p>
-                          <p className="mt-1 text-[11px] text-gray-500">{recipe.meta}</p>
-                        </li>
+                    <div className="space-y-3">
+                      {recipes.slice(0, 3).map((recipe) => (
+                        <div
+                          key={recipe.id}
+                          className="rounded-2xl bg-white border border-gray-200 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                        >
+                          {/* Collapsed state */}
+                          <div
+                            className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() =>
+                              setExpandedRecipeId(
+                                expandedRecipeId === recipe.id ? null : recipe.id
+                              )
+                            }
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <h4 className="text-sm font-semibold text-[#2f3a56]">
+                                  {recipe.title}
+                                </h4>
+                                <p className="text-xs text-[#545454] mt-1 line-clamp-2">
+                                  {recipe.description}
+                                </p>
+                                <p className="text-[10px] text-[#545454] mt-1.5">
+                                  {recipe.timeLabel} · {recipe.ageLabel}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setExpandedRecipeId(
+                                    expandedRecipeId === recipe.id ? null : recipe.id
+                                  )
+                                }}
+                                className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                              >
+                                {expandedRecipeId === recipe.id ? 'Ver menos ↑' : 'Ver detalhes →'}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Expanded state */}
+                          {expandedRecipeId === recipe.id && (
+                            <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-3">
+                              <div>
+                                <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
+                                  Modo de preparo
+                                </h5>
+                                <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
+                                  {recipe.preparation}
+                                </p>
+                              </div>
+
+                              <p className="text-[10px] text-[#545454] italic">
+                                Lembre-se: adapte sempre às orientações do pediatra.
+                              </p>
+
+                              <button
+                                type="button"
+                                onClick={() => handleSaveRecipe(recipe)}
+                                className="w-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-4 py-2.5 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(255,0,94,0.2)] hover:shadow-[0_6px_20px_rgba(255,0,94,0.3)] transition-all"
+                              >
+                                Salvar esta receita no planner
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       ))}
-                    </ul>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no planner.
+                    </p>
                   </>
                 )}
 
-                {!recipesLoading && !recipes && (
-                  <p className="text-[11px] text-gray-500">
-                    Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
-                  </p>
+                {!recipesLoading && (!recipes || recipes.length === 0) && (
+                  <div className="rounded-2xl bg-gray-50 p-3">
+                    <p className="text-[11px] text-gray-500">
+                      Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
+                    </p>
+                  </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleSaveRecipe}
-                  className="mt-3 w-full rounded-full bg-white px-4 py-2 text-xs font-semibold text-primary-600 shadow-sm border border-primary-200 hover:bg-primary-50 transition-colors"
-                >
-                  Salvar receitas no planner
-                </button>
               </div>
             </div>
 
@@ -546,7 +606,7 @@ export default function RotinaLevePage() {
                         <ul className="space-y-2 text-xs text-gray-700">
                           <li>• Mini brincadeira sensorial com objetos da sala.</li>
                           <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
-                          <li>��� Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
+                          <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
                         </ul>
                       )}
 
