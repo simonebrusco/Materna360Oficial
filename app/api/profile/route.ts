@@ -31,6 +31,10 @@ const safeParse = (value: string | undefined): Record<string, unknown> => {
 }
 
 async function fetchChildrenNames(): Promise<string[]> {
+  const TIMEOUT_MS = 2000 // 2 second timeout for Supabase
+  const controller = new AbortController()
+  const timeoutHandle = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
   try {
     const supabase = tryCreateServerSupabase()
     if (!supabase) {
@@ -38,50 +42,42 @@ async function fetchChildrenNames(): Promise<string[]> {
       return []
     }
 
-    const TIMEOUT_MS = 2000 // 2 second timeout for Supabase
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
 
-    // Wrap the entire Supabase call in a Promise.race with a timeout
-    const result = await Promise.race([
-      (async () => {
-        try {
-          const {
-            data: { user },
-            error: authError,
-          } = await supabase.auth.getUser()
+      if (authError || !user) {
+        return []
+      }
 
-          if (authError || !user) {
-            return []
-          }
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .neq('name', '')
+        .limit(10)
 
-          const { data: profiles, error } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('user_id', user.id)
-            .neq('name', '')
-            .limit(10)
+      if (error) {
+        console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
+        return []
+      }
 
-          if (error) {
-            console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
-            return []
-          }
-
-          return (profiles || [])
-            .map((p: { name?: string }) => p.name?.trim())
-            .filter((name: string | undefined): name is string => !!name && name.length > 0)
-        } catch (err) {
-          console.debug('[ProfileAPI] Exception fetching children:', err)
-          return []
-        }
-      })(),
-      new Promise<string[]>((_, reject) =>
-        setTimeout(() => reject(new Error('Children names fetch timeout')), TIMEOUT_MS)
-      ),
-    ])
-
-    return result
-  } catch (error) {
-    console.debug('[ProfileAPI] Error fetching children:', error)
-    return []
+      return (profiles || [])
+        .map((p: { name?: string }) => p.name?.trim())
+        .filter((name: string | undefined): name is string => !!name && name.length > 0)
+    } catch (err) {
+      if (controller.signal.aborted) {
+        console.debug('[ProfileAPI] Children fetch aborted (timeout)')
+      } else {
+        console.debug('[ProfileAPI] Exception fetching children:', err)
+      }
+      return []
+    }
+  } finally {
+    clearTimeout(timeoutHandle)
+    controller.abort()
   }
 }
 
