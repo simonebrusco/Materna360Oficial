@@ -1,4 +1,4 @@
-import { MeuDiaClient } from './Client.debug'
+import { MeuDiaClient } from './Client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
