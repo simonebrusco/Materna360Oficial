@@ -50,8 +50,11 @@ export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Load global saved inspirations
+  // Load global saved inspirations (legacy)
   const { savedItems: savedContents } = useSavedInspirations()
+
+  // Load planner saved contents from the new hook
+  const plannerHook = usePlannerSavedContents()
 
   // Initialize per-day planner data
   const [plannerData, setPlannerData] = useState<PlannerData>({
