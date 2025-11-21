@@ -88,7 +88,7 @@ export default function SavedContentsSection({
             <button
               key={item.id}
               onClick={() => onItemClick?.(item)}
-              className="w-40 md:w-64 lg:w-72 h-40 md:h-48 flex flex-col p-4 md:p-5 rounded-2xl border border-gray-100/60 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-left group"
+              className="flex-shrink-0 w-56 md:w-80 h-40 flex flex-col p-4 md:p-5 rounded-2xl border border-gray-100/60 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-left group"
             >
               <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[10px] md:text-xs font-semibold tracking-wide text-[#ff005e] uppercase w-fit">
                 {plannerTypeLabels[item.type] ?? 'CONTEÚDO'}
