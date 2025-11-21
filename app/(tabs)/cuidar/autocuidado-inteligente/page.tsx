@@ -225,11 +225,11 @@ export default function AutocuidadoInteligentePage() {
 
   const handleSalvarSugestao = () => {
     if (!sugestaoAtual) {
-      toast.error('Gere uma sugestão primeiro.')
+      toast.danger('Gere uma sugestão primeiro.')
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {})
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].sugestao = {
       escolhida: sugestaoAtual,
