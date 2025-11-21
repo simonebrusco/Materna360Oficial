@@ -102,36 +102,51 @@ export default function RotinaLevePage() {
   const { addItem } = usePlannerSavedContents()
 
   const handleSaveIdeia = () => {
-    addItem({
-      origin: 'rotina-leve',
-      type: 'insight',
-      title: 'Ideia rápida para agora',
-      payload: {
-        description: 'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
-      },
-    })
+    try {
+      addItem({
+        origin: 'rotina-leve',
+        type: 'insight',
+        title: 'Ideia rápida para agora',
+        payload: {
+          description: 'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+        },
+      })
+      console.log('[Rotina Leve] Idea saved to planner')
+    } catch (error) {
+      console.error('[Rotina Leve] Error saving idea:', error)
+    }
   }
 
   const handleSaveRecipe = () => {
-    addItem({
-      origin: 'rotina-leve',
-      type: 'recipe',
-      title: 'Sugestões de receitas de hoje',
-      payload: {
-        description: 'Creminho de aveia rápida e banana com chia.',
-      },
-    })
+    try {
+      addItem({
+        origin: 'rotina-leve',
+        type: 'recipe',
+        title: 'Sugestões de receitas de hoje',
+        payload: {
+          description: 'Creminho de aveia rápida e banana com chia.',
+        },
+      })
+      console.log('[Rotina Leve] Recipe saved to planner')
+    } catch (error) {
+      console.error('[Rotina Leve] Error saving recipe:', error)
+    }
   }
 
   const handleSaveInspiracao = () => {
-    addItem({
-      origin: 'rotina-leve',
-      type: 'insight',
-      title: 'Inspiração do dia',
-      payload: {
-        description: 'Você não precisa dar conta de tudo hoje. Pequeno cuidado: 1 minuto de respiração consciente antes de retomar a próxima tarefa. Mini ritual: envie uma mensagem carinhosa para alguém que te apoia.',
-      },
-    })
+    try {
+      addItem({
+        origin: 'rotina-leve',
+        type: 'insight',
+        title: 'Inspiração do dia',
+        payload: {
+          description: 'Você não precisa dar conta de tudo hoje. Pequeno cuidado: 1 minuto de respiração consciente antes de retomar a próxima tarefa. Mini ritual: envie uma mensagem carinhosa para alguém que te apoia.',
+        },
+      })
+      console.log('[Rotina Leve] Inspiration saved to planner')
+    } catch (error) {
+      console.error('[Rotina Leve] Error saving inspiration:', error)
+    }
   }
 
   const handleGenerateRecipes = async () => {
