@@ -240,10 +240,10 @@ export default function MinhaJornadaPage() {
           <Reveal delay={150}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
               <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
                   Conquistas e Memórias
                 </h3>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-[var(--color-text-muted)]">
                   Celebre as pequenas vitórias e momentos afetivos.
                 </p>
               </div>
@@ -251,27 +251,27 @@ export default function MinhaJornadaPage() {
               <div className="space-y-4">
                 {/* Minhas Conquistas Recentes */}
                 <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
-                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                  <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-3">
                     Minhas Conquistas Recentes
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {['🏆', '⭐', '💪', '🎯'].map((emoji, idx) => (
                       <div
                         key={idx}
-                        className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] flex items-center justify-center text-lg"
+                        className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-soft-strong)] to-[var(--color-soft-strong)] flex items-center justify-center text-lg"
                       >
                         {emoji}
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-[#545454] mt-3">
+                  <p className="text-xs text-[var(--color-text-muted)] mt-3">
                     Registre suas pequenas vitórias aqui.
                   </p>
                 </div>
 
                 {/* Memórias da Semana */}
                 <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
-                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                  <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-3">
                     Memórias da Semana
                   </h4>
                   <div className="space-y-2">
@@ -280,8 +280,8 @@ export default function MinhaJornadaPage() {
                         key={idx}
                         className="flex items-center gap-2 p-2 rounded-lg bg-white/50"
                       >
-                        <span className="text-primary text-lg">💝</span>
-                        <p className="text-sm text-[#545454]">{item}</p>
+                        <span className="text-[var(--color-brand)] text-lg">💝</span>
+                        <p className="text-sm text-[var(--color-text-muted)]">{item}</p>
                       </div>
                     ))}
                   </div>
@@ -289,12 +289,12 @@ export default function MinhaJornadaPage() {
 
                 {/* O que quero lembrar */}
                 <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
-                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-3">
+                  <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-3">
                     O que quero lembrar
                   </h4>
                   <textarea
                     placeholder="Escreva algo que você não quer esquecer…"
-                    className="w-full min-h-[80px] rounded-xl border border-white/40 bg-white/70 p-3 text-sm text-[#2f3a56] shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="w-full min-h-[80px] rounded-xl border border-white/40 bg-white/70 p-3 text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] shadow-soft focus:border-[var(--color-brand)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
                   />
                 </div>
               </div>
