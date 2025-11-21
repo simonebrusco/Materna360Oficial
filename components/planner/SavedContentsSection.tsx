@@ -102,7 +102,7 @@ export default function SavedContentsSection({
           {/* Ver tudo link */}
           <Link
             href="/descobrir/salvos"
-            className="w-40 md:w-64 lg:w-72 h-40 md:h-48 flex flex-col items-center justify-center p-4 md:p-5 rounded-2xl border-2 border-dashed border-gray-200 bg-white/50 hover:border-[#ff005e] hover:bg-[#ffd8e6]/10 transition-all cursor-pointer group"
+            className="flex-shrink-0 w-56 md:w-80 h-40 flex flex-col items-center justify-center p-4 md:p-5 rounded-2xl border-2 border-dashed border-gray-200 bg-white/50 hover:border-[#ff005e] hover:bg-[#ffd8e6]/10 transition-all cursor-pointer group"
           >
             <AppIcon name="plus" className="w-6 h-6 text-[#545454]/40 group-hover:text-[#ff005e] transition-colors" />
             <p className="text-[11px] md:text-xs font-semibold text-[#545454]/60 group-hover:text-[#ff005e] transition-colors mt-2 uppercase tracking-wide">
