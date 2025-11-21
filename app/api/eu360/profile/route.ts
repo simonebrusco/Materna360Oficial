@@ -5,6 +5,11 @@ import { monthsFromBirthdate } from '@/app/lib/age'
 import { tryCreateServerSupabase } from '@/app/lib/supabase'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 60
+
+const CACHE_HEADERS = {
+  'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+}
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
@@ -14,19 +19,52 @@ type Eu360ProfilePayload = {
   name?: unknown
   birthdate?: unknown
   age_months?: unknown
+  userPreferredName?: unknown
+  userRole?: unknown
+  userEmotionalBaseline?: unknown
+  userMainChallenges?: unknown
+  userEnergyPeakTime?: unknown
+  routineChaosMoments?: unknown
+  routineScreenTime?: unknown
+  routineDesiredSupport?: unknown
+  supportNetwork?: unknown
+  supportAvailability?: unknown
+  userContentPreferences?: unknown
+  userGuidanceStyle?: unknown
+  userSelfcareFrequency?: unknown
+  figurinha?: unknown
+  children?: unknown
 }
 
 type Eu360ProfileResponse = {
   name: string
   birthdate: string | null
   age_months: number | null
+  userPreferredName?: string
+  userRole?: string
+  userEmotionalBaseline?: string
+  userMainChallenges?: string[]
+  userEnergyPeakTime?: string
+  routineChaosMoments?: string[]
+  routineScreenTime?: string
+  routineDesiredSupport?: string[]
+  supportNetwork?: string[]
+  supportAvailability?: string
+  userContentPreferences?: string[]
+  userGuidanceStyle?: string
+  userSelfcareFrequency?: string
+  figurinha?: string
+  children?: any[]
 }
 
 const invalidResponse = (message: string, status = 400) =>
   NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
 
-const successResponse = (payload: Eu360ProfileResponse) =>
-  NextResponse.json(payload, { status: 200, headers: NO_STORE_HEADERS })
+const successResponse = (payload: Eu360ProfileResponse, useCache = false) =>
+  NextResponse.json(payload, {
+    status: 200,
+    headers: useCache ? CACHE_HEADERS : NO_STORE_HEADERS
+  })
 
 function normalizeName(raw: unknown): string {
   if (typeof raw !== 'string') {
@@ -69,49 +107,139 @@ export async function GET() {
     const supabase = tryCreateServerSupabase()
     if (!supabase) {
       console.error('[Eu360] Supabase client unavailable. Returning empty profile.')
-      return successResponse({ name: '', birthdate: null, age_months: null })
+      return successResponse({
+        name: '',
+        birthdate: null,
+        age_months: null,
+        userPreferredName: undefined,
+        userRole: undefined,
+        userEmotionalBaseline: undefined,
+        userMainChallenges: undefined,
+        userEnergyPeakTime: undefined,
+        routineChaosMoments: undefined,
+        routineScreenTime: undefined,
+        routineDesiredSupport: undefined,
+        supportNetwork: undefined,
+        supportAvailability: undefined,
+        userContentPreferences: undefined,
+        userGuidanceStyle: undefined,
+        userSelfcareFrequency: undefined,
+        figurinha: undefined,
+        children: undefined,
+      }, true)
     }
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    // Add a timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+    )
 
-    if (authError) {
-      console.error('[Eu360] Failed to verify user:', authError.message)
-    }
+    const fetchPromise = (async () => {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
 
-    if (!user) {
-      return successResponse({ name: '', birthdate: null, age_months: null })
-    }
+      if (authError) {
+        console.error('[Eu360] Failed to verify user:', authError.message)
+      }
 
-    const [profileResult, babyResult] = await Promise.all([
-      supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(),
-      supabase.from('babies').select('birthdate, age_months').eq('user_id', user.id).maybeSingle(),
-    ])
+      if (!user) {
+        return {
+          name: '',
+          birthdate: null,
+          age_months: null,
+          userPreferredName: undefined,
+          userRole: undefined,
+          userEmotionalBaseline: undefined,
+          userMainChallenges: undefined,
+          userEnergyPeakTime: undefined,
+          routineChaosMoments: undefined,
+          routineScreenTime: undefined,
+          routineDesiredSupport: undefined,
+          supportNetwork: undefined,
+          supportAvailability: undefined,
+          userContentPreferences: undefined,
+          userGuidanceStyle: undefined,
+          userSelfcareFrequency: undefined,
+          figurinha: undefined,
+          children: undefined,
+        }
+      }
 
-    if (profileResult.error) {
-      console.error('[Eu360] Failed to load profile:', profileResult.error.message)
-    }
+      const [profileResult, babyResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('name, user_preferred_name, user_role, user_emotional_baseline, user_main_challenges, user_energy_peak_time, routine_chaos_moments, routine_screen_time, routine_desired_support, support_network, support_availability, user_content_preferences, user_guidance_style, user_selfcare_frequency, figurinha, children')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase.from('babies').select('birthdate, age_months').eq('user_id', user.id).maybeSingle(),
+      ])
 
-    if (babyResult.error) {
-      console.error('[Eu360] Failed to load baby profile:', babyResult.error.message)
-    }
+      if (profileResult.error) {
+        console.error('[Eu360] Failed to load profile:', profileResult.error.message)
+      }
 
-    const name = normalizeName(profileResult.data?.name ?? '')
-    const birthdate = typeof babyResult.data?.birthdate === 'string' ? babyResult.data.birthdate : null
-    const ageMonthsFromBirthdate = monthsFromBirthdate(birthdate)
-    const ageMonths =
-      ageMonthsFromBirthdate !== null
-        ? ageMonthsFromBirthdate
-        : typeof babyResult.data?.age_months === 'number'
-          ? babyResult.data.age_months
-          : null
+      if (babyResult.error) {
+        console.error('[Eu360] Failed to load baby profile:', babyResult.error.message)
+      }
 
-    return successResponse({ name, birthdate, age_months: ageMonths })
+      const name = normalizeName(profileResult.data?.name ?? '')
+      const birthdate = typeof babyResult.data?.birthdate === 'string' ? babyResult.data.birthdate : null
+      const ageMonthsFromBirthdate = monthsFromBirthdate(birthdate)
+      const ageMonths =
+        ageMonthsFromBirthdate !== null
+          ? ageMonthsFromBirthdate
+          : typeof babyResult.data?.age_months === 'number'
+            ? babyResult.data.age_months
+            : null
+
+      return {
+        name,
+        birthdate,
+        age_months: ageMonths,
+        userPreferredName: profileResult.data?.user_preferred_name,
+        userRole: profileResult.data?.user_role,
+        userEmotionalBaseline: profileResult.data?.user_emotional_baseline,
+        userMainChallenges: profileResult.data?.user_main_challenges,
+        userEnergyPeakTime: profileResult.data?.user_energy_peak_time,
+        routineChaosMoments: profileResult.data?.routine_chaos_moments,
+        routineScreenTime: profileResult.data?.routine_screen_time,
+        routineDesiredSupport: profileResult.data?.routine_desired_support,
+        supportNetwork: profileResult.data?.support_network,
+        supportAvailability: profileResult.data?.support_availability,
+        userContentPreferences: profileResult.data?.user_content_preferences,
+        userGuidanceStyle: profileResult.data?.user_guidance_style,
+        userSelfcareFrequency: profileResult.data?.user_selfcare_frequency,
+        figurinha: profileResult.data?.figurinha,
+        children: profileResult.data?.children,
+      }
+    })()
+
+    const result = await Promise.race([fetchPromise, timeoutPromise])
+    return successResponse(result as Eu360ProfileResponse, true)
   } catch (error) {
-    console.error('[Eu360] Unexpected error in GET:', error)
-    return successResponse({ name: '', birthdate: null, age_months: null })
+    console.error('[Eu360] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
+    return successResponse({
+      name: '',
+      birthdate: null,
+      age_months: null,
+      userPreferredName: undefined,
+      userRole: undefined,
+      userEmotionalBaseline: undefined,
+      userMainChallenges: undefined,
+      userEnergyPeakTime: undefined,
+      routineChaosMoments: undefined,
+      routineScreenTime: undefined,
+      routineDesiredSupport: undefined,
+      supportNetwork: undefined,
+      supportAvailability: undefined,
+      userContentPreferences: undefined,
+      userGuidanceStyle: undefined,
+      userSelfcareFrequency: undefined,
+      figurinha: undefined,
+      children: undefined,
+    }, true)
   }
 }
 
@@ -145,12 +273,33 @@ export async function POST(request: Request) {
     const ageMonthsRaw = normalizeAgeMonths(body.age_months)
     const ageMonths = birthdate ? null : ageMonthsRaw
 
+    // Prepare profile data with EU360 2.0 fields
+    const profileData = {
+      user_id: user.id,
+      name,
+      user_preferred_name: body.userPreferredName,
+      user_role: body.userRole,
+      user_emotional_baseline: body.userEmotionalBaseline,
+      user_main_challenges: body.userMainChallenges,
+      user_energy_peak_time: body.userEnergyPeakTime,
+      routine_chaos_moments: body.routineChaosMoments,
+      routine_screen_time: body.routineScreenTime,
+      routine_desired_support: body.routineDesiredSupport,
+      support_network: body.supportNetwork,
+      support_availability: body.supportAvailability,
+      user_content_preferences: body.userContentPreferences,
+      user_guidance_style: body.userGuidanceStyle,
+      user_selfcare_frequency: body.userSelfcareFrequency,
+      figurinha: body.figurinha,
+      children: body.children,
+    }
+
     const {
-      data: profileData,
+      data: profileUpsertData,
       error: profileError,
     } = await supabase
       .from('profiles')
-      .upsert({ user_id: user.id, name })
+      .upsert(profileData)
       .select('name')
       .maybeSingle()
 
@@ -186,6 +335,21 @@ export async function POST(request: Request) {
       name,
       birthdate,
       age_months: birthdate ? monthsFromBirthdate(birthdate) : ageMonths,
+      userPreferredName: body.userPreferredName as string | undefined,
+      userRole: body.userRole as string | undefined,
+      userEmotionalBaseline: body.userEmotionalBaseline as string | undefined,
+      userMainChallenges: body.userMainChallenges as string[] | undefined,
+      userEnergyPeakTime: body.userEnergyPeakTime as string | undefined,
+      routineChaosMoments: body.routineChaosMoments as string[] | undefined,
+      routineScreenTime: body.routineScreenTime as string | undefined,
+      routineDesiredSupport: body.routineDesiredSupport as string[] | undefined,
+      supportNetwork: body.supportNetwork as string[] | undefined,
+      supportAvailability: body.supportAvailability as string | undefined,
+      userContentPreferences: body.userContentPreferences as string[] | undefined,
+      userGuidanceStyle: body.userGuidanceStyle as string | undefined,
+      userSelfcareFrequency: body.userSelfcareFrequency as string | undefined,
+      figurinha: body.figurinha as string | undefined,
+      children: body.children as any[] | undefined,
     }
 
     return successResponse(responsePayload)

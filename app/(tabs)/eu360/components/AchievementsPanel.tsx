@@ -4,6 +4,7 @@ import * as React from 'react'
 import { computeBadges } from '@/app/lib/badges'
 import { Award } from 'lucide-react'
 import Link from 'next/link'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 export function AchievementsPanel() {
   const [count, setCount] = React.useState(0)
@@ -13,7 +14,7 @@ export function AchievementsPanel() {
   }, [])
 
   return (
-    <div suppressHydrationWarning>
+    <ClientOnly>
       {count === 0 ? null : (
     <div className="rounded-2xl border border-white/60 bg-white/90 backdrop-blur-sm shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5">
       <div className="flex items-center gap-2 mb-2">
@@ -29,6 +30,6 @@ export function AchievementsPanel() {
       </Link>
     </div>
       )}
-    </div>
+    </ClientOnly>
   )
 }

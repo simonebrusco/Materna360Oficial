@@ -224,7 +224,6 @@ export default function ExportReportPage() {
             className="rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-support-1 shadow-soft focus:outline-none focus:ring-2 focus:ring-primary/30"
             value={range}
             onChange={(e) => router.replace(`/eu360/export?range=${e.target.value}`)}
-            suppressHydrationWarning
           >
             <option value="weekly">Semanal (7 dias)</option>
             <option value="monthly">Mensal (28 dias)</option>

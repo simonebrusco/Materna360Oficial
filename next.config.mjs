@@ -1,10 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
   swcMinify: true,
   productionBrowserSourceMaps: false,
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'cdn.builder.io' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' }
+    ],
+  },
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
   },
   async headers() {
     return [
@@ -18,6 +26,13 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  webpack: (config, { isServer }) => {
+    // Configure webpack caching with proper versioning for build stability
+    if (config.cache) {
+      config.cache.version = `${isServer ? 'server' : 'client'}-${process.env.NODE_ENV || 'production'}`;
+    }
+    return config;
   },
 };
 

@@ -46,10 +46,10 @@ export function InactivityReminder() {
             <AppIcon name="bell" size={18} className="text-primary" decorative />
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="m360-subtitle">
+            <h3 className="m360-subtitle font-poppins">
               Faz alguns dias que você não registra seu dia
             </h3>
-            <p className="m360-label-sm text-gray-600">
+            <p className="m360-label-sm text-[#545454] font-poppins">
               Que tal anotar só um momento bom de hoje? Mesmo que pequeno.
             </p>
           </div>
@@ -67,7 +67,7 @@ export function InactivityReminder() {
           <button
             type="button"
             onClick={dismiss}
-            className="m360-label-sm text-gray-500 underline-offset-2 hover:underline"
+            className="m360-label-sm text-[#545454] underline-offset-2 hover:underline font-poppins"
           >
             Agora não
           </button>

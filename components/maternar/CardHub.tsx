@@ -15,29 +15,40 @@ type CardConfig = {
 }
 
 const HUB_CARDS: CardConfig[] = [
+  // Row 1
+  {
+    id: 'humor-energia',
+    icon: 'smile',
+    title: 'Como Estou Hoje',
+    subtitle: 'Seu espaço para reconhecer seu humor e energia do dia.',
+    href: '/meu-dia/como-estou-hoje',
+    ctaText: 'Começar agora',
+    tag: 'Você',
+  },
   {
     id: 'planner-do-dia',
     icon: 'calendar',
     title: 'Planner do Dia',
-    subtitle: 'Organize suas tarefas sem se sobrecarregar.',
+    subtitle: 'Organize suas tarefas sem peso e com leveza.',
     href: '/meu-dia',
-    ctaText: 'Planejar agora',
+    ctaText: 'Começar agora',
     tag: 'Você',
   },
   {
     id: 'cuidar-de-mim',
     icon: 'heart',
     title: 'Autocuidado Inteligente',
-    subtitle: 'Cuidar de você também é cuidar da sua família.',
+    subtitle: 'Cuidados que ajudam você a recarregar e se ouvir.',
     href: '/cuidar/autocuidado-inteligente',
     ctaText: 'Explorar',
     tag: 'Você',
   },
+  // Row 2
   {
     id: 'cuidar-do-meu-filho',
     icon: 'care',
     title: 'Cuidar com Amor',
-    subtitle: 'Pequenos gestos que fortalecem o vínculo com seu filho.',
+    subtitle: 'Orientações práticas para cuidar do seu filho com presença.',
     href: '/cuidar/cuidar-com-amor',
     ctaText: 'Explorar',
     tag: 'Seu filho',
@@ -46,80 +57,67 @@ const HUB_CARDS: CardConfig[] = [
     id: 'organizar-minha-rotina',
     icon: 'calendar',
     title: 'Rotina Leve',
-    subtitle: 'Organize o dia sem se sobrecarregar.',
+    subtitle: 'Ideias e inspirações rápidas para simplificar seu dia.',
     href: '/meu-dia/rotina-leve',
-    ctaText: 'Começar',
+    ctaText: 'Começar agora',
     tag: 'Rotina',
-  },
-  {
-    id: 'humor-energia',
-    icon: 'smile',
-    title: 'Como Estou Hoje',
-    subtitle: 'Um check-in honesto com você mesma.',
-    href: '/meu-dia/como-estou-hoje',
-    ctaText: 'Começar',
-    tag: 'Você',
   },
   {
     id: 'aprender-brincar',
     icon: 'idea',
     title: 'Aprender Brincando',
-    subtitle: 'Ideias rápidas de brincar e ensinar.',
+    subtitle: 'Brincadeiras inteligentes para aprender e se conectar.',
     href: '/descobrir/aprender-brincando',
     ctaText: 'Explorar',
     tag: 'Seu filho',
   },
+  // Row 3
   {
     id: 'biblioteca-materna',
     icon: 'book-open',
     title: 'Biblioteca Materna',
-    subtitle: 'Conteúdos inteligentes para sua jornada.',
+    subtitle: 'Conteúdos escolhidos para apoiar sua rotina.',
     href: '/biblioteca-materna',
-    ctaText: 'Explorar',
+    ctaText: 'Ver conteúdos',
     tag: 'Aprender',
   },
   {
     id: 'minha-evolucao',
     icon: 'crown',
     title: 'Minha Jornada',
-    subtitle: 'Acompanhe sua evolução e os momentos especiais da sua maternidade.',
+    subtitle: 'Um retrato carinhoso da sua evolução emocional.',
     href: '/eu360/minha-jornada',
-    ctaText: 'Explorar',
+    ctaText: 'Ver minha jornada',
     tag: 'Você',
   },
   {
     id: 'minhas-conquistas-hub',
     icon: 'star',
     title: 'Minhas Conquistas',
-    subtitle: 'Celebre seus pequenos progressos todos os dias.',
+    subtitle: 'Celebre pequenos passos que fazem grandes mudanças.',
     href: '/meu-dia/minhas-conquistas',
-    ctaText: 'Começar',
+    ctaText: 'Ver conquistas',
     tag: 'Você',
   },
+  // Row 4
   {
     id: 'planos-premium',
     icon: 'star',
     title: 'Materna+',
-    subtitle: 'Conteúdos guiados para ir mais fundo.',
+    subtitle: 'Conteúdos guiados para ir mais fundo no seu bem-estar.',
     href: '/planos',
-    ctaText: 'Ver planos',
+    ctaText: 'Ver planos →',
     tag: 'Premium',
   },
 ]
 
 export default function CardHub() {
   return (
-    <section className="mt-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 md:gap-x-4 md:gap-y-6 px-2 md:px-4 max-w-7xl mx-auto">
+    <section className="mt-8 md:mt-10">
+      {/* All cards: 2 columns on mobile, 3 columns on desktop */}
+      <div className="grid grid-cols-2 gap-4 items-stretch md:grid-cols-3 md:gap-6 max-w-full mx-auto">
         {HUB_CARDS.map((card, index) => (
-          <div
-            key={card.id}
-            className={clsx(
-              'h-full',
-              card.id === 'planos-premium' && 'md:order-10'
-            )}
-            suppressHydrationWarning
-          >
+          <div key={card.id} className="h-full">
             <MaternarFeatureCard
               icon={card.icon}
               title={card.title}

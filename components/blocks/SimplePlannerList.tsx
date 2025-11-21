@@ -20,7 +20,7 @@ export function SimplePlannerList({ items, onToggleDone }: SimplePlannerListProp
           </div>
           <div>
             <p className="font-semibold text-support-1">Nenhum item adicionado ainda.</p>
-            <p className="mt-1 text-xs text-support-2">Use o botão "Adicionar item" para começar a organizar sua semana.</p>
+            <p className="mt-1 text-xs text-support-2">Use o botão &quot;Adicionar item&quot; para começar a organizar sua semana.</p>
           </div>
         </div>
       </div>

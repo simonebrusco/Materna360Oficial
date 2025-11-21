@@ -11,8 +11,15 @@ type RevealProps = {
 export function Reveal({ children, className = '', delay = 0 }: RevealProps) {
   const elementRef = React.useRef<HTMLDivElement | null>(null)
   const [isVisible, setIsVisible] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  React.useEffect(() => {
+    if (!isMounted) return
+
     const element = elementRef.current
     if (!element) return
 
@@ -30,16 +37,15 @@ export function Reveal({ children, className = '', delay = 0 }: RevealProps) {
 
     observer.observe(element)
     return () => observer.disconnect()
-  }, [])
+  }, [isMounted])
 
   return (
     <div
       ref={elementRef}
-      suppressHydrationWarning
-      className={`transition-all duration-700 ease-gentle will-change-transform ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+      className={`transition-all duration-700 ease-out will-change-transform ${
+        isMounted && isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
       } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ pointerEvents: 'auto', transitionDelay: `${delay}ms` }}
     >
       {children}
     </div>

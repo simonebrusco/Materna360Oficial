@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import MaternarClient from './Client';
 
 const toBool = (v: string | undefined, fallback: boolean) => {
@@ -16,7 +16,26 @@ export const metadata = {
   description: 'Central hub para acessar todos os recursos do Maternar',
 };
 
-export default async function MaternarPage() {
+export default async function MaternarPage(props: {
+  searchParams?: Promise<Record<string, string | string[]>>;
+}) {
+  // Detect Builder preview mode
+  const headerValue = headers().get('x-builder-preview');
+  const isHeaderPreview = headerValue === '1' || headerValue === 'true';
+
+  // Check query parameter for builder.preview
+  let isQueryPreview = false;
+  try {
+    if (props.searchParams) {
+      const params = await props.searchParams;
+      isQueryPreview = params['builder.preview'] === '1';
+    }
+  } catch {
+    // If promise fails, continue without query param
+  }
+
+  const isBuilderPreview = isHeaderPreview || isQueryPreview;
+
   // Check if Maternar Hub is enabled
   const cookieVal = cookies().get('ff_maternar')?.value ?? null;
   const cookieBool =
@@ -28,9 +47,14 @@ export default async function MaternarPage() {
     isPreview
   );
 
-  const ff_maternar_hub = cookieBool !== null ? cookieBool : envDefault;
+  // In Builder preview mode, always enable the hub regardless of feature flag
+  let ff_maternar_hub = isBuilderPreview
+    ? true
+    : cookieBool !== null
+      ? cookieBool
+      : envDefault;
 
-  // Redirect if feature is disabled
+  // Redirect if feature is disabled (never redirect in Builder preview)
   if (!ff_maternar_hub) {
     redirect('/meu-dia');
   }

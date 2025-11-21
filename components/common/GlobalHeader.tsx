@@ -3,6 +3,7 @@
 import React from 'react'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getTimeGreeting } from '@/app/lib/greetings'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 /**
  * Global translucent header that appears on all tabs
@@ -20,21 +21,22 @@ export function GlobalHeader() {
           <img
             src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
-            className="h-8 w-auto max-w-[140px] object-contain"
+            className="h-8 w-auto max-w-[160px] object-contain"
           />
         </div>
 
         {/* Right: User greeting + avatar */}
         <div className="flex items-center gap-4">
           {!isLoading && name && (
-            <div className="hidden sm:block text-right">
-              <p className="m360-micro font-medium">
-                {getTimeGreeting(name)}
-              </p>
-              <p className="text-[12px] text-[#545454] truncate max-w-[120px]">
-                {name.split(' ')[0]}
-              </p>
-            </div>
+            <ClientOnly>
+              <div className="hidden sm:block text-right">
+                <p
+                  className="m360-micro font-medium"
+                >
+                  {getTimeGreeting(name)}
+                </p>
+              </div>
+            </ClientOnly>
           )}
           {avatar ? (
             <div className="flex-shrink-0 overflow-hidden">
