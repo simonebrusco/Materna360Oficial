@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { buildReport } from '@/app/lib/pdf/buildReport';
 
 /**
  * PDF Export API Route
  * Generates PDF reports server-side to avoid chunk load errors
- * 
+ *
  * Usage: POST /api/pdf/export
  * Body: { variant: 'wellness' | 'insights', data: {...} }
  * Response: PDF blob
@@ -27,9 +28,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Import PDF builder server-side
-    const { buildReport } = await import('@/app/lib/pdf/buildReport');
 
     // Build the PDF blob
     const blob = await buildReport(variant, data);
