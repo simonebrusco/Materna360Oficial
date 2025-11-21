@@ -90,7 +90,7 @@ export default function SavedContentsSection({
               <Link
                 key={content.id}
                 href={content.href || '#'}
-                className="flex-shrink-0 min-w-[140px] md:min-w-[160px] inline-flex items-start gap-2.5 p-3 rounded-lg border border-[#ddd] bg-white hover:bg-[#fafafa] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                className="flex-shrink-0 w-48 md:w-56 inline-flex items-start gap-2.5 p-4 md:p-5 rounded-lg border border-[#ddd] bg-white hover:bg-[#fafafa] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
               >
                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#ffe3f0] flex items-center justify-center">
                   <AppIcon
