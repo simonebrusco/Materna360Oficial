@@ -17,8 +17,14 @@ export default function AutocuidadoInteligentePage() {
   const [hydration, setHydration] = useState<number>(0)
   const [sleep, setSleep] = useState<number>(3)
   const [movement, setMovement] = useState<string | null>(null)
+  const [miniRoutineActions, setMiniRoutineActions] = useState<Record<string, boolean>>({
+    'Respirar por 1 minuto': false,
+    'Beber água com calma': false,
+    'Alongar o corpo': false,
+  })
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+  const { addItem } = usePlannerSavedContents()
 
   // Mark as hydrated on mount
   useEffect(() => {
