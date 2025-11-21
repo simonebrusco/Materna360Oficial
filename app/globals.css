@@ -9,8 +9,27 @@ body {
   color: #111;
 }
 
-/* ===== Materna360 token fallbacks (safe to keep) ===== */
+/* ===== NEW MATERNA360 COLOR SYSTEM (Official) ===== */
 :root {
+  /* Page & Background Colors */
+  --color-page-bg: #FFFFFF;        /* white background */
+  --color-soft-bg: #F5F1F1;        /* subtle contextual sections, hero strips */
+  --color-soft-strong: #FDBED7;    /* affectionate blocks, rare use */
+
+  /* Brand Colors */
+  --color-brand: #FD2597;          /* primary CTA, brand identity, active states */
+  --color-brand-deep: #B8236B;     /* emotional depth, highlights, strong accents */
+  --color-support: #E865A7;        /* secondary pink, icons, accents */
+
+  /* Text Colors */
+  --color-text-main: #4A4A4A;      /* titles, main text */
+  --color-text-muted: #6A6A6A;     /* descriptions, paragraphs, secondary text */
+
+  /* Border Colors */
+  --color-border-soft: #F5F1F1;    /* subtle borders, dividers */
+  --color-border-muted: #D8D8D8;   /* more visible borders, lines */
+
+  /* ===== Legacy Materna360 token fallbacks (safe to keep for compatibility) ===== */
   /* Page background - soft luxury aesthetic */
   --soft-page-bg: #fff7fb; /* very light pink */
 
