@@ -193,12 +193,33 @@ export async function POST(request: Request) {
     const ageMonthsRaw = normalizeAgeMonths(body.age_months)
     const ageMonths = birthdate ? null : ageMonthsRaw
 
+    // Prepare profile data with EU360 2.0 fields
+    const profileData = {
+      user_id: user.id,
+      name,
+      user_preferred_name: body.userPreferredName,
+      user_role: body.userRole,
+      user_emotional_baseline: body.userEmotionalBaseline,
+      user_main_challenges: body.userMainChallenges,
+      user_energy_peak_time: body.userEnergyPeakTime,
+      routine_chaos_moments: body.routineChaosMoments,
+      routine_screen_time: body.routineScreenTime,
+      routine_desired_support: body.routineDesiredSupport,
+      support_network: body.supportNetwork,
+      support_availability: body.supportAvailability,
+      user_content_preferences: body.userContentPreferences,
+      user_guidance_style: body.userGuidanceStyle,
+      user_selfcare_frequency: body.userSelfcareFrequency,
+      figurinha: body.figurinha,
+      children: body.children,
+    }
+
     const {
-      data: profileData,
+      data: profileUpsertData,
       error: profileError,
     } = await supabase
       .from('profiles')
-      .upsert({ user_id: user.id, name })
+      .upsert(profileData)
       .select('name')
       .maybeSingle()
 
