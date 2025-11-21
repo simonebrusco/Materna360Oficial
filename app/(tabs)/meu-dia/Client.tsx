@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getTimeGreeting } from '@/app/lib/greetings'
-import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
-import { getDailyIndex } from '@/app/lib/dailyMessage'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
