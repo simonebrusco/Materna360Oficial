@@ -53,7 +53,7 @@ export function MaternarFeatureCard({
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
         {/* Top content: Icon, Tag, Title, Subtitle */}
-        <div className="flex flex-col gap-2 md:gap-4">
+        <div className="flex flex-col gap-2 md:gap-4 h-full">
           <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#ffd8e6] flex-shrink-0">
             <AppIcon
               name={icon}
