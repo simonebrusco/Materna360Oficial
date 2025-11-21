@@ -3,6 +3,7 @@
 import React from 'react'
 import { useProfile } from '@/app/hooks/useProfile'
 import { getTimeGreeting } from '@/app/lib/greetings'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 /**
  * Global translucent header that appears on all tabs
