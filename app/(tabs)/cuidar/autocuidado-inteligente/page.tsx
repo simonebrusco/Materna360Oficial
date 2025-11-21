@@ -200,6 +200,8 @@ export default function AutocuidadoInteligentePage() {
                         <span className="text-sm md:text-base text-[#2f3a56] font-medium">{action}</span>
                         <input
                           type="checkbox"
+                          checked={miniRoutineActions[action] ?? false}
+                          onChange={() => handleToggleMiniRoutineAction(action)}
                           className="h-4 w-4 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer"
                           aria-label={action}
                         />
