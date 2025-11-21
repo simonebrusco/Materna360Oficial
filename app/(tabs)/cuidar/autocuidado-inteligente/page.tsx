@@ -180,15 +180,15 @@ export default function AutocuidadoInteligentePage() {
 
   // CARD 3: Saúde & bem-estar
   const handleSalvarSaude = () => {
-    if (!hidratacao && !sono && !alimentacao) {
-      toast.error('Registre pelo menos um dado de saúde para continuar.')
+    if (hidratacao === null && !sono && !alimentacao) {
+      toast.danger('Registre pelo menos um dado de saúde para continuar.')
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {})
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].saude = {
-      hidratacao: hidratacao ?? null,
+      hidratacao: hidratacao,
       sono: sono ?? null,
       alimentacao: alimentacao ?? null,
     }
