@@ -375,14 +375,14 @@ export default function WeeklyPlannerShell() {
               </div>
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                     ROTINA
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Casa &amp; rotina
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
