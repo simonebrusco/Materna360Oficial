@@ -135,7 +135,7 @@ export default function SavedContentsSection({
 
             <Link
               href="/descobrir/salvos"
-              className="flex-shrink-0 min-w-[140px] md:min-w-[160px] inline-flex items-center justify-center p-3 rounded-lg border-2 border-dashed border-[#ddd] bg-white hover:bg-[#fafafa] hover:border-[#ff005e] transition-all"
+              className="flex-shrink-0 w-48 md:w-56 inline-flex items-center justify-center p-4 md:p-5 rounded-lg border-2 border-dashed border-[#ddd] bg-white hover:bg-[#fafafa] hover:border-[#ff005e] transition-all"
             >
               <div className="text-center space-y-1">
                 <AppIcon name="plus" className="w-5 h-5 text-[#545454]/40 mx-auto" />
