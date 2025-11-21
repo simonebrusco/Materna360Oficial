@@ -47,9 +47,14 @@ const plannerTypeIcons: Record<string, string> = {
 
 export default function SavedContentsSection({
   contents,
+  plannerContents = [],
+  onItemClick,
   hideTitle = false,
 }: SavedContentsSectionProps) {
-  if (contents.length === 0) {
+  const hasLegacyContents = contents.length > 0
+  const hasPlannerContents = plannerContents.length > 0
+
+  if (!hasLegacyContents && !hasPlannerContents) {
     return null
   }
 
@@ -70,6 +75,7 @@ export default function SavedContentsSection({
       <SoftCard className="p-5 md:p-6">
         <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 pb-2">
           <div className="flex gap-3 min-w-min">
+            {/* Legacy saved contents (from useSavedInspirations) */}
             {contents.map(content => (
               <Link
                 key={content.id}
@@ -92,6 +98,31 @@ export default function SavedContentsSection({
                 </div>
               </Link>
             ))}
+
+            {/* New planner saved contents (from usePlannerSavedContents) */}
+            {plannerContents.map(item => (
+              <button
+                key={item.id}
+                onClick={() => onItemClick?.(item)}
+                className="flex-shrink-0 min-w-[140px] md:min-w-[160px] inline-flex items-start gap-2.5 p-3 rounded-lg border border-[#ddd] bg-white hover:bg-[#fafafa] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all text-left"
+              >
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#ffe3f0] flex items-center justify-center">
+                  <AppIcon
+                    name={plannerTypeIcons[item.type] || 'bookmark'}
+                    className="w-3.5 h-3.5 text-[#ff005e]"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#ff005e]/70">
+                    {item.type}
+                  </span>
+                  <p className="text-xs font-medium text-[#2f3a56] line-clamp-2 mt-1">
+                    {item.title}
+                  </p>
+                </div>
+              </button>
+            ))}
+
             <Link
               href="/descobrir/salvos"
               className="flex-shrink-0 min-w-[140px] md:min-w-[160px] inline-flex items-center justify-center p-3 rounded-lg border-2 border-dashed border-[#ddd] bg-white hover:bg-[#fafafa] hover:border-[#ff005e] transition-all"
