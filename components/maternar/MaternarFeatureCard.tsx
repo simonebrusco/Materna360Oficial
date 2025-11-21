@@ -46,7 +46,7 @@ export function MaternarFeatureCard({
       href={href}
       aria-label={title}
       data-card-id={cardId}
-      className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)] rounded-3xl"
+      className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1475] focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-3xl"
     >
       <div
         role="article"
