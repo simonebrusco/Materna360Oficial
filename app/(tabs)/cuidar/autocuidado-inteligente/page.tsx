@@ -113,11 +113,11 @@ export default function AutocuidadoInteligentePage() {
   // CARD 1: Meu ritmo hoje
   const handleSalvarRitmo = () => {
     if (!selectedRitmo) {
-      toast.error('Selecione um ritmo para continuar.')
+      toast.danger('Selecione um ritmo para continuar.')
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {})
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].ritmo = {
       estiloDia: selectedRitmo,
