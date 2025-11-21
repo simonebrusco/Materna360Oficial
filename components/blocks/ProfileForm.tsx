@@ -116,6 +116,23 @@ export function ProfileForm() {
           setForm((previous) => ({
             ...previous,
             nomeMae: data?.name || '',
+            userPreferredName: data?.userPreferredName || '',
+            userRole: data?.userRole || undefined,
+            userEmotionalBaseline: data?.userEmotionalBaseline || undefined,
+            userMainChallenges: data?.userMainChallenges || [],
+            userEnergyPeakTime: data?.userEnergyPeakTime || undefined,
+            filhos: data?.children && Array.isArray(data.children) && data.children.length > 0
+              ? data.children
+              : [createEmptyChild(0)],
+            routineChaosMoments: data?.routineChaosMoments || [],
+            routineScreenTime: data?.routineScreenTime || undefined,
+            routineDesiredSupport: data?.routineDesiredSupport || [],
+            supportNetwork: data?.supportNetwork || [],
+            supportAvailability: data?.supportAvailability || undefined,
+            userContentPreferences: data?.userContentPreferences || [],
+            userGuidanceStyle: data?.userGuidanceStyle || undefined,
+            userSelfcareFrequency: data?.userSelfcareFrequency || undefined,
+            figurinha: (isProfileStickerId(data?.figurinha) ? data.figurinha : '') || '',
           }))
           setBabyBirthdate(data?.birthdate || '')
         }
