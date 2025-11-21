@@ -354,14 +354,14 @@ export default function WeeklyPlannerShell() {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                     VOCÊ
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Prioridades do dia
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
