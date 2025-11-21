@@ -84,7 +84,7 @@ export function MaternarFeatureCard({
         <div className="mt-auto pt-3">
           <button
             type="button"
-            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[var(--color-brand)] transition-all duration-150 hover:gap-1"
+            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#FF1475] transition-all duration-150 hover:gap-1"
             aria-label={`${ctaText} ${title}`}
           >
             <span>{ctaText}</span>
