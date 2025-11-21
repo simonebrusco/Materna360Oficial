@@ -107,7 +107,26 @@ export async function GET() {
     const supabase = tryCreateServerSupabase()
     if (!supabase) {
       console.error('[Eu360] Supabase client unavailable. Returning empty profile.')
-      return successResponse({ name: '', birthdate: null, age_months: null }, true)
+      return successResponse({
+        name: '',
+        birthdate: null,
+        age_months: null,
+        userPreferredName: undefined,
+        userRole: undefined,
+        userEmotionalBaseline: undefined,
+        userMainChallenges: undefined,
+        userEnergyPeakTime: undefined,
+        routineChaosMoments: undefined,
+        routineScreenTime: undefined,
+        routineDesiredSupport: undefined,
+        supportNetwork: undefined,
+        supportAvailability: undefined,
+        userContentPreferences: undefined,
+        userGuidanceStyle: undefined,
+        userSelfcareFrequency: undefined,
+        figurinha: undefined,
+        children: undefined,
+      }, true)
     }
 
     // Add a timeout to prevent hanging requests
