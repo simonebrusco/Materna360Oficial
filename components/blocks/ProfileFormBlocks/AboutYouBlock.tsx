@@ -39,7 +39,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <h3 className="text-xs font-semibold text-gray-900">Escolha uma figurinha de perfil</h3>
           <p className="mt-1 text-[11px] text-gray-600">Escolha a vibe que mais combina com você hoje.</p>
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {STICKER_OPTIONS.map((sticker) => {
             const isActive = form.figurinha === sticker.id
             return (
