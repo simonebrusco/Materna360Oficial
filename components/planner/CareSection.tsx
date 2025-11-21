@@ -72,8 +72,8 @@ export default function CareSection({
               key={item.id}
               className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all ${
                 item.done
-                  ? 'bg-[var(--color-soft-bg)] border-[var(--color-border-muted)]'
-                  : 'bg-white border-[#F0F0F0] hover:border-[var(--color-brand)]/20'
+                  ? 'bg-[var(--color-soft-bg)] border-[var(--color-border-soft)]'
+                  : 'bg-white border-[var(--color-border-soft)] hover:border-[var(--color-brand)]/30'
               }`}
             >
               <button
