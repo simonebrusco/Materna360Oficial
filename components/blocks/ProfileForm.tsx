@@ -64,6 +64,7 @@ const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
   'mae-determinada': 'Força com doçura.',
   'mae-criativa': 'Inventa e transforma.',
   'mae-tranquila': 'Serenidade e autocuidado.',
+  'mae-resiliente': 'Cai, respira fundo e recomeça.',
 }
 
 const createEmptyChild = (index: number): ChildProfile => ({
