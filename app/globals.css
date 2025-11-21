@@ -12,22 +12,24 @@ body {
 /* ===== NEW MATERNA360 COLOR SYSTEM (Official) ===== */
 :root {
   /* Page & Background Colors */
-  --color-page-bg: #FFFFFF;        /* white background */
-  --color-soft-bg: #F5F1F1;        /* subtle contextual sections, hero strips */
-  --color-soft-strong: #FDBED7;    /* affectionate blocks, rare use */
+  --color-page-bg: #FFFFFF;        /* white background - no pink tint */
+  --color-soft-bg: #FFFFFF;        /* white, no gradient backgrounds */
+  --color-soft-strong: #FFE8F2;    /* pinkSnow - subtle accent only */
 
-  /* Brand Colors */
-  --color-brand: #FD2597;          /* primary CTA, brand identity, active states */
-  --color-brand-deep: #B8236B;     /* emotional depth, highlights, strong accents */
-  --color-support: #E865A7;        /* secondary pink, icons, accents */
+  /* Brand Colors - Refined Palette */
+  --color-brand: #FF1475;          /* brandPink - primary CTA, active states */
+  --color-brand-soft: #FFD3E6;     /* brandPinkSoft - light accents, hover states */
+  --color-brand-deep: #E6005F;     /* deep pink for emphasis */
+  --color-support: #FFD3E6;        /* secondary pink - use brandPinkSoft */
+  --color-pink-snow: #FFE8F2;      /* pinkSnow - subtle borders, focus rings */
 
-  /* Text Colors */
-  --color-text-main: #545454;      /* titles, main text - Cinza Premium */
-  --color-text-muted: #6A6A6A;     /* descriptions, paragraphs, secondary text - Cinza Neutro */
+  /* Text Colors - New Materna360 Palette */
+  --color-text-main: #3A3A3A;      /* titles, main text - Premium dark gray */
+  --color-text-muted: #6A6A6A;     /* descriptions, secondary text - Neutral gray */
 
   /* Border Colors */
-  --color-border-soft: #F5F1F1;    /* subtle borders, dividers */
-  --color-border-muted: #D8D8D8;   /* more visible borders, lines */
+  --color-border-soft: #FFE8F2;    /* pinkSnow borders for cards */
+  --color-border-muted: #E9E9E9;   /* neutral gray borders */
 
   /* ===== Legacy Materna360 token fallbacks (safe to keep for compatibility) ===== */
   /* Page background - soft luxury aesthetic */
@@ -59,10 +61,10 @@ body {
   --border-soft-gray: #e9ecf2;
 
   /* Legacy aliases (mapped to new palette) */
-  --color-primary: #FD2597;        /* Pink Premium */
-  --color-primary-weak: #FDBED7;   /* Rosa Bebê */
-  --color-ink-1: #545454;          /* Cinza Premium */
-  --color-ink-2: #6A6A6A;          /* Cinza Neutro */
+  --color-primary: #FF1475;        /* brandPink - primary */
+  --color-primary-weak: #FFD3E6;   /* brandPinkSoft - secondary */
+  --color-ink-1: #3A3A3A;          /* text-main */
+  --color-ink-2: #6A6A6A;          /* text-muted */
 
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
@@ -94,9 +96,9 @@ body {
   --glow-pink: 0 8px 24px rgba(253, 37, 151, 0.12);
 }
 
-/* Soft page background utility */
+/* Soft page background utility - now pure white */
 .bg-soft-page {
-  background: var(--soft-page-bg);
+  background: #FFFFFF;
 }
 
 @layer base {
@@ -781,16 +783,15 @@ body {
   background: linear-gradient(180deg, rgba(255, 0, 94, 0.8), rgba(255, 216, 230, 0.95));
 }
 
-/* ---- App background: gradient on the root document ---- */
+/* ---- App background: pure white, no gradients ---- */
 html {
-  /* same gradient as before, but anchored at the document root */
-  background: linear-gradient(180deg, var(--color-soft-bg) 0%, var(--color-page-bg) 80%) fixed;
+  background: #FFFFFF fixed;
   min-height: 100%;
 }
 
-/* The body must be transparent so the root gradient shows through */
+/* Body background */
 body {
-  background: transparent !important;
+  background: #FFFFFF !important;
   min-height: 100%;
 }
 
