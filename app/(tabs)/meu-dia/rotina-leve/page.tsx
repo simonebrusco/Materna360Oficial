@@ -87,7 +87,7 @@ function mockGenerateInspiration(): Promise<Inspiration> {
       resolve({
         phrase: 'Você não precisa dar conta de tudo hoje.',
         care: '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-        ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
+        ritual: 'Envie uma mensagem carinhosa para algu��m que te apoia.',
       })
     }, 700)
   })
@@ -267,6 +267,12 @@ export default function RotinaLevePage() {
               <p className="mt-2 text-[11px] text-gray-500">
                 Hoje você já usou <span className="font-semibold text-gray-700">{usedRecipesToday} de {DAILY_RECIPE_LIMIT}</span> sugestões do seu plano.
               </p>
+
+              {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
+                <p className="mt-2 text-[11px] text-[#ff005e] font-medium">
+                  Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem mais 💗
+                </p>
+              )}
 
               {/* Recipes Results */}
               <div className="mt-4 space-y-3">
