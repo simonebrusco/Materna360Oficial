@@ -22,27 +22,10 @@ type SavedContentsSectionProps = {
 }
 
 const typeLabels: Record<SavedContent['type'], string> = {
-  artigo: 'Artigo',
-  receita: 'Receita',
-  ideia: 'Ideia',
-  frase: 'Frase',
-}
-
-const typeIcons: Record<SavedContent['type'], string> = {
-  artigo: 'book-open',
-  receita: 'star',
-  ideia: 'idea',
-  frase: 'sparkles',
-}
-
-const plannerTypeIcons: Record<string, string> = {
-  recipe: 'star',
-  checklist: 'list-check',
-  insight: 'lightbulb',
-  note: 'book-open',
-  task: 'check-square',
-  goal: 'target',
-  event: 'calendar',
+  artigo: 'ARTIGO',
+  receita: 'RECEITA',
+  ideia: 'IDEIA',
+  frase: 'FRASE',
 }
 
 const plannerTypeLabels: Record<string, string> = {
@@ -82,71 +65,52 @@ export default function SavedContentsSection({
         </div>
       )}
 
-      <SoftCard className="p-5 md:p-6">
-        <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 pb-2">
-          <div className="flex gap-3 min-w-min">
-            {/* Legacy saved contents (from useSavedInspirations) */}
-            {contents.map(content => (
-              <Link
-                key={content.id}
-                href={content.href || '#'}
-                className="flex-shrink-0 w-48 md:w-56 inline-flex items-start gap-2.5 p-4 md:p-5 rounded-lg border border-[#ddd] bg-white hover:bg-[#fafafa] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
-              >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#ffe3f0] flex items-center justify-center">
-                  <AppIcon
-                    name={typeIcons[content.type] as any}
-                    className="w-3.5 h-3.5 text-[#ff005e]"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#ff005e]/70">
-                    {typeLabels[content.type]}
-                  </span>
-                  <p className="text-xs font-medium text-[#2f3a56] line-clamp-2 mt-1">
-                    {content.title}
-                  </p>
-                </div>
-              </Link>
-            ))}
-
-            {/* New planner saved contents (from usePlannerSavedContents) */}
-            {plannerContents.map(item => (
-              <button
-                key={item.id}
-                onClick={() => onItemClick?.(item)}
-                className="flex-shrink-0 w-48 md:w-56 inline-flex items-start gap-2.5 p-4 md:p-5 rounded-lg border border-[#ddd] bg-white hover:bg-[#fafafa] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all text-left"
-              >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#ffe3f0] flex items-center justify-center">
-                  <AppIcon
-                    name={plannerTypeIcons[item.type] || 'bookmark'}
-                    className="w-3.5 h-3.5 text-[#ff005e]"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#ff005e]/70">
-                    {plannerTypeLabels[item.type] ?? 'CONTEÚDO'}
-                  </span>
-                  <p className="text-xs font-medium text-[#2f3a56] line-clamp-2 mt-1">
-                    {item.title}
-                  </p>
-                </div>
-              </button>
-            ))}
-
+      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 pb-2">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 min-w-min md:min-w-0 auto-cols-max md:auto-cols-fr">
+          {/* Legacy saved contents (from useSavedInspirations) */}
+          {contents.map(content => (
             <Link
-              href="/descobrir/salvos"
-              className="flex-shrink-0 w-48 md:w-56 inline-flex items-center justify-center p-4 md:p-5 rounded-lg border-2 border-dashed border-[#ddd] bg-white hover:bg-[#fafafa] hover:border-[#ff005e] transition-all"
+              key={content.id}
+              href={content.href || '#'}
+              className="w-40 md:w-64 lg:w-72 h-40 md:h-48 flex flex-col p-4 md:p-5 rounded-2xl border border-gray-100/60 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
             >
-              <div className="text-center space-y-1">
-                <AppIcon name="plus" className="w-5 h-5 text-[#545454]/40 mx-auto" />
-                <p className="text-[10px] font-medium text-[#545454]/60">
-                  Ver tudo
-                </p>
-              </div>
+              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[10px] md:text-xs font-semibold tracking-wide text-[#ff005e] uppercase w-fit">
+                {typeLabels[content.type]}
+              </span>
+              <p className="text-sm md:text-base font-semibold text-[#2f3a56] line-clamp-3 mt-2 flex-1 group-hover:text-[#ff005e] transition-colors">
+                {content.title}
+              </p>
             </Link>
-          </div>
+          ))}
+
+          {/* New planner saved contents (from usePlannerSavedContents) */}
+          {plannerContents.map(item => (
+            <button
+              key={item.id}
+              onClick={() => onItemClick?.(item)}
+              className="w-40 md:w-64 lg:w-72 h-40 md:h-48 flex flex-col p-4 md:p-5 rounded-2xl border border-gray-100/60 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer text-left group"
+            >
+              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[10px] md:text-xs font-semibold tracking-wide text-[#ff005e] uppercase w-fit">
+                {plannerTypeLabels[item.type] ?? 'CONTEÚDO'}
+              </span>
+              <p className="text-sm md:text-base font-semibold text-[#2f3a56] line-clamp-3 mt-2 flex-1 group-hover:text-[#ff005e] transition-colors">
+                {item.title}
+              </p>
+            </button>
+          ))}
+
+          {/* Ver tudo link */}
+          <Link
+            href="/descobrir/salvos"
+            className="w-40 md:w-64 lg:w-72 h-40 md:h-48 flex flex-col items-center justify-center p-4 md:p-5 rounded-2xl border-2 border-dashed border-gray-200 bg-white/50 hover:border-[#ff005e] hover:bg-[#ffd8e6]/10 transition-all cursor-pointer group"
+          >
+            <AppIcon name="plus" className="w-6 h-6 text-[#545454]/40 group-hover:text-[#ff005e] transition-colors" />
+            <p className="text-[11px] md:text-xs font-semibold text-[#545454]/60 group-hover:text-[#ff005e] transition-colors mt-2 uppercase tracking-wide">
+              Ver tudo
+            </p>
+          </Link>
         </div>
-      </SoftCard>
+      </div>
     </div>
   )
 }
