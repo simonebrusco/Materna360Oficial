@@ -214,6 +214,7 @@ export default function AutocuidadoInteligentePage() {
                   <button
                     type="button"
                     onClick={() => {
+                      handleSaveMiniRoutine()
                       try {
                         track('autocuidado.save_to_planner_click', {
                           tab: 'autocuidado-inteligente',
