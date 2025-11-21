@@ -298,20 +298,20 @@ export default function WeeklyPlannerShell() {
           {/* Calendar Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AppIcon name="calendar" className="w-5 h-5 text-[#ff005e]" />
-              <h2 className="text-lg md:text-xl font-bold text-[#2f3a56] capitalize">
+              <AppIcon name="calendar" className="w-5 h-5 text-[var(--color-brand)]" />
+              <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)] capitalize">
                 {monthYear}
               </h2>
             </div>
 
             {/* View Toggle */}
-            <div className="flex gap-2 bg-[#f5f5f5] p-1 rounded-full">
+            <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
               <button
                 onClick={() => setViewMode('day')}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                   viewMode === 'day'
-                    ? 'bg-white text-[#ff005e] shadow-[0_2px_8px_rgba(255,0,94,0.1)]'
-                    : 'text-[#545454] hover:text-[#ff005e]'
+                    ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                 }`}
               >
                 Dia
@@ -320,8 +320,8 @@ export default function WeeklyPlannerShell() {
                 onClick={() => setViewMode('week')}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                   viewMode === 'week'
-                    ? 'bg-white text-[#ff005e] shadow-[0_2px_8px_rgba(255,0,94,0.1)]'
-                    : 'text-[#545454] hover:text-[#ff005e]'
+                    ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                 }`}
               >
                 Semana
