@@ -100,10 +100,10 @@ export default function BibliotecaMaternaPage() {
           <Reveal delay={50}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
               <div className="mb-8">
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
                   Filtrar por
                 </h2>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-[var(--color-text-muted)]">
                   Selecione um tema e formato para encontrar conteúdos relevantes.
                 </p>
               </div>
@@ -111,7 +111,7 @@ export default function BibliotecaMaternaPage() {
               <div className="space-y-8">
                 {/* Theme Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-3">
                     Tema
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -129,7 +129,7 @@ export default function BibliotecaMaternaPage() {
 
                 {/* Format Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-3">
                     Formato
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -151,10 +151,10 @@ export default function BibliotecaMaternaPage() {
           {/* RESULTS SECTION */}
           <Reveal delay={80}>
             <div className="space-y-4 mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+              <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
                 Materiais Disponíveis
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 {selectedTheme || selectedFormat
                   ? `Resultados filtrados por ${selectedTheme ? `tema: ${selectedTheme}` : ''} ${selectedTheme && selectedFormat ? 'e' : ''} ${selectedFormat ? `formato: ${selectedFormat}` : ''}`
                   : 'Todos os materiais'}
@@ -167,36 +167,36 @@ export default function BibliotecaMaternaPage() {
                   <Link href="#" className="block h-full">
                     <SoftCard className="rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg overflow-hidden">
                       {/* Thumbnail Placeholder */}
-                      <div className="mb-4 h-32 bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] rounded-2xl flex items-center justify-center">
+                      <div className="mb-4 h-32 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-[var(--color-soft-strong)] rounded-2xl flex items-center justify-center">
                         <AppIcon
                           name={material.icon as any}
                           size={48}
-                          className="text-primary/40"
+                          className="text-[var(--color-brand)]/40"
                           decorative
                         />
                       </div>
 
                       {/* Content */}
-                      <h3 className="text-lg font-semibold text-[#2f3a56] mb-2 line-clamp-2">
+                      <h3 className="text-lg font-semibold text-[var(--color-text-main)] mb-2 line-clamp-2">
                         {material.title}
                       </h3>
-                      <p className="text-sm text-[#545454] mb-4 line-clamp-2">
+                      <p className="text-sm text-[var(--color-text-muted)] mb-4 line-clamp-2">
                         {material.description}
                       </p>
 
                       {/* Tags */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
                           {material.theme}
                         </span>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 text-[#545454]">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]">
                           {material.format}
                         </span>
                       </div>
 
                       {/* CTA */}
                       <div className="flex justify-end mt-auto">
-                        <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
+                        <span className="text-sm font-medium text-[var(--color-brand)] inline-flex items-center gap-1">
                           Acessar →
                         </span>
                       </div>
@@ -210,26 +210,26 @@ export default function BibliotecaMaternaPage() {
           {/* INSIGHT SECTION */}
           <Reveal delay={120}>
             <div className="space-y-4 mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+              <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
                 Insight Personalizado
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 Aqui você verá recomendações inteligentes baseadas na idade e fase do seu filho.
               </p>
             </div>
 
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[#FFE5EF]/40 to-white border border-primary/10">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-white border border-[var(--color-brand)]/10">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-[var(--color-brand)]/10 flex items-center justify-center">
                   <AppIcon
                     name="idea"
                     size={24}
-                    className="text-primary"
+                    className="text-[var(--color-brand)]"
                     decorative
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm md:text-base text-[#545454] leading-relaxed">
+                  <p className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
                     Seu filho está passando por uma fase importante de desenvolvimento. Em breve, sugestões personalizadas aparecerão aqui.
                   </p>
                 </div>
@@ -239,17 +239,17 @@ export default function BibliotecaMaternaPage() {
 
           {/* PREMIUM CTA SECTION */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-primary/8 to-white border border-primary/30">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[var(--color-brand)]/8 to-white border border-[var(--color-brand)]/30">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-brand)]/20 text-[var(--color-brand)] text-xs font-semibold mb-3">
                     <AppIcon name="sparkles" size={12} decorative />
                     <span>Premium</span>
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                  <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
                     Desbloqueie conteúdos completos
                   </h3>
-                  <p className="text-sm text-[#545454]">
+                  <p className="text-sm text-[var(--color-text-muted)]">
                     PDFs avançados, eBooks exclusivos e guias profissionais.
                   </p>
                 </div>
