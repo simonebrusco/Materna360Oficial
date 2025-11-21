@@ -164,7 +164,9 @@ export default function RotinaLevePage() {
         type: 'insight',
         title: 'Inspiração do dia',
         payload: {
-          description: 'Você não precisa dar conta de tudo hoje. Pequeno cuidado: 1 minuto de respiração consciente antes de retomar a próxima tarefa. Mini ritual: envie uma mensagem carinhosa para alguém que te apoia.',
+          frase: inspiration?.phrase || 'Você não precisa dar conta de tudo hoje.',
+          pequenoCuidado: inspiration?.care || '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
+          miniRitual: inspiration?.ritual || 'Envie uma mensagem carinhosa para alguém que te apoia.',
         },
       })
       console.log('[Rotina Leve] Inspiration saved to planner')
