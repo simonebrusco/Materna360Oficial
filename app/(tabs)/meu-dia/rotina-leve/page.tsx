@@ -5,17 +5,20 @@ import clsx from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import { toast } from '@/app/lib/toast'
 
 type QuickIdea = {
   id: string
   text: string
 }
 
-type RecipeSuggestion = {
+type GeneratedRecipe = {
   id: string
   title: string
   description: string
-  meta: string
+  timeLabel: string
+  ageLabel: string
+  preparation: string
 }
 
 type Inspiration = {
