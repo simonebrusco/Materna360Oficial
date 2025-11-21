@@ -129,9 +129,9 @@ export async function GET() {
       }, true)
     }
 
-    // Add a timeout to prevent hanging requests
+    // Add a timeout to prevent hanging requests (fail fast)
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+      setTimeout(() => reject(new Error('Profile fetch timeout')), 2000)
     )
 
     const fetchPromise = (async () => {
