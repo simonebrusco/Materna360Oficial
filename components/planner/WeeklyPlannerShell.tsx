@@ -498,13 +498,13 @@ export default function WeeklyPlannerShell() {
                 </>
               ) : (
                 <SoftCard className="p-5 md:p-6 text-center py-6">
-                  <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
-                  <p className="text-sm text-[#545454]/70 mb-3">
+                  <AppIcon name="bookmark" className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3" />
+                  <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
                     Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
                   </p>
                   <a
                     href="/biblioteca-materna"
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
                   >
                     Ver tudo na Biblioteca Materna
                     <AppIcon name="arrow-right" className="w-4 h-4" />
