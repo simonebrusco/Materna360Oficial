@@ -81,7 +81,7 @@ export function MaternarFeatureCard({
         </div>
 
         {/* Bottom CTA - always at bottom */}
-        <div className="mt-auto pt-2 md:pt-4">
+        <div className="mt-3">
           <button
             type="button"
             className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#ff005e] transition-all duration-150 hover:gap-1"
