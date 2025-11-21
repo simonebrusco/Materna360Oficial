@@ -148,10 +148,10 @@ export function SavedContentDrawer({
                 {/* Description */}
                 {item.payload.description && (
                   <div>
-                    <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
                       Descrição
                     </p>
-                    <p className="text-sm text-[#545454] leading-relaxed">
+                    <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
                       {item.payload.description}
                     </p>
                   </div>
@@ -160,7 +160,7 @@ export function SavedContentDrawer({
                 {/* Actions */}
                 {item.payload.actions && Array.isArray(item.payload.actions) && (
                   <div>
-                    <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
                       Ações da rotina
                     </p>
                     <ul className="space-y-2">
@@ -168,9 +168,9 @@ export function SavedContentDrawer({
                         <li key={idx} className="flex items-start gap-2.5">
                           <AppIcon
                             name="check-circle"
-                            className="w-5 h-5 text-[#ff005e] flex-shrink-0 mt-0.5"
+                            className="w-5 h-5 text-[var(--color-brand)] flex-shrink-0 mt-0.5"
                           />
-                          <span className="text-sm text-[#545454]">{action}</span>
+                          <span className="text-sm text-[var(--color-text-muted)]">{action}</span>
                         </li>
                       ))}
                     </ul>
@@ -183,29 +183,29 @@ export function SavedContentDrawer({
               <div className="space-y-4">
                 {item.payload.frase && (
                   <div>
-                    <p className="text-base text-[#2f3a56] leading-relaxed font-medium">
+                    <p className="text-base text-[var(--color-text-main)] leading-relaxed font-medium">
                       {item.payload.frase}
                     </p>
                   </div>
                 )}
 
                 {item.payload.pequenoCuidado && (
-                  <div className="text-sm text-[#545454]">
-                    <p className="font-semibold text-[#2f3a56] mb-1">Pequeno cuidado:</p>
+                  <div className="text-sm text-[var(--color-text-muted)]">
+                    <p className="font-semibold text-[var(--color-text-main)] mb-1">Pequeno cuidado:</p>
                     <p className="leading-relaxed">{item.payload.pequenoCuidado}</p>
                   </div>
                 )}
 
                 {item.payload.miniRitual && (
-                  <div className="text-sm text-[#545454]">
-                    <p className="font-semibold text-[#2f3a56] mb-1">Mini ritual:</p>
+                  <div className="text-sm text-[var(--color-text-muted)]">
+                    <p className="font-semibold text-[var(--color-text-main)] mb-1">Mini ritual:</p>
                     <p className="leading-relaxed">{item.payload.miniRitual}</p>
                   </div>
                 )}
 
                 {item.payload.description && (
                   <div>
-                    <p className="text-sm text-[#545454] leading-relaxed">
+                    <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
                       {item.payload.description}
                     </p>
                   </div>
@@ -217,15 +217,15 @@ export function SavedContentDrawer({
             {!['recipe', 'checklist', 'insight'].includes(item.type) && (
               <div className="space-y-3">
                 {item.payload && typeof item.payload === 'object' && (
-                  <div className="text-sm text-[#545454] space-y-2">
+                  <div className="text-sm text-[var(--color-text-muted)] space-y-2">
                     {Object.entries(item.payload).map(([key, value]) => {
                       if (!value || typeof value === 'object') return null
                       return (
                         <div key={key}>
-                          <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-1">
+                          <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
                             {key}
                           </p>
-                          <p className="text-sm text-[#545454]">{String(value)}</p>
+                          <p className="text-sm text-[var(--color-text-muted)]">{String(value)}</p>
                         </div>
                       )
                     })}
@@ -239,7 +239,7 @@ export function SavedContentDrawer({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 rounded-full bg-gradient-to-r from-[#ff005e] via-[#ff2f78] to-[#ff6b9c] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(255,0,94,0.2)] hover:shadow-[0_6px_20px_rgba(255,0,94,0.3)] transition-all"
+              className="flex-1 rounded-full bg-[var(--color-brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(253,37,151,0.2)] hover:shadow-[0_6px_20px_rgba(253,37,151,0.3)] transition-all hover:opacity-90"
             >
               Fechar
             </button>
