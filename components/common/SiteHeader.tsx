@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+import { AppLogo } from '@/components/ui/AppLogo';
 
 export default function SiteHeader() {
   return (
@@ -16,13 +16,7 @@ export default function SiteHeader() {
       <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-3">
         {/* Left: brand */}
         <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/images/logo-principal.png"
-            alt="Materna360"
-            width={104}
-            height={24}
-            priority
-          />
+          <AppLogo width={104} height={24} priority />
         </Link>
 
         {/* Center: title */}
