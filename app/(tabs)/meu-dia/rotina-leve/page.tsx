@@ -150,6 +150,7 @@ export default function RotinaLevePage() {
           preparation: recipe.preparation,
         },
       })
+      setUsedRecipesToday((prev) => prev + 1)
       console.log(`[Rotina Leve] Recipe "${recipe.title}" saved to planner`)
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
