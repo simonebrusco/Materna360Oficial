@@ -378,7 +378,10 @@ export default function AutocuidadoInteligentePage() {
                         Hidratação
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {['Preciso beber mais', 'Estou me cuidando bem'].map((label, idx) => (
+                        {[
+                          { idx: 0, label: 'Preciso beber mais' },
+                          { idx: 1, label: 'Estou me cuidando bem' },
+                        ].map(({ idx, label }) => (
                           <button
                             key={label}
                             onClick={() => setHidratacao(hidratacao === idx ? null : idx)}
