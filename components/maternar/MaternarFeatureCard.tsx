@@ -66,7 +66,7 @@ export function MaternarFeatureCard({
           <div className="space-y-0">
             {tag && (
               <div className="pb-1 md:pb-2">
-                <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[var(--color-brand)]">
+                <span className="inline-flex items-center rounded-full bg-[#FFE8F2] px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[#FF1475]">
                   {tag}
                 </span>
               </div>
