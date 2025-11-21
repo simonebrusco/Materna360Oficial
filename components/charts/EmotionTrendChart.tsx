@@ -93,7 +93,7 @@ export function EmotionTrendChart({
             y={label.y + 4}
             textAnchor="end"
             fontSize="12"
-            fill="#545454"
+            fill="#6A6A6A"
             className="font-medium"
           >
             {label.value}
@@ -118,7 +118,7 @@ export function EmotionTrendChart({
               y={height - padding.bottom + 18}
               textAnchor="middle"
               fontSize="12"
-              fill="#545454"
+              fill="#6A6A6A"
               className="font-medium"
             >
               {label.label}
@@ -126,21 +126,21 @@ export function EmotionTrendChart({
           </g>
         ))}
 
-        {/* Mood line (primary - #ff005e) */}
-        <path d={moodPath} stroke="#ff005e" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Mood line (primary - new brand color) */}
+        <path d={moodPath} stroke="#FD2597" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
 
-        {/* Energy line (secondary - #2f3a56) */}
-        <path d={energyPath} stroke="#2f3a56" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Energy line (secondary - text main) */}
+        <path d={energyPath} stroke="#4A4A4A" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Legend */}
         <g transform={`translate(${padding.left}, 8)`}>
-          <circle cx="0" cy="0" r="3" fill="#ff005e" />
-          <text x="10" y="4" fontSize="12" fill="#545454" className="font-medium">
+          <circle cx="0" cy="0" r="3" fill="#FD2597" />
+          <text x="10" y="4" fontSize="12" fill="#6A6A6A" className="font-medium">
             Humor
           </text>
 
-          <circle cx="100" cy="0" r="3" fill="#2f3a56" />
-          <text x="110" y="4" fontSize="12" fill="#545454" className="font-medium">
+          <circle cx="100" cy="0" r="3" fill="#4A4A4A" />
+          <text x="110" y="4" fontSize="12" fill="#6A6A6A" className="font-medium">
             Energia
           </text>
         </g>
