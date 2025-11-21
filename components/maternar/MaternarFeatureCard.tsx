@@ -52,8 +52,8 @@ export function MaternarFeatureCard({
         role="article"
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
-        {/* Header: Icon and Tag */}
-        <div className="flex flex-col gap-3 md:gap-4">
+        {/* Top content: Icon, Tag, Title, Subtitle */}
+        <div className="flex flex-col gap-2 md:gap-4">
           <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#ffd8e6] flex-shrink-0">
             <AppIcon
               name={icon}
@@ -65,23 +65,23 @@ export function MaternarFeatureCard({
           {/* Tag, Title, Subtitle */}
           <div className="space-y-0">
             {tag && (
-              <div className="pb-1.5 md:pb-2">
+              <div className="pb-1 md:pb-2">
                 <span className="inline-flex items-center rounded-full bg-[#ffe3f0] px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[#ff005e]">
                   {tag}
                 </span>
               </div>
             )}
-            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
+            <h3 className="text-sm md:text-lg font-semibold text-[#2f3a56] leading-snug">
               {title}
             </h3>
-            <p className="text-xs md:text-sm text-[#545454] leading-relaxed pt-1 md:pt-1.5">
+            <p className="text-xs md:text-sm text-[#545454] leading-relaxed pt-0.5 md:pt-1.5 line-clamp-2 md:line-clamp-3">
               {subtitle}
             </p>
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-auto pt-3 md:pt-4">
+        {/* Bottom CTA - always at bottom */}
+        <div className="mt-auto pt-2 md:pt-4">
           <button
             type="button"
             className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#ff005e] transition-all duration-150 hover:gap-1"
