@@ -464,19 +464,19 @@ body {
     font-size: 16px;
     line-height: 22px;
     font-weight: 600;
-    color: var(--color-ink-1);
+    color: #3A3A3A;
   }
 
   .text-body {
     font-size: 14px;
     line-height: 20px;
-    color: var(--color-ink-1);
+    color: #3A3A3A;
   }
 
   .text-micro {
     font-size: 12px;
     line-height: 16px;
-    color: var(--color-ink-2);
+    color: #6A6A6A;
   }
 }
 
