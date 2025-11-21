@@ -4,6 +4,7 @@ import * as React from 'react'
 import { track } from '@/app/lib/telemetry'
 import AppIcon from '@/components/ui/AppIcon'
 import Link from 'next/link'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 type Entry = { date: string; mood: number; energy: number }
 type Props = { storageKey?: string }
