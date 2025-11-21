@@ -144,8 +144,8 @@ export function MeuDiaClient() {
                         onClick={() => setSelectedDay(selectedDay === tag ? null : tag)}
                         className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                           selectedDay === tag
-                            ? 'bg-[var(--color-soft-strong)] border-[1.5px] border-[var(--color-brand)] text-[var(--color-brand)] shadow-sm'
-                            : 'bg-[var(--color-page-bg)] border border-[var(--color-border-soft)] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/30'
+                            ? 'bg-[var(--color-brand)] border border-[var(--color-brand)] text-white shadow-[var(--shadow-card)]'
+                            : 'bg-[var(--color-page-bg)] border border-[var(--color-border-soft)] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/50'
                         }`}
                       >
                         {tag}
