@@ -58,7 +58,8 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
           description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
           timeLabel: 'Pronto em ~10 min',
           ageLabel: 'a partir de 1 ano',
-          preparation: '1. Cozinhe 3 colheres de sopa de aveia em fogo baixo com 150ml de leite (ou bebida vegetal) por 5 minutos, mexendo ocasionalmente. 2. Amasse uma fruta à sua escolha (maçã, banana, pera) em um prato à parte. 3. Misture a aveia cozida com a fruta amassada. 4. Deixe esfriar um pouco antes de servir. 5. Você pode adicionar uma colher de mel ou melado se desejar mais doçura (após 1 ano).',
+          preparation:
+            '1. Cozinhe 3 colheres de sopa de aveia em fogo baixo com 150ml de leite (ou bebida vegetal) por 5 minutos, mexendo ocasionalmente. 2. Amasse uma fruta à sua escolha (maçã, banana, pera) em um prato à parte. 3. Misture a aveia cozida com a fruta amassada. 4. Deixe esfriar um pouco antes de servir. 5. Você pode adicionar uma colher de mel ou melado se desejar mais doçura (após 1 ano).',
         },
         {
           id: 'recipe-2',
@@ -66,7 +67,8 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
           description: 'Combinação simples para lanches rápidos e nutritivos.',
           timeLabel: 'Pronto em ~5 min',
           ageLabel: 'a partir de 6 meses',
-          preparation: '1. Escolha uma banana bem madura e descasque-a. 2. Amasse a banana em um prato com um garfo até obter uma consistência cremosa. 3. Adicione 1 colher de chá de sementes de chia (se o bebê já tiver 8+ meses). 4. Misture bem os ingredientes. 5. Sirva imediatamente para evitar oxidação. Para bebês menores de 8 meses, omita a chia ou ofereça apenas a banana amassada.',
+          preparation:
+            '1. Escolha uma banana bem madura e descasque-a. 2. Amasse a banana em um prato com um garfo até obter uma consistência cremosa. 3. Adicione 1 colher de chá de sementes de chia (se o bebê já tiver 8+ meses). 4. Misture bem os ingredientes. 5. Sirva imediatamente para evitar oxidação. Para bebês menores de 8 meses, omita a chia ou ofereça apenas a banana amassada.',
         },
         {
           id: 'recipe-3',
@@ -74,7 +76,8 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
           description: 'Uma opção refrescante e probiótica para o seu filho.',
           timeLabel: 'Pronto em ~3 min',
           ageLabel: 'a partir de 9 meses',
-          preparation: '1. Coloque 100ml de iogurte natural integral em um copo. 2. Adicione uma porção de fruta fresca (morango, mirtilo ou goiaba). 3. Se preferir uma textura mais batida, use um garfo ou liquidificador por alguns segundos. 4. Sirva em seguida. Dica: você pode congelar a fruta antes para deixar a bebida bem gelada e refrescante no calor.',
+          preparation:
+            '1. Coloque 100ml de iogurte natural integral em um copo. 2. Adicione uma porção de fruta fresca (morango, mirtilo ou goiaba). 3. Se preferir uma textura mais batida, use um garfo ou liquidificador por alguns segundos. 4. Sirva em seguida. Dica: você pode congelar a fruta antes para deixar a bebida bem gelada e refrescante no calor.',
         },
       ])
     }, 900)
@@ -128,7 +131,8 @@ export default function RotinaLevePage() {
         type: 'insight',
         title: 'Ideia rápida para agora',
         payload: {
-          description: 'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+          description:
+            'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
         },
       })
       console.log('[Rotina Leve] Idea saved to planner')
@@ -165,8 +169,12 @@ export default function RotinaLevePage() {
         title: 'Inspiração do dia',
         payload: {
           frase: inspiration?.phrase || 'Você não precisa dar conta de tudo hoje.',
-          pequenoCuidado: inspiration?.care || '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-          miniRitual: inspiration?.ritual || 'Envie uma mensagem carinhosa para alguém que te apoia.',
+          pequenoCuidado:
+            inspiration?.care ||
+            '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
+          miniRitual:
+            inspiration?.ritual ||
+            'Envie uma mensagem carinhosa para alguém que te apoia.',
         },
       })
       console.log('[Rotina Leve] Inspiration saved to planner')
@@ -253,7 +261,7 @@ export default function RotinaLevePage() {
 
               {/* Age Rule Message */}
               <p className="mt-3 text-[11px] text-gray-500">
-                Para bebês menores de 6 meses, o ideal é manter o foco no aleitamento materno e seguir sempre a orientação do pediatra.
+                Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir sempre a orientação do pediatra.
               </p>
 
               {/* Generate Button + Plan Counter */}
@@ -267,7 +275,11 @@ export default function RotinaLevePage() {
               </button>
 
               <p className="mt-2 text-[11px] text-gray-500">
-                Hoje você já usou <span className="font-semibold text-gray-700">{usedRecipesToday} de {DAILY_RECIPE_LIMIT}</span> sugestões do seu plano.
+                Hoje você já usou{' '}
+                <span className="font-semibold text-gray-700">
+                  {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
+                </span>{' '}
+                sugestões do seu plano.
               </p>
 
               {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
@@ -288,9 +300,7 @@ export default function RotinaLevePage() {
 
                 {!recipesLoading && recipes && recipes.length > 0 && (
                   <>
-                    <p className="text-xs font-medium text-gray-800">
-                      Sugestões de hoje (até 3)
-                    </p>
+                    <p className="text-xs font-medium text-gray-800">Sugestões de hoje (até 3)</p>
                     <div className="space-y-3">
                       {recipes.slice(0, 3).map((recipe) => {
                         const hasRecipes = recipes && recipes.length > 0
@@ -333,7 +343,9 @@ export default function RotinaLevePage() {
                                   }}
                                   className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
                                 >
-                                  {expandedRecipeId === recipe.id ? 'Ver menos ↑' : 'Ver detalhes →'}
+                                  {expandedRecipeId === recipe.id
+                                    ? 'Ver menos ↑'
+                                    : 'Ver detalhes →'}
                                 </button>
                               </div>
                             </div>
@@ -630,8 +642,12 @@ export default function RotinaLevePage() {
                       {!ideasLoading && !ideas && (
                         <ul className="space-y-2 text-xs text-gray-700">
                           <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                          <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
-                          <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
+                          <li>
+                            • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
+                          </li>
+                          <li>
+                            • Ritual rápido: uma respiração profunda juntas antes de recomeçar.
+                          </li>
                         </ul>
                       )}
 
@@ -693,16 +709,31 @@ export default function RotinaLevePage() {
                       {!inspirationLoading && (
                         <>
                           <div>
-                            <p className="mb-1 text-[11px] font-medium text-gray-700">Frase de hoje</p>
-                            <p>{(inspiration && inspiration.phrase) || 'Você não precisa dar conta de tudo hoje.'}</p>
+                            <p className="mb-1 text-[11px] font-medium text-gray-700">
+                              Frase de hoje
+                            </p>
+                            <p>
+                              {(inspiration && inspiration.phrase) ||
+                                'Você não precisa dar conta de tudo hoje.'}
+                            </p>
                           </div>
                           <div>
-                            <p className="mb-1 text-[11px] font-medium text-gray-700">Pequeno cuidado</p>
-                            <p>{(inspiration && inspiration.care) || '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}</p>
+                            <p className="mb-1 text-[11px] font-medium text-gray-700">
+                              Pequeno cuidado
+                            </p>
+                            <p>
+                              {(inspiration && inspiration.care) ||
+                                '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
+                            </p>
                           </div>
                           <div>
-                            <p className="mb-1 text-[11px] font-medium text-gray-700">Mini ritual</p>
-                            <p>{(inspiration && inspiration.ritual) || 'Envie uma mensagem carinhosa para alguém que te apoia.'}</p>
+                            <p className="mb-1 text-[11px] font-medium text-gray-700">
+                              Mini ritual
+                            </p>
+                            <p>
+                              {(inspiration && inspiration.ritual) ||
+                                'Envie uma mensagem carinhosa para alguém que te apoia.'}
+                            </p>
                           </div>
                         </>
                       )}

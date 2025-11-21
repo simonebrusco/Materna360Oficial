@@ -221,7 +221,6 @@ export default function WeeklyPlannerShell() {
   // Get current month and year for display
   const monthYear = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
-    // Parse the date key (YYYY-MM-DD format)
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
     return date.toLocaleDateString('pt-BR', {
@@ -233,7 +232,6 @@ export default function WeeklyPlannerShell() {
   // Format selected date for contextual text
   const capitalizedDateFormatted = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
-    // Parse the date key (YYYY-MM-DD format)
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
     const selectedDateFormatted = date.toLocaleDateString('pt-BR', {
@@ -252,7 +250,6 @@ export default function WeeklyPlannerShell() {
     origin: string
     href?: string
   }
-
 
   // Get selected date for calendar
   const selectedDate = useMemo(() => {
