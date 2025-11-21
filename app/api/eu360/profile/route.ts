@@ -145,7 +145,26 @@ export async function GET() {
       }
 
       if (!user) {
-        return { name: '', birthdate: null, age_months: null }
+        return {
+          name: '',
+          birthdate: null,
+          age_months: null,
+          userPreferredName: undefined,
+          userRole: undefined,
+          userEmotionalBaseline: undefined,
+          userMainChallenges: undefined,
+          userEnergyPeakTime: undefined,
+          routineChaosMoments: undefined,
+          routineScreenTime: undefined,
+          routineDesiredSupport: undefined,
+          supportNetwork: undefined,
+          supportAvailability: undefined,
+          userContentPreferences: undefined,
+          userGuidanceStyle: undefined,
+          userSelfcareFrequency: undefined,
+          figurinha: undefined,
+          children: undefined,
+        }
       }
 
       const [profileResult, babyResult] = await Promise.all([
