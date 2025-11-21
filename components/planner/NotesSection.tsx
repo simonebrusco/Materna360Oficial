@@ -30,7 +30,7 @@ export default function NotesSection({ content, onChange, hideTitle = false }: N
           value={content}
           onChange={e => onChange(e.target.value)}
           placeholder="Anote pensamentos, recados, coisas para lembrar..."
-          className="w-full h-32 md:h-40 px-4 py-3 rounded-lg border border-[#EDEDED] text-sm font-medium text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 resize-none font-poppins"
+          className="w-full h-32 md:h-40 px-4 py-3 rounded-lg border border-[var(--color-border-soft)] bg-white text-sm font-medium text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 resize-none font-poppins"
         />
         <p className="text-xs text-[var(--color-text-muted)] mt-2 font-poppins">
           {content.length} caracteres
