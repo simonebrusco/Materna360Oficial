@@ -154,11 +154,11 @@ export default function AutocuidadoInteligentePage() {
 
   const handleSalvarRotina = () => {
     if (selectedRotinItems.size === 0) {
-      toast.error('Selecione pelo menos um item para continuar.')
+      toast.danger('Selecione pelo menos um item para continuar.')
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {})
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].rotina = {
       itensSelecionados: Array.from(selectedRotinItems),
