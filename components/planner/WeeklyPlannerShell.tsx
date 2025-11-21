@@ -51,6 +51,10 @@ export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
+  // Saved content drawer state
+  const [selectedSavedItem, setSelectedSavedItem] = useState<PlannerSavedContent | null>(null)
+  const [isSavedItemOpen, setIsSavedItemOpen] = useState(false)
+
   // Load global saved inspirations (legacy)
   const { savedItems: savedContents } = useSavedInspirations()
 
