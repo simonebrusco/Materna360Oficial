@@ -111,7 +111,7 @@ export default function MaternarClient() {
             </header>
 
             {/* Page Content */}
-            <div className="space-y-6 md:space-y-8">
+            <div className="space-y-8 md:space-y-10">
               {/* Daily Message Card */}
               <Reveal delay={100}>
                 <div className="mt-0 mb-0 px-0 md:px-0 max-w-7xl mx-auto">
