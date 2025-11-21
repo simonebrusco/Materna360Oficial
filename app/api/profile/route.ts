@@ -118,15 +118,8 @@ export async function GET() {
     const raw = cookies().get(COOKIE)?.value
     const data = safeParse(raw)
 
-    // Add a 3-second timeout to the entire GET request
-    const timeoutPromise = new Promise<string[]>((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), 3000)
-    )
-
-    const childrenNames = await Promise.race([
-      fetchChildrenNames(),
-      timeoutPromise,
-    ])
+    // Fetch children names with built-in timeout handling
+    const childrenNames = await fetchChildrenNames()
 
     return NextResponse.json(
       {
@@ -141,7 +134,7 @@ export async function GET() {
       }
     )
   } catch (error) {
-    console.error('[ProfileAPI] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
+    console.debug('[ProfileAPI] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
     // Always return a valid response, even if something fails
     return NextResponse.json(
       {
