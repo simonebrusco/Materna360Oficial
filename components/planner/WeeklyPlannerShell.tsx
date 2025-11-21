@@ -502,10 +502,19 @@ export default function WeeklyPlannerShell() {
                 </p>
               </div>
               {transformedPlannerContents.length > 0 || savedContents.length > 0 ? (
-                <SavedContentsSection
-                  contents={[...transformedPlannerContents, ...savedContents]}
-                  hideTitle={true}
-                />
+                <>
+                  <SavedContentsSection
+                    contents={savedContents}
+                    plannerContents={plannerHook.items}
+                    onItemClick={handleOpenSavedItem}
+                    hideTitle={true}
+                  />
+                  <SavedContentDrawer
+                    open={isSavedItemOpen}
+                    onClose={handleCloseSavedItem}
+                    item={selectedSavedItem}
+                  />
+                </>
               ) : (
                 <SoftCard className="p-5 md:p-6 text-center py-6">
                   <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
