@@ -19,14 +19,14 @@ export function SoftCard({
   return (
     <Component
       className={clsx(
-        'rounded-3xl md:rounded-3xl',
-        'bg-[var(--color-page-bg)]',
-        'border border-[var(--color-border-soft)]',
-        'shadow-[var(--shadow-card-base)]',
-        'hover:shadow-[var(--shadow-card-hover-neutral)]',
+        'rounded-3xl',
+        'bg-white',
+        'border border-[#FFE8F2]',
+        'shadow-sm',
+        'hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]',
         'hover:translate-y-[-1px]',
         'p-6',
-        'transition-all duration-150 ease-out',
+        'transition-all duration-200 ease-out',
         className
       )}
       {...rest}
@@ -64,8 +64,8 @@ export function SoftCardHeader({
     <div
       className={clsx(
         'p-5 sm:p-6',
-        'border-b border-[var(--color-border-soft)]',
-        'bg-gradient-to-br from-[var(--color-page-bg)] to-[var(--color-soft-strong)]/5',
+        'border-b border-[#FFE8F2]',
+        'bg-white',
         className
       )}
       {...rest}
