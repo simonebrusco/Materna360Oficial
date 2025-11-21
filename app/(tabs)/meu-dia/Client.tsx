@@ -167,7 +167,7 @@ export function MeuDiaClient() {
             </Reveal>
 
             {/* MAIN PLANNER CARD */}
-            <div className="rounded-3xl bg-[var(--color-page-bg)] border border-[var(--color-border-soft)] p-6 shadow-[var(--shadow-card-base)] space-y-6 hover:shadow-[var(--shadow-card-hover-neutral)] transition-shadow duration-200">
+            <div className="rounded-3xl bg-[var(--color-page-bg)] border border-[var(--color-border-soft)] p-6 md:p-8 shadow-[var(--shadow-card-base)] space-y-6 md:space-y-8 hover:shadow-[var(--shadow-card-hover-neutral)] transition-shadow duration-200">
               {/* MAIN CONTENT SECTIONS - organized with consistent spacing */}
 
               {/* INTELLIGENT SUGGESTIONS */}
