@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
+import { ClientOnly } from '@/components/common/ClientOnly'
 
 interface PlannerHeaderProps {
   greeting: string
