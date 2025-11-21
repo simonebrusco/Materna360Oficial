@@ -30,9 +30,9 @@ export default function PlannerHeader({ greeting, onMoodSelect }: PlannerHeaderP
   return (
     <div className="space-y-6">
       {/* Greeting */}
-      <div suppressHydrationWarning>
+      <ClientOnly>
         <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56] leading-tight">{greeting}</h1>
-      </div>
+      </ClientOnly>
 
       {/* Mood Check-in Pills */}
       <div className="space-y-3">
