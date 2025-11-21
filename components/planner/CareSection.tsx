@@ -110,13 +110,13 @@ export default function CareSection({
         {!isAddingForm ? (
           <button
             onClick={() => setIsAddingForm(true)}
-            className="mt-2 pt-2 border-t border-[#F0F0F0] inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+            className="mt-2 pt-2 border-t border-[var(--color-border-soft)] inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
           >
             <AppIcon name="plus" className="w-4 h-4" />
             Adicionar
           </button>
         ) : (
-          <div className="mt-2 pt-2 border-t border-[#F0F0F0] space-y-2">
+          <div className="mt-2 pt-2 border-t border-[var(--color-border-soft)] space-y-2">
             <input
               type="text"
               value={newTitle}
