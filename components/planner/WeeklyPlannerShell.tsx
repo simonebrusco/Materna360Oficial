@@ -482,7 +482,7 @@ export default function WeeklyPlannerShell() {
                   Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                 </p>
               </div>
-              {transformedPlannerContents.length > 0 || savedContents.length > 0 ? (
+              {plannerHook.items.length > 0 || savedContents.length > 0 ? (
                 <>
                   <SavedContentsSection
                     contents={savedContents}
