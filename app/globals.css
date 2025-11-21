@@ -678,6 +678,7 @@ body {
   font-size: clamp(16px, 1.8vw, 18px);
   line-height: 1.28;
   letter-spacing: 0;
+  color: #3A3A3A;
 }
 
 .notesCard .title--clamp {
@@ -700,7 +701,7 @@ body {
   line-height: 1.45;
   letter-spacing: 0;
   opacity: 0.8;
-  color: rgba(47, 58, 86, 0.86);
+  color: #6A6A6A;
 }
 
 .notesCard-meta {
