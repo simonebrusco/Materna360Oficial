@@ -104,7 +104,7 @@ const HUB_CARDS: CardConfig[] = [
     id: 'planos-premium',
     icon: 'star',
     title: 'Materna+',
-    subtitle: 'Conte��dos guiados para ir mais fundo no seu bem-estar.',
+    subtitle: 'Conteúdos guiados para ir mais fundo no seu bem-estar.',
     href: '/planos',
     ctaText: 'Ver planos →',
     tag: 'Premium',
@@ -114,16 +114,10 @@ const HUB_CARDS: CardConfig[] = [
 export default function CardHub() {
   return (
     <section className="mt-8 md:mt-10">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2 sm:gap-y-3 md:gap-x-6 md:gap-y-6 px-2 md:px-4 max-w-full mx-auto">
-        {HUB_CARDS.map((card, index) => (
-          <div
-            key={card.id}
-            className={clsx(
-              'h-full',
-              card.id === 'planos-premium' && 'md:order-last'
-            )}
-            suppressHydrationWarning
-          >
+      {/* First 9 cards in 3x3 grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 sm:gap-y-4 md:gap-x-6 md:gap-y-8 px-2 md:px-4 max-w-full mx-auto mb-6 md:mb-8">
+        {HUB_CARDS.slice(0, 9).map((card, index) => (
+          <div key={card.id} className="h-full" suppressHydrationWarning>
             <MaternarFeatureCard
               icon={card.icon}
               title={card.title}
@@ -137,6 +131,24 @@ export default function CardHub() {
           </div>
         ))}
       </div>
+
+      {/* Premium card (Row 4) - centered on desktop */}
+      {HUB_CARDS.length > 9 && (
+        <div className="flex justify-center md:justify-start px-2 md:px-4">
+          <div className="w-full md:w-1/3">
+            <MaternarFeatureCard
+              icon={HUB_CARDS[9].icon}
+              title={HUB_CARDS[9].title}
+              subtitle={HUB_CARDS[9].subtitle}
+              href={HUB_CARDS[9].href}
+              cardId={HUB_CARDS[9].id}
+              ctaText={HUB_CARDS[9].ctaText}
+              index={9}
+              tag={HUB_CARDS[9].tag}
+            />
+          </div>
+        </div>
+      )}
     </section>
   )
 }
