@@ -82,7 +82,7 @@ export default function AutocuidadoInteligentePage() {
   useEffect(() => {
     if (!isHydrated) return
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {})
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     const diaData = storage[currentDateKey] || {}
 
     console.log('[Autocuidado] Dados carregados para:', currentDateKey, diaData)
