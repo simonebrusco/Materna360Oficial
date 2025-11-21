@@ -25,7 +25,7 @@ export function PageTemplate({
     <main
       data-layout="page-template-v1"
       className={clsx(
-        'bg-soft-page min-h-[100dvh] pb-24',
+        'bg-[var(--color-page-bg)] min-h-[100dvh] pb-24',
         className
       )}
     >
