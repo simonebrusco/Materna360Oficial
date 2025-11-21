@@ -121,9 +121,16 @@ export default function MaternarClient() {
                       {/* Top content */}
                       <div className="flex flex-col gap-1.5">
                         {/* New title - replacing the pill header */}
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug font-poppins" suppressHydrationWarning>
-                          Um carinho pra você hoje 💗
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug font-poppins">
+                            Um carinho pra você hoje
+                          </h3>
+                          <AppIcon
+                            name="heart"
+                            className="h-4 w-4 md:h-5 md:w-5 text-[#ff005e] flex-shrink-0"
+                            aria-hidden="true"
+                          />
+                        </div>
 
                         {/* Message text */}
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed font-poppins" suppressHydrationWarning>
