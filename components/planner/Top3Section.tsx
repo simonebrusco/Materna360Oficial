@@ -103,9 +103,9 @@ export default function Top3Section({
         </div>
 
         {allComplete && (
-          <div className="mt-auto p-3 rounded-lg bg-gradient-to-r from-[var(--color-soft-strong)] to-[var(--color-page-bg)] border border-[var(--color-brand)]/20 text-center">
+          <div className="mt-auto p-3 rounded-lg bg-white border border-[var(--color-brand)]/20 text-center">
             <p className="text-sm font-semibold text-[var(--color-brand)]">
-              Parabéns! Você concluiu seus 3 focos principais
+              Parabéns! Você concluiu seus 3 focos principais ✨
             </p>
           </div>
         )}
