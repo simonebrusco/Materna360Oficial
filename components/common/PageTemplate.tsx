@@ -30,15 +30,17 @@ export function PageTemplate({
         className
       )}
     >
-      {/* Very subtle hero gradient - only at top, low opacity */}
-      <div
-        className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(to bottom, rgba(253, 190, 215, 0.02) 0%, transparent 40%)',
-        }}
-      />
+      {/* Very subtle hero gradient - top-only, 2-3% opacity max, hero container only */}
+      {(hero || title) && (
+        <div
+          className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(to bottom, rgba(255, 20, 117, 0.02) 0%, transparent 50%)',
+          }}
+        />
+      )}
 
-      <div className="mx-auto max-w-[1040px] px-4 md:px-6 relative z-10">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 relative z-10">
         <header className="pt-6 md:pt-8 mb-8 md:mb-10">
           <PageHeader label={label} title={title} subtitle={subtitle} />
           {hero ? <div className="mt-4 md:mt-6">{hero}</div> : null}
