@@ -162,10 +162,10 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
   // Skeleton state while loading
   if (entries === null || !insight) {
     return (
-      <div
-        className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5"
-        suppressHydrationWarning
-      >
+      <ClientOnly>
+        <div
+          className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5"
+        >
         <div className="flex items-center gap-2 mb-3">
           <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
             <div className="h-4 w-4 rounded bg-black/5" />
@@ -174,17 +174,18 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
         </div>
         <div className="h-4 w-full rounded-lg bg-black/5 mb-2" />
         <div className="h-4 w-5/6 rounded-lg bg-black/5" />
-      </div>
+        </div>
+      </ClientOnly>
     )
   }
 
   const isEmpty = entries.length === 0
 
   return (
-    <div
-      className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5"
-      suppressHydrationWarning
-    >
+    <ClientOnly>
+      <div
+        className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5"
+      >
       <div className="flex items-center gap-2 mb-3">
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
           <AppIcon name="heart" size={16} variant="brand" decorative />
@@ -247,6 +248,7 @@ export function WeeklyEmotionalSummary({ storageKey = 'meu-dia:mood' }: Props) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ClientOnly>
   )
 }
