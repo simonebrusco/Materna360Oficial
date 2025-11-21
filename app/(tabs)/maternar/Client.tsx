@@ -115,9 +115,9 @@ export default function MaternarClient() {
               {/* Daily Message Card */}
               <Reveal delay={100}>
                 <div className="mt-0 mb-0 px-0 md:px-0 max-w-7xl mx-auto">
-                  <div className="bg-gradient-to-br from-[var(--color-page-bg)] to-[var(--color-soft-strong)]/5 rounded-3xl border border-[var(--color-border-soft)] shadow-[var(--shadow-card-base)] hover:shadow-[var(--shadow-card-hover-neutral)] px-4 py-3 md:px-6 md:py-4 relative overflow-hidden transition-all duration-200">
-                    {/* Subtle gradient accent blob - top-right corner */}
-                    <div className="pointer-events-none select-none absolute -top-6 -right-6 h-24 w-24 bg-gradient-to-br from-[var(--color-brand)]/10 to-transparent rounded-full" />
+                  <div className="bg-white rounded-3xl border border-[var(--color-border-soft)] shadow-[var(--shadow-card-base)] hover:shadow-[var(--shadow-card-hover-neutral)] px-4 py-3 md:px-6 md:py-4 relative overflow-hidden transition-all duration-200">
+                    {/* Very subtle accent - only in corner */}
+                    <div className="pointer-events-none select-none absolute -top-8 -right-8 h-20 w-20 bg-gradient-to-br from-[var(--color-brand)]/5 to-transparent rounded-full" />
 
                     {/* Content wrapper - flex with space-between to push CTA to bottom */}
                     <div className="flex h-full flex-col justify-between gap-2 relative z-10 min-h-[140px] max-h-[210px] md:max-h-[220px]">
