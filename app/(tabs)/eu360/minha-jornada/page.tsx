@@ -214,22 +214,22 @@ export default function MinhaJornadaPage() {
                   <AppIcon
                     name="chart"
                     size={32}
-                    className="text-primary/40 mx-auto mb-2"
+                    className="text-[var(--color-brand)]/40 mx-auto mb-2"
                     decorative
                   />
-                  <p className="text-sm text-[#545454]">
+                  <p className="text-sm text-[var(--color-text-muted)]">
                     Gráfico de tendências da semana
                   </p>
                 </div>
               </div>
 
               {/* IA Note */}
-              <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-[#FFE5EF]/40 to-white p-4">
-                <h4 className="text-sm font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                  <AppIcon name="idea" size={16} className="text-primary" decorative />
+              <div className="rounded-2xl border border-[var(--color-brand)]/20 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-white p-4">
+                <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-2 flex items-center gap-2">
+                  <AppIcon name="idea" size={16} className="text-[var(--color-brand)]" decorative />
                   Em breve
                 </h4>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-[var(--color-text-muted)]">
                   Em breve, você verá análises inteligentes sobre sua evolução.
                 </p>
               </div>
