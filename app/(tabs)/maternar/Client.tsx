@@ -58,9 +58,10 @@ export default function MaternarClient() {
 
   return (
     <div className="relative">
-      {/* Subtle editorial background */}
+      {/* Pure white background */}
       <div className="absolute inset-0 bg-[var(--color-page-bg)] pointer-events-none" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-gradient-to-b from-[var(--color-soft-strong)]/8 to-transparent blur-3xl pointer-events-none" />
+      {/* Very subtle hero gradient - only at top */}
+      <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-[var(--color-soft-strong)]/3 to-transparent blur-2xl pointer-events-none" />
 
       <div className="relative z-10">
         <main data-layout="page-template-v1" className="bg-[var(--color-page-bg)] min-h-[100dvh] pb-24">
