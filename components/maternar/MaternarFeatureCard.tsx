@@ -53,7 +53,7 @@ export function MaternarFeatureCard({
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
         {/* Top content: Icon, Tag, Title, Subtitle */}
-        <div className="flex flex-col gap-2 md:gap-4 h-full">
+        <div className="flex flex-col gap-2 md:gap-4">
           <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#ffd8e6] flex-shrink-0">
             <AppIcon
               name={icon}
@@ -81,7 +81,7 @@ export function MaternarFeatureCard({
         </div>
 
         {/* Bottom CTA - always at bottom */}
-        <div className="mt-3">
+        <div className="mt-auto pt-3">
           <button
             type="button"
             className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#ff005e] transition-all duration-150 hover:gap-1"
