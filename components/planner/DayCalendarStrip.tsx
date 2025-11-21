@@ -56,15 +56,15 @@ export default function DayCalendarStrip({
             onClick={() => onDateSelect(date)}
             className={`flex-shrink-0 min-w-fit px-3 py-2.5 rounded-full text-sm font-semibold transition-all ${
               selected
-                ? 'bg-[#ff005e] text-white shadow-[0_4px_12px_rgba(255,0,94,0.3)]'
-                : 'bg-white border border-[#ddd] text-[#545454] hover:border-[#ff005e]'
+                ? 'bg-[var(--color-brand)] text-white shadow-[0_4px_12px_rgba(253,37,151,0.3)]'
+                : 'bg-[var(--color-page-bg)] border border-[var(--color-border-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-brand)]'
             }`}
           >
             <div className="flex flex-col items-center">
               <span className="text-xs font-medium">{dayNames[index]}</span>
               <span className="text-sm font-bold">{date.getDate()}</span>
               {today && !selected && (
-                <span className="text-[6px] text-[#ff005e] font-bold mt-0.5">●</span>
+                <span className="text-[6px] text-[var(--color-brand)] font-bold mt-0.5">●</span>
               )}
             </div>
           </button>
