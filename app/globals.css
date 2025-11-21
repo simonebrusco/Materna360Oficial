@@ -132,15 +132,15 @@ body {
   h4,
   h5,
   h6 {
-    @apply font-semibold tracking-tight text-support-1;
+    @apply font-semibold tracking-tight text-[#3A3A3A];
   }
 
   p {
-    @apply text-sm leading-relaxed text-support-2 md:text-base;
+    @apply text-sm leading-relaxed text-[#6A6A6A] md:text-base;
   }
 
   a {
-    @apply text-primary transition-colors duration-300 hover:text-primary/85;
+    @apply text-[#FF1475] transition-colors duration-300 hover:text-[#E6005F];
   }
 
   ::selection {
