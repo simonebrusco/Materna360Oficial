@@ -87,10 +87,11 @@ body {
   --safearea-bottom-d: 80px;
   --safearea-bottom-t: 72px;
   --safearea-bottom-m: 64px;
-  --shadow-card-base: 0 6px 22px rgba(16, 24, 40, 0.06), 0 1px 0 rgba(16, 24, 40, 0.03);
-  --shadow-card-hover-neutral: 0 12px 28px rgba(16, 24, 40, 0.12), 0 2px 0 rgba(16, 24, 40, 0.04);
-  --shadow-card-active: 0 8px 20px rgba(16, 24, 40, 0.1), 0 1px 0 rgba(16, 24, 40, 0.04);
-  --glow-pink: 0 24px 48px rgba(255, 0, 94, 0.18);
+  /* Premium editorial shadows */
+  --shadow-card-base: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover-neutral: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-card-active: 0 6px 20px rgba(0, 0, 0, 0.09);
+  --glow-pink: 0 8px 24px rgba(253, 37, 151, 0.12);
 }
 
 /* Soft page background utility */
