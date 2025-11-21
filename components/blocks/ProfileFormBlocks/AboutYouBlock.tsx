@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 import { FormErrors, ProfileFormState } from '../ProfileForm'
 
