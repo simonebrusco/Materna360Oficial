@@ -442,7 +442,7 @@ export default function WeeklyPlannerShell() {
                     items={plannerData.familyItems}
                     onToggle={id => handleToggleCareItem(id, 'family')}
                     onAdd={title => handleAddCareItem(title, 'family')}
-                    placeholder="Novo momento com a família…"
+                    placeholder="Novo momento com a família���"
                     hideTitle={true}
                   />
                 </div>
@@ -519,7 +519,7 @@ export default function WeeklyPlannerShell() {
         {viewMode === 'week' && (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <p className="text-sm text-[#545454]/70">
+              <p className="text-sm text-[var(--color-text-muted)]/70">
                 Visão geral da sua semana. Toque em um dia para ver em detalhes.
               </p>
             </div>
