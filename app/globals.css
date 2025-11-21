@@ -167,15 +167,15 @@ body {
   }
 
   .section-title {
-    @apply text-2xl font-semibold text-support-1 md:text-3xl;
+    @apply text-2xl font-semibold text-[#3A3A3A] md:text-3xl;
   }
 
   .section-subtitle {
-    @apply mt-1 text-sm text-support-3 md:text-base;
+    @apply mt-1 text-sm text-[#6A6A6A] md:text-base;
   }
 
   .section-eyebrow {
-    color: #ff005e;
+    color: #FF1475;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -194,7 +194,7 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #ff005e;
+    color: #FF1475;
   }
 
   @media (min-width: 768px) {
