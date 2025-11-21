@@ -89,7 +89,7 @@ export default function Top3Section({
             Array.from({ length: emptySlots }).map((_, idx) => (
               <div
                 key={`empty-${idx}`}
-                className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-[var(--color-border-muted)] bg-[var(--color-soft-bg)]"
+                className="flex items-start gap-3 p-3 rounded-xl border border-dashed border-[var(--color-border-soft)] bg-[var(--color-soft-bg)]"
               >
                 <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[var(--color-border-muted)] opacity-40" />
                 <span className="flex-1 text-sm text-[var(--color-text-muted)]/40">
