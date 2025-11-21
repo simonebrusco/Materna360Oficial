@@ -64,10 +64,10 @@ export default function MinhaJornadaPage() {
           <Reveal delay={0}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
               <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
                   Sua Linha do Tempo
                 </h3>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-[var(--color-text-muted)]">
                   Veja como você evoluiu ao longo dos dias.
                 </p>
               </div>
@@ -86,7 +86,7 @@ export default function MinhaJornadaPage() {
                         key={dateStr}
                         className="flex-shrink-0 w-20 rounded-2xl bg-white/60 border border-white/40 p-3 text-center hover:bg-white/80 transition-all duration-200 cursor-pointer"
                       >
-                        <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                        <p className="text-xs font-semibold text-[var(--color-text-main)] mb-2">
                           {dayOfWeek} {dayOfMonth}
                         </p>
                         {entry.humor && (
@@ -95,7 +95,7 @@ export default function MinhaJornadaPage() {
                           </p>
                         )}
                         {entry.energia && (
-                          <p className="text-xs text-[#545454]">
+                          <p className="text-xs text-[var(--color-text-muted)]">
                             {entry.energia === 'Alta' && '⚡'}
                             {entry.energia === 'Média' && '🔋'}
                             {entry.energia === 'Baixa' && '😴'}
@@ -107,7 +107,7 @@ export default function MinhaJornadaPage() {
                           </p>
                         )}
                         {!entry.humor && !entry.energia && !entry.nota && (
-                          <p className="text-xs text-[#545454]">—</p>
+                          <p className="text-xs text-[var(--color-text-muted)]">—</p>
                         )}
                       </div>
                     )
@@ -116,7 +116,7 @@ export default function MinhaJornadaPage() {
               </div>
 
               {/* Helper Text */}
-              <div className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#545454]">
+              <div className="rounded-2xl bg-[var(--color-soft-strong)]/40 p-3 text-sm text-[var(--color-text-muted)]">
                 Tudo o que você registra ajuda você a ver sua própria evolução.
               </div>
             </SoftCard>
@@ -126,10 +126,10 @@ export default function MinhaJornadaPage() {
           <Reveal delay={50}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
               <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
                   A Jornada do Seu Filho
                 </h3>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-[var(--color-text-muted)]">
                   Acompanhe os marcos e momentos especiais.
                 </p>
               </div>
@@ -154,10 +154,10 @@ export default function MinhaJornadaPage() {
                     className="flex items-start justify-between p-4 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer"
                   >
                     <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                      <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-1">
                         {item.title}
                       </h4>
-                      <p className="text-xs text-[#545454]">
+                      <p className="text-xs text-[var(--color-text-muted)]">
                         {item.description}
                       </p>
                     </div>
@@ -172,44 +172,44 @@ export default function MinhaJornadaPage() {
           <Reveal delay={100}>
             <SoftCard className="rounded-3xl p-6 md:p-8">
               <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+                <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
                   Insights da Semana
                 </h3>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-[var(--color-text-muted)]">
                   Padrões e descobertas que ajudam no seu dia a dia.
                 </p>
               </div>
 
               {/* Insight Placeholders */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="rounded-2xl bg-[#FFE5EF]/40 p-4">
-                  <p className="text-xs text-[#545454] font-medium mb-2">
+                <div className="rounded-2xl bg-[var(--color-soft-strong)]/40 p-4">
+                  <p className="text-xs text-[var(--color-text-muted)] font-medium mb-2">
                     Seu padrão da semana
                   </p>
-                  <p className="text-sm font-semibold text-[#2f3a56]">
+                  <p className="text-sm font-semibold text-[var(--color-text-main)]">
                     — (placeholder)
                   </p>
                 </div>
-                <div className="rounded-2xl bg-[#FFE5EF]/40 p-4">
-                  <p className="text-xs text-[#545454] font-medium mb-2">
+                <div className="rounded-2xl bg-[var(--color-soft-strong)]/40 p-4">
+                  <p className="text-xs text-[var(--color-text-muted)] font-medium mb-2">
                     Quando você esteve melhor
                   </p>
-                  <p className="text-sm font-semibold text-[#2f3a56]">
+                  <p className="text-sm font-semibold text-[var(--color-text-main)]">
                     — (placeholder)
                   </p>
                 </div>
-                <div className="rounded-2xl bg-[#FFE5EF]/40 p-4">
-                  <p className="text-xs text-[#545454] font-medium mb-2">
+                <div className="rounded-2xl bg-[var(--color-soft-strong)]/40 p-4">
+                  <p className="text-xs text-[var(--color-text-muted)] font-medium mb-2">
                     Principais desafios
                   </p>
-                  <p className="text-sm font-semibold text-[#2f3a56]">
+                  <p className="text-sm font-semibold text-[var(--color-text-main)]">
                     — (placeholder)
                   </p>
                 </div>
               </div>
 
               {/* Emotional Trend Placeholder */}
-              <div className="mb-6 p-6 rounded-2xl bg-[#FFE5EF]/40 flex items-center justify-center h-40">
+              <div className="mb-6 p-6 rounded-2xl bg-[var(--color-soft-strong)]/40 flex items-center justify-center h-40">
                 <div className="text-center">
                   <AppIcon
                     name="chart"
