@@ -487,7 +487,7 @@ export default function AutocuidadoInteligentePage() {
                     ) : (
                       <div className="p-4 rounded-lg bg-[#f5f5f7] text-center">
                         <p className="text-sm text-[#545454]">
-                          Clique em "Gerar sugestão" para descobrir um cuidado especial para você hoje.
+                          Clique em &quot;Gerar sugestão&quot; para descobrir um cuidado especial para você hoje.
                         </p>
                       </div>
                     )}
