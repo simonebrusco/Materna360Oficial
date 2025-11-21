@@ -265,7 +265,7 @@ export default function RotinaLevePage() {
               </button>
 
               <p className="mt-2 text-[11px] text-gray-500">
-                Hoje você já usou <span className="font-semibold text-gray-700">1 de 3</span> sugestões do seu plano.
+                Hoje você já usou <span className="font-semibold text-gray-700">{usedRecipesToday} de {DAILY_RECIPE_LIMIT}</span> sugestões do seu plano.
               </p>
 
               {/* Recipes Results */}
