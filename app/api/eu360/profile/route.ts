@@ -130,7 +130,11 @@ export async function GET() {
       }
 
       const [profileResult, babyResult] = await Promise.all([
-        supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('name, user_preferred_name, user_role, user_emotional_baseline, user_main_challenges, user_energy_peak_time, routine_chaos_moments, routine_screen_time, routine_desired_support, support_network, support_availability, user_content_preferences, user_guidance_style, user_selfcare_frequency, figurinha, children')
+          .eq('user_id', user.id)
+          .maybeSingle(),
         supabase.from('babies').select('birthdate, age_months').eq('user_id', user.id).maybeSingle(),
       ])
 
@@ -152,7 +156,26 @@ export async function GET() {
             ? babyResult.data.age_months
             : null
 
-      return { name, birthdate, age_months: ageMonths }
+      return {
+        name,
+        birthdate,
+        age_months: ageMonths,
+        userPreferredName: profileResult.data?.user_preferred_name,
+        userRole: profileResult.data?.user_role,
+        userEmotionalBaseline: profileResult.data?.user_emotional_baseline,
+        userMainChallenges: profileResult.data?.user_main_challenges,
+        userEnergyPeakTime: profileResult.data?.user_energy_peak_time,
+        routineChaosMoments: profileResult.data?.routine_chaos_moments,
+        routineScreenTime: profileResult.data?.routine_screen_time,
+        routineDesiredSupport: profileResult.data?.routine_desired_support,
+        supportNetwork: profileResult.data?.support_network,
+        supportAvailability: profileResult.data?.support_availability,
+        userContentPreferences: profileResult.data?.user_content_preferences,
+        userGuidanceStyle: profileResult.data?.user_guidance_style,
+        userSelfcareFrequency: profileResult.data?.user_selfcare_frequency,
+        figurinha: profileResult.data?.figurinha,
+        children: profileResult.data?.children,
+      }
     })()
 
     const result = await Promise.race([fetchPromise, timeoutPromise])
