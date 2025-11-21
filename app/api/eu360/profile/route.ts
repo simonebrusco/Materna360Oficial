@@ -19,12 +19,42 @@ type Eu360ProfilePayload = {
   name?: unknown
   birthdate?: unknown
   age_months?: unknown
+  userPreferredName?: unknown
+  userRole?: unknown
+  userEmotionalBaseline?: unknown
+  userMainChallenges?: unknown
+  userEnergyPeakTime?: unknown
+  routineChaosMoments?: unknown
+  routineScreenTime?: unknown
+  routineDesiredSupport?: unknown
+  supportNetwork?: unknown
+  supportAvailability?: unknown
+  userContentPreferences?: unknown
+  userGuidanceStyle?: unknown
+  userSelfcareFrequency?: unknown
+  figurinha?: unknown
+  children?: unknown
 }
 
 type Eu360ProfileResponse = {
   name: string
   birthdate: string | null
   age_months: number | null
+  userPreferredName?: string
+  userRole?: string
+  userEmotionalBaseline?: string
+  userMainChallenges?: string[]
+  userEnergyPeakTime?: string
+  routineChaosMoments?: string[]
+  routineScreenTime?: string
+  routineDesiredSupport?: string[]
+  supportNetwork?: string[]
+  supportAvailability?: string
+  userContentPreferences?: string[]
+  userGuidanceStyle?: string
+  userSelfcareFrequency?: string
+  figurinha?: string
+  children?: any[]
 }
 
 const invalidResponse = (message: string, status = 400) =>
