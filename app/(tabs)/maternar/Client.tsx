@@ -133,7 +133,7 @@ export default function MaternarClient() {
                         </div>
 
                         {/* Message text */}
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed font-poppins" suppressHydrationWarning>
+                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed font-poppins">
                           &quot;{dailyMessage}&quot;
                         </p>
 
