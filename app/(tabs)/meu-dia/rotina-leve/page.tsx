@@ -133,17 +133,20 @@ export default function RotinaLevePage() {
     }
   }
 
-  const handleSaveRecipe = () => {
+  const handleSaveRecipe = (recipe: GeneratedRecipe) => {
     try {
       addItem({
         origin: 'rotina-leve',
         type: 'recipe',
-        title: 'Sugestões de receitas de hoje',
+        title: recipe.title,
         payload: {
-          description: 'Creminho de aveia rápida e banana com chia.',
+          description: recipe.description,
+          timeLabel: recipe.timeLabel,
+          ageLabel: recipe.ageLabel,
+          preparation: recipe.preparation,
         },
       })
-      console.log('[Rotina Leve] Recipe saved to planner')
+      console.log(`[Rotina Leve] Recipe "${recipe.title}" saved to planner`)
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
     }
@@ -543,7 +546,7 @@ export default function RotinaLevePage() {
                         <ul className="space-y-2 text-xs text-gray-700">
                           <li>• Mini brincadeira sensorial com objetos da sala.</li>
                           <li>• Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.</li>
-                          <li>• Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
+                          <li>��� Ritual rápido: uma respiração profunda juntas antes de recomeçar.</li>
                         </ul>
                       )}
 
