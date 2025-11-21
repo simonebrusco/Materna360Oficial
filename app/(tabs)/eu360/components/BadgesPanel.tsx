@@ -27,21 +27,21 @@ export function BadgesPanel() {
         id: 'selfcare',
         label: 'Autocuidado Ativo',
         description: 'Você praticou autocuidado durante a semana.',
-        icon: <Heart className="h-5 w-5 text-[#ff005e]" />,
+        icon: <Heart className="h-5 w-5 text-[var(--color-brand)]" />,
         unlocked: saved.includes('selfcare'),
       },
       {
         id: 'present-mom',
         label: 'Mãe Presente',
         description: 'Você registrou suas emoções no diário.',
-        icon: <MessageCircle className="h-5 w-5 text-[#ff005e]" />,
+        icon: <MessageCircle className="h-5 w-5 text-[var(--color-brand)]" />,
         unlocked: saved.includes('present-mom'),
       },
       {
         id: 'connected',
         label: 'Conexão Sem Culpa',
         description: 'Você manteve sua rotina em dia.',
-        icon: <Users className="h-5 w-5 text-[#ff005e]" />,
+        icon: <Users className="h-5 w-5 text-[var(--color-brand)]" />,
         unlocked: saved.includes('connected'),
       },
     ]
@@ -71,8 +71,8 @@ export function BadgesPanel() {
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4" suppressHydrationWarning>
-      <h2 className="text-[18px] font-semibold mb-2 text-[#2f3a56] flex items-center gap-2">
-        <Trophy className="h-5 w-5 text-[#ff005e]" /> Conquistas
+      <h2 className="text-[18px] font-semibold mb-2 text-[var(--color-text-main)] flex items-center gap-2">
+        <Trophy className="h-5 w-5 text-[var(--color-brand)]" /> Conquistas
       </h2>
       <div className="grid gap-3">
         {badges.map(badge => (
@@ -81,15 +81,15 @@ export function BadgesPanel() {
             className={cn(
               'rounded-xl border p-3 flex items-center justify-between transition-all duration-300',
               badge.unlocked
-                ? 'bg-[#ffd8e6]/50 border-[#ff005e]/40 shadow-[0_4px_12px_rgba(255,0,94,0.12)]'
-                : 'bg-white/70 border-[#e9ecf2]'
+                ? 'bg-[var(--color-soft-strong)]/50 border-[var(--color-brand)]/40 shadow-[0_4px_12px_rgba(253,37,151,0.12)]'
+                : 'bg-white/70 border-[var(--color-border-muted)]'
             )}
           >
             <div className="flex items-center gap-3">
               {badge.icon}
               <div>
-                <div className="font-medium text-[14px] text-[#2f3a56]">{badge.label}</div>
-                <div className="text-[12px] text-[#545454]">{badge.description}</div>
+                <div className="font-medium text-[14px] text-[var(--color-text-main)]">{badge.label}</div>
+                <div className="text-[12px] text-[var(--color-text-muted)]">{badge.description}</div>
               </div>
             </div>
             <button
@@ -97,7 +97,7 @@ export function BadgesPanel() {
                 'ui-press ui-ring px-3 py-1.5 text-[12px] rounded-xl border',
                 badge.unlocked
                   ? 'opacity-50 cursor-default'
-                  : 'bg-[#ff005e] text-white hover:opacity-95'
+                  : 'bg-[var(--color-brand)] text-white hover:opacity-95'
               )}
               disabled={badge.unlocked}
               onClick={() => unlock(badge.id)}
