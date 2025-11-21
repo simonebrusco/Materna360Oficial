@@ -104,6 +104,34 @@ export default function AutocuidadoInteligentePage() {
     }
   }
 
+  const handleToggleMiniRoutineAction = (action: string) => {
+    setMiniRoutineActions(prev => ({
+      ...prev,
+      [action]: !prev[action],
+    }))
+  }
+
+  const handleSaveMiniRoutine = () => {
+    try {
+      const selectedActions = Object.entries(miniRoutineActions)
+        .filter(([_, checked]) => checked)
+        .map(([action, _]) => action)
+
+      addItem({
+        origin: 'autocuidado-inteligente',
+        type: 'checklist',
+        title: 'Mini rotina de cuidado',
+        payload: {
+          actions: selectedActions,
+          description: 'Pequenos gestos que fazem diferença no seu bem-estar.',
+        },
+      })
+      console.log('[Autocuidado Inteligente] Mini routine saved to planner')
+    } catch (error) {
+      console.error('[Autocuidado Inteligente] Error saving mini routine:', error)
+    }
+  }
+
   return (
     <PageTemplate
       label="CUIDAR"
