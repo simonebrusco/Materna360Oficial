@@ -219,20 +219,20 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.28em;
-    color: rgba(47, 58, 86, 0.72);
+    color: #FF1475;
   }
 
   .SectionWrapper-title {
     font-size: 1.25rem;
     line-height: 1.35;
     font-weight: 600;
-    color: rgba(47, 58, 86, 0.95);
+    color: #3A3A3A;
   }
 
   .SectionWrapper-description {
     font-size: 0.875rem;
     line-height: 1.5;
-    color: rgba(47, 58, 86, 0.78);
+    color: #6A6A6A;
   }
 
   .SectionWrapper-header + * {
