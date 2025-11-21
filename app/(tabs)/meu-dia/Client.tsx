@@ -22,8 +22,8 @@ function generateSummaryText(mood: string | null, day: string | null): { main: R
       show: true,
       main: (
         <>
-          Hoje você está <span className="font-semibold text-[#ff005e]">{MOOD_LABELS[mood]}</span> e escolheu um dia{' '}
-          <span className="font-semibold text-[#ff005e]">{day}</span>. Que tal começar definindo suas três prioridades?
+          Hoje você está <span className="font-semibold text-[var(--color-brand)]">{MOOD_LABELS[mood]}</span> e escolheu um dia{' '}
+          <span className="font-semibold text-[var(--color-brand)]">{day}</span>. Que tal começar definindo suas três prioridades?
         </>
       ),
     }
@@ -34,7 +34,7 @@ function generateSummaryText(mood: string | null, day: string | null): { main: R
       show: true,
       main: (
         <>
-          Hoje você está <span className="font-semibold text-[#ff005e]">{MOOD_LABELS[mood]}</span>. Agora escolha que tipo de
+          Hoje você está <span className="font-semibold text-[var(--color-brand)]">{MOOD_LABELS[mood]}</span>. Agora escolha que tipo de
           dia você quer ter.
         </>
       ),
@@ -46,7 +46,7 @@ function generateSummaryText(mood: string | null, day: string | null): { main: R
       show: true,
       main: (
         <>
-          Você escolheu um dia <span className="font-semibold text-[#ff005e]">{day}</span>. Conte pra gente como você está agora.
+          Você escolheu um dia <span className="font-semibold text-[var(--color-brand)]">{day}</span>. Conte pra gente como você está agora.
         </>
       ),
     }
@@ -93,22 +93,22 @@ export function MeuDiaClient() {
   }, [])
 
   return (
-    <div className="bg-gradient-to-b from-[#FFF0F6] via-[#FFF8FC] to-white min-h-[100dvh]">
+    <div className="bg-gradient-to-b from-[var(--color-soft-bg)] via-[var(--color-page-bg)] to-[var(--color-page-bg)] min-h-[100dvh]">
       <PageTemplate label="MEU DIA" title="Seu Dia Organizado" subtitle="Um espaço para planejar com leveza.">
         <ClientOnly>
           <div className="mx-auto max-w-5xl px-4 py-8">
             {/* GREETING SECTION */}
             <Reveal delay={0}>
               <section className="space-y-4 mb-6 md:mb-8">
-                <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-snug font-poppins">
+                <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-main)] leading-snug font-poppins">
                   {greeting}
                 </h2>
 
                 {/* Mood Pills */}
                 <div className="space-y-4 md:space-y-5">
                   <div>
-                    <p className="text-xs md:text-sm font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">Como você está?</p>
-                    <p className="text-xs md:text-sm text-[#545454]/70 font-poppins">Escolha como você se sente agora.</p>
+                    <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide mb-1">Como você está?</p>
+                    <p className="text-xs md:text-sm text-[var(--color-text-muted)] font-poppins">Escolha como você se sente agora.</p>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {[
@@ -121,8 +121,8 @@ export function MeuDiaClient() {
                         onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
                         className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                           selectedMood === mood.id
-                            ? 'bg-[#ffd8e6] border-[1.5px] border-[#ff005e] text-[#ff005e] shadow-sm'
-                            : 'bg-white border border-[#e5e5e5] text-[#2f3a56] hover:border-[#ff005e]/30'
+                            ? 'bg-[var(--color-soft-strong)] border-[1.5px] border-[var(--color-brand)] text-[var(--color-brand)] shadow-sm'
+                            : 'bg-[var(--color-page-bg)] border border-[var(--color-border-soft)] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/30'
                         }`}
                       >
                         {mood.label}
@@ -134,8 +134,8 @@ export function MeuDiaClient() {
                 {/* Day Tags */}
                 <div className="space-y-4 md:space-y-5">
                   <div>
-                    <p className="text-xs md:text-sm font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">Hoje eu quero um dia...</p>
-                    <p className="text-xs md:text-sm text-[#545454]/70 font-poppins">Selecione o estilo do seu dia.</p>
+                    <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide mb-1">Hoje eu quero um dia...</p>
+                    <p className="text-xs md:text-sm text-[var(--color-text-muted)] font-poppins">Selecione o estilo do seu dia.</p>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(tag => (
@@ -144,8 +144,8 @@ export function MeuDiaClient() {
                         onClick={() => setSelectedDay(selectedDay === tag ? null : tag)}
                         className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                           selectedDay === tag
-                            ? 'bg-[#ffd8e6] border-[1.5px] border-[#ff005e] text-[#ff005e] shadow-sm'
-                            : 'bg-white border border-[#e5e5e5] text-[#2f3a56] hover:border-[#ff005e]/30'
+                            ? 'bg-[var(--color-soft-strong)] border-[1.5px] border-[var(--color-brand)] text-[var(--color-brand)] shadow-sm'
+                            : 'bg-[var(--color-page-bg)] border border-[var(--color-border-soft)] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/30'
                         }`}
                       >
                         {tag}
@@ -158,7 +158,7 @@ export function MeuDiaClient() {
                 {(() => {
                   const summary = generateSummaryText(selectedMood, selectedDay)
                   return (
-                    <div className="mt-4 text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
+                    <div className="mt-4 text-sm md:text-base text-[var(--color-text-muted)] font-poppins leading-relaxed">
                       {summary.main}
                     </div>
                   )
@@ -167,7 +167,7 @@ export function MeuDiaClient() {
             </Reveal>
 
             {/* MAIN PLANNER CARD */}
-            <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-6">
+            <div className="rounded-3xl bg-[var(--color-page-bg)] p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-6">
               {/* MAIN CONTENT SECTIONS - organized with consistent spacing */}
 
               {/* INTELLIGENT SUGGESTIONS */}
@@ -181,7 +181,7 @@ export function MeuDiaClient() {
 
             {/* Footer message */}
             <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-              <p className="text-xs md:text-sm text-[#545454] leading-relaxed font-poppins">
+              <p className="text-xs md:text-sm text-[var(--color-text-muted)] leading-relaxed font-poppins">
                 Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
               </p>
             </div>
