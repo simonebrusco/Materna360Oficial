@@ -471,14 +471,14 @@ export default function WeeklyPlannerShell() {
 
             {/* Inspirações & conteúdos salvos */}
             <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 INSPIRAÇÕES
               </span>
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                   Inspirações &amp; conteúdos salvos
                 </h2>
-                <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                   Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                 </p>
               </div>
