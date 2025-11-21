@@ -65,19 +65,19 @@ export function SavedContentDrawer({
           {/* Header */}
           <div className="flex items-start justify-between mb-5 gap-4">
             <div className="flex-1">
-              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 {originLabels[item.origin] || item.origin}
               </span>
-              <h3 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mt-3 font-poppins">
+              <h3 className="text-xl md:text-2xl font-semibold text-[var(--color-text-main)] mt-3 font-poppins">
                 {item.title}
               </h3>
-              <p className="text-xs md:text-sm text-[#545454] mt-1">
+              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
                 {capitalizeFirstLetter(formatDate(item.dateKey))}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 rounded-lg px-3 py-2 bg-[#f5f5f5] text-[#545454] font-medium text-sm hover:bg-[#efefef] transition-colors"
+              className="flex-shrink-0 rounded-lg px-3 py-2 bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] font-medium text-sm hover:bg-[var(--color-soft-bg)]/80 transition-colors"
               aria-label="Fechar"
             >
               Fechar
