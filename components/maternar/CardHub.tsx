@@ -114,8 +114,8 @@ const HUB_CARDS: CardConfig[] = [
 export default function CardHub() {
   return (
     <section className="mt-8 md:mt-10">
-      {/* First 9 cards in 3x3 grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-4 sm:gap-y-4 md:gap-x-6 md:gap-y-8 px-2 md:px-4 max-w-full mx-auto mb-6 md:mb-8">
+      {/* First 9 cards: 2 columns on mobile, 3 columns on desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-2 md:px-4 max-w-full mx-auto mb-6 md:mb-8">
         {HUB_CARDS.slice(0, 9).map((card, index) => (
           <div key={card.id} className="h-full" suppressHydrationWarning>
             <MaternarFeatureCard
