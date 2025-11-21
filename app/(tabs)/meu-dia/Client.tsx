@@ -104,7 +104,7 @@ export function MeuDiaClient() {
           <div className="mx-auto max-w-5xl px-4 py-8">
             {/* GREETING SECTION */}
             <Reveal delay={0}>
-              <section className="space-y-4 mb-6 md:mb-8" suppressHydrationWarning>
+              <section className="space-y-4 mb-6 md:mb-8">
                 <h2 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-snug font-poppins">
                   {greeting}
                 </h2>
