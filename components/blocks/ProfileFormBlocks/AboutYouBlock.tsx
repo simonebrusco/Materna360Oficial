@@ -61,23 +61,12 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                     isActive ? 'bg-primary-100' : 'bg-gray-100'
                   }`}
                 >
-                  {sticker.asset.startsWith('http') ? (
-                    <img
-                      src={sticker.asset}
-                      alt={sticker.label}
-                      className="h-9 w-9 object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Image
-                      src={sticker.asset}
-                      alt={sticker.label}
-                      width={128}
-                      height={128}
-                      className="h-9 w-9 object-contain"
-                      loading="lazy"
-                    />
-                  )}
+                  <img
+                    src={sticker.asset}
+                    alt={sticker.label}
+                    className="h-9 w-9 object-contain"
+                    loading="lazy"
+                  />
                 </span>
                 <span className="text-[10px] font-semibold text-gray-900 line-clamp-2">{sticker.label}</span>
                 <span className="text-[9px] text-gray-500 line-clamp-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
