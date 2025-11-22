@@ -315,44 +315,49 @@ export default function CuidarComAmorPage() {
 
           {/* BLOCK 3 — Cuidados do Dia */}
           <Reveal delay={100}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2">
-                  Cuidados do Dia
-                </h3>
-                <p className="text-sm md:text-base text-[#545454]">
-                  Acompanhe cuidados importantes de forma leve.
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-sm text-[#2f3a56] font-medium mb-3">
-                  Marque o que você já conseguiu cuidar hoje:
-                </p>
-                <div className="space-y-3">
-                  {CARE_ITEMS.map((item) => (
-                    <label
-                      key={item}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-white/60 hover:bg-white/80 transition-all duration-200 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={careData.checkedItems.includes(item)}
-                        onChange={() => handleCareToggle(item)}
-                        className="w-5 h-5 rounded-lg accent-[#ff005e] cursor-pointer"
-                      />
-                      <span className="text-sm text-[#2f3a56]">{item}</span>
-                    </label>
-                  ))}
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cuidados do Dia
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Acompanhe cuidados importantes de forma leve.
+                  </p>
                 </div>
-              </div>
 
-              <button
-                onClick={handleSaveCare}
-                className="w-full px-4 py-3 rounded-lg bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 transition-all duration-200"
-              >
-                Salvar cuidados de hoje
-              </button>
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                    Marque o que você já conseguiu cuidar hoje:
+                  </p>
+                  <div className="space-y-2.5 flex-1">
+                    {CARE_ITEMS.map((item) => (
+                      <label
+                        key={item}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={careData.checkedItems.includes(item)}
+                          onChange={() => handleCareToggle(item)}
+                          className="w-5 h-5 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer accent-[#ff005e]"
+                        />
+                        <span className="text-sm text-[#2f3a56] flex-1 font-medium">{item}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveCare}
+                  className="w-full mt-auto"
+                >
+                  Salvar cuidados de hoje
+                </Button>
+              </div>
             </SoftCard>
           </Reveal>
 
