@@ -1,4 +1,4 @@
-// lib/ai/types.ts
+// app/lib/ai/types.ts
 
 export type AIType = 'rotina' | 'emocional' | 'autocuidado' | 'biblioteca' | 'planner'
 
