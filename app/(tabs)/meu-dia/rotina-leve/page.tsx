@@ -412,23 +412,29 @@ export default function RotinaLevePage() {
             {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Ideias Rápidas - Collapsed by default */}
-              <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] transition-all duration-200">
-                <h3 className="text-base font-semibold text-gray-900">Ideias Rápidas</h3>
-                <p className="mt-1 text-sm text-gray-600">
-                  Inspirações simples para deixar o dia mais leve.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setOpenIdeas((prev) => !prev)}
-                  className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                >
-                  {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
-                </button>
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                      Ideias Rápidas
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Inspirações simples para deixar o dia mais leve.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenIdeas((prev) => !prev)}
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                  >
+                    {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
+                  </button>
 
-                {openIdeas && (
-                  <div className="mt-4 space-y-3 text-xs">
-                    <div>
-                      <p className="mb-1 font-medium text-gray-800">Tempo disponível</p>
+                  {openIdeas && (
+                    <div className="space-y-3 text-xs flex-1">
+                      <div>
+                        <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
@@ -436,10 +442,10 @@ export default function RotinaLevePage() {
                             setTempoDisponivel((current) => (current === '5' ? null : '5'))
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tempoDisponivel === '5'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '5'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           5 min
@@ -451,10 +457,10 @@ export default function RotinaLevePage() {
                             setTempoDisponivel((current) => (current === '10' ? null : '10'))
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tempoDisponivel === '10'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '10'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           10 min
@@ -466,10 +472,10 @@ export default function RotinaLevePage() {
                             setTempoDisponivel((current) => (current === '20' ? null : '20'))
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tempoDisponivel === '20'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '20'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           20 min
@@ -481,19 +487,19 @@ export default function RotinaLevePage() {
                             setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tempoDisponivel === '30+'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '30+'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           30+
                         </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <p className="mb-1 font-medium text-gray-800">Com quem</p>
+                      <div>
+                        <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
@@ -501,10 +507,10 @@ export default function RotinaLevePage() {
                             setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            comQuem === 'so-eu'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              comQuem === 'so-eu'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Só eu
@@ -518,10 +524,10 @@ export default function RotinaLevePage() {
                             )
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            comQuem === 'eu-e-meu-filho'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              comQuem === 'eu-e-meu-filho'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Eu e meu filho
@@ -535,19 +541,19 @@ export default function RotinaLevePage() {
                             )
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            comQuem === 'familia-toda'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              comQuem === 'familia-toda'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Família toda
                         </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <p className="mb-1 font-medium text-gray-800">Tipo de ideia</p>
+                      <div>
+                        <p className="mb-1 font-medium text-[#2f3a56]">Tipo de ideia</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
@@ -557,10 +563,10 @@ export default function RotinaLevePage() {
                             )
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tipoIdeia === 'brincadeira'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'brincadeira'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Brincadeira
@@ -574,10 +580,10 @@ export default function RotinaLevePage() {
                             )
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tipoIdeia === 'organizacao'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'organizacao'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Organização da casa
@@ -591,10 +597,10 @@ export default function RotinaLevePage() {
                             )
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tipoIdeia === 'autocuidado'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'autocuidado'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Autocuidado
@@ -608,68 +614,71 @@ export default function RotinaLevePage() {
                             )
                           }
                           className={clsx(
-                            'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
-                            tipoIdeia === 'receita-rapida'
-                              ? 'border-primary-300 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200'
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'receita-rapida'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                           )}
                         >
                           Receita rápida
                         </button>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateIdeas}
+                        disabled={ideasLoading}
+                        className="w-full"
+                      >
+                        {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
+                      </Button>
+
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
+                        <p className="text-xs font-medium text-[#2f3a56] mb-2">
+                          Sugestões para agora
+                        </p>
+
+                        {ideasLoading && (
+                          <p className="text-[11px] text-[#545454]">
+                            Pensando em pequenas ações que cabem no seu momento…
+                          </p>
+                        )}
+
+                        {!ideasLoading && ideas && (
+                          <ul className="space-y-2 text-xs text-[#545454]">
+                            {ideas.map((idea) => (
+                              <li key={idea.id}>• {idea.text}</li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {!ideasLoading && !ideas && (
+                          <ul className="space-y-2 text-xs text-[#545454]">
+                            <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                            <li>
+                              • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
+                            </li>
+                            <li>
+                              • Ritual rápido: uma respiração profunda juntas antes de recomeçar.
+                            </li>
+                          </ul>
+                        )}
+
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSaveIdeia}
+                          className="w-full mt-3"
+                        >
+                          Salvar no planner
+                        </Button>
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleGenerateIdeas}
-                      disabled={ideasLoading}
-                      className="mt-3 w-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-6 py-2.5 text-base font-semibold text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                    >
-                      {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
-                    </button>
-
-                    <div className="rounded-2xl bg-gray-50 p-3">
-                      <p className="text-xs font-medium text-gray-800 mb-2">
-                        Sugestões para agora
-                      </p>
-
-                      {ideasLoading && (
-                        <p className="text-[11px] text-gray-500">
-                          Pensando em pequenas ações que cabem no seu momento…
-                        </p>
-                      )}
-
-                      {!ideasLoading && ideas && (
-                        <ul className="space-y-2 text-xs text-gray-700">
-                          {ideas.map((idea) => (
-                            <li key={idea.id}>• {idea.text}</li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {!ideasLoading && !ideas && (
-                        <ul className="space-y-2 text-xs text-gray-700">
-                          <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                          <li>
-                            • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
-                          </li>
-                          <li>
-                            • Ritual rápido: uma respiração profunda juntas antes de recomeçar.
-                          </li>
-                        </ul>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleSaveIdeia}
-                        className="mt-3 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
-                      >
-                        Salvar no planner
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </SoftCard>
 
               {/* Inspirações do Dia - Collapsed by default */}
               <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] transition-all duration-200">
