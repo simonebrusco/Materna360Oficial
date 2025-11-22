@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { AppLogo } from '@/components/ui/AppLogo';
+import Link from 'next/link'
+import { AppLogo } from '@/components/ui/AppLogo'
 
-export default function SiteHeader() {
+export function SiteHeader() {
   return (
     <header
       className="
