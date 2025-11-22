@@ -410,7 +410,7 @@ export default function RotinaLevePage() {
               </div>
             </SoftCard>
 
-            {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
+            {/* 2-Column Grid: Ideias Rápidas + Inspira��ões do Dia */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Ideias Rápidas - Collapsed by default */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
@@ -779,10 +779,7 @@ export default function RotinaLevePage() {
             </div>
           </div>
 
-          {/* Local Mini-Footer */}
-          <p className="mt-8 text-center text-[11px] text-gray-500">
-            Organize seu dia com leveza. Você merece.
-          </p>
+          <MotivationalFooter routeKey="meu-dia-rotina-leve" />
         </div>
       </ClientOnly>
     </PageTemplate>
