@@ -253,18 +253,20 @@ export default function AutocuidadoInteligentePage() {
       subtitle="Cuidados que cabem na rotina, feitos na sua medida."
     >
       <ClientOnly>
-        <div className="max-w-5xl mx-auto px-4 pb-12 md:pb-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div className="max-w-6xl mx-auto px-4 pb-12 md:pb-16">
+          {/* Grid: 2x2 mobile, 3+ desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
             {/* CARD 1 — Meu Ritmo Hoje */}
             <Reveal delay={0}>
               <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="space-y-5 flex flex-col h-full">
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                       <AppIcon name="sparkles" size={18} className="text-[#ff005e]" decorative />
                       Meu ritmo hoje
                     </h3>
-                    <p className="text-sm text-[#545454]">
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                       Conte pra gente que tipo de dia você está vivendo.
                     </p>
                   </div>
@@ -280,10 +282,10 @@ export default function AutocuidadoInteligentePage() {
                           <button
                             key={ritmo}
                             onClick={() => setSelectedRitmo(selectedRitmo === ritmo ? null : ritmo)}
-                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                               selectedRitmo === ritmo
                                 ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
-                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/20'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             }`}
                           >
                             {ritmo.charAt(0).toUpperCase() + ritmo.slice(1)}
@@ -300,8 +302,8 @@ export default function AutocuidadoInteligentePage() {
                       <textarea
                         value={ritmoNota}
                         onChange={(e) => setRitmoNota(e.target.value)}
-                        placeholder="Se quiser, escreva um pouco sobre o seu ritmo…"
-                        className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/50 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
+                        placeholder="Se quiser, escreva um pouco…"
+                        className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/20 resize-none"
                         rows={3}
                       />
                     </div>
@@ -309,7 +311,7 @@ export default function AutocuidadoInteligentePage() {
 
                   <button
                     onClick={handleSalvarRitmo}
-                    className="w-full px-4 py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30"
+                    className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 mt-auto"
                   >
                     Salvar meu ritmo
                   </button>
@@ -320,13 +322,14 @@ export default function AutocuidadoInteligentePage() {
             {/* CARD 2 — Mini Rotina de Cuidado */}
             <Reveal delay={50}>
               <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="space-y-5 flex flex-col h-full">
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                       <AppIcon name="heart" size={18} className="text-[#ff005e]" decorative />
                       Mini rotina de cuidado
                     </h3>
-                    <p className="text-sm text-[#545454]">
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                       Escolha pequenos gestos que caibam no seu momento.
                     </p>
                   </div>
@@ -335,7 +338,7 @@ export default function AutocuidadoInteligentePage() {
                     {MINI_ROTINA_ITEMS.map((item) => (
                       <label
                         key={item}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/30"
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
                       >
                         <input
                           type="checkbox"
@@ -350,9 +353,9 @@ export default function AutocuidadoInteligentePage() {
 
                   <button
                     onClick={handleSalvarRotina}
-                    className="w-full px-4 py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30"
+                    className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 mt-auto"
                   >
-                    Salvar rotina de cuidado
+                    Salvar rotina
                   </button>
                 </div>
               </SoftCard>
@@ -361,14 +364,15 @@ export default function AutocuidadoInteligentePage() {
             {/* CARD 3 — Saúde & Bem-Estar */}
             <Reveal delay={100}>
               <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="space-y-5 flex flex-col h-full">
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                       <AppIcon name="zap" size={18} className="text-[#ff005e]" decorative />
                       Saúde & bem-estar
                     </h3>
-                    <p className="text-sm text-[#545454]">
-                      Registre como seu corpo está hoje, sem culpa.
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Registre como seu corpo está hoje.
                     </p>
                   </div>
 
@@ -386,10 +390,10 @@ export default function AutocuidadoInteligentePage() {
                           <button
                             key={label}
                             onClick={() => setHidratacao(hidratacao === idx ? null : idx)}
-                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                               hidratacao === idx
                                 ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
-                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/20'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             }`}
                           >
                             {label}
@@ -408,10 +412,10 @@ export default function AutocuidadoInteligentePage() {
                           <button
                             key={label}
                             onClick={() => setSono(sono === label ? null : label)}
-                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                               sono === label
                                 ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
-                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/20'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             }`}
                           >
                             {label}
@@ -436,10 +440,10 @@ export default function AutocuidadoInteligentePage() {
                             onClick={() =>
                               setAlimentacao(alimentacao === (key as typeof alimentacao) ? null : (key as typeof alimentacao))
                             }
-                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                               alimentacao === key
                                 ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
-                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/20'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             }`}
                           >
                             {label}
@@ -451,9 +455,9 @@ export default function AutocuidadoInteligentePage() {
 
                   <button
                     onClick={handleSalvarSaude}
-                    className="w-full px-4 py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30"
+                    className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 mt-auto"
                   >
-                    Salvar saúde & bem-estar
+                    Salvar saúde
                   </button>
                 </div>
               </SoftCard>
@@ -462,20 +466,21 @@ export default function AutocuidadoInteligentePage() {
             {/* CARD 4 — Para Você Hoje */}
             <Reveal delay={150}>
               <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="space-y-5 flex flex-col h-full">
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                      <AppIcon name="lightbulb" size={18} className="text-[#9B4D96]" decorative />
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                      <AppIcon name="lightbulb" size={18} className="text-[#6A2C70]" decorative />
                       Para você hoje
                     </h3>
-                    <p className="text-sm text-[#545454]">
-                      Sugestões carinhosas para você não esquecer de si mesma.
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Sugestões carinhosas só para você.
                     </p>
                   </div>
 
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-4">
                     {sugestaoAtual ? (
-                      <div className="p-5 rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/50 space-y-4">
+                      <div className="p-4 rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/50 space-y-3">
                         <p className="text-sm md:text-base leading-relaxed text-[#2f3a56] font-medium">
                           {sugestaoAtual}
                         </p>
@@ -483,13 +488,13 @@ export default function AutocuidadoInteligentePage() {
                           onClick={handleGerarSugestao}
                           className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
                         >
-                          Gerar outra <AppIcon name="refresh-cw" size={14} decorative />
+                          Outra sugestão <AppIcon name="refresh-cw" size={14} decorative />
                         </button>
                       </div>
                     ) : (
-                      <div className="p-5 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/30 text-center space-y-2">
+                      <div className="p-4 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/30 text-center">
                         <p className="text-sm text-[#545454]">
-                          Clique em &quot;Gerar sugestão&quot; para descobrir um cuidado especial feito só para você.
+                          Clique abaixo para descobrir um cuidado especial feito só para você.
                         </p>
                       </div>
                     )}
@@ -499,14 +504,14 @@ export default function AutocuidadoInteligentePage() {
                     {!sugestaoAtual ? (
                       <button
                         onClick={handleGerarSugestao}
-                        className="w-full px-4 py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30"
+                        className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20"
                       >
                         Gerar sugestão
                       </button>
                     ) : (
                       <button
                         onClick={handleSalvarSugestao}
-                        className="w-full px-4 py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30"
+                        className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20"
                       >
                         Salvar essa sugestão
                       </button>
