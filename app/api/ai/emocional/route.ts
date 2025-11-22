@@ -1,6 +1,6 @@
 // app/api/ai/emocional/route.ts
 import { NextRequest } from 'next/server'
-import { createStubAIResponse } from '@/lib/ai/handlers'
+import { createStubAIResponse } from '@/app/lib/ai/handlers'
 
 export async function POST(req: NextRequest) {
   let body: unknown = null
