@@ -1,165 +1,170 @@
+# 🚀 Materna360 — Deployment Checklist (cosmos-verse → main)
+**Versão:** Março/2025  
+**Ambiente:** cosmos-verse (dev) → main (prod)  
+**Responsável:** Simone Brusco  
+**Status:** Oficial
 
-# 🚀 Deployment Checklist — cosmos-verse (P2 Complete)
-
-**Versão:** v0.2.0-p2-staging1  
-**Data:** 11/12/2025  
-**Responsável:** @simonebrusco  
-**Branch:** `cosmos-verse`  
-**Status:** 🟢 P2 – Intelligence & Personalization ✅ COMPLETO / Pronto para P3 (QA & Polish)
-
-
-## 🔨 Pré-deploy
-- [x] Branch: `cosmos-verse`
-- [x] Todas as PRs de P2 mergeadas
-- [x] CI: `pnpm run build` ✅ (sem warnings críticos)
-- [x] TypeScript: `tsc --noEmit` ✅
-- [x] ENVs Preview verificados:
-  - [x] `NEXT_PUBLIC_FF_MATERNAR_HUB=1`
-  - [x] `NEXT_PUBLIC_FF_EMOTION_TRENDS=1`
-  - [x] `NEXT_PUBLIC_FF_COACH_V1=1` (v0.3 ativo)
-  - [x] `NEXT_PUBLIC_FF_EXPORT_PDF=1`
-  - [x] `NEXT_PUBLIC_FF_PAYWALL_MODAL=1`
-  - [x] `NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1` (novo)
-- [x] Node 20 + Corepack ativo
-- [x] Sem erros de hidratação em SSR/Fusion
-- [x] Builder CSP habilitado
-
-# 🚀 Deployment Checklist — cosmos-verse (Staging)
-
-**Versão:** v0.2.0-p2-staging1  
-**Data:** 11/11/2025  
-**Responsável:** @simonebrusco  
-**Branch:** `cosmos-verse`  
-**Status:** 🟢 Deploy Staging concluído / QA inicial em progresso  
+Este checklist garante que NENHUMA alteração crítica do Materna360 chegue ao main sem passar por auditoria visual, técnica e funcional, mantendo o padrão premium e a estabilidade do app.
 
 ---
 
-## �� Pré-deploy
-- [x] Branch: `cosmos-verse`
-- [x] PRs #143 e #145 mergeados
-- [x] CI: `pnpm run build` ✅
-- [x] ENVs Preview verificados (`NEXT_PUBLIC_FF_PDF_EXPORT=1`, `NEXT_PUBLIC_FF_COACH_V1=1`, `NEXT_PUBLIC_FF_INTERNAL_INSIGHTS=1`)
-- [x] Node 20 + Corepack ativo
-- [x] Flags habilitadas:  
-  `FF_LAYOUT_V1`, `FF_MATERNAR_HUB`, `FF_PREMIUM_ENABLED`
+# 🧱 1. Pré-Deploy — Verificações Obrigatórias
 
+### ✔ 1.1 Build
+- [ ] `pnpm install` sem warnings críticos  
+- [ ] `pnpm typecheck` sem erros  
+- [ ] `pnpm build` concluído com sucesso  
+- [ ] Sem mensagens de hidratação suspeitas  
 
----
+### ✔ 1.2 Telemetria
+- [ ] Nenhum evento foi removido  
+- [ ] `page_view` funcionando  
+- [ ] `nav_click` funcionando  
+- [ ] `card_click` funcionando  
+- [ ] Eventos especiais funcionando:  
+  - [ ] `coach_*`  
+  - [ ] `emotion_trend`  
+  - [ ] `pdf_*`  
+  - [ ] `plan_*`  
 
-## ⚙️ Deploy
-- [x] Deploy Vercel a partir de `cosmos-verse`
-- [x] Deploy ID anotado (rollback fácil)
-- [x] Logs de build limpos e sem TypeErrors
-- [x] CSP habilitado para Builder (`frame-ancestors 'self' https://builder.io`)
+### ✔ 1.3 Rotas
+Todas as rotas precisam abrir **sem erro 404**:
 
----
-
-## 🧪 Smoke Test (rotas principais)
-| Rota | Status | Verificação |
-|-------|---------|--------------|
-
-| `/meu-dia` | ✅ | Planner, check-in de humor, Coach v0.3, inactivity reminder, gráfico SVG |
-| `/cuidar` | ✅ | Seções carregam sem erro; áudios funcionais |
-| `/maternar` | ✅ | Hub central, grid 6-cards, navegação suave |
-| `/descobrir` | ✅ | Filtros <100ms, empty-state, save-for-later UX |
-| `/eu360` | ✅ | Weekly insight, Coach v0.3, PDF v2 (premium gated), paywall modal |
-| `/admin/insights` | ✅ | Dashboard local, KPIs, filters, chart, clear button (flag-gated) |
-| `/builder-embed` | ✅ | Renderiza sem erro de hidratação |
-
----
-
-## 📊 Telemetria (Unified & Dashboard)
-- [x] **Basic Events**: `page_view`, `nav_click`, `card_click`
-- [x] **Coach v0.3**: `coach_v3_shown` (com `patternKey`), `coach_v3_cta_click`
-- [x] **PDF & Premium**: `pdf_export_attempt`, `paywall_shown`, `plan_*` events
-- [x] **Engagement**: `discover_save`, `reminder_inactivity_*`, `coach_v3_*`
-- [x] **Dashboard `/admin/insights`**:
-  - [x] KPIs (total events, unique users, top events)
-  - [x] Filters (date range, event type)
-  - [x] Real-time table view
-  - [x] Time-series chart
-  - [x] Clear telemetry button
-- [x] LocalStorage persistence (não requer servidor)
+| Rota | Status |
+|------|--------|
+| /meu-dia | [ ] |
+| /meu-dia/rotina-leve | [ ] |
+| /meu-dia/como-estou-hoje | [ ] |
+| /maternar | [ ] |
+| /maternar/cuidar-com-amor | [ ] |
+| /maternar/minhas-conquistas | [ ] |
+| /maternar/biblioteca-materna | [ ] |
+| /cuidar/meu-bem-estar | [ ] |
+| /eu360 | [ ] |
+| /admin/insights (preview-only) | [ ] |
 
 ---
 
-## 📄 PDF v2 / Premium Gating
-- [x] Export v2 funcional (capa dinâmica, sumário, seções)
-- [x] Gating por plano (`m360_premium` localStorage)
-- [x] Paywall intercept ativo e elegante
-- [x] Premium unlock permite download direto
-- [x] Telemetry captura `plan_` events e `paywall_shown`
+# 🎨 2. Padrão Visual Premium (QA Rápido)
 
-| `/builder-embed` | ✅ | Renderiza sem erro de hidratação |
-| `/meu-dia` | ✅ | Planner, humor e gráfico SVG funcionais |
-| `/eu360` | ✅ | Coach + export PDF (window.print) |
-| `/descobrir` | ✅ | Filtros <100ms, empty-state OK |
-| `/maternar` | ✅ | Hub central sem warnings |
-| `/cuidar` | ⚙️ | Carrega; falta persistência do diário infantil |
+### ✔ 2.1 Hero (PageTemplate)
+- [ ] Label em CAPS  
+- [ ] Título curto  
+- [ ] Subtítulo acolhedor  
 
----
+### ✔ 2.2 Grid
+- [ ] 1 coluna no mobile  
+- [ ] 2 colunas no desktop  
 
-## 📊 Telemetria (Network)
-- [x] `page_view` em cada rota  
-- [x] `nav_click` ao trocar abas  
-- [x] `card_click` nos hubs  
-- [x] `coach` ao gerar/atualizar sugestão  
-- [x] `pdf_export_attempt` e `paywall_shown` no fluxo de export  
+### ✔ 2.3 SoftCards
+- [ ] Bordas 3XL  
+- [ ] Sombras leves  
+- [ ] Ícones em ameixa  
+- [ ] Tags rosas  
+- [ ] Nenhum card com layout antigo  
 
 ---
 
-## 📄 PDF / Paywall
-- [x] Export v1 funcional (`window.print`)  
-- [x] Capa com dados do Coach Materno  
-- [x] Paywall intercept ativo e elegante  
+# 🧩 3. Mini-Hubs — Validação Completa
 
+### ✔ Rotina Leve
+- [ ] Inputs funcionando  
+- [ ] Botões padrão (finos e suaves)  
+- [ ] Salvar no planner funcionando  
 
----
+### ✔ Como Estou Hoje
+- [ ] Humor e energia registrando  
+- [ ] Resumo inteligente carregando  
+- [ ] Sem duplicação  
 
-## ✅ Pós-deploy
-- [x] Tag criada: `v0.2.0-p2-staging1`
+### ✔ Autocuidado Inteligente
+- [ ] Blocos organizados  
+- [ ] Nada de emojis  
+- [ ] Botões do novo padrão  
 
-- [x] Changelog completo de P2 incluído
-- [x] PRs mergidas e branches removidas
-- [x] Documentação atualizada (PROJECT_TRACKER, QA_CHECKLIST, ENV, README)
+### ✔ Cuidar com Amor
+- [ ] Tags corretas  
+- [ ] Cards limpos  
+- [ ] Fluxos não duplicados  
 
----
+### ✔ Minhas Conquistas
+- [ ] Modal funcionando  
+- [ ] Estrutura de gamificação estável  
 
-### 📘 Release Notes — v0.2.0-p2-staging1 (P2 Complete)
-
-#### 🎯 P2 – Intelligence & Personalization
-- **Coach Materno v0.3** — 5 padrões contextuais com mensagens em PT-BR puras (low_energy_week, inactivity, trend_up, balanced, no_data)
-- **Weekly Emotional Insight** em /eu360 — Resumo semanal de humor/energia com tom empático
-- **Inactivity Reminder** em /meu-dia — Nudge suave após 3+ dias sem entrada (acolhedor, sem culpa)
-- **Premium PDF v2** — Capa dinâmica, sumário das semanas, seções personalizadas (gated por plan)
-- **Internal Telemetry Dashboard** (`/admin/insights`) — KPIs, filtros, gráfico time-series, botão clear (local-only, preview-only)
-- **Unified Telemetry** — Events completos: page_view, nav_click, card_click, coach*, pdf*, paywall*, plan_*, discover_save, reminder_inactivity_*
-- **TypeScript & Build** — Clean types, sem erros de compilação, SSR e Fusion-safe
-
-#### 🔧 Technical Improvements
-- Strict guards para SSR/Fusion (localStorage, window, document)
-- Pattern-based message builder (buildCoachMessage)
-- Local telemetry persistence (não requer servidor)
-- Feature flag: NEXT_PUBLIC_FF_INTERNAL_INSIGHTS
-
-#### 📝 Documentation
-- PROJECT_TRACKER.md atualizado com P2 concluído
-- QA_CHECKLIST.md com testes por aba e features
-- ENV.md com nova flag INTERNAL_INSIGHTS
-- README.md com seção "What's in P2"
-- DEPLOYMENT_CHECKLIST atualizado
-
-- [x] Changelog curto incluído no commit
-- [x] PRs antigos (ex.: #144) encerrados como obsoletos
-- [x] Branches “fix/*” removidas após merge
-- [ ] Issues abertas para pendências menores  
+### ✔ Biblioteca Materna
+- [ ] Cards carregam corretamente  
+- [ ] Filtros estáveis  
+- [ ] Layout premium aplicado  
 
 ---
 
-### 📘 Release Notes — v0.2.0-p2-staging1
-- **Coach Materno v0.2** — persistência de foco/tom e sugestões empáticas  
-- **PDF Export v1** — capa integrada ao coach e export direta  
-- **Builder Preview** — BottomNav estável e sem erro de hidratação  
-- **Telemetria unificada** — nav/page/card/coach/pdf/paywall  
-- **Correções** — tipos `Child` e `PlanTier`, MessageOfDay  
+# 🧠 4. Inteligência (IA)
 
+- [ ] Ideias rápidas funcionando  
+- [ ] Inspirações funcionando  
+- [ ] Sugestões de leveza funcionando  
+- [ ] Nenhum endpoint retornando erro  
+
+---
+
+# 🔒 5. Segurança & Guardrails
+
+- [ ] Nenhum arquivo proibido alterado:  
+  - `app/layout.tsx`  
+  - `BottomNav.tsx`  
+  - `PageHeader.tsx`  
+  - `SoftCard.tsx`  
+  - `telemetry.ts`  
+  - `app/api/*`  
+
+- [ ] Nenhuma cor fora do Design System  
+- [ ] Nenhum emoji adicionado  
+
+---
+
+# 🔍 6. Testes de Responsividade
+
+### Mobile:
+- [ ] Todos os mini-hubs abrem  
+- [ ] 2x2 no Maternar  
+- [ ] Footer premium renderiza correto  
+
+### Desktop:
+- [ ] Grids centralizados  
+- [ ] Cards alinhados  
+- [ ] Espaçamentos corretos  
+
+---
+
+# 🧪 7. Testes cruzados de navegação
+
+- [ ] Ir e voltar entre mini-hubs não quebra layout  
+- [ ] Abrir modais e fechar sem erro  
+- [ ] Navegar via footer funcionando  
+
+---
+
+# ⛳ 8. Deploy para Main
+
+Quando estiver **tudo verde**:
+
+1. [ ] Abrir PR cosmos-verse → main  
+2. [ ] Revisar diffs  
+3. [ ] Merge manual  
+4. [ ] Verificar build do Vercel (Preview + Production)  
+5. [ ] Testar todas as rotas na produção  
+6. [ ] Atualizar CHECKLIST VIVO  
+
+---
+
+# 🎉 Conclusão
+
+Este checklist mantém o Materna360:
+
+✔ Premium  
+✔ Estável  
+✔ Coerente  
+✔ Seguro  
+✔ Pronto para escalar  
+
+Sempre execute este checklist **antes de qualquer merge para main**.
