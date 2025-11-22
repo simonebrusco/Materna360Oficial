@@ -28,6 +28,7 @@ export function AppLogo({
         width={width}
         height={height}
         priority={priority}
+        fetchPriority={priority ? 'high' : 'auto'}
       />
     </div>
   )
