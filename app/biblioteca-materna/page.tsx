@@ -164,8 +164,7 @@ export default function BibliotecaMaternaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {PLACEHOLDER_MATERIALS.map((material, index) => (
                 <Reveal key={material.id} delay={100 + index * 30}>
-                  <Link href="#" className="block h-full">
-                    <SoftCard className="rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg overflow-hidden">
+                  <SoftCard className="rounded-3xl p-5 sm:p-6 flex flex-col h-full bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:shadow-[0_8px_20px_rgba(255,0,94,0.1)] overflow-hidden">
                       {/* Thumbnail Placeholder */}
                       <div className="mb-4 h-32 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-[var(--color-soft-strong)] rounded-2xl flex items-center justify-center">
                         <AppIcon
@@ -195,13 +194,15 @@ export default function BibliotecaMaternaPage() {
                       </div>
 
                       {/* CTA */}
-                      <div className="flex justify-end mt-auto">
-                        <span className="text-sm font-medium text-[var(--color-brand)] inline-flex items-center gap-1">
-                          Acessar →
-                        </span>
-                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => (window.location.href = '#')}
+                        className="w-full mt-auto"
+                      >
+                        Acessar
+                      </Button>
                     </SoftCard>
-                  </Link>
                 </Reveal>
               ))}
             </div>
