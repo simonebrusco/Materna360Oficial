@@ -11,36 +11,75 @@ import { track } from '@/app/lib/telemetry'
 
 interface PlanFeature {
   label: string
-  included: boolean
 }
 
-const PLAN_FEATURES: Record<string, PlanFeature[]> = {
-  free: [
-    { label: 'Planner diário', included: true },
-    { label: 'Registro de humor e energia', included: true },
-    { label: 'Atividades do dia', included: true },
-    { label: 'Anotações rápidas', included: true },
-    { label: 'Exportar PDF', included: false },
-    { label: 'Insights avançados', included: false },
-    { label: 'Modo offline', included: false },
-  ],
-  premium: [
-    { label: 'Planner diário', included: true },
-    { label: 'Registro de humor e energia', included: true },
-    { label: 'Atividades do dia', included: true },
-    { label: 'Anotações rápidas', included: true },
-    { label: 'Exportar PDF', included: true },
-    { label: 'Insights avançados', included: true },
-    { label: 'Modo offline', included: true },
-  ],
-}
+// Plan configurations
+const PLANS = [
+  {
+    id: 'essencial',
+    name: 'Essencial',
+    badge: 'Seu plano atual',
+    price: 'R$0',
+    pricePeriod: '/mês',
+    priceNote: 'Sem necessidade de cartão de crédito',
+    subtitle: 'Essencial para começar',
+    features: [
+      { label: 'Planner diário' },
+      { label: 'Registro de humor e energia' },
+      { label: 'Atividades do dia' },
+      { label: 'Anotações rápidas' },
+    ],
+    buttonText: 'Seu plano atual',
+    buttonVariant: 'secondary' as const,
+    highlighted: false,
+    badgeIcon: 'star' as const,
+  },
+  {
+    id: 'materna-plus',
+    name: 'Materna+',
+    badge: 'Recomendado',
+    price: 'R$29,90',
+    pricePeriod: '/mês',
+    priceNote: 'Teste 7 dias grátis, sem compromisso',
+    subtitle: 'Tudo liberado + recursos avançados',
+    features: [
+      { label: 'Tudo do Essencial' },
+      { label: 'Exportar PDF' },
+      { label: 'Insights avançados' },
+      { label: 'Modo offline' },
+    ],
+    buttonText: 'Upgrade agora',
+    buttonVariant: 'primary' as const,
+    highlighted: true,
+    badgeIcon: 'sparkles' as const,
+  },
+  {
+    id: 'materna-360',
+    name: 'Materna+ 360',
+    badge: 'Completo',
+    price: 'R$49,90',
+    pricePeriod: '/mês',
+    priceNote: 'Acesso à biblioteca completa',
+    subtitle: 'Tudo do Materna+ + conteúdos exclusivos',
+    features: [
+      { label: 'Tudo do Materna+' },
+      { label: 'Biblioteca Materna completa' },
+      { label: 'Conteúdos premium (aulas, guias, áudios)' },
+      { label: 'Novidades em primeira mão' },
+    ],
+    buttonText: 'Quero o completo',
+    buttonVariant: 'primary' as const,
+    highlighted: false,
+    badgeIcon: 'crown' as const,
+  },
+]
 
 export default function PlanosPage() {
   const [open, setOpen] = React.useState(false)
   const plan = typeof window !== 'undefined' ? getPlan() : 'free'
 
-  const handleViewPlans = (planName: string) => {
-    track('paywall_view', { plan: planName, source: 'planos_page' })
+  const handleViewPlans = (planId: string) => {
+    track('paywall_view', { plan: planId, source: 'planos_page' })
   }
 
   const handleUpgradeClick = () => {
@@ -48,206 +87,184 @@ export default function PlanosPage() {
     setOpen(true)
   }
 
+  const currentPlanId = plan === 'premium' ? 'materna-plus' : 'essencial'
+
   return (
     <SectionWrapper className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 pb-24">
       {/* Header */}
       <header className="mb-8 sm:mb-12 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-support-1 mb-2">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-text-main)] mb-2">
           Escolha seu plano
         </h1>
-        <p className="text-sm sm:text-base text-support-2 max-w-2xl mx-auto">
+        <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-2xl mx-auto">
           Desbloqueie o potencial completo do Materna360 com recursos premium.
-          {plan === 'premium' && (
-            <span className="block mt-2 text-primary font-semibold">
-              ✓ Você já está no plano Premium
+          {currentPlanId && (
+            <span className="block mt-2 text-[var(--color-brand)] font-semibold">
+              ✓ Você já está no plano {PLANS.find(p => p.id === currentPlanId)?.name}
             </span>
           )}
         </p>
       </header>
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-12">
-        {/* Free Plan */}
-        <SoftCard
-          className={`rounded-3xl border-2 transition-all ${
-            plan === 'free'
-              ? 'border-primary/40 shadow-lg'
-              : 'border-neutral-200/40'
-          } p-6 sm:p-8 flex flex-col`}
-        >
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 text-xs font-semibold mb-3">
-              <AppIcon name="star" size={12} decorative />
-              Seu plano atual
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-support-1">Free</h2>
-            <p className="text-sm text-support-2 mt-1">
-              Essencial para começar
-            </p>
-          </div>
+      {/* Plans Grid - 3 Column Responsive */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12 lg:px-4">
+        {PLANS.map((planConfig) => {
+          const isCurrentPlan = currentPlanId === planConfig.id
+          const isHighlighted = planConfig.highlighted
 
-          {/* Price */}
-          <div className="mb-6 pb-6 border-b border-neutral-200/40">
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl sm:text-5xl font-bold text-support-1">R$0</span>
-              <span className="text-sm text-support-2">/mês</span>
-            </div>
-            <p className="text-xs text-support-2 mt-2">
-              Sem necessidade de cartão de crédito
-            </p>
-          </div>
-
-          {/* Features */}
-          <div className="flex-1 space-y-3 mb-6">
-            {PLAN_FEATURES.free.map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-3">
-                {feature.included ? (
-                  <AppIcon
-                    name="check"
-                    size={16}
-                    decorative
-                    className="text-primary flex-shrink-0 mt-0.5"
-                  />
-                ) : (
-                  <AppIcon
-                    name="x"
-                    size={16}
-                    decorative
-                    className="text-neutral-300 flex-shrink-0 mt-0.5"
-                  />
-                )}
-                <span
-                  className={`text-sm ${
-                    feature.included
-                      ? 'text-support-1'
-                      : 'text-support-2/60'
+          return (
+            <SoftCard
+              key={planConfig.id}
+              className={`rounded-3xl border transition-all flex flex-col relative ${
+                isCurrentPlan
+                  ? 'border-[var(--color-brand)]/40 shadow-lg'
+                  : isHighlighted
+                    ? 'border-[var(--color-brand-plum)]/30 shadow-lg'
+                    : 'border-[var(--color-pink-snow)]/60'
+              } ${
+                isHighlighted
+                  ? 'lg:scale-105 lg:shadow-[0_12px_40px_rgba(155,77,150,0.15)]'
+                  : ''
+              } p-6 sm:p-8`}
+            >
+              {/* Badge */}
+              <div className="mb-4">
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
+                    isHighlighted
+                      ? 'bg-[var(--color-brand)] text-white'
+                      : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
                   }`}
                 >
-                  {feature.label}
-                </span>
+                  <AppIcon name={planConfig.badgeIcon} size={12} decorative />
+                  {planConfig.badge}
+                </div>
               </div>
-            ))}
-          </div>
 
-          {/* Button */}
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              handleViewPlans('free')
-              setPlan('free')
-            }}
-          >
-            Seu plano atual
-          </Button>
-        </SoftCard>
-
-        {/* Premium Plan */}
-        <SoftCard
-          className={`rounded-3xl border-2 transition-all ${
-            plan === 'premium'
-              ? 'border-primary/40 shadow-lg bg-gradient-to-br from-primary/5 to-white'
-              : 'border-primary/20 shadow-lg bg-gradient-to-br from-primary/10 to-white'
-          } p-6 sm:p-8 flex flex-col relative`}
-        >
-          {/* Badge */}
-          <div className="absolute -top-3 right-6">
-            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-white text-xs font-bold shadow-lg">
-              <AppIcon name="sparkles" size={12} decorative />
-              Recomendado
-            </div>
-          </div>
-
-          <div className="mb-6 pt-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-support-1">Premium</h2>
-            <p className="text-sm text-support-2 mt-1">
-              Tudo liberado + recursos avançados
-            </p>
-          </div>
-
-          {/* Price */}
-          <div className="mb-6 pb-6 border-b border-primary/20">
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl sm:text-5xl font-bold text-primary">R$29,90</span>
-              <span className="text-sm text-support-2">/mês</span>
-            </div>
-            <p className="text-xs text-support-2 mt-2">
-              Teste 7 dias grátis, sem compromisso
-            </p>
-          </div>
-
-          {/* Features */}
-          <div className="flex-1 space-y-3 mb-6">
-            {PLAN_FEATURES.premium.map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-3">
-                <AppIcon
-                  name="check"
-                  size={16}
-                  decorative
-                  className="text-primary flex-shrink-0 mt-0.5"
-                />
-                <span className="text-sm text-support-1 font-medium">
-                  {feature.label}
-                </span>
+              {/* Plan Name */}
+              <div className="mb-1">
+                <h2
+                  className={`text-xl sm:text-2xl font-bold mb-1 ${
+                    isHighlighted
+                      ? 'text-[var(--color-brand)]'
+                      : 'text-[var(--color-text-main)]'
+                  }`}
+                >
+                  {planConfig.name}
+                </h2>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  {planConfig.subtitle}
+                </p>
               </div>
-            ))}
-          </div>
 
-          {/* Button */}
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={handleUpgradeClick}
-          >
-            {plan === 'premium' ? 'Seu plano atual' : 'Upgrade agora'}
-          </Button>
+              {/* Price Section */}
+              <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
+                <div className="flex items-baseline gap-1">
+                  <span
+                    className={`text-4xl sm:text-5xl font-bold ${
+                      isHighlighted
+                        ? 'text-[var(--color-brand)]'
+                        : 'text-[var(--color-text-main)]'
+                    }`}
+                  >
+                    {planConfig.price}
+                  </span>
+                  <span className="text-sm text-[var(--color-text-muted)]">
+                    {planConfig.pricePeriod}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                  {planConfig.priceNote}
+                </p>
+              </div>
 
-          {plan === 'premium' && (
-            <p className="text-center text-xs text-primary font-semibold mt-3">
-              ✓ Ativo até 31 de dezembro de 2025
-            </p>
-          )}
-        </SoftCard>
+              {/* Features List */}
+              <div className="flex-1 space-y-3 mb-6">
+                {planConfig.features.map((feature, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <AppIcon
+                      name="check"
+                      size={16}
+                      decorative
+                      className={`flex-shrink-0 mt-0.5 ${
+                        isHighlighted
+                          ? 'text-[var(--color-brand)]'
+                          : 'text-[var(--color-brand)]'
+                      }`}
+                    />
+                    <span className="text-sm text-[var(--color-text-main)]">
+                      {feature.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Button */}
+              <Button
+                variant={planConfig.buttonVariant}
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  handleViewPlans(planConfig.id)
+                  if (planConfig.id !== 'essencial') {
+                    handleUpgradeClick()
+                  } else {
+                    setPlan('free')
+                  }
+                }}
+                disabled={isCurrentPlan && planConfig.id === 'essencial'}
+              >
+                {isCurrentPlan && planConfig.id === 'essencial'
+                  ? 'Seu plano atual'
+                  : planConfig.buttonText}
+              </Button>
+
+              {isCurrentPlan && planConfig.id !== 'essencial' && (
+                <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
+                  ✓ Ativo até 31 de dezembro de 2025
+                </p>
+              )}
+            </SoftCard>
+          )
+        })}
       </div>
 
       {/* FAQ Section */}
       <div className="max-w-2xl mx-auto">
-        <h3 className="text-lg sm:text-xl font-bold text-support-1 mb-4">
+        <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
           Perguntas frequentes
         </h3>
         <div className="space-y-3">
           <details className="group">
-            <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-neutral-200/40 bg-white/50 p-4 font-medium text-support-1 hover:bg-white/70 transition-colors">
+            <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/50 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/70 transition-colors">
               Posso mudar de plano depois?
               <span className="transition-transform group-open:rotate-180">
                 <AppIcon name="chevron-down" size={20} decorative />
               </span>
             </summary>
-            <div className="p-4 text-sm text-support-2 border-t border-neutral-200/40 bg-white/30">
+            <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/30">
               Sim, você pode fazer downgrade ou cancelar a qualquer momento sem penalidades.
             </div>
           </details>
           <details className="group">
-            <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-neutral-200/40 bg-white/50 p-4 font-medium text-support-1 hover:bg-white/70 transition-colors">
+            <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/50 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/70 transition-colors">
               O teste premium de 7 dias é realmente grátis?
               <span className="transition-transform group-open:rotate-180">
                 <AppIcon name="chevron-down" size={20} decorative />
               </span>
             </summary>
-            <div className="p-4 text-sm text-support-2 border-t border-neutral-200/40 bg-white/30">
+            <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/30">
               Sim, completamente grátis e sem necessidade de cartão de crédito para começar o teste.
             </div>
           </details>
           <details className="group">
-            <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-neutral-200/40 bg-white/50 p-4 font-medium text-support-1 hover:bg-white/70 transition-colors">
+            <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/50 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/70 transition-colors">
               Meus dados ficarão privados?
               <span className="transition-transform group-open:rotate-180">
                 <AppIcon name="chevron-down" size={20} decorative />
               </span>
             </summary>
-            <div className="p-4 text-sm text-support-2 border-t border-neutral-200/40 bg-white/30">
+            <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/30">
               Todos os seus dados são criptografados e armazenados com segurança. Nunca compartilhamos informações pessoais.
             </div>
           </details>
