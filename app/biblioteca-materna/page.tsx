@@ -150,11 +150,11 @@ export default function BibliotecaMaternaPage() {
 
           {/* RESULTS SECTION */}
           <Reveal delay={80}>
-            <div className="space-y-4 mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Materiais Disponíveis
               </h2>
-              <p className="text-sm text-[var(--color-text-muted)]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 {selectedTheme || selectedFormat
                   ? `Resultados filtrados por ${selectedTheme ? `tema: ${selectedTheme}` : ''} ${selectedTheme && selectedFormat ? 'e' : ''} ${selectedFormat ? `formato: ${selectedFormat}` : ''}`
                   : 'Todos os materiais'}
