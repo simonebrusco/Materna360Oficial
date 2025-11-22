@@ -117,7 +117,7 @@ export default function RotinaLevePage() {
   const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
-  // Ideias Rápidas - Filter State (simple, explicit)
+  // Ideias Rápidas - Filter State
   const [tempoDisponivel, setTempoDisponivel] = useState<string | null>(null)
   const [comQuem, setComQuem] = useState<string | null>(null)
   const [tipoIdeia, setTipoIdeia] = useState<string | null>(null)
@@ -202,12 +202,10 @@ export default function RotinaLevePage() {
     setIdeasLoading(true)
 
     try {
-      // Chama a IA de Rotina Leve em modo seguro (stub por enquanto)
       await callRotinaAI({
         mode: 'ideias_rapidas',
         locale: 'pt-BR',
         dayContext: {
-          // No futuro podemos conectar com o contexto real do dia
           hasKids: true,
         },
       })
@@ -215,7 +213,6 @@ export default function RotinaLevePage() {
       console.error('[Rotina Leve] Erro ao chamar IA de Ideias Rápidas:', error)
     }
 
-    // Enquanto a IA estiver em modo stub, mantemos o mock como fonte principal
     const result = await mockGenerateIdeas()
     setIdeas(result)
     setIdeasLoading(false)
@@ -291,7 +288,8 @@ export default function RotinaLevePage() {
 
                 {/* Age Rule Message */}
                 <p className="text-[11px] text-[#545454]">
-                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir sempre a orientação do pediatra.
+                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
+                  sempre a orientação do pediatra.
                 </p>
 
                 {/* Generate Button + Plan Counter */}
@@ -316,7 +314,8 @@ export default function RotinaLevePage() {
 
                   {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem mais 💗
+                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
+                      mais 💗
                     </p>
                   )}
                 </div>
@@ -333,7 +332,9 @@ export default function RotinaLevePage() {
 
                   {!recipesLoading && recipes && recipes.length > 0 && (
                     <>
-                      <p className="text-xs font-medium text-[#2f3a56]">Sugestões de hoje (até 3)</p>
+                      <p className="text-xs font-medium text-[#2f3a56]">
+                        Sugestões de hoje (até 3)
+                      </p>
                       <div className="space-y-3">
                         {recipes.slice(0, 3).map((recipe) => {
                           const hasRecipes = recipes && recipes.length > 0
@@ -350,7 +351,7 @@ export default function RotinaLevePage() {
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
                                 onClick={() =>
                                   setExpandedRecipeId(
-                                    expandedRecipeId === recipe.id ? null : recipe.id
+                                    expandedRecipeId === recipe.id ? null : recipe.id,
                                   )
                                 }
                               >
@@ -371,7 +372,7 @@ export default function RotinaLevePage() {
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       setExpandedRecipeId(
-                                        expandedRecipeId === recipe.id ? null : recipe.id
+                                        expandedRecipeId === recipe.id ? null : recipe.id,
                                       )
                                     }}
                                     className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
@@ -415,7 +416,8 @@ export default function RotinaLevePage() {
                         })}
                       </div>
                       <p className="text-[11px] text-[#545454] mt-2">
-                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no planner.
+                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
+                        planner.
                       </p>
                     </>
                   )}
@@ -423,7 +425,8 @@ export default function RotinaLevePage() {
                   {!recipesLoading && (!recipes || recipes.length === 0) && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                       <p className="text-[11px] text-[#545454]">
-                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
+                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
+                        idade do seu filho.
                       </p>
                     </div>
                   )}
@@ -622,7 +625,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Autocuidado
