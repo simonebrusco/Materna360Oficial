@@ -7,7 +7,11 @@ import { inter, poppins } from '@/app/fonts'
 export const metadata: Metadata = {
   title: 'Materna360',
   description: 'Uma plataforma acolhedora para apoiar você em cada etapa da maternidade',
-  icons: { icon: '/favicon.ico' },
+  icons: {
+    icon: '/images/favicon-materna.png',
+    shortcut: '/images/favicon-materna.png',
+    apple: '/images/favicon-materna.png',
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
