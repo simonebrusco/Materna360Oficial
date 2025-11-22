@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 
 interface MaterialCard {
   id: string
