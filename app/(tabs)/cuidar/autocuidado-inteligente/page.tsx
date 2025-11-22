@@ -534,7 +534,7 @@ export default function AutocuidadoInteligentePage() {
             </Reveal>
           </div>
 
-          <MotivationalFooter hubName="cuidar" />
+          <MotivationalFooter routeKey="cuidar-autocuidado-inteligente" />
         </div>
       </ClientOnly>
     </PageTemplate>
