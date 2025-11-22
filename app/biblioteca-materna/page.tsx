@@ -265,6 +265,8 @@ export default function BibliotecaMaternaPage() {
               </div>
             </SoftCard>
           </Reveal>
+
+          <MotivationalFooter routeKey="biblioteca-materna" />
         </div>
       </ClientOnly>
     </PageTemplate>
