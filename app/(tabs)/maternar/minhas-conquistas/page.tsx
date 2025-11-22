@@ -320,6 +320,79 @@ function SealsAndMedalsBlock() {
   );
 }
 
+function MemoriesWeekBlock({ memories, onMemoryClick, onNewMemory }: { memories: MemoryData[]; onMemoryClick: (memory: MemoryData) => void; onNewMemory: () => void }) {
+  return (
+    <Reveal delay={250}>
+      <SoftCard className="p-6 md:p-8">
+        <div className="mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-[#3A3A3A] mb-1">
+            Memórias da Semana
+          </h2>
+          <p className="text-sm md:text-base text-[#6A6A6A]">
+            Momentos especiais que você quer guardar.
+          </p>
+        </div>
+
+        {memories.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            {memories.map((memory) => (
+              <button
+                key={memory.id}
+                onClick={() => onMemoryClick(memory)}
+                className="flex items-center gap-3 p-4 rounded-2xl border border-[#FFE8F2] bg-white hover:bg-[#FFFBFD] hover:shadow-[0_4px_12px_rgba(255,20,117,0.1)] transition-all duration-200 active:bg-[#FFE8F2]/30 text-left"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFE8F2] flex items-center justify-center">
+                  <AppIcon
+                    name={memory.icon as any}
+                    className="w-5 h-5 text-[#FF1475]"
+                    decorative
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#3A3A3A] line-clamp-1">
+                    {memory.title}
+                  </p>
+                  <p className="text-xs text-[#6A6A6A] line-clamp-1">
+                    {memory.description}
+                  </p>
+                </div>
+                <span className="text-xs text-[#FF1475] font-medium flex-shrink-0">
+                  Editar
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 mb-6">
+            <div className="w-12 h-12 rounded-full bg-[#FFE8F2] flex items-center justify-center mx-auto mb-3">
+              <AppIcon
+                name="bookmark"
+                className="w-6 h-6 text-[#FF1475]"
+                decorative
+              />
+            </div>
+            <p className="text-sm text-[#6A6A6A]">
+              Nenhuma memória registrada ainda.
+            </p>
+            <p className="text-xs text-[#6A6A6A]/60 mt-1">
+              Comece a guardar seus momentos especiais!
+            </p>
+          </div>
+        )}
+
+        <Button
+          variant="primary"
+          onClick={onNewMemory}
+          className="w-full h-11 rounded-xl"
+        >
+          <AppIcon name="plus" size={16} decorative className="mr-2" />
+          Adicionar memória
+        </Button>
+      </SoftCard>
+    </Reveal>
+  );
+}
+
 function ProgressAndSummaryBlock() {
   return (
     <Reveal delay={300}>
