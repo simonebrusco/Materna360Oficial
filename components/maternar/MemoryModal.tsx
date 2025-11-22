@@ -269,7 +269,7 @@ export function MemoryModal({
                 onClick={() => setShowDeleteConfirm(true)}
                 className="w-full h-11 rounded-xl"
               >
-                <AppIcon name="trash-2" size={16} decorative className="mr-2" />
+                <AppIcon name="x" size={16} decorative className="mr-2" />
                 Excluir memória
               </Button>
             )}
