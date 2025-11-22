@@ -162,12 +162,7 @@ export default function MaternarClient() {
 
               <CardHub />
 
-              {/* Emotional closing text */}
-              <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-                <p className="text-xs md:text-sm text-[#6A6A6A]/75 leading-relaxed">
-                  Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-                </p>
-              </div>
+              <MotivationalFooter routeKey="maternar-minha-jornada" />
             </div>
       </div>
     </main>
