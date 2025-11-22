@@ -24,11 +24,7 @@ export function ChildrenBlock({
   onRemoveChild,
 }: Props) {
   return (
-    <div className="rounded-3xl bg-white p-6 border border-[var(--color-border-soft)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-gray-900">Sobre seu(s) filho(s)</h2>
-        <p className="mt-1 text-xs text-gray-600">Isso ajuda a personalizar tudo: conteúdo, receitas, atividades.</p>
-      </div>
+    <div className="space-y-4">
 
       {form.filhos.map((child, index) => (
         <div key={child.id} className="border-t border-gray-200 pt-4 space-y-4">
