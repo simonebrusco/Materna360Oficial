@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
+import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
