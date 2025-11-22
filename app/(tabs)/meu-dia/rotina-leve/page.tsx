@@ -9,6 +9,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { toast } from '@/app/lib/toast'
+import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
 
 type QuickIdea = {
   id: string
@@ -127,6 +128,10 @@ export default function RotinaLevePage() {
 
   const { addItem } = usePlannerSavedContents()
 
+  const { call: callRotinaAI } = useRotinaAISuggestions({
+    defaultMode: 'ideias_rapidas',
+  })
+
   const handleSaveIdeia = () => {
     try {
       addItem({
@@ -195,6 +200,22 @@ export default function RotinaLevePage() {
 
   const handleGenerateIdeas = async () => {
     setIdeasLoading(true)
+
+    try {
+      // Chama a IA de Rotina Leve em modo seguro (stub por enquanto)
+      await callRotinaAI({
+        mode: 'ideias_rapidas',
+        locale: 'pt-BR',
+        dayContext: {
+          // No futuro podemos conectar com o contexto real do dia
+          hasKids: true,
+        },
+      })
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao chamar IA de Ideias Rápidas:', error)
+    }
+
+    // Enquanto a IA estiver em modo stub, mantemos o mock como fonte principal
     const result = await mockGenerateIdeas()
     setIdeas(result)
     setIdeasLoading(false)
@@ -313,86 +334,86 @@ export default function RotinaLevePage() {
                   {!recipesLoading && recipes && recipes.length > 0 && (
                     <>
                       <p className="text-xs font-medium text-[#2f3a56]">Sugestões de hoje (até 3)</p>
-                    <div className="space-y-3">
-                      {recipes.slice(0, 3).map((recipe) => {
-                        const hasRecipes = recipes && recipes.length > 0
-                        const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
-                        const canSave = hasRecipes && !isOverLimit
+                      <div className="space-y-3">
+                        {recipes.slice(0, 3).map((recipe) => {
+                          const hasRecipes = recipes && recipes.length > 0
+                          const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
+                          const canSave = hasRecipes && !isOverLimit
 
-                        return (
-                        <div
-                          key={recipe.id}
-                          className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
-                        >
-                          {/* Collapsed state */}
-                          <div
-                            className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
-                            onClick={() =>
-                              setExpandedRecipeId(
-                                expandedRecipeId === recipe.id ? null : recipe.id
-                              )
-                            }
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1">
-                                <h4 className="text-sm font-semibold text-[#2f3a56]">
-                                  {recipe.title}
-                                </h4>
-                                <p className="text-xs text-[#545454] mt-1 line-clamp-2">
-                                  {recipe.description}
-                                </p>
-                                <p className="text-[10px] text-[#545454] mt-1.5">
-                                  {recipe.timeLabel} · {recipe.ageLabel}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
+                          return (
+                            <div
+                              key={recipe.id}
+                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                            >
+                              {/* Collapsed state */}
+                              <div
+                                className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
+                                onClick={() =>
                                   setExpandedRecipeId(
                                     expandedRecipeId === recipe.id ? null : recipe.id
                                   )
-                                }}
-                                className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                                }
                               >
-                                {expandedRecipeId === recipe.id
-                                  ? 'Ver menos ↑'
-                                  : 'Ver detalhes →'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Expanded state */}
-                          {expandedRecipeId === recipe.id && (
-                            <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
-                              <div>
-                                <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
-                                  Modo de preparo
-                                </h5>
-                                <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
-                                  {recipe.preparation}
-                                </p>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1">
+                                    <h4 className="text-sm font-semibold text-[#2f3a56]">
+                                      {recipe.title}
+                                    </h4>
+                                    <p className="text-xs text-[#545454] mt-1 line-clamp-2">
+                                      {recipe.description}
+                                    </p>
+                                    <p className="text-[10px] text-[#545454] mt-1.5">
+                                      {recipe.timeLabel} · {recipe.ageLabel}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setExpandedRecipeId(
+                                        expandedRecipeId === recipe.id ? null : recipe.id
+                                      )
+                                    }}
+                                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                                  >
+                                    {expandedRecipeId === recipe.id
+                                      ? 'Ver menos ↑'
+                                      : 'Ver detalhes →'}
+                                  </button>
+                                </div>
                               </div>
 
-                              <p className="text-[10px] text-[#545454] italic">
-                                Lembre-se: adapte sempre às orientações do pediatra.
-                              </p>
+                              {/* Expanded state */}
+                              {expandedRecipeId === recipe.id && (
+                                <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
+                                  <div>
+                                    <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
+                                      Modo de preparo
+                                    </h5>
+                                    <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
+                                      {recipe.preparation}
+                                    </p>
+                                  </div>
 
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleSaveRecipe(recipe)}
-                                disabled={!canSave}
-                                className="w-full"
-                              >
-                                Salvar esta receita no planner
-                              </Button>
+                                  <p className="text-[10px] text-[#545454] italic">
+                                    Lembre-se: adapte sempre às orientações do pediatra.
+                                  </p>
+
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleSaveRecipe(recipe)}
+                                    disabled={!canSave}
+                                    className="w-full"
+                                  >
+                                    Salvar esta receita no planner
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                          )
+                        })}
+                      </div>
                       <p className="text-[11px] text-[#545454] mt-2">
                         Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no planner.
                       </p>
@@ -410,7 +431,7 @@ export default function RotinaLevePage() {
               </div>
             </SoftCard>
 
-            {/* 2-Column Grid: Ideias Rápidas + Inspira��ões do Dia */}
+            {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Ideias Rápidas - Collapsed by default */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
@@ -436,193 +457,193 @@ export default function RotinaLevePage() {
                     <div className="space-y-3 text-xs flex-1">
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '5' ? null : '5'))
-                          }
-                          className={clsx(
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '5' ? null : '5'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '5'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          5 min
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            5 min
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '10' ? null : '10'))
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '10' ? null : '10'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '10'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          10 min
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            10 min
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '20' ? null : '20'))
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '20' ? null : '20'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '20'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          20 min
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            20 min
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '30+'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          30+
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            30+
+                          </button>
                         </div>
                       </div>
 
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
-                          }
-                          className={clsx(
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Só eu
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Só eu
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setComQuem((current) =>
-                              current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) =>
+                                current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Eu e meu filho
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Eu e meu filho
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setComQuem((current) =>
-                              current === 'familia-toda' ? null : 'familia-toda'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) =>
+                                current === 'familia-toda' ? null : 'familia-toda'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Família toda
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Família toda
+                          </button>
                         </div>
                       </div>
 
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Tipo de ideia</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'brincadeira' ? null : 'brincadeira'
-                            )
-                          }
-                          className={clsx(
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'brincadeira' ? null : 'brincadeira'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Brincadeira
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Brincadeira
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'organizacao' ? null : 'organizacao'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'organizacao' ? null : 'organizacao'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Organização da casa
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Organização da casa
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'autocuidado' ? null : 'autocuidado'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'autocuidado' ? null : 'autocuidado'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Autocuidado
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Autocuidado
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'receita-rapida' ? null : 'receita-rapida'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'receita-rapida' ? null : 'receita-rapida'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Receita rápida
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                            )}
+                          >
+                            Receita rápida
+                          </button>
                         </div>
                       </div>
 
