@@ -30,8 +30,6 @@ type Inspiration = {
   ritual: string
 }
 
-// ---------- FALLBACKS LOCAIS (mock) ----------
-
 function mockGenerateIdeas(): Promise<QuickIdea[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -101,31 +99,6 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   })
 }
 
-// ---------- CHAMADA SEGURA PARA /api/ai/rotina ----------
-
-async function callRotinaAi(body: any): Promise<any | null> {
-  try {
-    const res = await fetch('/api/ai/rotina', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-
-    if (!res.ok) {
-      console.error('[Rotina Leve] /api/ai/rotina retornou status', res.status)
-      return null
-    }
-
-    const data = await res.json()
-    return data
-  } catch (error) {
-    console.error('[Rotina Leve] Erro ao chamar /api/ai/rotina:', error)
-    return null
-  }
-}
-
 export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
@@ -139,16 +112,11 @@ export default function RotinaLevePage() {
   const DAILY_RECIPE_LIMIT = 3
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
 
-  // Form state para Receitas Inteligentes
-  const [mainIngredient, setMainIngredient] = useState('')
-  const [mealType, setMealType] = useState('Lanche')
-  const [prepTime, setPrepTime] = useState('10 min')
-
   // Ideias Rápidas
   const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
-  // Ideias Rápidas - Filter State
+  // Ideias Rápidas - Filter State (simple, explicit)
   const [tempoDisponivel, setTempoDisponivel] = useState<string | null>(null)
   const [comQuem, setComQuem] = useState<string | null>(null)
   const [tipoIdeia, setTipoIdeia] = useState<string | null>(null)
@@ -231,116 +199,23 @@ export default function RotinaLevePage() {
     }
 
     setRecipesLoading(true)
-
-    try {
-      const aiResponse = await callRotinaAi({
-        mode: 'recipes',
-        ingredient: mainIngredient || null,
-        mealType,
-        prepTime,
-      })
-
-      if (aiResponse?.recipes && Array.isArray(aiResponse.recipes) && aiResponse.recipes.length > 0) {
-        const mapped: GeneratedRecipe[] = aiResponse.recipes.slice(0, 3).map((recipe: any, index: number) => ({
-          id: recipe.id || `recipe-${index + 1}`,
-          title: recipe.title || 'Sugestão rápida',
-          description:
-            recipe.description ||
-            'Sugestão pensada para facilitar sua rotina com o que você tem em casa.',
-          timeLabel: recipe.timeLabel || recipe.time || 'Tempo de preparo rápido',
-          ageLabel: recipe.ageLabel || recipe.age || 'Idade sugerida: consulte o pediatra.',
-          preparation:
-            recipe.preparation ||
-            recipe.preparo ||
-            'Adapte o preparo às orientações do pediatra e às preferências da sua família.',
-        }))
-
-        setRecipes(mapped)
-      } else {
-        // Fallback local
-        const fallback = await mockGenerateRecipes()
-        setRecipes(fallback)
-      }
-    } catch (error) {
-      console.error('[Rotina Leve] Erro ao gerar receitas:', error)
-      const fallback = await mockGenerateRecipes()
-      setRecipes(fallback)
-    } finally {
-      setRecipesLoading(false)
-    }
+    const result = await mockGenerateRecipes()
+    setRecipes(result)
+    setRecipesLoading(false)
   }
 
   const handleGenerateIdeas = async () => {
     setIdeasLoading(true)
-
-    try {
-      const aiResponse = await callRotinaAi({
-        mode: 'ideas',
-        filters: {
-          tempoDisponivel,
-          comQuem,
-          tipoIdeia,
-        },
-      })
-
-      if (aiResponse?.ideas && Array.isArray(aiResponse.ideas) && aiResponse.ideas.length > 0) {
-        const mapped: QuickIdea[] = aiResponse.ideas.map((idea: any, index: number) => ({
-          id: idea.id || `idea-${index + 1}`,
-          text:
-            idea.text ||
-            idea.description ||
-            'Uma pequena ação pensada para deixar seu dia mais leve.',
-        }))
-        setIdeas(mapped)
-      } else {
-        const fallback = await mockGenerateIdeas()
-        setIdeas(fallback)
-      }
-    } catch (error) {
-      console.error('[Rotina Leve] Erro ao gerar ideias rápidas:', error)
-      const fallback = await mockGenerateIdeas()
-      setIdeas(fallback)
-    } finally {
-      setIdeasLoading(false)
-    }
+    const result = await mockGenerateIdeas()
+    setIdeas(result)
+    setIdeasLoading(false)
   }
 
   const handleGenerateInspiration = async () => {
     setInspirationLoading(true)
-
-    try {
-      const aiResponse = await callRotinaAi({
-        mode: 'inspiration',
-      })
-
-      if (aiResponse?.inspiration) {
-        const data = aiResponse.inspiration
-        const mapped: Inspiration = {
-          phrase:
-            data.phrase ||
-            data.frase ||
-            'Você não precisa dar conta de tudo hoje.',
-          care:
-            data.care ||
-            data.pequenoCuidado ||
-            '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-          ritual:
-            data.ritual ||
-            data.miniRitual ||
-            'Envie uma mensagem carinhosa para alguém que te apoia.',
-        }
-        setInspiration(mapped)
-      } else {
-        const fallback = await mockGenerateInspiration()
-        setInspiration(fallback)
-      }
-    } catch (error) {
-      console.error('[Rotina Leve] Erro ao gerar inspiração do dia:', error)
-      const fallback = await mockGenerateInspiration()
-      setInspiration(fallback)
-    } finally {
-      setInspirationLoading(false)
-    }
+    const result = await mockGenerateInspiration()
+    setInspiration(result)
+    setInspirationLoading(false)
   }
 
   return (
@@ -373,8 +248,6 @@ export default function RotinaLevePage() {
                     <input
                       type="text"
                       placeholder="Ex.: banana, aveia, frango..."
-                      value={mainIngredient}
-                      onChange={(e) => setMainIngredient(e.target.value)}
                       className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
                     />
                   </div>
@@ -382,11 +255,7 @@ export default function RotinaLevePage() {
                   <div className="flex gap-2">
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
-                      <select
-                        value={mealType}
-                        onChange={(e) => setMealType(e.target.value)}
-                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                      >
+                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
                         <option>Lanche</option>
                         <option>Almoço / Jantar</option>
                         <option>Café da manhã</option>
@@ -396,11 +265,7 @@ export default function RotinaLevePage() {
 
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tempo de preparo</p>
-                      <select
-                        value={prepTime}
-                        onChange={(e) => setPrepTime(e.target.value)}
-                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                      >
+                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
                         <option>10 min</option>
                         <option>20 min</option>
                         <option>30 min</option>
@@ -649,7 +514,7 @@ export default function RotinaLevePage() {
                         <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
                         <div className="flex flex-wrap gap-2">
                           <button
-                            type="button'
+                            type="button"
                             onClick={() =>
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
