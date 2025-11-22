@@ -6,6 +6,7 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 
 // ===== CONSTANTS =====
 const INITIAL_MISSIONS = [
