@@ -9,7 +9,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { Button } from '@/components/ui/Button'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
-type ConquestIcon = 'leaf' | 'heart-pulse' | 'star' | 'message-circle' | 'target' | 'smile' | 'footprints' | 'feather'
+type ConquestIcon = 'leaf' | 'heart' | 'star' | 'target' | 'smile' | 'footprints' | 'sun' | 'smile-plus'
 
 interface Conquest {
   id: string
@@ -18,17 +18,17 @@ interface Conquest {
   timestamp: string
 }
 
-const AVAILABLE_ICONS: ConquestIcon[] = ['leaf', 'heart-pulse', 'star', 'message-circle', 'target', 'smile', 'footprints', 'feather']
+const AVAILABLE_ICONS: ConquestIcon[] = ['leaf', 'heart', 'star', 'target', 'smile', 'footprints', 'sun', 'smile-plus']
 
 const ICON_LABELS: Record<ConquestIcon, string> = {
   leaf: 'Crescimento',
-  'heart-pulse': 'Bem-estar',
+  heart: 'Bem-estar',
   star: 'Destaque',
-  'message-circle': 'Comunicação',
   target: 'Meta',
   smile: 'Alegria',
   footprints: 'Passos',
-  feather: 'Leveza',
+  sun: 'Luz',
+  'smile-plus': 'Conexão',
 }
 
 export default function MinhasConquistasPage() {
