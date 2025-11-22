@@ -252,6 +252,9 @@ export default function MinhasConquistasPage() {
               <h1 className="text-4xl md:text-5xl font-bold text-[#3A3A3A] mb-2">
                 Minhas Conquistas
               </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Versão gamificada v0.1 – teste de layout
+              </p>
               <p className="text-base md:text-lg text-[#6A6A6A]">
                 Você está evoluindo. Pequenos passos levam longe.
               </p>
