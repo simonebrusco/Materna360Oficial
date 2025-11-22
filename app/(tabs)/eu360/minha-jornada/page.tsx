@@ -13,6 +13,7 @@ import { track } from '@/app/lib/telemetry'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 type ConquestIcon = 'star' | 'heart' | 'target' | 'smile' | 'leaf' | 'sun' | 'sparkles' | 'crown'
+type MemoryIcon = 'star' | 'heart' | 'sparkles' | 'bookmark' | 'star' | 'crown' | 'sun' | 'smile'
 
 interface Conquest {
   id: string
@@ -21,7 +22,16 @@ interface Conquest {
   timestamp: string
 }
 
+interface Memory {
+  id: string
+  icon: MemoryIcon
+  description: string
+  day?: string
+  timestamp: string
+}
+
 const AVAILABLE_ICONS: ConquestIcon[] = ['star', 'heart', 'target', 'smile', 'leaf', 'sun', 'sparkles', 'crown']
+const AVAILABLE_MEMORY_ICONS: MemoryIcon[] = ['star', 'heart', 'sparkles', 'bookmark', 'crown', 'sun', 'smile']
 
 const ICON_LABELS: Record<ConquestIcon, string> = {
   star: 'Destaque',
@@ -32,6 +42,16 @@ const ICON_LABELS: Record<ConquestIcon, string> = {
   sun: 'Luz',
   sparkles: 'Magia',
   crown: 'Força',
+}
+
+const MEMORY_ICON_LABELS: Record<MemoryIcon, string> = {
+  star: 'Especial',
+  heart: 'Amor',
+  sparkles: 'Mágico',
+  bookmark: 'Lembrar',
+  crown: 'Destaque',
+  sun: 'Luz',
+  smile: 'Feliz',
 }
 
 export default function MinhaJornadaPage() {
