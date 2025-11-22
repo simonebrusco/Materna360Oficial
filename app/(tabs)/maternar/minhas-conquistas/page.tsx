@@ -53,7 +53,7 @@ const WEEKLY_PROGRESS_METRICS: ProgressMetric[] = [
 ];
 
 const QUICK_SUMMARY_ITEMS: ProgressMetric[] = [
-  { label: 'Dias de sequência', value: 7, icon: 'flame' },
+  { label: 'Dias de sequência', value: 7, icon: 'sun' },
   { label: 'Hábitos ativos', value: 4, icon: 'target' },
   { label: 'Conquistas desbloqueadas', value: 12, icon: 'crown' },
   { label: 'XP acumulado', value: '450 XP', icon: 'sparkles' },
