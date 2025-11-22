@@ -20,6 +20,7 @@ export function AppLogo({
     <div
       className={`flex items-center shrink-0 ${className}`}
       aria-label="Materna360"
+      suppressHydrationWarning
       {...props}
     >
       <Image
@@ -28,7 +29,6 @@ export function AppLogo({
         width={width}
         height={height}
         priority={priority}
-        suppressHydrationWarning
       />
     </div>
   )
