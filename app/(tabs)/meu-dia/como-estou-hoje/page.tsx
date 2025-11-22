@@ -13,6 +13,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import { useEmotionalInsights } from '@/app/hooks/useEmotionalInsights'
 
 export default function ComoEstouHojePage() {
   const [isHydrated, setIsHydrated] = useState(false)
@@ -22,6 +23,13 @@ export default function ComoEstouHojePage() {
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
   const { addItem, getByOrigin } = usePlannerSavedContents()
+
+  const {
+    loading: emotionalLoading,
+    error: emotionalError,
+    data: emotionalData,
+    call: fetchEmotionalInsights,
+  } = useEmotionalInsights()
 
   // Mark as hydrated on mount
   useEffect(() => {
@@ -96,6 +104,31 @@ export default function ComoEstouHojePage() {
       })
     } catch {}
     toast.success('Notas salvas!')
+  }
+
+  const handleGenerateEmotionalInsight = async () => {
+    // Mapa simples de energia para o contrato da IA
+    let mappedEnergy: 'baixa' | 'media' | 'alta' | string | undefined
+    if (selectedEnergy === 'Alta') mappedEnergy = 'alta'
+    if (selectedEnergy === 'Média') mappedEnergy = 'media'
+    if (selectedEnergy === 'Baixa') mappedEnergy = 'baixa'
+
+    try {
+      await fetchEmotionalInsights({
+        userId: null,
+        locale: 'pt-BR',
+        moodEntries: [
+          {
+            date: new Date().toISOString().slice(0, 10),
+            mood: selectedHumor || 'Neutro',
+            energy: mappedEnergy,
+          },
+        ],
+        timeRange: 'last_7_days',
+      })
+    } catch (error) {
+      console.error('[Como Estou Hoje] Erro ao gerar insight emocional:', error)
+    }
   }
 
   return (
@@ -244,21 +277,73 @@ export default function ComoEstouHojePage() {
             {/* CARD 3: Insight do Dia (IA) */}
             <Reveal delay={100}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]">
-                <div className="mb-4">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                    <AppIcon name="sparkles" size={18} className="text-[#9B4D96]" decorative />
-                    Insight do Dia (IA)
-                  </h3>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                      <AppIcon name="sparkles" size={18} className="text-[#9B4D96]" decorative />
+                      Insight do Dia (IA)
+                    </h3>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleGenerateEmotionalInsight}
+                    disabled={emotionalLoading}
+                  >
+                    {emotionalLoading ? 'Gerando insight…' : 'Gerar insight com IA'}
+                  </Button>
                 </div>
 
-                {/* Premium insight placeholder */}
                 <div className="space-y-4">
-                  <p className="text-sm leading-relaxed text-[#545454]">
-                    Ao longo da semana, você tem registrado momentos de alta energia principalmente à noite. Isso pode ser uma oportunidade para planejar tarefas importantes nesse horário.
-                  </p>
-                  <p className="text-sm leading-relaxed text-[#545454]">
-                    Quando você está neutro ou cansada, suas prioridades tendem a se concentrar em autocuidado. Isso é um padrão saudável — respeite seu ritmo.
-                  </p>
+                  {emotionalError && (
+                    <p className="text-xs text-[#ff005e]">
+                      Não foi possível gerar o insight agora. Tente novamente em alguns minutos.
+                    </p>
+                  )}
+
+                  {emotionalLoading && (
+                    <p className="text-sm leading-relaxed text-[#545454]">
+                      Estou olhando com carinho para seus registros para trazer um insight leve e acolhedor…
+                    </p>
+                  )}
+
+                  {!emotionalLoading && emotionalData && (
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-[#2f3a56]">
+                        {emotionalData.title}
+                      </p>
+                      <p className="text-sm leading-relaxed text-[#545454]">
+                        {emotionalData.body}
+                      </p>
+
+                      {emotionalData.highlights && emotionalData.highlights.length > 0 && (
+                        <div className="space-y-2">
+                          {emotionalData.highlights.map((h, idx) => (
+                            <div
+                              key={idx}
+                              className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-3"
+                            >
+                              <p className="text-xs font-semibold text-[#2f3a56]">
+                                {h.label}
+                              </p>
+                              <p className="text-xs text-[#545454] mt-1">{h.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!emotionalLoading && !emotionalData && (
+                    <div className="space-y-4">
+                      <p className="text-sm leading-relaxed text-[#545454]">
+                        Ao longo da semana, você tem registrado momentos de alta energia principalmente à noite. Isso pode ser uma oportunidade para planejar tarefas importantes nesse horário.
+                      </p>
+                      <p className="text-sm leading-relaxed text-[#545454]">
+                        Quando você está neutro ou cansada, suas prioridades tendem a se concentrar em autocuidado. Isso é um padrão saudável — respeite seu ritmo.
+                      </p>
+                    </div>
+                  )}
 
                   <button className="mt-4 text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1">
                     Ver insight detalhado <AppIcon name="arrow-right" size={14} decorative />
