@@ -485,23 +485,90 @@ export default function MinhaJornadaPage() {
                   </div>
                 </SoftCard>
 
-                {/* Memórias da Semana */}
-                <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
-                  <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-3">
-                    Memórias da Semana
-                  </h4>
-                  <div className="space-y-2">
-                    {['Momento 1', 'Momento 2', 'Momento 3'].map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-white/50"
-                      >
-                        <span className="text-[var(--color-brand)] text-lg">💝</span>
-                        <p className="text-sm text-[var(--color-text-muted)]">{item}</p>
-                      </div>
-                    ))}
+                {/* Memórias da Semana - REFINED */}
+                <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <div className="space-y-3 border-b-2 border-[#9B4D96] pb-4 mb-5">
+                    <h4 className="text-[0.95rem] md:text-[1rem] font-semibold text-[#3A3A3A]">
+                      Memórias da Semana
+                    </h4>
+                    <p className="text-[0.8rem] md:text-[0.85rem] text-[#6A6A6A]">
+                      Registre os momentos afetivos que marcaram a sua semana.
+                    </p>
                   </div>
-                </div>
+
+                  <div className="space-y-4">
+                    {/* Memories List */}
+                    {memories.length > 0 ? (
+                      <div className="space-y-2">
+                        {memories.map((memory) => (
+                          <button
+                            key={memory.id}
+                            onClick={() => openEditMemory(memory)}
+                            className="w-full flex items-center justify-between gap-3 py-2.5 px-3 rounded-xl hover:bg-[#ffd8e6]/30 transition-colors duration-150 active:bg-[#ffd8e6]/50"
+                          >
+                            <div className="flex items-center gap-3 flex-1 text-left">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#ffd8e6] flex items-center justify-center">
+                                <AppIcon
+                                  name={memory.icon}
+                                  size={16}
+                                  className="text-[#FF1475]"
+                                  decorative
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-[#3A3A3A] line-clamp-1">
+                                  {memory.description}
+                                </p>
+                                {memory.day && (
+                                  <p className="text-xs text-[#6A6A6A]">
+                                    {memory.day}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-xs text-[#FF1475] font-medium flex-shrink-0 whitespace-nowrap">
+                              Ver / editar
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <p className="text-[0.85rem] text-[#6A6A6A]">
+                          Você ainda não registrou nenhuma memória esta semana. Que tal começar com um pequeno momento?
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Registrar Memória Button */}
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setMemoryInput('')
+                        setSelectedMemoryIcon('heart')
+                        setSelectedMemoryDay('')
+                        setEditingMemoryId(null)
+                        setMemoryModalOpen(true)
+                      }}
+                      className="w-full h-11 rounded-xl mt-4"
+                    >
+                      <AppIcon
+                        name="plus"
+                        size={16}
+                        decorative
+                        className="mr-2"
+                      />
+                      Registrar memória
+                    </Button>
+
+                    {/* Saved Feedback */}
+                    {showMemorySaved && (
+                      <div className="text-center text-xs text-[#FF1475] font-medium">
+                        Memória salva com sucesso
+                      </div>
+                    )}
+                  </div>
+                </SoftCard>
 
                 {/* O que quero lembrar */}
                 <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
