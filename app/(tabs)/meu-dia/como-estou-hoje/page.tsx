@@ -24,6 +24,10 @@ export default function ComoEstouHojePage() {
   const [insightLoading, setInsightLoading] = useState(false)
   const [insight, setInsight] = useState<string | null>(null)
 
+  // IA – Minha Semana Emocional
+  const [weeklyInsightLoading, setWeeklyInsightLoading] = useState(false)
+  const [weeklyInsight, setWeeklyInsight] = useState<string | null>(null)
+
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
   const { addItem, getByOrigin } = usePlannerSavedContents()
 
@@ -135,6 +139,39 @@ export default function ComoEstouHojePage() {
     }
 
     setInsightLoading(false)
+  }
+
+  // ===== IA — Minha Semana Emocional =====
+  const handleGenerateWeeklyInsight = async () => {
+    setWeeklyInsightLoading(true)
+
+    try {
+      const res = await fetch('/api/ai/emocional', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'weekly_overview',
+          humor: selectedHumor,
+          energy: selectedEnergy,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Erro na IA semanal')
+
+      const data = await res.json()
+      setWeeklyInsight(data?.weeklyInsight || data?.insight || null)
+      toast.success('Leitura da semana atualizada!')
+    } catch (err) {
+      console.error('[Semana Emocional] Fallback acionado:', err)
+
+      setWeeklyInsight(
+        'Parece que sua semana teve altos e baixos — e está tudo bem. Observe quais dias você se sentiu mais carregada e use isso como um convite para cuidar um pouco mais de você nos próximos dias. 💗'
+      )
+
+      toast.info('Trouxemos uma reflexão carinhosa sobre a sua semana ✨')
+    } finally {
+      setWeeklyInsightLoading(false)
+    }
   }
 
   return (
@@ -353,9 +390,9 @@ export default function ComoEstouHojePage() {
                   </p>
                 </div>
 
-                {/* Mood Trend Placeholder */}
+                {/* Mood Trend Placeholder + IA resumo da semana */}
                 <div className="mb-6 p-8 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/50 flex items-center justify-center min-h-[160px]">
-                  <div className="text-center space-y-3">
+                  <div className="text-center space-y-3 max-w-xl">
                     <AppIcon
                       name="chart"
                       size={40}
@@ -366,6 +403,38 @@ export default function ComoEstouHojePage() {
                     <p className="text-xs text-[#545454]/60">
                       Os dados aparecerão conforme você registra seus humores.
                     </p>
+
+                    {weeklyInsightLoading && (
+                      <p className="text-xs text-[#545454] italic">
+                        Lendo a sua semana com carinho…
+                      </p>
+                    )}
+
+                    {!weeklyInsightLoading && !weeklyInsight && (
+                      <p className="text-xs text-[#545454]/70">
+                        Quando quiser, toque no botão abaixo para receber uma leitura carinhosa
+                        sobre como tem sido a sua semana.
+                      </p>
+                    )}
+
+                    {!weeklyInsightLoading && weeklyInsight && (
+                      <p className="text-xs text-[#545454] leading-relaxed">
+                        {weeklyInsight}
+                      </p>
+                    )}
+
+                    <div className="mt-3">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateWeeklyInsight}
+                        disabled={weeklyInsightLoading}
+                      >
+                        {weeklyInsightLoading
+                          ? 'Lendo sua semana…'
+                          : 'Gerar leitura da semana'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -375,13 +444,17 @@ export default function ComoEstouHojePage() {
                     <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
                       Melhor dia da semana
                     </p>
-                    <p className="text-sm font-semibold text-[#2f3a56]">(Em progresso)</p>
+                    <p className="text-sm font-semibold text-[#2f3a56]">
+                      (Em progresso)
+                    </p>
                   </div>
                   <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
                     <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
                       Dias mais desafiadores
                     </p>
-                    <p className="text-sm font-semibold text-[#2f3a56]">(Em progresso)</p>
+                    <p className="text-sm font-semibold text-[#2f3a56]">
+                      (Em progresso)
+                    </p>
                   </div>
                 </div>
               </SoftCard>
