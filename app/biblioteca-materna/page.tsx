@@ -221,16 +221,16 @@ export default function BibliotecaMaternaPage() {
 
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-[var(--color-brand)]/10 flex items-center justify-center">
+                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-[#ffd8e6]/40 flex items-center justify-center">
                   <AppIcon
-                    name="idea"
+                    name="lightbulb"
                     size={24}
-                    className="text-[var(--color-brand)]"
+                    className="text-[#ff005e]"
                     decorative
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
+                  <p className="text-sm md:text-base text-[#545454] leading-relaxed">
                     Seu filho está passando por uma fase importante de desenvolvimento. Em breve, sugestões personalizadas aparecerão aqui.
                   </p>
                 </div>
