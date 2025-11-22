@@ -325,25 +325,69 @@ export default function MinhaJornadaPage() {
               </div>
 
               <div className="space-y-4">
-                {/* Minhas Conquistas Recentes */}
-                <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
-                  <h4 className="text-sm font-semibold text-[var(--color-text-main)] mb-3">
-                    Minhas Conquistas Recentes
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {['🏆', '⭐', '💪', '🎯'].map((emoji, idx) => (
-                      <div
-                        key={idx}
-                        className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-soft-strong)] to-[var(--color-soft-strong)] flex items-center justify-center text-lg"
-                      >
-                        {emoji}
-                      </div>
-                    ))}
+                {/* Minhas Conquistas Recentes - REFINED */}
+                <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <div className="space-y-3 border-b-2 border-[#9B4D96] pb-4 mb-4">
+                    <h4 className="text-[0.95rem] md:text-[1rem] font-semibold text-[#3A3A3A]">
+                      Minhas Conquistas Recentes
+                    </h4>
+                    <p className="text-[0.8rem] md:text-[0.85rem] text-[#6A6A6A]">
+                      Celebre cada pequeno avanço na sua jornada.
+                    </p>
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-3">
-                    Registre suas pequenas vitórias aqui.
-                  </p>
-                </div>
+
+                  <div className="space-y-4">
+                    {/* Icon Badges Grid */}
+                    {recentConquests.length > 0 ? (
+                      <div className="flex justify-center md:justify-center">
+                        <div className="flex gap-2 flex-wrap justify-center">
+                          {recentConquests.map((conquest) => (
+                            <button
+                              key={conquest.id}
+                              className="group flex items-center justify-center w-10 h-10 rounded-full bg-[#ffd8e6] border border-[#ffd8e6] shadow-[0_2px_8px_rgba(255,0,94,0.08)] transition-all duration-200 hover:scale-105 active:scale-97"
+                              aria-label={`${ICON_LABELS[conquest.icon]}: ${conquest.description}`}
+                              title={conquest.description}
+                            >
+                              <AppIcon
+                                name={conquest.icon}
+                                size={18}
+                                className="text-[#FF1475]"
+                                decorative
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-[0.85rem] text-[#6A6A6A]">
+                          Nenhuma conquista registrada ainda.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Registrar Conquista Button */}
+                    <button
+                      onClick={() => setDrawerOpen(true)}
+                      className="w-full h-11 rounded-xl bg-[#FF1475] text-white font-semibold shadow-[0_4px_24px_rgba(255,0,94,0.16)] transition-all duration-150 hover:shadow-[0_8px_32px_rgba(255,0,94,0.24)] active:scale-98 flex items-center justify-center gap-2 group"
+                    >
+                      <AppIcon
+                        name="plus"
+                        size={16}
+                        className="text-white"
+                        decorative
+                      />
+                      <span className="text-[0.9rem]">Registrar conquista</span>
+                    </button>
+
+                    {/* Saved Feedback */}
+                    {showSaved && (
+                      <div className="text-center text-xs text-[#FF1475] font-medium animate-fade-in">
+                        Tudo salvo com carinho 💝
+                      </div>
+                    )}
+                  </div>
+                </SoftCard>
 
                 {/* Memórias da Semana */}
                 <div className="rounded-2xl border border-white/40 bg-white/60 p-4">
