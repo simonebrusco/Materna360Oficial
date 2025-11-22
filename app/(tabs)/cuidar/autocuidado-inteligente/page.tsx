@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
+import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
@@ -309,12 +310,14 @@ export default function AutocuidadoInteligentePage() {
                     </div>
                   </div>
 
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={handleSalvarRitmo}
-                    className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 mt-auto"
+                    className="w-full mt-auto"
                   >
                     Salvar meu ritmo
-                  </button>
+                  </Button>
                 </div>
               </SoftCard>
             </Reveal>
@@ -351,12 +354,14 @@ export default function AutocuidadoInteligentePage() {
                     ))}
                   </div>
 
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={handleSalvarRotina}
-                    className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 mt-auto"
+                    className="w-full mt-auto"
                   >
                     Salvar rotina
-                  </button>
+                  </Button>
                 </div>
               </SoftCard>
             </Reveal>
@@ -453,12 +458,14 @@ export default function AutocuidadoInteligentePage() {
                     </div>
                   </div>
 
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={handleSalvarSaude}
-                    className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 mt-auto"
+                    className="w-full mt-auto"
                   >
                     Salvar saúde
-                  </button>
+                  </Button>
                 </div>
               </SoftCard>
             </Reveal>
@@ -502,19 +509,23 @@ export default function AutocuidadoInteligentePage() {
 
                   <div className="space-y-2">
                     {!sugestaoAtual ? (
-                      <button
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={handleGerarSugestao}
-                        className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20"
+                        className="w-full"
                       >
                         Gerar sugestão
-                      </button>
+                      </Button>
                     ) : (
-                      <button
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={handleSalvarSugestao}
-                        className="w-full px-4 py-2.5 md:py-3 rounded-xl bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 active:bg-[#ff005e]/80 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20"
+                        className="w-full"
                       >
                         Salvar essa sugestão
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
