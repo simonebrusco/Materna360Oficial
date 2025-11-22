@@ -7,6 +7,7 @@ import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import IntelligentSuggestionsSection from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 
