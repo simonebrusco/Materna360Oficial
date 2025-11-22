@@ -35,7 +35,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <h3 className="text-xs font-semibold text-[var(--color-text-main)]">Escolha uma figurinha de perfil</h3>
           <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">Escolha a vibe que mais combina com você hoje.</p>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 max-w-3xl">
           {STICKER_OPTIONS.map((sticker) => {
             const isActive = form.figurinha === sticker.id
             return (
@@ -43,28 +43,30 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                 key={sticker.id}
                 type="button"
                 onClick={() => onChange({ figurinha: sticker.id })}
-                className={`group relative flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/30 focus-visible:ring-offset-2 ${
+                className={`group relative flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all duration-300 aspect-square focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                   isActive
-                    ? 'border-[var(--color-brand)] bg-[var(--color-brand)]/5 shadow-sm'
-                    : 'border-[var(--color-border-soft)] bg-white hover:border-[var(--color-brand)]/30 hover:shadow-sm'
+                    ? 'border-[#9B4D96] bg-[#9B4D96]/8 shadow-[0_4px_16px_rgba(155,77,150,0.15)] focus-visible:ring-[#9B4D96]'
+                    : 'border-[var(--color-border-soft)] bg-white hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_12px_rgba(255,20,117,0.08)] focus-visible:ring-[var(--color-brand)]'
                 }`}
                 aria-pressed={isActive}
                 aria-label={`Selecionar figurinha ${sticker.label}`}
               >
                 <span
-                  className={`inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full transition-all duration-300 ${
-                    isActive ? 'bg-[var(--color-brand)]/10' : 'bg-[var(--color-soft-bg)]'
+                  className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full transition-all duration-300 flex-shrink-0 ${
+                    isActive ? 'bg-[#9B4D96]/12' : 'bg-[var(--color-soft-bg)]'
                   }`}
                 >
                   <img
                     src={sticker.asset}
                     alt={sticker.label}
-                    className="h-9 w-9 object-contain"
+                    className="h-11 w-11 object-contain"
                     loading="lazy"
                   />
                 </span>
-                <span className="text-[10px] font-semibold text-[var(--color-text-main)] line-clamp-2">{sticker.label}</span>
-                <span className="text-[9px] text-[var(--color-text-muted)] line-clamp-2">{STICKER_DESCRIPTIONS[sticker.id]}</span>
+                <div className="flex flex-col items-center gap-0.5 min-h-[32px] flex-1 justify-center">
+                  <span className="text-[9px] font-bold text-[var(--color-text-main)] line-clamp-2 text-center leading-tight">{sticker.label}</span>
+                  <span className="text-[8px] text-[var(--color-text-muted)] line-clamp-1 text-center">{STICKER_DESCRIPTIONS[sticker.id]}</span>
+                </div>
               </button>
             )
           })}
