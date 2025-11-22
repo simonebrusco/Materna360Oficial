@@ -124,7 +124,7 @@ export default function MinhaJornadaPage() {
     'Muito bem': '😄',
     'Bem': '🙂',
     'Neutro': '😐',
-    'Cansada': '😔',
+    'Cansada': '����',
     'Exausta': '😴',
   }
 
@@ -383,7 +383,7 @@ export default function MinhaJornadaPage() {
                     {/* Saved Feedback */}
                     {showSaved && (
                       <div className="text-center text-xs text-[#FF1475] font-medium animate-fade-in">
-                        Tudo salvo com carinho 💝
+                        Tudo salvo
                       </div>
                     )}
                   </div>
