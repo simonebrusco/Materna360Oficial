@@ -363,72 +363,79 @@ export default function CuidarComAmorPage() {
 
           {/* BLOCK 4 — Para Fortalecer o Vínculo */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2">
-                  Para Fortalecer o Vínculo
-                </h3>
-                <p className="text-sm md:text-base text-[#545454]">
-                  Escolha um gesto especial para hoje.
-                </p>
-              </div>
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Para Fortalecer o Vínculo
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Escolha um gesto especial para hoje.
+                  </p>
+                </div>
 
-              <div className="space-y-3 mb-6">
-                {/* Gesto Option */}
-                <label className="flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer bg-white/60 hover:bg-white/80"
-                  style={{
-                    borderColor: bondData.selectedOption === 'gesto' ? '#ff005e' : 'rgba(255, 255, 255, 0.4)',
-                  }}
+                <div className="space-y-3 flex-1">
+                  {/* Gesto Option */}
+                  <label className="flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
+                    style={{
+                      borderColor: bondData.selectedOption === 'gesto' ? '#ff005e' : '#ffd8e6',
+                      backgroundColor: bondData.selectedOption === 'gesto' ? '#ffd8e6/10' : '#ffd8e6/5',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="bond-option"
+                      value="gesto"
+                      checked={bondData.selectedOption === 'gesto'}
+                      onChange={() => handleBondOptionChange('gesto')}
+                      className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                        Gesto de hoje
+                      </h4>
+                      <p className="text-xs text-[#545454] leading-relaxed">
+                        Escolha um pequeno gesto para deixar o dia do seu filho mais leve (ex.: bilhete, elogio, tempo de colo).
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Ritual Option */}
+                  <label className="flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
+                    style={{
+                      borderColor: bondData.selectedOption === 'ritual' ? '#ff005e' : '#ffd8e6',
+                      backgroundColor: bondData.selectedOption === 'ritual' ? '#ffd8e6/10' : '#ffd8e6/5',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="bond-option"
+                      value="ritual"
+                      checked={bondData.selectedOption === 'ritual'}
+                      onChange={() => handleBondOptionChange('ritual')}
+                      className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                        Ritual rápido
+                      </h4>
+                      <p className="text-xs text-[#545454] leading-relaxed">
+                        Defina um mini-ritual de conexão para antes de dormir ou depois da escola.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveBond}
+                  className="w-full mt-auto"
                 >
-                  <input
-                    type="radio"
-                    name="bond-option"
-                    value="gesto"
-                    checked={bondData.selectedOption === 'gesto'}
-                    onChange={() => handleBondOptionChange('gesto')}
-                    className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
-                      Gesto de hoje
-                    </h4>
-                    <p className="text-xs text-[#545454]">
-                      Escolha um pequeno gesto para deixar o dia do seu filho mais leve (ex.: bilhete, elogio, tempo de colo).
-                    </p>
-                  </div>
-                </label>
-
-                {/* Ritual Option */}
-                <label className="flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer bg-white/60 hover:bg-white/80"
-                  style={{
-                    borderColor: bondData.selectedOption === 'ritual' ? '#ff005e' : 'rgba(255, 255, 255, 0.4)',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="bond-option"
-                    value="ritual"
-                    checked={bondData.selectedOption === 'ritual'}
-                    onChange={() => handleBondOptionChange('ritual')}
-                    className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
-                      Ritual rápido
-                    </h4>
-                    <p className="text-xs text-[#545454]">
-                      Defina um mini-ritual de conexão para antes de dormir ou depois da escola.
-                    </p>
-                  </div>
-                </label>
+                  Salvar no planner
+                </Button>
               </div>
-
-              <button
-                onClick={handleSaveBond}
-                className="w-full px-4 py-3 rounded-lg bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 transition-all duration-200"
-              >
-                Salvar no planner
-              </button>
             </SoftCard>
           </Reveal>
         </div>
