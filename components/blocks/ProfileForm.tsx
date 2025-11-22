@@ -359,7 +359,7 @@ export function ProfileForm() {
 
         <PreferencesBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
 
-        <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-3">
+        <div className="rounded-3xl bg-white p-6 border border-[var(--color-border-soft)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-3">
           <Button type="submit" variant="primary" disabled={saving} className="w-full">
             {saving ? 'Salvando...' : 'Salvar e continuar'}
           </Button>
