@@ -14,6 +14,7 @@ import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { useEmotionalInsights } from '@/app/hooks/useEmotionalInsights'
+import { getLastNDaysMoodEntries } from '@/app/lib/ai/emocionalHistory'
 
 export default function ComoEstouHojePage() {
   const [isHydrated, setIsHydrated] = useState(false)
@@ -24,11 +25,20 @@ export default function ComoEstouHojePage() {
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
   const { addItem, getByOrigin } = usePlannerSavedContents()
 
+  // IA emocional – insight do dia
   const {
     loading: emotionalLoading,
     error: emotionalError,
     data: emotionalData,
     call: fetchEmotionalInsights,
+  } = useEmotionalInsights()
+
+  // IA emocional – visão da semana
+  const {
+    loading: weeklyEmotionalLoading,
+    error: weeklyEmotionalError,
+    data: weeklyEmotionalData,
+    call: fetchWeeklyEmotionalInsights,
   } = useEmotionalInsights()
 
   // Mark as hydrated on mount
@@ -128,6 +138,26 @@ export default function ComoEstouHojePage() {
       })
     } catch (error) {
       console.error('[Como Estou Hoje] Erro ao gerar insight emocional:', error)
+    }
+  }
+
+  const handleGenerateWeeklyEmotionalInsight = async () => {
+    const entries = getLastNDaysMoodEntries(7)
+
+    if (!entries.length) {
+      toast.info('Registre seu humor em alguns dias para ver o resumo da semana ✨')
+      return
+    }
+
+    try {
+      await fetchWeeklyEmotionalInsights({
+        userId: null,
+        locale: 'pt-BR',
+        moodEntries: entries,
+        timeRange: 'last_7_days',
+      })
+    } catch (error) {
+      console.error('[Como Estou Hoje] Erro ao gerar visão emocional da semana:', error)
     }
   }
 
@@ -366,14 +396,24 @@ export default function ComoEstouHojePage() {
             {/* CARD 4: Minha Semana Emocional */}
             <Reveal delay={150}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="mb-6">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                    <AppIcon name="chart" size={18} className="text-[#ff005e]" decorative />
-                    Minha Semana Emocional
-                  </h3>
-                  <p className="text-sm text-[#545454]">
-                    Enxergue seu padrão emocional ao longo da semana.
-                  </p>
+                <div className="mb-6 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                      <AppIcon name="chart" size={18} className="text-[#ff005e]" decorative />
+                      Minha Semana Emocional
+                    </h3>
+                    <p className="text-sm text-[#545454]">
+                      Enxergue seu padrão emocional ao longo da semana.
+                    </p>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleGenerateWeeklyEmotionalInsight}
+                    disabled={weeklyEmotionalLoading}
+                  >
+                    {weeklyEmotionalLoading ? 'Analisando semana…' : 'Ver resumo com IA'}
+                  </Button>
                 </div>
 
                 {/* Mood Trend Placeholder */}
@@ -394,6 +434,12 @@ export default function ComoEstouHojePage() {
                   </div>
                 </div>
 
+                {weeklyEmotionalError && (
+                  <p className="text-xs text-[#ff005e] mb-3">
+                    Não foi possível analisar a semana agora. Tente novamente mais tarde.
+                  </p>
+                )}
+
                 {/* Highlights */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
@@ -401,7 +447,9 @@ export default function ComoEstouHojePage() {
                       Melhor dia da semana
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">
-                      (Em progresso)
+                      {weeklyEmotionalLoading
+                        ? 'Analisando sua semana…'
+                        : weeklyEmotionalData?.highlights?.[0]?.text || '(Em progresso)'}
                     </p>
                   </div>
                   <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
@@ -409,7 +457,9 @@ export default function ComoEstouHojePage() {
                       Dias mais desafiadores
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">
-                      (Em progresso)
+                      {weeklyEmotionalLoading
+                        ? 'Analisando sua semana…'
+                        : weeklyEmotionalData?.highlights?.[1]?.text || '(Em progresso)'}
                     </p>
                   </div>
                 </div>
