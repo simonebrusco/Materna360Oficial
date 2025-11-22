@@ -98,12 +98,12 @@ export default function BibliotecaMaternaPage() {
 
           {/* FILTER SECTION */}
           <Reveal delay={50}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-8">
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+                <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                   Filtrar por
                 </h2>
-                <p className="text-sm text-[var(--color-text-muted)]">
+                <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                   Selecione um tema e formato para encontrar conteúdos relevantes.
                 </p>
               </div>
@@ -111,7 +111,7 @@ export default function BibliotecaMaternaPage() {
               <div className="space-y-8">
                 {/* Theme Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-3">
+                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                     Tema
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -129,7 +129,7 @@ export default function BibliotecaMaternaPage() {
 
                 {/* Format Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-[var(--color-text-main)] mb-3">
+                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                     Formato
                   </label>
                   <div className="flex flex-wrap gap-2">
