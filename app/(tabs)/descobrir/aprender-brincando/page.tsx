@@ -317,11 +317,11 @@ export default function AprenderBrincandoPage() {
 
         {/* SECTION 5: RECOMMENDED TOYS & PRODUCTS */}
         <Reveal delay={200}>
-          <div className="space-y-4 mb-6">
-            <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+          <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
               Brinquedos Recomendados
             </h2>
-            <p className="text-sm text-[#545454]">
+            <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
               Produtos que combinam com a idade do seu filho e estimulam seu desenvolvimento.
             </p>
           </div>
