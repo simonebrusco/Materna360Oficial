@@ -97,6 +97,16 @@ export default function MinhaJornadaPage() {
         setConquests([])
       }
     }
+
+    // Load memories from localStorage
+    const storedMemories = localStorage.getItem('minha-jornada:memories:v1')
+    if (storedMemories) {
+      try {
+        setMemories(JSON.parse(storedMemories))
+      } catch {
+        setMemories([])
+      }
+    }
   }, [isHydrated])
 
   const saveConquest = () => {
