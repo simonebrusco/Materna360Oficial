@@ -60,7 +60,53 @@ export default function MinhaJornadaPage() {
     if (typeof saved === 'object' && saved !== null) {
       setTimelineNotes(saved as Record<string, { humor?: string; energia?: string; nota?: string }>)
     }
+
+    // Load conquests from localStorage
+    const storedConquests = localStorage.getItem('minha-jornada:conquests:v1')
+    if (storedConquests) {
+      try {
+        setConquests(JSON.parse(storedConquests))
+      } catch {
+        setConquests([])
+      }
+    }
   }, [isHydrated])
+
+  const saveConquest = () => {
+    if (!inputValue.trim()) return
+
+    const newConquest: Conquest = {
+      id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      icon: selectedIcon,
+      description: inputValue.trim(),
+      timestamp: new Date().toISOString(),
+    }
+
+    const updated = [newConquest, ...conquests]
+    setConquests(updated)
+    localStorage.setItem('minha-jornada:conquests:v1', JSON.stringify(updated))
+
+    addItem({
+      origin: 'minhas-conquistas',
+      type: 'goal',
+      title: inputValue.trim(),
+      payload: {
+        icon: selectedIcon,
+        description: inputValue.trim(),
+      },
+    })
+
+    setShowSaved(true)
+    setTimeout(() => setShowSaved(false), 2000)
+
+    setInputValue('')
+    setSelectedIcon('star')
+    setDrawerOpen(false)
+  }
+
+  const recentConquests = conquests.slice(0, 4)
 
   const generateTimeline = () => {
     const days = []
