@@ -87,11 +87,12 @@ export function MaternarFeatureCard({
           </div>
         </div>
 
-        {/* Bottom CTA - always at bottom with breathing room */}
-        <div className="mt-auto pt-5 md:pt-6">
+        {/* Bottom CTA - always at bottom with generous breathing room */}
+        <div className="mt-auto pt-6 md:pt-7">
           <button
             type="button"
-            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-[#FF1475] transition-all duration-150 hover:gap-1 active:opacity-80"
+            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-bold uppercase tracking-wide transition-all duration-150 hover:gap-1 active:opacity-75"
+            style={{ color: isConquistas || isPremium ? '#b8236b' : '#fd2597' }}
             aria-label={`${ctaText} ${title}`}
           >
             <span>{ctaText}</span>
