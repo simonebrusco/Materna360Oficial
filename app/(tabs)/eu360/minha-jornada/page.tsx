@@ -422,6 +422,132 @@ export default function MinhaJornadaPage() {
           </Reveal>
         </div>
       </ClientOnly>
+
+      {/* DRAWER - REGISTRAR CONQUISTA */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50">
+          {/* BACKDROP */}
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-200"
+            onClick={() => setDrawerOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* DRAWER PANEL */}
+          <div
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] max-h-[90vh] overflow-y-auto animate-[slide-up_0.3s_ease-out]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Registrar Conquista"
+          >
+            <div className="p-6 md:p-8 space-y-5">
+              {/* HEADER */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-[1rem] md:text-[1.1rem] font-semibold text-[#3A3A3A]">
+                    Registrar Conquista
+                  </h2>
+                  <p className="text-[0.85rem] text-[#6A6A6A] mt-1">
+                    Descreva sua vitória e escolha um ícone.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex-shrink-0 rounded-lg p-2 text-[#6A6A6A] hover:bg-[#ffd8e6]/30 transition-colors"
+                  aria-label="Fechar"
+                >
+                  <AppIcon name="x" size={20} decorative />
+                </button>
+              </div>
+
+              {/* INPUT FIELD */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-[#3A3A3A] uppercase tracking-wide">
+                  Descreva sua conquista
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Passei 30 min sem celular com meu filho"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') saveConquest()
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border border-[#ffd8e6] bg-white text-[#3A3A3A] placeholder-[#6A6A6A] text-sm focus:outline-none focus:ring-2 focus:ring-[#FF1475]/30 focus:border-[#FF1475] transition-all duration-150"
+                  autoFocus
+                />
+              </div>
+
+              {/* ICON SELECTOR */}
+              <div className="space-y-3">
+                <label className="block text-xs font-semibold text-[#3A3A3A] uppercase tracking-wide">
+                  Escolha um ícone
+                </label>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {AVAILABLE_ICONS.map((icon) => (
+                    <button
+                      key={icon}
+                      onClick={() => setSelectedIcon(icon)}
+                      className={`flex-shrink-0 w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center ${
+                        selectedIcon === icon
+                          ? 'border-[#FF1475] bg-[#ffd8e6] shadow-[0_4px_12px_rgba(255,0,94,0.16)]'
+                          : 'border-[#ffd8e6] bg-white hover:border-[#FF1475]/50'
+                      }`}
+                      aria-label={ICON_LABELS[icon]}
+                      title={ICON_LABELS[icon]}
+                    >
+                      <AppIcon
+                        name={icon}
+                        size={18}
+                        className={selectedIcon === icon ? 'text-[#FF1475]' : 'text-[#6A6A6A]'}
+                        decorative
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SAVE BUTTON */}
+              <Button
+                variant="primary"
+                onClick={saveConquest}
+                disabled={!inputValue.trim()}
+                className="w-full h-11 rounded-xl"
+              >
+                <AppIcon name="check" size={16} decorative className="mr-2" />
+                Salvar no planner
+              </Button>
+
+              {/* HELPER TEXT */}
+              <p className="text-xs text-center text-[#6A6A6A]">
+                Sua conquista será salva na sua jornada.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ANIMATION KEYFRAMES */}
+      <style>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      `}</style>
     </PageTemplate>
   )
 }
