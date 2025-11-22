@@ -10,7 +10,7 @@ interface Props {
 
 export function SupportBlock({ form, onChange, onToggleArrayField }: Props) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-4">
+    <div className="rounded-3xl bg-white p-6 border border-[var(--color-border-soft)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-gray-900">Apoio & rede de suporte</h2>
         <p className="mt-1 text-xs text-gray-600">Conectar você com sua rede pode ser a melhor ajuda.</p>

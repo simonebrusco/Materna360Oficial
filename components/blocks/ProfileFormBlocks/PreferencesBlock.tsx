@@ -10,7 +10,7 @@ interface Props {
 
 export function PreferencesBlock({ form, onChange, onToggleArrayField }: Props) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-4">
+    <div className="rounded-3xl bg-white p-6 border border-[var(--color-border-soft)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-gray-900">Preferências no app</h2>
         <p className="mt-1 text-xs text-gray-600">Assim a gente personaliza tudo para você.</p>
