@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { SoftCard } from '@/components/ui/card'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { Button } from '@/components/ui/Button'
