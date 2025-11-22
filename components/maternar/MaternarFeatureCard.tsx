@@ -82,11 +82,11 @@ export function MaternarFeatureCard({
           </div>
         </div>
 
-        {/* Bottom CTA - always at bottom */}
-        <div className="mt-auto pt-3">
+        {/* Bottom CTA - always at bottom with breathing room */}
+        <div className="mt-auto pt-5 md:pt-6">
           <button
             type="button"
-            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#FF1475] transition-all duration-150 hover:gap-1"
+            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-[#FF1475] transition-all duration-150 hover:gap-1 active:opacity-80"
             aria-label={`${ctaText} ${title}`}
           >
             <span>{ctaText}</span>
