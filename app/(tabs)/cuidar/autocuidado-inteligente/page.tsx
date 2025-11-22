@@ -533,6 +533,8 @@ export default function AutocuidadoInteligentePage() {
               </SoftCard>
             </Reveal>
           </div>
+
+          <MotivationalFooter hubName="cuidar" />
         </div>
       </ClientOnly>
     </PageTemplate>
