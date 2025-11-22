@@ -45,7 +45,7 @@ export default function DayCalendarStrip({
   }
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
+    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:justify-center">
       {weekDays.map((date, index) => {
         const selected = isSelected(date)
         const today = isToday(date)
