@@ -29,20 +29,35 @@ export function MaternarFeatureCard({
   const isConquistas = cardId === 'minhas-conquistas-hub'
   const isSpecial = isPremium || isConquistas
 
-  const baseCardClasses =
-    'h-full flex flex-col rounded-3xl border bg-white ' +
-    'shadow-[0_2px_12px_rgba(47,58,86,0.06)] ' +
-    'min-h-[180px] md:min-h-[200px] ' +
-    'px-4 md:px-6 py-4 md:py-6 ' +
-    'transition-all duration-200 ease-out ' +
-    'hover:shadow-[0_8px_28px_rgba(47,58,86,0.1)] ' +
+  // Enhanced premium spacing for special cards
+  const baseCardClasses = clsx(
+    'h-full flex flex-col rounded-3xl border bg-white transition-all duration-200 ease-out',
+    isSpecial
+      ? 'min-h-[190px] md:min-h-[210px] px-4 md:px-6 py-5 md:py-7'
+      : 'min-h-[180px] md:min-h-[200px] px-4 md:px-6 py-4 md:py-6',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+  )
 
-  // Special treatment for Materna+ and Minhas Conquistas
+  // Special premium styling for Materna+ and Minhas Conquistas
   const specialCardClasses = isSpecial
-    ? 'border-l-[3px] border-l-[#9B4D96] border-t border-t-[#FFE8F2] border-r border-r-[#FFE8F2] border-b border-b-[#FFE8F2] ' +
-      'hover:shadow-[0_12px_36px_rgba(155,77,150,0.18)]'
-    : 'border-[#FFE8F2] hover:border-[#FF1475]/20'
+    ? clsx(
+        // Enhanced plumSoft border (light plum) for premium presence
+        'border-[#E8D4E8] border-[1.5px]',
+        // Premium glow shadow: larger blur (14px), subtle spread, 10% opacity
+        'shadow-[0_4px_14px_rgba(155,77,150,0.10)]',
+        // Enhanced hover state with plum glow
+        'hover:shadow-[0_8px_28px_rgba(155,77,150,0.16)]',
+        // Elegant curved left accent in plum
+        'border-l-[4px] border-l-[#9B4D96]',
+        // Premium focus ring
+        'focus-visible:ring-[#9B4D96]'
+      )
+    : clsx(
+        'border-[#FFE8F2]',
+        'shadow-[0_2px_12px_rgba(47,58,86,0.06)]',
+        'hover:shadow-[0_8px_28px_rgba(47,58,86,0.1)]',
+        'focus-visible:ring-[#FF1475]'
+      )
 
   return (
     <Link
@@ -56,13 +71,13 @@ export function MaternarFeatureCard({
           : 'focus-visible:ring-[#FF1475] focus-visible:ring-offset-white'
       )}
     >
-      <div
-        role="article"
-        className={clsx(baseCardClasses, specialCardClasses)}
-      >
+      <div role="article" className={clsx(baseCardClasses, specialCardClasses)}>
         {/* Top Row: Category Badge (Left) + Icon (Right) */}
-        <div className="flex items-start justify-between gap-3 mb-2.5 md:mb-3">
-          {/* Category Badge - Left */}
+        <div className={clsx(
+          'flex items-start justify-between gap-3',
+          isSpecial ? 'mb-3 md:mb-3.5' : 'mb-2.5 md:mb-3'
+        )}>
+          {/* Category Badge - Left, always pink */}
           {tag && (
             <div>
               <span className="inline-flex items-center rounded-full bg-[#FFE8F2] px-2.5 py-1 text-[9px] md:text-xs font-bold uppercase tracking-wider text-[#FF1475]">
@@ -72,30 +87,52 @@ export function MaternarFeatureCard({
           )}
           {!tag && <div />}
 
-          {/* Icon - Top Right, reduced 20-25%, plum color with subtle shadow */}
+          {/* Icon - Top Right, reduced ~15% for special cards, plum with soft glow */}
           <div
-            className="flex-shrink-0 h-8 w-8 md:h-9 md:w-9 flex items-center justify-center rounded-lg transition-all shadow-sm"
+            className={clsx(
+              'flex-shrink-0 flex items-center justify-center rounded-lg transition-all',
+              isSpecial
+                ? 'h-8 w-8 md:h-8.5 md:w-8.5 shadow-sm'
+                : 'h-8 w-8 md:h-9 md:w-9 shadow-sm'
+            )}
             style={{
-              backgroundColor: isSpecial ? 'rgba(155, 77, 150, 0.08)' : 'rgba(155, 77, 150, 0.06)',
+              backgroundColor: isSpecial
+                ? 'rgba(155, 77, 150, 0.12)'
+                : 'rgba(155, 77, 150, 0.06)',
             }}
           >
             <AppIcon
               name={icon}
-              className="h-4 w-4 md:h-4.5 md:w-4.5 flex-shrink-0"
+              className={clsx(
+                'flex-shrink-0',
+                isSpecial
+                  ? 'h-3.5 w-3.5 md:h-4 md:w-4'
+                  : 'h-4 w-4 md:h-4.5 md:w-4.5'
+              )}
               style={{ color: '#9B4D96' }}
               aria-hidden="true"
             />
           </div>
         </div>
 
-        {/* Accent Line - Plum, positioned close to category for cohesion */}
+        {/* Accent Line - Plum, positioned close to category */}
         <div
-          className="h-0.5 w-6 rounded-full mb-2.5 md:mb-3"
+          className={clsx(
+            'h-0.5 rounded-full',
+            isSpecial ? 'w-7 mb-3 md:mb-3.5' : 'w-6 mb-2.5 md:mb-3'
+          )}
           style={{ backgroundColor: '#9B4D96' }}
         />
 
-        {/* Title + Subtitle - Tighter spacing, moved up 12-16px */}
-        <div className="flex-1 space-y-1 md:space-y-1.5 mb-3.5 md:mb-4">
+        {/* Title + Subtitle - Premium spacing, raised slightly for special cards */}
+        <div
+          className={clsx(
+            'flex-1',
+            isSpecial
+              ? 'space-y-1.5 md:space-y-2 mb-4 md:mb-5'
+              : 'space-y-1 md:space-y-1.5 mb-3.5 md:mb-4'
+          )}
+        >
           <h3 className="text-sm md:text-base font-semibold text-[#3A3A3A] leading-tight">
             {title}
           </h3>
@@ -104,7 +141,7 @@ export function MaternarFeatureCard({
           </p>
         </div>
 
-        {/* Premium CTA - Pink text, pink arrow, plum hover animation */}
+        {/* Premium CTA - Pink text/arrow, plum hover animation */}
         <div className="mt-auto pt-0.5">
           <button
             type="button"
