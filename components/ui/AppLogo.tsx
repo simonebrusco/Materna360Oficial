@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import React from 'react'
 
 interface AppLogoProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -20,15 +19,14 @@ export function AppLogo({
     <div
       className={`flex items-center shrink-0 ${className}`}
       aria-label="Materna360"
-      suppressHydrationWarning
       {...props}
     >
-      <Image
+      <img
         src="/images/logo-principal.png"
         alt="Materna360"
         width={width}
         height={height}
-        priority={priority}
+        style={{ maxWidth: '100%', height: 'auto' }}
       />
     </div>
   )
