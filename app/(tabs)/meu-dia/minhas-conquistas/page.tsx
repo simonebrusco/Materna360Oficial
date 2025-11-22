@@ -1,11 +1,108 @@
 'use client'
 
+import { useState } from 'react'
+import { clsx } from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
-import { Reveal } from '@/components/ui/Reveal'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 import { ClientOnly } from '@/components/common/ClientOnly'
 
+// ===== CONSTANTS =====
+const INITIAL_MISSIONS = [
+  { id: 'humor', label: 'Registrar como estou hoje', xp: 10 },
+  { id: 'planner', label: 'Preencher meu planner', xp: 20 },
+  { id: 'pausa', label: 'Fazer uma pausa de 5 minutos sem culpa', xp: 15 },
+  { id: 'conquista', label: 'Registrar uma conquista', xp: 25 },
+]
+
+const SEALS: { id: string; label: string; icon: KnownIconName }[] = [
+  { id: 'primeiro-passo', label: 'Primeiro passo', icon: 'sparkles' },
+  { id: 'semana-leve', label: 'Semana leve', icon: 'sun' },
+  { id: 'cuidar-de-mim', label: 'Cuidando de mim', icon: 'heart' },
+  { id: 'conexao', label: 'Conectando com meu filho', icon: 'smile' },
+  { id: 'rotina', label: 'Rotina em dia', icon: 'calendar' },
+  { id: 'presenca', label: 'Presença real', icon: 'star' },
+]
+
+// ===== MISSIONS CARD COMPONENT =====
+function MissionsCard() {
+  const [missions, setMissions] = useState(
+    INITIAL_MISSIONS.map((m) => ({ ...m, done: false }))
+  )
+
+  const completedCount = missions.filter((m) => m.done).length
+
+  return (
+    <SoftCard className="w-full rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold text-gray-900">Missões de hoje</h2>
+        <p className="text-sm text-gray-600">
+          Pequenas ações que valem pontos.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {missions.map((mission) => {
+          const isDone = mission.done
+          return (
+            <button
+              key={mission.id}
+              type="button"
+              onClick={() => {
+                setMissions((prev) =>
+                  prev.map((item) =>
+                    item.id === mission.id
+                      ? { ...item, done: !item.done }
+                      : item
+                  )
+                )
+              }}
+              className={clsx(
+                'flex w-full items-center justify-between rounded-2xl border px-3 py-2.5 text-left transition',
+                isDone
+                  ? 'border-pink-200 bg-pink-50'
+                  : 'border-pink-100 bg-white hover:bg-pink-50/60'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={clsx(
+                    'flex h-5 w-5 items-center justify-center rounded-full border',
+                    isDone
+                      ? 'border-pink-500 bg-pink-500'
+                      : 'border-pink-300 bg-white'
+                  )}
+                >
+                  {isDone && (
+                    <AppIcon name="check" className="h-3 w-3 text-white" decorative />
+                  )}
+                </div>
+                <span
+                  className={clsx(
+                    'text-sm',
+                    isDone ? 'text-gray-700 line-through' : 'text-gray-800'
+                  )}
+                >
+                  {mission.label}
+                </span>
+              </div>
+
+              <span className="text-xs font-medium text-pink-600">
+                +{mission.xp} XP
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="text-xs text-gray-500">
+        {completedCount} de {missions.length} missões concluídas hoje.
+      </p>
+    </SoftCard>
+  )
+}
+
+// ===== MAIN PAGE =====
 export default function MinhasConquistasPage() {
   return (
     <PageTemplate
@@ -18,204 +115,90 @@ export default function MinhasConquistasPage() {
           <p className="mt-1 text-sm text-gray-500">
             Versão gamificada v0.1 – teste de layout (/meu-dia)
           </p>
-          {/* MOTIVATIONAL LINE */}
-          <Reveal delay={0}>
-            <div className="text-center">
-              <p className="text-sm md:text-base text-neutral-600 leading-relaxed">
-                Cada pequeno avanço importa. Você está evoluindo.
-              </p>
-            </div>
-          </Reveal>
 
-          {/* BLOCK 1 — Pontuação Diária e Total */}
-          <Reveal delay={50}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-[#2f3a56] mb-4">
-                Sua Pontuação
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col items-center p-3 rounded-2xl bg-[#FFE5EF]/40">
-                  <span className="text-2xl font-bold text-primary">320</span>
-                  <span className="text-xs text-neutral-500 font-medium mt-1">
-                    Pontuação Diária
-                  </span>
+          {/* GAMIFIED LAYOUT START */}
+          <div className="mt-4 space-y-6">
+            {/* SECTION 1 – Seu painel de progresso */}
+            <SoftCard className="w-full rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Seu painel de progresso
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Cada pequeno avanço importa.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    Pontuação de hoje
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-900">320</p>
                 </div>
-                <div className="flex flex-col items-center p-3 rounded-2xl bg-[#FFE5EF]/40">
-                  <span className="text-2xl font-bold text-primary">4.250</span>
-                  <span className="text-xs text-neutral-500 font-medium mt-1">
-                    Pontuação Total
-                  </span>
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    Pontuação total
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-900">4.250</p>
                 </div>
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    Dias de sequência
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-900">3</p>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-pink-50">
+                  <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500" />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Faltam 80 XP para o próximo nível.
+                </p>
               </div>
             </SoftCard>
-          </Reveal>
 
-          {/* BLOCK 2 — Seu Progresso da Semana */}
-          <Reveal delay={80}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-[#2f3a56] mb-4">
-                Seu Progresso da Semana
-              </h3>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-primary">5/7</span>
-                  <span className="text-xs text-neutral-500 font-medium">
-                    Registros
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-primary">8/10</span>
-                  <span className="text-xs text-neutral-500 font-medium">
-                    Missões
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-primary">3</span>
-                  <span className="text-xs text-neutral-500 font-medium">
-                    Selos
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-[#545454] font-medium">Barra de Progresso</p>
-                <div className="h-3 bg-primary/10 rounded-full overflow-hidden">
-                  <div className="h-full w-3/5 bg-primary rounded-full" />
-                </div>
-              </div>
-            </SoftCard>
-          </Reveal>
+            {/* SECTION 2 – Missões de hoje */}
+            <MissionsCard />
 
-          {/* BLOCK 3 — Selos Desbloqueáveis e Medalhas */}
-          <Reveal delay={100}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-[#2f3a56] mb-4">
-                Selos & Medalhas
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { title: 'Primeiro Passo', unlocked: true },
-                  { title: 'Mãe Presente', unlocked: true },
-                  { title: 'Criatividade em Ação', unlocked: false },
-                  { title: 'Semana Leve', unlocked: false },
-                ].map((badge) => (
-                  <SoftCard
-                    key={badge.title}
-                    className={`rounded-2xl p-4 flex flex-col items-center justify-center text-center h-28 ${
-                      badge.unlocked
-                        ? 'bg-gradient-to-br from-[#FFE5EF]/40 to-white border border-primary/10'
-                        : 'bg-white/60 border border-white/40'
-                    }`}
+            {/* SECTION 3 – Selos desbloqueados */}
+            <SoftCard className="w-full rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Selos desbloqueados
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Uma coleção das suas pequenas grandes vitórias.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                {SEALS.map((seal) => (
+                  <div
+                    key={seal.id}
+                    className="flex flex-col items-center justify-center rounded-2xl border border-pink-100 bg-white px-3 py-4 shadow-sm transition hover:shadow-md"
                   >
-                    <AppIcon
-                      name={badge.unlocked ? 'star' : 'lock'}
-                      size={24}
-                      className={badge.unlocked ? 'text-primary' : 'text-neutral-400'}
-                      decorative
-                    />
-                    <p className={`text-xs font-medium mt-2 ${badge.unlocked ? 'text-primary' : 'text-neutral-400'}`}>
-                      {badge.title}
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-pink-50">
+                      <AppIcon
+                        name={seal.icon}
+                        className="h-5 w-5 text-pink-500"
+                        decorative
+                      />
+                    </div>
+                    <p className="text-xs font-medium text-gray-800 text-center">
+                      {seal.label}
                     </p>
-                  </SoftCard>
+                    <span className="mt-1 inline-flex items-center rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-medium text-pink-600">
+                      Conquistado
+                    </span>
+                  </div>
                 ))}
               </div>
             </SoftCard>
-          </Reveal>
-
-          {/* BLOCK 4 — Missões Diárias e Semanais */}
-          <Reveal delay={110}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-[#2f3a56] mb-4">
-                Missões
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">Diárias</h4>
-                  <div className="space-y-2">
-                    {[
-                      { title: 'Registrar humor', done: true },
-                      { title: 'Completar checklist', done: true },
-                      { title: 'Anotação rápida', done: false },
-                    ].map((mission, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-2 rounded-xl bg-[#FFE5EF]/40">
-                        <input type="checkbox" checked={mission.done} readOnly className="w-4 h-4 rounded" />
-                        <span className={`text-sm ${mission.done ? 'line-through text-neutral-400' : 'text-[#545454]'}`}>
-                          {mission.title}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/60">
-                  <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">Semanais</h4>
-                  <div className="space-y-2">
-                    {[
-                      { title: 'Completar 5 registros', done: true },
-                      { title: 'Desbloquear novo selo', done: false },
-                    ].map((mission, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-2 rounded-xl bg-[#FFE5EF]/40">
-                        <input type="checkbox" checked={mission.done} readOnly className="w-4 h-4 rounded" />
-                        <span className={`text-sm ${mission.done ? 'line-through text-neutral-400' : 'text-[#545454]'}`}>
-                          {mission.title}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </SoftCard>
-          </Reveal>
-
-          {/* BLOCK 5 — Nível Atual (XP Premium) */}
-          <Reveal delay={120}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-[#2f3a56] mb-2">
-                Seu Nível
-              </h3>
-              <p className="text-sm text-[#545454] mb-1">
-                Nível 5 — Cuidando de Mim
-              </p>
-              <p className="text-sm text-[#545454] mb-4">
-                450 / 600 XP
-              </p>
-              <div className="space-y-2 mb-4">
-                <div className="h-3 bg-primary/10 rounded-full overflow-hidden">
-                  <div className="h-full w-3/4 bg-primary rounded-full" />
-                </div>
-                <p className="text-xs text-neutral-500 text-right">75% para o próximo nível</p>
-              </div>
-              <p className="text-xs text-neutral-500 font-medium text-center">
-                Continue caminhando no seu ritmo.
-              </p>
-            </SoftCard>
-          </Reveal>
-
-          {/* BLOCK 6 — Conquistas de Hábitos e Resumo */}
-          <Reveal delay={130}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-[#2f3a56] mb-4">
-                Resumo de Progresso
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FFE5EF]/40">
-                  <span className="text-sm text-[#545454]">Dias de sequência</span>
-                  <span className="font-bold text-primary">7</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FFE5EF]/40">
-                  <span className="text-sm text-[#545454]">Hábitos ativos</span>
-                  <span className="font-bold text-primary">4</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FFE5EF]/40">
-                  <span className="text-sm text-[#545454]">Conquistas desbloqueadas</span>
-                  <span className="font-bold text-primary">12</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FFE5EF]/40">
-                  <span className="text-sm text-[#545454]">XP acumulado</span>
-                  <span className="font-bold text-primary">4.250</span>
-                </div>
-              </div>
-            </SoftCard>
-          </Reveal>
+          </div>
+          {/* GAMIFIED LAYOUT END */}
         </div>
       </ClientOnly>
     </PageTemplate>
