@@ -175,6 +175,16 @@ Status geral: 🟢 Base estável / IA iniciada com segurança
   - Testar em mobile e desktop:
     - /meu-dia/rotina-leve
     - /meu-dia/como-estou-hoje
+   
+ ## 6. PRÓXIMOS PASSOS DA FASE 2 (IA)
+
+1. **Insight do Dia (Como Estou Hoje) conectado à `/api/ai/emocional`** ✅ FEITO
+   - Botão “Gerar insight do dia” usando IA com fallback seguro
+   - Texto humanizado, sem aparecer “IA” na interface
+
+2. Conectar Minha Semana Emocional / Eu360 à `/api/ai/emocional` ⏳
+3. Aprimorar mensagens de plano/limites ⏳
+4. Rodada de QA visual focada em “sensação de produto pronto” ⏳
 
 ---
 
