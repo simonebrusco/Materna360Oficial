@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
@@ -11,6 +11,8 @@ import {
   SupportBlock,
   PreferencesBlock,
 } from './ProfileFormBlocks'
+import { Eu360Stepper, type Eu360Step } from '@/components/eu360/Eu360Stepper'
+import { WizardBand } from '@/components/eu360/WizardBand'
 
 import { DEFAULT_STICKER_ID, STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
@@ -102,6 +104,19 @@ export function ProfileForm() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [statusMessage, setStatusMessage] = useState('')
   const [todayISO, setTodayISO] = useState<string>('')
+  const [currentStep, setCurrentStep] = useState<Eu360Step>('about-you')
+  const [autoSaveStatus, setAutoSaveStatus] = useState<Record<Eu360Step, 'idle' | 'saving' | 'saved'>>({
+    'about-you': 'idle',
+    children: 'idle',
+    routine: 'idle',
+    support: 'idle',
+  })
+  const autoSaveTimeoutRef = useRef<Record<Eu360Step, NodeJS.Timeout>>({
+    'about-you': undefined as any,
+    children: undefined as any,
+    routine: undefined as any,
+    support: undefined as any,
+  })
 
   useEffect(() => {
     const date = new Date().toISOString().split('T')[0]
@@ -250,6 +265,90 @@ export function ProfileForm() {
     return nextErrors
   }
 
+  const triggerAutoSave = useCallback(
+    async (step: Eu360Step) => {
+      setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saving' }))
+
+      try {
+        const normalizedBirthdate = babyBirthdate || null
+        const firstChildAge = form.filhos[0]?.idadeMeses
+        const normalizedAgeMonths =
+          normalizedBirthdate !== null
+            ? null
+            : typeof firstChildAge === 'number' && Number.isFinite(firstChildAge) && firstChildAge >= 0
+              ? Math.floor(firstChildAge)
+              : null
+
+        const response = await fetch('/api/eu360/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          cache: 'no-store',
+          body: JSON.stringify({
+            name: form.nomeMae,
+            birthdate: normalizedBirthdate,
+            age_months: normalizedAgeMonths,
+            userPreferredName: form.userPreferredName,
+            userRole: form.userRole,
+            userEmotionalBaseline: form.userEmotionalBaseline,
+            userMainChallenges: form.userMainChallenges,
+            userEnergyPeakTime: form.userEnergyPeakTime,
+            routineChaosMoments: form.routineChaosMoments,
+            routineScreenTime: form.routineScreenTime,
+            routineDesiredSupport: form.routineDesiredSupport,
+            supportNetwork: form.supportNetwork,
+            supportAvailability: form.supportAvailability,
+            userContentPreferences: form.userContentPreferences,
+            userGuidanceStyle: form.userGuidanceStyle,
+            userSelfcareFrequency: form.userSelfcareFrequency,
+            figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID,
+            children: form.filhos,
+          }),
+        })
+
+        if (response.ok) {
+          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saved' }))
+          // Clear saved status after 3 seconds
+          if (autoSaveTimeoutRef.current[step]) {
+            clearTimeout(autoSaveTimeoutRef.current[step])
+          }
+          autoSaveTimeoutRef.current[step] = setTimeout(() => {
+            setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+          }, 3000)
+        } else {
+          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+        }
+      } catch (error) {
+        console.warn('Autosave failed:', error)
+        setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+      }
+    },
+    [form, babyBirthdate]
+  )
+
+  // Setup debounced autosave on form change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      triggerAutoSave(currentStep)
+    }, 1500) // 1.5 second debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [form, currentStep, triggerAutoSave])
+
+  // Handle step change with smooth scroll
+  const handleStepClick = (step: Eu360Step) => {
+    setCurrentStep(step)
+    triggerAutoSave(step) // Save when changing steps
+
+    // Smooth scroll to the section
+    const element = document.getElementById(step)
+    if (element) {
+      setTimeout(() => {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setStatusMessage('')
@@ -339,32 +438,80 @@ export function ProfileForm() {
 
   return (
     <Reveal>
-      <form className="space-y-6" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
-        <AboutYouBlock form={form} errors={errors} onChange={handleChange} />
+      <form className="w-full" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
+        {/* Stepper Navigation */}
+        <Eu360Stepper currentStep={currentStep} onStepClick={handleStepClick} />
 
-        <ChildrenBlock
-          form={form}
-          errors={errors}
-          babyBirthdate={babyBirthdate}
-          todayISO={todayISO}
-          onBirthdateChange={setBabyBirthdate}
-          onUpdateChild={updateChild}
-          onAddChild={addChild}
-          onRemoveChild={removeChild}
-        />
+        {/* Wizard Bands */}
+        <div className="space-y-0">
+          {/* Band 1: About You */}
+          <WizardBand
+            id="about-you"
+            title="Sobre você"
+            description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
+            autoSaveStatus={autoSaveStatus['about-you']}
+          >
+            <AboutYouBlock form={form} errors={errors} onChange={handleChange} />
+          </WizardBand>
 
-        <RoutineBlock form={form} errors={errors} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+          {/* Band 2: Children */}
+          <WizardBand
+            id="children"
+            title="Sobre seu(s) filho(s)"
+            description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
+            autoSaveStatus={autoSaveStatus['children']}
+          >
+            <ChildrenBlock
+              form={form}
+              errors={errors}
+              babyBirthdate={babyBirthdate}
+              todayISO={todayISO}
+              onBirthdateChange={setBabyBirthdate}
+              onUpdateChild={updateChild}
+              onAddChild={addChild}
+              onRemoveChild={removeChild}
+            />
+          </WizardBand>
 
-        <SupportBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+          {/* Band 3: Routine & Moments */}
+          <WizardBand
+            id="routine"
+            title="Rotina & momentos críticos"
+            description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
+            autoSaveStatus={autoSaveStatus['routine']}
+          >
+            <RoutineBlock form={form} errors={errors} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+          </WizardBand>
 
-        <PreferencesBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+          {/* Band 4: Support Network */}
+          <WizardBand
+            id="support"
+            title="Rede de apoio"
+            description="Conectar você com sua rede pode ser a melhor ajuda."
+            autoSaveStatus={autoSaveStatus['support']}
+          >
+            <SupportBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
 
-        <div className="rounded-3xl bg-white p-6 border border-[var(--color-border-soft)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-3">
-          <Button type="submit" variant="primary" disabled={saving} className="w-full">
-            {saving ? 'Salvando...' : 'Salvar e continuar'}
-          </Button>
-          <p className="text-center text-[11px] text-gray-500">Você poderá editar essas informações no seu Perfil.</p>
-          {statusMessage && <p className="text-center text-xs font-semibold text-gray-900">{statusMessage}</p>}
+            {/* Preferences in same band */}
+            <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-[var(--color-text-main)]">Preferências no app</h3>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">Assim a gente personaliza tudo para você.</p>
+              </div>
+              <PreferencesBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+            </div>
+          </WizardBand>
+
+          {/* Submit Button Band */}
+          <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+            <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-3">
+              <Button type="submit" variant="primary" disabled={saving} className="w-full">
+                {saving ? 'Salvando...' : 'Salvar e continuar'}
+              </Button>
+              <p className="text-center text-[11px] text-[var(--color-text-muted)]">Você poderá editar essas informações no seu Perfil.</p>
+              {statusMessage && <p className="text-center text-xs font-semibold text-[var(--color-text-main)]">{statusMessage}</p>}
+            </div>
+          </div>
         </div>
       </form>
     </Reveal>
