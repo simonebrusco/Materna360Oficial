@@ -6,6 +6,7 @@ import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { toast } from '@/app/lib/toast'
 
