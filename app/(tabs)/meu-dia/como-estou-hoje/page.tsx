@@ -524,7 +524,7 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 5: Sugestões para a Mãe */}
+            {/* CARD 5: Sugestões para a Mãe (IA) */}
             <Reveal delay={200}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="mb-6 flex items-center justify-between gap-3">
