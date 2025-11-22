@@ -29,11 +29,11 @@ export function MaternarFeatureCard({
 
   const baseCardClasses =
     'h-full flex flex-col justify-between rounded-[26px] md:rounded-[20px] border border-[#FFE8F2] bg-white ' +
-    'shadow-sm ' +
-    'min-h-[190px] max-h-[220px] ' +
-    'mb-0 px-4 py-5 md:px-6 md:py-7 ' +
+    'shadow-[0_4px_24px_rgba(47,58,86,0.08)] ' +
+    'min-h-[200px] ' +
+    'mb-0 px-4 py-5 md:px-6 md:py-6 ' +
     'transition-all duration-200 ease-out ' +
-    'hover:-translate-y-1 hover:shadow-[0_18px_60px_rgba(0,0,0,0.06)] hover:border-[#FF1475]/60 ' +
+    'hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:border-[#FF1475]/40 ' +
     'active:shadow-[0_2px_8px_rgba(0,0,0,0.05)]'
 
   const premiumCardClasses =
