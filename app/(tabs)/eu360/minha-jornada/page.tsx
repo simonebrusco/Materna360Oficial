@@ -145,6 +145,65 @@ export default function MinhaJornadaPage() {
 
   const recentConquests = conquests.slice(0, 4)
 
+  const saveMemory = () => {
+    if (!memoryInput.trim()) return
+
+    if (editingMemoryId) {
+      const updated = memories.map((memory) =>
+        memory.id === editingMemoryId
+          ? {
+              ...memory,
+              description: memoryInput.trim(),
+              icon: selectedMemoryIcon,
+              day: selectedMemoryDay,
+              timestamp: new Date().toISOString(),
+            }
+          : memory
+      )
+      setMemories(updated)
+      localStorage.setItem('minha-jornada:memories:v1', JSON.stringify(updated))
+    } else {
+      const newMemory: Memory = {
+        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        icon: selectedMemoryIcon,
+        description: memoryInput.trim(),
+        day: selectedMemoryDay,
+        timestamp: new Date().toISOString(),
+      }
+
+      const updated = [newMemory, ...memories]
+      setMemories(updated)
+      localStorage.setItem('minha-jornada:memories:v1', JSON.stringify(updated))
+    }
+
+    setShowMemorySaved(true)
+    setTimeout(() => setShowMemorySaved(false), 2000)
+
+    setMemoryInput('')
+    setSelectedMemoryIcon('heart')
+    setSelectedMemoryDay('')
+    setEditingMemoryId(null)
+    setMemoryModalOpen(false)
+  }
+
+  const deleteMemory = (id: string) => {
+    const updated = memories.filter((memory) => memory.id !== id)
+    setMemories(updated)
+    localStorage.setItem('minha-jornada:memories:v1', JSON.stringify(updated))
+    setMemoryModalOpen(false)
+    setEditingMemoryId(null)
+  }
+
+  const openEditMemory = (memory: Memory) => {
+    setMemoryInput(memory.description)
+    setSelectedMemoryIcon(memory.icon)
+    setSelectedMemoryDay(memory.day || '')
+    setEditingMemoryId(memory.id)
+    setMemoryModalOpen(true)
+  }
+
   const generateTimeline = () => {
     const days = []
     for (let i = 9; i >= 0; i--) {
