@@ -110,10 +110,13 @@ module.exports = {
     'max-w-md', 'rounded-2xl', 'shadow-lg', 'transition', 'ease-out', 'duration-200',
 
     // Maternar card styles
-    'hover:-translate-y-0.5', 'hover:-translate-y-1', 'rounded-full', 'w-8', 'w-12', 'h-1', 'h-[2px]', 'mb-2.5', 'mb-1.5', 'h-full', 'flex', 'flex-col', 'justify-between',
-    'h-10', 'w-10', 'gap-2.5', 'md:gap-3', 'pt-5', 'md:pt-6', 'pb-32', 'active:opacity-80',
-    'shadow-[0_4px_24px_rgba(47,58,86,0.08)]', 'shadow-[0_12px_40px_rgba(0,0,0,0.12)]', 'shadow-[0_0_0_8px_rgba(255,20,117,0.06)]',
-    'bg-[#FF1475]/5', 'bg-[#FF1475]/30', 'bg-[#FF1475]/40',
+    'hover:-translate-y-0.5', 'hover:-translate-y-1', 'rounded-full', 'rounded-2xl', 'w-8', 'w-10', 'w-11', 'w-12', 'h-1', 'h-0.5', 'h-[2px]', 'mb-2.5', 'mb-1.5', 'h-full', 'h-11', 'flex', 'flex-col', 'justify-between', 'gap-3', 'gap-2.5', 'gap-3.5',
+    'h-10', 'pt-6', 'pt-7', 'md:pt-6', 'md:pt-7', 'pt-5', 'md:pt-6', 'pb-24', 'pb-32', 'md:pb-32', 'active:opacity-80', 'active:opacity-75',
+    'md:gap-3.5', 'md:mt-12', 'mt-10',
+    'shadow-[0_2px_12px_rgba(47,58,86,0.06)]', 'shadow-[0_8px_28px_rgba(47,58,86,0.1)]', 'shadow-[0_4px_24px_rgba(47,58,86,0.08)]', 'shadow-[0_12px_40px_rgba(0,0,0,0.12)]', 'shadow-[0_0_0_8px_rgba(255,20,117,0.06)]',
+    'border-[#FFE8F2]', 'border-[#e865a7]', 'hover:border-[#FF1475]/30', 'hover:border-[#b8236b]/50',
+    'tracking-wider', 'tracking-wide',
+    'bg-[#FFE8F2]', 'px-2.5', 'py-1',
 
     // whitespace utilities
     'whitespace-pre-wrap', 'break-all',
