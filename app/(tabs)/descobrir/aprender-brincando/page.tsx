@@ -361,7 +361,7 @@ export default function AprenderBrincandoPage() {
           </div>
         </Reveal>
 
-        <MotivationalFooter hubName="descobrir" />
+        <MotivationalFooter routeKey="descobrir-aprender-brincando" />
       </div>
     </PageTemplate>
   )
