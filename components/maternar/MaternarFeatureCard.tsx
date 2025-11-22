@@ -26,20 +26,20 @@ export function MaternarFeatureCard({
   tag,
 }: MaternarFeatureCardProps) {
   const isPremium = cardId === 'planos-premium'
+  const isConquistas = cardId === 'minhas-conquistas-hub'
 
   const baseCardClasses =
-    'h-full flex flex-col justify-between rounded-[26px] md:rounded-[20px] border border-[#FFE8F2] bg-white ' +
-    'shadow-[0_4px_24px_rgba(47,58,86,0.08)] ' +
-    'min-h-[200px] ' +
-    'mb-0 px-4 py-5 md:px-6 md:py-6 ' +
+    'h-full flex flex-col justify-between rounded-2xl border border-[#FFE8F2] bg-white ' +
+    'shadow-[0_2px_12px_rgba(47,58,86,0.06)] ' +
+    'min-h-[220px] ' +
+    'mb-0 px-4 py-6 md:px-6 md:py-7 ' +
     'transition-all duration-200 ease-out ' +
-    'hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:border-[#FF1475]/40 ' +
+    'hover:-translate-y-1 hover:shadow-[0_8px_28px_rgba(47,58,86,0.1)] hover:border-[#FF1475]/30 ' +
     'active:shadow-[0_2px_8px_rgba(0,0,0,0.05)]'
 
   const premiumCardClasses =
-    'border-[#FFE8F2] bg-white ' +
-    'shadow-sm ' +
-    'hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]'
+    'border-[#e865a7] ' +
+    'hover:border-[#b8236b]/50'
 
   return (
     <Link
