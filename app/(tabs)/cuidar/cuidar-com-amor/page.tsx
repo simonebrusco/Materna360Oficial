@@ -274,39 +274,42 @@ export default function CuidarComAmorPage() {
 
           {/* BLOCK 2 — Cuidado Emocional por Idade */}
           <Reveal delay={50}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2">
-                  Cuidado Emocional por Idade
-                </h3>
-                <p className="text-sm md:text-base text-[#545454]">
-                  Sugestões suaves para acolher o momento do seu filho.
-                </p>
-              </div>
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cuidado Emocional por Idade
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Sugestões suaves para acolher o momento do seu filho.
+                  </p>
+                </div>
 
-              <div className="mb-6 p-4 rounded-2xl bg-[#FFE5EF]/40">
-                <p className="text-sm text-[#545454]">
-                  Cadastre a idade do seu filho no Eu360 para sugestões ainda mais certeiras.
-                </p>
-              </div>
+                <div className="p-4 rounded-2xl bg-[#FFE5EF]/40 border border-[#ffd8e6]/50">
+                  <p className="text-xs md:text-sm text-[#545454]">
+                    Cadastre a idade do seu filho no Eu360 para sugestões ainda mais certeiras.
+                  </p>
+                </div>
 
-              <div className="space-y-3 mb-6">
-                {EMOTIONAL_CARE_TIPS.map((tip, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <div className="flex-shrink-0 text-[#ff005e] mt-0.5">
-                      •
+                <div className="space-y-3 flex-1">
+                  {EMOTIONAL_CARE_TIPS.map((tip, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div className="flex-shrink-0 text-[#6A2C70] mt-0.5 font-semibold">
+                        •
+                      </div>
+                      <p className="text-sm text-[#545454] leading-relaxed">{tip}</p>
                     </div>
-                    <p className="text-sm text-[#545454]">{tip}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <button
-                onClick={() => console.log('ver mais cuidado emocional')}
-                className="text-sm font-semibold text-[#ff005e] hover:opacity-80 transition-opacity inline-flex items-center gap-1"
-              >
-                Ver mais ideias de cuidado →
-              </button>
+                <button
+                  onClick={() => console.log('ver mais cuidado emocional')}
+                  className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                >
+                  Ver mais ideias de cuidado →
+                </button>
+              </div>
             </SoftCard>
           </Reveal>
 
