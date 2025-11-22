@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { SoftCard } from '@/components/ui/card'
+import { Button } from '@/components/ui/Button'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { toast } from '@/app/lib/toast'
