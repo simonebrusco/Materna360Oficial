@@ -142,7 +142,7 @@ export default function RotinaLevePage() {
       toast.success('Ideia salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving idea:', error)
-      toast.error('Não foi possível salvar a ideia agora.')
+      toast.danger('Não foi possível salvar a ideia agora.')
     }
   }
 
@@ -164,7 +164,7 @@ export default function RotinaLevePage() {
       toast.success('Receita salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
-      toast.error('Não foi possível salvar a receita agora.')
+      toast.danger('Não foi possível salvar a receita agora.')
     }
   }
 
@@ -188,7 +188,7 @@ export default function RotinaLevePage() {
       toast.success('Inspiração salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving inspiration:', error)
-      toast.error('Não foi possível salvar a inspiração agora.')
+      toast.danger('Não foi possível salvar a inspiração agora.')
     }
   }
 
