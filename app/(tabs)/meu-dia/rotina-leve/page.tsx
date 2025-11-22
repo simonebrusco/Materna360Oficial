@@ -681,91 +681,100 @@ export default function RotinaLevePage() {
               </SoftCard>
 
               {/* Inspirações do Dia - Collapsed by default */}
-              <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] transition-all duration-200">
-                <h3 className="text-base font-semibold text-gray-900">Inspirações do Dia</h3>
-                <p className="mt-1 text-sm text-gray-600">
-                  Uma frase e um pequeno cuidado para hoje.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setOpenInspiration((prev) => !prev)}
-                  className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60"
-                >
-                  {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
-                </button>
-
-                {openInspiration && (
-                  <div className="mt-4 text-xs text-gray-800 space-y-3">
-                    <div className="space-y-1">
-                      <p className="font-medium text-gray-800">Foco de hoje</p>
-                      <select className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-primary-600">
-                        <option>Cansaço</option>
-                        <option>Culpa</option>
-                        <option>Organização</option>
-                        <option>Conexão com o filho</option>
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleGenerateInspiration}
-                      disabled={inspirationLoading}
-                      className="mt-3 w-full rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] px-6 py-2.5 text-base font-semibold text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                    >
-                      {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
-                    </button>
-
-                    <div className="rounded-2xl bg-gray-50 p-3 text-xs text-gray-800 space-y-3">
-                      {inspirationLoading && (
-                        <p className="text-[11px] text-gray-500">
-                          Pensando em uma frase e um cuidado especial para hoje…
-                        </p>
-                      )}
-
-                      {!inspirationLoading && (
-                        <>
-                          <div>
-                            <p className="mb-1 text-[11px] font-medium text-gray-700">
-                              Frase de hoje
-                            </p>
-                            <p>
-                              {(inspiration && inspiration.phrase) ||
-                                'Você não precisa dar conta de tudo hoje.'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="mb-1 text-[11px] font-medium text-gray-700">
-                              Pequeno cuidado
-                            </p>
-                            <p>
-                              {(inspiration && inspiration.care) ||
-                                '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="mb-1 text-[11px] font-medium text-gray-700">
-                              Mini ritual
-                            </p>
-                            <p>
-                              {(inspiration && inspiration.ritual) ||
-                                'Envie uma mensagem carinhosa para alguém que te apoia.'}
-                            </p>
-                          </div>
-                        </>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleSaveInspiracao}
-                        className="mt-2 w-full rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
-                      >
-                        Salvar inspiração no planner
-                      </button>
-                    </div>
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                      Inspirações do Dia
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Uma frase e um pequeno cuidado para hoje.
+                    </p>
                   </div>
-                )}
-              </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOpenInspiration((prev) => !prev)}
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                  >
+                    {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
+                  </button>
+
+                  {openInspiration && (
+                    <div className="text-xs space-y-3 flex-1">
+                      <div className="space-y-1">
+                        <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
+                        <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                          <option>Cansaço</option>
+                          <option>Culpa</option>
+                          <option>Organização</option>
+                          <option>Conexão com o filho</option>
+                        </select>
+                      </div>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateInspiration}
+                        disabled={inspirationLoading}
+                        className="w-full"
+                      >
+                        {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
+                      </Button>
+
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
+                        {inspirationLoading && (
+                          <p className="text-[11px]">
+                            Pensando em uma frase e um cuidado especial para hoje…
+                          </p>
+                        )}
+
+                        {!inspirationLoading && (
+                          <>
+                            <div>
+                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                                Frase de hoje
+                              </p>
+                              <p>
+                                {(inspiration && inspiration.phrase) ||
+                                  'Você não precisa dar conta de tudo hoje.'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                                Pequeno cuidado
+                              </p>
+                              <p>
+                                {(inspiration && inspiration.care) ||
+                                  '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                                Mini ritual
+                              </p>
+                              <p>
+                                {(inspiration && inspiration.ritual) ||
+                                  'Envie uma mensagem carinhosa para alguém que te apoia.'}
+                              </p>
+                            </div>
+                          </>
+                        )}
+
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSaveInspiracao}
+                          className="w-full mt-2"
+                        >
+                          Salvar inspiração no planner
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SoftCard>
             </div>
           </div>
 
