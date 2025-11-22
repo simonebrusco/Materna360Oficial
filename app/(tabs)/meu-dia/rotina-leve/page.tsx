@@ -58,7 +58,8 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
         {
           id: 'recipe-1',
           title: 'Creminho de aveia rápida',
-          description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
+          description:
+            'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
           timeLabel: 'Pronto em ~10 min',
           ageLabel: 'a partir de 1 ano',
           preparation:
@@ -253,11 +254,61 @@ export default function RotinaLevePage() {
     }
   }
 
+  // 🔗 Ideias Rápidas conectadas à IA com fallback seguro
   const handleGenerateIdeas = async () => {
     setIdeasLoading(true)
-    const result = await mockGenerateIdeas()
-    setIdeas(result)
-    setIdeasLoading(false)
+    try {
+      const res = await fetch('/api/ai/rotina', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature: 'quick_ideas',
+          limit: 3,
+          context: {
+            origin: 'rotina-leve',
+            tempoDisponivel,
+            comQuem,
+            tipoIdeia,
+          },
+        }),
+      })
+
+      if (!res.ok) {
+        console.error('[Rotina Leve] IA quick_ideas: response not OK', await res.text())
+        const fallback = await mockGenerateIdeas()
+        setIdeas(fallback)
+        toast.info(
+          'Usei sugestões do Materna360 enquanto ajustamos suas ideias rápidas.'
+        )
+        return
+      }
+
+      const data: any = await res.json()
+
+      const mapped: QuickIdea[] =
+        data?.ideas && Array.isArray(data.ideas) && data.ideas.length > 0
+          ? data.ideas.map((idea: any, index: number) => ({
+              id: idea.id || `idea-${index + 1}`,
+              text:
+                idea.text ||
+                idea.descricao ||
+                'Uma pequena ação para deixar seu dia mais leve.',
+            }))
+          : await mockGenerateIdeas()
+
+      setIdeas(mapped)
+    } catch (error) {
+      console.error('[Rotina Leve] Error generating quick ideas via IA:', error)
+      const fallback = await mockGenerateIdeas()
+      setIdeas(fallback)
+      toast.info(
+        'Usei sugestões do Materna360 enquanto ajustamos suas ideias rápidas.'
+      )
+    } finally {
+      setIdeasLoading(false)
+    }
   }
 
   const handleGenerateInspiration = async () => {
@@ -330,7 +381,8 @@ export default function RotinaLevePage() {
 
                 {/* Age Rule Message */}
                 <p className="text-[11px] text-[#545454]">
-                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir sempre a orientação do pediatra.
+                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
+                  sempre a orientação do pediatra.
                 </p>
 
                 {/* Generate Button + Plan Counter */}
@@ -568,7 +620,7 @@ export default function RotinaLevePage() {
                         <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
                         <div className="flex flex-wrap gap-2">
                           <button
-                            type="button"
+                            type="button'
                             onClick={() =>
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
