@@ -400,9 +400,57 @@ function ProgressAndSummaryBlock() {
 // ===== MAIN PAGE =====
 export default function MinhasConquistasPage() {
   const [isHydrated, setIsHydrated] = useState(false);
+  const [memories, setMemories] = useState<MemoryData[]>([]);
+  const [memoryModalOpen, setMemoryModalOpen] = useState(false);
+  const [selectedMemory, setSelectedMemory] = useState<MemoryData | null>(null);
 
+  // Load memories from localStorage on mount
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('maternar:memories:v1');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setMemories(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load memories:', e);
+    }
     setIsHydrated(true);
+  }, []);
+
+  // Save memories to localStorage whenever they change
+  useEffect(() => {
+    if (isHydrated && memories.length >= 0) {
+      localStorage.setItem('maternar:memories:v1', JSON.stringify(memories));
+    }
+  }, [memories, isHydrated]);
+
+  const openMemoryModal = useCallback((memory: MemoryData) => {
+    setSelectedMemory(memory);
+    setMemoryModalOpen(true);
+  }, []);
+
+  const openNewMemoryModal = useCallback(() => {
+    setSelectedMemory(null);
+    setMemoryModalOpen(true);
+  }, []);
+
+  const handleSaveMemory = useCallback((memory: MemoryData) => {
+    setMemories(prev => {
+      const existing = prev.find(m => m.id === memory.id);
+      if (existing) {
+        return prev.map(m => (m.id === memory.id ? memory : m));
+      } else {
+        return [...prev, memory];
+      }
+    });
+    setMemoryModalOpen(false);
+  }, []);
+
+  const handleDeleteMemory = useCallback((memoryId: string) => {
+    setMemories(prev => prev.filter(m => m.id !== memoryId));
   }, []);
 
   if (!isHydrated) {
