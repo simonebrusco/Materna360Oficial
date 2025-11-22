@@ -15,6 +15,10 @@ import { toast } from '@/app/lib/toast'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { useEmotionalInsights } from '@/app/hooks/useEmotionalInsights'
 import { getLastNDaysMoodEntries } from '@/app/lib/ai/emocionalHistory'
+import {
+  getWeeklySuggestions,
+  type EmotionalSuggestion,
+} from '@/app/lib/ai/emocionalSuggestions'
 
 export default function ComoEstouHojePage() {
   const [isHydrated, setIsHydrated] = useState(false)
@@ -40,6 +44,30 @@ export default function ComoEstouHojePage() {
     data: weeklyEmotionalData,
     call: fetchWeeklyEmotionalInsights,
   } = useEmotionalInsights()
+
+  // IA emocional – sugestões para a semana
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null)
+  const [weeklySuggestions, setWeeklySuggestions] = useState<EmotionalSuggestion[] | null>(null)
+
+  // Sugestões padrão (fallback)
+  const defaultWeeklySuggestions: EmotionalSuggestion[] = [
+    {
+      tag: 'Pausa',
+      title: 'Respire fundo nos momentos difíceis',
+      text: 'Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.',
+    },
+    {
+      tag: 'Conexão',
+      title: 'Momento com seu filho',
+      text: 'Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma ambos.',
+    },
+    {
+      tag: 'Rotina',
+      title: 'Mantenha um pequeno ritual',
+      text: 'Café da manhã tranquilo ou alongamento matinal criam estabilidade.',
+    },
+  ]
 
   // Mark as hydrated on mount
   useEffect(() => {
@@ -160,6 +188,36 @@ export default function ComoEstouHojePage() {
       console.error('[Como Estou Hoje] Erro ao gerar visão emocional da semana:', error)
     }
   }
+
+  const handleGenerateWeeklySuggestions = async () => {
+    const entries = getLastNDaysMoodEntries(7)
+
+    if (!entries.length) {
+      toast.info('Registre seu humor em alguns dias para receber sugestões personalizadas ✨')
+      return
+    }
+
+    setSuggestionsLoading(true)
+    setSuggestionsError(null)
+
+    try {
+      const response = await getWeeklySuggestions({
+        locale: 'pt-BR',
+        moodEntries: entries,
+      })
+      setWeeklySuggestions(response.suggestions ?? null)
+    } catch (error) {
+      console.error('[Como Estou Hoje] Erro ao gerar sugestões emocionais:', error)
+      setSuggestionsError('Não foi possível gerar as sugestões agora.')
+    } finally {
+      setSuggestionsLoading(false)
+    }
+  }
+
+  const suggestionsToRender: EmotionalSuggestion[] =
+    weeklySuggestions && weeklySuggestions.length > 0
+      ? weeklySuggestions
+      : defaultWeeklySuggestions
 
   return (
     <PageTemplate
@@ -469,35 +527,41 @@ export default function ComoEstouHojePage() {
             {/* CARD 5: Sugestões para a Mãe */}
             <Reveal delay={200}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="mb-6">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                    <AppIcon name="lightbulb" size={18} className="text-[#ff005e]" decorative />
-                    Sugestões pensadas para você esta semana
-                  </h3>
-                  <p className="text-sm text-[#545454]">
-                    Pequenas ideias que fazem diferença no seu bem-estar.
-                  </p>
+                <div className="mb-6 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                      <AppIcon name="lightbulb" size={18} className="text-[#ff005e]" decorative />
+                      Sugestões pensadas para você esta semana
+                    </h3>
+                    <p className="text-sm text-[#545454]">
+                      Pequenas ideias que fazem diferença no seu bem-estar.
+                    </p>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleGenerateWeeklySuggestions}
+                    disabled={suggestionsLoading}
+                  >
+                    {suggestionsLoading ? 'Gerando sugestões…' : 'Ver sugestões com IA'}
+                  </Button>
                 </div>
+
+                {suggestionsError && (
+                  <p className="text-xs text-[#ff005e] mb-3">
+                    {suggestionsError}
+                  </p>
+                )}
 
                 {/* Suggestions Grid */}
                 <div className="space-y-3">
-                  {[
-                    {
-                      tag: 'Pausa',
-                      title: 'Respire fundo nos momentos difíceis',
-                      desc: 'Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.',
-                    },
-                    {
-                      tag: 'Conexão',
-                      title: 'Momento com seu filho',
-                      desc: 'Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma ambos.',
-                    },
-                    {
-                      tag: 'Rotina',
-                      title: 'Mantenha um pequeno ritual',
-                      desc: 'Café da manhã tranquilo ou alongamento matinal criam estabilidade.',
-                    },
-                  ].map((suggestion, idx) => (
+                  {suggestionsLoading && (
+                    <p className="text-xs text-[#545454] mb-1">
+                      Olhando para a sua semana para sugerir pequenas ações que realmente combinam com o seu momento…
+                    </p>
+                  )}
+
+                  {suggestionsToRender.map((suggestion, idx) => (
                     <div
                       key={idx}
                       className="rounded-2xl border border-[#ffd8e6] bg-white p-4 md:p-5 hover:bg-[#ffd8e6]/5 transition-colors space-y-2"
@@ -513,7 +577,7 @@ export default function ComoEstouHojePage() {
                             {suggestion.title}
                           </h4>
                           <p className="text-sm text-[#545454] mt-1.5">
-                            {suggestion.desc}
+                            {suggestion.text}
                           </p>
                         </div>
                       </div>
