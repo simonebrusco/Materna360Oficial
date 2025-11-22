@@ -255,8 +255,8 @@ export default function AutocuidadoInteligentePage() {
     >
       <ClientOnly>
         <div className="max-w-6xl mx-auto px-4 pb-12 md:pb-16">
-          {/* Grid: 2x2 mobile, 3+ desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+          {/* Grid: 1 col mobile, 2 cols tablet+, 2 cols desktop */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
             {/* CARD 1 — Meu Ritmo Hoje */}
             <Reveal delay={0}>
               <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
