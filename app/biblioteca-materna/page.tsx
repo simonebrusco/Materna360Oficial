@@ -210,16 +210,16 @@ export default function BibliotecaMaternaPage() {
 
           {/* INSIGHT SECTION */}
           <Reveal delay={120}>
-            <div className="space-y-4 mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Insight Personalizado
               </h2>
-              <p className="text-sm text-[var(--color-text-muted)]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 Aqui você verá recomendações inteligentes baseadas na idade e fase do seu filho.
               </p>
             </div>
 
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-white border border-[var(--color-brand)]/10">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 h-12 w-12 rounded-full bg-[var(--color-brand)]/10 flex items-center justify-center">
                   <AppIcon
