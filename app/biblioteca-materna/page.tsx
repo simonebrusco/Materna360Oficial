@@ -240,26 +240,26 @@ export default function BibliotecaMaternaPage() {
 
           {/* PREMIUM CTA SECTION */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[var(--color-brand)]/8 to-white border border-[var(--color-brand)]/30">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                 <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-brand)]/20 text-[var(--color-brand)] text-xs font-semibold mb-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffd8e6]/50 text-[#ff005e] text-xs font-semibold mb-3">
                     <AppIcon name="sparkles" size={12} decorative />
                     <span>Premium</span>
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-2">
+                  <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                     Desbloqueie conteúdos completos
                   </h3>
-                  <p className="text-sm text-[var(--color-text-muted)]">
+                  <p className="text-sm text-[#545454]">
                     PDFs avançados, eBooks exclusivos e guias profissionais.
                   </p>
                 </div>
                 <Button
                   variant="primary"
-                  size="lg"
-                  className="flex-shrink-0 whitespace-nowrap rounded-full px-8"
+                  size="sm"
+                  className="flex-shrink-0 whitespace-nowrap w-full sm:w-auto"
                 >
-                  <AppIcon name="crown" size={16} decorative className="mr-2" />
+                  <AppIcon name="crown" size={14} decorative className="mr-1" />
                   Conhecer Materna+
                 </Button>
               </div>
