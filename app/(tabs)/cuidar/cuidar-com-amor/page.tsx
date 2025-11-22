@@ -209,61 +209,66 @@ export default function CuidarComAmorPage() {
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
           {/* BLOCK 1 — Sinais do Dia */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2">
-                  Sinais do Dia
-                </h3>
-                <p className="text-sm md:text-base text-[#545454]">
-                  Observe pequenos sinais que podem mostrar como seu filho está hoje.
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-sm text-[#2f3a56] font-medium mb-3">
-                  Quais desses sinais você percebe hoje?
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {SIGNALS_OPTIONS.map((signal) => (
-                    <button
-                      key={signal}
-                      onClick={() => handleSignalToggle(signal)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                        signalsData.selectedSignals.includes(signal)
-                          ? 'bg-[#ff005e] text-white shadow-md'
-                          : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                      }`}
-                    >
-                      {signal}
-                    </button>
-                  ))}
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Sinais do Dia
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Observe pequenos sinais que podem mostrar como seu filho está hoje.
+                  </p>
                 </div>
-              </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-[#2f3a56] mb-2">
-                  Quer detalhar algo?
-                </label>
-                <textarea
-                  value={signalsData.observation}
-                  onChange={(e) =>
-                    setSignalsData({
-                      ...signalsData,
-                      observation: e.target.value,
-                    })
-                  }
-                  placeholder="Escreva aqui algo que você percebeu no seu filho hoje."
-                  className="w-full px-4 py-3 rounded-2xl border border-white/40 bg-white/50 text-[#2f3a56] placeholder-[#999] text-sm focus:border-[#ff005e]/60 focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30"
-                  rows={3}
-                />
-              </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-[#2f3a56] font-medium">
+                    Quais desses sinais você percebe hoje?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {SIGNALS_OPTIONS.map((signal) => (
+                      <button
+                        key={signal}
+                        onClick={() => handleSignalToggle(signal)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                          signalsData.selectedSignals.includes(signal)
+                            ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
+                            : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                        }`}
+                      >
+                        {signal}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <button
-                onClick={handleSaveSignals}
-                className="w-full px-4 py-3 rounded-lg bg-[#ff005e] text-white font-semibold text-sm hover:bg-[#ff005e]/90 transition-all duration-200"
-              >
-                Salvar sinais do dia
-              </button>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5">
+                    Quer detalhar algo?
+                  </label>
+                  <textarea
+                    value={signalsData.observation}
+                    onChange={(e) =>
+                      setSignalsData({
+                        ...signalsData,
+                        observation: e.target.value,
+                      })
+                    }
+                    placeholder="Escreva aqui algo que você percebeu no seu filho hoje."
+                    className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/20 resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveSignals}
+                  className="w-full mt-auto"
+                >
+                  Salvar sinais do dia
+                </Button>
+              </div>
             </SoftCard>
           </Reveal>
 
