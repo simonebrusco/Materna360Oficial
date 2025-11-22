@@ -326,7 +326,7 @@ export default function AprenderBrincandoPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
             {SAMPLE_TOYS.map((toy) => (
               <SoftCard key={toy.id} className="rounded-3xl p-5 md:p-6 flex flex-col h-full bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="h-32 sm:h-40 w-full rounded-2xl bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] mb-4 flex items-center justify-center">
