@@ -114,7 +114,7 @@ export default function MinhasConquistasPage() {
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
           <p className="mt-1 text-sm text-gray-500">
-            Versão gamificada v0.1 – teste de layout (/meu-dia)
+            Versão gamificada v0.1 ��� teste de layout (/meu-dia)
           </p>
 
           {/* GAMIFIED LAYOUT START */}
@@ -200,6 +200,8 @@ export default function MinhasConquistasPage() {
             </SoftCard>
           </div>
           {/* GAMIFIED LAYOUT END */}
+
+          <MotivationalFooter routeKey="meu-dia-minhas-conquistas" />
         </div>
       </ClientOnly>
     </PageTemplate>
