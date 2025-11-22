@@ -113,9 +113,9 @@ const HUB_CARDS: CardConfig[] = [
 
 export default function CardHub() {
   return (
-    <section className="mt-8 md:mt-10 pb-32">
-      {/* All cards: 2 columns on mobile, 3 columns on desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 items-stretch max-w-full mx-auto">
+    <section className="mt-10 md:mt-12 pb-24 md:pb-32">
+      {/* Grid: 2 cols mobile, 2 cols tablet, 3 cols desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 items-stretch max-w-full mx-auto">
         {HUB_CARDS.map((card, index) => (
           <div key={card.id} className="h-full">
             <MaternarFeatureCard
