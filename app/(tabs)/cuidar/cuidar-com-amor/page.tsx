@@ -439,6 +439,8 @@ export default function CuidarComAmorPage() {
               </div>
             </SoftCard>
           </Reveal>
+
+          <MotivationalFooter routeKey="cuidar-cuidar-com-amor" />
         </div>
       </ClientOnly>
     </PageTemplate>
