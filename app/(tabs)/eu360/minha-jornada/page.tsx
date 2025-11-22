@@ -690,6 +690,138 @@ export default function MinhaJornadaPage() {
         </div>
       )}
 
+      {/* DRAWER - REGISTRAR MEMÓRIA */}
+      {memoryModalOpen && (
+        <div className="fixed inset-0 z-50">
+          {/* BACKDROP */}
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-200"
+            onClick={() => setMemoryModalOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* DRAWER PANEL */}
+          <div
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] max-h-[90vh] overflow-y-auto animate-[slide-up_0.3s_ease-out]"
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingMemoryId ? 'Editar Memória' : 'Registrar Memória'}
+          >
+            <div className="p-6 md:p-8 space-y-5">
+              {/* HEADER */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-[1rem] md:text-[1.1rem] font-semibold text-[#3A3A3A]">
+                    {editingMemoryId ? 'Editar Memória' : 'Registrar Memória'}
+                  </h2>
+                  <p className="text-[0.85rem] text-[#6A6A6A] mt-1">
+                    Descreva um momento que você quer guardar dessa semana.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setMemoryModalOpen(false)}
+                  className="flex-shrink-0 rounded-lg p-2 text-[#6A6A6A] hover:bg-[#ffd8e6]/30 transition-colors"
+                  aria-label="Fechar"
+                >
+                  <AppIcon name="x" size={20} decorative />
+                </button>
+              </div>
+
+              {/* TEXTAREA FIELD */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-[#3A3A3A] uppercase tracking-wide">
+                  Sua memória
+                </label>
+                <textarea
+                  placeholder="Ex: Hoje meu filho riu alto quando contei uma história antes de dormir…"
+                  value={memoryInput}
+                  onChange={(e) => setMemoryInput(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#ffd8e6] bg-white text-[#3A3A3A] placeholder-[#6A6A6A] text-sm focus:outline-none focus:ring-2 focus:ring-[#FF1475]/30 focus:border-[#FF1475] transition-all duration-150 resize-none min-h-[100px]"
+                  autoFocus
+                />
+              </div>
+
+              {/* ICON SELECTOR */}
+              <div className="space-y-3">
+                <label className="block text-xs font-semibold text-[#3A3A3A] uppercase tracking-wide">
+                  Escolha um ícone
+                </label>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {AVAILABLE_MEMORY_ICONS.map((icon) => (
+                    <button
+                      key={icon}
+                      onClick={() => setSelectedMemoryIcon(icon)}
+                      className={`flex-shrink-0 w-10 h-10 rounded-full border-2 transition-all duration-150 flex items-center justify-center ${
+                        selectedMemoryIcon === icon
+                          ? 'border-[#FF1475] bg-[#ffd8e6] shadow-[0_4px_12px_rgba(255,0,94,0.16)]'
+                          : 'border-[#ffd8e6] bg-white hover:border-[#FF1475]/50'
+                      }`}
+                      aria-label={MEMORY_ICON_LABELS[icon]}
+                      title={MEMORY_ICON_LABELS[icon]}
+                    >
+                      <AppIcon
+                        name={icon}
+                        size={18}
+                        className={selectedMemoryIcon === icon ? 'text-[#FF1475]' : 'text-[#6A6A6A]'}
+                        decorative
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* DAY SELECTOR (OPTIONAL) */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-[#3A3A3A] uppercase tracking-wide">
+                  Dia da semana (opcional)
+                </label>
+                <select
+                  value={selectedMemoryDay}
+                  onChange={(e) => setSelectedMemoryDay(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#ffd8e6] bg-white text-[#3A3A3A] text-sm focus:outline-none focus:ring-2 focus:ring-[#FF1475]/30 focus:border-[#FF1475] transition-all duration-150"
+                >
+                  <option value="">Selecione um dia</option>
+                  <option value="Segunda">Segunda</option>
+                  <option value="Terça">Terça</option>
+                  <option value="Quarta">Quarta</option>
+                  <option value="Quinta">Quinta</option>
+                  <option value="Sexta">Sexta</option>
+                  <option value="Sábado">Sábado</option>
+                  <option value="Domingo">Domingo</option>
+                </select>
+              </div>
+
+              {/* BUTTONS */}
+              <div className="space-y-3 pt-2">
+                <Button
+                  variant="primary"
+                  onClick={saveMemory}
+                  disabled={!memoryInput.trim()}
+                  className="w-full h-11 rounded-xl"
+                >
+                  <AppIcon name="check" size={16} decorative className="mr-2" />
+                  {editingMemoryId ? 'Salvar alterações' : 'Salvar memória'}
+                </Button>
+
+                {editingMemoryId && (
+                  <button
+                    onClick={() => deleteMemory(editingMemoryId)}
+                    className="w-full h-11 rounded-xl border border-red-300 text-red-600 font-semibold transition-all duration-150 hover:bg-red-50 active:bg-red-100 text-sm"
+                  >
+                    Excluir memória
+                  </button>
+                )}
+              </div>
+
+              {/* HELPER TEXT */}
+              <p className="text-xs text-center text-[#6A6A6A]">
+                Suas memórias são guardadas com carinho.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ANIMATION KEYFRAMES */}
       <style>{`
         @keyframes slide-up {
