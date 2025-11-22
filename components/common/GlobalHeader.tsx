@@ -18,7 +18,7 @@ export function GlobalHeader() {
     <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/85 border-b border-white/50">
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
         {/* Left: Logo */}
-        <AppLogo width={128} height={32} priority />
+        <AppLogo width={128} height={32} />
 
         {/* Right: User greeting + avatar */}
         <div className="flex items-center gap-4">
