@@ -16,7 +16,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-3">
         {/* Left: brand */}
         <Link href="/" className="flex items-center gap-2">
-          <AppLogo width={104} height={24} priority />
+          <AppLogo width={104} height={24} />
         </Link>
 
         {/* Center: title */}
