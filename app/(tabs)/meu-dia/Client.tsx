@@ -179,12 +179,7 @@ export function MeuDiaClient() {
               <WeeklyPlannerShell />
             </div>
 
-            {/* Footer message */}
-            <div className="mt-8 md:mt-10 text-center pb-12 md:pb-16">
-              <p className="text-xs md:text-sm text-[#6A6A6A] leading-relaxed font-poppins">
-                Você não precisa abraçar tudo de uma vez. Escolha só um passo para hoje — o Materna360 caminha com você.
-              </p>
-            </div>
+            <MotivationalFooter routeKey="meu-dia" />
         </div>
       </ClientOnly>
     </PageTemplate>
