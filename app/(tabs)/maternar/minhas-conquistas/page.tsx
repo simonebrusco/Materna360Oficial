@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import AppIcon from '@/components/ui/AppIcon';
 import { SoftCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { ClientOnly } from '@/components/common/ClientOnly';
+import { MemoryModal, type MemoryData } from '@/components/maternar/MemoryModal';
 
 // ===== TYPES =====
 interface DailyMission {
