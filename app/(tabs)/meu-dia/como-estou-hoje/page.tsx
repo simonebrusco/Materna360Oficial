@@ -393,6 +393,8 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
           </section>
+
+          <MotivationalFooter routeKey="meu-dia-como-estou-hoje" />
         </div>
       </ClientOnly>
     </PageTemplate>
