@@ -53,30 +53,35 @@ export function MaternarFeatureCard({
         className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
       >
         {/* Top content: Icon, Tag, Title, Subtitle */}
-        <div className="flex flex-col gap-2.5 md:gap-3">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#FF1475]/5 flex-shrink-0 shadow-[0_0_0_8px_rgba(255,20,117,0.06)]">
+        <div className="flex flex-col gap-3 md:gap-3.5">
+          <div className="inline-flex h-11 w-11 items-center justify-center rounded-full flex-shrink-0"
+            style={{
+              backgroundColor: isConquistas ? 'rgba(184,35,107,0.08)' : 'rgba(255,20,117,0.05)',
+              boxShadow: isConquistas ? '0 0 0 8px rgba(184,35,107,0.06)' : '0 0 0 8px rgba(255,20,117,0.06)'
+            }}>
             <AppIcon
               name={icon}
-              className="h-5 w-5 text-[#FF1475]"
+              className="h-5 w-5"
+              style={{ color: isConquistas ? '#b8236b' : '#fd2597' }}
               aria-hidden="true"
             />
           </div>
 
           {/* Tag, Title, Subtitle */}
-          <div className="space-y-0">
+          <div className="space-y-2.5">
             {tag && (
-              <div className="pb-1.5 md:pb-2">
-                <span className="inline-flex items-center rounded-full bg-[#FFE8F2] px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[#FF1475]">
+              <div>
+                <span className="inline-flex items-center rounded-full bg-[#FFE8F2] px-2.5 py-1 text-[9px] md:text-xs font-bold uppercase tracking-wider text-[#fd2597]">
                   {tag}
                 </span>
               </div>
             )}
-            {/* Accent bar above title - shorter, more elegant */}
-            <div className="h-[2px] w-8 bg-[#FF1475]/30 rounded-full mb-2.5" />
-            <h3 className="text-sm md:text-lg font-semibold text-[var(--color-text-main)] leading-snug">
+            {/* Editorial accent line - refined */}
+            <div className="h-0.5 w-10 rounded-full" style={{ backgroundColor: isPremium || isConquistas ? '#b8236b' : '#fd2597' }} />
+            <h3 className="text-sm md:text-base font-bold text-[#4a4a4a] leading-tight pt-0.5">
               {title}
             </h3>
-            <p className="text-xs md:text-sm text-[var(--color-text-muted)] leading-relaxed pt-0.5 md:pt-1.5 line-clamp-2 md:line-clamp-3">
+            <p className="text-xs md:text-sm text-[#6a6a6a] leading-relaxed line-clamp-2 md:line-clamp-3 pt-0.5">
               {subtitle}
             </p>
           </div>
