@@ -20,6 +20,7 @@ body {
   --color-brand: #FF1475;          /* brandPink - primary CTA, active states */
   --color-brand-soft: #FFD3E6;     /* brandPinkSoft - light accents, hover states */
   --color-brand-deep: #E6005F;     /* deep pink for emphasis */
+  --color-brand-plum: #9B4D96;     /* brandPlum - ameixa, sophisticated details & stepper accents */
   --color-support: #FFD3E6;        /* secondary pink - use brandPinkSoft */
   --color-pink-snow: #FFE8F2;      /* pinkSnow - subtle borders, focus rings */
 
