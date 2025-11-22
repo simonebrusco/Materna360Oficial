@@ -198,7 +198,7 @@ export default function AprenderBrincandoPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Play Idea Card 1 */}
-              <SoftCard className="rounded-3xl p-6">
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
