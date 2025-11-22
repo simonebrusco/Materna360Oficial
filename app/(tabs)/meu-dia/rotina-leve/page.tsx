@@ -192,6 +192,7 @@ export default function RotinaLevePage() {
     }
   }
 
+  // 🔗 Receitas Inteligentes conectadas à IA com fallback seguro
   const handleGenerateRecipes = async () => {
     if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
       toast.info('Você já usou todas as sugestões de hoje. Amanhã tem mais 💗')
@@ -199,9 +200,57 @@ export default function RotinaLevePage() {
     }
 
     setRecipesLoading(true)
-    const result = await mockGenerateRecipes()
-    setRecipes(result)
-    setRecipesLoading(false)
+    try {
+      const res = await fetch('/api/ai/rotina', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature: 'recipes',
+          limit: 3,
+          context: {
+            origin: 'rotina-leve',
+            idadeReferenciaMeses: 24,
+          },
+        }),
+      })
+
+      if (!res.ok) {
+        console.error('[Rotina Leve] IA recipes: response not OK', await res.text())
+        const fallback = await mockGenerateRecipes()
+        setRecipes(fallback)
+        toast.info(
+          'Usei sugestões do Materna360 enquanto ajustamos suas receitas inteligentes.'
+        )
+        return
+      }
+
+      const data: any = await res.json()
+
+      const mapped: GeneratedRecipe[] =
+        data?.recipes && Array.isArray(data.recipes) && data.recipes.length > 0
+          ? data.recipes.map((r: any, index: number) => ({
+              id: r.id || `recipe-${index + 1}`,
+              title: r.title || r.nome || 'Sugestão rápida para hoje',
+              description: r.description || r.resumo || '',
+              timeLabel: r.timeLabel || r.tempoPreparo || 'Pronto em poucos minutos',
+              ageLabel: r.ageLabel || r.faixaEtaria || 'a partir de 1 ano',
+              preparation: r.preparation || r.modoPreparo || '',
+            }))
+          : await mockGenerateRecipes()
+
+      setRecipes(mapped)
+    } catch (error) {
+      console.error('[Rotina Leve] Error generating recipes via IA:', error)
+      const fallback = await mockGenerateRecipes()
+      setRecipes(fallback)
+      toast.info(
+        'Usei sugestões do Materna360 enquanto ajustamos suas receitas inteligentes.'
+      )
+    } finally {
+      setRecipesLoading(false)
+    }
   }
 
   const handleGenerateIdeas = async () => {
@@ -306,7 +355,8 @@ export default function RotinaLevePage() {
 
                   {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem mais 💗
+                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
+                      mais 💗
                     </p>
                   )}
                 </div>
@@ -323,7 +373,9 @@ export default function RotinaLevePage() {
 
                   {!recipesLoading && recipes && recipes.length > 0 && (
                     <>
-                      <p className="text-xs font-medium text-[#2f3a56]">Sugestões de hoje (até 3)</p>
+                      <p className="text-xs font-medium text-[#2f3a56]">
+                        Sugestões de hoje (até 3)
+                      </p>
                       <div className="space-y-3">
                         {recipes.slice(0, 3).map((recipe) => {
                           const hasRecipes = recipes && recipes.length > 0
@@ -405,7 +457,8 @@ export default function RotinaLevePage() {
                         })}
                       </div>
                       <p className="text-[11px] text-[#545454] mt-2">
-                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no planner.
+                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
+                        planner.
                       </p>
                     </>
                   )}
@@ -413,7 +466,8 @@ export default function RotinaLevePage() {
                   {!recipesLoading && (!recipes || recipes.length === 0) && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                       <p className="text-[11px] text-[#545454]">
-                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
+                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
+                        idade do seu filho.
                       </p>
                     </div>
                   )}
