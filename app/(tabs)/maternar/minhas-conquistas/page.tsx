@@ -541,6 +541,11 @@ export default function MinhasConquistasPage() {
           <div className="space-y-8 md:space-y-10">
             <DailyMissionsBlock />
             <SealsAndMedalsBlock />
+            <MemoriesWeekBlock
+              memories={memories}
+              onMemoryClick={openMemoryModal}
+              onNewMemory={openNewMemoryModal}
+            />
             <ProgressAndSummaryBlock />
 
             {/* Closing Statement */}
@@ -552,6 +557,18 @@ export default function MinhasConquistasPage() {
           </div>
         </div>
       </main>
+
+      {/* Memory Modal */}
+      <MemoryModal
+        isOpen={memoryModalOpen}
+        memory={selectedMemory}
+        onClose={() => {
+          setMemoryModalOpen(false);
+          setSelectedMemory(null);
+        }}
+        onSave={handleSaveMemory}
+        onDelete={handleDeleteMemory}
+      />
     </ClientOnly>
   );
 }
