@@ -6,13 +6,43 @@ import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { Button } from '@/components/ui/Button'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+
+type ConquestIcon = 'star' | 'heart' | 'target' | 'smile' | 'leaf' | 'sun' | 'sparkles' | 'crown'
+
+interface Conquest {
+  id: string
+  icon: ConquestIcon
+  description: string
+  timestamp: string
+}
+
+const AVAILABLE_ICONS: ConquestIcon[] = ['star', 'heart', 'target', 'smile', 'leaf', 'sun', 'sparkles', 'crown']
+
+const ICON_LABELS: Record<ConquestIcon, string> = {
+  star: 'Destaque',
+  heart: 'Bem-estar',
+  target: 'Meta',
+  smile: 'Alegria',
+  leaf: 'Crescimento',
+  sun: 'Luz',
+  sparkles: 'Magia',
+  crown: 'Força',
+}
 
 export default function MinhaJornadaPage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [timelineNotes, setTimelineNotes] = useState<Record<string, { humor?: string; energia?: string; nota?: string }>>({})
+  const [conquests, setConquests] = useState<Conquest[]>([])
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [inputValue, setInputValue] = useState('')
+  const [selectedIcon, setSelectedIcon] = useState<ConquestIcon>('star')
+  const [showSaved, setShowSaved] = useState(false)
+  const { addItem } = usePlannerSavedContents()
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
