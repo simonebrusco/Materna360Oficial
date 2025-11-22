@@ -4,8 +4,10 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { useSavedInspirations } from '@/app/hooks/useSavedInspirations'
+import { usePlannerSavedContents, PlannerSavedContent } from '@/app/hooks/usePlannerSavedContents'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
+import SavedContentDrawer from '@/components/ui/SavedContentDrawer'
 import Top3Section from './Top3Section'
 import CareSection from './CareSection'
 import AgendaSection from './AgendaSection'
@@ -49,8 +51,15 @@ export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Load global saved inspirations
+  // Saved content drawer state
+  const [selectedSavedItem, setSelectedSavedItem] = useState<PlannerSavedContent | null>(null)
+  const [isSavedItemOpen, setIsSavedItemOpen] = useState(false)
+
+  // Load global saved inspirations (legacy)
   const { savedItems: savedContents } = useSavedInspirations()
+
+  // Load planner saved contents from the new hook
+  const plannerHook = usePlannerSavedContents()
 
   // Initialize per-day planner data
   const [plannerData, setPlannerData] = useState<PlannerData>({
@@ -68,8 +77,16 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
+    plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
-  }, [])
+  }, [plannerHook])
+
+  // Update planner hook date when selected date changes
+  useEffect(() => {
+    if (isHydrated && selectedDateKey) {
+      plannerHook.setDateKey(selectedDateKey)
+    }
+  }, [selectedDateKey, isHydrated, plannerHook])
 
   // Load planner data for the selected date whenever selectedDateKey changes
   useEffect(() => {
@@ -182,6 +199,16 @@ export default function WeeklyPlannerShell() {
     })
   }, [])
 
+  const handleOpenSavedItem = useCallback((item: PlannerSavedContent) => {
+    setSelectedSavedItem(item)
+    setIsSavedItemOpen(true)
+  }, [])
+
+  const handleCloseSavedItem = useCallback(() => {
+    setIsSavedItemOpen(false)
+    setSelectedSavedItem(null)
+  }, [])
+
   const handleNotesChange = useCallback((content: string) => {
     setPlannerData(prev => ({ ...prev, notes: content }))
   }, [])
@@ -194,7 +221,6 @@ export default function WeeklyPlannerShell() {
   // Get current month and year for display
   const monthYear = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
-    // Parse the date key (YYYY-MM-DD format)
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
     return date.toLocaleDateString('pt-BR', {
@@ -206,7 +232,6 @@ export default function WeeklyPlannerShell() {
   // Format selected date for contextual text
   const capitalizedDateFormatted = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
-    // Parse the date key (YYYY-MM-DD format)
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
     const selectedDateFormatted = date.toLocaleDateString('pt-BR', {
@@ -216,6 +241,15 @@ export default function WeeklyPlannerShell() {
     })
     return selectedDateFormatted.charAt(0).toUpperCase() + selectedDateFormatted.slice(1)
   }, [selectedDateKey, isHydrated])
+
+  // Transform PlannerSavedContent to SavedContentsSection format
+  type SavedContentDisplay = {
+    id: string
+    title: string
+    type: 'artigo' | 'receita' | 'ideia' | 'frase'
+    origin: string
+    href?: string
+  }
 
   // Get selected date for calendar
   const selectedDate = useMemo(() => {
@@ -261,20 +295,20 @@ export default function WeeklyPlannerShell() {
           {/* Calendar Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AppIcon name="calendar" className="w-5 h-5 text-[#ff005e]" />
-              <h2 className="text-lg md:text-xl font-bold text-[#2f3a56] capitalize">
+              <AppIcon name="calendar" className="w-5 h-5 text-[var(--color-brand)]" />
+              <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)] capitalize">
                 {monthYear}
               </h2>
             </div>
 
             {/* View Toggle */}
-            <div className="flex gap-2 bg-[#f5f5f5] p-1 rounded-full">
+            <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
               <button
                 onClick={() => setViewMode('day')}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                   viewMode === 'day'
-                    ? 'bg-white text-[#ff005e] shadow-[0_2px_8px_rgba(255,0,94,0.1)]'
-                    : 'text-[#545454] hover:text-[#ff005e]'
+                    ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                 }`}
               >
                 Dia
@@ -283,8 +317,8 @@ export default function WeeklyPlannerShell() {
                 onClick={() => setViewMode('week')}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                   viewMode === 'week'
-                    ? 'bg-white text-[#ff005e] shadow-[0_2px_8px_rgba(255,0,94,0.1)]'
-                    : 'text-[#545454] hover:text-[#ff005e]'
+                    ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                 }`}
               >
                 Semana
@@ -301,10 +335,10 @@ export default function WeeklyPlannerShell() {
 
           {/* Contextual date caption */}
           <div className="space-y-1">
-            <p className="text-sm text-[#545454] text-center">
+            <p className="text-sm text-[var(--color-text-muted)] text-center">
               Tudo aqui vale para: <span className="font-semibold">{capitalizedDateFormatted}</span>
             </p>
-            <p className="text-xs text-[#545454]/60 text-center">
+            <p className="text-xs text-[var(--color-text-muted)]/60 text-center">
               Toque em outro dia para planejar ou rever sua semana.
             </p>
           </div>
@@ -317,14 +351,14 @@ export default function WeeklyPlannerShell() {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                     VOCÊ
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Prioridades do dia
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Escolha até três coisas que realmente importam hoje.
                     </p>
                   </div>
@@ -338,14 +372,14 @@ export default function WeeklyPlannerShell() {
               </div>
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                     ROTINA
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Casa &amp; rotina
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
@@ -362,14 +396,14 @@ export default function WeeklyPlannerShell() {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                     VOCÊ
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Cuidar de mim
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Pequenos gestos que cuidam da sua energia.
                     </p>
                   </div>
@@ -387,14 +421,14 @@ export default function WeeklyPlannerShell() {
               </div>
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                     SEU FILHO
                   </span>
                   <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Cuidar do meu filho
                     </h2>
-                    <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Um momento de conexão faz diferença no dia.
                     </p>
                   </div>
@@ -405,7 +439,7 @@ export default function WeeklyPlannerShell() {
                     items={plannerData.familyItems}
                     onToggle={id => handleToggleCareItem(id, 'family')}
                     onAdd={title => handleAddCareItem(title, 'family')}
-                    placeholder="Novo momento com a família…"
+                    placeholder="Novo momento com a família���"
                     hideTitle={true}
                   />
                 </div>
@@ -414,14 +448,14 @@ export default function WeeklyPlannerShell() {
 
             {/* Lembretes rápidos */}
             <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 LEMBRETES
               </span>
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                   Lembretes rápidos
                 </h2>
-                <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                   Anotações soltas para não esquecer.
                 </p>
               </div>
@@ -434,28 +468,40 @@ export default function WeeklyPlannerShell() {
 
             {/* Inspirações & conteúdos salvos */}
             <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[#ff005e] uppercase font-poppins">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 INSPIRAÇÕES
               </span>
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] font-poppins">
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                   Inspirações &amp; conteúdos salvos
                 </h2>
-                <p className="mt-1 mb-4 text-sm text-[#545454] font-poppins">
+                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                   Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                 </p>
               </div>
-              {savedContents.length > 0 ? (
-                <SavedContentsSection contents={savedContents} hideTitle={true} />
+              {plannerHook.items.length > 0 || savedContents.length > 0 ? (
+                <>
+                  <SavedContentsSection
+                    contents={savedContents}
+                    plannerContents={plannerHook.items}
+                    onItemClick={handleOpenSavedItem}
+                    hideTitle={true}
+                  />
+                  <SavedContentDrawer
+                    open={isSavedItemOpen}
+                    onClose={handleCloseSavedItem}
+                    item={selectedSavedItem}
+                  />
+                </>
               ) : (
                 <SoftCard className="p-5 md:p-6 text-center py-6">
-                  <AppIcon name="bookmark" className="w-8 h-8 text-[#ddd] mx-auto mb-3" />
-                  <p className="text-sm text-[#545454]/70 mb-3">
+                  <AppIcon name="bookmark" className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3" />
+                  <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
                     Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
                   </p>
                   <a
                     href="/biblioteca-materna"
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
                   >
                     Ver tudo na Biblioteca Materna
                     <AppIcon name="arrow-right" className="w-4 h-4" />
@@ -470,7 +516,7 @@ export default function WeeklyPlannerShell() {
         {viewMode === 'week' && (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <p className="text-sm text-[#545454]/70">
+              <p className="text-sm text-[var(--color-text-muted)]/70">
                 Visão geral da sua semana. Toque em um dia para ver em detalhes.
               </p>
             </div>

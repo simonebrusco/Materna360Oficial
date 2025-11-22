@@ -3,324 +3,538 @@
 import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
+import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import AppIcon from '@/components/ui/AppIcon'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 
+const AUTOCUIDADO_KEY = 'eu360/autocuidado-inteligente'
+
+type AutocuidadoDia = {
+  ritmo?: {
+    estiloDia: string | null
+    tags?: string[]
+    nota?: string | null
+  }
+  rotina?: {
+    itensSelecionados: string[]
+  }
+  saude?: {
+    hidratacao?: number | null
+    sono?: string | null
+    alimentacao?: 'leve' | 'ok' | 'pesada' | null
+    humorEmoji?: string | null
+  }
+  sugestao?: {
+    escolhida?: string | null
+  }
+}
+
+type AutocuidadoStorage = {
+  [dateKey: string]: AutocuidadoDia
+}
+
+const RITMO_OPTIONS = ['leve', 'cansada', 'animada', 'exausta', 'focada']
+const MINI_ROTINA_ITEMS = [
+  'Respirar por 1 minuto',
+  'Tomar um copo de água',
+  'Fazer um alongamento rápido',
+  'Mover o corpo por 3 minutos',
+  'Pausa sem culpa por 5 minutos',
+]
+
+const SUGESTOES_FIXAS = [
+  'Beba um copo de água com calma, sem pressa.',
+  'Respire fundo por 1 minuto antes de pegar o celular.',
+  'Envie uma mensagem carinhosa para alguém que te apoia.',
+  'Dê uma pausa de 3 minutos só para você.',
+  'Alongue o corpo enquanto bebe algo quente.',
+  'Anote uma coisa que você fez bem hoje.',
+]
+
 export default function AutocuidadoInteligentePage() {
   const [isHydrated, setIsHydrated] = useState(false)
-  const [selectedRitmo, setSelectedRitmo] = useState<string | null>(null)
-  const [hydration, setHydration] = useState<number>(0)
-  const [sleep, setSleep] = useState<number>(3)
-  const [movement, setMovement] = useState<string | null>(null)
-
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
-  // Mark as hydrated on mount
+  // Ritmo state
+  const [selectedRitmo, setSelectedRitmo] = useState<string | null>(null)
+  const [ritmoNota, setRitmoNota] = useState<string>('')
+
+  // Mini rotina state
+  const [selectedRotinItems, setSelectedRotinaItems] = useState<Set<string>>(new Set())
+
+  // Saúde state
+  const [hidratacao, setHidratacao] = useState<number | null>(null)
+  const [sono, setSono] = useState<string | null>(null)
+  const [alimentacao, setAlimentacao] = useState<'leve' | 'ok' | 'pesada' | null>(null)
+
+  // Sugestão state
+  const [sugestaoAtual, setSugestaoAtual] = useState<string | null>(null)
+
+  // Load persisted data on hydration
   useEffect(() => {
     setIsHydrated(true)
   }, [])
 
-  // Load persisted data
   useEffect(() => {
     if (!isHydrated) return
 
-    const ritmoKey = `autocuidado:${currentDateKey}:ritmo`
-    const hydrationKey = `autocuidado:${currentDateKey}:hydration`
-    const sleepKey = `autocuidado:${currentDateKey}:sleep`
-    const movementKey = `autocuidado:${currentDateKey}:movement`
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    const diaData = storage[currentDateKey] || {}
 
-    const savedRitmo = load(ritmoKey)
-    const savedHydration = load(hydrationKey)
-    const savedSleep = load(sleepKey)
-    const savedMovement = load(movementKey)
-
-    if (typeof savedRitmo === 'string') setSelectedRitmo(savedRitmo)
-    if (typeof savedHydration === 'number') setHydration(savedHydration)
-    if (typeof savedSleep === 'number') setSleep(savedSleep)
-    if (typeof savedMovement === 'string') setMovement(savedMovement)
+    if (diaData.ritmo?.estiloDia) {
+      setSelectedRitmo(diaData.ritmo.estiloDia)
+    }
+    if (diaData.ritmo?.nota) {
+      setRitmoNota(diaData.ritmo.nota)
+    }
+    if (diaData.rotina?.itensSelecionados) {
+      setSelectedRotinaItems(new Set(diaData.rotina.itensSelecionados))
+    }
+    if (diaData.saude?.hidratacao !== undefined) {
+      setHidratacao(diaData.saude.hidratacao)
+    }
+    if (diaData.saude?.sono) {
+      setSono(diaData.saude.sono)
+    }
+    if (diaData.saude?.alimentacao) {
+      setAlimentacao(diaData.saude.alimentacao)
+    }
+    if (diaData.sugestao?.escolhida) {
+      setSugestaoAtual(diaData.sugestao.escolhida)
+    }
   }, [isHydrated, currentDateKey])
 
-  const handleRitmoSelect = (ritmo: string) => {
-    setSelectedRitmo(selectedRitmo === ritmo ? null : ritmo)
-    if (selectedRitmo !== ritmo) {
-      const ritmoKey = `autocuidado:${currentDateKey}:ritmo`
-      save(ritmoKey, ritmo)
-      try {
-        track('ritmo.registered', {
-          tab: 'autocuidado-inteligente',
-          ritmo: ritmo,
-        })
-      } catch {}
-      toast.success('Ritmo registrado!')
+  // CARD 1: Meu ritmo hoje
+  const handleSalvarRitmo = () => {
+    if (!selectedRitmo) {
+      toast.danger('Selecione um ritmo para continuar.')
+      return
+    }
+
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    storage[currentDateKey] = storage[currentDateKey] || {}
+    storage[currentDateKey].ritmo = {
+      estiloDia: selectedRitmo,
+      nota: ritmoNota || null,
+    }
+
+    save(AUTOCUIDADO_KEY, storage)
+
+    try {
+      track('autocuidado_ritmo_salvo', {
+        dateKey: currentDateKey,
+        estiloDia: selectedRitmo,
+        temNota: !!ritmoNota,
+      })
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao rastrear ritmo:', e)
+    }
+
+    toast.success('Seu ritmo de hoje foi salvo com carinho.')
+  }
+
+  // CARD 2: Mini rotina de cuidado
+  const handleToggleRotinaItem = (item: string) => {
+    setSelectedRotinaItems((prev) => {
+      const next = new Set(prev)
+      if (next.has(item)) {
+        next.delete(item)
+      } else {
+        next.add(item)
+      }
+      return next
+    })
+  }
+
+  const handleSalvarRotina = () => {
+    if (selectedRotinItems.size === 0) {
+      toast.danger('Selecione pelo menos um item para continuar.')
+      return
+    }
+
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    storage[currentDateKey] = storage[currentDateKey] || {}
+    storage[currentDateKey].rotina = {
+      itensSelecionados: Array.from(selectedRotinItems),
+    }
+
+    save(AUTOCUIDADO_KEY, storage)
+
+    try {
+      track('autocuidado_rotina_salva', {
+        dateKey: currentDateKey,
+        totalItens: selectedRotinItems.size,
+      })
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao rastrear rotina:', e)
+    }
+
+    toast.success('Sua mini rotina de cuidado foi salva. Você merece esse cuidado.')
+  }
+
+  // CARD 3: Saúde & bem-estar
+  const handleSalvarSaude = () => {
+    if (hidratacao === null && !sono && !alimentacao) {
+      toast.danger('Registre pelo menos um dado de saúde para continuar.')
+      return
+    }
+
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    storage[currentDateKey] = storage[currentDateKey] || {}
+    storage[currentDateKey].saude = {
+      hidratacao: hidratacao,
+      sono: sono ?? null,
+      alimentacao: alimentacao ?? null,
+    }
+
+    save(AUTOCUIDADO_KEY, storage)
+
+    try {
+      track('autocuidado_saude_salva', {
+        dateKey: currentDateKey,
+        temHidratacao: hidratacao !== null,
+        temSono: sono !== null,
+        temAlimentacao: alimentacao !== null,
+      })
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao rastrear saúde:', e)
+    }
+
+    toast.success('Seus cuidados de saúde de hoje foram salvos.')
+  }
+
+  // CARD 4: Para você hoje
+  const handleGerarSugestao = () => {
+    const indexAleatorio = Math.floor(Math.random() * SUGESTOES_FIXAS.length)
+    setSugestaoAtual(SUGESTOES_FIXAS[indexAleatorio])
+
+    try {
+      track('autocuidado_sugestao_gerada', {
+        dateKey: currentDateKey,
+      })
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao rastrear sugestão:', e)
     }
   }
 
-  const handleHydrationChange = (value: number) => {
-    setHydration(value)
-    const hydrationKey = `autocuidado:${currentDateKey}:hydration`
-    save(hydrationKey, value)
-    try {
-      track('hydration.logged', {
-        tab: 'autocuidado-inteligente',
-        cups: value,
-      })
-    } catch {}
-  }
-
-  const handleSleepChange = (value: number) => {
-    setSleep(value)
-    const sleepKey = `autocuidado:${currentDateKey}:sleep`
-    save(sleepKey, value)
-    try {
-      track('sleep.logged', {
-        tab: 'autocuidado-inteligente',
-        quality: value,
-      })
-    } catch {}
-  }
-
-  const handleMovementSelect = (value: string) => {
-    setMovement(movement === value ? null : value)
-    if (movement !== value) {
-      const movementKey = `autocuidado:${currentDateKey}:movement`
-      save(movementKey, value)
-      try {
-        track('movement.logged', {
-          tab: 'autocuidado-inteligente',
-          duration: value,
-        })
-      } catch {}
+  const handleSalvarSugestao = () => {
+    if (!sugestaoAtual) {
+      toast.danger('Gere uma sugestão primeiro.')
+      return
     }
+
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    storage[currentDateKey] = storage[currentDateKey] || {}
+    storage[currentDateKey].sugestao = {
+      escolhida: sugestaoAtual,
+    }
+
+    save(AUTOCUIDADO_KEY, storage)
+
+    try {
+      track('autocuidado_sugestao_salva', {
+        dateKey: currentDateKey,
+      })
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao rastrear salvamento da sugestão:', e)
+    }
+
+    toast.success('Sugestão salva para você revisitar quando quiser.')
   }
 
   return (
     <PageTemplate
       label="CUIDAR"
       title="Autocuidado Inteligente"
-      subtitle="Cuidando de você com intenção, leveza e verdade."
+      subtitle="Cuidados que cabem na rotina, feitos na sua medida."
     >
       <ClientOnly>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
-          {/* BLOCK 1 — Meu Ritmo Hoje */}
-          <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Meu Ritmo Hoje
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Perceba o que seu corpo e sua mente estão pedindo.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {['Descansada', 'Cansada', 'Tensa', 'Tranquila', 'Sem energia', 'Preciso de uma pausa'].map(
-                  (ritmo) => (
-                    <button
-                      key={ritmo}
-                      onClick={() => handleRitmoSelect(ritmo)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                        selectedRitmo === ritmo
-                          ? 'bg-primary text-white shadow-md'
-                          : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                      }`}
-                    >
-                      {ritmo}
-                    </button>
-                  )
-                )}
-              </div>
-
-              <div className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#545454]">
-                Reconhecer seu ritmo é o primeiro passo para se cuidar.
-              </div>
-            </SoftCard>
-          </Reveal>
-
-          {/* BLOCK 2 — Mini Rotina de Cuidado */}
-          <Reveal delay={50}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Mini Rotina de Cuidado
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Sugestões rápidas para você se acolher hoje.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  {
-                    title: 'Respirar por 2 minutos',
-                    description: 'Uma pausa curta para regular seu corpo.',
-                  },
-                  {
-                    title: 'Meio copo de água agora',
-                    description: 'Mantenha sua energia fluindo.',
-                  },
-                  {
-                    title: 'Alongamento leve',
-                    description: 'Destrave a tensão acumulada.',
-                  },
-                ].map((routine, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start justify-between p-4 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer"
-                  >
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
-                        {routine.title}
-                      </h4>
-                      <p className="text-xs text-[#545454]">
-                        {routine.description}
-                      </p>
-                    </div>
-                    <span className="text-lg font-semibold text-primary ml-3">→</span>
-                  </div>
-                ))}
-              </div>
-            </SoftCard>
-          </Reveal>
-
-          {/* BLOCK 3 — Saúde & Bem-Estar */}
-          <Reveal delay={100}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Saúde & Bem-Estar
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Acompanhe pequenas coisas que fazem diferença.
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                {/* Hydration */}
-                <div>
-                  <label className="text-sm font-semibold text-[#2f3a56] mb-3 block">
-                    Hidratação hoje
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {[0, 1, 2, 3].map((cups) => (
-                      <button
-                        key={cups}
-                        onClick={() => handleHydrationChange(cups)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                          hydration === cups
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                        }`}
-                      >
-                        {cups} {cups === 1 ? 'copo' : 'copos'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sleep */}
-                <div>
-                  <label className="text-sm font-semibold text-[#2f3a56] mb-3 block">
-                    Sono da noite passada
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => handleSleepChange(level)}
-                        className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                          sleep === level
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                        }`}
-                      >
-                        {level === 1
-                          ? '😴'
-                          : level === 2
-                            ? '😴😴'
-                            : level === 3
-                              ? '😴😴😴'
-                              : level === 4
-                                ? '😴😴😴😴'
-                                : '😴😴😴����😴'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Movement */}
-                <div>
-                  <label className="text-sm font-semibold text-[#2f3a56] mb-3 block">
-                    Movimento do dia
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['0 min', '5 min', '10 min', '15+ min'].map((duration) => (
-                      <button
-                        key={duration}
-                        onClick={() => handleMovementSelect(duration)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                          movement === duration
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                        }`}
-                      >
-                        {duration}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </SoftCard>
-          </Reveal>
-
-          {/* BLOCK 4 — Sugestões Inteligentes */}
-          <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Para você hoje
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Pequenas atitudes que podem transformar seu dia.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  {
-                    title: 'Micro descanso guiado',
-                    description: 'Um minuto para recuperar seu fôlego.',
-                  },
-                  {
-                    title: 'Autocuidado rápido',
-                    description: 'Algo simples que você consegue fazer agora.',
-                  },
-                ].map((suggestion, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-2xl border border-white/60 bg-white/60 p-4 flex flex-col hover:bg-white/80 transition-all duration-200 cursor-pointer"
-                  >
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
-                      {suggestion.title}
-                    </h4>
-                    <p className="text-xs text-[#545454] mb-3 flex-1">
-                      {suggestion.description}
+        <div className="max-w-6xl mx-auto px-4 pb-12 md:pb-16">
+          {/* Grid: 1 col mobile, 2 cols tablet+, 2 cols desktop */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+            {/* CARD 1 — Meu Ritmo Hoje */}
+            <Reveal delay={0}>
+              <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                      <AppIcon name="sparkles" size={18} className="text-[#ff005e]" decorative />
+                      Meu ritmo hoje
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Conte pra gente que tipo de dia você está vivendo.
                     </p>
-                    <div className="flex justify-end">
-                      <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-                        Ver mais →
-                      </span>
+                  </div>
+
+                  <div className="space-y-5 flex-1">
+                    {/* Ritmo buttons */}
+                    <div>
+                      <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3 block">
+                        Como você está?
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {RITMO_OPTIONS.map((ritmo) => (
+                          <button
+                            key={ritmo}
+                            onClick={() => setSelectedRitmo(selectedRitmo === ritmo ? null : ritmo)}
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                              selectedRitmo === ritmo
+                                ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            }`}
+                          >
+                            {ritmo.charAt(0).toUpperCase() + ritmo.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Nota textarea */}
+                    <div>
+                      <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5 block">
+                        Deixe uma nota (opcional)
+                      </label>
+                      <textarea
+                        value={ritmoNota}
+                        onChange={(e) => setRitmoNota(e.target.value)}
+                        placeholder="Se quiser, escreva um pouco…"
+                        className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/20 resize-none"
+                        rows={3}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            </SoftCard>
-          </Reveal>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSalvarRitmo}
+                    className="w-full mt-auto"
+                  >
+                    Salvar meu ritmo
+                  </Button>
+                </div>
+              </SoftCard>
+            </Reveal>
+
+            {/* CARD 2 — Mini Rotina de Cuidado */}
+            <Reveal delay={50}>
+              <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                      <AppIcon name="heart" size={18} className="text-[#ff005e]" decorative />
+                      Mini rotina de cuidado
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Escolha pequenos gestos que caibam no seu momento.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2.5 flex-1">
+                    {MINI_ROTINA_ITEMS.map((item) => (
+                      <label
+                        key={item}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedRotinItems.has(item)}
+                          onChange={() => handleToggleRotinaItem(item)}
+                          className="w-5 h-5 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer accent-[#ff005e]"
+                        />
+                        <span className="text-sm text-[#2f3a56] flex-1 font-medium">{item}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSalvarRotina}
+                    className="w-full mt-auto"
+                  >
+                    Salvar rotina
+                  </Button>
+                </div>
+              </SoftCard>
+            </Reveal>
+
+            {/* CARD 3 — Saúde & Bem-Estar */}
+            <Reveal delay={100}>
+              <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                      <AppIcon name="zap" size={18} className="text-[#ff005e]" decorative />
+                      Saúde & bem-estar
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Registre como seu corpo está hoje.
+                    </p>
+                  </div>
+
+                  <div className="space-y-5 flex-1">
+                    {/* Hidratação */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                        💧 Hidratação
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { idx: 0, label: 'Preciso beber mais' },
+                          { idx: 1, label: 'Estou me cuidando bem' },
+                        ].map(({ idx, label }) => (
+                          <button
+                            key={label}
+                            onClick={() => setHidratacao(hidratacao === idx ? null : idx)}
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                              hidratacao === idx
+                                ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sono */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                        😴 Sono
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Pouco (≤6h)', 'Adequado (7-8h)', 'Restaurador (9+h)'].map((label) => (
+                          <button
+                            key={label}
+                            onClick={() => setSono(sono === label ? null : label)}
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                              sono === label
+                                ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Alimentação */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                        🍽️ Alimentação
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { key: 'leve', label: 'Leve' },
+                          { key: 'ok', label: 'Equilibrada' },
+                          { key: 'pesada', label: 'Pesada' },
+                        ].map(({ key, label }) => (
+                          <button
+                            key={key}
+                            onClick={() =>
+                              setAlimentacao(alimentacao === (key as typeof alimentacao) ? null : (key as typeof alimentacao))
+                            }
+                            className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                              alimentacao === key
+                                ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
+                                : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSalvarSaude}
+                    className="w-full mt-auto"
+                  >
+                    Salvar saúde
+                  </Button>
+                </div>
+              </SoftCard>
+            </Reveal>
+
+            {/* CARD 4 — Para Você Hoje */}
+            <Reveal delay={150}>
+              <SoftCard className="h-full rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <div className="space-y-6 flex flex-col h-full">
+                  {/* Card Header with Editorial Underline */}
+                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                      <AppIcon name="lightbulb" size={18} className="text-[#6A2C70]" decorative />
+                      Para você hoje
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Sugestões carinhosas só para você.
+                    </p>
+                  </div>
+
+                  <div className="flex-1 space-y-4">
+                    {sugestaoAtual ? (
+                      <div className="p-4 rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/50 space-y-3">
+                        <p className="text-sm md:text-base leading-relaxed text-[#2f3a56] font-medium">
+                          {sugestaoAtual}
+                        </p>
+                        <button
+                          onClick={handleGerarSugestao}
+                          className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
+                        >
+                          Outra sugestão <AppIcon name="refresh-cw" size={14} decorative />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/30 text-center">
+                        <p className="text-sm text-[#545454]">
+                          Clique abaixo para descobrir um cuidado especial feito só para você.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {!sugestaoAtual ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGerarSugestao}
+                        className="w-full"
+                      >
+                        Gerar sugestão
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSalvarSugestao}
+                        className="w-full"
+                      >
+                        Salvar essa sugestão
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </SoftCard>
+            </Reveal>
+          </div>
+
+          <MotivationalFooter routeKey="cuidar-autocuidado-inteligente" />
         </div>
       </ClientOnly>
     </PageTemplate>

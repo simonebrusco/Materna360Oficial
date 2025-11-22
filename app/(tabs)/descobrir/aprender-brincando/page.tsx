@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { SoftCard } from '@/components/ui/card'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { Button } from '@/components/ui/Button'
@@ -82,20 +83,20 @@ export default function AprenderBrincandoPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-10">
         {/* SECTION 2: SMART FILTERS */}
         <Reveal delay={80}>
-          <SoftCard className="rounded-3xl p-6 md:p-8">
-            <div className="mb-8">
-              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56] mb-2">
+          <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Filtros Inteligentes
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 Personalize as brincadeiras de acordo com suas necessidades.
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Time Filter */}
               <div>
-                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                   Tempo disponível
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -113,7 +114,7 @@ export default function AprenderBrincandoPage() {
 
               {/* Location Filter */}
               <div>
-                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                   Local
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -133,7 +134,7 @@ export default function AprenderBrincandoPage() {
 
               {/* Mood Filter */}
               <div>
-                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                   Tipo de atividade
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -151,7 +152,7 @@ export default function AprenderBrincandoPage() {
 
               {/* Learning Objectives */}
               <div>
-                <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                   Objetivo de aprendizado
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -170,14 +171,14 @@ export default function AprenderBrincandoPage() {
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center sm:justify-end">
+            <div className="mt-8 flex justify-center sm:justify-end">
               <Button
                 variant="primary"
-                size="lg"
+                size="sm"
                 onClick={handleGenerateIdeas}
-                className="rounded-full px-8 py-3"
+                className="w-full sm:w-auto"
               >
-                <AppIcon name="sparkles" size={18} decorative className="mr-2" />
+                <AppIcon name="sparkles" size={16} decorative className="mr-1" />
                 Gerar Ideias
               </Button>
             </div>
@@ -187,18 +188,18 @@ export default function AprenderBrincandoPage() {
         {/* SECTION 3: AI RESULTS BLOCK */}
         {showPlayResults && (
           <Reveal delay={120}>
-            <div className="space-y-4 mb-8">
-              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Resultados Personalizados
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 Ideias baseadas nos seus filtros.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Play Idea Card 1 */}
-              <SoftCard className="rounded-3xl p-6">
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -254,7 +255,7 @@ export default function AprenderBrincandoPage() {
               </SoftCard>
 
               {/* Play Idea Card 2 */}
-              <SoftCard className="rounded-3xl p-6">
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -317,18 +318,18 @@ export default function AprenderBrincandoPage() {
 
         {/* SECTION 5: RECOMMENDED TOYS & PRODUCTS */}
         <Reveal delay={200}>
-          <div className="space-y-4 mb-6">
-            <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+          <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
               Brinquedos Recomendados
             </h2>
-            <p className="text-sm text-[#545454]">
+            <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
               Produtos que combinam com a idade do seu filho e estimulam seu desenvolvimento.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
             {SAMPLE_TOYS.map((toy) => (
-              <SoftCard key={toy.id} className="rounded-3xl p-5 md:p-6 flex flex-col h-full">
+              <SoftCard key={toy.id} className="rounded-3xl p-5 md:p-6 flex flex-col h-full bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="h-32 sm:h-40 w-full rounded-2xl bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] mb-4 flex items-center justify-center">
                   <AppIcon
                     name="gift"
@@ -360,6 +361,7 @@ export default function AprenderBrincandoPage() {
           </div>
         </Reveal>
 
+        <MotivationalFooter routeKey="descobrir-aprender-brincando" />
       </div>
     </PageTemplate>
   )

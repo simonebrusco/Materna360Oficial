@@ -23,37 +23,37 @@ export default function WeekView({ weekData }: WeekViewProps) {
       {/* Weekly Summary */}
       <div className="grid grid-cols-3 gap-3 md:gap-4">
         <SoftCard className="p-4 md:p-5 text-center">
-          <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
+          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-wide mb-2">
             Tarefas
           </p>
-          <p className="text-2xl md:text-3xl font-bold text-[#2f3a56]">
+          <p className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)]">
             {weekData.reduce((acc, day) => acc + day.top3Count, 0)}
           </p>
-          <p className="text-xs text-[#545454]/60 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)]/60 mt-1">
             planejadas esta semana
           </p>
         </SoftCard>
 
         <SoftCard className="p-4 md:p-5 text-center">
-          <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
+          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-wide mb-2">
             Autocuidado
           </p>
-          <p className="text-2xl md:text-3xl font-bold text-[#2f3a56]">
+          <p className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)]">
             {weekData.reduce((acc, day) => acc + day.careCount, 0)}
           </p>
-          <p className="text-xs text-[#545454]/60 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)]/60 mt-1">
             ações programadas
           </p>
         </SoftCard>
 
         <SoftCard className="p-4 md:p-5 text-center">
-          <p className="text-xs md:text-sm font-semibold text-[#545454]/70 uppercase tracking-wide mb-2">
+          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-wide mb-2">
             Família
           </p>
-          <p className="text-2xl md:text-3xl font-bold text-[#2f3a56]">
+          <p className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)]">
             {weekData.reduce((acc, day) => acc + day.familyCount, 0)}
           </p>
-          <p className="text-xs text-[#545454]/60 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)]/60 mt-1">
             ações com a família
           </p>
         </SoftCard>
@@ -61,7 +61,7 @@ export default function WeekView({ weekData }: WeekViewProps) {
 
       {/* Weekly Timeline */}
       <SoftCard className="p-4 md:p-5">
-        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-4">
+        <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] mb-4">
           Timeline da semana
         </h3>
 
@@ -69,14 +69,14 @@ export default function WeekView({ weekData }: WeekViewProps) {
           {weekData.map((day, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between p-3 rounded-lg border border-[#f0f0f0] hover:border-[#ff005e]/20 transition-all"
+              className="flex items-center justify-between p-3 rounded-lg border border-[#f0f0f0] hover:border-[var(--color-brand)]/20 transition-all"
             >
               <div className="flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-[#2f3a56]">
+                  <span className="text-sm font-bold text-[var(--color-text-main)]">
                     {day.dayName}
                   </span>
-                  <span className="text-xs text-[#545454]/60">
+                  <span className="text-xs text-[var(--color-text-muted)]/60">
                     {day.dayNumber}
                   </span>
                 </div>
@@ -87,9 +87,9 @@ export default function WeekView({ weekData }: WeekViewProps) {
                   <div className="flex items-center gap-1">
                     <AppIcon
                       name="clock"
-                      className="w-3.5 h-3.5 text-[#545454]/40"
+                      className="w-3.5 h-3.5 text-[var(--color-text-muted)]/40"
                     />
-                    <span className="text-xs font-semibold text-[#545454]/70">
+                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
                       {day.agendaCount}
                     </span>
                   </div>
@@ -99,9 +99,9 @@ export default function WeekView({ weekData }: WeekViewProps) {
                   <div className="flex items-center gap-1">
                     <AppIcon
                       name="target"
-                      className="w-3.5 h-3.5 text-[#545454]/40"
+                      className="w-3.5 h-3.5 text-[var(--color-text-muted)]/40"
                     />
-                    <span className="text-xs font-semibold text-[#545454]/70">
+                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
                       {day.top3Count}
                     </span>
                   </div>
@@ -111,9 +111,9 @@ export default function WeekView({ weekData }: WeekViewProps) {
                   <div className="flex items-center gap-1">
                     <AppIcon
                       name="heart"
-                      className="w-3.5 h-3.5 text-[#ff005e]/40"
+                      className="w-3.5 h-3.5 text-[var(--color-brand)]/40"
                     />
-                    <span className="text-xs font-semibold text-[#545454]/70">
+                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
                       {day.careCount}
                     </span>
                   </div>
@@ -123,9 +123,9 @@ export default function WeekView({ weekData }: WeekViewProps) {
                   <div className="flex items-center gap-1">
                     <AppIcon
                       name="smile"
-                      className="w-3.5 h-3.5 text-[#545454]/40"
+                      className="w-3.5 h-3.5 text-[var(--color-text-muted)]/40"
                     />
-                    <span className="text-xs font-semibold text-[#545454]/70">
+                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
                       {day.familyCount}
                     </span>
                   </div>

@@ -26,74 +26,139 @@ export function MaternarFeatureCard({
   tag,
 }: MaternarFeatureCardProps) {
   const isPremium = cardId === 'planos-premium'
+  const isConquistas = cardId === 'minhas-conquistas-hub'
+  const isSpecial = isPremium || isConquistas
 
-  const baseCardClasses =
-    'h-full flex flex-col justify-between rounded-[26px] md:rounded-[20px] border border-black/5 bg-white/90 ' +
-    'shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-sm ' +
-    'min-h-[190px] max-h-[220px] ' +
-    'mb-0 px-4 py-5 md:px-6 md:py-7 ' +
-    'transition-all duration-200 ease-out ' +
-    'hover:shadow-[0_6px_16px_rgba(0,0,0,0.08),0_10px_28px_rgba(0,0,0,0.12),0_14px_40px_rgba(0,0,0,0.12)] ' +
-    'active:shadow-[0_2px_8px_rgba(0,0,0,0.05)]'
+  // Enhanced premium spacing for special cards
+  const baseCardClasses = clsx(
+    'h-full flex flex-col rounded-3xl border bg-white transition-all duration-200 ease-out',
+    isSpecial
+      ? 'min-h-[190px] md:min-h-[210px] px-4 md:px-6 py-5 md:py-7'
+      : 'min-h-[180px] md:min-h-[200px] px-4 md:px-6 py-4 md:py-6',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+  )
 
-  const premiumCardClasses =
-    'border-transparent bg-gradient-to-br from-[#ffe3f0] via-white to-[#ffe9f5] ' +
-    'shadow-[0_4px_12px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08),0_12px_36px_rgba(0,0,0,0.08)] ' +
-    'hover:shadow-[0_6px_16px_rgba(0,0,0,0.08),0_10px_28px_rgba(0,0,0,0.12),0_14px_40px_rgba(0,0,0,0.12)]'
+  // Special premium styling for Materna+ and Minhas Conquistas
+  const specialCardClasses = isSpecial
+    ? clsx(
+        // Enhanced plumSoft border (light plum) for premium presence
+        'border-[#E8D4E8] border-[1.5px]',
+        // Premium glow shadow: larger blur (14px), subtle spread, 10% opacity
+        'shadow-[0_4px_14px_rgba(155,77,150,0.10)]',
+        // Enhanced hover state with plum glow
+        'hover:shadow-[0_8px_28px_rgba(155,77,150,0.16)]',
+        // Elegant curved left accent in plum
+        'border-l-[4px] border-l-[#9B4D96]',
+        // Premium focus ring
+        'focus-visible:ring-[#9B4D96]'
+      )
+    : clsx(
+        'border-[#FFE8F2]',
+        'shadow-[0_2px_12px_rgba(47,58,86,0.06)]',
+        'hover:shadow-[0_8px_28px_rgba(47,58,86,0.1)]',
+        'focus-visible:ring-[#FF1475]'
+      )
 
   return (
     <Link
       href={href}
       aria-label={title}
       data-card-id={cardId}
-      className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e] focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-3xl"
+      className={clsx(
+        'block h-full rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        isSpecial
+          ? 'focus-visible:ring-[#9B4D96] focus-visible:ring-offset-white'
+          : 'focus-visible:ring-[#FF1475] focus-visible:ring-offset-white'
+      )}
     >
-      <div
-        role="article"
-        className={clsx(baseCardClasses, isPremium && premiumCardClasses)}
-      >
-        {/* Top content: Icon, Tag, Title, Subtitle */}
-        <div className="flex flex-col gap-2 md:gap-4">
-          <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#ffd8e6] flex-shrink-0">
+      <div role="article" className={clsx(baseCardClasses, specialCardClasses)}>
+        {/* Top Row: Category Badge (Left) + Icon (Right) */}
+        <div className={clsx(
+          'flex items-start justify-between gap-3',
+          isSpecial ? 'mb-3 md:mb-3.5' : 'mb-2.5 md:mb-3'
+        )}>
+          {/* Category Badge - Left, always pink */}
+          {tag && (
+            <div>
+              <span className="inline-flex items-center rounded-full bg-[#FFE8F2] px-2.5 py-1 text-[9px] md:text-xs font-bold uppercase tracking-wider text-[#FF1475]">
+                {tag}
+              </span>
+            </div>
+          )}
+          {!tag && <div />}
+
+          {/* Icon - Top Right, reduced ~15% for special cards, plum with soft glow */}
+          <div
+            className={clsx(
+              'flex-shrink-0 flex items-center justify-center rounded-lg transition-all',
+              isSpecial
+                ? 'h-8 w-8 md:h-8.5 md:w-8.5 shadow-sm'
+                : 'h-8 w-8 md:h-9 md:w-9 shadow-sm'
+            )}
+            style={{
+              backgroundColor: isSpecial
+                ? 'rgba(155, 77, 150, 0.12)'
+                : 'rgba(155, 77, 150, 0.06)',
+            }}
+          >
             <AppIcon
               name={icon}
-              className="h-3.5 w-3.5 md:h-4 md:w-4 text-[#ff005e]"
+              className={clsx(
+                'flex-shrink-0',
+                isSpecial
+                  ? 'h-3.5 w-3.5 md:h-4 md:w-4'
+                  : 'h-4 w-4 md:h-4.5 md:w-4.5'
+              )}
+              style={{ color: '#9B4D96' }}
               aria-hidden="true"
             />
           </div>
-
-          {/* Tag, Title, Subtitle */}
-          <div className="space-y-0">
-            {tag && (
-              <div className="pb-1 md:pb-2">
-                <span className="inline-flex items-center rounded-full bg-[#ffe3f0] px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[#ff005e]">
-                  {tag}
-                </span>
-              </div>
-            )}
-            <h3 className="text-sm md:text-lg font-semibold text-[#2f3a56] leading-snug">
-              {title}
-            </h3>
-            <p className="text-xs md:text-sm text-[#545454] leading-relaxed pt-0.5 md:pt-1.5 line-clamp-2 md:line-clamp-3">
-              {subtitle}
-            </p>
-          </div>
         </div>
 
-        {/* Bottom CTA - always at bottom */}
-        <div className="mt-auto pt-3">
+        {/* Accent Line - Plum, positioned close to category */}
+        <div
+          className={clsx(
+            'h-0.5 rounded-full',
+            isSpecial ? 'w-7 mb-3 md:mb-3.5' : 'w-6 mb-2.5 md:mb-3'
+          )}
+          style={{ backgroundColor: '#9B4D96' }}
+        />
+
+        {/* Title + Subtitle - Premium spacing, raised slightly for special cards */}
+        <div
+          className={clsx(
+            'flex-1',
+            isSpecial
+              ? 'space-y-1.5 md:space-y-2 mb-4 md:mb-5'
+              : 'space-y-1 md:space-y-1.5 mb-3.5 md:mb-4'
+          )}
+        >
+          <h3 className="text-sm md:text-base font-semibold text-[#3A3A3A] leading-tight">
+            {title}
+          </h3>
+          <p className="text-xs md:text-[13px] text-[#6A6A6A] leading-snug line-clamp-2 md:line-clamp-3">
+            {subtitle}
+          </p>
+        </div>
+
+        {/* Premium CTA - Pink text/arrow, plum hover animation */}
+        <div className="mt-auto pt-0.5">
           <button
             type="button"
-            className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#ff005e] transition-all duration-150 hover:gap-1"
+            className="inline-flex items-center gap-1 text-xs md:text-sm font-medium transition-all duration-150 hover:translate-x-[2px] hover:text-[#9B4D96] group"
+            style={{ color: '#FF1475' }}
             aria-label={`${ctaText} ${title}`}
           >
             <span>{ctaText}</span>
-            {!ctaText.includes('→') && <span aria-hidden="true">→</span>}
+            <AppIcon
+              name="chevron"
+              className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 transition-all group-hover:text-[#9B4D96]"
+              style={{ color: '#FF1475' }}
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>
     </Link>
   )
 }
-
-export default MaternarFeatureCard

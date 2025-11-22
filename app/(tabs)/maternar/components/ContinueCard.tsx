@@ -83,16 +83,16 @@ export function ContinueCard({ dateKey }: { dateKey: string }) {
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
       <div className="flex items-center gap-2 mb-2">
-        <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
-          <Icon className="h-4 w-4 text-[#ff005e]" aria-hidden />
+        <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]/60">
+          <Icon className="h-4 w-4 text-[var(--color-brand)]" aria-hidden />
         </div>
         <h3 className="text-[16px] font-semibold">Continue de onde parou</h3>
       </div>
-      <p className="text-[14px] text-[#2f3a56] mb-3">{resume.label}</p>
+      <p className="text-[14px] text-[var(--color-text-main)] mb-3">{resume.label}</p>
       <Link
         href={resume.href}
         onClick={() => track('nav.click', { tab: 'maternar', dest: resume.href })}
-        className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[#ff005e] text-white font-medium hover:opacity-95 active:scale-[0.99]"
+        className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[var(--color-brand)] text-white font-medium hover:opacity-95 active:scale-[0.99]"
       >
         <Clock4 className="h-4 w-4" aria-hidden /> Retomar agora
       </Link>

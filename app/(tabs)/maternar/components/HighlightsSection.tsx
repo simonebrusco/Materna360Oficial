@@ -122,14 +122,14 @@ export function HighlightsSection() {
               key={h.id}
               href={h.href}
               onClick={() => track('nav.click', { tab: 'maternar', dest: h.href })}
-              className="flex items-center gap-3 rounded-xl border px-3 py-2 hover:bg-[#ffd8e6]/20 focus:outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+              className="flex items-center gap-3 rounded-xl border px-3 py-2 hover:bg-[var(--color-soft-strong)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--color-soft-strong)]"
             >
-              <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd8e6]/60">
-                <Icon className="h-4 w-4 text-[#ff005e]" aria-hidden />
+              <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]/60">
+                <Icon className="h-4 w-4 text-[var(--color-brand)]" aria-hidden />
               </div>
               <div className="min-w-0">
                 <div className="text-[14px] font-semibold truncate">{h.title}</div>
-                <div className="text-[12px] text-[#545454] truncate">{h.subtitle}</div>
+                <div className="text-[12px] text-[var(--color-text-muted)] truncate">{h.subtitle}</div>
               </div>
             </Link>
           )

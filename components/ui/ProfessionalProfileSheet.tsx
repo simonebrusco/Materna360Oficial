@@ -157,7 +157,7 @@ export function ProfessionalProfileSheet({
       >
         <Card className="w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-screen bg-white animate-in slide-in-from-bottom-10">
           {/* Header with subtle gradient */}
-          <div className="bg-gradient-to-b from-[#FFE5EF] to-white px-6 pt-6 pb-8">
+          <div className="bg-gradient-to-b from-[var(--color-soft-strong)] to-[var(--color-page-bg)] px-6 pt-6 pb-8">
             <div className="flex items-start gap-4">
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]">
                 <Image

@@ -76,9 +76,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative min-h-[100dvh] bg-gradient-to-b from-[#FFF0F6] to-white overflow-hidden">
+    <div className="relative min-h-[100dvh] bg-gradient-to-b from-[var(--color-soft-bg)] to-[var(--color-page-bg)] overflow-hidden">
       {/* Soft gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FFE5EF] to-transparent opacity-70 blur-[40px] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-soft-strong)]/70 to-transparent opacity-70 blur-[40px] pointer-events-none" />
 
       <div className="relative z-10 flex flex-col min-h-[100dvh] px-4">
         {/* Progress indicator */}
@@ -90,8 +90,8 @@ export default function OnboardingPage() {
                   key={idx}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     idx <= currentStep
-                      ? 'bg-[#ff005e] w-8'
-                      : 'bg-[#ffd8e6] w-6'
+                      ? 'bg-[var(--color-brand)] w-8'
+                      : 'bg-[var(--color-soft-strong)] w-6'
                   }`}
                 />
               ))}
@@ -105,11 +105,11 @@ export default function OnboardingPage() {
             <div className="max-w-md mx-auto text-center space-y-8">
               {/* Icon */}
               <div className="flex justify-center">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FFE5EF] to-[#ffe9f5] flex items-center justify-center shadow-[0_10px_40px_rgba(255,0,94,0.12)]">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--color-soft-strong)] to-[var(--color-soft-bg)] flex items-center justify-center shadow-[0_10px_40px_rgba(253,37,151,0.12)]">
                   <AppIcon
                     name={step.icon as any}
                     size={48}
-                    className="text-[#ff005e]"
+                    className="text-[var(--color-brand)]"
                     decorative
                   />
                 </div>
@@ -117,19 +117,19 @@ export default function OnboardingPage() {
 
               {/* Content */}
               <div className="space-y-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-[#2f3a56]">
+                <h1 className="text-3xl md:text-4xl font-bold text-[var(--color-text-main)]">
                   {step.title}
                 </h1>
-                <p className="text-lg text-[#545454] font-medium">
+                <p className="text-lg text-[var(--color-text-muted)] font-medium">
                   {step.subtitle}
                 </p>
-                <p className="text-base text-[#545454]/80 leading-relaxed">
+                <p className="text-base text-[var(--color-text-muted)]/80 leading-relaxed">
                   {step.content}
                 </p>
               </div>
 
               {/* Step indicator text */}
-              <p className="text-xs text-[#545454]/60 tracking-wide">
+              <p className="text-xs text-[var(--color-text-muted)]/60 tracking-wide">
                 ETAPA {currentStep + 1} DE {ONBOARDING_STEPS.length}
               </p>
             </div>
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
 
             {!isLastStep && (
               <Link href="/meu-dia" className="block pt-2">
-                <button className="w-full text-xs text-[#545454]/60 hover:text-[#545454] transition-colors">
+                <button className="w-full text-xs text-[var(--color-text-muted)]/60 hover:text-[var(--color-text-muted)] transition-colors">
                   Pular para o app
                 </button>
               </Link>

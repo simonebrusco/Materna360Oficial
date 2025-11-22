@@ -11,11 +11,7 @@ interface Props {
 
 export function RoutineBlock({ form, errors, onChange, onToggleArrayField }: Props) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-gray-900">Rotina & momentos críticos</h2>
-        <p className="mt-1 text-xs text-gray-600">Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas.</p>
-      </div>
+    <div className="space-y-4">
 
       <div className="space-y-2">
         <label className="text-xs font-medium text-gray-800">Em quais momentos do dia você sente mais caos?</label>

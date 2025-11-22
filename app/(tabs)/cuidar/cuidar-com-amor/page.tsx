@@ -3,24 +3,68 @@
 import { useState, useEffect, useMemo } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
+import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+
+type SignalsDayData = {
+  selectedSignals: string[]
+  observation: string
+}
+
+type CareCareData = {
+  checkedItems: string[]
+}
+
+type BondData = {
+  selectedOption: 'gesto' | 'ritual' | null
+}
+
+const SIGNALS_OPTIONS = [
+  'Alegria',
+  'Agitação',
+  'Carinho',
+  'Muito sono',
+  'Carência',
+  'Irritação',
+]
+
+const CARE_ITEMS = [
+  'Sono respeitado',
+  'Alimentação equilibrada',
+  'Água durante o dia',
+  'Tempo de movimento/brincadeira',
+  'Pausa de conexão (olho no olho, conversa, abraço)',
+]
+
+const EMOTIONAL_CARE_TIPS = [
+  'Reserve alguns minutos para ouvir seu filho sem interrupções.',
+  'Valide o que ele sente, mesmo quando não concordar com o comportamento.',
+  'Ofereça um gesto de carinho físico, como um abraço ou colo.',
+]
 
 export default function CuidarComAmorPage() {
   const [isHydrated, setIsHydrated] = useState(false)
-  const [selectedSignals, setSelectedSignals] = useState<string[]>([])
-  const [sleepNote, setSleepNote] = useState('')
-  const [foodNote, setFoodNote] = useState('')
-  const [wellnessNote, setWellnessNote] = useState('')
+  const [signalsData, setSignalsData] = useState<SignalsDayData>({
+    selectedSignals: [],
+    observation: '',
+  })
+  const [careData, setCareData] = useState<CareCareData>({
+    checkedItems: [],
+  })
+  const [bondData, setBondData] = useState<BondData>({
+    selectedOption: null,
+  })
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+  const { addItem } = usePlannerSavedContents()
 
-  // Mark as hydrated on mount
   useEffect(() => {
     setIsHydrated(true)
   }, [])
@@ -30,47 +74,130 @@ export default function CuidarComAmorPage() {
     if (!isHydrated) return
 
     const signalsKey = `cuidar-com-amor:${currentDateKey}:signals`
-    const sleepKey = `cuidar-com-amor:${currentDateKey}:sleep`
-    const foodKey = `cuidar-com-amor:${currentDateKey}:food`
-    const wellnessKey = `cuidar-com-amor:${currentDateKey}:wellness`
+    const careKey = `cuidar-com-amor:${currentDateKey}:care`
+    const bondKey = `cuidar-com-amor:${currentDateKey}:bond`
 
-    const savedSignals = load(signalsKey)
-    const savedSleep = load(sleepKey)
-    const savedFood = load(foodKey)
-    const savedWellness = load(wellnessKey)
+    const savedSignals = load<SignalsDayData>(signalsKey)
+    const savedCare = load<CareCareData>(careKey)
+    const savedBond = load<BondData>(bondKey)
 
-    if (Array.isArray(savedSignals)) setSelectedSignals(savedSignals)
-    if (typeof savedSleep === 'string') setSleepNote(savedSleep)
-    if (typeof savedFood === 'string') setFoodNote(savedFood)
-    if (typeof savedWellness === 'string') setWellnessNote(savedWellness)
+    if (
+      savedSignals &&
+      typeof savedSignals === 'object' &&
+      'selectedSignals' in savedSignals
+    ) {
+      setSignalsData(savedSignals)
+    }
+
+    if (
+      savedCare &&
+      typeof savedCare === 'object' &&
+      'checkedItems' in savedCare
+    ) {
+      setCareData(savedCare)
+    }
+
+    if (
+      savedBond &&
+      typeof savedBond === 'object' &&
+      'selectedOption' in savedBond
+    ) {
+      setBondData(savedBond)
+    }
   }, [isHydrated, currentDateKey])
 
   const handleSignalToggle = (signal: string) => {
-    const updated = selectedSignals.includes(signal)
-      ? selectedSignals.filter(s => s !== signal)
-      : [...selectedSignals, signal]
-    setSelectedSignals(updated)
-    const signalsKey = `cuidar-com-amor:${currentDateKey}:signals`
-    save(signalsKey, updated)
-    try {
-      track('child_signals.logged', {
-        tab: 'cuidar-com-amor',
-        signals: updated,
-      })
-    } catch {}
+    const updated = signalsData.selectedSignals.includes(signal)
+      ? signalsData.selectedSignals.filter((s) => s !== signal)
+      : [...signalsData.selectedSignals, signal]
+
+    setSignalsData({
+      ...signalsData,
+      selectedSignals: updated,
+    })
   }
 
-  const handleSaveNote = (type: string, note: string) => {
-    if (!note.trim()) return
-    const key = `cuidar-com-amor:${currentDateKey}:${type}`
-    save(key, note)
+  const handleSaveSignals = () => {
+    const signalsKey = `cuidar-com-amor:${currentDateKey}:signals`
+    save(signalsKey, signalsData)
+
     try {
-      track('care_note.saved', {
-        tab: 'cuidar-com-amor',
-        type: type,
+      track('care_signals_saved', {
+        origin: 'cuidar-com-amor',
+        signalsCount: signalsData.selectedSignals.length,
       })
     } catch {}
-    toast.success('Anotação salva!')
+
+    toast.success('Sinais do dia salvos com carinho.')
+  }
+
+  const handleCareToggle = (item: string) => {
+    const updated = careData.checkedItems.includes(item)
+      ? careData.checkedItems.filter((i) => i !== item)
+      : [...careData.checkedItems, item]
+
+    setCareData({
+      ...careData,
+      checkedItems: updated,
+    })
+  }
+
+  const handleSaveCare = () => {
+    const careKey = `cuidar-com-amor:${currentDateKey}:care`
+    save(careKey, careData)
+
+    try {
+      track('care_checklist_saved', {
+        origin: 'cuidar-com-amor',
+        checkedCount: careData.checkedItems.length,
+      })
+    } catch {}
+
+    toast.success('Cuidados de hoje registrados com carinho.')
+  }
+
+  const handleBondOptionChange = (option: 'gesto' | 'ritual') => {
+    setBondData({
+      selectedOption: option,
+    })
+  }
+
+  const handleSaveBond = () => {
+    if (!bondData.selectedOption) {
+      toast.info('Escolha uma opção para continuar.')
+      return
+    }
+
+    const bondKey = `cuidar-com-amor:${currentDateKey}:bond`
+    save(bondKey, bondData)
+
+    try {
+      addItem({
+        origin: 'cuidar-com-amor',
+        type: 'insight',
+        title:
+          bondData.selectedOption === 'gesto'
+            ? 'Gesto de vínculo para hoje'
+            : 'Ritual de conexão para hoje',
+        payload: {
+          tipoEscolhido: bondData.selectedOption,
+          descricao:
+            bondData.selectedOption === 'gesto'
+              ? 'Pequeno gesto para deixar o dia do seu filho mais leve.'
+              : 'Mini-ritual de conexão para antes de dormir ou depois da escola.',
+        },
+      })
+
+      try {
+        track('care_bond_saved', {
+          origin: 'cuidar-com-amor',
+          type: bondData.selectedOption,
+        })
+      } catch {}
+    } catch (error) {
+      console.error('[Cuidar com Amor] Error saving bond to planner:', error)
+      toast.danger('Erro ao salvar no planner.')
+    }
   }
 
   return (
@@ -83,190 +210,237 @@ export default function CuidarComAmorPage() {
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
           {/* BLOCK 1 — Sinais do Dia */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Sinais do Dia
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Observe como seu filho expressou suas necessidades hoje.
-                </p>
-              </div>
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Sinais do Dia
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Observe pequenos sinais que podem mostrar como seu filho está hoje.
+                  </p>
+                </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
-                {['Sonolento', 'Agitado', 'Carinhoso', 'Irritado', 'Curioso', 'Carente'].map(
-                  (signal) => (
-                    <button
-                      key={signal}
-                      onClick={() => handleSignalToggle(signal)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                        selectedSignals.includes(signal)
-                          ? 'bg-primary text-white shadow-md'
-                          : 'bg-white/60 text-[#2f3a56] hover:bg-white/80'
-                      }`}
-                    >
-                      {signal}
-                    </button>
-                  )
-                )}
-              </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-[#2f3a56] font-medium">
+                    Quais desses sinais você percebe hoje?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {SIGNALS_OPTIONS.map((signal) => (
+                      <button
+                        key={signal}
+                        onClick={() => handleSignalToggle(signal)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                          signalsData.selectedSignals.includes(signal)
+                            ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
+                            : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                        }`}
+                      >
+                        {signal}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="rounded-2xl bg-[#FFE5EF]/40 p-3 text-sm text-[#545454]">
-                Perceber os sinais ajuda você a entender o que seu filho precisa.
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5">
+                    Quer detalhar algo?
+                  </label>
+                  <textarea
+                    value={signalsData.observation}
+                    onChange={(e) =>
+                      setSignalsData({
+                        ...signalsData,
+                        observation: e.target.value,
+                      })
+                    }
+                    placeholder="Escreva aqui algo que você percebeu no seu filho hoje."
+                    className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/20 resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveSignals}
+                  className="w-full mt-auto"
+                >
+                  Salvar sinais do dia
+                </Button>
               </div>
             </SoftCard>
           </Reveal>
 
           {/* BLOCK 2 — Cuidado Emocional por Idade */}
           <Reveal delay={50}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Cuidado Emocional por Idade
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  O que seu filho mais precisa emocionalmente nesta fase.
-                </p>
-              </div>
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cuidado Emocional por Idade
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Sugestões suaves para acolher o momento do seu filho.
+                  </p>
+                </div>
 
-              <div className="space-y-3">
-                {[
-                  {
-                    title: 'Apoio e segurança',
-                    description: 'Como acolher as emoções hoje.',
-                  },
-                  {
-                    title: 'Expressão emocional',
-                    description: 'Ideias para ajudar seu filho a se comunicar.',
-                  },
-                  {
-                    title: 'Conexão rápida',
-                    description: 'Gestos simples para reforçar o vínculo.',
-                  },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start justify-between p-4 rounded-2xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all duration-200 cursor-pointer"
-                  >
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
-                        {item.title}
-                      </h4>
-                      <p className="text-xs text-[#545454]">
-                        {item.description}
-                      </p>
+                <div className="p-4 rounded-2xl bg-[#FFE5EF]/40 border border-[#ffd8e6]/50">
+                  <p className="text-xs md:text-sm text-[#545454]">
+                    Cadastre a idade do seu filho no Eu360 para sugestões ainda mais certeiras.
+                  </p>
+                </div>
+
+                <div className="space-y-3 flex-1">
+                  {EMOTIONAL_CARE_TIPS.map((tip, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div className="flex-shrink-0 text-[#6A2C70] mt-0.5 font-semibold">
+                        •
+                      </div>
+                      <p className="text-sm text-[#545454] leading-relaxed">{tip}</p>
                     </div>
-                    <span className="text-lg font-semibold text-primary ml-3">→</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => console.log('ver mais cuidado emocional')}
+                  className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                >
+                  Ver mais ideias de cuidado →
+                </button>
               </div>
             </SoftCard>
           </Reveal>
 
           {/* BLOCK 3 — Cuidados do Dia */}
           <Reveal delay={100}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Cuidados do Dia
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Acompanhe o que realmente importa.
-                </p>
-              </div>
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cuidados do Dia
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Acompanhe cuidados importantes de forma leve.
+                  </p>
+                </div>
 
-              <div className="space-y-3">
-                {[
-                  {
-                    title: 'Sono',
-                    question: 'Como foi a rotina de descanso?',
-                    state: sleepNote,
-                    setState: setSleepNote,
-                    type: 'sleep',
-                  },
-                  {
-                    title: 'Alimentação',
-                    question: 'Alguma observação importante hoje?',
-                    state: foodNote,
-                    setState: setFoodNote,
-                    type: 'food',
-                  },
-                  {
-                    title: 'Bem-estar',
-                    question: 'Anote algo que chamou atenção.',
-                    state: wellnessNote,
-                    setState: setWellnessNote,
-                    type: 'wellness',
-                  },
-                ].map((care, idx) => (
-                  <div key={idx} className="rounded-2xl border border-white/40 bg-white/60 p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
-                          {care.title}
-                        </h4>
-                        <p className="text-xs text-[#545454]">
-                          {care.question}
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="text"
-                      value={care.state}
-                      onChange={(e) => care.setState(e.target.value)}
-                      placeholder="Escreva aqui..."
-                      className="w-full text-xs px-3 py-2 rounded-xl border border-white/40 bg-white/50 text-[#2f3a56] focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      onBlur={() => handleSaveNote(care.type, care.state)}
-                    />
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                    Marque o que você já conseguiu cuidar hoje:
+                  </p>
+                  <div className="space-y-2.5 flex-1">
+                    {CARE_ITEMS.map((item) => (
+                      <label
+                        key={item}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={careData.checkedItems.includes(item)}
+                          onChange={() => handleCareToggle(item)}
+                          className="w-5 h-5 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer accent-[#ff005e]"
+                        />
+                        <span className="text-sm text-[#2f3a56] flex-1 font-medium">{item}</span>
+                      </label>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveCare}
+                  className="w-full mt-auto"
+                >
+                  Salvar cuidados de hoje
+                </Button>
               </div>
             </SoftCard>
           </Reveal>
 
-          {/* BLOCK 4 — Sugestões Afetivas */}
+          {/* BLOCK 4 — Para Fortalecer o Vínculo */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-6">
-                <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
-                  Para Fortalecer o Vínculo
-                </h3>
-                <p className="text-sm text-[#545454]">
-                  Pequenas sugestões para um dia mais leve.
-                </p>
-              </div>
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Card Header with Editorial Underline */}
+                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Para Fortalecer o Vínculo
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Escolha um gesto especial para hoje.
+                  </p>
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  {
-                    title: 'Pausa Afetuosa',
-                    description: 'Um gesto curto para reconectar vocês.',
-                  },
-                  {
-                    title: 'Ritual de carinho',
-                    description: 'Uma ideia simples para antes de dormir.',
-                  },
-                ].map((suggestion, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-2xl border border-white/60 bg-white/60 p-4 flex flex-col hover:bg-white/80 transition-all duration-200 cursor-pointer"
+                <div className="space-y-3 flex-1">
+                  {/* Gesto Option */}
+                  <label className="flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
+                    style={{
+                      borderColor: bondData.selectedOption === 'gesto' ? '#ff005e' : '#ffd8e6',
+                      backgroundColor: bondData.selectedOption === 'gesto' ? '#ffd8e6/10' : '#ffd8e6/5',
+                    }}
                   >
-                    <h4 className="text-sm font-semibold text-[#2f3a56] mb-2">
-                      {suggestion.title}
-                    </h4>
-                    <p className="text-xs text-[#545454] mb-3 flex-1">
-                      {suggestion.description}
-                    </p>
-                    <div className="flex justify-end">
-                      <span className="text-xs font-medium text-primary inline-flex items-center gap-1">
-                        Ver mais →
-                      </span>
+                    <input
+                      type="radio"
+                      name="bond-option"
+                      value="gesto"
+                      checked={bondData.selectedOption === 'gesto'}
+                      onChange={() => handleBondOptionChange('gesto')}
+                      className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                        Gesto de hoje
+                      </h4>
+                      <p className="text-xs text-[#545454] leading-relaxed">
+                        Escolha um pequeno gesto para deixar o dia do seu filho mais leve (ex.: bilhete, elogio, tempo de colo).
+                      </p>
                     </div>
-                  </div>
-                ))}
+                  </label>
+
+                  {/* Ritual Option */}
+                  <label className="flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
+                    style={{
+                      borderColor: bondData.selectedOption === 'ritual' ? '#ff005e' : '#ffd8e6',
+                      backgroundColor: bondData.selectedOption === 'ritual' ? '#ffd8e6/10' : '#ffd8e6/5',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="bond-option"
+                      value="ritual"
+                      checked={bondData.selectedOption === 'ritual'}
+                      onChange={() => handleBondOptionChange('ritual')}
+                      className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                        Ritual rápido
+                      </h4>
+                      <p className="text-xs text-[#545454] leading-relaxed">
+                        Defina um mini-ritual de conexão para antes de dormir ou depois da escola.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveBond}
+                  className="w-full mt-auto"
+                >
+                  Salvar no planner
+                </Button>
               </div>
             </SoftCard>
           </Reveal>
+
+          <MotivationalFooter routeKey="cuidar-cuidar-com-amor" />
         </div>
       </ClientOnly>
     </PageTemplate>

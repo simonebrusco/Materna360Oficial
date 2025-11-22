@@ -21,9 +21,9 @@ export default function CuidarDeMimSection({
     <div className="space-y-4">
       {/* Section Header */}
       <div className="flex items-center gap-2">
-        <AppIcon name="heart" className="w-5 h-5 text-[#ff005e]" />
-        <h2 className="text-lg md:text-xl font-bold text-[#2f3a56]">Cuidar de Mim</h2>
-        <span className="text-xs font-medium bg-[#f5f5f5] text-[#545454] px-2 py-1 rounded-full">
+        <AppIcon name="heart" className="w-5 h-5 text-[var(--color-brand)]" />
+        <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)]">Cuidar de Mim</h2>
+        <span className="text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] px-2 py-1 rounded-full">
           {tasks.length}
         </span>
       </div>
@@ -46,8 +46,8 @@ export default function CuidarDeMimSection({
                   onClick={() => onToggle(task.id)}
                   className={`flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all mt-0.5 ${
                     task.done
-                      ? 'bg-[#ff005e] border-[#ff005e]'
-                      : 'border-[#ddd] hover:border-[#ff005e]'
+                      ? 'bg-[var(--color-brand)] border-[var(--color-brand)]'
+                      : 'border-[#ddd] hover:border-[var(--color-brand)]'
                   }`}
                 >
                   {task.done && <AppIcon name="check" className="w-4 h-4 text-white" />}
@@ -55,8 +55,8 @@ export default function CuidarDeMimSection({
                 <span
                   className={`text-sm font-medium transition-all ${
                     task.done
-                      ? 'text-[#545454]/50 line-through'
-                      : 'text-[#2f3a56]'
+                      ? 'text-[var(--color-text-muted)]/50 line-through'
+                      : 'text-[var(--color-text-main)]'
                   }`}
                 >
                   {task.title}
@@ -69,8 +69,8 @@ export default function CuidarDeMimSection({
                   onClick={() => onTogglePriority(task.id)}
                   className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
                     task.priority === 'alta'
-                      ? 'bg-[#ff005e]/10 text-[#ff005e]'
-                      : 'bg-white border border-[#ddd] text-[#545454]/60 hover:border-[#ff005e]'
+                      ? 'bg-[var(--color-brand)]/10 text-[var(--color-brand)]'
+                      : 'bg-white border border-[#ddd] text-[var(--color-text-muted)]/60 hover:border-[var(--color-brand)]'
                   }`}
                 >
                   {task.priority === 'alta' ? 'Essencial' : 'Bônus'}
@@ -84,7 +84,7 @@ export default function CuidarDeMimSection({
       {/* Add Task */}
       <button
         onClick={() => onAddTask('Nova atividade de autocuidado')}
-        className="inline-flex items-center gap-2 text-sm font-medium text-[#ff005e] hover:text-[#ff005e]/80 transition-colors mt-2"
+        className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors mt-2"
       >
         <AppIcon name="plus" className="w-4 h-4" />
         Adicionar atividade

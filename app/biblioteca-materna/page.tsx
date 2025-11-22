@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { FilterPill } from '@/components/ui/FilterPill'
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 
 interface MaterialCard {
   id: string
@@ -98,12 +98,12 @@ export default function BibliotecaMaternaPage() {
 
           {/* FILTER SECTION */}
           <Reveal delay={50}>
-            <SoftCard className="rounded-3xl p-6 md:p-8">
-              <div className="mb-8">
-                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+                <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                   Filtrar por
                 </h2>
-                <p className="text-sm text-[#545454]">
+                <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                   Selecione um tema e formato para encontrar conteúdos relevantes.
                 </p>
               </div>
@@ -111,7 +111,7 @@ export default function BibliotecaMaternaPage() {
               <div className="space-y-8">
                 {/* Theme Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                     Tema
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -129,7 +129,7 @@ export default function BibliotecaMaternaPage() {
 
                 {/* Format Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#2f3a56] mb-3">
+                  <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                     Formato
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -150,11 +150,11 @@ export default function BibliotecaMaternaPage() {
 
           {/* RESULTS SECTION */}
           <Reveal delay={80}>
-            <div className="space-y-4 mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Materiais Disponíveis
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 {selectedTheme || selectedFormat
                   ? `Resultados filtrados por ${selectedTheme ? `tema: ${selectedTheme}` : ''} ${selectedTheme && selectedFormat ? 'e' : ''} ${selectedFormat ? `formato: ${selectedFormat}` : ''}`
                   : 'Todos os materiais'}
@@ -164,44 +164,45 @@ export default function BibliotecaMaternaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {PLACEHOLDER_MATERIALS.map((material, index) => (
                 <Reveal key={material.id} delay={100 + index * 30}>
-                  <Link href="#" className="block h-full">
-                    <SoftCard className="rounded-3xl p-5 sm:p-6 flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg overflow-hidden">
+                  <SoftCard className="rounded-3xl p-5 sm:p-6 flex flex-col h-full bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:shadow-[0_8px_20px_rgba(255,0,94,0.1)] overflow-hidden">
                       {/* Thumbnail Placeholder */}
-                      <div className="mb-4 h-32 bg-gradient-to-br from-[#FFE5EF] to-[#FFD8E6] rounded-2xl flex items-center justify-center">
+                      <div className="mb-4 h-32 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-[var(--color-soft-strong)] rounded-2xl flex items-center justify-center">
                         <AppIcon
                           name={material.icon as any}
                           size={48}
-                          className="text-primary/40"
+                          className="text-[var(--color-brand)]/40"
                           decorative
                         />
                       </div>
 
                       {/* Content */}
-                      <h3 className="text-lg font-semibold text-[#2f3a56] mb-2 line-clamp-2">
+                      <h3 className="text-lg font-semibold text-[var(--color-text-main)] mb-2 line-clamp-2">
                         {material.title}
                       </h3>
-                      <p className="text-sm text-[#545454] mb-4 line-clamp-2">
+                      <p className="text-sm text-[var(--color-text-muted)] mb-4 line-clamp-2">
                         {material.description}
                       </p>
 
                       {/* Tags */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
                           {material.theme}
                         </span>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 text-[#545454]">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]">
                           {material.format}
                         </span>
                       </div>
 
                       {/* CTA */}
-                      <div className="flex justify-end mt-auto">
-                        <span className="text-sm font-medium text-primary inline-flex items-center gap-1">
-                          Acessar →
-                        </span>
-                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => (window.location.href = '#')}
+                        className="w-full mt-auto"
+                      >
+                        Acessar
+                      </Button>
                     </SoftCard>
-                  </Link>
                 </Reveal>
               ))}
             </div>
@@ -209,22 +210,22 @@ export default function BibliotecaMaternaPage() {
 
           {/* INSIGHT SECTION */}
           <Reveal delay={120}>
-            <div className="space-y-4 mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Insight Personalizado
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 Aqui você verá recomendações inteligentes baseadas na idade e fase do seu filho.
               </p>
             </div>
 
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[#FFE5EF]/40 to-white border border-primary/10">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="flex-shrink-0 h-12 w-12 rounded-full bg-[#ffd8e6]/40 flex items-center justify-center">
                   <AppIcon
                     name="idea"
                     size={24}
-                    className="text-primary"
+                    className="text-[#ff005e]"
                     decorative
                   />
                 </div>
@@ -239,10 +240,10 @@ export default function BibliotecaMaternaPage() {
 
           {/* PREMIUM CTA SECTION */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-gradient-to-br from-primary/8 to-white border border-primary/30">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                 <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold mb-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffd8e6]/50 text-[#ff005e] text-xs font-semibold mb-3">
                     <AppIcon name="sparkles" size={12} decorative />
                     <span>Premium</span>
                   </div>
@@ -255,15 +256,17 @@ export default function BibliotecaMaternaPage() {
                 </div>
                 <Button
                   variant="primary"
-                  size="lg"
-                  className="flex-shrink-0 whitespace-nowrap rounded-full px-8"
+                  size="sm"
+                  className="flex-shrink-0 whitespace-nowrap w-full sm:w-auto"
                 >
-                  <AppIcon name="crown" size={16} decorative className="mr-2" />
+                  <AppIcon name="crown" size={14} decorative className="mr-1" />
                   Conhecer Materna+
                 </Button>
               </div>
             </SoftCard>
           </Reveal>
+
+          <MotivationalFooter routeKey="biblioteca-materna" />
         </div>
       </ClientOnly>
     </PageTemplate>

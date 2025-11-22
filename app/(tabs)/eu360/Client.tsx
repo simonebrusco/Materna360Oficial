@@ -23,7 +23,7 @@ export default function Eu360Client() {
       title="Seu mundo em perspectiva"
       subtitle="Conte um pouco sobre você e a fase da sua família."
     >
-      <SectionWrapper className="mx-auto max-w-5xl px-4 py-8">
+      <SectionWrapper>
         <ProfileForm />
       </SectionWrapper>
     </PageTemplate>

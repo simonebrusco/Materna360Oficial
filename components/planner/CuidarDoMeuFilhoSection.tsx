@@ -21,9 +21,9 @@ export default function CuidarDoMeuFilhoSection({
     <div className="space-y-4">
       {/* Section Header */}
       <div className="flex items-center gap-2">
-        <AppIcon name="smile" className="w-5 h-5 text-[#ff005e]" />
-        <h2 className="text-lg md:text-xl font-bold text-[#2f3a56]">Cuidar do Meu Filho</h2>
-        <span className="text-xs font-medium bg-[#f5f5f5] text-[#545454] px-2 py-1 rounded-full">
+        <AppIcon name="smile" className="w-5 h-5 text-[var(--color-brand)]" />
+        <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)]">Cuidar do Meu Filho</h2>
+        <span className="text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] px-2 py-1 rounded-full">
           {tasks.length}
         </span>
       </div>
@@ -35,7 +35,7 @@ export default function CuidarDoMeuFilhoSection({
             key={task.id}
             className={`rounded-[14px] border border-black/5 p-3 transition-all ${
               task.done
-                ? 'bg-[#f5f5f5] shadow-sm'
+                ? 'bg-[var(--color-soft-bg)] shadow-sm'
                 : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
             }`}
           >
@@ -49,8 +49,8 @@ export default function CuidarDoMeuFilhoSection({
               <div
                 className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                   task.done
-                    ? 'bg-[#ff005e] border-[#ff005e]'
-                    : 'border-[#ddd] hover:border-[#ff005e]'
+                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)]'
+                    : 'border-[var(--color-border-muted)] hover:border-[var(--color-brand)]'
                 }`}
               >
                 {task.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
@@ -58,8 +58,8 @@ export default function CuidarDoMeuFilhoSection({
               <span
                 className={`text-xs font-medium transition-all line-clamp-2 ${
                   task.done
-                    ? 'text-[#545454]/40 line-through'
-                    : 'text-[#2f3a56]'
+                    ? 'text-[var(--color-text-muted)]/40 line-through'
+                    : 'text-[var(--color-text-main)]'
                 }`}
               >
                 {task.title}
@@ -71,8 +71,8 @@ export default function CuidarDoMeuFilhoSection({
               onClick={() => onTogglePriority(task.id)}
               className={`w-full text-center px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
                 task.priority === 'alta'
-                  ? 'bg-[#ff005e]/10 text-[#ff005e]'
-                  : 'bg-[#f5f5f5] text-[#545454]/50 text-[10px]'
+                  ? 'bg-[var(--color-brand)]/10 text-[var(--color-brand)]'
+                  : 'bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]/50 text-[10px]'
               }`}
             >
               {task.priority === 'alta' ? '★ Prioridade' : 'Normal'}
@@ -84,7 +84,7 @@ export default function CuidarDoMeuFilhoSection({
       {/* Add Task */}
       <button
         onClick={() => onAddTask('Nova atividade com a criança')}
-        className="inline-flex items-center gap-2 text-sm font-medium text-[#ff005e] hover:text-[#ff005e]/80 transition-colors mt-2"
+        className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors mt-2"
       >
         <AppIcon name="plus" className="w-4 h-4" />
         Adicionar atividade

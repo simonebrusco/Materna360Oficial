@@ -30,7 +30,7 @@ export default function DiscoverSavedPage() {
   const hasItems = saved.length > 0
 
   return (
-    <div data-layout="page-template-v1" className="min-h-[100dvh] bg-soft-page pb-24">
+    <div data-layout="page-template-v1" className="min-h-[100dvh] bg-[var(--color-page-bg)] pb-24">
       <div className="mx-auto max-w-[1040px] px-4 md:px-6 py-4">
         <div className="mb-6 flex items-center gap-3">
           <Link

@@ -31,7 +31,7 @@ export function ToastHost() {
       case 'warning':
         return <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
       default:
-        return <Info className="h-5 w-5 text-[#ff005e] flex-shrink-0" />
+        return <Info className="h-5 w-5 text-[var(--color-brand)] flex-shrink-0" />
     }
   }
 
@@ -45,7 +45,7 @@ export function ToastHost() {
       case 'warning':
         return 'bg-gradient-to-r from-amber-50 to-white border-amber-200'
       default:
-        return 'bg-gradient-to-r from-[#ffd8e6] to-white border-[#ffb3d9]'
+        return 'bg-gradient-to-r from-[var(--color-soft-strong)] to-white border-[var(--color-brand)]/30'
     }
   }
 
@@ -60,7 +60,7 @@ export function ToastHost() {
         className={[
           'rounded-xl border backdrop-blur-md shadow-[0_12px_40px_rgba(47,58,86,0.18)]',
           'px-4 py-3 w-full max-w-[520px] pointer-events-auto',
-          'text-[14px] text-[#2f3a56]',
+          'text-[14px] text-[var(--color-text-main)]',
           getBgClass(),
         ].join(' ')}
         style={{
@@ -75,15 +75,15 @@ export function ToastHost() {
             {current.title && (
               <div className="font-semibold text-[14px] leading-[20px] mb-0.5">{current.title}</div>
             )}
-            <div className="text-[13px] leading-[20px] text-[#545454]">{current.message}</div>
+            <div className="text-[13px] leading-[20px] text-[var(--color-text-muted)]">{current.message}</div>
           </div>
           <button
             type="button"
             aria-label="Fechar aviso"
             onClick={dismiss}
-            className="ml-3 flex-shrink-0 rounded-lg p-1 hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[#ffd8e6] transition-colors"
+            className="ml-3 flex-shrink-0 rounded-lg p-1 hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[var(--color-soft-strong)] transition-colors"
           >
-            <X className="h-4 w-4 text-[#545454]" />
+            <X className="h-4 w-4 text-[var(--color-text-muted)]" />
           </button>
         </div>
       </div>

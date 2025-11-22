@@ -67,7 +67,7 @@ export default function BottomNav({
         fixed bottom-4 inset-x-4
         z-50
         bg-white/90 backdrop-blur-xl
-        border border-black/5 border-t-2 border-t-[#ffd8e6]
+        border border-black/5 border-t-2 border-t-[var(--color-soft-strong)]
         rounded-3xl
         shadow-[0_10px_40px_rgba(0,0,0,0.18)]
       "
@@ -96,7 +96,7 @@ export default function BottomNav({
                   active:scale-95
                   ${
                     isActive
-                      ? 'bg-[#ff005e]/10 border border-[#ff005e]/40 shadow-[0_0_18px_rgba(255,0,94,0.35)]'
+                      ? 'bg-[var(--color-brand)]/10 border border-[var(--color-brand)]/40 shadow-[0_0_18px_rgba(253,37,151,0.35)]'
                       : 'bg-transparent border border-transparent hover:opacity-80'
                   }
                 `}
@@ -108,8 +108,8 @@ export default function BottomNav({
                   size={isActive ? 18 : 16}
                   className={
                     isActive
-                      ? 'text-[#ff005e] transition-all duration-200'
-                      : 'text-[#545454]/70 transition-all duration-200'
+                      ? 'text-[var(--color-brand)] transition-all duration-200'
+                      : 'text-[var(--color-text-muted)]/70 transition-all duration-200'
                   }
                   decorative
                 />
@@ -118,8 +118,8 @@ export default function BottomNav({
                     text-[11px] leading-tight transition-all duration-200
                     ${
                       isActive
-                        ? 'font-semibold text-[#ff005e]'
-                        : 'font-medium text-[#545454] opacity-80'
+                        ? 'font-semibold text-[var(--color-brand)]'
+                        : 'font-medium text-[var(--color-text-muted)] opacity-80'
                     }
                   `}
                 >

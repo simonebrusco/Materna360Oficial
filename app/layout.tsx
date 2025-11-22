@@ -7,7 +7,11 @@ import { inter, poppins } from '@/app/fonts'
 export const metadata: Metadata = {
   title: 'Materna360',
   description: 'Uma plataforma acolhedora para apoiar você em cada etapa da maternidade',
-  icons: { icon: '/favicon.ico' },
+  icons: {
+    icon: '/images/favicon-materna.png',
+    shortcut: '/images/favicon-materna.png',
+    apple: '/images/favicon-materna.png',
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -25,12 +29,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#ff005e" />
+        <meta name="theme-color" content="#FD2597" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Materna360" />
-        <link rel="apple-touch-icon" href="/images/logo.png" />
         <link rel="manifest" href="/manifest.json" />
         {/* Service Worker registration for PWA */}
         <Script id="sw-register" strategy="afterInteractive">

@@ -38,49 +38,51 @@ async function fetchChildrenNames(): Promise<string[]> {
       return []
     }
 
-    const TIMEOUT_MS = 2000 // 2 second timeout for Supabase
+    const TIMEOUT_MS = 1500 // 1.5 second timeout for Supabase - fail fast
 
-    // Wrap the entire Supabase call in a Promise.race with a timeout
-    const result = await Promise.race([
-      (async () => {
-        try {
-          const {
-            data: { user },
-            error: authError,
-          } = await supabase.auth.getUser()
+    // Create a timeout promise that rejects after the timeout
+    const timeoutPromise = new Promise<string[]>((_, reject) =>
+      setTimeout(() => reject(new Error('Children fetch timeout')), TIMEOUT_MS)
+    )
 
-          if (authError || !user) {
-            return []
-          }
+    // Create the actual fetch promise
+    const fetchPromise = (async () => {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
 
-          const { data: profiles, error } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('user_id', user.id)
-            .neq('name', '')
-            .limit(10)
-
-          if (error) {
-            console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
-            return []
-          }
-
-          return (profiles || [])
-            .map((p: { name?: string }) => p.name?.trim())
-            .filter((name: string | undefined): name is string => !!name && name.length > 0)
-        } catch (err) {
-          console.debug('[ProfileAPI] Exception fetching children:', err)
+        if (authError || !user) {
           return []
         }
-      })(),
-      new Promise<string[]>((_, reject) =>
-        setTimeout(() => reject(new Error('Children names fetch timeout')), TIMEOUT_MS)
-      ),
-    ])
 
-    return result
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .neq('name', '')
+          .limit(10)
+
+        if (error) {
+          console.debug('[ProfileAPI] Failed to fetch children names:', error.message)
+          return []
+        }
+
+        return (profiles || [])
+          .map((p: { name?: string }) => p.name?.trim())
+          .filter((name: string | undefined): name is string => !!name && name.length > 0)
+      } catch (err) {
+        console.debug('[ProfileAPI] Exception fetching children:', err)
+        return []
+      }
+    })()
+
+    // Race between the fetch and the timeout - whichever completes first wins
+    return await Promise.race([fetchPromise, timeoutPromise])
   } catch (error) {
-    console.debug('[ProfileAPI] Error fetching children:', error)
+    // If timeout or other error, just return empty array
+    console.debug('[ProfileAPI] Error fetching children:', error instanceof Error ? error.message : String(error))
     return []
   }
 }
@@ -122,15 +124,8 @@ export async function GET() {
     const raw = cookies().get(COOKIE)?.value
     const data = safeParse(raw)
 
-    // Add a 3-second timeout to the entire GET request
-    const timeoutPromise = new Promise<string[]>((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), 3000)
-    )
-
-    const childrenNames = await Promise.race([
-      fetchChildrenNames(),
-      timeoutPromise,
-    ])
+    // Fetch children names with built-in timeout handling
+    const childrenNames = await fetchChildrenNames()
 
     return NextResponse.json(
       {
@@ -145,7 +140,7 @@ export async function GET() {
       }
     )
   } catch (error) {
-    console.error('[ProfileAPI] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
+    console.debug('[ProfileAPI] Error in GET (returning cached default):', error instanceof Error ? error.message : error)
     // Always return a valid response, even if something fails
     return NextResponse.json(
       {

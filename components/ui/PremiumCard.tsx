@@ -42,17 +42,17 @@ export function PremiumCard({
 
   const cardClasses = {
     default: 'bg-gradient-to-br from-white/95 to-white/85 border border-white/60',
-    elevated: 'bg-gradient-to-br from-[#ff005e]/5 to-[#ffd8e6]/10 border border-[#ff005e]/20',
+    elevated: 'bg-gradient-to-br from-[var(--color-brand)]/5 to-[var(--color-soft-strong)]/10 border border-[var(--color-brand)]/20',
   }
 
   return (
     <div className={`${cardClasses[variant]} rounded-2xl p-6 md:p-8 shadow-soft ${className}`}>
       {/* Icon */}
-      <div className="mb-4 inline-block p-3 rounded-xl bg-[#ff005e]/10">
+      <div className="mb-4 inline-block p-3 rounded-xl bg-[var(--color-brand)]/10">
         <AppIcon
           name={icon as any}
           size={32}
-          className="text-[#ff005e]"
+          className="text-[var(--color-brand)]"
           decorative
         />
       </div>
@@ -62,7 +62,7 @@ export function PremiumCard({
       <p className="m360-subtitle mb-3 text-base">{subtitle}</p>
 
       {description && (
-        <p className="m360-body mb-6 text-sm md:text-base text-[#545454]">
+        <p className="m360-body mb-6 text-sm md:text-base text-[var(--color-text-muted)]">
           {description}
         </p>
       )}

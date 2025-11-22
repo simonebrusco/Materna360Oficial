@@ -12,7 +12,7 @@ export default function AppMark({
   // Simple rounded mark using Materna360 brand colors
   return (
     <div
-      className={`rounded-full border border-white/60 bg-[#ffd8e6] ${className}`}
+      className={`rounded-full border border-white/60 bg-[var(--color-soft-strong)] ${className}`}
       style={{ width: size, height: size }}
       aria-hidden
     />
