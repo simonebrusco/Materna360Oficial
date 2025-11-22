@@ -9,7 +9,6 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { toast } from '@/app/lib/toast'
-import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
 
 type QuickIdea = {
   id: string
@@ -30,6 +29,8 @@ type Inspiration = {
   care: string
   ritual: string
 }
+
+// ---------- FALLBACKS LOCAIS (mock) ----------
 
 function mockGenerateIdeas(): Promise<QuickIdea[]> {
   return new Promise((resolve) => {
@@ -100,6 +101,31 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   })
 }
 
+// ---------- CHAMADA SEGURA PARA /api/ai/rotina ----------
+
+async function callRotinaAi(body: any): Promise<any | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      console.error('[Rotina Leve] /api/ai/rotina retornou status', res.status)
+      return null
+    }
+
+    const data = await res.json()
+    return data
+  } catch (error) {
+    console.error('[Rotina Leve] Erro ao chamar /api/ai/rotina:', error)
+    return null
+  }
+}
+
 export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
@@ -112,6 +138,11 @@ export default function RotinaLevePage() {
   // Plan limits for Receitas Inteligentes
   const DAILY_RECIPE_LIMIT = 3
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
+
+  // Form state para Receitas Inteligentes
+  const [mainIngredient, setMainIngredient] = useState('')
+  const [mealType, setMealType] = useState('Lanche')
+  const [prepTime, setPrepTime] = useState('10 min')
 
   // Ideias Rápidas
   const [ideasLoading, setIdeasLoading] = useState(false)
@@ -128,10 +159,6 @@ export default function RotinaLevePage() {
 
   const { addItem } = usePlannerSavedContents()
 
-  const { call: callRotinaAI } = useRotinaAISuggestions({
-    defaultMode: 'ideias_rapidas',
-  })
-
   const handleSaveIdeia = () => {
     try {
       addItem({
@@ -144,8 +171,10 @@ export default function RotinaLevePage() {
         },
       })
       console.log('[Rotina Leve] Idea saved to planner')
+      toast.success('Ideia salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving idea:', error)
+      toast.error('Não foi possível salvar a ideia agora.')
     }
   }
 
@@ -164,8 +193,10 @@ export default function RotinaLevePage() {
       })
       setUsedRecipesToday((prev) => prev + 1)
       console.log(`[Rotina Leve] Recipe "${recipe.title}" saved to planner`)
+      toast.success('Receita salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
+      toast.error('Não foi possível salvar a receita agora.')
     }
   }
 
@@ -186,43 +217,130 @@ export default function RotinaLevePage() {
         },
       })
       console.log('[Rotina Leve] Inspiration saved to planner')
+      toast.success('Inspiração salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving inspiration:', error)
+      toast.error('Não foi possível salvar a inspiração agora.')
     }
   }
 
   const handleGenerateRecipes = async () => {
+    if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
+      toast.info('Você já usou todas as sugestões de hoje. Amanhã tem mais 💗')
+      return
+    }
+
     setRecipesLoading(true)
-    const result = await mockGenerateRecipes()
-    setRecipes(result)
-    setRecipesLoading(false)
+
+    try {
+      const aiResponse = await callRotinaAi({
+        mode: 'recipes',
+        ingredient: mainIngredient || null,
+        mealType,
+        prepTime,
+      })
+
+      if (aiResponse?.recipes && Array.isArray(aiResponse.recipes) && aiResponse.recipes.length > 0) {
+        const mapped: GeneratedRecipe[] = aiResponse.recipes.slice(0, 3).map((recipe: any, index: number) => ({
+          id: recipe.id || `recipe-${index + 1}`,
+          title: recipe.title || 'Sugestão rápida',
+          description:
+            recipe.description ||
+            'Sugestão pensada para facilitar sua rotina com o que você tem em casa.',
+          timeLabel: recipe.timeLabel || recipe.time || 'Tempo de preparo rápido',
+          ageLabel: recipe.ageLabel || recipe.age || 'Idade sugerida: consulte o pediatra.',
+          preparation:
+            recipe.preparation ||
+            recipe.preparo ||
+            'Adapte o preparo às orientações do pediatra e às preferências da sua família.',
+        }))
+
+        setRecipes(mapped)
+      } else {
+        // Fallback local
+        const fallback = await mockGenerateRecipes()
+        setRecipes(fallback)
+      }
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar receitas:', error)
+      const fallback = await mockGenerateRecipes()
+      setRecipes(fallback)
+    } finally {
+      setRecipesLoading(false)
+    }
   }
 
   const handleGenerateIdeas = async () => {
     setIdeasLoading(true)
 
     try {
-      await callRotinaAI({
-        mode: 'ideias_rapidas',
-        locale: 'pt-BR',
-        dayContext: {
-          hasKids: true,
+      const aiResponse = await callRotinaAi({
+        mode: 'ideas',
+        filters: {
+          tempoDisponivel,
+          comQuem,
+          tipoIdeia,
         },
       })
-    } catch (error) {
-      console.error('[Rotina Leve] Erro ao chamar IA de Ideias Rápidas:', error)
-    }
 
-    const result = await mockGenerateIdeas()
-    setIdeas(result)
-    setIdeasLoading(false)
+      if (aiResponse?.ideas && Array.isArray(aiResponse.ideas) && aiResponse.ideas.length > 0) {
+        const mapped: QuickIdea[] = aiResponse.ideas.map((idea: any, index: number) => ({
+          id: idea.id || `idea-${index + 1}`,
+          text:
+            idea.text ||
+            idea.description ||
+            'Uma pequena ação pensada para deixar seu dia mais leve.',
+        }))
+        setIdeas(mapped)
+      } else {
+        const fallback = await mockGenerateIdeas()
+        setIdeas(fallback)
+      }
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar ideias rápidas:', error)
+      const fallback = await mockGenerateIdeas()
+      setIdeas(fallback)
+    } finally {
+      setIdeasLoading(false)
+    }
   }
 
   const handleGenerateInspiration = async () => {
     setInspirationLoading(true)
-    const result = await mockGenerateInspiration()
-    setInspiration(result)
-    setInspirationLoading(false)
+
+    try {
+      const aiResponse = await callRotinaAi({
+        mode: 'inspiration',
+      })
+
+      if (aiResponse?.inspiration) {
+        const data = aiResponse.inspiration
+        const mapped: Inspiration = {
+          phrase:
+            data.phrase ||
+            data.frase ||
+            'Você não precisa dar conta de tudo hoje.',
+          care:
+            data.care ||
+            data.pequenoCuidado ||
+            '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
+          ritual:
+            data.ritual ||
+            data.miniRitual ||
+            'Envie uma mensagem carinhosa para alguém que te apoia.',
+        }
+        setInspiration(mapped)
+      } else {
+        const fallback = await mockGenerateInspiration()
+        setInspiration(fallback)
+      }
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar inspiração do dia:', error)
+      const fallback = await mockGenerateInspiration()
+      setInspiration(fallback)
+    } finally {
+      setInspirationLoading(false)
+    }
   }
 
   return (
@@ -255,6 +373,8 @@ export default function RotinaLevePage() {
                     <input
                       type="text"
                       placeholder="Ex.: banana, aveia, frango..."
+                      value={mainIngredient}
+                      onChange={(e) => setMainIngredient(e.target.value)}
                       className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
                     />
                   </div>
@@ -262,7 +382,11 @@ export default function RotinaLevePage() {
                   <div className="flex gap-2">
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
-                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                      <select
+                        value={mealType}
+                        onChange={(e) => setMealType(e.target.value)}
+                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                      >
                         <option>Lanche</option>
                         <option>Almoço / Jantar</option>
                         <option>Café da manhã</option>
@@ -272,7 +396,11 @@ export default function RotinaLevePage() {
 
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tempo de preparo</p>
-                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                      <select
+                        value={prepTime}
+                        onChange={(e) => setPrepTime(e.target.value)}
+                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                      >
                         <option>10 min</option>
                         <option>20 min</option>
                         <option>30 min</option>
@@ -288,8 +416,7 @@ export default function RotinaLevePage() {
 
                 {/* Age Rule Message */}
                 <p className="text-[11px] text-[#545454]">
-                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
-                  sempre a orientação do pediatra.
+                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir sempre a orientação do pediatra.
                 </p>
 
                 {/* Generate Button + Plan Counter */}
@@ -314,8 +441,7 @@ export default function RotinaLevePage() {
 
                   {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
-                      mais 💗
+                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem mais 💗
                     </p>
                   )}
                 </div>
@@ -332,9 +458,7 @@ export default function RotinaLevePage() {
 
                   {!recipesLoading && recipes && recipes.length > 0 && (
                     <>
-                      <p className="text-xs font-medium text-[#2f3a56]">
-                        Sugestões de hoje (até 3)
-                      </p>
+                      <p className="text-xs font-medium text-[#2f3a56]">Sugestões de hoje (até 3)</p>
                       <div className="space-y-3">
                         {recipes.slice(0, 3).map((recipe) => {
                           const hasRecipes = recipes && recipes.length > 0
@@ -351,7 +475,7 @@ export default function RotinaLevePage() {
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
                                 onClick={() =>
                                   setExpandedRecipeId(
-                                    expandedRecipeId === recipe.id ? null : recipe.id,
+                                    expandedRecipeId === recipe.id ? null : recipe.id
                                   )
                                 }
                               >
@@ -372,7 +496,7 @@ export default function RotinaLevePage() {
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       setExpandedRecipeId(
-                                        expandedRecipeId === recipe.id ? null : recipe.id,
+                                        expandedRecipeId === recipe.id ? null : recipe.id
                                       )
                                     }}
                                     className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
@@ -416,8 +540,7 @@ export default function RotinaLevePage() {
                         })}
                       </div>
                       <p className="text-[11px] text-[#545454] mt-2">
-                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
-                        planner.
+                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no planner.
                       </p>
                     </>
                   )}
@@ -425,8 +548,7 @@ export default function RotinaLevePage() {
                   {!recipesLoading && (!recipes || recipes.length === 0) && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                       <p className="text-[11px] text-[#545454]">
-                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
-                        idade do seu filho.
+                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
                       </p>
                     </div>
                   )}
@@ -470,7 +592,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '5'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             5 min
@@ -485,7 +607,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '10'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             10 min
@@ -500,7 +622,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '20'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             20 min
@@ -515,7 +637,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '30+'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             30+
@@ -527,7 +649,7 @@ export default function RotinaLevePage() {
                         <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
                         <div className="flex flex-wrap gap-2">
                           <button
-                            type="button"
+                            type="button'
                             onClick={() =>
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
@@ -535,7 +657,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Só eu
@@ -552,7 +674,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Eu e meu filho
@@ -569,7 +691,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Família toda
@@ -591,7 +713,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Brincadeira
@@ -608,7 +730,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Organização da casa
@@ -625,7 +747,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Autocuidado
@@ -642,7 +764,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Receita rápida
