@@ -362,14 +362,14 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 3: Insight do Dia (IA) */}
+            {/* CARD 3: Insight do Dia (Amiga Inteligente) */}
             <Reveal delay={100}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                       <AppIcon name="sparkles" size={18} className="text-[#9B4D96]" decorative />
-                      Insight do Dia (IA)
+                      Insight do Dia
                     </h3>
                   </div>
                   <Button
@@ -378,14 +378,14 @@ export default function ComoEstouHojePage() {
                     onClick={handleGenerateEmotionalInsight}
                     disabled={emotionalLoading}
                   >
-                    {emotionalLoading ? 'Gerando insight…' : 'Gerar insight com IA'}
+                    {emotionalLoading ? 'Gerando insight…' : 'Ver insight do dia'}
                   </Button>
                 </div>
 
                 <div className="space-y-4">
                   {emotionalError && (
                     <p className="text-xs text-[#ff005e]">
-                      Não foi possível gerar o insight agora. Tente novamente em alguns minutos.
+                      Não foi possível trazer o insight agora. Tente novamente em alguns minutos.
                     </p>
                   )}
 
@@ -470,7 +470,7 @@ export default function ComoEstouHojePage() {
                     onClick={handleGenerateWeeklyEmotionalInsight}
                     disabled={weeklyEmotionalLoading}
                   >
-                    {weeklyEmotionalLoading ? 'Analisando semana…' : 'Ver resumo com IA'}
+                    {weeklyEmotionalLoading ? 'Analisando semana…' : 'Ver resumo da semana'}
                   </Button>
                 </div>
 
@@ -524,7 +524,7 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 5: Sugestões para a Mãe (IA) */}
+            {/* CARD 5: Sugestões para a Mãe (Amiga Inteligente) */}
             <Reveal delay={200}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="mb-6 flex items-center justify-between gap-3">
@@ -543,7 +543,7 @@ export default function ComoEstouHojePage() {
                     onClick={handleGenerateWeeklySuggestions}
                     disabled={suggestionsLoading}
                   >
-                    {suggestionsLoading ? 'Gerando sugestões…' : 'Ver sugestões com IA'}
+                    {suggestionsLoading ? 'Gerando sugestões…' : 'Ver sugestões da semana'}
                   </Button>
                 </div>
 
