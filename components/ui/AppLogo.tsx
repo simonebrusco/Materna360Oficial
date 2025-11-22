@@ -12,7 +12,7 @@ interface AppLogoProps extends React.HTMLAttributes<HTMLDivElement> {
 export function AppLogo({
   width = 160,
   height = 40,
-  priority = true,
+  priority = false,
   className = '',
   ...props
 }: AppLogoProps) {
