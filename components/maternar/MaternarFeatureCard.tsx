@@ -54,7 +54,7 @@ export function MaternarFeatureCard({
       >
         {/* Top content: Icon, Tag, Title, Subtitle */}
         <div className="flex flex-col gap-2 md:gap-4">
-          <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#FFE8F2] flex-shrink-0">
+          <div className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-[#FFE8F2]/80 flex-shrink-0 shadow-[0_4px_12px_rgba(255,0,94,0.15)]">
             <AppIcon
               name={icon}
               className="h-3.5 w-3.5 md:h-4 md:w-4 text-[#FF1475]"
@@ -66,11 +66,13 @@ export function MaternarFeatureCard({
           <div className="space-y-0">
             {tag && (
               <div className="pb-1 md:pb-2">
-                <span className="inline-flex items-center rounded-full bg-[#FFE8F2] px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[#FF1475]">
+                <span className="inline-flex items-center rounded-full bg-[#FFE8F2]/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold uppercase tracking-tight text-[#FF1475]">
                   {tag}
                 </span>
               </div>
             )}
+            {/* Accent bar above title */}
+            <div className="h-1 w-12 bg-[#FF1475]/80 rounded-full mb-1.5" />
             <h3 className="text-sm md:text-lg font-semibold text-[var(--color-text-main)] leading-snug">
               {title}
             </h3>
