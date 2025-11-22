@@ -361,6 +361,7 @@ export default function AprenderBrincandoPage() {
           </div>
         </Reveal>
 
+        <MotivationalFooter hubName="descobrir" />
       </div>
     </PageTemplate>
   )
