@@ -28,11 +28,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
   }
 
   return (
-    <div className="rounded-3xl bg-white p-6 border border-[var(--color-border-soft)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-[var(--color-text-main)]">Sobre você</h2>
-        <p className="mt-1 text-xs text-[var(--color-text-muted)]">Isso nos ajuda a adaptar as sugestões à sua rotina real.</p>
-      </div>
+    <div className="space-y-4">
 
       <div className="space-y-3 pt-2">
         <div>
