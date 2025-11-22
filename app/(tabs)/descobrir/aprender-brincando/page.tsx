@@ -187,11 +187,11 @@ export default function AprenderBrincandoPage() {
         {/* SECTION 3: AI RESULTS BLOCK */}
         {showPlayResults && (
           <Reveal delay={120}>
-            <div className="space-y-4 mb-8">
-              <h2 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+            <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4 mb-8">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Resultados Personalizados
               </h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 Ideias baseadas nos seus filtros.
               </p>
             </div>
