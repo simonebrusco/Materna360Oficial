@@ -620,7 +620,7 @@ export default function RotinaLevePage() {
                         <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
                         <div className="flex flex-wrap gap-2">
                           <button
-                            type="button'
+                            type="button"
                             onClick={() =>
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
