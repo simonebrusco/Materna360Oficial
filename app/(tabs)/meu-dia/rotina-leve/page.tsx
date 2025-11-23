@@ -138,12 +138,10 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
       }>
     }
 
-    const rawSuggestions = Array.isArray(data.suggestions)
-      ? data.suggestions
-      : []
+    const rawSuggestions = Array.isArray(data.suggestions) ? data.suggestions : []
 
     const recipeSuggestions = rawSuggestions.filter(
-      (s) => s.category === 'receita-inteligente'
+      (s) => s.category === 'receita-inteligente',
     )
 
     if (recipeSuggestions.length === 0) {
@@ -197,9 +195,7 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
     }
 
     return {
-      phrase:
-        inspiration.phrase ??
-        'Você não precisa dar conta de tudo hoje.',
+      phrase: inspiration.phrase ?? 'Você não precisa dar conta de tudo hoje.',
       care:
         inspiration.care ??
         '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
@@ -251,10 +247,10 @@ export default function RotinaLevePage() {
   // Dados agregados do Planner para este mini-hub
   const plannerItemsFromRotinaLeve = getByOrigin('rotina-leve')
   const savedRecipesCount = plannerItemsFromRotinaLeve.filter(
-    (item) => item.type === 'recipe'
+    (item) => item.type === 'recipe',
   ).length
   const savedInsights = plannerItemsFromRotinaLeve.filter(
-    (item) => item.type === 'insight'
+    (item) => item.type === 'insight',
   )
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
@@ -494,7 +490,7 @@ export default function RotinaLevePage() {
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
                                 onClick={() =>
                                   setExpandedRecipeId(
-                                    expandedRecipeId === recipe.id ? null : recipe.id
+                                    expandedRecipeId === recipe.id ? null : recipe.id,
                                   )
                                 }
                               >
@@ -515,7 +511,7 @@ export default function RotinaLevePage() {
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       setExpandedRecipeId(
-                                        expandedRecipeId === recipe.id ? null : recipe.id
+                                        expandedRecipeId === recipe.id ? null : recipe.id,
                                       )
                                     }}
                                     className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
@@ -608,10 +604,10 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '5' ? null : '5'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '5'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             5 min
@@ -623,10 +619,10 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '10' ? null : '10'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '10'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             10 min
@@ -638,10 +634,10 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '20' ? null : '20'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '20'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             20 min
@@ -653,10 +649,10 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '30+'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             30+
@@ -673,10 +669,10 @@ export default function RotinaLevePage() {
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Só eu
@@ -686,14 +682,14 @@ export default function RotinaLevePage() {
                             type="button"
                             onClick={() =>
                               setComQuem((current) =>
-                                current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
+                                current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho',
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Eu e meu filho
@@ -703,14 +699,14 @@ export default function RotinaLevePage() {
                             type="button"
                             onClick={() =>
                               setComQuem((current) =>
-                                current === 'familia-toda' ? null : 'familia-toda'
+                                current === 'familia-toda' ? null : 'familia-toda',
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Família toda
@@ -725,14 +721,14 @@ export default function RotinaLevePage() {
                             type="button"
                             onClick={() =>
                               setTipoIdeia((current) =>
-                                current === 'brincadeira' ? null : 'brincadeira'
+                                current === 'brincadeira' ? null : 'brincadeira',
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Brincadeira
@@ -742,14 +738,14 @@ export default function RotinaLevePage() {
                             type="button"
                             onClick={() =>
                               setTipoIdeia((current) =>
-                                current === 'organizacao' ? null : 'organizacao'
+                                current === 'organizacao' ? null : 'organizacao',
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Organização da casa
@@ -759,14 +755,14 @@ export default function RotinaLevePage() {
                             type="button"
                             onClick={() =>
                               setTipoIdeia((current) =>
-                                current === 'autocuidado' ? null : 'autocuidado'
+                                current === 'autocuidado' ? null : 'autocuidado',
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Autocuidado
@@ -776,14 +772,14 @@ export default function RotinaLevePage() {
                             type="button"
                             onClick={() =>
                               setTipoIdeia((current) =>
-                                current === 'receita-rapida' ? null : 'receita-rapida'
+                                current === 'receita-rapida' ? null : 'receita-rapida',
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
                             )}
                           >
                             Receita rápida
@@ -963,13 +959,13 @@ export default function RotinaLevePage() {
                   ) : (
                     <p className="text-sm text-[#545454]">
                       Você já salvou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedRecipesCount} receita(s)
-                      </span>{' '}
-                      e{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedInspirationCount} inspiração(ões)
-                      </span>{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {savedRecipesCount} receita(s)
+                        </span>{' '}
+                        e{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {savedInspirationCount} inspiração(ões)
+                        </span>{' '}
                       deste mini-hub no seu planner.
                     </p>
                   )}

@@ -1,5 +1,7 @@
 // app/hooks/useRotinaAISuggestions.ts
 
+'use client'
+
 import { useCallback, useState } from 'react'
 import {
   type RotinaLeveContext,
@@ -49,7 +51,7 @@ export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
       setIsLoading(false)
       setSuggestions(result.suggestions)
     },
-    []
+    [],
   )
 
   return {
