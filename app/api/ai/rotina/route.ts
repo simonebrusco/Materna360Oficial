@@ -7,8 +7,8 @@ import {
   type MaternaChildProfile,
   type RotinaComQuem,
   type RotinaTipoIdeia,
-} from '@/lib/ai/maternaCore'
-import { loadMaternaContextFromRequest } from '@/lib/ai/profileAdapter'
+} from '@/app/lib/ai/maternaCore'
+import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 
 export const runtime = 'nodejs'
 
