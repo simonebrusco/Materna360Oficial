@@ -7,7 +7,7 @@ import {
   type MaternaChildProfile,
   type MaternaFocusOfDay,
 } from '@/app/lib/ai/maternaCore'
-import { adaptEu360ProfileToMaterna } from '@/app/lib/ai/eu360ProfileAdapter'
+import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 
 export const runtime = 'nodejs'
 
@@ -21,36 +21,6 @@ const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
 }
 
-// Carrega perfil + criança principal a partir do Eu360, com fallback neutro
-async function loadMaternaContext(
-  req: Request
-): Promise<{ profile: MaternaProfile | null; child: MaternaChildProfile | null }> {
-  try {
-    const url = new URL('/api/eu360/profile', req.url)
-
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        cookie: req.headers.get('cookie') ?? '',
-      },
-      cache: 'no-store',
-    })
-
-    if (!res.ok) {
-      return { profile: null, child: null }
-    }
-
-    const data = await res.json().catch(() => null)
-    return adaptEu360ProfileToMaterna(data)
-  } catch (error) {
-    console.debug(
-      '[API /api/ai/emocional] Falha ao carregar Eu360, usando contexto neutro:',
-      error
-    )
-    return { profile: null, child: null }
-  }
-}
-
 export async function POST(req: Request) {
   try {
     let body: EmocionalRequestBody | null = null
@@ -61,7 +31,10 @@ export async function POST(req: Request) {
       body = null
     }
 
-    const { profile, child } = await loadMaternaContext(req)
+    // Personalização com base no Eu360 (com fallback neutro)
+    const { profile, child } = (await loadMaternaContextFromRequest(
+      req
+    )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
 
     // Chamamos sempre o modo "daily-inspiration" e só mudamos
     // o formato da resposta quando a feature pedir visão semanal.
@@ -109,7 +82,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error: 'Não consegui gerar uma inspiração agora, tente novamente em instantes.',
+        error:
+          'Não consegui gerar uma inspiração agora, tente novamente em instantes.',
       },
       {
         status: 500,
