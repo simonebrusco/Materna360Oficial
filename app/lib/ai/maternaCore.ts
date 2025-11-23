@@ -9,8 +9,6 @@
 // - Endpoints como /api/ai/rotina e /api/ai/emocional devem importar funções daqui.
 // - Sempre tratar erros nos endpoints e aplicar fallbacks carinhosos no front.
 
-import type { MaternaPersonalizationSnapshot } from '@/app/lib/ai/personalizationSnapshot'
-
 export type MaternaGuidanceStyle = 'diretas' | 'explicacao' | 'motivacionais'
 
 export type MaternaEmotionalBaseline = 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
@@ -115,21 +113,21 @@ export type MaternaAIRequestPayload =
       profile: MaternaProfile | null
       child?: MaternaChildProfile | null
       context: RotinaQuickIdeasContext
-      personalization?: MaternaPersonalizationSnapshot | null
+      personalization?: unknown | null
     }
   | {
       mode: 'daily-inspiration'
       profile: MaternaProfile | null
       child?: MaternaChildProfile | null
       context: DailyInspirationContext
-      personalization?: MaternaPersonalizationSnapshot | null
+      personalization?: unknown | null
     }
   | {
       mode: 'smart-recipes'
       profile: MaternaProfile | null
       child?: MaternaChildProfile | null
       context: SmartRecipesContext
-      personalization?: MaternaPersonalizationSnapshot | null
+      personalization?: unknown | null
     }
 
 export interface MaternaAIResponseMap {
@@ -174,7 +172,7 @@ Você sempre recebe um JSON com:
 - "profile": dados da mãe e da família (campos do EU360)
 - "child": dados do filho principal (idade em meses, fase, alergias)
 - "context": contexto da funcionalidade/mini-hub (tempo disponível, foco do dia, tipo de ideia, etc.)
-- "personalization": snapshot estruturado com o resumo dos padrões da família e do uso do Planner
+- "personalization": snapshot estruturado com o resumo dos padrões da família e do uso do Planner (quando disponível)
 
 Use esses dados para:
 - ajustar o tom (mais motivacional, mais direto, mais leve)
