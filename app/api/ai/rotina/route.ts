@@ -7,7 +7,7 @@ import {
   type MaternaChildProfile,
   type RotinaComQuem,
   type RotinaTipoIdeia,
-} from '@/lib/ai/maternaCore'
+} from '@/app/lib/ai/maternaCore'
 
 export const runtime = 'nodejs'
 
