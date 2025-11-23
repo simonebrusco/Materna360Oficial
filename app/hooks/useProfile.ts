@@ -41,18 +41,31 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
 
         if (response.ok && isMounted) {
           const data = await response.json()
-          const savedName =
-            typeof data?.motherName === 'string'
-              ? data.motherName
-              : typeof data?.nomeMae === 'string'
-                ? data.nomeMae
-                : ''
+
+          // Resolução robusta do nome:
+          let savedName = ''
+
+          if (typeof data?.motherName === 'string' && data.motherName.trim()) {
+            savedName = data.motherName
+          } else if (typeof data?.nomeMae === 'string' && data.nomeMae.trim()) {
+            savedName = data.nomeMae
+          } else if (typeof data?.name === 'string' && data.name.trim()) {
+            // compat com rotas que salvam "name"
+            savedName = data.name
+          } else if (
+            data?.eu360 &&
+            typeof (data.eu360 as any).name === 'string' &&
+            (data.eu360 as any).name.trim()
+          ) {
+            // compat com estrutura aninhada do Eu360
+            savedName = (data.eu360 as any).name
+          }
 
           const children = Array.isArray(data?.children) ? data.children : []
 
           const figurinhaId = data?.figurinha
-          const validStickerIdId = isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID
-          const sticker = resolveSticker(validStickerIdId)
+          const validStickerId = isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID
+          const sticker = resolveSticker(validStickerId)
 
           setProfile({
             name: savedName.trim(),
