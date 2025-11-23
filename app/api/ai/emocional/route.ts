@@ -43,11 +43,12 @@ export async function POST(req: Request) {
     // -----------------------------------------
     if (feature === 'weekly_overview') {
       const result = await callMaternaAI({
-        mode: 'emotional-weekly',
+        mode: 'daily-inspiration', // <- modo permitido pelo maternaCore
         profile,
         child,
         context: {
           origin: body?.origin ?? null,
+          variant: 'weekly', // dica pro core gerar visão semanal
         },
       })
 
@@ -66,12 +67,13 @@ export async function POST(req: Request) {
     // 2) INSPIRAÇÃO DO DIA (Rotina Leve: daily_inspiration)
     // -----------------------------------------
     const result = await callMaternaAI({
-      mode: 'emotional-daily',
+      mode: 'daily-inspiration',
       profile,
       child,
       context: {
         origin: body?.origin ?? null,
         focus: body?.focus ?? null,
+        variant: 'daily',
       },
     })
 
