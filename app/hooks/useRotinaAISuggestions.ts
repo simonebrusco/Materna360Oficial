@@ -1,58 +1,105 @@
-// app/hooks/useRotinaAISuggestions.ts
-
 'use client'
 
-import { useCallback, useState } from 'react'
-import {
-  type RotinaLeveContext,
-  type RotinaLeveSuggestion,
-} from '@/app/lib/ai/rotinaLeve'
-import { fetchRotinaLeveSuggestions } from '@/app/lib/ai/rotinaLeveClient'
+import { useState } from 'react'
+import type { RotinaComQuem, RotinaTipoIdeia } from '@/app/lib/ai/maternaCore'
 
-export type UseRotinaAISuggestionsState = {
-  suggestions: RotinaLeveSuggestion[]
+type RotinaAISuggestion = {
+  id: string
+  title: string
+  description: string
+  category?: string
+  tags?: string[]
+}
+
+type RequestPayload = {
+  mood?: string
+  energy?: 'baixa' | 'media' | 'alta'
+  timeOfDay?: string
+  hasKidsAround?: boolean
+  availableMinutes?: number
+  comQuem?: RotinaComQuem | null
+  tipoIdeia?: RotinaTipoIdeia | null
+}
+
+type UseRotinaAISuggestionsResult = {
+  suggestions: RotinaAISuggestion[]
   isLoading: boolean
   error: string | null
+  requestSuggestions: (payload: RequestPayload) => Promise<void>
 }
 
-export type UseRotinaAISuggestionsResult = UseRotinaAISuggestionsState & {
-  /**
-   * Dispara manualmente a geração de sugestões de IA
-   * com base no contexto atual da Rotina Leve.
-   */
-  requestSuggestions: (context: RotinaLeveContext) => Promise<void>
-}
-
-/**
- * Hook de alto nível para consumir a IA da Rotina Leve.
- *
- * Não faz chamadas automáticas: sempre depende do `requestSuggestions`,
- * deixando o componente no controle total de quando disparar a IA.
- */
 export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
-  const [suggestions, setSuggestions] = useState<RotinaLeveSuggestion[]>([])
+  const [suggestions, setSuggestions] = useState<RotinaAISuggestion[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const requestSuggestions = useCallback(
-    async (context: RotinaLeveContext) => {
-      setIsLoading(true)
-      setError(null)
+  const requestSuggestions = async (payload: RequestPayload) => {
+    setIsLoading(true)
+    setError(null)
 
-      const result = await fetchRotinaLeveSuggestions(context)
+    try {
+      const res = await fetch('/api/ai/rotina', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'quick-ideas',
+          origin: 'rotina-leve',
+          // Mapeamos o que já vem da página:
+          tempoDisponivel: payload.availableMinutes ?? null,
+          comQuem: payload.comQuem ?? null,
+          tipoIdeia: payload.tipoIdeia ?? null,
+        }),
+      })
 
-      if (!result.ok) {
-        setIsLoading(false)
-        setSuggestions([])
-        setError(result.error || 'Não foi possível gerar sugestões agora.')
+      if (!res.ok) {
+        throw new Error(`Status ${res.status}`)
+      }
+
+      const data = await res.json()
+      const raw = Array.isArray(data?.suggestions) ? data.suggestions : null
+
+      if (!raw || raw.length === 0) {
+        // Fallback se a IA não devolver nada
+        setSuggestions([
+          {
+            id: 'fallback-1',
+            title: 'Conexão de 5 minutos',
+            description:
+              'Sente com seu filho e perguntem um ao outro: “qual foi a melhor parte do seu dia?”',
+            category: 'conexao',
+            tags: ['rapida'],
+          },
+          {
+            id: 'fallback-2',
+            title: 'Mini pausa para você',
+            description:
+              'Beba um copo de água devagar, alongue os ombros e faça três respirações profundas.',
+            category: 'autocuidado',
+            tags: ['autocuidado'],
+          },
+        ])
         return
       }
 
+      setSuggestions(raw)
+    } catch (err) {
+      console.error('[useRotinaAISuggestions] Erro ao buscar ideias rápidas:', err)
+      setError('Não consegui trazer ideias agora, tente de novo em alguns instantes.')
+      // Fallback seguro para não quebrar o hub
+      setSuggestions([
+        {
+          id: 'safe-1',
+          title: 'Pequeno momento de presença',
+          description:
+            'Desligue as telas por 5 minutos e faça algo simples com seu filho: olhar pela janela, desenhar ou abraçar em silêncio.',
+          category: 'conexao',
+          tags: ['rapida', 'sem-tela'],
+        },
+      ])
+    } finally {
       setIsLoading(false)
-      setSuggestions(result.suggestions)
-    },
-    [],
-  )
+    }
+  }
 
   return {
     suggestions,
