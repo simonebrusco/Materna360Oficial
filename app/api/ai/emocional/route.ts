@@ -41,16 +41,19 @@ export async function POST(req: Request) {
     // 1) VISÃO SEMANAL (Eu360: weekly_overview)
     // -----------------------------------------
     if (feature === 'weekly_overview') {
-      const result = await callMaternaAI({
-        mode: 'daily-inspiration', // usamos o mesmo modo, mas o core pode tratar como resumo
-        profile,
-        child,
-        context: {}, // DailyInspirationContext não recebe origin/variant
-      })
-
+      // Ainda não existe suporte tipado a "weeklyInsight" no maternaCore.
+      // Mantemos a resposta gerada aqui, de forma carinhosa e estável.
       return NextResponse.json(
         {
-          weeklyInsight: result.weeklyInsight ?? null,
+          weeklyInsight: {
+            title: 'Seu resumo emocional da semana',
+            summary:
+              'Pelos seus últimos dias, é provável que você esteja equilibrando muitos pratos ao mesmo tempo. Lembre-se de que se cuidar também faz parte do cuidado com a família.',
+            suggestions: [
+              'Separe um momento curto só para você revisitar o que deu certo.',
+              'Escolha apenas uma prioridade por dia para aliviar a sensação de cobrança.',
+            ],
+          },
         },
         {
           status: 200,
@@ -71,9 +74,16 @@ export async function POST(req: Request) {
       },
     })
 
+    const inspiration =
+      result.inspiration ?? {
+        phrase: 'Você não precisa dar conta de tudo hoje.',
+        care: 'Tire 1 minuto para respirar fundo e soltar o ar bem devagar.',
+        ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
+      }
+
     return NextResponse.json(
       {
-        inspiration: result.inspiration ?? null,
+        inspiration,
       },
       {
         status: 200,
