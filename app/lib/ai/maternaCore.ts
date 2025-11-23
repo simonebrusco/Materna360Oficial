@@ -9,6 +9,8 @@
 // - Endpoints como /api/ai/rotina e /api/ai/emocional devem importar funções daqui.
 // - Sempre tratar erros nos endpoints e aplicar fallbacks carinhosos no front.
 
+import type { MaternaPersonalizationSnapshot } from '@/app/lib/ai/personalizationSnapshot'
+
 export type MaternaGuidanceStyle = 'diretas' | 'explicacao' | 'motivacionais'
 
 export type MaternaEmotionalBaseline = 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
@@ -113,18 +115,21 @@ export type MaternaAIRequestPayload =
       profile: MaternaProfile | null
       child?: MaternaChildProfile | null
       context: RotinaQuickIdeasContext
+      personalization?: MaternaPersonalizationSnapshot | null
     }
   | {
       mode: 'daily-inspiration'
       profile: MaternaProfile | null
       child?: MaternaChildProfile | null
       context: DailyInspirationContext
+      personalization?: MaternaPersonalizationSnapshot | null
     }
   | {
       mode: 'smart-recipes'
       profile: MaternaProfile | null
       child?: MaternaChildProfile | null
       context: SmartRecipesContext
+      personalization?: MaternaPersonalizationSnapshot | null
     }
 
 export interface MaternaAIResponseMap {
@@ -165,16 +170,18 @@ REGRAS GERAIS:
 
 PERSONALIZAÇÃO:
 Você sempre recebe um JSON com:
+- "mode": tipo de conteúdo que deve gerar
 - "profile": dados da mãe e da família (campos do EU360)
 - "child": dados do filho principal (idade em meses, fase, alergias)
 - "context": contexto da funcionalidade/mini-hub (tempo disponível, foco do dia, tipo de ideia, etc.)
-- "mode": tipo de conteúdo que deve gerar
+- "personalization": snapshot estruturado com o resumo dos padrões da família e do uso do Planner
 
 Use esses dados para:
 - ajustar o tom (mais motivacional, mais direto, mais leve)
 - adequar à idade e fase da criança
 - respeitar o nível de energia e sobrecarga
 - propor poucas ações, simples e realistas (nunca muitas tarefas de uma vez)
+- reconhecer padrões de uso do app e reforçar o que já está ajudando (sem pressão)
 
 TOM EMOCIONAL:
 - Se a mãe estiver "sobrecarregada" ou "cansada", diminua exigências e foque em alívio e autocuidado possível.
@@ -347,6 +354,7 @@ export async function callMaternaAI<M extends MaternaMode>(
         profile: payload.profile ?? null,
         child: childWithAgeRange,
         context: payload.context ?? null,
+        personalization: payload.personalization ?? null,
       }),
     },
   ]
