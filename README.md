@@ -1,119 +1,267 @@
-# 🌸 Materna360
+# 🌸 Materna360 — App Premium de Parentalidade Inteligente  
+**Versão Oficial do README · Março/2025**
 
-
-## 🚀 Versão Atual — v0.2.0-p2-staging1 (cosmos-verse)
-**Status:** 🟢 Estável em Staging / **Fase P2 – Inteligência & Personalização ✅ COMPLETO**
-**Main:** v0.2.0-p2
-
-### ✅ P2 Entregas Completas
-- ✅ **Coach Materno v0.3** – Mensagens contextuais baseadas em padrões (low_energy_week, inactivity, trend_up, balanced, no_data)
-- ✅ **Weekly Emotional Insight** em /eu360 – Resumo semanal com tone empático
-- ✅ **Inactivity Reminder** em /meu-dia – Nudge suave para retomar registros (3+ dias)
-- ✅ **Premium PDF v2** – Capa dinâmica, sumário, seções semanais (gated por plano)
-- ✅ **Internal Telemetry Dashboard** (`/admin/insights`) – KPIs, filtros, gráfico, botão clear (local-only)
-- ✅ **Unified Telemetry** – Events completos: page_view, nav_click, card_click, coach*, pdf*, paywall*, plan_*, discover_save, reminder_inactivity_*
-- ✅ **TypeScript & Builds** – Sem erros, tipos limpos, compilação passa
-
-### Próximos marcos (P3)
-- A11y final (contraste AA, foco visível)
-- QA responsivo (tablet ≥768px)
-- Edge case testing
-- Deploy para produção
-
-## 🚀 Versão Atual — v0.2.0-p2-staging1
-**Status:** 🟢 Estável em Staging / Fase P2 – Inteligência & Personalização  
-
-### Principais entregas
-- Coach Materno v0.2 (persistência e tom empático)
-- PDF Export v1 (capa com dados do coach)
-- Telemetria unificada (nav/page/card/coach/pdf/paywall)
-- Correções de hidratação e tipos
-- Builder Preview estável (`/builder-embed`)
-
-### Próximos marcos
-- PDF v2 (capa dinâmica e sumário premium)
-- Feature gating real por plano
-- Diário da criança persistente (/cuidar)
-- QA visual e A11y final
-
-
-📄 Veja também:
-- [`/docs/DEPLOYMENT_CHECKLIST_COSMOS_VERSE.md`](./docs/DEPLOYMENT_CHECKLIST_COSMOS_VERSE.md)
-- [`/docs/QA_CHECKLIST.md`](./docs/QA_CHECKLIST.md)
-
-**Materna360** is a mobile-first web application focused on the emotional and organizational well-being of mothers.  
-It combines daily planning, emotional tracking, and personalized coaching — all inside a soft, premium digital experience.
+**Branch ativa:** `cosmos-verse`  
+**Produção:** Vercel  
+**Status atual:** 🟢 Estável · **Fase 3: Inteligência + Layout Premium Consolidado + Mini-Hubs Inteligentes**
 
 ---
 
-## 🧭 Project Overview
+# 🧭 Visão Geral
 
-**Vision:**  
-Empower parents — especially mothers — to live with more balance, self-compassion, and connection.  
+O **Materna360** é um web app premium criado para apoiar mães reais na rotina, nas emoções e na organização da vida familiar.  
+Ele combina:
 
-**Core Tabs:**
-| Tab | Purpose |
-|------|----------|
-| 🩷 **Meu Dia** | Daily planner + mood check-in + recommendations |
-| 🌿 **Cuidar** | Health & emotional care for mother and child |
-| 🪶 **Maternar** | Central hub connecting all experiences |
-| 🎨 **Descobrir** | Educational and playful learning content |
-| 💫 **Eu360** | Self-care, reflections, and premium reports |
+- 🌿 Mini-hubs temáticos inteligentes  
+- 🧠 IA aplicada (brincadeiras, receitas, insights emocionais)  
+- 📘 Conteúdos educativos (PDFs, trilhas, guias)  
+- ✨ Design system premium  
+- 🎮 Gamificação leve  
+- 💗 Tom acolhedor e seguro  
 
----
-
-## 🧩 Key Features
-- **Soft Luxury Design System** – clean, soft shadows, elegant typography, premium feel
-- **Coach Materno v0.3** – Context-aware, pattern-based messages with empathetic tone (5 distinct patterns)
-- **Weekly Emotional Insight** – Visual summary of mood/energy trends with personalized guidance
-- **Emotion Trends Chart** – SVG visualization of 7-day and 28-day patterns
-- **Inactivity Reminders** – Gentle nudge after 3+ days without entries (local-only, non-judgmental)
-- **Premium PDF Export v2** – Branded cover, dynamic summary sections, gated by subscription plan
-- **Internal Telemetry Dashboard** (`/admin/insights`) – Real-time event analytics, filters, and visualization (Preview-only)
-- **Paywall Modal** – Elegant premium upsell for PDF export and advanced features
-- **Unified Telemetry System** – Comprehensive analytics across all tabs and user interactions  
+Todo o projeto é estruturado para entregar **clareza, leveza e orientação**, sem julgamentos.
 
 ---
 
-## 🔧 Tech Stack
-- **Next.js 14 / App Router**
-- **TypeScript + Tailwind CSS**
-- **Lucide Icons** (no emojis)
-- **LocalStorage** persistence
-- **Vercel Preview Environments**
+# 🏛 Arquitetura Principal
+
+Baseado em **Next.js 14 (App Router)** com:
+
+- React + TypeScript  
+- Tailwind CSS (Design System Materna360)  
+- Camada de IA via API Routes  
+- Vercel (deploy, preview, produção)  
+- Builder.io para edição controlada de telas  
+- Telemetria unificada  
+- Persistência local (atual) → migração opcional para DB no futuro  
+
+📌 **System Design completo**:  
+`docs/SYSTEM_DESIGN_v0.4.pdf`  
+:contentReference[oaicite:0]{index=0}
 
 ---
 
-## 📈 Progress Tracking
+# 🧩 Estrutura das Abas do App
 
-See the full live development status and roadmap here:  
-👉 [**docs/PROJECT_TRACKER.md**](./docs/PROJECT_TRACKER.md)
+O Materna360 tem **3 eixos principais**:
 
-**Current progress:** 🟢 78% complete  
-**Estimated completion:** ~19 working days (~4 weeks)
+| Aba | Função |
+|-----|--------|
+| **Meu Dia** | Planner, Rotina Leve, Como Estou Hoje |
+| **Maternar** | Mini-hubs principais |
+| **Eu360** | Perfil completo da mãe + dados-chave |
 
----
-
-## 🚀 Next Milestones
-- PDF Premium v2 (branded cover + summary)
-- Internal insights dashboard
-- QA polish (A11y + responsiveness)
-- Public launch (target: **December 2025**)
+As abas **Cuidar** e **Descobrir** existem apenas como **rotas técnicas legadas** (não criar nada novo nelas).
 
 ---
 
-## 💡 Author & Concept
+# 🧱 Mini-Hubs Oficiais
 
-Developed by **Simone Brusco**  
-Pedagogue, mother, and creator of **Clube Nenê Feliz**, bringing emotional awareness and balance into the digital age.  
+### **1. Meu Dia**
+- `/meu-dia/rotina-leve` – Organização do dia  
+- `/meu-dia/como-estou-hoje` – Humor & energia  
+- `/meu-dia/minhas-conquistas` – Gamificação leve  
+- `/meu-dia` – Planner premium  
 
-**"A aventura de ser pai e mãe começa aqui."**
+### **2. Maternar**
+- `/maternar/cuidar-com-amor`  
+- `/cuidar/meu-bem-estar` (Autocuidado Inteligente)  
+- `/maternar/biblioteca-materna`  
+- `/maternar/minhas-conquistas`  
+- `/maternar/materna-plus` (assinatura futura)
 
+### **3. Eu360**
+- `/eu360` – Formulário premium + figurinha + dados de personalização  
 
+📌 **Matriz completa do que vai para onde**:  
+`docs/MINI_HUB_MATRIX.pdf`
 
-## What's new (P2 – Intelligence & Personalization)
-- Premium PDF v2 on /eu360 (cover, dynamic TOC, weekly blocks)
-- Real plan gating (free vs premium) with telemetry
-- /descobrir: Save for later UX (toast + aria-pressed + icon toggle)
-- /cuidar: Child Diary delete button variant fixed (destructive)
+---
+
+# 🎨 Design System Premium
+
+Todos os mini-hubs seguem o **Materna360 Premium Layout**, composto por:
+
+- `<PageTemplate>`  
+- `<SectionWrapper>`  
+- Grid 1x1 (mobile) / 2x2 (desktop)  
+- SoftCards (bordas 3XL, sombras leves)  
+- Ícones em ameixa  
+- Tags em rosa  
+- Tom de voz materno, curto, acolhedor  
+
+📌 **Guia visual oficial**:  
+`docs/VISUAL_STYLE_GUIDE.pdf`  
+📌 **Copy e microcopy**:  
+`docs/COPY_PLAYBOOK.pdf`  
+📌 **Tone of Voice**:  
+`docs/TONE_OF_VOICE_MASTER_GUIDE.pdf`  
+
+---
+
+# 🤖 Inteligência (IA)
+
+### IA implementada / simulada:
+- Sugestões de planejamento (Rotina Leve)  
+- Ideias rápidas com contexto  
+- Recomendações de leveza  
+
+### IA em desenvolvimento:
+- Brincadeiras personalizadas  
+- Receitas inteligentes por ingredientes  
+- Insights emocionais semanais  
+- Desenvolvimento infantil guiado  
+
+📌 **System Design — Camada de IA**  
+`docs/SYSTEM_DESIGN_v0.4.pdf`  
+:contentReference[oaicite:1]{index=1}
+
+---
+
+# 🎮 Gamificação
+
+O app possui:
+
+- Selos  
+- XP diário  
+- Missões leves  
+- Progresso mensal  
+- Medalhas futuras (Fase 4)  
+
+Documento oficial:  
+`docs/MINI_HUB_MATRIX.pdf`
+
+---
+
+# 📚 Biblioteca Materna
+
+A Biblioteca reúne:
+
+- PDFs  
+- E-books  
+- Guias educativos  
+- Trilhas de desenvolvimento  
+- Conteúdos filtrados por idade, tema e formato  
+
+**20 novos PDFs** estão planejados para Fase 3.
+
+---
+
+# 🧪 Telemetria & Observabilidade
+
+Telemetria ativa para:
+
+- page_view  
+- nav_click  
+- card_click  
+- coach_*  
+- pdf_*  
+- plan_*  
+- emotion_trend  
+- inactivity_*  
+
+Painel interno:  
+`/admin/insights` (somente local)
+
+---
+
+# 🛠 Como Contribuir (DEV & Builder)
+
+Guia completo de contribuição:  
+`docs/CONTRIBUTING_GUIDE.pdf`  
+:contentReference[oaicite:2]{index=2}
+
+Regra de ouro:  
+> **Nunca criar novos layouts. Sempre copiar o layout oficial do mini-hub.**
+
+### Arquivos proibidos de alterar:
+- `app/layout.tsx`  
+- `BottomNav.tsx`  
+- `PageHeader.tsx`  
+- `SoftCard.tsx`  
+- `AppIcon.tsx`  
+- `lib/telemetry.ts`  
+- `app/api/*`  
+
+### Comandos
+pnpm install
+pnpm dev
+pnpm typecheck
+pnpm lint
+pnpm build
+
+markdown
+Copiar código
+
+---
+
+# 🗂 Documentação Interna (Kit Materna360)
+
+Todos os documentos internos estão na pasta `/docs`:
+
+- **Product Strategy One-Pager**  
+- **Macro Fases**  
+- **Mini-Hub Matrix**  
+- **Tone of Voice Master Guide**  
+- **Visual Style Guide**  
+- **Copy Playbook & Layout System**  
+- **System Design v0.4**  
+- **Builder Guidelines**  
+- **Builder Prompt Template**  
+- **Contributing Guide**  
+- **Checklist Vivo**  
+- **Experience Playbook** (CX + UX)
+
+---
+
+# 📈 Roadmap 2025
+
+De acordo com o documento de Macro Fases:
+
+| Fase | Período | Foco |
+|------|---------|------|
+| **Fase 1** | Fev–Mar | Layout Premium + Mini-Hubs |
+| **Fase 2** | Mar–Abr | IA Inteligente |
+| **Fase 3** | Abr–Jun | Biblioteca + Conteúdos |
+| **Fase 4** | Jun–Ago | Gamificação Avançada |
+| **Fase 5** | Set–Dez | Onboarding + Materna+ + Marketing |
+
+---
+
+# 📌 Status Atual (Março/2025)
+
+- Layout Premium → **98% pronto**  
+- Hub Maternar → **pronto e refinado**  
+- Mini-Hubs → **todos estruturados**  
+- Planner → aguardando polimento final  
+- Formulário Eu360 → layout premium pendente  
+- IA → em fase de integração  
+- Biblioteca → pronta para receber PDFs  
+- Materna+ → aguardando estruturação de planos  
+- Footer Premium → pronto  
+- Telemetria → unificada  
+- Código → limpo e estável  
+
+---
+
+# 💗 Criadora
+
+**Simone Brusco**  
+Pedagoga, mãe e idealizadora do Materna360.  
+_"A aventura de ser pai e mãe começa aqui."_
+
+---
+
+# 📝 Observação Final
+
+Este README reflete:
+
+- Arquitetura real  
+- Documentação oficial  
+- Fase atual de desenvolvimento  
+- Padrões de escrita e design Materna360  
+- Segurança no desenvolvimento  
+- Direção futura do app  
+
+Qualquer alteração deve respeitar o **Kit Interno Materna360**.
 

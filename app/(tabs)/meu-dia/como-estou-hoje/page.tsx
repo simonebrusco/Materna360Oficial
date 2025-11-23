@@ -14,6 +14,69 @@ import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
+type WeeklyInsight = {
+  title: string
+  summary: string
+  highlights: {
+    bestDay: string
+    toughDays: string
+  }
+}
+
+// Insight semanal emocional via IA + fallback suave
+async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
+  try {
+    const res = await fetch('/api/ai/emocional', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'weekly_overview',
+        origin: 'como-estou-hoje',
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const insight = data?.weeklyInsight
+
+    if (!insight || typeof insight !== 'object') {
+      throw new Error('Insight semanal vazio')
+    }
+
+    return {
+      title: insight.title ?? 'Como sua semana tem se desenhado',
+      summary:
+        insight.summary ??
+        'Pelos seus registros recentes, sua semana parece misturar momentos de cansaço com alguns respiros de leveza. Só de você olhar para isso com sinceridade, já está cuidando muito de você e da sua família.',
+      highlights: {
+        bestDay:
+          insight.highlights?.bestDay ??
+          'Os dias em que você se sente mais equilibrada costumam ser aqueles em que você respeita mais seus limites e não tenta abraçar o mundo de uma vez.',
+        toughDays:
+          insight.highlights?.toughDays ??
+          'Os dias mais pesados tendem a aparecer quando você tenta dar conta de tudo sozinha. Pedir ajuda ou reduzir expectativas também é um gesto de amor.',
+      },
+    }
+  } catch (error) {
+    console.error('[Como Estou Hoje] Erro ao buscar insight semanal, usando fallback:', error)
+    // Fallback carinhoso, sem exposição de "IA" para a mãe
+    return {
+      title: 'Como sua semana tem se desenhado',
+      summary:
+        'Mesmo nos dias mais puxados, existe um fio de cuidado que passa pela sua semana inteira. Talvez você não perceba, mas pequenas atitudes suas já estão fazendo diferença.',
+      highlights: {
+        bestDay:
+          'Seus melhores dias costumam ser aqueles em que você aceita fazer um pouco menos e consegue respirar um pouco mais.',
+        toughDays:
+          'Os dias mais desafiadores aparecem quando a cobrança interna aumenta demais. Você não precisa ser perfeita para ser uma ótima mãe.',
+      },
+    }
+  }
+}
+
 export default function ComoEstouHojePage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [selectedHumor, setSelectedHumor] = useState<string | null>(null)
@@ -23,12 +86,16 @@ export default function ComoEstouHojePage() {
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
   const { addItem, getByOrigin } = usePlannerSavedContents()
 
+  // Insight semanal
+  const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
+  const [loadingWeeklyInsight, setLoadingWeeklyInsight] = useState(false)
+
   // Mark as hydrated on mount
   useEffect(() => {
     setIsHydrated(true)
   }, [])
 
-  // Load persisted data
+  // Load persisted data (humor/energia/notas)
   useEffect(() => {
     if (!isHydrated) return
 
@@ -44,6 +111,31 @@ export default function ComoEstouHojePage() {
     if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
     if (typeof savedNotes === 'string') setDayNotes(savedNotes)
   }, [isHydrated, currentDateKey])
+
+  // Load weekly emotional insight once
+  useEffect(() => {
+    let isMounted = true
+
+    const loadInsight = async () => {
+      setLoadingWeeklyInsight(true)
+      try {
+        const result = await fetchWeeklyEmotionalInsight()
+        if (isMounted) {
+          setWeeklyInsight(result)
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingWeeklyInsight(false)
+        }
+      }
+    }
+
+    loadInsight()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleHumorSelect = (humor: string) => {
     setSelectedHumor(selectedHumor === humor ? null : humor)
@@ -218,7 +310,8 @@ export default function ComoEstouHojePage() {
                   </div>
 
                   {/* Today's notes history from Planner */}
-                  {getByOrigin('como-estou-hoje').filter((item) => item.type === 'note').length > 0 && (
+                  {getByOrigin('como-estou-hoje').filter((item) => item.type === 'note').length >
+                    0 && (
                     <div className="pt-4 border-t border-[#ffd8e6] space-y-3">
                       <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
                         Notas de hoje no planner
@@ -241,23 +334,25 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 3: Insight do Dia (IA) */}
+            {/* CARD 3: Insight do Dia (IA) – ainda placeholder editorial */}
             <Reveal delay={100}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]">
                 <div className="mb-4">
                   <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                     <AppIcon name="sparkles" size={18} className="text-[#9B4D96]" decorative />
-                    Insight do Dia (IA)
+                    Insight do Dia
                   </h3>
                 </div>
 
-                {/* Premium insight placeholder */}
                 <div className="space-y-4">
                   <p className="text-sm leading-relaxed text-[#545454]">
-                    Ao longo da semana, você tem registrado momentos de alta energia principalmente à noite. Isso pode ser uma oportunidade para planejar tarefas importantes nesse horário.
+                    Ao longo da semana, você tem registrado momentos de alta energia principalmente
+                    à noite. Isso pode ser uma oportunidade para planejar tarefas importantes nesse
+                    horário.
                   </p>
                   <p className="text-sm leading-relaxed text-[#545454]">
-                    Quando você está neutro ou cansada, suas prioridades tendem a se concentrar em autocuidado. Isso é um padrão saudável — respeite seu ritmo.
+                    Quando você está neutro ou cansada, suas prioridades tendem a se concentrar em
+                    autocuidado. Isso é um padrão saudável — respeite seu ritmo.
                   </p>
 
                   <button className="mt-4 text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1">
@@ -278,7 +373,7 @@ export default function ComoEstouHojePage() {
               </h2>
             </div>
 
-            {/* CARD 4: Minha Semana Emocional */}
+            {/* CARD 4: Minha Semana Emocional (agora conectado à IA) */}
             <Reveal delay={150}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="mb-6">
@@ -287,44 +382,43 @@ export default function ComoEstouHojePage() {
                     Minha Semana Emocional
                   </h3>
                   <p className="text-sm text-[#545454]">
-                    Enxergue seu padrão emocional ao longo da semana.
+                    Enxergue seus padrões emocionais com mais leveza.
                   </p>
                 </div>
 
-                {/* Mood Trend Placeholder */}
-                <div className="mb-6 p-8 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/50 flex items-center justify-center min-h-[160px]">
-                  <div className="text-center space-y-3">
-                    <AppIcon
-                      name="chart"
-                      size={40}
-                      className="text-[#ff005e]/30 mx-auto"
-                      decorative
-                    />
+                {/* Texto principal da semana */}
+                <div className="mb-6 p-5 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/50">
+                  {loadingWeeklyInsight ? (
                     <p className="text-sm text-[#545454]">
-                      Gráfico de tendências da semana
+                      Estou olhando com carinho para os seus registros para trazer um resumo da sua
+                      semana…
                     </p>
-                    <p className="text-xs text-[#545454]/60">
-                      Os dados aparecerão conforme você registra seus humores.
+                  ) : (
+                    <p className="text-sm text-[#545454] leading-relaxed">
+                      {weeklyInsight?.summary ??
+                        'Conforme você registra seu humor e sua energia, este espaço vai te mostrar com mais clareza como anda a sua semana – sem julgamento, só com acolhimento.'}
                     </p>
-                  </div>
+                  )}
                 </div>
 
                 {/* Highlights */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
                     <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
-                      Melhor dia da semana
+                      Quando seus dias fluem melhor
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">
-                      (Em progresso)
+                      {weeklyInsight?.highlights.bestDay ??
+                        'Seus melhores dias costumam aparecer quando você respeita seu ritmo e não tenta fazer tudo ao mesmo tempo.'}
                     </p>
                   </div>
                   <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
                     <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
-                      Dias mais desafiadores
+                      Quando o dia pesa um pouco mais
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">
-                      (Em progresso)
+                      {weeklyInsight?.highlights.toughDays ??
+                        'Os dias mais desafiadores costumam vir acompanhados de muita cobrança interna. Lembre-se: pedir ajuda ou fazer menos também é cuidado.'}
                     </p>
                   </div>
                 </div>
