@@ -1,218 +1,122 @@
-# ✅ CHECKLIST VIVO — Materna360
+## ✅ P2 — IA Emocional & Rotina Inteligente (FECHADO)
 
-Versão alvo: **FASE 2 — IA Inteligente & Personalização (Fev–Abr/2025)**  
-Branch de trabalho: **cosmos-verse**  
-PR atual: **feat/p2-inteligencia-cosmos-verse**  
-Status geral: 🟢 Base estável / IA em progresso com segurança
+**Versão:** v0.3.2-P2-IA-Emocional  
+**Branch:** `cosmos-verse`  
+**Status:** 🟢 Concluído e estável (build passando)
 
----
+### Escopo da P2 Emocional
 
-## 1. BASE TÉCNICA & AMBIENTE
-
-- ✅ App Router estável (rotas principais confirmadas)
-  - /meu-dia/como-estou-hoje  
-  - /meu-dia/rotina-leve  
-  - /cuidar/autocuidado-inteligente  
-  - /cuidar/cuidar-com-amor  
-  - /maternar/minhas-conquistas  
-  - /maternar/biblioteca-materna  
-  - /eu360
-
-- ✅ Layout premium padronizado (PageTemplate + SoftCard + MotivationalFooter)
-- ✅ Cores e tipografia seguindo Visual Style Guide
-- ✅ Nada de mudanças em:
-  - layout.tsx  
-  - BottomNav  
-  - Sistema de cores da marca  
+- Centralização da IA emocional e de rotina em:
+  - `POST /api/ai/emocional`
+  - `POST /api/ai/rotina`
+- Integração de insights emocionais com:
+  - `/meu-dia/como-estou-hoje`
+  - `/meu-dia/rotina-leve`
+  - `/eu360`
+- Conexão entre IA e Planner via `usePlannerSavedContents`, sempre com:
+  - `origin` bem definido por mini-hub
+  - fallbacks editoriais carinhosos (sem “cara de IA” para a mãe)
 
 ---
 
-## 2. IA & ENDPOINTS /api/ai/*
+### /meu-dia/rotina-leve
 
-### 2.1 Arquitetura de IA
+**Objetivo:** transformar Rotina Leve em um hub de apoio rápido para o dia, com IA nos bastidores, mas experiência de “conversa com uma amiga”.
 
-- ✅ Documento de arquitetura:
-  - `docs/IA_ARCH_MAP_P2.md`  
-  - Mapeia:
-    - /api/ai/emocional → insights emocionais (dia, semana, Eu360)  
-    - /api/ai/rotina → rotina leve, receitas, ideias rápidas  
-
-- ✅ Módulo central de handlers:
-  - `lib/ai/handlers.ts`
-  - Responsabilidades:
-    - Orquestrar chamadas de IA
-    - Normalizar respostas
-    - Garantir fallback seguro (mock) se falhar
-
-### 2.2 Endpoints
-
-- ✅ `/api/ai/rotina` (POST)
-  - `feature: 'recipes'` → receitas inteligentes
-  - `feature: 'quick_ideas'` → ideias rápidas
-  - Contexto:
-    - origin: 'rotina-leve'
-    - filtros simples (tempoDisponivel, comQuem, tipoIdeia)
-
-- ✅ `/api/ai/emocional` (POST)
-  - `feature: 'daily_insight'` → insight do dia (como-estou-hoje)
-  - `feature: 'weekly_overview'` → leitura emocional da semana
-  - Pensado para:
-    - Como Estou Hoje (dia + semana)
-    - Weekly Emotional Insight em /eu360 (próximo passo)
-
----
-
-## 3. MINI-HUBS & FLUXOS INTELIGENTES
-
-### 3.1 /meu-dia/rotina-leve
-
-- ✅ Layout premium padronizado
+- ✅ Layout premium consolidado:
   - Hero card: **Receitas Inteligentes**
-  - Grid 2x2: **Ideias Rápidas** + **Inspirações do Dia**
-  - MotivationalFooter no final
-
-- ✅ Integrações com Planner
-  - Receitas:
+  - Grid 2 colunas: **Ideias Rápidas** + **Inspirações do Dia**
+  - Card-resumo final com visão do que foi salvo no Planner
+- ✅ IA de **Receitas Inteligentes**
+  - Endpoint: `POST /api/ai/rotina` (`feature: 'recipes'`, `origin: 'rotina-leve'`)
+  - Fallback seguro com 3 receitas editoriais bem explicadas
+  - Limite diário simples (3 receitas/dia) com mensagem amigável
+  - Salvamento no Planner:
     - `origin: 'rotina-leve'`
     - `type: 'recipe'`
-    - payload: título, descrição, tempo, faixa etária, preparo
-  - Ideias rápidas:
+- ✅ IA de **Inspirações do Dia**
+  - Endpoint: `POST /api/ai/emocional` (`feature: 'daily_inspiration'`, `origin: 'rotina-leve'`)
+  - Foco selecionável (Cansaço, Culpa, Organização, Conexão com o filho)
+  - Fallback com frase + pequeno cuidado + mini ritual
+  - Salvamento no Planner:
     - `origin: 'rotina-leve'`
     - `type: 'insight'`
-    - payload: descrição
-  - Inspirações:
-    - `origin: 'rotina-leve'`
-    - `type: 'insight'`
-    - payload: frase, pequeno cuidado, mini-ritual
+- ✅ Card-resumo conectado ao Planner:
+  - Contagem de receitas salvas
+  - Contagem de inspirações salvas
+  - Exibição da última inspiração salva
 
-- ✅ Inteligência ligada (com fallback)
-  - Botão **“Gerar receitas”**
-    - Chama `/api/ai/rotina` com `feature: 'recipes'`
-    - Se falhar → `mockGenerateRecipes()`
-    - Limite diário de 3 sugestões (contador de plano)
-  - Botão **“Gerar ideias”**
-    - Chama `/api/ai/rotina` com `feature: 'quick_ideas'`
-    - Usa filtros:
-      - tempoDisponivel (5, 10, 20, 30+)
-      - comQuem (só eu, eu e meu filho, família toda)
-      - tipoIdeia (brincadeira, organização, autocuidado, receita-rapida)
-    - Se falhar → `mockGenerateIdeas()`
+---
 
-- ✅ Experiência para a mãe **sem aparecer “IA”**
-  - Textos humanizados, tom de amiga
-  - IA fica nos bastidores
+### /eu360 — Insight emocional semanal
 
-- ✅ Tratamento de erros
-  - `toast.success`, `toast.info`, `toast.danger`
-  - Logs `[Rotina Leve] ...`
-  - Nunca quebra tela se falhar
+**Objetivo:** fazer do **EU360** o painel de visão emocional da mãe, com linguagem acolhedora.
 
-### 3.2 /meu-dia/como-estou-hoje
+- ✅ Arquivo: `app/(tabs)/eu360/Client.tsx`
+- ✅ Mantido padrão Materna360 Premium:
+  - `AppShell` + `PageTemplate` + `SectionWrapper`
+  - `ProfileForm` intacto
+- ✅ Card **“Olhar carinhoso sobre a sua semana”**
+  - Endpoint: `POST /api/ai/emocional` (`feature: 'weekly_overview'`, `origin: 'eu360'`)
+  - Estrutura do insight:
+    - `title`
+    - `summary`
+    - `suggestions: string[]`
+  - Personalização leve usando primeiro nome do perfil
+  - Fallback editorial carinhoso (sem mencionar “IA” na cópia)
 
-- ✅ Layout premium com:
-  - Card 1: **Meu Humor & Minha Energia**
-  - Card 2: **Como foi meu dia?**
-  - Card 3: **Insight do Dia**
-  - Bloco “Semana” com:
-    - **Minha Semana Emocional** (leitura + placeholder gráfico)
-    - **Sugestões pensadas para você esta semana** (card estático)
+---
 
-- ✅ Persistência local do dia
-  - `getBrazilDateKey()` para chave por dia
-  - `save` / `load` para:
-    - humor
-    - energy
-    - notes
+### /meu-dia/como-estou-hoje — Dia + Semana + Insight integrado ao Planner
 
-- ✅ Integração com Planner
-  - Ao salvar notas:
+**Objetivo:** conectar registros diários com uma visão emocional da semana e um insight diário que pode ir para o Planner.
+
+- ✅ Card **“Meu Humor & Minha Energia”**
+  - Persistência diária via `getBrazilDateKey` + `save/load`
+  - Telemetria:
+    - `mood.registered`
+    - `energy.registered`
+- ✅ Card **“Como foi meu dia?”**
+  - Notas do dia com salvamento local
+  - Salvamento no Planner:
     - `origin: 'como-estou-hoje'`
     - `type: 'note'`
-    - `payload.text`
-  - Histórico do dia:
-    - `getByOrigin('como-estou-hoje')` filtrando `type === 'note'`
-
-- ✅ IA — Insight do Dia (comportamento atual)
-  - Botão **“Gerar insight do dia”**
-  - Chama `/api/ai/emocional` com:
-    - `feature: 'daily_insight'`
-    - humor selecionado
-    - energia selecionada
-    - notas do dia (quando houver)
-  - Se a API falhar:
-    - Fallback com texto carinhoso padrão
-    - `toast.info` explicando de forma leve
-  - Não aparece “IA” na UI — apenas “Insight do Dia”
-
-- ✅ IA — Minha Semana Emocional
-  - Botão **“Gerar leitura da semana”**
-  - Chama `/api/ai/emocional` com:
-    - `feature: 'weekly_overview'`
-    - humor/energia atuais como contexto simples (v1)
-  - Exibe texto-resumo dentro do card “Minha Semana Emocional”
-  - Se a API falhar:
-    - Fallback com reflexão acolhedora sobre altos e baixos da semana
-    - `toast.info` avisando com tom de cuidado
-  - Gráfico ainda é placeholder visual (sem dados reais) — **intencional em P2**
+  - Lista das notas de hoje vindas do Planner
+- ✅ Card **“Insight do Dia”** (IA + Planner)
+  - Endpoint: `POST /api/ai/emocional` (`feature: 'daily_insight'`, `origin: 'como-estou-hoje'`)
+  - Estrutura:
+    - `title`
+    - `body`
+    - `gentleReminder`
+  - Botão **“Levar este insight para o planner”**:
+    - `origin: 'como-estou-hoje'`
+    - `type: 'insight'`
+    - `payload: { text, gentleReminder }`
+  - Fallback com texto editorial acolhedor
+  - Telemetria: `daily_insight.saved`
+- ✅ Card **“Minha Semana Emocional”**
+  - Endpoint: `POST /api/ai/emocional` (`feature: 'weekly_overview'`, `origin: 'como-estou-hoje'`)
+  - Estrutura:
+    - `summary`
+    - `highlights.bestDay`
+    - `highlights.toughDays`
+  - UI em 3 partes:
+    - bloco de texto com resumo da semana
+    - card “Quando seus dias fluem melhor”
+    - card “Quando o dia pesa um pouco mais”
+  - Fallback garantindo texto compassivo quando IA falha
 
 ---
 
-## 4. PLANNER & CONEXÕES ENTRE MINI-HUBS
+### Estado técnico
 
-- ✅ Hook centralizado:
-  - `usePlannerSavedContents`
-  - Usado em:
-    - /meu-dia/como-estou-hoje
-    - /meu-dia/rotina-leve
-    - (outros mini-hubs seguem o mesmo padrão)
-
-- ✅ Origem sempre marcada:
-  - `'como-estou-hoje'`
-  - `'rotina-leve'`
-  - Facilita insights futuros em /eu360
-
-- 🚧 Próximos passos P2:
-  - Conectar insights emocionais agregados ao /eu360
-  - Produzir recomendações cruzadas Planner ↔ Emoções
-
----
-
-## 5. QA & DEPLOY
-
-- ✅ Build passando (`pnpm run build`)
-- ✅ /meu-dia/rotina-leve:
-  - IA + fallback funcionando
-  - Limite diário respeitado
-- ✅ /meu-dia/como-estou-hoje:
-  - Persistência diária funcionando
-  - Insight do dia via API + fallback
-  - Leitura da semana via API + fallback
-
-- ⏳ QA visual adicional:
-  - Conferir em mobile e desktop:
-    - espaçamentos
-    - sombras
-    - consistência de textos e microcopys
-
----
-
-## 6. PRÓXIMOS PASSOS DA FASE 2 (IA)
-
-Ordem sugerida (sempre passo-a-passo, com build verde entre um e outro):
-
-1. **Documentar rapidamente no IA_ARCH_MAP_P2** o uso de:
-   - `feature: 'daily_insight'`
-   - `feature: 'weekly_overview'`
-   - Origem: `/meu-dia/como-estou-hoje`  
-   _(se ainda não estiver descrito)_
-
-2. **Levar essa inteligência emocional para o /eu360**  
-   - Reusar `/api/ai/emocional`  
-   - Criar um “Weekly Emotional Insight” mais completo usando:
-     - humores do período
-     - energias registradas
-     - itens salvos no planner (v2)
-
-3. **Rodada de QA visual com foco em “produto pronto”**  
-   - Pequenos ajustes finos de layout  
-   - Microcopy consistente com o Tone of Voice Materna360  
+- ✅ Build: `pnpm run build` passando
+- ✅ Sem mudanças em:
+  - `layout.tsx`
+  - BottomNav
+  - paleta de cores
+  - sistema de navegação principal
+- ✅ Todas as chamadas de IA têm:
+  - fallback editorial
+  - logs de erro no console (sem travar UX)
+  - não revelam “IA” diretamente na experiência da mãe
