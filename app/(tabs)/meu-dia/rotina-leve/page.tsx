@@ -136,6 +136,49 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
   }
 }
 
+// ---------- IA de inspiração diária com fallback suave ----------
+
+async function generateInspirationWithAI(focus: string | null): Promise<Inspiration> {
+  try {
+    const res = await fetch('/api/ai/emocional', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'daily_inspiration',
+        origin: 'rotina-leve',
+        focus: focus || null,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const inspiration = data?.inspiration
+
+    if (!inspiration || typeof inspiration !== 'object') {
+      throw new Error('Inspiração vazia')
+    }
+
+    return {
+      phrase:
+        inspiration.phrase ??
+        'Você não precisa dar conta de tudo hoje.',
+      care:
+        inspiration.care ??
+        '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
+      ritual:
+        inspiration.ritual ??
+        'Envie uma mensagem carinhosa para alguém que te apoia.',
+    }
+  } catch (error) {
+    console.error('[Rotina Leve] Erro na IA de inspiração, usando fallback:', error)
+    toast.info('Preparei uma inspiração especial pra hoje ✨')
+    return await mockGenerateInspiration()
+  }
+}
+
 export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
@@ -161,6 +204,7 @@ export default function RotinaLevePage() {
   // Inspirações do Dia
   const [inspirationLoading, setInspirationLoading] = useState(false)
   const [inspiration, setInspiration] = useState<Inspiration | null>(null)
+  const [focusOfDay, setFocusOfDay] = useState<string>('Cansaço')
 
   const { addItem } = usePlannerSavedContents()
 
@@ -242,9 +286,12 @@ export default function RotinaLevePage() {
 
   const handleGenerateInspiration = async () => {
     setInspirationLoading(true)
-    const result = await mockGenerateInspiration()
-    setInspiration(result)
-    setInspirationLoading(false)
+    try {
+      const result = await generateInspirationWithAI(focusOfDay)
+      setInspiration(result)
+    } finally {
+      setInspirationLoading(false)
+    }
   }
 
   const hasRecipes = recipes && recipes.length > 0
@@ -575,7 +622,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Eu e meu filho
@@ -592,7 +639,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Família toda
@@ -614,7 +661,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Brincadeira
@@ -753,7 +800,11 @@ export default function RotinaLevePage() {
                     <div className="text-xs space-y-3 flex-1">
                       <div className="space-y-1">
                         <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
-                        <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                        <select
+                          className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                          value={focusOfDay}
+                          onChange={(e) => setFocusOfDay(e.target.value)}
+                        >
                           <option>Cansaço</option>
                           <option>Culpa</option>
                           <option>Organização</option>
