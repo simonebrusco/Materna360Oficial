@@ -1,0 +1,201 @@
+'use client';
+
+import React, { useState } from 'react';
+import AppIcon from '@/components/ui/AppIcon';
+import { Button } from '@/components/ui/Button';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Card } from '@/components/ui/card';
+import { toast } from '@/app/lib/toast';
+import { track } from '@/app/lib/telemetry';
+import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations';
+import { useIdeasQuota, type PlanTier } from './useIdeasQuota';
+
+interface IdeaCard {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  age_range: string;
+}
+
+const MOCK_IDEAS: Record<number, IdeaCard> = {
+  0: {
+    id: 'idea-1',
+    title: 'Brincadeira Sensorial: Exploração Tátil',
+    description: 'Atividade para estimular os sentidos. Use texturas diferentes (algodão, papel, plástico).',
+    duration: '10 minutos',
+    age_range: '0-24 meses',
+  },
+  1: {
+    id: 'idea-2',
+    title: 'Respiração em 4 Tempos',
+    description: 'Técnica simples para acalmar você e as crianças. Inspire por 4, segure por 4, expire por 4.',
+    duration: '5 minutos',
+    age_range: '12+ meses',
+  },
+  2: {
+    id: 'idea-3',
+    title: 'Receita Rápida: Papinha Caseira',
+    description: 'Prepare uma papinha nutritiva em menos de 15 minutos com ingredientes que você tem em casa.',
+    duration: '15 minutos',
+    age_range: '6-36 meses',
+  },
+};
+
+interface IdeasPanelProps {
+  initialPlan?: PlanTier;
+}
+
+export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
+  const quota = useIdeasQuota(initialPlan);
+  const { toggleSave, isSaved, isHydrated } = useSavedInspirations();
+  const [ideas, setIdeas] = useState<IdeaCard[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+
+  const handleGenerateIdea = async () => {
+    if (!quota.canGenerate) {
+      console.log('[telemetry] ideas.quota_exceeded', { tier: quota.tier });
+      return;
+    }
+
+    setButtonDisabled(true);
+    setIsGenerating(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Generate deterministic idea based on usedToday
+    const ideaIndex = quota.usedToday % Object.keys(MOCK_IDEAS).length;
+    const newIdea = MOCK_IDEAS[ideaIndex];
+
+    setIdeas((prev) => [newIdea, ...prev]);
+    quota.generateIdea();
+
+    setIsGenerating(false);
+
+    // Throttle button for UX (3-5s)
+    setTimeout(() => {
+      setButtonDisabled(false);
+    }, 3000);
+
+    toast.success(`Tudo certo! Ideia gerada: ${newIdea.title}`);
+    console.log('[telemetry] ideas.generated', { idea: newIdea.id, tier: quota.tier });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Generate Button */}
+      <Button
+        variant="primary"
+        size="lg"
+        onClick={handleGenerateIdea}
+        disabled={buttonDisabled || !quota.canGenerate}
+        className="w-full"
+      >
+        {isGenerating ? 'Gerando ideia...' : 'Gerar Ideia'}
+      </Button>
+
+      {/* Error State when limit reached */}
+      {quota.isLimitReached && (
+        <ErrorState
+          title="Você atingiu seu limite diário"
+          description={`No plano ${quota.tier} você tem até ${quota.limit} ideias por dia. Volte amanhã ou experimente um plano superior.`}
+          actionLabel="Conheça os planos"
+          onAction={() => {
+            window.location.href = '/planos';
+          }}
+        />
+      )}
+
+      {/* Loading State */}
+      {isGenerating && (
+        <Skeleton variant="card" count={1} />
+      )}
+
+      {/* Ideas List */}
+      {ideas.length > 0 && (
+        <div className="space-y-4">
+          <p className="text-sm font-medium text-support-1">Suas ideias ({ideas.length})</p>
+          {ideas.map((idea) => {
+            const ideaId = `idea-${idea.id}`
+            const saved = isHydrated ? isSaved(ideaId) : false
+
+            const handleSaveIdea = () => {
+              if (!isHydrated) return
+
+              const savedContent: SavedContent = {
+                id: ideaId,
+                title: idea.title,
+                type: 'ideia',
+                origin: 'Ideias rápidas',
+                href: '#',
+              }
+
+              toggleSave(savedContent)
+
+              if (saved) {
+                track('inspiration.unsaved', {
+                  id: ideaId,
+                  title: idea.title,
+                  type: 'ideia',
+                  origin: 'Ideias rápidas',
+                  timestamp: new Date().toISOString(),
+                })
+              } else {
+                track('inspiration.saved', {
+                  id: ideaId,
+                  title: idea.title,
+                  type: 'ideia',
+                  origin: 'Ideias rápidas',
+                  timestamp: new Date().toISOString(),
+                })
+              }
+
+              toast.success(saved ? 'Ideia removida' : 'Ideia salva!')
+            }
+
+            return (
+              <Card
+                key={idea.id}
+                className="rounded-2xl bg-white border border-white/60 shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <h4 className="text-base font-semibold text-support-1 mb-2">{idea.title}</h4>
+                    <p className="text-sm text-support-2 mb-3">{idea.description}</p>
+                    <div className="flex flex-wrap gap-3 text-xs text-support-3">
+                      <span>⏱️ {idea.duration}</span>
+                      <span>👶 {idea.age_range}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSaveIdea}
+                    className="p-2 rounded-full hover:bg-primary/10 transition-colors flex-shrink-0"
+                    aria-label={saved ? 'Remover dos salvos' : 'Salvar ideia'}
+                    title={saved ? 'Remover dos salvos' : 'Salvar ideia'}
+                  >
+                    <AppIcon
+                      name="bookmark"
+                      className={`w-5 h-5 ${
+                        saved ? 'text-[#ff005e] fill-current' : 'text-[#ddd]'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isGenerating && ideas.length === 0 && (
+        <p className="text-center text-sm text-support-2 py-6">
+          Clique em &quot;Gerar Ideia&quot; para descobrir atividades personalizadas.
+        </p>
+      )}
+    </div>
+  );
+}

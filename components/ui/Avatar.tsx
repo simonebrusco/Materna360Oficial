@@ -28,7 +28,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   } as const
 
   return (
-    <div className={`relative flex items-center justify-center overflow-hidden rounded-full bg-secondary ${sizeStyles[size]} ${className}`}>
+    <div className={`relative flex items-center justify-center overflow-hidden rounded-full bg-secondary border border-[#FFE8F2] ${sizeStyles[size]} ${className}`}>
       {src ? (
         <Image
           src={src}

@@ -1,8 +1,12 @@
 'use client'
 
 import { useMemo } from 'react'
+import AppIcon from '@/components/ui/AppIcon'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import { useSavedInspirations, type SavedContent } from '@/app/hooks/useSavedInspirations'
+import { toast } from '@/app/lib/toast'
+import { track } from '@/app/lib/telemetry'
 
 /** Tipo mínimo local, suficiente para este card (evita dependência de tipos não exportados) */
 type RecipeLike = {
@@ -33,10 +37,50 @@ interface ReceitinhasCardProps {
 
 export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
   // Hooks sempre no topo
+  const { toggleSave, isSaved, isHydrated } = useSavedInspirations()
   const computedId = useMemo(() => generatePlannerId('recipe', item), [item])
 
   // Early return após hooks
   if (!item) return null
+
+  const recipeId = `recipe-${computedId}`
+  const saved = isHydrated ? isSaved(recipeId) : false
+
+  const handleSaveRecipe = () => {
+    if (!isHydrated) return
+
+    const savedContent: SavedContent = {
+      id: recipeId,
+      title: item.title || 'Receita',
+      type: 'receita',
+      origin: 'Receitas',
+      href: '#',
+    }
+
+    toggleSave(savedContent)
+
+    if (saved) {
+      track('inspiration.unsaved', {
+        id: recipeId,
+        title: item.title || 'Receita',
+        type: 'receita',
+        origin: 'Receitas',
+        timestamp: new Date().toISOString(),
+      })
+    } else {
+      track('inspiration.saved', {
+        id: recipeId,
+        title: item.title || 'Receita',
+        type: 'receita',
+        origin: 'Receitas',
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    toast.success(saved ? 'Receita removida' : 'Receita salva!')
+
+    if (onSave && item) onSave(item)
+  }
 
   return (
     <Card className="flex flex-col gap-3" data-computed-id={computedId}>
@@ -49,16 +93,24 @@ export function ReceitinhasCard({ item, onSave }: ReceitinhasCardProps) {
         <Button
           size="sm"
           variant="primary"
-          onClick={() => {
-
-            if (onSave) onSave(item)
-
-            if (onSave && item) onSave(item)
-
-          }}
+          onClick={handleSaveRecipe}
+          className="flex-1"
         >
-          Salvar
+          {saved ? '✓ Salvo' : 'Salvar'}
         </Button>
+        <button
+          onClick={handleSaveRecipe}
+          className="p-2 rounded-lg hover:bg-primary/10 transition-colors flex-shrink-0"
+          aria-label={saved ? 'Remover dos salvos' : 'Salvar receita'}
+          title={saved ? 'Remover dos salvos' : 'Salvar receita'}
+        >
+          <AppIcon
+            name="bookmark"
+            className={`w-5 h-5 ${
+              saved ? 'text-[#ff005e] fill-current' : 'text-[#ddd]'
+            }`}
+          />
+        </button>
       </div>
     </Card>
   )

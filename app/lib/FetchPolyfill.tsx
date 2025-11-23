@@ -1,19 +1,18 @@
 'use client'
 
 import { useEffect } from 'react'
-import { initSafeFetch } from './SafeFetch'
+import { initSafeFetch } from './safeFetch'
 
 /**
  * FetchPolyfill: Handles FullStory's broken fetch wrapper.
  * Initializes SafeFetch as early as possible to wrap window.fetch.
  */
 export default function FetchPolyfill() {
-  // Initialize immediately during render (synchronously) to wrap fetch before FullStory
-  if (typeof window !== 'undefined') {
-    initSafeFetch()
-  }
-
   useEffect(() => {
+    // Initialize SafeFetch as soon as the component mounts (client-side)
+    // This wraps window.fetch before other client-side code runs
+    initSafeFetch()
+
     // Detect and disable prefetching if FullStory is present
     // FullStory breaks RSC prefetch, causing navigation failures
     if ((window as any).FS && (window as any).FS.identify) {

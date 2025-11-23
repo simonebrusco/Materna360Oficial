@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog'
-import { trackTelemetry } from '@/app/lib/telemetry'
+import { track } from '@/app/lib/telemetry'
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -36,12 +36,12 @@ export async function POST(req: Request) {
     const body = (await req.json()) as QuickIdeasRequest | null
 
     if (!body || !body.plan || !body.profile || !body.context) {
-      trackTelemetry('quick_ideas_bad_request', { reason: 'missing_fields' })
+      track('audio.select', { reason: 'missing_fields' })
       return badRequest('Missing required fields: plan, profile, context')
     }
 
     if (!Array.isArray(body.profile.children)) {
-      trackTelemetry('quick_ideas_bad_request', { reason: 'children_not_array' })
+      track('audio.select', { reason: 'children_not_array' })
       return badRequest('Invalid profile.children')
     }
 
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         ideas: [] as unknown[],
         aggregates: { materials_consolidated: [] as string[] },
       }
-      trackTelemetry('quick_ideas_access_denied', { plan: body.plan })
+      track('audio.select', { plan: body.plan })
       return NextResponse.json(res)
     }
 
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
       aggregates: { materials_consolidated: consolidateMaterials(ideas) },
     }
 
-    trackTelemetry('quick_ideas_success', {
+    track('audio.select', {
       plan: body.plan,
       location: body.context.location,
       energy: body.context.energy,
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(response)
   } catch (err) {
-    trackTelemetry('quick_ideas_error', { error: String(err) })
+    track('audio.end', { error: String(err) })
     return badRequest('Invalid JSON payload', String(err))
   }
 }

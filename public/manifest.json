@@ -1,0 +1,94 @@
+{
+  "name": "Materna360",
+  "short_name": "Materna360",
+  "description": "Uma plataforma acolhedora para apoiar você em cada etapa da maternidade",
+  "start_url": "/meu-dia",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#ff005e",
+  "background_color": "#ffffff",
+  "categories": ["lifestyle", "health"],
+  "screenshots": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Meu Dia",
+      "short_name": "Meu Dia",
+      "description": "Organize seu dia com leveza",
+      "url": "/meu-dia",
+      "icons": [
+        {
+          "src": "/images/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Maternar",
+      "short_name": "Maternar",
+      "description": "Hub central de recursos",
+      "url": "/maternar",
+      "icons": [
+        {
+          "src": "/images/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Eu360",
+      "short_name": "Eu360",
+      "description": "Seu perfil e jornada",
+      "url": "/eu360",
+      "icons": [
+        {
+          "src": "/images/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

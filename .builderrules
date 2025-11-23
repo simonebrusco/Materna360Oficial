@@ -1,18 +1,12 @@
-Tech & Tooling
+Tech & Tooling (versão atualizada)
 
-Framework: Next.js 14 (App Router em app/).
-
-Linguagem: TypeScript.
-
-Estilo: Tailwind CSS (tailwind.config).
-
-Ícones: lucide-react.
-
-Animações: Framer Motion (sutil, premium).
-
-Gerenciador de pacotes: pnpm.
-
-Node: 20.x (igual na Vercel e Builder).
+Framework: Next.js 14 (App Router em app/)
+Linguagem: TypeScript
+Estilo: Tailwind CSS (tailwind.config)
+Ícones: lucide-react
+Animações: Framer Motion (sutil, premium)
+Gerenciador de pacotes: pnpm
+Node: 20.x (igual Vercel/Builder)
 
 Estrutura & Paths
 
@@ -27,20 +21,20 @@ Não duplicar páginas nem mover arquivos de rota sem forte justificativa.
 
 Scripts & Dev Server
 
-Porta do dev server: http://localhost:3000
+Porta do dev server (local e Builder): http://localhost:3001
 
 package.json:
 
 {
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start"
   }
 }
 
 
-CI/Vercel/Builder: usar pnpm install --frozen-lockfile (mantém versões idênticas ao lockfile).
+CI/Vercel/Builder: usar pnpm install --frozen-lockfile.
 
 Configuração do Builder (obrigatório alinhar)
 
@@ -51,89 +45,78 @@ pnpm install --frozen-lockfile
 
 Development Server Command:
 
-NEXT_TELEMETRY_DISABLED=1 pnpm exec next dev -p 3000
+NEXT_TELEMETRY_DISABLED=1 pnpm exec next dev -p 3001
 
 
-Auto-detect dev server URL: ligado.
+Auto-detect dev server URL: desligado.
+Development Server URL: http://localhost:3001/
 
 Variáveis principais:
 
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:3001
 
-Demais variáveis públicas/secretas iguais às da Vercel.
+DemaIs variáveis (públicas/secretas) espelhadas da Vercel.
 
 Branching & PRs
 
 Produção: main.
 
-Trabalho diário: branches de feature/hotfix:
+Trabalho diário: feat/<nome>, fix/<nome>, chore/<nome>.
 
-feat/<nome>, fix/<nome>, chore/<nome>.
-
-Fluxo: abrir PR em modo Draft de feat/* → main.
-Usar Conventional Commits no título do PR (feat:, fix:, chore:…).
-
-Não criar novos repositórios. Não renomear o projeto.
+PR em Draft de feat/* → main. Título com Conventional Commits.
 
 Diretrizes de Design
 
 Visual “premium”: cantos arredondados, sombras suaves, micro-interações discretas.
 
-Paleta de marca: Primária #ff005e, Secundária #ffd8e6 (apoio: #2f3a56, #545454, #000000, #ffffff).
+Paleta: Primária #ff005e, Secundária #ffd8e6 (apoio: #2f3a56, #545454, #000000, #ffffff).
 
 Mobile-first e acessibilidade (foco visível, contraste legível).
 
 O que NÃO mudar
 
-Gerenciador de pacotes: manter pnpm.
+Manter pnpm.
 
-Alias e tsconfig: não alterar @/*, baseUrl e paths.
+Não alterar @/*, baseUrl, paths.
 
-Porta: manter 3000 no dev.
+Porta 3001 no dev/Builder.
 
-Segredos: não hardcode; usar .env/variáveis do Builder/Vercel.
+Segredos via .env/variáveis (nunca hardcode).
 
-Next config & APIs: não introduzir breaking changes em next.config.mjs ou rotas.
+Não introduzir breaking changes em next.config.mjs ou APIs.
 
 Entregáveis & UX
 
-Telas (“Meu Dia”, “Cuidar”, “Descobrir”, “Eu360”): manter tab bar inferior consistente.
+Telas: “Meu Dia”, “Cuidar”, “Descobrir”, “Eu360”, “Maternar”, “Planos” com tab bar inferior consistente.
 
-Reutilizar átomos de components/ui e compor features em components/features.
+Reutilizar átomos de components/ui e compor em components/features.
 
-Aplicar animações sutis (opacity/translate/scale) e tokens de sombra previstos no Tailwind.
+Animações sutis e tokens de sombra do Tailwind.
 
 Observações operacionais
 
-Imagens do Builder.io: garantir next.config.mjs com domínio do CDN do Builder:
+Imagens Builder.io — garantir em next.config.mjs:
 
-const nextConfig = {
+export default {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' },
-    ],
-  },
-};
-export default nextConfig;
+      { protocol: 'https', hostname: 'cdn.builder.io', pathname: '/api/v1/image/**' }
+    ]
+  }
+}
 
 
-Cache em páginas dinâmicas (server): quando necessário, preferir:
+Cache server dinâmico (quando necessário):
 
 import { unstable_noStore as noStore } from 'next/cache';
 if (typeof (noStore as any) === 'function') (noStore as any)();
 
 Troubleshooting rápido
 
-“Builder não reflete o GitHub”:
+“Builder não reflete o GitHub”
 
-Confirme que o branch aberto no Code do Builder é origin/main (Switch Branch → origin/main → Checkout).
+Confirme branch no Code do Builder = origin/main (Switch Branch → origin/main → Checkout).
 
-Clique Refresh Preview.
+Refresh Preview.
 
-Verifique console do “Dev Server Status” e se a porta é 3000.
-
-Diferença Vercel x Builder: quase sempre é lockfile ou porta. Confira:
-
-Builder usando pnpm install --frozen-lockfile e next dev -p 3000.
-
-NEXT_PUBLIC_SITE_URL=http://localhost:3000.
+Verifique porta 3001 e NEXT_PUBLIC_SITE_URL=http://localhost:3001.

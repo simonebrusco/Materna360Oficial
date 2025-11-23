@@ -82,6 +82,10 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
     ? `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora falando diretamente com ${name}.`
     : `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora para uma mãe.`
 
+  const controller = new AbortController()
+  const TIMEOUT_MS = 8000 // 8 second timeout for OpenAI
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -89,6 +93,7 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
+      signal: controller.signal,
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
         messages: [
@@ -119,8 +124,14 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
 
     return aiMessage
   } catch (error) {
-    console.error('AI daily message generation failed:', error)
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('AI daily message generation timeout:', error)
+    } else {
+      console.error('AI daily message generation failed:', error)
+    }
     return null
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
