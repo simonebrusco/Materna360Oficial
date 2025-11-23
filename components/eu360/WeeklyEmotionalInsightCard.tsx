@@ -21,8 +21,6 @@ export function WeeklyEmotionalInsightCard() {
         body: JSON.stringify({
           feature: 'weekly_overview',
           origin: 'eu360',
-          // Versão v1: sem contexto detalhado ainda.
-          // Futuras versões podem enviar resumo real da semana aqui.
           humor: null,
           energy: null,
         }),
@@ -42,7 +40,6 @@ export function WeeklyEmotionalInsightCard() {
     } catch (error) {
       console.error('[Eu360] Weekly emotional insight fallback:', error)
 
-      // Fallback carinhoso caso a IA não responda
       setInsight(
         'Sua semana não precisa ser perfeita para ser importante. Observe quais dias foram mais leves e quais pesaram um pouco mais. Essa consciência já é um grande ato de cuidado com você mesma. 💗'
       )
