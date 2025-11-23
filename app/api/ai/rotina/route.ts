@@ -8,7 +8,7 @@ import {
   type RotinaComQuem,
   type RotinaTipoIdeia,
 } from '@/lib/ai/maternaCore'
-import { adaptEu360ProfileToMaterna } from '@/lib/ai/eu360ProfileAdapter'
+import { loadMaternaContextFromRequest } from '@/lib/ai/profileAdapter'
 
 export const runtime = 'nodejs'
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as RotinaRequestBody
 
-    // Agora tentamos personalizar com base no Eu360 (mas com fallback seguro)
+    // Personalização com base no Eu360 (com fallback seguro)
     const { profile, child } = (await loadMaternaContextFromRequest(
       req
     )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
