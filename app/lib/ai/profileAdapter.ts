@@ -18,7 +18,7 @@ export type MaternaContext = {
  * Esse adapter existe para evitar duplicar essa lógica em cada endpoint de IA.
  */
 export async function loadMaternaContextFromRequest(
-  req: Request
+  req: Request,
 ): Promise<MaternaContext> {
   try {
     const url = new URL('/api/eu360/profile', req.url)
@@ -42,7 +42,7 @@ export async function loadMaternaContextFromRequest(
   } catch (error) {
     console.debug(
       '[profileAdapter] Falha ao carregar Eu360, usando contexto neutro:',
-      error
+      error,
     )
 
     return { profile: null, child: null }
