@@ -618,7 +618,7 @@ export default function RotinaLevePage() {
                           </button>
 
                           <button
-                            type="button'
+                            type="button"
                             onClick={() =>
                               setTempoDisponivel((current) => (current === '10' ? null : '10'))
                             }
