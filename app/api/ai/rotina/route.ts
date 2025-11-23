@@ -7,8 +7,8 @@ import {
   type MaternaChildProfile,
   type RotinaComQuem,
   type RotinaTipoIdeia,
-} from '@/lib/ai/maternaCore'
-import { loadMaternaContextFromRequest } from '@/lib/ai/profileAdapter'
+} from '@/app/lib/ai/maternaCore'
+import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 
 export const runtime = 'nodejs'
 
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     // Personalização com base no Eu360 (com fallback seguro)
     const { profile, child } = (await loadMaternaContextFromRequest(
-      req
+      req,
     )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
 
     // -----------------------------------------
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         {
           status: 200,
           headers: NO_STORE_HEADERS,
-        }
+        },
       )
     }
 
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       {
         status: 200,
         headers: NO_STORE_HEADERS,
-      }
+      },
     )
   } catch (error) {
     console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', error)
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       {
         status: 500,
         headers: NO_STORE_HEADERS,
-      }
+      },
     )
   }
 }
