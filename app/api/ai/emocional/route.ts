@@ -5,54 +5,86 @@ import {
   callMaternaAI,
   type MaternaProfile,
   type MaternaChildProfile,
+  type MaternaFocusOfDay,
 } from '@/app/lib/ai/maternaCore'
+import { adaptEu360ProfileToMaterna } from '@/app/lib/ai/eu360ProfileAdapter'
 
 export const runtime = 'nodejs'
 
-type EmotionalFeature = 'daily_inspiration' | 'weekly_overview'
-
-type EmotionalRequestBody = {
-  feature?: EmotionalFeature
-  focus?: string | null
+type EmocionalRequestBody = {
+  feature?: 'daily_inspiration' | 'weekly_overview'
+  origin?: string
+  focus?: MaternaFocusOfDay | null
 }
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
 }
 
-export async function POST(req: Request) {
-  let body: EmotionalRequestBody | null = null
-
+// Carrega perfil + criança principal a partir do Eu360, com fallback neutro
+async function loadMaternaContext(
+  req: Request
+): Promise<{ profile: MaternaProfile | null; child: MaternaChildProfile | null }> {
   try {
-    body = (await req.json()) as EmotionalRequestBody
-  } catch {
-    body = null
+    const url = new URL('/api/eu360/profile', req.url)
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        cookie: req.headers.get('cookie') ?? '',
+      },
+      cache: 'no-store',
+    })
+
+    if (!res.ok) {
+      return { profile: null, child: null }
+    }
+
+    const data = await res.json().catch(() => null)
+    return adaptEu360ProfileToMaterna(data)
+  } catch (error) {
+    console.debug(
+      '[API /api/ai/emocional] Falha ao carregar Eu360, usando contexto neutro:',
+      error
+    )
+    return { profile: null, child: null }
   }
+}
 
-  const feature: EmotionalFeature = body?.feature ?? 'daily_inspiration'
-
-  // Por enquanto não buscamos perfil real aqui.
-  // Mantemos pronto para futura integração com EU360/Supabase.
-  const profile: MaternaProfile | null = null
-  const child: MaternaChildProfile | null = null
-
+export async function POST(req: Request) {
   try {
-    // -----------------------------------------
-    // 1) VISÃO SEMANAL (Eu360: weekly_overview)
-    // -----------------------------------------
-    if (feature === 'weekly_overview') {
-      // Ainda não existe suporte tipado a "weeklyInsight" no maternaCore.
-      // Mantemos a resposta gerada aqui, de forma carinhosa e estável.
+    let body: EmocionalRequestBody | null = null
+
+    try {
+      body = (await req.json()) as EmocionalRequestBody
+    } catch {
+      body = null
+    }
+
+    const { profile, child } = await loadMaternaContext(req)
+
+    // Chamamos sempre o modo "daily-inspiration" e só mudamos
+    // o formato da resposta quando a feature pedir visão semanal.
+    const result = await callMaternaAI({
+      mode: 'daily-inspiration',
+      profile,
+      child,
+      context: {
+        focusOfDay: body?.focus ?? null,
+      },
+    })
+
+    const inspiration = result.inspiration
+
+    // Caso especial: /eu360 pede "weekly_overview" e espera weeklyInsight
+    if (body?.feature === 'weekly_overview') {
       return NextResponse.json(
         {
           weeklyInsight: {
-            title: 'Seu resumo emocional da semana',
-            summary:
-              'Pelos seus últimos dias, é provável que você esteja equilibrando muitos pratos ao mesmo tempo. Lembre-se de que se cuidar também faz parte do cuidado com a família.',
-            suggestions: [
-              'Separe um momento curto só para você revisitar o que deu certo.',
-              'Escolha apenas uma prioridade por dia para aliviar a sensação de cobrança.',
-            ],
+            // Reaproveitamos os campos da inspiração:
+            title: inspiration.phrase,
+            summary: inspiration.care,
+            suggestions: [inspiration.ritual],
           },
         },
         {
@@ -62,23 +94,7 @@ export async function POST(req: Request) {
       )
     }
 
-    // -----------------------------------------
-    // 2) INSPIRAÇÃO DO DIA (Rotina Leve: daily_inspiration)
-    // -----------------------------------------
-    const result = await callMaternaAI({
-      mode: 'daily-inspiration',
-      profile,
-      child,
-      context: {}, // DailyInspirationContext atual não recebe campos extras
-    })
-
-    const inspiration =
-      result.inspiration ?? {
-        phrase: 'Você não precisa dar conta de tudo hoje.',
-        care: 'Tire 1 minuto para respirar fundo e soltar o ar bem devagar.',
-        ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
-      }
-
+    // Caso padrão: Inspirações do Dia
     return NextResponse.json(
       {
         inspiration,
@@ -89,40 +105,14 @@ export async function POST(req: Request) {
       }
     )
   } catch (error) {
-    console.error('[API /api/ai/emocional] Erro ao gerar resposta emocional:', error)
-
-    // Fallbacks carinhosos, no formato que o front já espera
-
-    if (feature === 'weekly_overview') {
-      return NextResponse.json(
-        {
-          weeklyInsight: {
-            title: 'Seu resumo emocional da semana',
-            summary:
-              'Pelos seus últimos dias, é provável que você esteja equilibrando muitos pratos ao mesmo tempo. Lembre-se de que se cuidar também faz parte do cuidado com a família.',
-            suggestions: [
-              'Separe um momento curto só para você revisitar o que deu certo.',
-              'Escolha apenas uma prioridade por dia para aliviar a sensação de cobrança.',
-            ],
-          },
-        },
-        {
-          status: 200,
-          headers: NO_STORE_HEADERS,
-        }
-      )
-    }
+    console.error('[API /api/ai/emocional] Erro ao gerar inspiração:', error)
 
     return NextResponse.json(
       {
-        inspiration: {
-          phrase: 'Você não precisa dar conta de tudo hoje.',
-          care: 'Tire 1 minuto para respirar fundo e soltar o ar bem devagar.',
-          ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
-        },
+        error: 'Não consegui gerar uma inspiração agora, tente novamente em instantes.',
       },
       {
-        status: 200,
+        status: 500,
         headers: NO_STORE_HEADERS,
       }
     )
