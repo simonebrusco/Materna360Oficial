@@ -13,7 +13,6 @@ type EmotionalFeature = 'daily_inspiration' | 'weekly_overview'
 
 type EmotionalRequestBody = {
   feature?: EmotionalFeature
-  origin?: string | null
   focus?: string | null
 }
 
@@ -43,13 +42,10 @@ export async function POST(req: Request) {
     // -----------------------------------------
     if (feature === 'weekly_overview') {
       const result = await callMaternaAI({
-        mode: 'daily-inspiration', // <- modo permitido pelo maternaCore
+        mode: 'daily-inspiration', // usamos o mesmo modo, mas o core pode tratar como resumo
         profile,
         child,
-        context: {
-          origin: body?.origin ?? null,
-          variant: 'weekly', // dica pro core gerar visão semanal
-        },
+        context: {}, // DailyInspirationContext não recebe origin/variant
       })
 
       return NextResponse.json(
@@ -71,9 +67,7 @@ export async function POST(req: Request) {
       profile,
       child,
       context: {
-        origin: body?.origin ?? null,
         focus: body?.focus ?? null,
-        variant: 'daily',
       },
     })
 
