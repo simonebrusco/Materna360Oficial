@@ -30,6 +30,8 @@ type Inspiration = {
   ritual: string
 }
 
+// ---------- MOCKS (fallback padrão) ----------
+
 function mockGenerateIdeas(): Promise<QuickIdea[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -58,8 +60,7 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
         {
           id: 'recipe-1',
           title: 'Creminho de aveia rápida',
-          description:
-            'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
+          description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
           timeLabel: 'Pronto em ~10 min',
           ageLabel: 'a partir de 1 ano',
           preparation:
@@ -100,6 +101,41 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   })
 }
 
+// ---------- IA de receitas com fallback suave ----------
+
+async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'recipes',
+        origin: 'rotina-leve',
+        // v1: ainda sem filtros avançados. No futuro podemos enviar idade da criança,
+        // período do dia, etc.
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const recipes = data?.recipes
+
+    if (!Array.isArray(recipes) || recipes.length === 0) {
+      throw new Error('Nenhuma receita recebida')
+    }
+
+    return recipes as GeneratedRecipe[]
+  } catch (error) {
+    console.error('[Rotina Leve] Erro na IA de receitas, usando fallback:', error)
+    // Experiência suave: a mãe não precisa saber que foi erro de IA.
+    toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
+    return await mockGenerateRecipes()
+  }
+}
+
 export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
@@ -117,7 +153,7 @@ export default function RotinaLevePage() {
   const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
-  // Ideias Rápidas - Filter State (simple, explicit)
+  // Ideias Rápidas - Filtros
   const [tempoDisponivel, setTempoDisponivel] = useState<string | null>(null)
   const [comQuem, setComQuem] = useState<string | null>(null)
   const [tipoIdeia, setTipoIdeia] = useState<string | null>(null)
@@ -140,10 +176,8 @@ export default function RotinaLevePage() {
         },
       })
       console.log('[Rotina Leve] Idea saved to planner')
-      toast.success('Ideia salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving idea:', error)
-      toast.danger('Não foi possível salvar a ideia agora.')
     }
   }
 
@@ -162,10 +196,8 @@ export default function RotinaLevePage() {
       })
       setUsedRecipesToday((prev) => prev + 1)
       console.log(`[Rotina Leve] Recipe "${recipe.title}" saved to planner`)
-      toast.success('Receita salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
-      toast.danger('Não foi possível salvar a receita agora.')
     }
   }
 
@@ -186,129 +218,26 @@ export default function RotinaLevePage() {
         },
       })
       console.log('[Rotina Leve] Inspiration saved to planner')
-      toast.success('Inspiração salva no planner!')
     } catch (error) {
       console.error('[Rotina Leve] Error saving inspiration:', error)
-      toast.danger('Não foi possível salvar a inspiração agora.')
     }
   }
 
-  // 🔗 Receitas Inteligentes conectadas à IA com fallback seguro
   const handleGenerateRecipes = async () => {
-    if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
-      toast.info('Você já usou todas as sugestões de hoje. Amanhã tem mais 💗')
-      return
-    }
-
     setRecipesLoading(true)
     try {
-      const res = await fetch('/api/ai/rotina', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          feature: 'recipes',
-          limit: 3,
-          context: {
-            origin: 'rotina-leve',
-            idadeReferenciaMeses: 24,
-          },
-        }),
-      })
-
-      if (!res.ok) {
-        console.error('[Rotina Leve] IA recipes: response not OK', await res.text())
-        const fallback = await mockGenerateRecipes()
-        setRecipes(fallback)
-        toast.info(
-          'Usei sugestões do Materna360 enquanto ajustamos suas receitas inteligentes.'
-        )
-        return
-      }
-
-      const data: any = await res.json()
-
-      const mapped: GeneratedRecipe[] =
-        data?.recipes && Array.isArray(data.recipes) && data.recipes.length > 0
-          ? data.recipes.map((r: any, index: number) => ({
-              id: r.id || `recipe-${index + 1}`,
-              title: r.title || r.nome || 'Sugestão rápida para hoje',
-              description: r.description || r.resumo || '',
-              timeLabel: r.timeLabel || r.tempoPreparo || 'Pronto em poucos minutos',
-              ageLabel: r.ageLabel || r.faixaEtaria || 'a partir de 1 ano',
-              preparation: r.preparation || r.modoPreparo || '',
-            }))
-          : await mockGenerateRecipes()
-
-      setRecipes(mapped)
-    } catch (error) {
-      console.error('[Rotina Leve] Error generating recipes via IA:', error)
-      const fallback = await mockGenerateRecipes()
-      setRecipes(fallback)
-      toast.info(
-        'Usei sugestões do Materna360 enquanto ajustamos suas receitas inteligentes.'
-      )
+      const result = await generateRecipesWithAI()
+      setRecipes(result)
     } finally {
       setRecipesLoading(false)
     }
   }
 
-  // 🔗 Ideias Rápidas conectadas à IA com fallback seguro
   const handleGenerateIdeas = async () => {
     setIdeasLoading(true)
-    try {
-      const res = await fetch('/api/ai/rotina', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          feature: 'quick_ideas',
-          limit: 3,
-          context: {
-            origin: 'rotina-leve',
-            tempoDisponivel,
-            comQuem,
-            tipoIdeia,
-          },
-        }),
-      })
-
-      if (!res.ok) {
-        console.error('[Rotina Leve] IA quick_ideas: response not OK', await res.text())
-        const fallback = await mockGenerateIdeas()
-        setIdeas(fallback)
-        toast.info(
-          'Usei sugestões do Materna360 enquanto ajustamos suas ideias rápidas.'
-        )
-        return
-      }
-
-      const data: any = await res.json()
-
-      const mapped: QuickIdea[] =
-        data?.ideas && Array.isArray(data.ideas) && data.ideas.length > 0
-          ? data.ideas.map((idea: any, index: number) => ({
-              id: idea.id || `idea-${index + 1}`,
-              text:
-                idea.text ||
-                idea.descricao ||
-                'Uma pequena ação para deixar seu dia mais leve.',
-            }))
-          : await mockGenerateIdeas()
-
-      setIdeas(mapped)
-    } catch (error) {
-      console.error('[Rotina Leve] Error generating quick ideas via IA:', error)
-      const fallback = await mockGenerateIdeas()
-      setIdeas(fallback)
-      toast.info(
-        'Usei sugestões do Materna360 enquanto ajustamos suas ideias rápidas.'
-      )
-    } finally {
-      setIdeasLoading(false)
-    }
+    const result = await mockGenerateIdeas()
+    setIdeas(result)
+    setIdeasLoading(false)
   }
 
   const handleGenerateInspiration = async () => {
@@ -317,6 +246,9 @@ export default function RotinaLevePage() {
     setInspiration(result)
     setInspirationLoading(false)
   }
+
+  const hasRecipes = recipes && recipes.length > 0
+  const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
 
   return (
     <PageTemplate
@@ -341,7 +273,7 @@ export default function RotinaLevePage() {
                   </p>
                 </div>
 
-                {/* Form Inputs */}
+                {/* Form Inputs (ainda estático na v1) */}
                 <div className="space-y-3 text-xs">
                   <div className="space-y-1">
                     <p className="font-medium text-[#2f3a56]">Ingrediente principal</p>
@@ -405,7 +337,7 @@ export default function RotinaLevePage() {
                     sugestões do seu plano.
                   </p>
 
-                  {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
+                  {isOverLimit && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
                       Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
                       mais 💗
@@ -423,15 +355,13 @@ export default function RotinaLevePage() {
                     </div>
                   )}
 
-                  {!recipesLoading && recipes && recipes.length > 0 && (
+                  {!recipesLoading && hasRecipes && (
                     <>
                       <p className="text-xs font-medium text-[#2f3a56]">
                         Sugestões de hoje (até 3)
                       </p>
                       <div className="space-y-3">
-                        {recipes.slice(0, 3).map((recipe) => {
-                          const hasRecipes = recipes && recipes.length > 0
-                          const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
+                        {recipes!.slice(0, 3).map((recipe) => {
                           const canSave = hasRecipes && !isOverLimit
 
                           return (
@@ -628,7 +558,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Só eu
@@ -701,7 +631,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Organização da casa
@@ -718,7 +648,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Autocuidado
@@ -735,7 +665,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Receita rápida
