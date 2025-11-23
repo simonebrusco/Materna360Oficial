@@ -1,41 +1,50 @@
 // app/lib/ai/profileAdapter.ts
 
-export type MaternaChildProfile = {
-  name?: string
-  ageInMonths?: number | null
-  ageInYears?: number | null
-}
+import {
+  type MaternaProfile,
+  type MaternaChildProfile,
+} from '@/app/lib/ai/maternaCore'
+import { adaptEu360ProfileToMaterna } from '@/app/lib/ai/eu360ProfileAdapter'
 
-export type MaternaUserProfile = {
-  motherName?: string
-  mainChallenges?: string[]
-  availableTimePerDayMinutes?: number | null
-  energyLevel?: 'baixa' | 'media' | 'alta' | null
-  children?: MaternaChildProfile[]
+export type MaternaContext = {
+  profile: MaternaProfile | null
+  child: MaternaChildProfile | null
 }
 
 /**
- * Tipo de contexto base que será passado para a IA.
+ * Carrega o perfil da mãe + criança principal a partir do Eu360,
+ * usando a mesma API interna já existente.
+ *
+ * Esse adapter existe para evitar duplicar essa lógica em cada endpoint de IA.
  */
-export type BaseAIContext = {
-  profile: MaternaUserProfile | null
-}
+export async function loadMaternaContextFromRequest(
+  req: Request
+): Promise<MaternaContext> {
+  try {
+    const url = new URL('/api/eu360/profile', req.url)
 
-/**
- * Aqui vamos buscar o perfil real armazenado no EU360.
- * POR ENQUANTO, retornamos null para garantir segurança.
- * Depois vamos integrar com sua fonte real (Supabase, API interna ou persist local).
- */
-export async function getMaternaProfile(): Promise<MaternaUserProfile | null> {
-  // TODO: integrar com o perfil real do EU360.
-  // Temporariamente retornamos null para não quebrar fluxos.
-  return null
-}
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        // repassa cookies para manter o contexto da usuária
+        cookie: req.headers.get('cookie') ?? '',
+      },
+      cache: 'no-store',
+    })
 
-/**
- * Constrói o contexto base da IA usando o perfil da mãe.
- */
-export async function buildAIContextFromProfile(): Promise<BaseAIContext> {
-  const profile = await getMaternaProfile()
-  return { profile }
+    if (!res.ok) {
+      return { profile: null, child: null }
+    }
+
+    const data = await res.json().catch(() => null)
+
+    return adaptEu360ProfileToMaterna(data)
+  } catch (error) {
+    console.debug(
+      '[profileAdapter] Falha ao carregar Eu360, usando contexto neutro:',
+      error
+    )
+
+    return { profile: null, child: null }
+  }
 }
