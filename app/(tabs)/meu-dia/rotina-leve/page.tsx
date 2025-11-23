@@ -107,27 +107,63 @@ function mockGenerateInspiration(): Promise<Inspiration> {
 
 async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
   try {
-    const res = await fetch('/api/ai/rotina', {
+    const res = await fetch('/api/ai/rotina-leve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        feature: 'recipes',
-        origin: 'rotina-leve',
+        context: {
+          mood: 'cansada',
+          energy: 'baixa',
+          timeOfDay: 'hoje',
+          hasKidsAround: true,
+          availableMinutes: 15,
+        },
+        prompt: 'receitas-inteligentes-rotina-leve',
       }),
     })
 
     if (!res.ok) {
-      throw new Error('Resposta inválida da IA')
+      throw new Error(`Resposta inválida da IA: status ${res.status}`)
     }
 
-    const data = await res.json()
-    const recipes = data?.recipes
-
-    if (!Array.isArray(recipes) || recipes.length === 0) {
-      throw new Error('Nenhuma receita recebida')
+    const data = (await res.json()) as {
+      suggestions?: Array<{
+        id?: string
+        category?: string
+        title?: string
+        description?: string
+        timeLabel?: string
+        ageLabel?: string
+        preparation?: string
+      }>
     }
 
-    return recipes as GeneratedRecipe[]
+    const rawSuggestions = Array.isArray(data.suggestions)
+      ? data.suggestions
+      : []
+
+    const recipeSuggestions = rawSuggestions.filter(
+      (s) => s.category === 'receita-inteligente'
+    )
+
+    if (recipeSuggestions.length === 0) {
+      throw new Error('Nenhuma receita recebida da IA')
+    }
+
+    const mapped: GeneratedRecipe[] = recipeSuggestions.map((s, index) => ({
+      id: s.id ?? `ai-recipe-${index}`,
+      title: s.title ?? 'Sugestão rápida de lanche',
+      description:
+        s.description ??
+        'Uma opção simples para o dia de hoje, pensada para ser prática e gentil com a sua rotina.',
+      timeLabel: s.timeLabel ?? '10–15 minutos',
+      ageLabel: s.ageLabel ?? 'A partir de 2 anos (adaptando texturas)',
+      preparation:
+        s.preparation ??
+        '1. Separe um ingrediente principal que você já tenha em casa.\n2. Combine com uma base simples (fruta, iogurte, pão ou legume).\n3. Ajuste a textura para a idade do seu filho.\n4. Sirva sem pressa, transformando em um pequeno momento de conexão.',
+    }))
+
+    return mapped
   } catch (error) {
     console.error('[Rotina Leve] Erro na IA de receitas, usando fallback:', error)
     toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
@@ -417,9 +453,9 @@ export default function RotinaLevePage() {
 
                   <p className="text-[11px] text-[#545454]">
                     Hoje você já usou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
-                      </span>{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
+                    </span>{' '}
                     sugestões do seu plano.
                   </p>
 
@@ -582,7 +618,7 @@ export default function RotinaLevePage() {
                           </button>
 
                           <button
-                            type="button"
+                            type="button'
                             onClick={() =>
                               setTempoDisponivel((current) => (current === '10' ? null : '10'))
                             }
