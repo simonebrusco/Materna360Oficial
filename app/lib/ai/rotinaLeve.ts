@@ -1,4 +1,4 @@
-// lib/ai/rotinaLeve.ts
+// app/lib/ai/rotinaLeve.ts
 
 export type RotinaLeveMood =
   | 'leve'
@@ -40,6 +40,10 @@ export interface RotinaLeveSuggestion {
   description: string
   timeLabel?: string
   ageLabel?: string
+  /**
+   * Campo opcional pensado principalmente para receitas inteligentes.
+   */
+  preparation?: string
 }
 
 /**
@@ -64,40 +68,59 @@ export async function generateRotinaLeveSuggestions(
 ): Promise<RotinaLeveSuggestion[]> {
   const useMock = options?.mock ?? true
 
-  if (useMock) {
-    const mood = request.context.mood ?? 'com o dia cheio'
-    const energy = request.context.energy ?? 'com a energia oscilando'
-    const timeOfDay = request.context.timeOfDay ?? 'hoje'
-
-    return [
-      {
-        id: 'mock-ideia-rapida-1',
-        category: 'ideia-rapida',
-        title: 'Micro pausa de respiro',
-        description: `Separe 5 minutos ${timeOfDay} para respirar fundo, alongar os ombros e tomar um copo de água. Para uma mãe ${mood}, pequenos respiros já fazem diferença.`,
-        timeLabel: '5 minutos',
-      },
-      {
-        id: 'mock-receita-1',
-        category: 'receita-inteligente',
-        title: 'Lanche rápido de energia gentil',
-        description:
-          'Uma combinação simples de fruta picada + iogurte natural + aveia. Poucos passos, quase nenhuma louça e um lanche que ajuda a segurar a fome sem complicar.',
-        timeLabel: '10–15 minutos',
-        ageLabel: 'A partir de 2 anos (adaptando texturas)',
-      },
-      {
-        id: 'mock-inspiracao-1',
-        category: 'inspiracao-do-dia',
-        title: 'Você não precisa dar conta de tudo',
-        description:
-          'Hoje, escolha uma coisa que pode ficar para depois. Cuidar de você também é cuidar da família. Um passo de cada vez já é muito.',
-      },
-    ]
+  if (!useMock) {
+    // 🚫 Caminho protegido enquanto não houver integração real de IA
+    throw new Error(
+      'Rotina Leve AI service não implementado para modo não-mock.'
+    )
   }
 
-  // 🚫 Caminho protegido enquanto não houver integração real de IA
-  throw new Error(
-    'Rotina Leve AI service não implementado para modo não-mock.'
-  )
+  const { mood, energy, timeOfDay, hasKidsAround, availableMinutes } =
+    request.context
+
+  const moodText = mood ?? 'com o dia cheio'
+  const energyText = energy ?? 'com a energia oscilando'
+  const timeOfDayText = timeOfDay ?? 'hoje'
+
+  const whoIsAround = hasKidsAround
+    ? 'com o seu filho por perto'
+    : 'em um momento mais seu'
+  const minutesText =
+    typeof availableMinutes === 'number' && availableMinutes > 0
+      ? `${availableMinutes} minutos`
+      : 'alguns minutinhos'
+
+  return [
+    // Ideia rápida
+    {
+      id: 'mock-ideia-rapida-1',
+      category: 'ideia-rapida',
+      title: 'Micro pausa de conexão',
+      description: `Separe ${minutesText} ${timeOfDayText} para uma pequena ação ${whoIsAround}. Pode ser uma mini brincadeira, um abraço demorado ou apenas respirar fundo juntas. Para uma mãe ${moodText} e ${energyText}, o importante não é o tamanho do momento, e sim a qualidade.`,
+      timeLabel: minutesText,
+    },
+
+    // Receita inteligente
+    {
+      id: 'mock-receita-inteligente-1',
+      category: 'receita-inteligente',
+      title: 'Lanche rápido de energia gentil',
+      description:
+        'Uma combinação simples de fruta picada + iogurte natural + aveia. Poucos passos, quase nenhuma louça e um lanche que ajuda a segurar a fome sem complicar.',
+      timeLabel: '10–15 minutos',
+      ageLabel: 'A partir de 2 anos (adaptando texturas)',
+      preparation:
+        '1. Pique uma fruta que você já tenha em casa (banana, maçã, pera ou mamão).\n2. Coloque em um potinho com 2–3 colheres de iogurte natural integral.\n3. Finalize com 1 colher de sopa de aveia em flocos.\n4. Misture tudo com calma, envolvendo seu filho na preparação, se fizer sentido no seu momento.',
+    },
+
+    // Inspiração do dia
+    {
+      id: 'mock-inspiracao-1',
+      category: 'inspiracao-do-dia',
+      title: 'Você não precisa dar conta de tudo',
+      description:
+        'Hoje, escolha uma coisa que pode ficar para depois. Cuidar de você também é cuidar da família. Um passo de cada vez já é muito.',
+      timeLabel: timeOfDayText,
+    },
+  ]
 }
