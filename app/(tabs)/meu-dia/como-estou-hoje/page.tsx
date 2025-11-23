@@ -23,6 +23,12 @@ type WeeklyInsight = {
   }
 }
 
+type DailyInsight = {
+  title: string
+  body: string
+  gentleReminder: string
+}
+
 // Insight semanal emocional via IA + fallback suave
 async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
   try {
@@ -77,6 +83,51 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
   }
 }
 
+// Insight do dia (emocional) via IA + fallback suave
+async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
+  try {
+    const res = await fetch('/api/ai/emocional', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'daily_insight',
+        origin: 'como-estou-hoje',
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const insight = data?.dailyInsight
+
+    if (!insight || typeof insight !== 'object') {
+      throw new Error('Insight diário vazio')
+    }
+
+    return {
+      title: insight.title ?? 'Um olhar gentil para o seu dia',
+      body:
+        insight.body ??
+        'Pelos sinais que você tem dado, parece que o dia de hoje veio com uma mistura de cansaço e responsabilidade. Mesmo assim, você continua aparecendo para a sua família – isso já é enorme.',
+      gentleReminder:
+        insight.gentleReminder ??
+        'Você não precisa fazer tudo hoje. Escolha uma coisa importante e permita que o resto seja “suficientemente bom”.',
+    }
+  } catch (error) {
+    console.error('[Como Estou Hoje] Erro ao buscar insight do dia, usando fallback:', error)
+    // Fallback carinhoso
+    return {
+      title: 'Um olhar gentil para o seu dia',
+      body:
+        'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.',
+      gentleReminder:
+        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo, tomar um café quente ou ficar em silêncio por um momento.',
+    }
+  }
+}
+
 export default function ComoEstouHojePage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [selectedHumor, setSelectedHumor] = useState<string | null>(null)
@@ -89,6 +140,10 @@ export default function ComoEstouHojePage() {
   // Insight semanal
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
   const [loadingWeeklyInsight, setLoadingWeeklyInsight] = useState(false)
+
+  // Insight diário
+  const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null)
+  const [loadingDailyInsight, setLoadingDailyInsight] = useState(false)
 
   // Mark as hydrated on mount
   useEffect(() => {
@@ -131,6 +186,31 @@ export default function ComoEstouHojePage() {
     }
 
     loadInsight()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // Load daily emotional insight once
+  useEffect(() => {
+    let isMounted = true
+
+    const loadDaily = async () => {
+      setLoadingDailyInsight(true)
+      try {
+        const result = await fetchDailyEmotionalInsight()
+        if (isMounted) {
+          setDailyInsight(result)
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingDailyInsight(false)
+        }
+      }
+    }
+
+    loadDaily()
 
     return () => {
       isMounted = false
@@ -188,6 +268,33 @@ export default function ComoEstouHojePage() {
       })
     } catch {}
     toast.success('Notas salvas!')
+  }
+
+  const handleSaveDailyInsightToPlanner = () => {
+    const insightToSave = dailyInsight ?? {
+      title: 'Insight do dia',
+      body:
+        'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.',
+      gentleReminder:
+        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo, tomar um café quente ou ficar em silêncio por um momento.',
+    }
+
+    addItem({
+      origin: 'como-estou-hoje',
+      type: 'insight',
+      title: insightToSave.title,
+      payload: {
+        text: insightToSave.body,
+        gentleReminder: insightToSave.gentleReminder,
+      },
+    })
+
+    try {
+      track('daily_insight.saved', {
+        tab: 'como-estou-hoje',
+      })
+    } catch {}
+    toast.success('Insight salvo no planner!')
   }
 
   return (
@@ -334,7 +441,7 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 3: Insight do Dia (IA) – ainda placeholder editorial */}
+            {/* CARD 3: Insight do Dia (agora conectado e integrado ao Planner) */}
             <Reveal delay={100}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]">
                 <div className="mb-4">
@@ -345,19 +452,38 @@ export default function ComoEstouHojePage() {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-sm leading-relaxed text-[#545454]">
-                    Ao longo da semana, você tem registrado momentos de alta energia principalmente
-                    à noite. Isso pode ser uma oportunidade para planejar tarefas importantes nesse
-                    horário.
-                  </p>
-                  <p className="text-sm leading-relaxed text-[#545454]">
-                    Quando você está neutro ou cansada, suas prioridades tendem a se concentrar em
-                    autocuidado. Isso é um padrão saudável — respeite seu ritmo.
-                  </p>
+                  {loadingDailyInsight ? (
+                    <p className="text-sm leading-relaxed text-[#545454]">
+                      Estou olhando com carinho para o seu dia para trazer uma reflexão para você…
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-relaxed text-[#545454]">
+                        {dailyInsight?.body ??
+                          'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.'}
+                      </p>
+                      <div className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 p-3">
+                        <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">
+                          Lembrete suave para hoje
+                        </p>
+                        <p className="text-sm text-[#545454]">
+                          {dailyInsight?.gentleReminder ??
+                            'Se conseguir, separe alguns minutos só seus – mesmo que seja para respirar fundo em silêncio.'}
+                        </p>
+                      </div>
+                    </>
+                  )}
 
-                  <button className="mt-4 text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1">
-                    Ver insight detalhado <AppIcon name="arrow-right" size={14} decorative />
-                  </button>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleSaveDailyInsightToPlanner}
+                      className="mt-2 text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1"
+                    >
+                      Levar este insight para o planner
+                      <AppIcon name="arrow-right" size={14} decorative />
+                    </button>
+                  </div>
                 </div>
               </SoftCard>
             </Reveal>
@@ -373,7 +499,7 @@ export default function ComoEstouHojePage() {
               </h2>
             </div>
 
-            {/* CARD 4: Minha Semana Emocional (agora conectado à IA) */}
+            {/* CARD 4: Minha Semana Emocional (conectado à IA) */}
             <Reveal delay={150}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="mb-6">
