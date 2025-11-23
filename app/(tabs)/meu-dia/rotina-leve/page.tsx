@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { toast } from '@/app/lib/toast'
+import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
 
 type QuickIdea = {
   id: string
@@ -191,7 +192,6 @@ export default function RotinaLevePage() {
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
 
   // Ideias Rápidas
-  const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
   // Ideias Rápidas - Filtros
@@ -203,6 +203,12 @@ export default function RotinaLevePage() {
   const [inspirationLoading, setInspirationLoading] = useState(false)
   const [inspiration, setInspiration] = useState<Inspiration | null>(null)
   const [focusOfDay, setFocusOfDay] = useState<string>('Cansaço')
+
+  const {
+    suggestions: aiSuggestions,
+    isLoading: ideasLoading,
+    requestSuggestions,
+  } = useRotinaAISuggestions()
 
   const { addItem, getByOrigin } = usePlannerSavedContents()
 
@@ -216,6 +222,22 @@ export default function RotinaLevePage() {
   )
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
+
+  // Quando a IA da Rotina Leve retornar sugestões, convertemos para QuickIdea
+  useEffect(() => {
+    if (!aiSuggestions || aiSuggestions.length === 0) return
+
+    const quickIdeas: QuickIdea[] = aiSuggestions
+      .filter((s) => s.category === 'ideia-rapida')
+      .map((s, index) => ({
+        id: s.id || `ai-idea-${index}`,
+        text: s.description || s.title,
+      }))
+
+    if (quickIdeas.length > 0) {
+      setIdeas(quickIdeas)
+    }
+  }, [aiSuggestions])
 
   const handleSaveIdeia = () => {
     try {
@@ -287,10 +309,23 @@ export default function RotinaLevePage() {
   }
 
   const handleGenerateIdeas = async () => {
-    setIdeasLoading(true)
-    const result = await mockGenerateIdeas()
-    setIdeas(result)
-    setIdeasLoading(false)
+    await requestSuggestions({
+      // Contexto inicial simples; no futuro podemos conectar com humor/energia reais do Planner
+      mood: 'cansada',
+      energy: 'baixa',
+      timeOfDay: 'hoje',
+      hasKidsAround: comQuem !== 'so-eu',
+      availableMinutes:
+        tempoDisponivel === '5'
+          ? 5
+          : tempoDisponivel === '10'
+          ? 10
+          : tempoDisponivel === '20'
+          ? 20
+          : tempoDisponivel === '30+'
+          ? 30
+          : undefined,
+    })
   }
 
   const handleGenerateInspiration = async () => {
@@ -382,9 +417,9 @@ export default function RotinaLevePage() {
 
                   <p className="text-[11px] text-[#545454]">
                     Hoje você já usou{' '}
-                    <span className="font-semibold text-[#2f3a56]">
-                      {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
-                    </span>{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
+                      </span>{' '}
                     sugestões do seu plano.
                   </p>
 
@@ -537,7 +572,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '5' ? null : '5'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '5'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -552,7 +587,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '10' ? null : '10'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '10'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -567,7 +602,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '20' ? null : '20'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '20'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -582,7 +617,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '30+'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -602,10 +637,10 @@ export default function RotinaLevePage() {
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Só eu
@@ -619,10 +654,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Eu e meu filho
@@ -636,10 +671,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Família toda
@@ -658,10 +693,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Brincadeira
@@ -675,10 +710,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Organização da casa
@@ -692,10 +727,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Autocuidado
@@ -709,10 +744,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Receita rápida
