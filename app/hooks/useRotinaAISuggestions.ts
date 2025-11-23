@@ -1,65 +1,61 @@
-'use client'
+// app/hooks/useRotinaAISuggestions.ts
 
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import {
-  getRotinaAISuggestions,
-  type RotinaAIResponse,
-  type RotinaAIRequestPayload,
-  type RotinaMode,
-} from '@/app/lib/ai/rotina'
+  type RotinaLeveContext,
+  type RotinaLeveSuggestion,
+} from '@/app/lib/ai/rotinaLeve'
+import { fetchRotinaLeveSuggestions } from '@/app/lib/ai/rotinaLeveClient'
 
-interface UseRotinaAISuggestionsOptions {
-  defaultMode?: RotinaMode
+export type UseRotinaAISuggestionsState = {
+  suggestions: RotinaLeveSuggestion[]
+  isLoading: boolean
+  error: string | null
 }
 
-interface UseRotinaAISuggestionsResult {
-  loading: boolean
-  error: string | null
-  data: RotinaAIResponse | null
-  call: (overridePayload?: Partial<RotinaAIRequestPayload>) => Promise<void>
+export type UseRotinaAISuggestionsResult = UseRotinaAISuggestionsState & {
+  /**
+   * Dispara manualmente a geração de sugestões de IA
+   * com base no contexto atual da Rotina Leve.
+   */
+  requestSuggestions: (context: RotinaLeveContext) => Promise<void>
 }
 
 /**
- * Hook client-side para consumir a IA da Rotina Leve de forma segura.
- * Ainda NÃO está acoplado a nenhum componente de UI.
+ * Hook de alto nível para consumir a IA da Rotina Leve.
+ *
+ * Não faz chamadas automáticas: sempre depende do `requestSuggestions`,
+ * deixando o componente no controle total de quando disparar a IA.
  */
-export function useRotinaAISuggestions(
-  options: UseRotinaAISuggestionsOptions = {},
-): UseRotinaAISuggestionsResult {
-  const { defaultMode = 'ideias_rapidas' } = options
-
-  const [loading, setLoading] = useState(false)
+export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
+  const [suggestions, setSuggestions] = useState<RotinaLeveSuggestion[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<RotinaAIResponse | null>(null)
 
-  const call = useCallback(
-    async (overridePayload?: Partial<RotinaAIRequestPayload>) => {
-      setLoading(true)
+  const requestSuggestions = useCallback(
+    async (context: RotinaLeveContext) => {
+      setIsLoading(true)
       setError(null)
 
-      try {
-        const payload: RotinaAIRequestPayload = {
-          mode: defaultMode,
-          locale: 'pt-BR',
-          ...overridePayload,
-        }
+      const result = await fetchRotinaLeveSuggestions(context)
 
-        const response = await getRotinaAISuggestions(payload)
-        setData(response)
-      } catch (err) {
-        console.error('[useRotinaAISuggestions] error', err)
-        setError('Não foi possível carregar sugestões no momento.')
-      } finally {
-        setLoading(false)
+      if (!result.ok) {
+        setIsLoading(false)
+        setSuggestions([])
+        setError(result.error || 'Não foi possível gerar sugestões agora.')
+        return
       }
+
+      setIsLoading(false)
+      setSuggestions(result.suggestions)
     },
-    [defaultMode],
+    []
   )
 
   return {
-    loading,
+    suggestions,
+    isLoading,
     error,
-    data,
-    call,
+    requestSuggestions,
   }
 }
