@@ -8,6 +8,7 @@ import {
   type RotinaComQuem,
   type RotinaTipoIdeia,
 } from '@/app/lib/ai/maternaCore'
+import { adaptEu360ProfileToMaterna } from '@/app/lib/ai/eu360ProfileAdapter'
 
 export const runtime = 'nodejs'
 
@@ -31,14 +32,40 @@ const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
 }
 
+// Carrega perfil + criança principal a partir do Eu360, com fallback neutro
+async function loadMaternaContext(
+  req: Request
+): Promise<{ profile: MaternaProfile | null; child: MaternaChildProfile | null }> {
+  try {
+    const url = new URL('/api/eu360/profile', req.url)
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        // repassa cookies para manter o contexto da usuária
+        cookie: req.headers.get('cookie') ?? '',
+      },
+      cache: 'no-store',
+    })
+
+    if (!res.ok) {
+      return { profile: null, child: null }
+    }
+
+    const data = await res.json().catch(() => null)
+    return adaptEu360ProfileToMaterna(data)
+  } catch (error) {
+    console.debug('[API /api/ai/rotina] Falha ao carregar Eu360, usando contexto neutro:', error)
+    return { profile: null, child: null }
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as RotinaRequestBody
 
-    // 🔐 Por enquanto, ainda sem leitura profunda do EU360 aqui.
-    // Mantemos a estrutura pronta para, no futuro, conectar Supabase / perfil real.
-    const profile: MaternaProfile | null = null
-    const child: MaternaChildProfile | null = null
+    // Agora tentamos personalizar com base no Eu360 (mas com fallback seguro)
+    const { profile, child } = await loadMaternaContext(req)
 
     // -----------------------------------------
     // 1) IDEIAS RÁPIDAS (modo quick-ideas)
