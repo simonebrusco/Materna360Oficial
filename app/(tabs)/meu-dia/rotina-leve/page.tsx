@@ -60,7 +60,8 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
         {
           id: 'recipe-1',
           title: 'Creminho de aveia rápida',
-          description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
+          description:
+            'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
           timeLabel: 'Pronto em ~10 min',
           ageLabel: 'a partir de 1 ano',
           preparation:
@@ -111,8 +112,6 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
       body: JSON.stringify({
         feature: 'recipes',
         origin: 'rotina-leve',
-        // v1: ainda sem filtros avançados. No futuro podemos enviar idade da criança,
-        // período do dia, etc.
       }),
     })
 
@@ -130,7 +129,6 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
     return recipes as GeneratedRecipe[]
   } catch (error) {
     console.error('[Rotina Leve] Erro na IA de receitas, usando fallback:', error)
-    // Experiência suave: a mãe não precisa saber que foi erro de IA.
     toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
     return await mockGenerateRecipes()
   }
@@ -206,7 +204,18 @@ export default function RotinaLevePage() {
   const [inspiration, setInspiration] = useState<Inspiration | null>(null)
   const [focusOfDay, setFocusOfDay] = useState<string>('Cansaço')
 
-  const { addItem } = usePlannerSavedContents()
+  const { addItem, getByOrigin } = usePlannerSavedContents()
+
+  // Dados agregados do Planner para este mini-hub
+  const plannerItemsFromRotinaLeve = getByOrigin('rotina-leve')
+  const savedRecipesCount = plannerItemsFromRotinaLeve.filter(
+    (item) => item.type === 'recipe'
+  ).length
+  const savedInsights = plannerItemsFromRotinaLeve.filter(
+    (item) => item.type === 'insight'
+  )
+  const savedInspirationCount = savedInsights.length
+  const lastInspiration = savedInsights[savedInsights.length - 1]
 
   const handleSaveIdeia = () => {
     try {
@@ -304,13 +313,11 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        {/* SectionWrapper */}
         <div className="mx-auto max-w-5xl px-4 py-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
               <div className="space-y-6 flex flex-col">
-                {/* Card Header with Editorial Underline */}
                 <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                   <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                     Receitas Inteligentes
@@ -320,7 +327,6 @@ export default function RotinaLevePage() {
                   </p>
                 </div>
 
-                {/* Form Inputs (ainda estático na v1) */}
                 <div className="space-y-3 text-xs">
                   <div className="space-y-1">
                     <p className="font-medium text-[#2f3a56]">Ingrediente principal</p>
@@ -358,13 +364,11 @@ export default function RotinaLevePage() {
                   </div>
                 </div>
 
-                {/* Age Rule Message */}
                 <p className="text-[11px] text-[#545454]">
                   Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
                   sempre a orientação do pediatra.
                 </p>
 
-                {/* Generate Button + Plan Counter */}
                 <div className="space-y-2">
                   <Button
                     variant="primary"
@@ -392,7 +396,6 @@ export default function RotinaLevePage() {
                   )}
                 </div>
 
-                {/* Recipes Results */}
                 <div className="space-y-3">
                   {recipesLoading && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
@@ -416,7 +419,6 @@ export default function RotinaLevePage() {
                               key={recipe.id}
                               className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
                             >
-                              {/* Collapsed state */}
                               <div
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
                                 onClick={() =>
@@ -454,7 +456,6 @@ export default function RotinaLevePage() {
                                 </div>
                               </div>
 
-                              {/* Expanded state */}
                               {expandedRecipeId === recipe.id && (
                                 <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
                                   <div>
@@ -506,10 +507,9 @@ export default function RotinaLevePage() {
 
             {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Ideias Rápidas - Collapsed by default */}
+              {/* Ideias Rápidas */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
-                  {/* Card Header with Editorial Underline */}
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Ideias Rápidas
@@ -775,10 +775,9 @@ export default function RotinaLevePage() {
                 </div>
               </SoftCard>
 
-              {/* Inspirações do Dia - Collapsed by default */}
+              {/* Inspirações do Dia */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
-                  {/* Card Header with Editorial Underline */}
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Inspirações do Dia
@@ -875,6 +874,57 @@ export default function RotinaLevePage() {
                 </div>
               </SoftCard>
             </div>
+          </div>
+
+          {/* Resumo rápido do que já foi salvo no Planner */}
+          <div className="mt-8">
+            <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                    Seu resumo na Rotina Leve
+                  </p>
+                  {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
+                    <p className="text-sm text-[#545454]">
+                      Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
+                      resumo rápido do que já está no seu planner.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-[#545454]">
+                      Você já salvou{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {savedRecipesCount} receita(s)
+                      </span>{' '}
+                      e{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {savedInspirationCount} inspiração(ões)
+                      </span>{' '}
+                      deste mini-hub no seu planner.
+                    </p>
+                  )}
+                </div>
+
+                {lastInspiration && (
+                  <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
+                    <p className="text-[11px] font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      Última inspiração salva
+                    </p>
+                    {lastInspiration.payload?.frase && (
+                      <p className="text-xs text-[#545454]">
+                        <span className="font-medium">Frase: </span>
+                        {lastInspiration.payload.frase}
+                      </p>
+                    )}
+                    {lastInspiration.payload?.pequenoCuidado && (
+                      <p className="text-xs text-[#545454]">
+                        <span className="font-medium">Cuidado: </span>
+                        {lastInspiration.payload.pequenoCuidado}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </SoftCard>
           </div>
 
           <MotivationalFooter routeKey="meu-dia-rotina-leve" />
