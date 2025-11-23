@@ -69,9 +69,7 @@ export async function POST(req: Request) {
       mode: 'daily-inspiration',
       profile,
       child,
-      context: {
-        focus: body?.focus ?? null,
-      },
+      context: {}, // DailyInspirationContext atual não recebe campos extras
     })
 
     const inspiration =
