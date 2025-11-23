@@ -30,6 +30,8 @@ type Inspiration = {
   ritual: string
 }
 
+// ---------- MOCKS (fallback padrão) ----------
+
 function mockGenerateIdeas(): Promise<QuickIdea[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -58,7 +60,8 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
         {
           id: 'recipe-1',
           title: 'Creminho de aveia rápida',
-          description: 'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
+          description:
+            'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para manhãs corridas.',
           timeLabel: 'Pronto em ~10 min',
           ageLabel: 'a partir de 1 ano',
           preparation:
@@ -99,6 +102,81 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   })
 }
 
+// ---------- IA de receitas com fallback suave ----------
+
+async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'recipes',
+        origin: 'rotina-leve',
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const recipes = data?.recipes
+
+    if (!Array.isArray(recipes) || recipes.length === 0) {
+      throw new Error('Nenhuma receita recebida')
+    }
+
+    return recipes as GeneratedRecipe[]
+  } catch (error) {
+    console.error('[Rotina Leve] Erro na IA de receitas, usando fallback:', error)
+    toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
+    return await mockGenerateRecipes()
+  }
+}
+
+// ---------- IA de inspiração diária com fallback suave ----------
+
+async function generateInspirationWithAI(focus: string | null): Promise<Inspiration> {
+  try {
+    const res = await fetch('/api/ai/emocional', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'daily_inspiration',
+        origin: 'rotina-leve',
+        focus: focus || null,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const inspiration = data?.inspiration
+
+    if (!inspiration || typeof inspiration !== 'object') {
+      throw new Error('Inspiração vazia')
+    }
+
+    return {
+      phrase:
+        inspiration.phrase ??
+        'Você não precisa dar conta de tudo hoje.',
+      care:
+        inspiration.care ??
+        '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
+      ritual:
+        inspiration.ritual ??
+        'Envie uma mensagem carinhosa para alguém que te apoia.',
+    }
+  } catch (error) {
+    console.error('[Rotina Leve] Erro na IA de inspiração, usando fallback:', error)
+    toast.info('Preparei uma inspiração especial pra hoje ✨')
+    return await mockGenerateInspiration()
+  }
+}
+
 export default function RotinaLevePage() {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
@@ -116,7 +194,7 @@ export default function RotinaLevePage() {
   const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
-  // Ideias Rápidas - Filter State (simple, explicit)
+  // Ideias Rápidas - Filtros
   const [tempoDisponivel, setTempoDisponivel] = useState<string | null>(null)
   const [comQuem, setComQuem] = useState<string | null>(null)
   const [tipoIdeia, setTipoIdeia] = useState<string | null>(null)
@@ -124,8 +202,20 @@ export default function RotinaLevePage() {
   // Inspirações do Dia
   const [inspirationLoading, setInspirationLoading] = useState(false)
   const [inspiration, setInspiration] = useState<Inspiration | null>(null)
+  const [focusOfDay, setFocusOfDay] = useState<string>('Cansaço')
 
-  const { addItem } = usePlannerSavedContents()
+  const { addItem, getByOrigin } = usePlannerSavedContents()
+
+  // Dados agregados do Planner para este mini-hub
+  const plannerItemsFromRotinaLeve = getByOrigin('rotina-leve')
+  const savedRecipesCount = plannerItemsFromRotinaLeve.filter(
+    (item) => item.type === 'recipe'
+  ).length
+  const savedInsights = plannerItemsFromRotinaLeve.filter(
+    (item) => item.type === 'insight'
+  )
+  const savedInspirationCount = savedInsights.length
+  const lastInspiration = savedInsights[savedInsights.length - 1]
 
   const handleSaveIdeia = () => {
     try {
@@ -188,9 +278,12 @@ export default function RotinaLevePage() {
 
   const handleGenerateRecipes = async () => {
     setRecipesLoading(true)
-    const result = await mockGenerateRecipes()
-    setRecipes(result)
-    setRecipesLoading(false)
+    try {
+      const result = await generateRecipesWithAI()
+      setRecipes(result)
+    } finally {
+      setRecipesLoading(false)
+    }
   }
 
   const handleGenerateIdeas = async () => {
@@ -202,10 +295,16 @@ export default function RotinaLevePage() {
 
   const handleGenerateInspiration = async () => {
     setInspirationLoading(true)
-    const result = await mockGenerateInspiration()
-    setInspiration(result)
-    setInspirationLoading(false)
+    try {
+      const result = await generateInspirationWithAI(focusOfDay)
+      setInspiration(result)
+    } finally {
+      setInspirationLoading(false)
+    }
   }
+
+  const hasRecipes = recipes && recipes.length > 0
+  const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
 
   return (
     <PageTemplate
@@ -214,13 +313,11 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        {/* SectionWrapper */}
         <div className="mx-auto max-w-5xl px-4 py-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
               <div className="space-y-6 flex flex-col">
-                {/* Card Header with Editorial Underline */}
                 <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                   <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                     Receitas Inteligentes
@@ -230,7 +327,6 @@ export default function RotinaLevePage() {
                   </p>
                 </div>
 
-                {/* Form Inputs */}
                 <div className="space-y-3 text-xs">
                   <div className="space-y-1">
                     <p className="font-medium text-[#2f3a56]">Ingrediente principal</p>
@@ -268,12 +364,11 @@ export default function RotinaLevePage() {
                   </div>
                 </div>
 
-                {/* Age Rule Message */}
                 <p className="text-[11px] text-[#545454]">
-                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir sempre a orientação do pediatra.
+                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
+                  sempre a orientação do pediatra.
                 </p>
 
-                {/* Generate Button + Plan Counter */}
                 <div className="space-y-2">
                   <Button
                     variant="primary"
@@ -293,14 +388,14 @@ export default function RotinaLevePage() {
                     sugestões do seu plano.
                   </p>
 
-                  {usedRecipesToday >= DAILY_RECIPE_LIMIT && (
+                  {isOverLimit && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem mais 💗
+                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
+                      mais 💗
                     </p>
                   )}
                 </div>
 
-                {/* Recipes Results */}
                 <div className="space-y-3">
                   {recipesLoading && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
@@ -310,91 +405,90 @@ export default function RotinaLevePage() {
                     </div>
                   )}
 
-                  {!recipesLoading && recipes && recipes.length > 0 && (
+                  {!recipesLoading && hasRecipes && (
                     <>
-                      <p className="text-xs font-medium text-[#2f3a56]">Sugestões de hoje (até 3)</p>
-                    <div className="space-y-3">
-                      {recipes.slice(0, 3).map((recipe) => {
-                        const hasRecipes = recipes && recipes.length > 0
-                        const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
-                        const canSave = hasRecipes && !isOverLimit
+                      <p className="text-xs font-medium text-[#2f3a56]">
+                        Sugestões de hoje (até 3)
+                      </p>
+                      <div className="space-y-3">
+                        {recipes!.slice(0, 3).map((recipe) => {
+                          const canSave = hasRecipes && !isOverLimit
 
-                        return (
-                        <div
-                          key={recipe.id}
-                          className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
-                        >
-                          {/* Collapsed state */}
-                          <div
-                            className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
-                            onClick={() =>
-                              setExpandedRecipeId(
-                                expandedRecipeId === recipe.id ? null : recipe.id
-                              )
-                            }
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1">
-                                <h4 className="text-sm font-semibold text-[#2f3a56]">
-                                  {recipe.title}
-                                </h4>
-                                <p className="text-xs text-[#545454] mt-1 line-clamp-2">
-                                  {recipe.description}
-                                </p>
-                                <p className="text-[10px] text-[#545454] mt-1.5">
-                                  {recipe.timeLabel} · {recipe.ageLabel}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
+                          return (
+                            <div
+                              key={recipe.id}
+                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                            >
+                              <div
+                                className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
+                                onClick={() =>
                                   setExpandedRecipeId(
                                     expandedRecipeId === recipe.id ? null : recipe.id
                                   )
-                                }}
-                                className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                                }
                               >
-                                {expandedRecipeId === recipe.id
-                                  ? 'Ver menos ↑'
-                                  : 'Ver detalhes →'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Expanded state */}
-                          {expandedRecipeId === recipe.id && (
-                            <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
-                              <div>
-                                <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
-                                  Modo de preparo
-                                </h5>
-                                <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
-                                  {recipe.preparation}
-                                </p>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1">
+                                    <h4 className="text-sm font-semibold text-[#2f3a56]">
+                                      {recipe.title}
+                                    </h4>
+                                    <p className="text-xs text-[#545454] mt-1 line-clamp-2">
+                                      {recipe.description}
+                                    </p>
+                                    <p className="text-[10px] text-[#545454] mt-1.5">
+                                      {recipe.timeLabel} · {recipe.ageLabel}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setExpandedRecipeId(
+                                        expandedRecipeId === recipe.id ? null : recipe.id
+                                      )
+                                    }}
+                                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                                  >
+                                    {expandedRecipeId === recipe.id
+                                      ? 'Ver menos ↑'
+                                      : 'Ver detalhes →'}
+                                  </button>
+                                </div>
                               </div>
 
-                              <p className="text-[10px] text-[#545454] italic">
-                                Lembre-se: adapte sempre às orientações do pediatra.
-                              </p>
+                              {expandedRecipeId === recipe.id && (
+                                <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
+                                  <div>
+                                    <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
+                                      Modo de preparo
+                                    </h5>
+                                    <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
+                                      {recipe.preparation}
+                                    </p>
+                                  </div>
 
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleSaveRecipe(recipe)}
-                                disabled={!canSave}
-                                className="w-full"
-                              >
-                                Salvar esta receita no planner
-                              </Button>
+                                  <p className="text-[10px] text-[#545454] italic">
+                                    Lembre-se: adapte sempre às orientações do pediatra.
+                                  </p>
+
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleSaveRecipe(recipe)}
+                                    disabled={!canSave}
+                                    className="w-full"
+                                  >
+                                    Salvar esta receita no planner
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                          )
+                        })}
+                      </div>
                       <p className="text-[11px] text-[#545454] mt-2">
-                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no planner.
+                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
+                        planner.
                       </p>
                     </>
                   )}
@@ -402,7 +496,8 @@ export default function RotinaLevePage() {
                   {!recipesLoading && (!recipes || recipes.length === 0) && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                       <p className="text-[11px] text-[#545454]">
-                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à idade do seu filho.
+                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
+                        idade do seu filho.
                       </p>
                     </div>
                   )}
@@ -410,12 +505,11 @@ export default function RotinaLevePage() {
               </div>
             </SoftCard>
 
-            {/* 2-Column Grid: Ideias Rápidas + Inspira��ões do Dia */}
+            {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Ideias Rápidas - Collapsed by default */}
+              {/* Ideias Rápidas */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
-                  {/* Card Header with Editorial Underline */}
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Ideias Rápidas
@@ -436,193 +530,193 @@ export default function RotinaLevePage() {
                     <div className="space-y-3 text-xs flex-1">
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '5' ? null : '5'))
-                          }
-                          className={clsx(
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '5' ? null : '5'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '5'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          5 min
-                        </button>
+                            )}
+                          >
+                            5 min
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '10' ? null : '10'))
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '10' ? null : '10'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '10'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          10 min
-                        </button>
+                            )}
+                          >
+                            10 min
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '20' ? null : '20'))
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '20' ? null : '20'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '20'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          20 min
-                        </button>
+                            )}
+                          >
+                            20 min
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '30+'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          30+
-                        </button>
+                            )}
+                          >
+                            30+
+                          </button>
                         </div>
                       </div>
 
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
-                          }
-                          className={clsx(
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Só eu
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Só eu
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setComQuem((current) =>
-                              current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) =>
+                                current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Eu e meu filho
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Eu e meu filho
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setComQuem((current) =>
-                              current === 'familia-toda' ? null : 'familia-toda'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) =>
+                                current === 'familia-toda' ? null : 'familia-toda'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Família toda
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Família toda
+                          </button>
                         </div>
                       </div>
 
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Tipo de ideia</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'brincadeira' ? null : 'brincadeira'
-                            )
-                          }
-                          className={clsx(
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'brincadeira' ? null : 'brincadeira'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Brincadeira
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Brincadeira
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'organizacao' ? null : 'organizacao'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'organizacao' ? null : 'organizacao'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Organização da casa
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Organização da casa
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'autocuidado' ? null : 'autocuidado'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'autocuidado' ? null : 'autocuidado'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Autocuidado
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Autocuidado
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTipoIdeia((current) =>
-                              current === 'receita-rapida' ? null : 'receita-rapida'
-                            )
-                          }
-                          className={clsx(
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'receita-rapida' ? null : 'receita-rapida'
+                              )
+                            }
+                            className={clsx(
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                          )}
-                        >
-                          Receita rápida
-                        </button>
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Receita rápida
+                          </button>
                         </div>
                       </div>
 
@@ -681,10 +775,9 @@ export default function RotinaLevePage() {
                 </div>
               </SoftCard>
 
-              {/* Inspirações do Dia - Collapsed by default */}
+              {/* Inspirações do Dia */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
-                  {/* Card Header with Editorial Underline */}
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Inspirações do Dia
@@ -706,7 +799,11 @@ export default function RotinaLevePage() {
                     <div className="text-xs space-y-3 flex-1">
                       <div className="space-y-1">
                         <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
-                        <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                        <select
+                          className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                          value={focusOfDay}
+                          onChange={(e) => setFocusOfDay(e.target.value)}
+                        >
                           <option>Cansaço</option>
                           <option>Culpa</option>
                           <option>Organização</option>
@@ -777,6 +874,57 @@ export default function RotinaLevePage() {
                 </div>
               </SoftCard>
             </div>
+          </div>
+
+          {/* Resumo rápido do que já foi salvo no Planner */}
+          <div className="mt-8">
+            <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                    Seu resumo na Rotina Leve
+                  </p>
+                  {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
+                    <p className="text-sm text-[#545454]">
+                      Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
+                      resumo rápido do que já está no seu planner.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-[#545454]">
+                      Você já salvou{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {savedRecipesCount} receita(s)
+                      </span>{' '}
+                      e{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {savedInspirationCount} inspiração(ões)
+                      </span>{' '}
+                      deste mini-hub no seu planner.
+                    </p>
+                  )}
+                </div>
+
+                {lastInspiration && (
+                  <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
+                    <p className="text-[11px] font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      Última inspiração salva
+                    </p>
+                    {lastInspiration.payload?.frase && (
+                      <p className="text-xs text-[#545454]">
+                        <span className="font-medium">Frase: </span>
+                        {lastInspiration.payload.frase}
+                      </p>
+                    )}
+                    {lastInspiration.payload?.pequenoCuidado && (
+                      <p className="text-xs text-[#545454]">
+                        <span className="font-medium">Cuidado: </span>
+                        {lastInspiration.payload.pequenoCuidado}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </SoftCard>
           </div>
 
           <MotivationalFooter routeKey="meu-dia-rotina-leve" />
