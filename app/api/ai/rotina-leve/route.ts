@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import {
   generateRotinaLeveSuggestions,
   type RotinaLeveRequest,
-} from '@/lib/ai/rotinaLeve'
+} from '@/app/lib/ai/rotinaLeve'
 
 export const dynamic = 'force-dynamic'
 
