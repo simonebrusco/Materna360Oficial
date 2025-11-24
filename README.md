@@ -110,7 +110,17 @@ Todos os mini-hubs seguem o **Materna360 Premium Layout**, composto por:
 - Brincadeiras personalizadas  
 - Receitas inteligentes por ingredientes  
 - Insights emocionais semanais  
-- Desenvolvimento infantil guiado  
+- Desenvolvimento infantil guiado
+
+### IA & Personalização
+
+Todos os endpoints de IA do Materna360 (ex.: `/api/ai/rotina`, `/api/ai/emocional`, etc.)
+devem seguir as regras descritas em:
+
+- `docs/AI_PERSONALIZATION_MODEL.md`
+
+Esse documento define o tom de voz, regras de segurança emocional e formatos de resposta.
+
 
 📌 **System Design — Camada de IA**  
 `docs/SYSTEM_DESIGN_v0.4.pdf`  

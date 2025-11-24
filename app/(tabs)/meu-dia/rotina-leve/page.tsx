@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -9,6 +9,8 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { toast } from '@/app/lib/toast'
+import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
+import { usePrimaryChildAge } from '@/app/hooks/usePrimaryChildAge'
 
 type QuickIdea = {
   id: string
@@ -191,7 +193,6 @@ export default function RotinaLevePage() {
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
 
   // Ideias Rápidas
-  const [ideasLoading, setIdeasLoading] = useState(false)
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
 
   // Ideias Rápidas - Filtros
@@ -203,6 +204,16 @@ export default function RotinaLevePage() {
   const [inspirationLoading, setInspirationLoading] = useState(false)
   const [inspiration, setInspiration] = useState<Inspiration | null>(null)
   const [focusOfDay, setFocusOfDay] = useState<string>('Cansaço')
+
+  // Idade principal do filho (Eu360)
+  const { ageMonths } = usePrimaryChildAge()
+  const isBabyUnderSixMonths = ageMonths !== null && ageMonths < 6
+
+  const {
+    suggestions: aiSuggestions,
+    isLoading: ideasLoading,
+    requestSuggestions,
+  } = useRotinaAISuggestions()
 
   const { addItem, getByOrigin } = usePlannerSavedContents()
 
@@ -217,20 +228,46 @@ export default function RotinaLevePage() {
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
 
+  // Quando a IA da Rotina Leve retornar sugestões, convertemos para QuickIdea
+  useEffect(() => {
+    if (!aiSuggestions || aiSuggestions.length === 0) return
+
+    const quickIdeas: QuickIdea[] = aiSuggestions
+      .filter((s) => s.category === 'ideia-rapida')
+      .map((s, index) => ({
+        id: s.id || `ai-idea-${index}`,
+        text: s.description || s.title,
+      }))
+
+    if (quickIdeas.length > 0) {
+      setIdeas(quickIdeas)
+    }
+  }, [aiSuggestions])
+
   const handleSaveIdeia = () => {
     try {
+      // Se a IA já trouxe ideias, salvamos exatamente essas no planner.
+      // Se ainda não, usamos o conjunto padrão como fallback.
+      const ideasToSave =
+        ideas && ideas.length > 0
+          ? ideas.map((idea) => idea.text)
+          : [
+              'Mini brincadeira sensorial com objetos da sala.',
+              'Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.',
+              'Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+            ]
+
       addItem({
         origin: 'rotina-leve',
         type: 'insight',
-        title: 'Ideia rápida para agora',
+        title: 'Ideias rápidas para agora',
         payload: {
-          description:
-            'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+          ideas: ideasToSave,
         },
       })
-      console.log('[Rotina Leve] Idea saved to planner')
+      console.log('[Rotina Leve] Ideas saved to planner')
     } catch (error) {
-      console.error('[Rotina Leve] Error saving idea:', error)
+      console.error('[Rotina Leve] Error saving ideas:', error)
     }
   }
 
@@ -277,6 +314,13 @@ export default function RotinaLevePage() {
   }
 
   const handleGenerateRecipes = async () => {
+    if (isBabyUnderSixMonths) {
+      toast.info(
+        'Até os 6 meses, a recomendação principal é o aleitamento materno exclusivo. Sempre siga a orientação do pediatra.'
+      )
+      return
+    }
+
     setRecipesLoading(true)
     try {
       const result = await generateRecipesWithAI()
@@ -287,10 +331,22 @@ export default function RotinaLevePage() {
   }
 
   const handleGenerateIdeas = async () => {
-    setIdeasLoading(true)
-    const result = await mockGenerateIdeas()
-    setIdeas(result)
-    setIdeasLoading(false)
+    await requestSuggestions({
+      mood: 'cansada',
+      energy: 'baixa',
+      timeOfDay: 'hoje',
+      hasKidsAround: comQuem !== 'so-eu',
+      availableMinutes:
+        tempoDisponivel === '5'
+          ? 5
+          : tempoDisponivel === '10'
+          ? 10
+          : tempoDisponivel === '20'
+          ? 20
+          : tempoDisponivel === '30+'
+          ? 30
+          : undefined,
+    })
   }
 
   const handleGenerateInspiration = async () => {
@@ -374,7 +430,7 @@ export default function RotinaLevePage() {
                     variant="primary"
                     size="sm"
                     onClick={handleGenerateRecipes}
-                    disabled={recipesLoading}
+                    disabled={recipesLoading || isBabyUnderSixMonths}
                     className="w-full"
                   >
                     {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
@@ -394,6 +450,14 @@ export default function RotinaLevePage() {
                       mais 💗
                     </p>
                   )}
+
+                  {isBabyUnderSixMonths && (
+                    <p className="text-[11px] text-[#ff005e] font-medium">
+                      Como o seu bebê tem menos de 6 meses, o foco agora é o aleitamento materno
+                      exclusivo. As receitinhas serão liberadas mais pra frente, sempre respeitando
+                      a orientação do pediatra.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -405,7 +469,7 @@ export default function RotinaLevePage() {
                     </div>
                   )}
 
-                  {!recipesLoading && hasRecipes && (
+                  {!recipesLoading && hasRecipes && !isBabyUnderSixMonths && (
                     <>
                       <p className="text-xs font-medium text-[#2f3a56]">
                         Sugestões de hoje (até 3)
@@ -417,7 +481,7 @@ export default function RotinaLevePage() {
                           return (
                             <div
                               key={recipe.id}
-                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                              className="rounded-2xl bg_WHITE border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
                             >
                               <div
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
@@ -493,14 +557,16 @@ export default function RotinaLevePage() {
                     </>
                   )}
 
-                  {!recipesLoading && (!recipes || recipes.length === 0) && (
-                    <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                      <p className="text-[11px] text-[#545454]">
-                        Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
-                        idade do seu filho.
-                      </p>
-                    </div>
-                  )}
+                  {!recipesLoading &&
+                    (!recipes || recipes.length === 0) &&
+                    !isBabyUnderSixMonths && (
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
+                        <p className="text-[11px] text-[#545454]">
+                          Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
+                          idade do seu filho.
+                        </p>
+                      </div>
+                    )}
                 </div>
               </div>
             </SoftCard>
@@ -521,7 +587,7 @@ export default function RotinaLevePage() {
                   <button
                     type="button"
                     onClick={() => setOpenIdeas((prev) => !prev)}
-                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-visible focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
                   >
                     {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
                   </button>
@@ -537,7 +603,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '5' ? null : '5'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '5'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -552,7 +618,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '10' ? null : '10'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '10'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -567,7 +633,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '20' ? null : '20'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '20'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -582,7 +648,7 @@ export default function RotinaLevePage() {
                               setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tempoDisponivel === '30+'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -602,7 +668,7 @@ export default function RotinaLevePage() {
                               setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -619,7 +685,7 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -636,7 +702,7 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -658,7 +724,7 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -675,7 +741,7 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -692,10 +758,10 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg_WHITE text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Autocuidado
@@ -709,7 +775,7 @@ export default function RotinaLevePage() {
                               )
                             }
                             className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
                                 : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
@@ -776,7 +842,7 @@ export default function RotinaLevePage() {
               </SoftCard>
 
               {/* Inspirações do Dia */}
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg_WHITE border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">

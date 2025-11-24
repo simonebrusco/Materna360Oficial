@@ -9,6 +9,7 @@ import {
   type RotinaTipoIdeia,
 } from '@/app/lib/ai/maternaCore'
 import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
+import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -34,9 +35,16 @@ const NO_STORE_HEADERS = {
 
 export async function POST(req: Request) {
   try {
+    // Proteção de uso da IA — limite por cliente / janela
+    // (best-effort, ajuda a proteger custos e abusos)
+    assertRateLimit(req, 'ai-rotina', {
+      limit: 20,
+      windowMs: 5 * 60_000, // 20 chamadas a cada 5 minutos
+    })
+
     const body = (await req.json()) as RotinaRequestBody
 
-    // Personalização com base no Eu360 (com fallback seguro)
+    // Agora tentamos personalizar com base no Eu360 (mas com fallback seguro)
     const { profile, child } = (await loadMaternaContextFromRequest(
       req,
     )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
@@ -92,6 +100,20 @@ export async function POST(req: Request) {
       },
     )
   } catch (error) {
+    // Tratamento específico de estouro de limite
+    if (error instanceof RateLimitError) {
+      console.warn('[API /api/ai/rotina] Rate limit atingido:', error.message)
+      return NextResponse.json(
+        {
+          error: error.message,
+        },
+        {
+          status: error.status ?? 429,
+          headers: NO_STORE_HEADERS,
+        },
+      )
+    }
+
     console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', error)
 
     return NextResponse.json(
