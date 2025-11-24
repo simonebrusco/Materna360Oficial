@@ -142,32 +142,32 @@ export default function CardHub() {
       className="mt-8 md:mt-10 pb-24 md:pb-28"
     >
       <Reveal>
-        {/* 2x2 em TODAS as telas (mobile e desktop) */}
+        {/* 2 colunas no mobile e desktop */}
         <div className="grid grid-cols-2 gap-4 md:gap-5">
           {HUB_CARDS.map((card) => (
             <div
               key={card.id}
               className="flex flex-col items-stretch gap-2 md:gap-3"
             >
-              {/* Card translúcido com ícones 2x2 */}
-              <div className="relative overflow-hidden rounded-3xl border border-white/65 bg-white/18 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
-                {/* Glows suaves de fundo */}
+              {/* Card translúcido principal */}
+              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/16 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
+                {/* Glows internos */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
                   <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
                   <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
                 </div>
 
-                {/* Conteúdo principal: ícones 2x2 */}
+                {/* Ícones 2x2 */}
                 <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
                   {card.icons.map((item) => (
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/82 border border-white/90 shadow-[0_10px_26px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_38px_rgba(0,0,0,0.24)] active:translate-y-0 active:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
+                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white border border-white/90 shadow-[0_10px_26px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_38px_rgba(0,0,0,0.24)] active:translate-y-0 active:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
                     >
                       <AppIcon
                         name={item.icon}
-                        className="w-5 h-5 md:w-6 md:h-6 text-[#FF1475] group-hover:scale-110 transition-transform duration-150"
+                        className="w-6 h-6 md:w-7 md:h-7 text-[#FF1475] group-hover:scale-110 transition-transform duration-150"
                         decorative
                       />
                     </Link>
