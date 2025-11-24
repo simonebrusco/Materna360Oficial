@@ -1,29 +1,31 @@
 'use client';
 
-import clsx from 'clsx';
-import { PageH1 } from './Headings';
+import React from 'react';
 
 export interface PageHeaderProps {
   label?: string;
   title: string;
   subtitle?: string;
-  className?: string;
 }
 
-export function PageHeader({ label, title, subtitle, className }: PageHeaderProps) {
+export function PageHeader({ label, title, subtitle }: PageHeaderProps) {
   return (
-    <header className={clsx('mb-4 md:mb-6', className)}>
+    <div className="space-y-2 md:space-y-3">
       {label && (
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand)] mb-2 font-poppins">
+        <span className="inline-flex items-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
           {label}
-        </p>
+        </span>
       )}
-      <PageH1>{title}</PageH1>
+
+      <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+        {title}
+      </h1>
+
       {subtitle && (
-        <p className="mt-4 md:mt-5 text-base text-[var(--color-text-muted)] font-poppins">
+        <p className="text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
           {subtitle}
         </p>
       )}
-    </header>
+    </div>
   );
 }
