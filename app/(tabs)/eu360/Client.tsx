@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PageTemplate } from '@/components/common/PageTemplate'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import AppShell from '@/components/common/AppShell'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -112,86 +111,98 @@ export default function Eu360Client() {
       className="min-h-[100dvh] pb-24 bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_35%,#FFD3E6_70%,#FFFFFF_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
-        <PageTemplate
-          label="EU360"
-          title="Seu mundo em perspectiva"
-          subtitle="Conte um pouco sobre você e a fase da sua família."
-        >
-          {/* Bloco principal: perfil da mãe/família */}
-          <SectionWrapper>
-            <ProfileForm />
-          </SectionWrapper>
+        {/* HERO EU360 */}
+        <header className="pt-8 md:pt-10 mb-8 md:mb-10">
+          <span className="inline-flex items-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+            EU360
+          </span>
 
-          {/* Bloco: Insight emocional da semana */}
-          <SectionWrapper>
-            <Reveal>
-              <SoftCard className="rounded-3xl border border-white/40 bg-white/18 px-6 py-6 md:px-8 md:py-8 shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-2xl">
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5">
-                      <AppIcon
-                        name="sparkles"
-                        size={20}
-                        className="text-[#FF1475]"
-                        decorative
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-white/80 uppercase tracking-[0.16em]">
-                        Olhar carinhoso sobre a sua semana
-                      </p>
-                      <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-                        {weeklyInsight?.title || 'Seu resumo emocional da semana'}
-                      </h3>
-                      <p className="text-xs text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-                        {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com
-                        mais gentileza, não para te cobrar mais nada.
-                      </p>
-                    </div>
+          <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+            Seu mundo em perspectiva
+          </h1>
+
+          <p className="mt-2 text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+            Conte um pouco sobre você e a fase da sua família. Isso ajuda o Materna360 a cuidar de
+            você com sugestões mais reais para a sua rotina.
+          </p>
+        </header>
+
+        {/* Bloco principal: perfil da mãe/família */}
+        <SectionWrapper>
+          <ProfileForm />
+        </SectionWrapper>
+
+        {/* Bloco: Insight emocional da semana */}
+        <SectionWrapper>
+          <Reveal>
+            <SoftCard className="rounded-3xl border border-white/40 bg-white/18 px-6 py-6 md:px-8 md:py-8 shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-2xl">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">
+                    <AppIcon
+                      name="sparkles"
+                      size={20}
+                      className="text-[#FF1475]"
+                      decorative
+                    />
                   </div>
-
-                  <div className="mt-2 space-y-3">
-                    {loadingInsight && (
-                      <p className="text-sm text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-                        Estou olhando com carinho para a sua semana para trazer uma reflexão pra
-                        você…
-                      </p>
-                    )}
-
-                    {!loadingInsight && (
-                      <>
-                        <p className="text-sm leading-relaxed text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-                          {weeklyInsight?.summary ??
-                            'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
-                        </p>
-
-                        {weeklyInsight?.suggestions && weeklyInsight.suggestions.length > 0 && (
-                          <div className="space-y-1.5">
-                            <p className="text-xs font-semibold text-white/85 uppercase tracking-[0.16em]">
-                              Pequenos passos para os próximos dias
-                            </p>
-                            <ul className="space-y-1.5 text-sm text-white/90">
-                              {weeklyInsight.suggestions.map((item, idx) => (
-                                <li key={idx} className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
-                                  • {item}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        <p className="text-[11px] text-white/80 mt-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-                          Isso não é um diagnóstico, e sim um convite para você se observar com mais
-                          leveza e cuidado. Um passo de cada vez já é muito.
-                        </p>
-                      </>
-                    )}
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-white/80 uppercase tracking-[0.16em]">
+                      Olhar carinhoso sobre a sua semana
+                    </p>
+                    <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                      {weeklyInsight?.title || 'Seu resumo emocional da semana'}
+                    </h3>
+                    <p className="text-xs text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                      {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com
+                      mais gentileza, não para te cobrar mais nada.
+                    </p>
                   </div>
                 </div>
-              </SoftCard>
-            </Reveal>
-          </SectionWrapper>
-        </PageTemplate>
+
+                <div className="mt-2 space-y-3">
+                  {loadingInsight && (
+                    <p className="text-sm text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                      Estou olhando com carinho para a sua semana para trazer uma reflexão pra você…
+                    </p>
+                  )}
+
+                  {!loadingInsight && (
+                    <>
+                      <p className="text-sm leading-relaxed text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                        {weeklyInsight?.summary ??
+                          'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
+                      </p>
+
+                      {weeklyInsight?.suggestions && weeklyInsight.suggestions.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold text-white/85 uppercase tracking-[0.16em]">
+                            Pequenos passos para os próximos dias
+                          </p>
+                          <ul className="space-y-1.5 text-sm text-white/90">
+                            {weeklyInsight.suggestions.map((item, idx) => (
+                              <li
+                                key={idx}
+                                className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+                              >
+                                • {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <p className="text-[11px] text-white/80 mt-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                        Isso não é um diagnóstico, e sim um convite para você se observar com mais
+                        leveza e cuidado. Um passo de cada vez já é muito.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </SoftCard>
+          </Reveal>
+        </SectionWrapper>
       </div>
     </main>
   )
