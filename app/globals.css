@@ -102,25 +102,17 @@ body {
   background: #FFFFFF;
 }
 
-/* Materna360 — Fundo Premium Fase P4 (opcional, não aplicado por padrão)
-   Fundo branco com atmosfera editorial rosa-neve + ameixa suave,
-   usando apenas cores oficiais (#ffd8e6 e #2f3a56).
-*/
+/* Materna360 — Fundo Premium Fase P4 (hero com ameixa → rosa → branco) */
 .materna360-premium-bg {
   background-color: #ffffff;
   background-image:
-    radial-gradient(
-      circle at 0% 0%,
-      #ffd8e6 0%,
-      #ffd8e6 40%,
-      rgba(255, 255, 255, 0.9) 70%,
-      #ffffff 100%
-    ),
-    radial-gradient(
-      circle at 100% 100%,
-      rgba(47, 58, 86, 0.06) 0%,
-      rgba(47, 58, 86, 0.02) 45%,
-      #ffffff 90%
+    linear-gradient(
+      180deg,
+      #2f3a56 0%,    /* ameixa forte no topo */
+      #2f3a56 14%,   /* faixa de destaque mais alta */
+      #ff1475 30%,   /* transição por um rosa mais vivo da marca */
+      #ffd8e6 55%,   /* rosa clarinho oficial */
+      #ffffff 82%    /* branco predominante na base */
     );
   background-repeat: no-repeat;
   background-attachment: fixed;
