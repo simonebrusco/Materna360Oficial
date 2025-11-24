@@ -29,8 +29,10 @@ type RateLimitStore = {
 // Usamos o escopo global para compartilhar entre chamadas
 const GLOBAL_KEY = '__materna_ai_rate_limit_store__'
 
-// @ts-expect-error - extensão segura do escopo global
-const globalWithStore: { [GLOBAL_KEY]?: RateLimitStore } = globalThis as any
+// estendemos o escopo global de forma segura
+const globalWithStore = globalThis as typeof globalThis & {
+  [GLOBAL_KEY]?: RateLimitStore
+}
 
 if (!globalWithStore[GLOBAL_KEY]) {
   globalWithStore[GLOBAL_KEY] = {}
