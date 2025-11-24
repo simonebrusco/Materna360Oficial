@@ -43,9 +43,16 @@ export default function MaternarClient() {
   // Daily message reload at midnight
   useEffect(() => {
     const now = new Date();
-    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const midnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
+    );
     const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0);
-    const timeoutId = window.setTimeout(() => window.location.reload(), delay);
+    const timeoutId = window.setTimeout(
+      () => window.location.reload(),
+      delay
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, []);
@@ -68,21 +75,22 @@ export default function MaternarClient() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               {/* Eyebrow capsule no padrão global */}
-              <span className="eyebrow-capsule">
+              <span className="eyebrow-capsule bg-white/92 border-white/80">
                 Maternar • Hub principal
               </span>
 
               {/* Título dinâmico (saudação) */}
               <ClientOnly>
-                <h1 className="text-3xl md:text-4xl font-semibold text-[#3A3A3A] leading-tight font-poppins">
+                <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight font-poppins drop-shadow-[0_1px_4px_rgba(0,0,0,0.28)]">
                   {greeting}
                 </h1>
               </ClientOnly>
 
               {/* Subtítulo explicando o hub */}
-              <p className="text-sm md:text-base text-[#545454] leading-relaxed">
-                Aqui é o seu ponto de partida no Materna360: um lugar para cuidar de você,
-                do seu filho e da sua jornada, com tudo o que você precisa em um só lugar.
+              <p className="text-sm md:text-base text-[rgba(255,248,252,0.92)] leading-relaxed max-w-xl">
+                Aqui é o seu ponto de partida no Materna360: um lugar para cuidar
+                de você, do seu filho e da sua jornada, com tudo o que você
+                precisa em um só lugar.
               </p>
             </div>
 
@@ -96,13 +104,13 @@ export default function MaternarClient() {
                       timestamp: new Date().toISOString(),
                     });
                   }}
-                  className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[#FF1475]/45 bg-[#FF1475]/4 text-[#FF1475]/85 text-sm font-normal tracking-tight shadow-[0_1px_2px_rgba(255,20,117,0.16)] hover:scale-[1.01] hover:shadow-[0_1px_4px_rgba(255,20,117,0.22)] active:scale-[0.99] transition-all duration-150"
+                  className="inline-flex items-center gap-1.5 px-[10px] py-[6px] rounded-2xl border-[0.5px] border-[#FF1475]/45 bg-[#FF1475]/10 text-[#FF1475]/90 text-sm font-normal tracking-tight shadow-[0_1px_4px_rgba(255,20,117,0.24)] hover:scale-[1.01] hover:shadow-[0_2px_6px_rgba(255,20,117,0.32)] active:scale-[0.99] transition-all duration-150"
                   aria-label="Completar perfil"
                 >
                   <AppIcon
                     name="hand-heart"
                     className="w-[14px] h-[14px]"
-                    style={{ color: 'rgba(255, 20, 117, 0.6)' }}
+                    style={{ color: 'rgba(255, 20, 117, 0.9)' }}
                     decorative
                   />
                   <span>Completar perfil</span>
@@ -119,7 +127,7 @@ export default function MaternarClient() {
             <div className="mt-0 mb-0 px-0 md:px-0 max-w-7xl mx-auto">
               <div className="bg-white rounded-3xl border border-[#FFE8F2] shadow-sm hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] px-4 py-3 md:px-6 md:py-4 relative overflow-hidden transition-all duration-200">
                 {/* Very subtle accent - only in corner */}
-                <div className="pointer-events-none select-none absolute -top-8 -right-8 h-20 w-20 bg-gradient-to-br from-[#FF1475]/3 to-transparent rounded-full" />
+                <div className="pointer-events-none select-none absolute -top-8 -right-8 h-20 w-20 bg-gradient-to-br from-[#FF1475]/6 to-transparent rounded-full" />
 
                 {/* Content wrapper */}
                 <div className="flex h-full flex-col justify-between gap-2 relative z-10 min-h-[140px] max-h-[210px] md:max-h-[220px]">
