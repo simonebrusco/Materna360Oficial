@@ -29,10 +29,10 @@ export function PageTemplate({
         className
       )}
     >
-      {/* Hero gradient global do Materna360 (topo da página) */}
+      {/* Hero gradient global do Materna360 (topo da página, agora contínuo) */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] md:h-[460px] lg:h-[500px]"
+        className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
             'linear-gradient(135deg, rgba(155,77,150,0.32) 0%, rgba(255,0,94,0.26) 26%, rgba(255,216,230,0.22) 60%, rgba(255,232,242,0.10) 82%, rgba(255,232,242,0) 100%)',
