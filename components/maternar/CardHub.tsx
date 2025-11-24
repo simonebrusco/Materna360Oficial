@@ -142,6 +142,7 @@ export default function CardHub() {
       className="mt-8 md:mt-10 pb-24 md:pb-28"
     >
       <Reveal>
+        {/* 2x2 em TODAS as telas (mobile e desktop) */}
         <div className="grid grid-cols-2 gap-4 md:gap-5">
           {HUB_CARDS.map((card) => (
             <div
@@ -156,7 +157,7 @@ export default function CardHub() {
                   <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
                 </div>
 
-                {/* Conteúdo principal */}
+                {/* Conteúdo principal: ícones 2x2 */}
                 <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
                   {card.icons.map((item) => (
                     <Link
