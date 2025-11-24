@@ -102,17 +102,17 @@ body {
   background: #FFFFFF;
 }
 
-/* Materna360 — Fundo Premium final (microajuste do rosa claro) */
+/* Materna360 — Fundo Premium Fase P4 (ameixa no topo → rosa suave → branco) */
 .materna360-premium-bg {
   background-color: #ffffff;
   background-image:
     linear-gradient(
       180deg,
-      #3b3563 0%,    /* ameixa topo */
-      #4c3f72 6%,    /* ameixa clara, faixa curta */
+      #3b3563 0%,    /* ameixa suavizado no topo */
+      #4c3f72 6%,    /* transição roxo mais claro, faixa curtinha */
       #ff6fa3 14%,   /* pink mais leve */
-      #ffd8e6 26%,   /* 🔼 rosa claro começa um pouco mais alto */
-      #fff5fa 48%,   /* quase branco já subindo */
+      #ffd8e6 26%,   /* rosa claro oficial, começa um pouco mais alto */
+      #fff5fa 48%,   /* quase branco na área do card */
       #ffffff 100%   /* branco total na base */
     );
   background-repeat: no-repeat;
@@ -123,10 +123,10 @@ body {
 .materna360-premium-bg header {
   max-width: 720px;
   margin: 0;
-  padding-left: 16px; /* alinhamento mais próximo do card */
+  padding-left: 16px; /* alinhamento visual com o card no mobile */
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 2px;           /* espaço pequeno entre título e subtítulo */
   text-align: left;
   align-items: flex-start;
 }
@@ -137,7 +137,7 @@ body {
   font-size: 24px;
   line-height: 1.2;
   font-weight: 600;
-  margin: 0; /* remove espaços extras */
+  margin: 0;          /* remove espaços extras */
 }
 
 /* Subtítulo */
@@ -150,9 +150,8 @@ body {
 
 @media (min-width: 768px) {
   .materna360-premium-bg header {
-    padding-left: 24px; /* também reduzido */
+    padding-left: 24px; /* um pouco mais de respiro no desktop */
   }
-}
 
   .materna360-premium-bg header h1 {
     font-size: 28px;
@@ -162,8 +161,6 @@ body {
     font-size: 14px;
   }
 }
-
-
 
 @layer base {
   html,
