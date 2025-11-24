@@ -115,11 +115,11 @@ export default function MaternarClient() {
           {/* CARD — UM CARINHO PRA VOCÊ HOJE */}
           <Reveal delay={80}>
             <div className="mt-0 mb-0">
-              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,20,117,0.16),rgba(255,255,255,0.96))] shadow-[0_18px_45px_rgba(0,0,0,0.22)] px-4 py-4 md:px-6 md:py-5">
+              <div className="relative overflow-hidden rounded-3xl border border-white/40 bg-white/15 backdrop-blur-2xl shadow-[0_18px_45px_rgba(0,0,0,0.18)] px-4 py-4 md:px-6 md:py-5">
                 {/* brilho suave */}
-                <div className="pointer-events-none absolute inset-0 opacity-80">
-                  <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-[rgba(255,255,255,0.8)] blur-3xl" />
-                  <div className="absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.12)] blur-3xl" />
+                <div className="pointer-events-none absolute inset-0 opacity-70">
+                  <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-[rgba(255,255,255,0.9)] blur-3xl" />
+                  <div className="absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.24)] blur-3xl" />
                 </div>
 
                 <div className="relative z-10 flex flex-col justify-between gap-2 md:gap-3">
