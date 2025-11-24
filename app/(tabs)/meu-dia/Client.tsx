@@ -126,104 +126,106 @@ export function MeuDiaClient() {
     >
       <ClientOnly>
         <div className="px-4 py-8">
-          {/* HERO EDITORIAL + MOOD SECTION */}
+          {/* BLOCO: SAUDAÇÃO + HUMOR + INTENÇÃO */}
           <Reveal delay={0}>
-            <section className="space-y-6 mb-6 md:mb-8">
-              {/* Hero editorial, sem card pesado */}
-              <div className="space-y-2">
-                <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                  Hoje por aqui
-                </p>
-                <h2 className="text-2xl md:text-3xl font-semibold text-[#2F3A56] leading-snug font-poppins">
-                  {greeting}
-                </h2>
-                <p className="text-xs md:text-sm text-[#545454] max-w-xl">
-                  Vamos organizar seu dia com leveza, priorizando o que
-                  realmente importa pra você e pra sua família.
-                </p>
-              </div>
+            <section className="mb-10 md:mb-12">
+              <div className="space-y-6 rounded-3xl bg-white/70 border border-[#FFD8E6] shadow-card px-4 py-5 md:px-5 md:py-6">
+                {/* Hero editorial dentro do bloco */}
+                <div className="space-y-2">
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Hoje por aqui
+                  </p>
+                  <h2 className="text-2xl md:text-3xl font-semibold text-[#3A3A3A] leading-snug font-poppins">
+                    {greeting}
+                  </h2>
+                  <p className="text-xs md:text-sm text-[#545454] max-w-xl">
+                    Vamos organizar seu dia com leveza, priorizando o que
+                    realmente importa pra você e pra sua família.
+                  </p>
+                </div>
 
-              {/* Mood Pills */}
-              <div className="space-y-4 md:space-y-5">
-                <div>
-                  <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
-                    Como você está?
-                  </p>
-                  <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
-                    Escolha como você se sente agora.
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { id: 'happy', label: 'Feliz' },
-                    { id: 'okay', label: 'Normal' },
-                    { id: 'stressed', label: 'Estressada' },
-                  ].map((mood) => (
-                    <button
-                      key={mood.id}
-                      onClick={() =>
-                        setSelectedMood(
-                          selectedMood === mood.id ? null : mood.id,
-                        )
-                      }
-                      className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
-                        selectedMood === mood.id
-                          ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
-                          : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
-                      }`}
-                    >
-                      {mood.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Day Tags */}
-              <div className="space-y-4 md:space-y-5">
-                <div>
-                  <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
-                    Hoje eu quero um dia...
-                  </p>
-                  <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
-                    Selecione o estilo do seu dia.
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(
-                    (tag) => (
+                {/* Mood Pills */}
+                <div className="space-y-3 md:space-y-4">
+                  <div>
+                    <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
+                      Como você está?
+                    </p>
+                    <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
+                      Escolha como você se sente agora.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { id: 'happy', label: 'Feliz' },
+                      { id: 'okay', label: 'Normal' },
+                      { id: 'stressed', label: 'Estressada' },
+                    ].map((mood) => (
                       <button
-                        key={tag}
+                        key={mood.id}
                         onClick={() =>
-                          setSelectedDay(selectedDay === tag ? null : tag)
+                          setSelectedMood(
+                            selectedMood === mood.id ? null : mood.id,
+                          )
                         }
                         className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
-                          selectedDay === tag
+                          selectedMood === mood.id
                             ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
                             : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
                         }`}
                       >
-                        {tag}
+                        {mood.label}
                       </button>
-                    ),
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Summary Block */}
-              {(() => {
-                const summary = generateSummaryText(selectedMood, selectedDay)
-                return (
-                  summary.show && (
-                    <div className="mt-2 text-sm md:text-base text-[#6A6A6A] font-poppins leading-relaxed">
-                      {summary.main}
-                    </div>
+                {/* Day Tags */}
+                <div className="space-y-3 md:space-y-4">
+                  <div>
+                    <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
+                      Hoje eu quero um dia...
+                    </p>
+                    <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
+                      Selecione o estilo do seu dia.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(
+                      (tag) => (
+                        <button
+                          key={tag}
+                          onClick={() =>
+                            setSelectedDay(selectedDay === tag ? null : tag)
+                          }
+                          className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
+                            selectedDay === tag
+                              ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
+                              : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* Summary Block */}
+                {(() => {
+                  const summary = generateSummaryText(selectedMood, selectedDay)
+                  return (
+                    summary.show && (
+                      <div className="pt-1 text-sm md:text-base text-[#6A6A6A] font-poppins leading-relaxed">
+                        {summary.main}
+                      </div>
+                    )
                   )
-                )
-              })()}
+                })()}
+              </div>
             </section>
           </Reveal>
 
-          {/* MAIN PLANNER CARD */}
+          {/* CARD PRINCIPAL DO PLANNER */}
           <SoftCard
             className="relative overflow-hidden rounded-3xl bg-white/90 border border-[#FFE8F2] p-6 md:p-8 shadow-card space-y-6 md:space-y-8
                        before:absolute before:inset-x-6 before:top-0 before:h-[3px] before:rounded-full
