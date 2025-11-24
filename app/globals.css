@@ -119,19 +119,22 @@ body {
   background-attachment: scroll;
 }
 
-/* Fundo premium do hub Maternar – combinando com Meu Dia */
-.maternar-hub-bg {
-  background-color: #ffffff;
-  background-image:
-    radial-gradient(
-      circle at 0% 0%,
-      rgba(155, 77, 150, 0.70) 0%,      /* plum mais discreto só no topo */
-      rgba(255, 20, 117, 0.92) 28%,    /* pink forte logo abaixo */
-      rgba(255, 216, 230, 0.95) 63%,   /* rosa-neve suave descendo */
-      #ffffff 100%                     /* branco na base da página */
-    );
-  background-repeat: no-repeat;
-  background-size: 140% 140%;
+@layer utilities {
+  /* Fundo premium do hub Maternar – alinhado ao Meu Dia */
+  .maternar-hub-bg {
+    background-color: #ffffff;
+    background-image:
+      radial-gradient(
+        circle at 0% 0%,
+        rgba(155, 77, 150, 0.95) 0%,
+        rgba(155, 77, 150, 0.8) 16%,
+        rgba(255, 20, 117, 0.9) 38%,
+        rgba(255, 216, 230, 0.96) 64%,
+        #ffffff 88%
+      );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
 }
 /* ===== Hero do Meu Dia — texto branco alinhado à esquerda ===== */
 .materna360-premium-bg header {
