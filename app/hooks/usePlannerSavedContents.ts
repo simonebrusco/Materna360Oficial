@@ -13,6 +13,7 @@ export type PlannerOrigin =
   | 'cuidar-com-amor'
   | 'minhas-conquistas'
   | 'biblioteca-materna'
+  | 'meu-dia'
 
 export type PlannerContentType =
   | 'note'
@@ -50,9 +51,7 @@ function loadForDate(dateKey: string): PlannerSavedContent[] {
 }
 
 export function usePlannerSavedContents(initialDate?: Date) {
-  const [dateKey, setDateKey] = useState(() =>
-    getBrazilDateKey(initialDate),
-  )
+  const [dateKey, setDateKey] = useState(() => getBrazilDateKey(initialDate))
   const [items, setItems] = useState<PlannerSavedContent[]>([])
 
   useEffect(() => {
@@ -72,9 +71,10 @@ export function usePlannerSavedContents(initialDate?: Date) {
     (input: Omit<PlannerSavedContent, 'id' | 'dateKey' | 'createdAt' | 'updatedAt'>) => {
       const now = new Date().toISOString()
       const newItem: PlannerSavedContent = {
-        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id:
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         dateKey,
         createdAt: now,
         updatedAt: now,
