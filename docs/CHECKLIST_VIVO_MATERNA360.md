@@ -1,170 +1,269 @@
-✅ CHECKLIST VIVO — P3 (Finalização Premium & Coerência Global)
+✅ CHECKLIST VIVO — Materna360
+v0.3.3 — P2 Concluída • P3 em Execução
+Branch oficial: cosmos-verse
+Status: 🟢 Estável e avançando
 
-Versão: v0.3.3-P3-Finalização
-Branch: cosmos-verse
-Status: 🚧 Em andamento (P2 concluída e estável)
+🔥 P2 — IA Emocional & Rotina Inteligente — FINALIZADA
+📌 Escopo entregue com sucesso
+🔧 Endpoints de IA
 
-🎯 Objetivo do P3
 
-Garantir que todo o Materna360 esteja 100% consistente com o Visual Style Guide, Tone of Voice, Experience Playbook, Mini-Hub Matrix e Layout Premium, eliminando variações, corrigindo desalinhamentos, unificando padrões e preparando a base perfeita para a Fase 3 (Biblioteca Materna + Conteúdo Premium).
+POST /api/ai/emocional
 
-P3 NÃO cria novas features.
-P3 perfila, alinha e finaliza.
 
-📦 ESCOPO OFICIAL DO P3
-1. Polimento Visual Global (100% do app)
+POST /api/ai/rotina
 
-Conferir spacing, radius, sombras e contraste
 
-Aplicar gradientes e nuances conforme o Style Guide
+🧠 IA Integrada aos Mini-Hubs
 
-Garantir consistência entre todos os mini-hubs
 
-Atualizar componentes antigos para o padrão premium
+/meu-dia/como-estou-hoje
 
-📚 Base oficial:
 
-Materna360 — VISUAL STYLE GUIDE (OFICIAL)
+/meu-dia/rotina-leve
 
-Materna360 — COPY PLAYBOOK & LAYOUT SYSTEM
 
-Materna360 — EXPERIENCE PLAYBOOK (CX+UX)
+/eu360
 
-2. Unificação de Botões e Ações (UI System)
 
-Todos os botões devem seguir o mesmo padrão:
+🧩 Núcleo da IA consolidado
 
-primary = #ff005e
 
-secundário = borda #ffd8e6, texto #2f3a56
+app/lib/ai/maternaCore.ts
 
-radius 999px
 
-sombra leve
+app/lib/ai/eu360ProfileAdapter.ts
 
-Remover botões antigos ou variantes que não seguem o sistema
 
-Padronizar microcopies (ex.: “Salvar no planner”, “Gerar receitas”)
+app/lib/ai/profileAdapter.ts ← agora corrigido e sem conflitos
 
-📚 Referência:
 
-Builder Guidelines
+app/lib/ai/rateLimit.ts
 
-Copy Playbook – CTAs
 
-3. Microcopy e Frases Motivacionais por Mini-Hub
+📌 Rotina Leve — Estado Final P2
+Layout Premium entegue
+✔ Hero: Receitas Inteligentes
+✔ Grid 2 colunas: Ideias Rápidas + Inspirações do Dia
+✔ Card-resumo conectado ao Planner
+IA de Receitas Inteligentes
 
-Verificar heros, subtítulos e textos curtos
 
-Unificar tom: leve, acolhedor, maternal, zero técnico
+Limite diário (3/dia)
 
-Revisar frases do footer e garantir coerência com o routeKey
 
-Aplicar insights do Tone of Voice Master Guide
+Fallback seguro
 
-4. Revisão Mobile (Responsividade Premium)
 
-Conferir grid 2x2 em hubs
+Salvamento no Planner com payload completo
+
+
+IA de Ideias Rápidas
+
+
+Hook oficial: useRotinaAISuggestions
+
+
+Filtros: tempo, companhia, tipo de ideia
+
+
+Fallback editorial
+
+
+Salvamento no Planner (type: insight)
+
+
+IA de Inspirações do Dia
+
+
+Foco: Cansaço, Culpa, Organização, Conexão
+
+
+Payload: frase + pequeno cuidado + mini ritual
+
+
+Salvamento no Planner
+
+
+📌 Como estou hoje — Estado Final P2
+
+
+Humor & Energia salvos por dia
+
+
+Insight do dia via IA
+
+
+Semana emocional via IA
+
+
+Integração completa com Planner
+
+
+📌 Eu360 — Insight emocional semanal
+
+
+IA integrada
+
+
+Copy premium e acolhedora
+
+
+Integração com perfil real (Eu360 → MaternaCore)
+
+
+🧪 Status técnico P2
+
+
+pnpm run build passando
+
+
+APIs 100% funcionais
+
+
+UX estável
+
+
+Fallbacks editoriais em todos os fluxos
+
+
+Zero regressões no layout principal
+
+
+
+🚧 P3 — Finalização Premium & Coerência Global
+(Em andamento agora — abril/2025)
+🎯 Objetivo
+Deixar o Materna360 100% coerente, premium e pronto para a Fase 3 (Biblioteca Materna + Conteúdos Premium).
+📦 Escopo oficial P3
+1) Polimento Visual Global
+
+
+Spacing unificado
+
+
+Radius 24–28px
+
+
+Bordas #ffd8e6
+
+
+Sombras premium
+
+
+Gradientes oficiais
+
+
+Correção de inconsistências visuais entre hubs
+
+
+2) Sistema de Botões — Unificação total
+
+
+primary: #ff005e
+
+
+secondary: borda #ffd8e6
+
+
+radius: 999px
+
+
+shadow: leve
+
+
+Remover variantes antigas
+
+
+Padronizar microcopy dos CTAs
+
+
+3) Microcopy Premium
+
+
+Hero, subtítulos, textos de apoio
+
+
+TOV acolhedor, gentil e maternal
+
+
+Revisão completa das frases do MotivationalFooter
+
+
+4) Revisão Mobile Premium
+
+
+Ajuste dos grids
+
+
+Revisão de colunas 360px / 390px / 414px
+
 
 Conferir cards sem quebra
 
-Ajustar paddings iguais nos 4 hubs
 
-Revisar comportamento de colunas em 360px, 390px e 414px
+5) P3 — Ajuste nos Mini-Hubs
+Meu Dia
 
-📚 Base:
 
-Experience Playbook – seção Mobile First
+Rotina Leve (80% pronto → revisar spacing e mobile)
 
-Matriz de Mini-Hubs
 
-5. Ajustes Finais do EU360
+Como Estou Hoje (90% pronto → revisar botões e microcopy)
 
-Conferir layout premium do ProfileForm
 
-Conferir cards de insight semanal
+Cuidar
 
-Garantir consistência de spacing e radius
 
-Unificar copy com restante do app
+Deixar Autocuidado Inteligente e Cuidar com Amor no mesmo nível da UX de Meu Dia
 
-📚 Referência:
 
-Mini-Hub Matrix – EU360
+Descobrir
 
-Visual Style Guide
 
-🧭 PLANO DE ATAQUE P3 (em ordem cirúrgica)
-1️⃣ Revisão UI Global
+Revisão dos cards da biblioteca
 
-Mapear todos os componentes que destoam do Style Guide
 
-Atualizar para SoftCard + spacing premium + sombras consistentes
+Preparar para Fase 3 (conteúdos PDF + artigos premium)
 
-2️⃣ Atualizar Mini-Hub "Meu Dia"
 
-Foco:
+Eu360
 
-Rotina Leve (já 80% premium → revisar apenas spacing e mobile)
 
-Como Estou Hoje (já 90% premium → revisar botões e microcopy)
+Revisão dos inputs + labels
 
-Checklist:
 
-✔️ Cards com radius 24/28
-✔️ Bordas #ffd8e6 em tudo
-✔️ Texto #2f3a56 e #545454
-✔️ Botões unificados
-✔️ Revisar grids mobile
+Cards de insight semanal no padrão final
 
-3️⃣ Atualizar Mini-Hub "Cuidar"
 
-Hubs:
+6) Footer motivacional
 
-Autocuidado Inteligente
 
-Cuidar com Amor
+Revisar todas as frases
 
-Objetivo:
 
-Deixar igual ao padrão premium dos hubs /meu-dia
+Alinhar com routeKey
 
-Revisar hero, cards, 2 colunas, espaçamentos
 
-4️⃣ Atualizar Mini-Hub "Descobrir"
+Aplicar TOV oficial
 
-Revisar cards da biblioteca
 
-Criar padrão premium para cards de conteúdo
+7) Revisão final + Build
 
-Deixar pronto para Fase 3 (Conteúdo + PDFs)
 
-5️⃣ Atualizar Mini-Hub "Eu360"
+pnpm build
 
-Revisar todo o fluxo de profile
 
-Cards, inputs, bordas, labels
+Revisão no Vercel Preview
 
-Revisar insight semanal (já atualizado na IA)
 
-Deixar 100% premium
+PR Final → Merge para main
 
-6️⃣ Revisar MotivationalFooter + microcopy do app inteiro
 
-Garantir frases coerentes
 
-Remover redundâncias
-
-Validar em todos os mini-hubs
-
-Aplicar TOV maternal acolhedor
-
-7️⃣ Revisão Final + Build de Confirmação
-
-Rodar pnpm run build
-
-Conferir Vercel Preview
-
-Aprovar PR
-
-Merge para main
+🔥 Tudo acima está limpo, consolidado e sem conflitos.
+Se quiser, posso agora:
+✅ transformar isso em PDF oficial
+✅ preparar a versão para colar na PR
+✅ gerar uma mensagem para enviar ao time
+Ou seguimos para os próximos arquivos com conflito?
