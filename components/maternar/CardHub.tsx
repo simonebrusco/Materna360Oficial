@@ -163,11 +163,11 @@ export default function CardHub() {
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white border border-white/90 shadow-[0_10px_26px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_38px_rgba(0,0,0,0.24)] active:translate-y-0 active:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
+                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/70 shadow-[0_8px_24px_rgba(0,0,0,0.14)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.18)] active:translate-y-0 active:shadow-[0_6px_18px_rgba(0,0,0,0.14)]"
                     >
                       <AppIcon
                         name={item.icon}
-                        className="w-6 h-6 md:w-7 md:h-7 text-[#FF1475] group-hover:scale-110 transition-transform duration-150"
+                        className="w-6 h-6 md:w-7 md:h-7 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                         decorative
                       />
                     </Link>
