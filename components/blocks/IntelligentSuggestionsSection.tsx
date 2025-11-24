@@ -220,18 +220,18 @@ async function fetchAISuggestions(
       throw new Error('Nenhuma sugestão recebida da IA')
     }
 
+    // 🔧 AQUI é onde ajustamos o problema: nada de retornar null.
     const mapped: Suggestion[] = raw
+      .filter((item: ApiSuggestion) => {
+        if (typeof item.title !== 'string') return false
+        return item.title.trim().length > 0
+      })
       .map((item: ApiSuggestion, index: number) => {
-        const title =
-          typeof item.title === 'string' ? item.title.trim() : ''
+        const title = (item.title as string).trim()
         const description =
           typeof item.description === 'string'
             ? item.description.trim()
             : undefined
-
-        if (!title) {
-          return null
-        }
 
         return {
           id: item.id || `ai-suggestion-${index}`,
@@ -239,7 +239,6 @@ async function fetchAISuggestions(
           description,
         }
       })
-      .filter((s): s is Suggestion => s !== null)
 
     if (!mapped.length) {
       throw new Error('Sugestões da IA inválidas')
