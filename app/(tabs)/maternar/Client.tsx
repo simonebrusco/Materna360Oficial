@@ -64,7 +64,7 @@ export default function MaternarClient() {
   return (
     <main
       data-layout="page-template-v1"
-      className="bg-white min-h-[100dvh] pb-24"
+      className="min-h-[100dvh] pb-24 maternar-hub-bg"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* Premium Hero Header - HUB principal */}
