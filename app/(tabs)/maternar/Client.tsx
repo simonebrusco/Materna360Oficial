@@ -101,13 +101,13 @@ export default function MaternarClient() {
                       timestamp: new Date().toISOString(),
                     });
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-[#FF1475]/70 bg-white/90 text-[#FF1475] text-sm font-medium tracking-tight shadow-[0_6px_18px_rgba(255,20,117,0.18)] hover:shadow-[0_8px_22px_rgba(255,20,117,0.24)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#FF1475] text-white text-sm font-medium tracking-tight shadow-[0_8px_22px_rgba(255,20,117,0.35)] hover:shadow-[0_10px_26px_rgba(255,20,117,0.45)] hover:scale-[1.02] active:scale-[0.99] transition-all duration-150"
                   aria-label="Completar perfil"
                 >
                   <AppIcon
                     name="hand-heart"
                     className="w-[14px] h-[14px]"
-                    style={{ color: 'rgba(255, 20, 117, 0.7)' }}
+                    style={{ color: 'rgba(255,255,255,0.9)' }}
                     decorative
                   />
                   <span>Completar perfil</span>
