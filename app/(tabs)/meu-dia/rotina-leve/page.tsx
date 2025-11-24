@@ -246,18 +246,28 @@ export default function RotinaLevePage() {
 
   const handleSaveIdeia = () => {
     try {
+      // Se a IA já trouxe ideias, salvamos exatamente essas no planner.
+      // Se ainda não, usamos o conjunto padrão como fallback.
+      const ideasToSave =
+        ideas && ideas.length > 0
+          ? ideas.map((idea) => idea.text)
+          : [
+              'Mini brincadeira sensorial com objetos da sala.',
+              'Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.',
+              'Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+            ]
+
       addItem({
         origin: 'rotina-leve',
         type: 'insight',
-        title: 'Ideia rápida para agora',
+        title: 'Ideias rápidas para agora',
         payload: {
-          description:
-            'Mini brincadeira sensorial com objetos da sala. Conexão de 5 minutos: conte algo bom do seu dia para o seu filho. Ritual rápido: uma respiração profunda juntas antes de recomeçar.',
+          ideas: ideasToSave,
         },
       })
-      console.log('[Rotina Leve] Idea saved to planner')
+      console.log('[Rotina Leve] Ideas saved to planner')
     } catch (error) {
-      console.error('[Rotina Leve] Error saving idea:', error)
+      console.error('[Rotina Leve] Error saving ideas:', error)
     }
   }
 
@@ -471,7 +481,7 @@ export default function RotinaLevePage() {
                           return (
                             <div
                               key={recipe.id}
-                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                              className="rounded-2xl bg_WHITE border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
                             >
                               <div
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
@@ -751,7 +761,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg_WHITE text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Autocuidado
@@ -832,7 +842,7 @@ export default function RotinaLevePage() {
               </SoftCard>
 
               {/* Inspirações do Dia */}
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg_WHITE border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
