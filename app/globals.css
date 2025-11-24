@@ -102,22 +102,23 @@ body {
   background: #FFFFFF;
 }
 
-/* Materna360 — Fundo Premium leve (ameixa só no topo → rosa suave → branco) */
+/* Materna360 — Fundo Premium final (microajuste do rosa claro) */
 .materna360-premium-bg {
   background-color: #ffffff;
   background-image:
     linear-gradient(
       180deg,
-      #3b3563 0%,   /* ameixa bem no topo */
-      #4c3f72 6%,   /* transição roxo mais claro, faixa curtinha */
-      #ff6fa3 14%,  /* pink mais leve já começando */
-      #ffd8e6 30%,  /* rosa claro oficial, altura do hero/título */
-      #fff5fa 52%,  /* quase branco atrás do card */
-      #ffffff 100%  /* branco total na base */
+      #3b3563 0%,    /* ameixa topo */
+      #4c3f72 6%,    /* ameixa clara, faixa curta */
+      #ff6fa3 14%,   /* pink mais leve */
+      #ffd8e6 26%,   /* 🔼 rosa claro começa um pouco mais alto */
+      #fff5fa 48%,   /* quase branco já subindo */
+      #ffffff 100%   /* branco total na base */
     );
   background-repeat: no-repeat;
   background-attachment: scroll;
 }
+
 /* ===== Hero do Meu Dia — texto branco alinhado à esquerda ===== */
 .materna360-premium-bg header {
   max-width: 720px;
