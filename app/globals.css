@@ -166,15 +166,12 @@ body {
   body {
     @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
-
   }
 
   img {
     display: block;
     max-width: 100%;
     height: auto;
-
-
   }
 
   h1,
@@ -347,7 +344,7 @@ body {
     }
 
     .GridRhythm > * {
-      padding: var(--rhythm-card-pad-д);
+      padding: var(--rhythm-card-pad-d);
     }
   }
 
@@ -694,4 +691,8 @@ body {
 }
 
 .notesCard-header {
-  d
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
