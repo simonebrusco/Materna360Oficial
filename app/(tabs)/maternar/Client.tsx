@@ -58,7 +58,10 @@ export default function MaternarClient() {
   const dailyMessage = DAILY_MESSAGES[dayIndex];
 
   return (
-    <main data-layout="page-template-v1" className="bg-white min-h-[100dvh] pb-24">
+    <main
+      data-layout="page-template-v1"
+      className="maternar-hub-bg min-h-[100dvh] pb-24"
+    >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* Premium Hero Header - HUB principal */}
         <header className="pt-8 md:pt-10 mb-8 md:mb-10">
