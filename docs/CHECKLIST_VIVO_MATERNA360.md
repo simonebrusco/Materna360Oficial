@@ -1,313 +1,170 @@
-✅ P2 — IA Emocional & Rotina Inteligente (FECHADO)
-Versão: v0.3.3-P2-IA-Emocional
+✅ CHECKLIST VIVO — P3 (Finalização Premium & Coerência Global)
+
+Versão: v0.3.3-P3-Finalização
 Branch: cosmos-verse
-Status: 🟢 Concluído e estável (pnpm run build passando)
+Status: 🚧 Em andamento (P2 concluída e estável)
 
-Escopo da P2 Emocional
+🎯 Objetivo do P3
 
-Centralização da IA emocional e de rotina em:
+Garantir que todo o Materna360 esteja 100% consistente com o Visual Style Guide, Tone of Voice, Experience Playbook, Mini-Hub Matrix e Layout Premium, eliminando variações, corrigindo desalinhamentos, unificando padrões e preparando a base perfeita para a Fase 3 (Biblioteca Materna + Conteúdo Premium).
 
-POST /api/ai/emocional
+P3 NÃO cria novas features.
+P3 perfila, alinha e finaliza.
 
-POST /api/ai/rotina
+📦 ESCOPO OFICIAL DO P3
+1. Polimento Visual Global (100% do app)
 
-Integração de insights emocionais com:
+Conferir spacing, radius, sombras e contraste
 
-/meu-dia/como-estou-hoje
+Aplicar gradientes e nuances conforme o Style Guide
 
-/meu-dia/rotina-leve
+Garantir consistência entre todos os mini-hubs
 
-/eu360
+Atualizar componentes antigos para o padrão premium
 
-Camada de orquestração da IA:
+📚 Base oficial:
 
-Núcleo de IA: app/lib/ai/maternaCore.ts
+Materna360 — VISUAL STYLE GUIDE (OFICIAL)
 
-Adapter de perfil Eu360 → IA: app/lib/ai/eu360ProfileAdapter.ts
+Materna360 — COPY PLAYBOOK & LAYOUT SYSTEM
 
-Loader compartilhado de contexto Materna (profile + child):
-app/lib/ai/profileAdapter.ts (loadMaternaContextFromRequest)
+Materna360 — EXPERIENCE PLAYBOOK (CX+UX)
 
-Rate limit de IA: app/lib/ai/rateLimit.ts
-(usado em /api/ai/emocional com mensagens amigáveis)
+2. Unificação de Botões e Ações (UI System)
 
-Conexão entre IA e Planner via usePlannerSavedContents, sempre com:
+Todos os botões devem seguir o mesmo padrão:
 
-origin bem definido por mini-hub
+primary = #ff005e
 
-tipos (type) padronizados (note, insight, recipe…)
+secundário = borda #ffd8e6, texto #2f3a56
 
-fallbacks editoriais carinhosos (sem “cara de IA” para a mãe)
+radius 999px
 
-/meu-dia/rotina-leve
+sombra leve
 
-Objetivo: transformar Rotina Leve em um hub de apoio rápido para o dia, com IA nos bastidores, mas experiência de “conversa com uma amiga”.
+Remover botões antigos ou variantes que não seguem o sistema
 
-✅ Layout premium consolidado:
+Padronizar microcopies (ex.: “Salvar no planner”, “Gerar receitas”)
 
-Hero card: Receitas Inteligentes
+📚 Referência:
 
-Grid 2 colunas: Ideias Rápidas + Inspirações do Dia
+Builder Guidelines
 
-Card-resumo final com visão do que foi salvo no Planner
+Copy Playbook – CTAs
 
-✅ IA de Receitas Inteligentes
+3. Microcopy e Frases Motivacionais por Mini-Hub
 
-Endpoint: POST /api/ai/rotina
+Verificar heros, subtítulos e textos curtos
 
-feature: 'recipes'
+Unificar tom: leve, acolhedor, maternal, zero técnico
 
-origin: 'rotina-leve'
+Revisar frases do footer e garantir coerência com o routeKey
 
-Usa contexto personalizado vindo do Eu360 (via loadMaternaContextFromRequest)
+Aplicar insights do Tone of Voice Master Guide
 
-Fallback seguro com 3 receitas editoriais bem explicadas
+4. Revisão Mobile (Responsividade Premium)
 
-Limite diário simples (3 receitas/dia) com mensagem amigável
+Conferir grid 2x2 em hubs
 
-Salvamento no Planner:
+Conferir cards sem quebra
 
-origin: 'rotina-leve'
+Ajustar paddings iguais nos 4 hubs
 
-type: 'recipe'
+Revisar comportamento de colunas em 360px, 390px e 414px
 
-payload com description, timeLabel, ageLabel, preparation
+📚 Base:
 
-✅ IA de Ideias Rápidas
+Experience Playbook – seção Mobile First
 
-Hook: useRotinaAISuggestions
-(camada de consumo da IA de “quick-ideas”)
+Matriz de Mini-Hubs
 
-Filtros inteligentes:
+5. Ajustes Finais do EU360
 
-tempo disponível
+Conferir layout premium do ProfileForm
 
-com quem (só eu / eu e meu filho / família toda)
+Conferir cards de insight semanal
 
-tipo de ideia (brincadeira, organização, autocuidado, receita rápida)
+Garantir consistência de spacing e radius
 
-Fallback com lista editorial de ideias quando IA não responde
+Unificar copy com restante do app
 
-Salvamento no Planner:
+📚 Referência:
 
-origin: 'rotina-leve'
+Mini-Hub Matrix – EU360
 
-type: 'insight'
+Visual Style Guide
 
-payload com descrição da ideia
+🧭 PLANO DE ATAQUE P3 (em ordem cirúrgica)
+1️⃣ Revisão UI Global
 
-✅ IA de Inspirações do Dia
+Mapear todos os componentes que destoam do Style Guide
 
-Endpoint: POST /api/ai/emocional
+Atualizar para SoftCard + spacing premium + sombras consistentes
 
-feature: 'daily_inspiration'
+2️⃣ Atualizar Mini-Hub "Meu Dia"
 
-origin: 'rotina-leve'
+Foco:
 
-Foco selecionável:
+Rotina Leve (já 80% premium → revisar apenas spacing e mobile)
 
-Cansaço, Culpa, Organização, Conexão com o filho
+Como Estou Hoje (já 90% premium → revisar botões e microcopy)
 
-Fallback com:
+Checklist:
 
-frase
+✔️ Cards com radius 24/28
+✔️ Bordas #ffd8e6 em tudo
+✔️ Texto #2f3a56 e #545454
+✔️ Botões unificados
+✔️ Revisar grids mobile
 
-pequeno cuidado
+3️⃣ Atualizar Mini-Hub "Cuidar"
 
-mini ritual
+Hubs:
 
-Salvamento no Planner:
+Autocuidado Inteligente
 
-origin: 'rotina-leve'
+Cuidar com Amor
 
-type: 'insight'
+Objetivo:
 
-payload: { frase, pequenoCuidado, miniRitual }
+Deixar igual ao padrão premium dos hubs /meu-dia
 
-✅ Card-resumo conectado ao Planner:
+Revisar hero, cards, 2 colunas, espaçamentos
 
-Contagem de receitas salvas
+4️⃣ Atualizar Mini-Hub "Descobrir"
 
-Contagem de inspirações salvas
+Revisar cards da biblioteca
 
-Exibição da última inspiração salva (frase + cuidado) vinda do Planner
+Criar padrão premium para cards de conteúdo
 
-/eu360 — Insight emocional semanal
+Deixar pronto para Fase 3 (Conteúdo + PDFs)
 
-Objetivo: fazer do Eu360 o painel de visão emocional da mãe, com linguagem acolhedora.
+5️⃣ Atualizar Mini-Hub "Eu360"
 
-✅ Arquivo: app/(tabs)/eu360/Client.tsx
-✅ Mantido padrão Materna360 Premium:
+Revisar todo o fluxo de profile
 
-AppShell + PageTemplate + SectionWrapper
+Cards, inputs, bordas, labels
 
-ProfileForm intacto (dados da mãe/filhos)
+Revisar insight semanal (já atualizado na IA)
 
-✅ Card “Olhar carinhoso sobre a sua semana”
+Deixar 100% premium
 
-Endpoint: POST /api/ai/emocional
+6️⃣ Revisar MotivationalFooter + microcopy do app inteiro
 
-feature: 'weekly_overview'
+Garantir frases coerentes
 
-origin: 'eu360'
+Remover redundâncias
 
-Usa contexto vindo de /api/eu360/profile via:
+Validar em todos os mini-hubs
 
-loadMaternaContextFromRequest → adaptEu360ProfileToMaterna
+Aplicar TOV maternal acolhedor
 
-Estrutura do insight semanal:
+7️⃣ Revisão Final + Build de Confirmação
 
-title
+Rodar pnpm run build
 
-summary
+Conferir Vercel Preview
 
-highlights.bestDay
+Aprovar PR
 
-highlights.toughDays
-
-Personalização leve usando perfil da mãe
-
-Fallback editorial carinhoso (sem mencionar “IA” na cópia)
-
-/meu-dia/como-estou-hoje — Dia + Semana + Insight integrado ao Planner
-
-Objetivo: conectar registros diários com uma visão emocional da semana e um insight diário que pode ir para o Planner.
-
-✅ Card “Meu Humor & Minha Energia”
-
-Persistência diária via:
-
-getBrazilDateKey
-
-save / load
-
-Telemetria:
-
-mood.registered
-
-energy.registered
-
-✅ Card “Como foi meu dia?”
-
-Notas do dia com salvamento local
-
-Salvamento no Planner:
-
-origin: 'como-estou-hoje'
-
-type: 'note'
-
-payload: { text }
-
-Lista de notas de hoje vinda do Planner (getByOrigin('como-estou-hoje'))
-
-✅ Card “Insight do Dia” (IA + Planner)
-
-Endpoint: POST /api/ai/emocional
-
-feature: 'daily_insight'
-
-origin: 'como-estou-hoje'
-
-Estrutura:
-
-title
-
-body
-
-gentleReminder
-
-Botão “Levar este insight para o planner”:
-
-origin: 'como-estou-hoje'
-
-type: 'insight'
-
-payload: { text, gentleReminder }
-
-Fallback com texto editorial acolhedor
-
-Telemetria:
-
-daily_insight.saved
-
-✅ Card “Minha Semana Emocional”
-
-Endpoint: POST /api/ai/emocional
-
-feature: 'weekly_overview'
-
-origin: 'como-estou-hoje'
-
-Estrutura:
-
-summary
-
-highlights.bestDay
-
-highlights.toughDays
-
-UI em 3 partes:
-
-bloco de texto com resumo da semana
-
-card “Quando seus dias fluem melhor”
-
-card “Quando o dia pesa um pouco mais”
-
-Fallback garante texto compassivo quando IA falha
-
-Estado técnico
-
-✅ Build: pnpm run build passando
-✅ Arquitetura de IA consolidada em:
-
-app/lib/ai/maternaCore.ts
-
-app/lib/ai/eu360ProfileAdapter.ts
-
-app/lib/ai/profileAdapter.ts
-
-app/lib/ai/rateLimit.ts
-
-✅ APIs de IA atualizadas:
-
-app/api/ai/emocional/route.ts
-
-uso de loadMaternaContextFromRequest
-
-suporte a daily_inspiration, weekly_overview, daily_insight
-
-proteção com rate limit (assertRateLimit) e mensagens amigáveis
-
-app/api/ai/rotina/route.ts
-
-conectada ao núcleo MaternaCore (modos smart-recipes e quick-ideas)
-
-integrada ao contexto Eu360 quando disponível
-
-✅ Hooks integrados ao Planner e IA:
-
-usePlannerSavedContents com origin/type padronizados
-
-useRotinaAISuggestions para Ideias Rápidas
-
-usePrimaryChildAge para regras de idade (ex.: bloqueio de receitas < 6 meses)
-
-✅ Sem mudanças em:
-
-app/layout.tsx
-
-BottomNav
-
-paleta de cores (seguindo Visual Style Guide oficial)
-
-sistema de navegação principal
-
-✅ Todas as chamadas de IA têm:
-
-fallback editorial carinhoso
-
-logs de erro no console (sem travar UX)
-
-não revelam “IA” diretamente na experiência da mãe
+Merge para main
