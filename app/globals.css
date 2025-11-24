@@ -102,17 +102,17 @@ body {
   background: #FFFFFF;
 }
 
-/* Materna360 — Fundo Premium Fase P4 (hero com ameixa → rosa → branco) */
+/* Materna360 — Fundo Premium Fase P4 (ameixa suave → rosa claro → branco) */
 .materna360-premium-bg {
   background-color: #ffffff;
   background-image:
     linear-gradient(
       180deg,
-      #2f3a56 0%,    /* ameixa forte no topo */
-      #2f3a56 14%,   /* faixa de destaque mais alta */
-      #ff1475 30%,   /* transição por um rosa mais vivo da marca */
-      #ffd8e6 55%,   /* rosa clarinho oficial */
-      #ffffff 82%    /* branco predominante na base */
+      #2f3a56 0%,     /* ameixa no topo */
+      #3b335f 10%,    /* ameixa um pouco mais suave */
+      #ff1475 24%,    /* pink da marca, faixa mais curta */
+      #ffd8e6 46%,    /* rosa claro predominante */
+      #ffffff 76%     /* branco assume antes do card */
     );
   background-repeat: no-repeat;
   background-attachment: fixed;
