@@ -1,12 +1,10 @@
 'use client'
 
-'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
-import { Toast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import {
   plannerApi,
   plannerStorage,
@@ -27,11 +25,6 @@ type TipState = {
   timerStatus: TimerStatus
   remainingMs: number
   targetTimestamp?: number
-}
-
-type ToastState = {
-  message: string
-  type: 'success' | 'error' | 'info'
 }
 
 type StoredState = Record<string, TipState>
@@ -172,7 +165,11 @@ const createId = () => {
 }
 
 export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
-  const [states, setStates] = useState<StoredState>(() => {
+  // SSR-safe initial state (no Date.now() call)
+  const [states, setStates] = useState<StoredState>({})
+
+  // Sanitize state on client mount only (avoids Date.now() during SSR)
+  useEffect(() => {
     const stored = readStoredState()
     const now = Date.now()
     const sanitized: StoredState = {}
@@ -185,11 +182,10 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
       sanitized[tip.id] = sanitizeTipState(tip, stored[tip.id], now)
     })
 
-    return sanitized
-  })
+    setStates(sanitized)
+  }, [tips])
 
   const [expandedIds, setExpandedIds] = useState<string[]>([])
-  const [toast, setToast] = useState<ToastState | null>(null)
 
   useEffect(() => {
     persistState(states)
@@ -361,10 +357,10 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         void plannerApi.savePlannerItem(dateKey, item)
       }
 
-      setToast({ message: '✅ Adicionado ao Planner.', type: 'success' })
+      toast.success('Tudo certo! Dica guardada no seu Planner.')
     } catch (error) {
       console.error('Falha ao adicionar dica ao Planner:', error)
-      setToast({ message: 'Não foi possível adicionar agora. Tente novamente.', type: 'error' })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
     }
   }
 
@@ -386,7 +382,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
           >
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <span aria-hidden className="text-3xl">
+                <span aria-hidden className="text-3xl flex-shrink-0">
                   {tip.icon}
                 </span>
                 <div>
@@ -403,8 +399,9 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                   onClick={() => toggleExpanded(tip.id)}
                   aria-expanded={isExpanded}
                   aria-controls={`organization-tip-${tip.id}-tasks`}
+                  className="flex items-center gap-1.5"
                 >
-                  ✓ Checklist
+                  <span aria-hidden>✓</span> Checklist
                 </Button>
 
                 {timerStatus === 'running' ? (
@@ -458,7 +455,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                     <p className="font-mono text-2xl text-support-1">{formattedTime}</p>
                   </div>
                   {timerStatus === 'completed' ? (
-                    <p className="text-sm font-medium text-primary">⏰ Tempo concluído! Pequenas pausas fazem grande diferença.</p>
+                    <p className="text-sm font-medium text-primary"><span aria-hidden>⏰</span> Tempo concluído! Pequenas pausas fazem grande diferença.</p>
                   ) : (
                     <p className="text-xs text-support-2">Reserve um momento só seu. Pausas curtas trazem fôlego para o dia.</p>
                   )}
@@ -497,7 +494,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                     </ul>
 
                     {allDone && (
-                      <p className="text-sm font-semibold text-primary">✨ Você fez o seu melhor hoje!</p>
+                      <p className="text-sm font-semibold text-primary"><span aria-hidden>✨</span> Você fez o seu melhor hoje!</p>
                     )}
                   </div>
                 )}
@@ -511,14 +508,6 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
         Você não precisa fazer tudo. Só o que cabe hoje.
       </p>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={4000}
-        />
-      )}
     </div>
   )
 }

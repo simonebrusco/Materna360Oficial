@@ -1,142 +1,122 @@
 'use client'
 
-'use client'
+import * as React from 'react'
+import { useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useProfile } from '@/app/hooks/useProfile'
+import { PageTemplate } from '@/components/common/PageTemplate'
+import { SoftCard as Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PageGrid } from '@/components/common/PageGrid'
+import { FilterPill } from '@/components/ui/FilterPill'
+import { Badge } from '@/components/ui/Badge'
+import { ChildDiary } from './components/ChildDiary'
+import { ChildDiaryCard } from './components/ChildDiaryCard'
+import { AppointmentsMVP } from './components/AppointmentsMVP'
+import { BreathAudios } from './components/BreathAudios'
+import { SectionH2 } from '@/components/common/Headings'
+import { CareHub } from '@/components/cuidar/CareHub'
 
-import React, { Suspense, type ErrorInfo, type ReactNode } from 'react'
-
-import { Reveal } from '@/components/ui/Reveal'
-import BreathTimer from '@/components/blocks/BreathTimer'
-import { CareJourneys } from '@/components/blocks/CareJourneys'
-import HealthyRecipesSection from '@/components/recipes/HealthyRecipesSection'
-import { MindfulnessCollections } from '@/components/blocks/MindfulnessCollections'
-import { OrganizationTips } from '@/components/features/OrganizationTips'
-import ProfessionalsSection from '@/components/support/ProfessionalsSection'
-
-interface CuidarClientProps {
-  firstName?: string
-  initialProfessionalId?: string
+type Props = {
+  recipesSection?: React.ReactNode
 }
 
-function SectionSkeleton({ className = '' }: { className?: string }) {
-  return <div className={`section-card h-44 animate-pulse bg-white/70 ${className}`} aria-hidden />
+// Focus query param to section ID mapping
+const FOCUS_TO_ID: Record<string, string> = {
+  mae: 'cuidar-mae',
+  filho: 'cuidar-filho',
 }
 
-class SectionErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false }
+export default function CuidarClient({ recipesSection }: Props) {
+  const { name } = useProfile();
+  const searchParams = useSearchParams()
+  const firstName = name ? name.split(' ')[0] : '';
+  const pageTitle = firstName ? `${firstName}, vamos cuidar do que importa agora?` : 'Cuidar';
+  const pageSubtitle = 'Saúde física, emocional e segurança — no ritmo da vida real.';
 
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Falha ao renderizar seção em Cuide-se:', error, errorInfo)
-  }
+    const targetId = FOCUS_TO_ID[focus]
+    if (!targetId) return
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="section-card border border-primary/30 bg-primary/10 text-sm text-primary">
-          Algo não carregou corretamente. Tente recarregar a página.
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
+
+  return (
+    <PageTemplate
+      label="CUIDAR"
+      title={pageTitle}
+      subtitle={pageSubtitle}
+    >
+      <CareHub />
+
+      <Card>
+        <div className="flex flex-wrap gap-2">
+          <FilterPill active>Hoje</FilterPill>
+          <FilterPill>Semana</FilterPill>
+          <FilterPill>Bem-estar</FilterPill>
+          <FilterPill>Sono</FilterPill>
+          <FilterPill>Consultas</FilterPill>
         </div>
-      )
-    }
+      </Card>
 
-    return this.props.children
-  }
-}
+      <ChildDiaryCard />
 
-function GuardedSection({ children }: { children: ReactNode }) {
-  return (
-    <Suspense fallback={<SectionSkeleton />}>
-      <SectionErrorBoundary>{children}</SectionErrorBoundary>
-    </Suspense>
-  )
-}
+      <section id="cuidar-mae">
+        <PageGrid>
+          <Card>
+            <Badge className="mb-2">Bem-estar</Badge>
+            <EmptyState
+              title="Check-in de bem-estar"
+              text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+            />
+          </Card>
+        </PageGrid>
+      </section>
 
-export default function CuidarClient({ firstName = '', initialProfessionalId }: CuidarClientProps) {
-  const trimmedName = firstName.trim()
-  const hasName = trimmedName.length > 0
-  const subheadingTail =
-    'seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.'
-  const subheading = hasName ? `${trimmedName}, ${subheadingTail}` : `Seu bem-estar é prioridade: reserve momentos de pausa, respire com consciência e nutra o corpo com carinho.`
+      <section id="cuidar-filho">
+        <PageGrid>
+          <ChildDiary />
 
-  return (
-    <div className="relative page-shell pb-32 pt-12">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-6 top-0 -z-10 h-64 rounded-soft-3xl bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,216,230,0.45),transparent)]"
-      />
+          <Card>
+            <Badge className="mb-2">Saúde</Badge>
+            <EmptyState
+              title="Saúde & Vacinas"
+              text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+            />
+          </Card>
+        </PageGrid>
+      </section>
 
-      <div className="relative space-y-12">
-        <Reveal>
-          <div className="space-y-4">
-            <span className="section-eyebrow eyebrow-capsule">Autocuidado</span>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span aria-hidden="true" className="text-3xl">🌿</span>
-                <h1 className="section-title md:text-4xl" aria-label="Cuide-se">
-                  Cuide-se
-                </h1>
-              </div>
-              {hasName && (
-                <span
-                  className="inline-flex max-w-[12ch] items-center truncate rounded-full bg-support-1/10 px-3 py-1 text-sm font-semibold text-support-1"
-                  aria-label={`Mãe: ${trimmedName}`}
-                  title={trimmedName}
-                >
-                  {trimmedName}
-                </span>
-              )}
-            </div>
-            <p className="section-subtitle max-w-3xl" aria-label={subheading}>
-              {subheading}
-            </p>
-          </div>
-        </Reveal>
+      <section id="cuidar-filho-consultas">
+        <Card>
+          <Badge className="mb-2">Consultas</Badge>
+          <AppointmentsMVP storageKey="cuidar:appointments" />
+        </Card>
+      </section>
 
-        <GuardedSection>
-          <Reveal delay={80}>
-            <BreathTimer />
-          </Reveal>
-        </GuardedSection>
+      <Card>
+        <Badge className="mb-2">Receitas</Badge>
+        {recipesSection ?? (
+          <EmptyState
+            title="Receitas saudáveis"
+            text="Nenhum registro adicionado hoje. Que tal começar anotando como foi a alimentação ou o sono?"
+          />
+        )}
+      </Card>
 
-        <GuardedSection>
-          <section className="space-y-4">
-            <Reveal>
-              <div className="space-y-2">
-                <h2 className="section-title flex items-center gap-2">
-                  <span aria-hidden="true">🎧</span>
-                  <span>Mindfulness para Mães</span>
-                </h2>
-                <p className="section-subtitle max-w-2xl">
-                  Um espaço para desacelerar, ouvir sua respiração e acolher as emoções do dia.
-                </p>
-              </div>
-            </Reveal>
-            <MindfulnessCollections />
-          </section>
-        </GuardedSection>
-
-        <GuardedSection>
-          <Reveal delay={140}>
-            <CareJourneys />
-          </Reveal>
-        </GuardedSection>
-
-        <GuardedSection>
-          <HealthyRecipesSection />
-        </GuardedSection>
-
-        <GuardedSection>
-          <Reveal delay={200}>
-            <OrganizationTips />
-          </Reveal>
-        </GuardedSection>
-
-        <GuardedSection>
-          <ProfessionalsSection />
-        </GuardedSection>
-      </div>
-    </div>
+      <BreathAudios />
+    </PageTemplate>
   )
 }

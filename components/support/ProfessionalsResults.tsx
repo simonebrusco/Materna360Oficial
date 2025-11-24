@@ -1,11 +1,17 @@
 'use client'
 
-'use client'
-
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import ProfessionalCard, { type ProfessionalCardData } from './ProfessionalCard'
 import type { ProfessionalsSearchFilters } from './ProfessionalsSearchForm'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
+import { Empty } from '@/components/ui/feedback/Empty'
+import { ErrorBlock } from '@/components/ui/feedback/Error'
+import { ProfessionalProfileSheet, type Professional } from '@/components/ui/ProfessionalProfileSheet'
+import { useMountedRef } from '@/components/hooks/useMountedRef'
+import { safeFetch } from '@/app/lib/safeFetch'
+
 
 type ApiResponse = {
   items: ProfessionalCardData[]
@@ -25,7 +31,10 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
+  const [selectedProfile, setSelectedProfile] = useState<Professional | undefined>()
+  const [openProfile, setOpenProfile] = useState(false)
 
+  const mounted = useMountedRef()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const handleSearchEvent = useCallback((event: CustomEvent<ProfessionalsSearchFilters>) => {
@@ -69,24 +78,28 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
       page: String(page),
     })
 
-    fetch(`/api/support/pros?${params.toString()}`, { signal: controller.signal })
+    safeFetch(`/api/support/pros?${params.toString()}`, { signal: controller.signal }, 8000)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error('Não foi possível carregar os profissionais.')
         }
         const json = (await response.json()) as ApiResponse
-        setData((previous) => (page === 1 ? json.items : [...previous, ...json.items]))
-        setHasMore(Boolean(json.hasMore))
+        if (mounted.current && !controller.signal.aborted) {
+          setData((previous) => (page === 1 ? json.items : [...previous, ...json.items]))
+          setHasMore(Boolean(json.hasMore))
+        }
       })
-      .catch((error_) => {
-        if (error_.name === 'AbortError') {
+      .catch((error_: any) => {
+        if (error_?.name === 'AbortError') {
           return
         }
-        console.error('[ProfessionalsResults] Falha ao carregar profissionais', error_)
-        setError('Não foi possível carregar os profissionais agora. Tente novamente em instantes.')
+        if (mounted.current) {
+          console.error('[ProfessionalsResults] Falha ao carregar profissionais', error_)
+          setError('Não foi possível carregar os profissionais agora. Tente novamente em instantes.')
+        }
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
+        if (mounted.current && !controller.signal.aborted) {
           setLoading(false)
         }
       })
@@ -94,13 +107,32 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
     return () => {
       controller.abort()
     }
-  }, [filters, page])
+  }, [filters, page, mounted])
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
       setPage((previous) => previous + 1)
     }
   }
+
+  const handleProfileOpen = useCallback((pro: ProfessionalCardData) => {
+    const professional: Professional = {
+      id: pro.id,
+      nome: pro.nome,
+      especialidade: pro.especialidade,
+      bioCurta: pro.bioCurta,
+      avatarUrl: pro.avatarUrl,
+      cidade: pro.cidade,
+      whatsUrl: pro.whatsUrl,
+      calendlyUrl: pro.calendlyUrl,
+      verificado: pro.verificado,
+      primeiraAvaliacaoGratuita: pro.primeiraAvaliacaoGratuita,
+      temas: pro.temas,
+      precoHint: pro.precoHint,
+    }
+    setSelectedProfile(professional)
+    setOpenProfile(true)
+  }, [])
 
   if (!filters) {
     return (
@@ -112,35 +144,56 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
 
   const showSkeletonGrid = loading && data.length === 0
   const showEmptyState = !loading && data.length === 0 && !error
+  const FF = isEnabled('FF_FEEDBACK_KIT')
 
   return (
     <div className="space-y-6">
       {showSkeletonGrid ? (
-        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
-            <div key={index} className="h-56 rounded-2xl border border-white/60 bg-white/60 animate-pulse" />
-          ))}
-        </div>
+        FF ? (
+          <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+            {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+              <Skeleton key={index} className="h-56 rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+            {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+              <div key={index} className="h-56 rounded-2xl border border-white/60 bg-white/60 animate-pulse" />
+            ))}
+          </div>
+        )
       ) : null}
 
       {data.length > 0 ? (
-        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="GridRhythm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
           {data.map((pro) => (
-            <ProfessionalCard key={pro.id} pro={pro} />
+            <ProfessionalCard
+              key={pro.id}
+              pro={pro}
+              onProfileOpen={isEnabled('FF_LAYOUT_V1') ? handleProfileOpen : undefined}
+            />
           ))}
         </div>
       ) : null}
 
       {showEmptyState ? (
-        <div className="rounded-2xl border border-white/60 bg-white/80 p-8 text-center text-support-2">
-          Nenhum profissional encontrado para os filtros escolhidos.
-        </div>
+        FF ? (
+          <Empty title="Nenhum profissional encontrado" hint="Tente ajustar os filtros." />
+        ) : (
+          <div className="rounded-2xl border border-white/60 bg-white/80 p-8 text-center text-support-2">
+            Nenhum profissional encontrado para os filtros escolhidos.
+          </div>
+        )
       ) : null}
 
       {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">
-          {error}
-        </div>
+        FF ? (
+          <ErrorBlock message={error} onRetry={() => setPage(1)} />
+        ) : (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">
+            {error}
+          </div>
+        )
       ) : null}
 
       {hasMore ? (
@@ -155,6 +208,14 @@ export default function ProfessionalsResults({ initial }: ProfessionalsResultsPr
           </button>
         </div>
       ) : null}
+
+      {isEnabled('FF_LAYOUT_V1') && (
+        <ProfessionalProfileSheet
+          open={openProfile}
+          onOpenChange={setOpenProfile}
+          professional={selectedProfile}
+        />
+      )}
     </div>
   )
 }

@@ -1,207 +1,243 @@
 'use client'
 
-'use client'
-
-import { useState } from 'react'
-
-import type { ChildActivity, ChildRecommendation } from '@/app/data/childContent'
-import type { Profile, AgeRange } from '@/app/lib/ageRange'
-import { ActivityOfDay } from '@/components/blocks/ActivityOfDay'
-import { CheckInCard } from '@/components/blocks/CheckInCard'
-import { Checklist } from '@/components/blocks/Checklist'
-import DailyMessageCard from '@/components/blocks/DailyMessageCard'
-import { FamilyPlanner } from '@/components/blocks/FamilyPlanner'
-import GridRhythm from '@/components/common/GridRhythm'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/card'
+import React, { useState, useEffect } from 'react'
+import { useProfile } from '@/app/hooks/useProfile'
+import { getTimeGreeting } from '@/app/lib/greetings'
+import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
+import { PageTemplate } from '@/components/common/PageTemplate'
+import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import { SoftCard } from '@/components/ui/card'
+import { DailyPriorities } from '@/components/blocks/DailyPriorities'
+import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
+import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 
-type MeuDiaClientProps = {
-  dailyGreeting: string
-  currentDateKey: string
-  weekStartKey: string
-  weekLabels: { key: string; shortLabel: string; longLabel: string; chipLabel: string }[]
-  plannerTitle: string
-  profile: Profile
-  dateKey: string
-  allActivities: ChildActivity[]
-  recommendations: ChildRecommendation[]
-  initialBuckets: AgeRange[]
+const MOOD_LABELS: Record<string, string> = {
+  happy: 'Feliz',
+  okay: 'Normal',
+  stressed: 'Estressada',
 }
 
-const quickActions = [
-  { emoji: '🏡', title: 'Rotina da Casa', description: 'Organize as tarefas do lar' },
-  { emoji: '📸', title: 'Momentos com os Filhos', description: 'Registre e celebre' },
-  { emoji: '🎯', title: 'Atividade do Dia', description: 'Faça com as crianças' },
-  { emoji: '☕', title: 'Pausa para Mim', description: 'Seu momento especial' },
-] as const
-
-const NOTES_LABEL = 'Notas R\u00E1pidas'
-const NOTES_DESCRIPTION = 'Capture ideias e lembretes em instantes.'
-const NOTES_EMPTY_TEXT = 'Nenhuma nota registrada ainda.'
-
-const safeUtf = (value?: string | null): string => {
-  if (!value) {
-    return ''
-  }
-
-  try {
-    return decodeURIComponent(escape(value))
-  } catch {
-    return value ?? ''
-  }
-}
-
-export function MeuDiaClient({
-  dailyGreeting,
-  currentDateKey,
-  weekStartKey,
-  weekLabels,
-  plannerTitle,
-  profile,
-  dateKey,
-  allActivities,
-  recommendations,
-  initialBuckets,
-}: MeuDiaClientProps) {
-  const [showNoteModal, setShowNoteModal] = useState(false)
-  const [noteText, setNoteText] = useState('')
-  const [notes, setNotes] = useState<string[]>([])
-
-  const notesLabel = safeUtf(NOTES_LABEL)
-  const notesDescription = safeUtf(NOTES_DESCRIPTION)
-  const emptyNotesText = safeUtf(NOTES_EMPTY_TEXT)
-
-  const handleAddNote = () => {
-    if (noteText.trim()) {
-      setNotes([noteText, ...notes])
-      setNoteText('')
-      setShowNoteModal(false)
+function generateSummaryText(
+  mood: string | null,
+  day: string | null,
+): { main: React.ReactNode; show: boolean } {
+  if (mood && day) {
+    return {
+      show: true,
+      main: (
+        <>
+          Hoje você está{' '}
+          <span className="font-semibold text-[#FF1475]">
+            {MOOD_LABELS[mood]}
+          </span>{' '}
+          e escolheu um dia{' '}
+          <span className="font-semibold text-[#FF1475]">{day}</span>. Que tal
+          começar definindo suas três prioridades?
+        </>
+      ),
     }
   }
 
+  if (mood) {
+    return {
+      show: true,
+      main: (
+        <>
+          Hoje você está{' '}
+          <span className="font-semibold text-[#FF1475]">
+            {MOOD_LABELS[mood]}
+          </span>
+          . Agora escolha que tipo de dia você quer ter.
+        </>
+      ),
+    }
+  }
+
+  if (day) {
+    return {
+      show: true,
+      main: (
+        <>
+          Você escolheu um dia{' '}
+          <span className="font-semibold text-[#FF1475]">{day}</span>. Conte
+          pra gente como você está agora.
+        </>
+      ),
+    }
+  }
+
+  return {
+    show: true,
+    main: (
+      <>
+        Conte pra gente como você está e que tipo de dia você quer ter. Vamos
+        organizar tudo a partir disso.
+      </>
+    ),
+  }
+}
+
+export function MeuDiaClient() {
+  const { name } = useProfile()
+  const [greeting, setGreeting] = useState<string>('')
+  const [selectedMood, setSelectedMood] = useState<string | null>(null)
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+
+  // Greeting dinâmico
+  useEffect(() => {
+    const firstName = name ? name.split(' ')[0] : 'Mãe'
+    const timeGreeting = getTimeGreeting(firstName)
+    setGreeting(timeGreeting)
+
+    const interval = setInterval(() => {
+      const updatedGreeting = getTimeGreeting(firstName)
+      setGreeting(updatedGreeting)
+    }, 60000)
+
+    return () => clearInterval(interval)
+  }, [name])
+
+  // Telemetria de navegação
+  useEffect(() => {
+    track('nav.click', { tab: 'meu-dia', timestamp: new Date().toISOString() })
+  }, [])
+
+  // Reload diário (vira o dia, reseta o estado visual)
+  useEffect(() => {
+    const now = new Date()
+    const midnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    )
+    const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0)
+    const timeoutId = window.setTimeout(() => window.location.reload(), delay)
+    return () => window.clearTimeout(timeoutId)
+  }, [])
+
   return (
-    <>
-      <SectionWrapper>
-        <Reveal delay={100}>
-          <DailyMessageCard greeting={dailyGreeting} />
-        </Reveal>
-      </SectionWrapper>
+    <PageTemplate
+      label="MEU DIA"
+      title="Seu Dia Organizado"
+      subtitle="Um espaço para planejar com leveza."
+    >
+      <ClientOnly>
+        <div className="px-4 py-8">
+          {/* GREETING SECTION */}
+          <Reveal delay={0}>
+            <section className="space-y-4 mb-6 md:mb-8">
+              <h2 className="text-2xl md:text-3xl font-semibold text-[#3A3A3A] leading-snug font-poppins">
+                {greeting}
+              </h2>
 
-      <SectionWrapper>
-        <Reveal delay={160}>
-          <CheckInCard />
-        </Reveal>
-      </SectionWrapper>
+              {/* Mood Pills */}
+              <div className="space-y-4 md:space-y-5">
+                <div>
+                  <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
+                    Como você está?
+                  </p>
+                  <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
+                    Escolha como você se sente agora.
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { id: 'happy', label: 'Feliz' },
+                    { id: 'okay', label: 'Normal' },
+                    { id: 'stressed', label: 'Estressada' },
+                  ].map((mood) => (
+                    <button
+                      key={mood.id}
+                      onClick={() =>
+                        setSelectedMood(
+                          selectedMood === mood.id ? null : mood.id,
+                        )
+                      }
+                      className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
+                        selectedMood === mood.id
+                          ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
+                          : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
+                      }`}
+                    >
+                      {mood.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-      <SectionWrapper>
-        <Reveal delay={220}>
-          <ActivityOfDay dateKey={dateKey} profile={profile} activities={allActivities} />
-        </Reveal>
-      </SectionWrapper>
+              {/* Day Tags */}
+              <div className="space-y-4 md:space-y-5">
+                <div>
+                  <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
+                    Hoje eu quero um dia...
+                  </p>
+                  <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
+                    Selecione o estilo do seu dia.
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(
+                    (tag) => (
+                      <button
+                        key={tag}
+                        onClick={() =>
+                          setSelectedDay(selectedDay === tag ? null : tag)
+                        }
+                        className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
+                          selectedDay === tag
+                            ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
+                            : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
 
-      <SectionWrapper>
-        <GridRhythm className="GridRhythm grid-cols-1 sm:grid-cols-2">
-          {quickActions.map((action, index) => (
-            <Reveal key={action.title} delay={index * 80} className="h-full">
-              <Card className="h-full">
-                <div className="mb-3 text-2xl">{action.emoji}</div>
-                <h3 className="text-base font-semibold text-support-1 md:text-lg">{action.title}</h3>
-                <p className="mb-4 text-xs text-support-2 md:text-sm">{action.description}</p>
-                <Button variant="primary" size="sm" className="w-full">
-                  Acessar
-                </Button>
-              </Card>
+              {/* Summary Block */}
+              {(() => {
+                const summary = generateSummaryText(selectedMood, selectedDay)
+                return (
+                  summary.show && (
+                    <div className="mt-4 text-sm md:text-base text-[#6A6A6A] font-poppins leading-relaxed">
+                      {summary.main}
+                    </div>
+                  )
+                )
+              })()}
+            </section>
+          </Reveal>
+
+          {/* MAIN PLANNER CARD */}
+          <SoftCard className="rounded-3xl bg-white border border-[#FFE8F2] p-6 md:p-8 shadow-sm space-y-6 md:space-y-8 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] transition-shadow duration-200">
+            {/* DAILY PRIORITIES */}
+            <Reveal delay={150}>
+              <DailyPriorities />
             </Reveal>
-          ))}
-        </GridRhythm>
-      </SectionWrapper>
 
-      <SectionWrapper>
-        <Reveal delay={280}>
-          <FamilyPlanner
-            currentDateKey={currentDateKey}
-            weekStartKey={weekStartKey}
-            weekLabels={weekLabels}
-            plannerTitle={plannerTitle}
-            profile={profile}
-            dateKey={dateKey}
-            recommendations={recommendations}
-            initialBuckets={initialBuckets}
-          />
-        </Reveal>
-      </SectionWrapper>
-
-      <SectionWrapper>
-        <Reveal delay={320}>
-          <Checklist currentDateKey={currentDateKey} />
-        </Reveal>
-      </SectionWrapper>
-
-      <SectionWrapper>
-        <Reveal delay={360}>
-          <Card className="notesCard">
-            <div className="notesCard-header mb-4 flex items-start justify-between gap-3 sm:items-center">
-              <div className="notesCard-text">
-                <h2 className="notesCard-title title title--clamp text-lg font-semibold text-support-1 md:text-xl">
-                  <span aria-hidden="true" className="mr-1">
-                    📝
-                  </span>
-                  {notesLabel}
-                </h2>
-                <p className="notesCard-meta meta text-xs text-support-2/80">{notesDescription}</p>
-              </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowNoteModal(true)}
-                className="notesCard-action"
-              >
-                ＋ Adicionar
-              </Button>
-            </div>
-
-            {notes.length > 0 ? (
-              <div className="notesCard-list space-y-2">
-                {notes.map((note, idx) => (
-                  <div key={idx} className="notesCard-item rounded-2xl bg-secondary/60 p-3 text-sm text-support-1 shadow-soft">
-                    {note}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="notesCard-empty empty text-sm text-support-2">{emptyNotesText}</p>
-            )}
-          </Card>
-        </Reveal>
-      </SectionWrapper>
-
-      {showNoteModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
-          <div className="w-full max-w-lg px-4 pb-12 pt-6 sm:px-0">
-            <Card className="w-full notesCard-modal">
-              <h3 className="mb-2 text-lg font-semibold text-support-1">Adicionar Nota</h3>
-              <p className="mb-4 text-sm text-support-2">Anote um pensamento, uma tarefa ou uma gratidão.</p>
-              <textarea
-                value={noteText}
-                onChange={(event) => setNoteText(event.target.value)}
-                placeholder="Escreva sua nota aqui..."
-                className="min-h-[140px] w-full rounded-2xl border border-white/40 bg-white/70 p-4 text-sm text-support-1 shadow-soft focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                rows={4}
+            {/* INTELLIGENT SUGGESTIONS */}
+            <Reveal delay={200}>
+              <IntelligentSuggestionsSection
+                mood={selectedMood}
+                intention={selectedDay}
               />
-              <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowNoteModal(false)} className="flex-1">
-                  Cancelar
-                </Button>
-                <Button variant="primary" size="sm" onClick={handleAddNote} className="flex-1">
-                  Salvar
-                </Button>
-              </div>
-            </Card>
-          </div>
+            </Reveal>
+
+            {/* WEEKLY PLANNER SHELL */}
+            <Reveal delay={250}>
+              <WeeklyPlannerShell />
+            </Reveal>
+          </SoftCard>
+
+          <MotivationalFooter routeKey="meu-dia" />
         </div>
-      )}
-    </>
+      </ClientOnly>
+    </PageTemplate>
   )
 }
+
+export default MeuDiaClient

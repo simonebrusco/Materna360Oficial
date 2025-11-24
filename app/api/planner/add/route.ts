@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-import { trackTelemetry } from '@/app/lib/telemetry'
+import { track } from '@/app/lib/telemetry'
 import {
   PLANNER_COOKIE_NAME,
   buildPlannerPayload,
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   }
 
   // 5) Telemetria
-  trackTelemetry('planner.add', { category: payload?.category })
+  track('todos.add', { category: payload?.category })
 
   // 6) OK
   return NextResponse.json({ id: payload?.id }, { status: 200 })

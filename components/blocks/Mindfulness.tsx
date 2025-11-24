@@ -1,13 +1,11 @@
 'use client'
 
-'use client'
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pause, Play } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import { Toast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 
 type MindfulnessTrack = {
   id: string
@@ -160,7 +158,6 @@ export function Mindfulness() {
   const [currentPlayback, setCurrentPlayback] = useState<{ theme: MindfulnessTheme; track: MindfulnessTrack } | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [lastPlayback, setLastPlayback] = useState<LastPlayback | null>(null)
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({})
   const [missingFiles, setMissingFiles] = useState<string[]>([])
   const [hasManifestError, setHasManifestError] = useState(false)
@@ -313,7 +310,7 @@ export function Mindfulness() {
       }
       window.localStorage.removeItem(LEGACY_LAST_TRACK_KEY)
     } catch (error) {
-      console.error('Não foi possível salvar o último áudio do mindfulness.', error)
+      console.error('Não��o foi possível salvar o último áudio do mindfulness.', error)
     }
   }, [])
 
@@ -372,7 +369,7 @@ export function Mindfulness() {
     const handlePause = () => setIsPlaying(false)
 
     const handleError = () => {
-      setToastMessage('Não foi possível tocar este áudio.')
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
       setIsPlaying(false)
     }
 
@@ -441,7 +438,7 @@ export function Mindfulness() {
           setIsPlaying(true)
         } catch (error) {
           console.error('Falha ao iniciar reprodução do Mindfulness', error)
-          setToastMessage('Não foi possível tocar este áudio.')
+          toast.danger('Algo não funcionou como esperado. Tente novamente.')
           setCurrentPlayback(previousPlayback ?? null)
           setLastPlayback(previousLastPlayback ?? null)
           persistLastPlayback(previousLastPlayback ?? null)
@@ -524,11 +521,10 @@ export function Mindfulness() {
   const renderEmptyState = !isLoading && themes.length === 0
 
   return (
-    <Card className="bg-gradient-to-br from-primary/10 via-white to-white p-7 shadow-soft">
+    <Card className="bg-gradient-to-br from-primary/10 via-white to-white p-7 shadow-soft" aria-label="Mindfulness">
       <div className="flex items-center justify-between gap-3">
         <div>
           <span className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Autocuidado guiado</span>
-          <h2 className="mt-2 text-xl font-semibold text-support-1 md:text-2xl">Mindfulness</h2>
         </div>
         {resumeTarget && (
           <Button variant="outline" size="sm" onClick={handleResume}>
@@ -570,8 +566,8 @@ export function Mindfulness() {
                     return (
                       <li
                         key={track.id}
-                        className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-soft transition ${
-                          isLastPlayed ? 'border-primary/50 shadow-elevated' : ''
+                        className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition ${
+                          isLastPlayed ? 'border-primary/50 shadow-[0_4px_24px_rgba(47,58,86,0.08)]' : ''
                         }`}
                       >
                         {isPlayable ? (
@@ -682,7 +678,6 @@ export function Mindfulness() {
 
       <audio ref={audioRef} preload="none" hidden />
 
-      {toastMessage && <Toast message={toastMessage} type="error" onClose={() => setToastMessage(null)} />}
     </Card>
   )
 }

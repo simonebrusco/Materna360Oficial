@@ -1,919 +1,570 @@
-'use client'
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
-import { AlertTriangle, ShoppingBag } from 'lucide-react'
-
-import SectionBoundary from '@/components/common/SectionBoundary'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import GridRhythm from '@/components/common/GridRhythm'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/card'
-import { Reveal } from '@/components/ui/Reveal'
-import { Toast } from '@/components/ui/Toast'
-
-import { trackTelemetry, sample } from '@/app/lib/telemetry'
+import * as React from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import HScroll from '@/components/common/HScroll';
+import AppIcon from '@/components/ui/AppIcon';
+import { SectionWrapper } from '@/components/common/SectionWrapper';
+import GridRhythm from '@/components/common/GridRhythm';
+import { Button } from '@/components/ui/Button';
+import { Empty } from '@/components/ui/Empty';
+import { PageTemplate } from '@/components/common/PageTemplate';
+import { PageGrid } from '@/components/common/PageGrid';
+import { Card } from '@/components/ui/card';
+import { FilterPill } from '@/components/ui/FilterPill';
+import { Badge } from '@/components/ui/Badge';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { toast } from '@/app/lib/toast';
+import { save, load, getCurrentDateKey } from '@/app/lib/persist';
+import { track } from '@/app/lib/telemetry';
+import { SectionH2, BlockH3 } from '@/components/common/Headings';
+import { SuggestionCover } from './components/SuggestionCover';
+import { PaywallBanner } from '@/components/paywall/PaywallBanner';
+import { gate } from '@/app/lib/gate';
+import { canSaveMore, incTodayCount, readTodayCount, resetIfNewDay } from './lib/quota';
 import {
-  friendlyEnergyLabel,
-  friendlyLocationLabel,
-} from '@/app/lib/quickIdeasCatalog'
-import type {
-  QuickIdea,
-  QuickIdeasAgeBucket,
-  QuickIdeasBadge,
-  QuickIdeasEnergy,
-  QuickIdeasLocation,
-  QuickIdeasTimeWindow,
-} from '@/app/types/quickIdeas'
-import type { RecShelfGroup, RecShelfItem } from '@/app/lib/recShelf'
-import type { RecProductKind } from '@/app/types/recProducts'
-import type { SelfCareEnergy } from '@/app/types/selfCare'
-import type { ProfileChildSummary } from '@/app/lib/profileTypes'
-import { getClientFlags, type DiscoverFlags } from '@/app/lib/flags'
-import type { FlashRoutineT, ProfileSummaryT, SelfCareT } from '@/app/lib/discoverSchemas'
+  DISCOVER_CATALOG,
+  filterAndRankSuggestions,
+  shouldShowSaveForLater,
+  type FilterInputs,
+  type TimeWindow,
+  type Location,
+  type Mood,
+} from './utils';
+import { useSavedSuggestions } from './hooks/useSavedSuggestions';
+import { useProfile } from '@/app/hooks/useProfile';
 
-/* ------------------------------------------------------------------ */
-/* Mock blocks (exibem quando não há rec shelf do CMS)                */
-/* ------------------------------------------------------------------ */
-const activities = [
-  { id: 1, emoji: '🎨', title: 'Pintura com Dedos', age: '1-3', place: 'Casa' },
-  { id: 2, emoji: '🌳', title: 'Caça ao Tesouro no Parque', age: '4+', place: 'Parque' },
-  { id: 3, emoji: '📚', title: 'Leitura em Ciranda', age: '0-7', place: 'Casa' },
-  { id: 4, emoji: '⚽', title: 'Jogos no Parquinho', age: '3-7', place: 'Parque' },
-  { id: 5, emoji: '🧬', title: 'Experiências Científicas', age: '5+', place: 'Casa' },
-  { id: 6, emoji: '🎭', title: 'Coreografia em Família', age: '2-6', place: 'Casa' },
-  { id: 7, emoji: '🍕', title: 'Aula de Culinária', age: '4+', place: 'Escola' },
-  { id: 8, emoji: '🏗️', title: 'Construção com Blocos', age: '2-4', place: 'Casa' },
-]
+type MoodOption = {
+  id: Mood;
+  label: string;
+  icon: 'heart' | 'star' | 'idea' | 'time' | 'care';
+};
 
-const books = [
-  { emoji: '📖', title: 'O Menino do Pijama Listrado', author: 'John Boyne' },
-  { emoji: '📖', title: "Charlotte's Web", author: 'E.B. White' },
-  { emoji: '📖', title: 'As Aventuras de Pinóquio', author: 'Carlo Collodi' },
-  { emoji: '📖', title: 'O Pequeno Príncipe', author: 'Antoine de Saint-Exupéry' },
-]
+const MOODS: MoodOption[] = [
+  { id: 'calm',   label: 'Calma',   icon: 'care' },
+  { id: 'focused',label: 'Foco',    icon: 'star' },
+  { id: 'playful',label:'Leve',    icon: 'heart' },
+  { id: 'energetic',label: 'Energia', icon: 'idea' },
+];
 
-const toys = [
-  { emoji: '🧩', title: 'Quebra-Cabeças', age: '2+' },
-  { emoji: '🪀', title: 'Brinquedos de Corda', age: '3+' },
-  { emoji: '🧸', title: 'Pelúcias Educativas', age: '0+' },
-  { emoji: '🚂', title: 'Trem de Brinquedo', age: '2+' },
-]
+const TIME_OPTIONS: { id: TimeWindow; label: string }[] = [
+  { id: 'now-5', label: '5 min' },
+  { id: 'now-15', label: '15 min' },
+  { id: 'now-30', label: '30 min' },
+  { id: 'later', label: 'Depois' },
+];
 
-/* ------------------------------------------------------------------ */
-/* Tipos e helpers                                                     */
-/* ------------------------------------------------------------------ */
-type ToastState = { message: string; type: 'success' | 'error' | 'info' }
-type SuggestionChild = ProfileChildSummary
-type SuggestionCard = QuickIdea & { child?: SuggestionChild }
+const LOCATION_OPTIONS: { id: Location; label: string; icon: 'place' | 'leaf' }[] = [
+  { id: 'indoor', label: 'Em casa', icon: 'place' },
+  { id: 'outdoor', label: 'Ao ar livre', icon: 'leaf' },
+];
 
-type RecShelfState = {
-  enabled: boolean
-  groups: RecShelfGroup[]
-}
-type FlashRoutineState = {
-  enabled: boolean
-  aiEnabled: boolean
-  routine: FlashRoutineT | null
-  strategy: 'cms' | 'composed' | 'fallback' | null
-  analyticsSource: 'local' | 'ai'
-}
-type SelfCareState = {
-  enabled: boolean
-  aiEnabled: boolean
-  items: SelfCareT[]
-  energy: SelfCareEnergy
-  minutes: 2 | 5 | 10
+const IDEA_QUOTA_LIMIT = 5; // Free tier limit: 5 ideas per day
+
+// Focus query param to section ID mapping
+const DISC_FOCUS_TO_ID: Record<string, string> = {
+  atividades: 'descobrir-atividades',
 }
 
-const badgeLabels: Record<QuickIdeasBadge, string> = {
-  curta: 'curta',
-  'sem_bagunça': 'sem bagunça',
-  ao_ar_livre: 'ao ar livre',
-  motor_fino: 'motor fino',
-  motor_grosso: 'motor grosso',
-  linguagem: 'linguagem',
-  sensorial: 'sensorial',
-}
+export default function DiscoverClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { name, children } = useProfile();
+  const { saved } = useSavedSuggestions();
+  const [childAgeMonths, setChildAgeMonths] = React.useState<number | undefined>(24);
+  const [selectedTimeWindow, setSelectedTimeWindow] = React.useState<TimeWindow | undefined>(undefined);
+  const [selectedLocation, setSelectedLocation] = React.useState<Location | undefined>(undefined);
+  const [selectedMood, setSelectedMood] = React.useState<Mood | undefined>(undefined);
+  const [savedItems, setSavedItems] = React.useState<Set<string>>(new Set());
+  const [ideaCount, setIdeaCount] = React.useState(0);
+  const [quotaLimitReached, setQuotaLimitReached] = React.useState(false);
+  const [savedCount, setSavedCount] = React.useState(0);
 
-const badgeClassName =
-  'inline-flex items-center gap-1 rounded-full border border-white/60 bg-white/75 px-3 py-1 text-xs font-semibold text-support-2/80 shadow-soft'
+  // Helper: Get today's idea view count
+  const getTodayIdeaCount = React.useCallback(() => {
+    const dateKey = getCurrentDateKey();
+    const count = load<number>(`ideas:${dateKey}`, 0);
+    return typeof count === 'number' ? count : 0;
+  }, []);
 
-const bucketLabels: Record<QuickIdeasAgeBucket, string> = {
-  '0-1': '0-1 anos',
-  '2-3': '2-3 anos',
-  '4-5': '4-5 anos',
-  '6-7': '6-7 anos',
-  '8+': '8+ anos',
-}
+  // Helper: Increment idea count and check limit
+  const incrementIdeaCount = React.useCallback(() => {
+    const dateKey = getCurrentDateKey();
+    const currentCount = getTodayIdeaCount();
+    const newCount = currentCount + 1;
 
-const shelfLabels: Record<RecProductKind, { icon: string; title: string }> = {
-  book: { icon: '📚', title: 'Livros que Inspiram' },
-  toy: { icon: '🧸', title: 'Brinquedos Inteligentes' },
-  course: { icon: '💻', title: 'Cursos para Aprender Juntos' },
-  printable: { icon: '🖨️', title: 'Printables para Brincar' },
-}
+    // Persist new count
+    save(`ideas:${dateKey}`, newCount);
+    setIdeaCount(newCount);
 
-const sanitizeStringList = (values: unknown): string[] => {
-  if (!Array.isArray(values)) return []
-  const seen = new Set<string>()
-  return values
-    .map((v) => (typeof v === 'string' ? v.trim() : ''))
-    .filter((entry) => {
-      if (!entry) return false
-      const key = entry.toLocaleLowerCase('pt-BR')
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-}
+    // Check if limit reached (emit telemetry when reached)
+    if (newCount === IDEA_QUOTA_LIMIT) {
+      setQuotaLimitReached(true);
+      track('paywall.view', {
+        context: 'ideas_quota_limit_reached',
+        count: newCount,
+        limit: IDEA_QUOTA_LIMIT,
+      });
+    }
 
-const coerceIntWithin = (value: unknown, fallback: number, min: number, max?: number): number => {
-  const numeric = typeof value === 'number' ? value : Number(value)
-  if (!Number.isFinite(numeric)) return fallback
-  const rounded = Math.round(numeric)
-  return max === undefined ? Math.max(min, rounded) : Math.min(Math.max(min, rounded), max)
-}
+    return newCount;
+  }, [getTodayIdeaCount]);
 
-/* ------------------------------------------------------------------ */
-/* Rec shelf card                                                      */
-/* ------------------------------------------------------------------ */
-type RecShelfCardProps = {
-  item: RecShelfItem
-  profileMode: 'single' | 'all'
-  onSave: (item: RecShelfItem) => Promise<void>
-  onBuy: (item: RecShelfItem) => void
-  savingProductId: string | null
-}
+  // Reset quota counter on new day (idempotent)
+  React.useEffect(() => {
+    resetIfNewDay();
+  }, []);
 
-function RecShelfCarouselCard({ item, profileMode, onSave, onBuy, savingProductId }: RecShelfCardProps) {
-  const [imageError, setImageError] = useState(false)
-  const bucketChips = profileMode === 'all' ? item.matchedBuckets : [item.primaryBucket]
-  const criticalFlag = item.safetyFlags?.find((flag) => {
-    const n = flag.toLowerCase()
-    return n.includes('peças pequenas') || n.includes('engasgo')
-  })
-  const safetyTooltip = item.safetyFlags?.join(' • ')
-  const isSaving = savingProductId === item.id
+  // Page-view telemetry on mount
+  React.useEffect(() => {
+    track('nav.click', { tab: 'descobrir', dest: '/descobrir' });
+  }, []);
+
+  // Load saved items and quota on mount
+  React.useEffect(() => {
+    const saved = load<string[]>('saved:discover', []);
+    if (saved && Array.isArray(saved)) {
+      setSavedItems(new Set(saved));
+    }
+
+    // Load today's idea count
+    const todayCount = getTodayIdeaCount();
+    setIdeaCount(todayCount);
+    if (todayCount >= IDEA_QUOTA_LIMIT) {
+      setQuotaLimitReached(true);
+      track('paywall.view', {
+        context: 'page_load_quota_limit',
+        count: todayCount,
+        limit: IDEA_QUOTA_LIMIT,
+      });
+    }
+  }, [getTodayIdeaCount]);
+
+  // Update saved count from hook
+  React.useEffect(() => {
+    setSavedCount(saved.length);
+  }, [saved]);
+
+  // Handle focus query param and smooth scroll
+  useEffect(() => {
+    const focus = searchParams.get('focus')
+    if (!focus) return
+
+    const targetId = DISC_FOCUS_TO_ID[focus]
+    if (!targetId) return
+
+    // Small timeout to ensure layout is ready before scrolling
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(targetId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 150)
+
+    return () => clearTimeout(timeout)
+  }, [searchParams])
+
+  // Compute filtered suggestions in real time
+  const filters: FilterInputs = {
+    childAgeMonths,
+    timeWindow: selectedTimeWindow,
+    location: selectedLocation,
+    mood: selectedMood,
+  };
+
+  const filteredSuggestions = filterAndRankSuggestions(DISCOVER_CATALOG, filters);
+
+  // Compute quota info - using daily save count
+  const quota = gate('ideas.dailyQuota');
+  const { count: dailySaveCount } = readTodayCount();
+  const { count: _, limit: dailyLimit } = canSaveMore();
+  const showQuotaWarning =
+    quota.enabled &&
+    Number.isFinite(dailyLimit) &&
+    dailySaveCount >= Math.max(0, (dailyLimit as number) - 1);
+
+  // Handlers
+  const handleStartSuggestion = (id: string) => {
+    // Increment idea count (quota tracking)
+    incrementIdeaCount();
+
+    // Fire telemetry event
+    track('discover.suggestion_started', {
+      tab: 'descobrir',
+      component: 'DiscoverClient',
+      id,
+      suggestionId: id,
+    });
+  };
+
+  const handleSaveSuggestion = (id: string) => {
+    // Check if this is a new save (not an unsave)
+    const isCurrenlySaved = savedItems.has(id);
+
+    if (!isCurrenlySaved) {
+      // This is a new save attempt - check quota first
+      const q = canSaveMore();
+      if (!q.allowed) {
+        toast.danger('Limite diário atingido.');
+        return;
+      }
+    }
+
+    setSavedItems((prev) => {
+      const updated = new Set(prev);
+      const isSaved = updated.has(id);
+
+      if (isSaved) {
+        updated.delete(id);
+        // Show toast for unsave
+        toast.info('Removido de Salvos');
+        // Fire unsave telemetry
+        track('discover_unsave', {
+          id,
+          source: 'card',
+          tab: 'descobrir',
+          component: 'DiscoverClient',
+        });
+      } else {
+        updated.add(id);
+        // Increment daily save count after successful save
+        incTodayCount();
+        // Show toast for save
+        toast.success('Salvo para depois');
+        // Fire save telemetry
+        track('discover_save', {
+          id,
+          source: 'card',
+          tab: 'descobrir',
+          component: 'DiscoverClient',
+        });
+      }
+
+      // Persist to localStorage
+      save('saved:discover', Array.from(updated));
+
+      return updated;
+    });
+  };
+
+  const handleFilterChange = (filterType: string, value?: string) => {
+    track('discover.filter_changed', {
+      tab: 'descobrir',
+      component: 'DiscoverClient',
+      action: 'filter',
+      filter: filterType,
+      value,
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSelectedTimeWindow(undefined);
+    setSelectedLocation(undefined);
+    setSelectedMood(undefined);
+    handleFilterChange('clear_all');
+  };
+
+  const handlePaywallCTA = () => {
+    track('paywall.click', {
+      context: 'ideas_quota_limit',
+      action: 'upgrade_click',
+    });
+    // Navigate to plans page
+    router.push('/planos');
+  };
+
+  const personalizedTitle = React.useMemo(() => {
+    if (!name) return 'Descobrir';
+
+    if (children.length > 0) {
+      const childrenText = children.length === 1
+        ? children[0]
+        : children.length === 2
+          ? `${children[0]} e ${children[1]}`
+          : `${children.slice(0, -1).join(', ')} e ${children[children.length - 1]}`;
+
+      return `${name}, separei algumas ideias que combinam com você e com ${children.length === 1 ? 'o(a)' : ''} ${childrenText}.`;
+    }
+
+    return `${name}, separei algumas ideias que combinam com você.`;
+  }, [name, children]);
+  const personalizedSubtitle = 'Brincadeiras e ideias inteligentes, por idade e objetivo';
 
   return (
-    <Card role="listitem" className="relative flex min-w-[260px] max-w-[260px] snap-start flex-col overflow-hidden bg-white/90 shadow-soft transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-elevated">
-      <div className="relative aspect-[4/5] w-full overflow-hidden">
-        <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">Parceria</span>
-        {criticalFlag && (
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold text-primary shadow-soft" title={safetyTooltip}>
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-            Cuidados
-          </span>
-        )}
-        {imageError ? (
-          <div className="flex h-full w-full items-center justify-center bg-secondary/40 text-xs font-semibold text-support-2/80">Imagem indisponível</div>
+    <PageTemplate
+      label="DESCOBRIR"
+      title={personalizedTitle}
+      subtitle={personalizedSubtitle}
+    >
+
+      {/* Saved Count Chip */}
+      {savedCount > 0 && (
+        <div className="mb-6 suppressHydrationWarning" suppressHydrationWarning>
+          <Link
+            href="/descobrir/salvos"
+            className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
+            aria-label={`Ver itens salvos (${savedCount})`}
+          >
+            Salvos ({savedCount})
+          </Link>
+        </div>
+      )}
+
+      {/* Filter Pills: Time Window */}
+      {selectedTimeWindow || selectedLocation || selectedMood ? (
+        <div className="mb-6">
+          <div className="mb-3 text-sm text-support-2">Filtros ativos:</div>
+          <div className="flex flex-wrap gap-2">
+            {selectedTimeWindow && (
+              <button
+                onClick={() => {
+                  setSelectedTimeWindow(undefined);
+                  handleFilterChange('time_cleared');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                aria-label={`Remover filtro: ${TIME_OPTIONS.find(t => t.id === selectedTimeWindow)?.label}`}
+              >
+                <AppIcon name="time" size={14} decorative />
+                {TIME_OPTIONS.find(t => t.id === selectedTimeWindow)?.label}
+                <AppIcon name="x" size={14} decorative className="ml-1" />
+              </button>
+            )}
+            {selectedLocation && (
+              <button
+                onClick={() => {
+                  setSelectedLocation(undefined);
+                  handleFilterChange('location_cleared');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                aria-label={`Remover filtro: ${LOCATION_OPTIONS.find(l => l.id === selectedLocation)?.label}`}
+              >
+                <AppIcon name="place" size={14} decorative />
+                {LOCATION_OPTIONS.find(l => l.id === selectedLocation)?.label}
+                <AppIcon name="x" size={14} decorative className="ml-1" />
+              </button>
+            )}
+            {selectedMood && (
+              <button
+                onClick={() => {
+                  setSelectedMood(undefined);
+                  handleFilterChange('mood_cleared');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                aria-label={`Remover filtro: ${MOODS.find(m => m.id === selectedMood)?.label}`}
+              >
+                <AppIcon name="heart" size={14} decorative />
+                {MOODS.find(m => m.id === selectedMood)?.label}
+                <AppIcon name="x" size={14} decorative className="ml-1" />
+              </button>
+            )}
+            <button
+              onClick={handleClearFilters}
+              className="text-sm font-medium text-support-2 hover:text-support-1 underline"
+              aria-label="Limpar todos os filtros"
+            >
+              Limpar tudo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Time Window Section */}
+      <Card>
+        <div className="mb-4">
+          <Badge className="mb-2">Tempo</Badge>
+          <SectionH2 className="mb-1">Quanto tempo você tem agora?</SectionH2>
+          <p className="text-sm text-support-2">Escolha o tempo disponível para adaptar as sugestões.</p>
+        </div>
+        <HScroll aria-label="Opções de tempo disponível">
+          {TIME_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => {
+                setSelectedTimeWindow(option.id);
+                handleFilterChange(`time_${option.id}`);
+              }}
+              className={[
+                'rounded-xl px-4 py-3 flex items-center gap-2 whitespace-nowrap min-w-fit',
+                'shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all',
+                selectedTimeWindow === option.id
+                  ? 'ring-2 ring-primary bg-white'
+                  : 'ring-1 ring-gray-200 bg-white hover:ring-primary/50',
+              ].join(' ')}
+              aria-pressed={selectedTimeWindow === option.id}
+              aria-label={`Selecionar: ${option.label}`}
+            >
+              <AppIcon name="time" size={16} decorative />
+              <span className="text-sm font-medium">{option.label}</span>
+            </button>
+          ))}
+        </HScroll>
+      </Card>
+
+      {/* Location Section */}
+      <Card>
+        <div className="mb-4">
+          <Badge className="mb-2">Local</Badge>
+          <SectionH2 className="mb-1">Onde você está?</SectionH2>
+          <p className="text-sm text-support-2">Escolha o local para ideias relevantes.</p>
+        </div>
+        <HScroll aria-label="Opções de local">
+          {LOCATION_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => {
+                setSelectedLocation(option.id);
+                handleFilterChange(`location_${option.id}`);
+              }}
+              className={[
+                'rounded-xl px-4 py-3 flex items-center gap-2 whitespace-nowrap min-w-fit',
+                'shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all',
+                selectedLocation === option.id
+                  ? 'ring-2 ring-primary bg-white'
+                  : 'ring-1 ring-gray-200 bg-white hover:ring-primary/50',
+              ].join(' ')}
+              aria-pressed={selectedLocation === option.id}
+              aria-label={`Selecionar: ${option.label}`}
+            >
+              <AppIcon name={option.icon} size={16} decorative />
+              <span className="text-sm font-medium">{option.label}</span>
+            </button>
+          ))}
+        </HScroll>
+      </Card>
+
+      {/* Mood Section */}
+      <Card>
+        <div className="mb-4">
+          <Badge className="mb-2">Humor</Badge>
+          <SectionH2 className="mb-1">Como você está agora?</SectionH2>
+          <p className="text-sm text-support-2">Escolha um humor para adaptar as sugestões��es.</p>
+        </div>
+        <HScroll aria-label="Opções de humor">
+          {MOODS.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => {
+                setSelectedMood(m.id);
+                handleFilterChange(`mood_${m.id}`);
+              }}
+              className={[
+                'rounded-xl bg-white px-4 py-3 shadow-[0_4px_24px_rgba(47,58,86,0.08)]',
+                'flex items-center gap-2 whitespace-nowrap min-w-fit transition-all',
+                selectedMood === m.id ? 'ring-2 ring-primary' : 'ring-1 ring-gray-200 hover:ring-primary/50',
+              ].join(' ')}
+              aria-pressed={selectedMood === m.id}
+              aria-label={`Selecionar humor: ${m.label}`}
+            >
+              <AppIcon name={m.icon} decorative />
+              <span className="text-sm font-medium">{m.label}</span>
+            </button>
+          ))}
+        </HScroll>
+      </Card>
+
+      {/* Quota Limit Banner */}
+      {showQuotaWarning && (
+        <div className="mb-4">
+          <PaywallBanner
+            message={`Está perto do limite diário de ideias salvas (${dailyLimit}). Faça upgrade para ampliar.`}
+          />
+        </div>
+      )}
+
+      {/* Suggestions Grid */}
+      <section id="descobrir-atividades">
+        {filteredSuggestions.length > 0 ? (
+          <PageGrid cols={2}>
+            {filteredSuggestions.map((suggestion) => {
+            const isSaved = savedItems.has(suggestion.id);
+            const showSaveForLater = shouldShowSaveForLater(suggestion, filters);
+            const q = canSaveMore();
+            const saveDisabled = !isSaved && !q.allowed; // Disable save buttons when quota reached
+
+            return (
+              <Card key={suggestion.id}>
+                <SuggestionCover
+                  src={suggestion.coverUrl}
+                  alt={suggestion.title}
+                  className="mb-3"
+                />
+                <header className="mb-2 flex items-center gap-2">
+                  <AppIcon name={suggestion.icon} decorative />
+                  <BlockH3 className="text-base">{suggestion.title}</BlockH3>
+                </header>
+                <p className="mb-3 text-sm text-support-2">
+                  {suggestion.description}
+                </p>
+                <p className="mb-4 text-xs text-support-3 flex items-center gap-1">
+                  <AppIcon name="time" size={14} decorative />
+                  {suggestion.durationMin} minutos
+                </p>
+                <div className="flex gap-2 items-center justify-between">
+                  <div className="flex-1">
+                    {showSaveForLater ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleSaveSuggestion(suggestion.id)}
+                        disabled={saveDisabled}
+                        className="w-full"
+                      >
+                        Salvar para depois
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleStartSuggestion(suggestion.id)}
+                        className="w-full"
+                      >
+                        Começar agora
+                      </Button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveSuggestion(suggestion.id)}
+                    disabled={saveDisabled}
+                    className={[
+                      'shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200',
+                      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60',
+                      saveDisabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : isSaved
+                        ? 'bg-primary/10 hover:bg-primary/20'
+                        : 'hover:bg-primary/5',
+                    ].join(' ')}
+                    aria-label={isSaved ? `Remover "${suggestion.title}" de Salvos` : `Salvar "${suggestion.title}"`}
+                    aria-pressed={isSaved}
+                    title={isSaved ? 'Remover de Salvos' : 'Salvar para depois'}
+                  >
+                    <span className="inline-block w-5 h-5" aria-hidden="true">
+                      <AppIcon
+                        name="bookmark"
+                        size={20}
+                        variant={isSaved ? 'brand' : 'default'}
+                      />
+                    </span>
+                    <span className="sr-only">{isSaved ? 'Removido de Salvos' : 'Salvar para depois'}</span>
+                  </button>
+                </div>
+              </Card>
+            );
+          })}
+          </PageGrid>
         ) : (
-          <Image
-            src={item.imageUrl}
-            alt={item.title}
-            fill
-            sizes="(min-width: 1024px) 260px, 70vw"
-            className="object-cover"
-            onError={() => setImageError(true)}
-            loading="lazy"
+          <EmptyState
+            title="Nenhum resultado encontrado."
+            text="Ajuste os filtros e tente novamente."
+            cta={<Button variant="primary" onClick={handleClearFilters}>Limpar filtros</Button>}
           />
         )}
-      </div>
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div>
-          <h3 className="text-base font-semibold text-support-1">{item.title}</h3>
-          {item.subtitle && <p className="mt-1 text-sm text-support-2/90">{item.subtitle}</p>}
-          {item.priceHint && <span className="mt-1 inline-block text-xs font-semibold text-primary/80">{item.priceHint}</span>}
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
-          {bucketChips.map((bucket) => (
-            <span key={`${item.id}-${bucket}`} className="rounded-full bg-secondary/40 px-3 py-1 font-semibold text-support-2 shadow-soft">
-              {bucketLabels[bucket]}
-            </span>
-          ))}
-          {item.skills?.slice(0, 3).map((skill) => (
-            <span key={`${item.id}-skill-${skill}`} className="rounded-full border border-white/60 bg-white/80 px-3 py-1 font-semibold text-support-2/80 shadow-soft">
-              {skill}
-            </span>
-          ))}
-        </div>
-        {item.reasons?.length ? (
-          <ul className="list-disc space-y-1 pl-5 text-xs text-support-2/90">
-            {item.reasons.slice(0, 3).map((reason) => (
-              <li key={`${item.id}-reason-${reason}`}>{reason}</li>
-            ))}
-          </ul>
-        ) : null}
-        <div className="mt-auto flex flex-col gap-2 pt-2">
-          <Button variant="primary" size="sm" className="w-full" onClick={() => onBuy(item)}>
-            <ShoppingBag className="h-4 w-4" aria-hidden />
-            Comprar
-          </Button>
-          <Button variant="outline" size="sm" className="w-full" onClick={() => void onSave(item)} disabled={isSaving}>
-            {isSaving ? 'Salvando…' : 'Salvar no Planner'}
-          </Button>
-        </div>
-      </div>
-    </Card>
-  )
+      </section>
+    </PageTemplate>
+  );
 }
 
-/* ------------------------------------------------------------------ */
-/* Props                                                               */
-/* ------------------------------------------------------------------ */
-type QuickIdeaFiltersSummary = {
-  location: QuickIdeasLocation
-  time_window_min: QuickIdeasTimeWindow
-  energy: QuickIdeasEnergy
-}
-
-type DescobrirClientProps = {
-  suggestions: SuggestionCard[]
-  filters: QuickIdeaFiltersSummary
-  dateKey: string
-  profile: ProfileSummaryT
-  initialAgeFilter?: QuickIdeasAgeBucket | null
-  initialPlaceFilter?: string | null
-  recShelf: RecShelfState
-  flashRoutine: FlashRoutineState
-  selfCare: SelfCareState
-  flags: DiscoverFlags
-}
-
-/* ------------------------------------------------------------------ */
-/* Componente                                                          */
-/* ------------------------------------------------------------------ */
-export default function DescobrirClient({
-  suggestions,
-  filters,
-  dateKey,
-  profile,
-  initialAgeFilter = null,
-  initialPlaceFilter = null,
-  recShelf,
-  flashRoutine,
-  selfCare,
-  flags,
-}: DescobrirClientProps) {
-  // UI state
-  const [expandedIdeaId, setExpandedIdeaId] = useState<string | null>(null)
-  const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null)
-  const [toast, setToast] = useState<ToastState | null>(null)
-  const [ageFilter, setAgeFilter] = useState<QuickIdeasAgeBucket | null>(initialAgeFilter)
-  const [placeFilter, setPlaceFilter] = useState<string | null>(initialPlaceFilter)
-  const [showActivities, setShowActivities] = useState(false)
-
-  // Optional sections state
-  const [savingProductId, setSavingProductId] = useState<string | null>(null)
-  const [savingRoutine, setSavingRoutine] = useState(false)
-  const [savingSelfCareId, setSavingSelfCareId] = useState<string | null>(null)
-  const [completingSelfCareId, setCompletingSelfCareId] = useState<string | null>(null)
-
-  // Flags e contexto
-  const discoverFlags = useMemo(() => getClientFlags(flags), [flags])
-  const recShelfEnabled = discoverFlags.recShelf && recShelf.enabled
-  const flashRoutineEnabled = discoverFlags.flashRoutine && flashRoutine.enabled
-  const selfCareEnabled = discoverFlags.selfCare && selfCare.enabled
-
-  const profileMode = profile.mode
-
-  const targetBuckets = useMemo<QuickIdeasAgeBucket[]>(() => {
-    const children = Array.isArray(profile.children) ? profile.children : []
-    if (profile.mode === 'all') {
-      const buckets = Array.from(new Set(children.map((c) => c.age_bucket))) as QuickIdeasAgeBucket[]
-      return buckets.length ? buckets : (['2-3'] as QuickIdeasAgeBucket[])
-    }
-    const active = children.find((c) => c.id === profile.activeChildId) ?? children[0]
-    return active ? [active.age_bucket] : (['2-3'] as QuickIdeasAgeBucket[])
-  }, [profile])
-
-  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev'
-  const telemetryFlags = useMemo(
-    () => ({
-      recShelf: !!discoverFlags.recShelf,
-      recShelfAI: !!discoverFlags.recShelfAI,
-      flashRoutine: !!discoverFlags.flashRoutine,
-      flashRoutineAI: !!discoverFlags.flashRoutineAI,
-      selfCare: !!discoverFlags.selfCare,
-      selfCareAI: !!discoverFlags.selfCareAI,
-    }),
-    [discoverFlags]
-  )
-
-  const telemetryCtx = useMemo(
-    () => ({
-      appVersion,
-      route: '/descobrir',
-      tz: 'America/Sao_Paulo',
-      dateKey,
-      flags: telemetryFlags,
-    }),
-    [appVersion, dateKey, telemetryFlags]
-  )
-
-  // Impression guards
-  const recShelfImpressionsKeyRef = useRef<string | null>(null)
-  const flashRoutineImpressionRef = useRef<string | null>(null)
-  const selfCareImpressionRef = useRef<string | null>(null)
-
-  // Filtros ativos (para “Sugestão do Dia”)
-  const friendlyFilters = useMemo(() => {
-    const parts = [
-      friendlyLocationLabel(filters.location),
-      `${filters.time_window_min} min`,
-      friendlyEnergyLabel(filters.energy),
-    ]
-    return parts.join(' • ')
-  }, [filters])
-
-  // Filtragem das atividades de mock
-  const filteredActivities = useMemo(() => {
-    return activities.filter((activity) => {
-      const matchesAge = !ageFilter || activity.age.includes(ageFilter.replace('+', ''))
-      const matchesPlace = !placeFilter || activity.place === placeFilter
-      return matchesAge && matchesPlace
-    })
-  }, [ageFilter, placeFilter])
-
-  /* --------------------- Telemetry: Rec Shelf ---------------------- */
-  const recShelfImpressionKey = useMemo(() => {
-    if (!recShelfEnabled || recShelf.groups.length === 0) return ''
-    return recShelf.groups.map((g) => `${g.kind}:${g.items.length}`).join('|')
-  }, [recShelfEnabled, recShelf.groups])
-
-  useEffect(() => {
-    if (!recShelfEnabled || !recShelfImpressionKey) return
-    if (recShelfImpressionsKeyRef.current === recShelfImpressionKey) return
-    recShelfImpressionsKeyRef.current = recShelfImpressionKey
-    if (!sample(0.2)) return
-    const kinds = recShelf.groups.map((g) => g.kind).slice(0, 4)
-    trackTelemetry(
-      'discover_rec_impression',
-      { shelves: recShelf.groups.length, ageBuckets: targetBuckets, kinds },
-      telemetryCtx
-    )
-  }, [recShelfEnabled, recShelfImpressionKey, recShelf.groups, targetBuckets, telemetryCtx])
-
-  /* ------------------ Telemetry: Flash Routine --------------------- */
-  const routine = flashRoutineEnabled ? flashRoutine.routine : null
-  const routineId = routine?.id ?? null
-  const analyticsSource = flashRoutine.analyticsSource ?? 'local'
-  const flashRoutineImpressionKey = useMemo(() => {
-    if (!routineId) return ''
-    return `${dateKey}::${routineId}::${analyticsSource}`
-  }, [dateKey, routineId, analyticsSource])
-
-  useEffect(() => {
-    if (!routine || !flashRoutineImpressionKey) return
-    if (flashRoutineImpressionRef.current === flashRoutineImpressionKey) return
-    flashRoutineImpressionRef.current = flashRoutineImpressionKey
-    if (!sample(0.2)) return
-    trackTelemetry(
-      'discover_flash_impression',
-      { routineId: routine.id, source: analyticsSource },
-      { ...telemetryCtx, source: analyticsSource }
-    )
-  }, [routine, flashRoutineImpressionKey, analyticsSource, telemetryCtx])
-
-  /* -------------------- Telemetry: Self Care ----------------------- */
-  const showSelfCare = selfCareEnabled && selfCare.items.length > 0
-  useEffect(() => {
-    if (!showSelfCare) return
-    const key = selfCare.items.map((i) => i.id).join('|')
-    if (selfCareImpressionRef.current === key) return
-    selfCareImpressionRef.current = key
-    if (!sample(0.2)) return
-    trackTelemetry(
-      'discover_selfcare_impression',
-      { count: selfCare.items.length, minutes: selfCare.minutes, energy: selfCare.energy },
-      telemetryCtx
-    )
-  }, [showSelfCare, selfCare.items, selfCare.minutes, selfCare.energy, telemetryCtx])
-
-  /* -------------------- Handlers “seguros” ------------------------ */
-  const handleStart = (id: string) => setExpandedIdeaId((cur) => (cur === id ? null : id))
-
-  const handleSaveToPlanner = async (suggestion: SuggestionCard) => {
-    setSavingIdeaId(suggestion.id)
-    try {
-      const ideaDuration = coerceIntWithin(
-        suggestion.planner_payload?.duration_min ?? suggestion.time_total_min ?? 5,
-        suggestion.time_total_min ?? 5,
-        1
-      )
-      const response = await fetch('/api/planner/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: `Ideia: ${suggestion.title}`,
-          dateISO: dateKey,
-          timeISO: '15:00',
-          category: 'Lanche',
-          link: '/descobrir',
-          payload: {
-            type: 'idea' as const,
-            id: suggestion.id,
-            title: suggestion.title,
-            duration_min: ideaDuration,
-            materials: sanitizeStringList(suggestion.planner_payload?.materials),
-          },
-          tags: ['atividade', 'quick-idea', suggestion.location],
-        }),
-      })
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({} as any))
-        throw new Error(payload?.error ?? 'Não foi possível salvar no Planner.')
-      }
-      trackTelemetry('planner_save_ok', { type: 'idea', id: suggestion.id }, telemetryCtx)
-      setToast({ message: 'Sugestão salva no Planner!', type: 'success' })
-    } catch (err) {
-      console.error('[QuickIdeas] Planner save failed:', err)
-      trackTelemetry(
-        'discover_section_error',
-        { section: 'ideas', reason: err instanceof Error ? err.message : 'unknown' },
-        telemetryCtx
-      )
-      setToast({ message: err instanceof Error ? err.message : 'Erro ao salvar no Planner.', type: 'error' })
-    } finally {
-      setSavingIdeaId(null)
-    }
-  }
-
-  // Rec shelf stub handlers
-  const handleBuyProduct = (item: RecShelfItem) => {
-    setToast({ message: `Abrindo página de compra: ${item.title}`, type: 'info' })
-  }
-  const handleSaveProduct = async (item: RecShelfItem) => {
-    try {
-      setSavingProductId(item.id)
-      // aqui você pode integrar com /api/planner/add no futuro
-      setToast({ message: `Produto salvo no Planner: ${item.title}`, type: 'success' })
-    } finally {
-      setSavingProductId(null)
-    }
-  }
-
-  // Flash routine stubs
-  const handleStartFlashRoutine = () => {
-    if (!routine) return
-    setToast({ message: `Iniciando rotina: ${routine.title}`, type: 'info' })
-  }
-  const handleSaveFlashRoutine = async () => {
-    if (!routine) return
-    try {
-      setSavingRoutine(true)
-      setToast({ message: `Rotina salva no Planner: ${routine.title}`, type: 'success' })
-    } finally {
-      setSavingRoutine(false)
-    }
-  }
-
-  // Self-care stubs
-  const handleSelfCareSave = async (item: SelfCareT) => {
-    try {
-      setSavingSelfCareId(item.id)
-      setToast({ message: `Autocuidado salvo no Planner: ${item.title}`, type: 'success' })
-    } finally {
-      setSavingSelfCareId(null)
-    }
-  }
-  const handleSelfCareDone = async (item: SelfCareT) => {
-    try {
-      setCompletingSelfCareId(item.id)
-      setToast({ message: `Autocuidado registrado: ${item.title}`, type: 'info' })
-    } finally {
-      setCompletingSelfCareId(null)
-    }
-  }
-
-  /* ----------------------------- UI -------------------------------- */
-  const filteredSuggestions = useMemo(() => {
-    return suggestions.filter((suggestion) => {
-      if (ageFilter && suggestion.child?.age_bucket !== ageFilter) return false
-      if (placeFilter) {
-        const normalized = placeFilter.toLowerCase().replace(' ', '_').replace('á', 'a')
-        if (suggestion.location !== normalized) return false
-      }
-      return true
-    })
-  }, [suggestions, ageFilter, placeFilter])
-
-  const showRecShelf = recShelfEnabled && recShelf.groups.length > 0
-
-  return (
-    <main className="PageSafeBottom relative mx-auto max-w-5xl px-4 pt-10 pb-28 sm:px-6 md:px-8 md:pb-32">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <Reveal>
-        <SectionWrapper
-          className="relative"
-          header={
-            <header className="SectionWrapper-header">
-              <span className="SectionWrapper-eyebrow">Inspirações</span>
-              <h1 className="SectionWrapper-title inline-flex items-center gap-2">
-                <span aria-hidden>🎨</span>
-                <span>Descobrir</span>
-              </h1>
-              <p className="SectionWrapper-description max-w-2xl">
-                Ideias de atividades, brincadeiras e descobertas para nutrir a curiosidade de cada fase da infância.
-              </p>
-            </header>
-          }
-        >
-          {null}
-        </SectionWrapper>
-      </Reveal>
-
-      {/* Filtros Inteligentes */}
-      <Reveal delay={80}>
-        <SectionWrapper
-          title={<span className="inline-flex items-center gap-2">🔍<span>Filtros Inteligentes</span></span>}
-          description="Combine idade e local para criar experiências personalizadas em segundos."
-        >
-          <Card className="p-7">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Idade</label>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(['0-1', '2-3', '4-5', '6-7', '8+'] as QuickIdeasAgeBucket[]).map((age) => {
-                    const isActive = ageFilter === age
-                    return (
-                      <button
-                        key={age}
-                        onClick={() => setAgeFilter(isActive ? null : age)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
-                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-                          }`}
-                      >
-                        {age} anos
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.28em] text-support-2/80">Local</label>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {['Casa', 'Parque', 'Escola', 'Área Externa'].map((place) => {
-                    const isActive = placeFilter === place
-                    return (
-                      <button
-                        key={place}
-                        onClick={() => setPlaceFilter(isActive ? null : place)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ease-gentle ${isActive
-                            ? 'bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] text-white shadow-glow'
-                            : 'bg-white/80 text-support-1 shadow-soft hover:shadow-elevated'
-                          }`}
-                      >
-                        {place}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="primary" onClick={() => setShowActivities(true)} className="flex-1 sm:flex-none">
-                ✨ Gerar Ideias
-              </Button>
-              {(ageFilter || placeFilter || showActivities) && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setAgeFilter(null)
-                    setPlaceFilter(null)
-                    setShowActivities(false)
-                  }}
-                  className="sm:w-auto"
-                >
-                  Limpar filtros
-                </Button>
-              )}
-            </div>
-          </Card>
-        </SectionWrapper>
-      </Reveal>
-
-      {/* Lista de atividades simuladas */}
-      {showActivities && (
-        <Reveal delay={140}>
-          <SectionWrapper title={`Atividades ${filteredActivities.length > 0 ? `(${filteredActivities.length})` : ''}`}>
-            {filteredActivities.length > 0 ? (
-              <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-                {filteredActivities.map((activity, idx) => (
-                  <Reveal key={activity.id} delay={idx * 70} className="h-full">
-                    <Card className="h-full">
-                      <div className="text-4xl">{activity.emoji}</div>
-                      <h3 className="mt-3 text-lg font-semibold text-support-1">{activity.title}</h3>
-                      <div className="mt-3 flex gap-3 text-xs text-support-2">
-                        <span>👧 {activity.age} anos</span>
-                        <span>📍 {activity.place}</span>
-                      </div>
-                      <Button variant="primary" size="sm" className="mt-6 w-full">
-                        Salvar no Planejador
-                      </Button>
-                    </Card>
-                  </Reveal>
-                ))}
-              </GridRhythm>
-            ) : (
-              <Card className="py-12 text-center">
-                <p className="text-sm text-support-2">Nenhuma atividade encontrada com esses filtros. Experimente ajustar as combinações.</p>
-              </Card>
-            )}
-          </SectionWrapper>
-        </Reveal>
-      )}
-
-      {/* Sugestão do Dia */}
-      <Reveal delay={200}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">🌟<span>Sugestão do Dia</span></span>}>
-          <div className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
-            Filtros ativos: {friendlyFilters}
-          </div>
-          <div className="flex flex-col gap-4">
-            {filteredSuggestions.length === 0 ? (
-              <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7">
-                <p className="text-sm text-support-2 md:text-base">
-                  Ainda não temos sugestões para estes filtros. Ajuste as preferências para descobrir novas ideias.
-                </p>
-              </Card>
-            ) : (
-              filteredSuggestions.map((suggestion, index) => (
-                <Reveal key={suggestion.id} delay={index * 60}>
-                  <Card className="flex flex-col gap-4 bg-gradient-to-br from-primary/12 via-white/90 to-white p-7 md:flex-row">
-                    <div className="text-5xl" aria-hidden>🌟</div>
-                    <div className="flex-1 space-y-4">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
-                          Sugestão personalizada
-                          {profileMode === 'all' && suggestion.child
-                            ? ` • para ${suggestion.child.name ?? 'Criança'} (${suggestion.child.age_bucket})`
-                            : ''}
-                        </span>
-                        <span className="text-xs text-support-2/80">
-                          ⏱ {suggestion.time_total_min} min • {friendlyLocationLabel(suggestion.location)}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-support-1 md:text-xl">{suggestion.title}</h3>
-                        <p className="text-sm text-support-2 md:text-base">{suggestion.summary}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 text-xs text-support-2/80">
-                        {suggestion.badges.slice(0, 2).map((badge) => (
-                          <span key={badge} className={badgeClassName}>{badgeLabels[badge] || badge}</span>
-                        ))}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="primary" size="sm" className="sm:w-auto" onClick={() => handleStart(suggestion.id)}>
-                          Começar agora
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="sm:w-auto"
-                          onClick={() => void handleSaveToPlanner(suggestion)}
-                          disabled={savingIdeaId === suggestion.id}
-                        >
-                          {savingIdeaId === suggestion.id ? 'Salvando…' : 'Salvar no Planner'}
-                        </Button>
-                      </div>
-
-                      {expandedIdeaId === suggestion.id && (
-                        <div className="space-y-4 rounded-2xl border border-white/60 bg-white/92 p-4 shadow-soft">
-                          <div>
-                            <h4 className="text-sm font-semibold text-support-1">Materiais</h4>
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-support-2/90">
-                              {suggestion.materials.map((item) => <li key={item}>{item}</li>)}
-                            </ul>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-semibold text-support-1">Passo a passo</h4>
-                            <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-support-2/90">
-                              {suggestion.steps.map((step, idx) => <li key={idx}>{step}</li>)}
-                            </ol>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </Reveal>
-              ))
-            )}
-          </div>
-        </SectionWrapper>
-      </Reveal>
-
-      {/* Rec shelf dinâmico OU mocks de livros/brinquedos */}
-      {showRecShelf ? (
-        recShelf.groups.map((group, shelfIndex) => {
-          const shelfMeta = shelfLabels[group.kind]
-          return (
-            <Reveal key={group.kind} delay={220 + shelfIndex * 60}>
-              <SectionWrapper
-                title={
-                  <span className="inline-flex items-center gap-2">
-                    <span aria-hidden>{shelfMeta.icon}</span>
-                    <span>{shelfMeta.title}</span>
-                  </span>
-                }
-              >
-                <div className="-mx-4 overflow-hidden sm:mx-0">
-                  <div className="flex gap-4 overflow-x-auto pb-4 pl-4 sm:pl-0" role="list" aria-label={`Recomendações de ${shelfMeta.title}`}>
-                    {group.items.map((item, idx) => (
-                      <Reveal key={item.id} delay={idx * 40} className="h-full">
-                        <RecShelfCarouselCard
-                          item={item}
-                          profileMode={profileMode}
-                          onBuy={handleBuyProduct}
-                          onSave={handleSaveProduct}
-                          savingProductId={savingProductId}
-                        />
-                      </Reveal>
-                    ))}
-                  </div>
-                </div>
-              </SectionWrapper>
-            </Reveal>
-          )
-        })
-      ) : (
-        <>
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">📚<span>Livros Recomendados</span></span>}>
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-              {books.map((book, idx) => (
-                <Reveal key={book.title} delay={idx * 70} className="h-full">
-                  <Card className="h-full">
-                    <div className="text-3xl">{book.emoji}</div>
-                    <h3 className="mt-3 text-base font-semibold text-support-1">{book.title}</h3>
-                    <p className="mt-2 text-xs text-support-2 GridRhythm-descriptionClamp">por {book.author}</p>
-                    <Button variant="primary" size="sm" className="mt-6 w-full">Ver Detalhes</Button>
-                  </Card>
-                </Reveal>
-              ))}
-            </GridRhythm>
-          </SectionWrapper>
-
-          <SectionWrapper title={<span className="inline-flex items-center gap-2">🧸<span>Brinquedos Sugeridos</span></span>}>
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-              {toys.map((toy, idx) => (
-                <Reveal key={toy.title} delay={idx * 70} className="h-full">
-                  <Card className="h-full">
-                    <div className="text-3xl">{toy.emoji}</div>
-                    <h3 className="mt-3 text-base font-semibold text-support-1">{toy.title}</h3>
-                    <p className="mt-2 text-xs text-support-2">A partir de {toy.age}</p>
-                    <Button variant="primary" size="sm" className="mt-6 w-full">Ver Mais</Button>
-                  </Card>
-                </Reveal>
-              ))}
-            </GridRhythm>
-          </SectionWrapper>
-        </>
-      )}
-
-      {/* Flash Routine (se disponível) */}
-      {flashRoutineEnabled && (
-        <Reveal delay={220}>
-          <SectionWrapper
-            title={
-              <span className="inline-flex items-center gap-2">
-                <span aria-hidden>⚡</span>
-                <span>Flash Routine</span>
-              </span>
-            }
-            description="Sequência rápida de 15 a 20 minutos para fortalecer a conexão."
-          >
-            <Card className="flex flex-col gap-4 bg-white/92 p-7 shadow-soft">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-support-1 md:text-xl">
-                    {routine?.title ?? 'Rotina sugerida'}
-                  </h3>
-                  <p className="text-sm text-support-2/90">
-                    {routine ? `${routine.totalMin} minutos • ${friendlyLocationLabel(routine.locale)}` : 'Rotina indisponível no momento'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {routine && (
-                    <span className="rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-support-2 shadow-soft">
-                      {bucketLabels[routine.ageBucket]}
-                    </span>
-                  )}
-                  <span className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-white shadow-soft">Parceria</span>
-                </div>
-              </div>
-
-              {!routine || !Array.isArray(routine.steps) || routine.steps.length === 0 ? (
-                <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-sm text-support-2/80">
-                  Rotina indisponível para este contexto. Tente ajustar tempo ou local.
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
-                  <ol className="space-y-3 text-sm text-support-1">
-                    {routine.steps.map((step, index) => (
-                      <li key={`${routine.id ?? 'routine'}-step-${index}`} className="flex gap-3">
-                        <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">{index + 1}</span>
-                        <div>
-                          <p className="font-semibold">{step.title}</p>
-                          {typeof step.minutes === 'number' && <p className="text-xs text-support-2/80">≈ {step.minutes} minutos</p>}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Button variant="primary" size="sm" onClick={handleStartFlashRoutine} disabled={!routine} aria-disabled={!routine}>
-                  {routine ? `Começar rotina (${routine.totalMin}’)` : 'Rotina indisponível'}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => void handleSaveFlashRoutine()} disabled={!routine || savingRoutine} aria-disabled={!routine || savingRoutine}>
-                  {savingRoutine ? 'Salvando…' : 'Salvar no Planner'}
-                </Button>
-              </div>
-            </Card>
-          </SectionWrapper>
-        </Reveal>
-      )}
-
-      {/* Self Care (se disponível) */}
-      {showSelfCare && (
-        <Reveal delay={240}>
-          <SectionWrapper
-            title={
-              <span className="inline-flex items-center gap-2">
-                <span aria-hidden>💛</span>
-                <span>Cuide-se rápido</span>
-              </span>
-            }
-            description={`Sugestões de ${selfCare.minutes} minutos para energia ${selfCare.energy}.`}
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              {selfCare.items.map((item) => (
-                <Card key={item.id} className="flex flex-col gap-4 bg-white/92 p-6 shadow-soft">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h3 className="text-base font-semibold text-support-1">{item.title}</h3>
-                      <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                        {item.minutes} minutos
-                      </span>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => void handleSelfCareDone(item)} disabled={completingSelfCareId === item.id}>
-                      {completingSelfCareId === item.id ? 'Registrando…' : 'Fiz agora'}
-                    </Button>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/60 bg-white/80 p-4">
-                    <ul className="space-y-2 text-sm text-support-1">
-                      {item.steps.slice(0, 2).map((step, idx) => (
-                        <li key={`${item.id}-step-${idx}`} className="flex gap-2">
-                          <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                            {idx + 1}
-                          </span>
-                          <span>{step}</span>
-                        </li>
-                      ))}
-                      {item.steps.length > 2 && (
-                        <li className="text-xs text-support-2/80">+ {item.steps.length - 2} passo(s) extras no Planner</li>
-                      )}
-                    </ul>
-                  </div>
-
-                  {item.tip && <p className="text-xs font-semibold text-primary/80">{item.tip}</p>}
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={() => void handleSelfCareSave(item)} disabled={savingSelfCareId === item.id}>
-                      {savingSelfCareId === item.id ? 'Salvando…' : 'Salvar no Planner'}
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </SectionWrapper>
-        </Reveal>
-      )}
-
-      {/* Para Você */}
-      <Reveal delay={260}>
-        <SectionWrapper title={<span className="inline-flex items-center gap-2">💚<span>Para Você</span></span>}>
-          <Card className="p-7">
-            <GridRhythm className="grid-cols-1 sm:grid-cols-2">
-              {['Autocuidado para Mães', 'Mindfulness Infantil', 'Receitas Saudáveis', 'Dicas de Sono'].map((item) => (
-                <div key={item}>
-                  <Button variant="outline" size="sm" className="w-full">{item}</Button>
-                </div>
-              ))}
-            </GridRhythm>
-          </Card>
-        </SectionWrapper>
-      </Reveal>
-    </main>
-  )
-}
+export const Client = DiscoverClient;

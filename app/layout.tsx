@@ -1,101 +1,124 @@
-import './globals.css'
+import '@/app/globals.css'
 import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
 import Script from 'next/script'
-
-import '@/app/lib/telemetryServer'
-import { inter } from './fonts'
-import FetchPolyfill from '@/app/lib/FetchPolyfill'
+import { ToastHost } from '@/components/ui/toast/ToastHost'
+import { inter, poppins } from '@/app/fonts'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Cuidado e bem-estar para mães',
+  description: 'Uma plataforma acolhedora para apoiar você em cada etapa da maternidade',
+  icons: {
+    icon: '/images/favicon-materna.png',
+    shortcut: '/images/favicon-materna.png',
+    apple: '/images/favicon-materna.png',
+  },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Materna360',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html lang="pt-BR" suppressHydrationWarning className={`${poppins.variable} ${inter.variable}`}>
       <head>
-        <Script
-          id="safe-fetch-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                if (typeof window === 'undefined') return;
-                let originalFetch = window.fetch;
-                let isSafeFetchInitialized = false;
-                
-                function isFullStoryPresent() {
-                  return !!(window.FS);
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#FD2597" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Materna360" />
+        <link rel="manifest" href="/manifest.json" />
+        {/* Service Worker registration for PWA */}
+        <Script id="sw-register" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('/sw.js').catch((err) => {
+                console.log('Service Worker registration failed:', err);
+              });
+            }
+          `}
+        </Script>
+        {/* FullStory fetch interception fix: capture native fetch before FullStory wraps it */}
+        <Script id="fullstory-fetch-fix" strategy="beforeInteractive">
+          {`
+            (function() {
+              const nativeFetch = window.fetch;
+              let fsDetected = false;
+
+              window.fetch = function(...args) {
+                // Detect FullStory presence at call time
+                if (!fsDetected && typeof window.FS !== 'undefined') {
+                  fsDetected = true;
                 }
-                
-                function fetchViaXHR(input, init) {
+
+                // If FullStory is present, use XMLHttpRequest instead
+                if (fsDetected) {
+                  const url = args[0];
+                  const init = args[1] || {};
+
                   return new Promise((resolve, reject) => {
-                    try {
-                      const xhr = new XMLHttpRequest();
-                      const url = input instanceof Request ? input.url : String(input);
-                      const method = (init?.method || 'GET').toUpperCase();
-                      
-                      xhr.open(method, url, true);
-                      
-                      if (init?.headers) {
-                        const headers = init.headers instanceof Headers
-                          ? Object.fromEntries(init.headers.entries())
-                          : (init.headers || {});
-                        Object.entries(headers).forEach(([key, val]) => {
-                          xhr.setRequestHeader(key, val);
-                        });
-                      }
-                      
-                      xhr.onload = () => {
-                        const contentType = xhr.getResponseHeader('content-type') || 'application/octet-stream';
-                        const response = new Response(xhr.responseText || xhr.response, {
-                          status: xhr.status,
-                          statusText: xhr.statusText,
-                          headers: new Headers({
-                            'content-type': contentType,
-                          }),
-                        });
-                        resolve(response);
-                      };
-                      
-                      xhr.onerror = () => reject(new TypeError('XMLHttpRequest failed'));
-                      xhr.ontimeout = () => reject(new TypeError('XMLHttpRequest timeout'));
-                      xhr.withCredentials = init?.credentials === 'include';
-                      
-                      xhr.send(init?.body ? String(init.body) : null);
-                    } catch (error) {
-                      reject(error);
-                    }
-                  });
-                }
-                
-                window.fetch = function safeFetch(input, init) {
-                  if (isFullStoryPresent()) {
-                    return fetchViaXHR(input, init);
-                  }
-                  
-                  return new Promise((resolve, reject) => {
-                    originalFetch.call(window, input, init)
-                      .then(resolve)
-                      .catch((error) => {
-                        if (error?.message?.includes('Failed to fetch')) {
-                          fetchViaXHR(input, init).then(resolve).catch(reject);
-                        } else {
-                          reject(error);
-                        }
+                    const xhr = new XMLHttpRequest();
+                    const method = init.method || 'GET';
+
+                    xhr.open(method, url);
+
+                    if (init.headers) {
+                      Object.entries(init.headers).forEach(([key, value]) => {
+                        xhr.setRequestHeader(key, value);
                       });
+                    }
+
+                    xhr.onload = () => {
+                      resolve(new Response(xhr.responseText, {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        headers: new Headers(),
+                      }));
+                    };
+
+                    xhr.onerror = () => {
+                      reject(new TypeError('Failed to fetch'));
+                    };
+
+                    xhr.send(init.body || undefined);
                   });
-                };
-              })();
-            `,
-          }}
-        />
+                }
+
+                // Try native fetch first
+                return nativeFetch.apply(this, args).catch(err => {
+                  // If we get "Failed to fetch" from FullStory, switch to XHR
+                  if (err instanceof TypeError && err.message === 'Failed to fetch' && !fsDetected) {
+                    fsDetected = true;
+                    return window.fetch.apply(this, args);
+                  }
+                  throw err;
+                });
+              };
+
+              // Disable prefetch links that may trigger FullStory issues
+              if (typeof window.FS !== 'undefined') {
+                document.addEventListener('mouseover', (e) => {
+                  const link = e.target.closest('a[rel~="prefetch"]');
+                  if (link) link.removeAttribute('rel');
+                }, true);
+              }
+            })();
+          `}
+        </Script>
       </head>
-      <body className={`${inter.className} bg-[#FFF9FB] text-support-1 antialiased`}>
-        <FetchPolyfill />
+      <body>
+        {/* Page content */}
         {children}
+
+        {/* Global, non-blocking toasts */}
+        <ToastHost />
       </body>
     </html>
   )

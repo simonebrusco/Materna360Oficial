@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import { Toast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
 import { ORG_TIPS, type OrgTip } from '@/data/org-tips'
 
 import { OrgTipModal } from './OrgTipModal'
@@ -52,10 +52,6 @@ const COM_QUEM_OPTIONS = [
   { label: 'Em família', value: 'com_familia' },
 ] as const
 
-type ToastState = {
-  message: string
-  type?: 'success' | 'error' | 'info'
-}
 
 type Option = { label: string; value: string }
 
@@ -86,7 +82,6 @@ const labelFromOptions = (value: string | null, options: readonly Option[]) =>
 export function OrgTipsGrid() {
   const [selectedTip, setSelectedTip] = useState<OrgTip | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [toast, setToast] = useState<ToastState | null>(null)
   const [showResults, setShowResults] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [fTempo, setFTempo] = useState<string | null>(null)
@@ -141,7 +136,7 @@ export function OrgTipsGrid() {
 
   const handleAddToPlanner = (tip: OrgTip) => {
     console.debug('planner:add:not-implemented', { id: tip.id })
-    setToast({ message: 'Em breve você poderá salvar no planner ❤️', type: 'info' })
+    toast.info('Ação registrada. Continue no seu ritmo.')
   }
 
   const toggleCollapse = (key: keyof CollapseState) => {
@@ -243,7 +238,6 @@ export function OrgTipsGrid() {
               {tip.duration}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-support-2/10 px-3 py-1 text-xs font-semibold text-support-2">
-              <span aria-hidden="true">🧩</span>
               {tip.category}
             </span>
           </div>
@@ -294,7 +288,7 @@ export function OrgTipsGrid() {
         <div className="mx-auto max-w-[55rem] rounded-3xl border border-support-2/20 bg-white/95 p-3 shadow-[0_16px_38px_-28px_rgba(47,58,86,0.24)] backdrop-blur-sm sm:px-3 sm:py-3 md:px-4 md:py-4">
           <div className="space-y-3">
             <header className="space-y-2">
-              <h3 className="text-[18px] font-semibold leading-[1.28] text-support-1">Dicas de Organização</h3>
+              <h3 className="text-[18px] font-semibold leading-[1.28] text-support-1">Filtrar sugestões</h3>
               <p className="text-[13px] leading-[1.45] text-support-2/85">Sugestões rápidas para organizar a rotina com leveza.</p>
               <div className="h-px w-full bg-support-2/40" />
             </header>
@@ -544,7 +538,6 @@ export function OrgTipsGrid() {
         <OrgTipModal tip={selectedTip} open={isModalOpen} onClose={handleCloseModal} onComplete={handleComplete} />
       )}
 
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   )
 }

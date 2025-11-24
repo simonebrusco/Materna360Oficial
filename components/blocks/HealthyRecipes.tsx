@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import {
@@ -19,8 +17,12 @@ import { VALID_PLANNER_CATEGORIES } from '@/app/lib/plannerServer'
 import type { PlannerItem } from '@/lib/plannerData'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
 import { Reveal } from '@/components/ui/Reveal'
-import { Toast } from '@/components/ui/Toast'
+import { toast } from '@/app/lib/toast'
+import { isEnabled } from '@/app/lib/flags'
+import { Skeleton } from '@/components/ui/feedback/Skeleton'
+import { Empty } from '@/components/ui/feedback/Empty'
 
 const COURSE_OPTIONS: { value: RecipeCourseOption; label: string }[] = [
   { value: 'prato_quente', label: 'Pratos quentes' },
@@ -49,16 +51,13 @@ const TIME_OPTIONS: { value: RecipeTimeOption; label: string }[] = [
 const AGE_BAND_LABEL: Record<string, string> = {
   '6-8m': '6–8 meses',
   '9-12m': '9–12 meses',
-
-  '1-2y': '1��2 anos',
-
-
+  '1-2y': '1–2 anos',
   '2-6y': '2–6 anos',
 }
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: '�',
+    emoji: '🍠',
     title: 'Purê cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
@@ -201,7 +200,6 @@ export function HealthyRecipesSection() {
   const [plannerTime, setPlannerTime] = useState<string>('12:00')
   const [plannerCategory, setPlannerCategory] = useState<PlannerCategory>('Almoço')
   const [plannerNote, setPlannerNote] = useState<string>('')
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -462,17 +460,11 @@ const childAgeBand = useMemo(
 
       const weekday = formatWeekday(plannerDate)
       const time = formatTime(plannerTime)
-      setToast({
-        message: `Receita salva no Planner para ${weekday} �s ${time}.`,
-        type: 'success',
-      })
+      toast.success(`Tudo certo! Receita guardada para ${weekday}.`)
       closePlannerModal()
     } catch (err) {
       console.error(err)
-      setToast({
-        message: err instanceof Error ? err.message : 'Erro ao salvar no Planner.',
-        type: 'error',
-      })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
     }
   }
 
@@ -490,10 +482,10 @@ const childAgeBand = useMemo(
 
     try {
       await navigator.clipboard.writeText(text)
-      setToast({ message: 'Detalhes copiados para compartilhar!', type: 'info' })
+      toast.info('Detalhes copiados. Compartilhe com quem desejar.')
     } catch (error) {
       console.error('Falha ao copiar para área de transferência:', error)
-      setToast({ message: 'Não foi possível copiar o conteúdo.', type: 'error' })
+      toast.danger('Algo não funcionou como esperado. Tente novamente.')
     }
   }
 
@@ -622,9 +614,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => toggleCourse(option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           courses.includes(option.value)
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -641,9 +633,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => toggleDietary(option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           dietary.includes(option.value)
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -663,9 +655,9 @@ const childAgeBand = useMemo(
                         key={option.value}
                         type="button"
                         onClick={() => setTimeOption(timeOption === option.value ? undefined : option.value)}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                        className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                           timeOption === option.value
-                            ? 'bg-primary text-white shadow-glow'
+                            ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                             : 'bg-white/80 text-support-1 hover:bg-primary/10'
                         }`}
                       >
@@ -705,6 +697,18 @@ const childAgeBand = useMemo(
             {noResultMessage}
           </Card>
         </Reveal>
+      )}
+
+      {isLoading && recipes.length === 0 && isEnabled('FF_FEEDBACK_KIT') && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-96 rounded-2xl" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && recipes.length === 0 && educationalMessage == null && noResultMessage == null && isEnabled('FF_FEEDBACK_KIT') && (
+        <Empty title="Nenhuma receita gerada" hint="Preencha os filtros e clique em 'Gerar receitas'." />
       )}
 
       {recipes.length > 0 && (
@@ -785,21 +789,25 @@ const childAgeBand = useMemo(
                   )}
                 </div>
 
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-6 flex items-center gap-3">
                   <Button size="sm" onClick={() => openPlannerModal(recipe)}>
                     Salvar no Planner
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                  <button
+                    type="button"
                     onClick={() => handleGenerate(recipe.title)}
                     disabled={isLoading}
+                    className="text-sm font-medium text-primary underline hover:opacity-70 disabled:opacity-50"
                   >
                     Gerar variação
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleShare(recipe)}>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleShare(recipe)}
+                    className="text-sm font-medium text-primary underline hover:opacity-70"
+                  >
                     Compartilhar
-                  </Button>
+                  </button>
                 </div>
               </Card>
             </Reveal>
@@ -816,7 +824,7 @@ const childAgeBand = useMemo(
                 <div key={item.title} className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-soft">
                   <div className="text-3xl">{item.emoji}</div>
                   <h4 className="mt-2 text-sm font-semibold text-support-1">{item.title}</h4>
-                  <p className="mt-1 text-xs text-support-2">⏱️ {item.prep}</p>
+                  <p className="mt-1 text-xs text-support-2"><Emoji char="⏱️" size={12} /> {item.prep}</p>
                   <p className="mt-2 text-xs text-support-2">{item.description}</p>
                 </div>
               ))}
@@ -832,7 +840,7 @@ const childAgeBand = useMemo(
               <div>
                 <h3 className="text-lg font-semibold text-support-1">Salvar no Planner</h3>
                 <p className="mt-1 text-xs text-support-2">
-                  Defina quando você quer preparar “{plannerModal.recipe.title}”.
+                  Defina quando você quer preparar &quot;{plannerModal.recipe.title}&quot;.
                 </p>
               </div>
               <button
@@ -878,9 +886,9 @@ const childAgeBand = useMemo(
                       key={option}
                       type="button"
                       onClick={() => setPlannerCategory(option)}
-                      className={`rounded-full px-4 py-2 text-xs font-semibold shadow-soft transition-all duration-300 ${
+                      className={`rounded-full px-4 py-2 text-xs font-semibold shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-all duration-300 ${
                         plannerCategory === option
-                          ? 'bg-primary text-white shadow-glow'
+                          ? 'bg-primary text-white shadow-[0_4px_24px_rgba(47,58,86,0.08)]'
                           : 'bg-white/80 text-support-1 hover:bg-primary/10'
                       }`}
                     >
@@ -915,14 +923,6 @@ const childAgeBand = useMemo(
         </div>
       )}
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={3500}
-        />
-      )}
     </section>
   )
 }

@@ -1,10 +1,9 @@
 'use client'
 
-'use client'
-
 import { useEffect, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
 import { DAILY_MESSAGES_PT } from '@/lib/dailyMessagesPt'
 
 const STORAGE_KEY = 'materna_daily_message_v2'
@@ -16,6 +15,8 @@ type StoredMessage = {
   message: string
 }
 
+type DateParts = Record<'year' | 'month' | 'day', string>
+
 const getTodayDateKey = () => {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: BRAZIL_TIMEZONE,
@@ -24,7 +25,14 @@ const getTodayDateKey = () => {
     day: '2-digit',
   })
 
-  return formatter.format(new Date())
+  const parts = formatter.formatToParts(new Date()).reduce<DateParts>((acc, part) => {
+    if (part.type === 'year' || part.type === 'month' || part.type === 'day') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, { year: '', month: '', day: '' })
+
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 const hashDateKey = (value: string) => {
@@ -162,7 +170,7 @@ export function MessageOfDay() {
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
       <div className="mb-5 flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-support-1 md:text-xl">✨ Mensagem do Dia</h2>
+        <h2 className="text-lg font-semibold text-support-1 md:text-xl"><Emoji char="✨" /> Mensagem do Dia</h2>
         <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">
           “{isLoading && !message ? '...' : message}”
         </p>

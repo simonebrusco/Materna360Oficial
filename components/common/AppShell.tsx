@@ -1,9 +1,5 @@
-'use client'
+import type { ReactNode } from 'react'
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-dvh bg-materna-gradient pb-24 shadow-soft rounded-lg">
-      {children}
-    </div>
-  )
+export default function AppShell({ children }: { children: ReactNode }) {
+  return <div className="min-h-dvh pb-24">{children}</div>
 }

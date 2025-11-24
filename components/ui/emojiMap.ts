@@ -1,0 +1,25 @@
+import type { AppIconName } from '@/components/ui/AppIcon';
+
+export const EMOJI_TO_ICON: Record<string, AppIconName> = {
+  '🏠': 'place',
+  '📚': 'books',
+  '⭐': 'star',
+  '💖': 'care',
+  '❤️': 'care',
+  '👑': 'crown',
+  '✨': 'sparkles',
+  '🔍': 'search',
+  '🎛️': 'filters',
+  '🎚️': 'filters',
+  '💡': 'idea',
+  '⏱️': 'time',
+  '🕒': 'time',
+  '⏰': 'time',
+  '📷': 'camera',
+  '📆': 'calendar',
+  '▶️': 'play',
+  '🔗': 'share',
+  '⬇️': 'download',
+  '✔️': 'check',
+  '❌': 'x',
+};
