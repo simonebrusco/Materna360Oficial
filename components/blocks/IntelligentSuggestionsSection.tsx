@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+import { useDailyAISuggestions } from '@/app/hooks/useDailyAISuggestions'
 
 export interface Suggestion {
   id: string
@@ -85,7 +86,6 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'happy-prod-2',
         title: 'Defina claramente as suas 3 prioridades do dia.',
-        description: '',
       },
     ]
   }
@@ -192,8 +192,31 @@ export default function IntelligentSuggestionsSection({
   mood,
   intention,
 }: IntelligentSuggestionsSectionProps) {
-  const suggestions = generateSuggestions(mood, intention)
-  const hasSelection = mood || intention
+  const hasSelection = !!mood || !!intention
+
+  const {
+    suggestions: aiSuggestions,
+    isLoading,
+    error,
+    requestSuggestions,
+  } = useDailyAISuggestions()
+
+  // Sempre que a mãe escolher humor/intenção, pedimos novas sugestões
+  useEffect(() => {
+    if (!hasSelection) return
+    void requestSuggestions({ mood, intention })
+  }, [hasSelection, mood, intention, requestSuggestions])
+
+  // Fallback editorial se IA não responder ou vier vazia
+  const fallbackSuggestions = generateSuggestions(mood, intention)
+
+  const shouldUseFallback =
+    !isLoading &&
+    (error || !aiSuggestions || aiSuggestions.length === 0)
+
+  const suggestionsToShow = shouldUseFallback
+    ? fallbackSuggestions
+    : aiSuggestions
 
   return (
     <div className="w-full">
@@ -215,23 +238,40 @@ export default function IntelligentSuggestionsSection({
             </div>
           ) : (
             <div className="space-y-3">
-              {suggestions.map(suggestion => (
-                <div key={suggestion.id} className="flex gap-3">
-                  <div className="flex-shrink-0 pt-1">
-                    <AppIcon name="idea" className="w-4 h-4 md:w-5 md:h-5 text-[#ff005e]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm md:text-base font-semibold text-[#2f3a56] font-poppins">
-                      {suggestion.title}
-                    </p>
-                    {suggestion.description && (
-                      <p className="text-xs md:text-sm text-[#545454] font-poppins mt-1">
-                        {suggestion.description}
+              {isLoading && (
+                <p className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
+                  Estou pensando em algumas ideias que combinem com o seu momento de hoje…
+                </p>
+              )}
+
+              {!isLoading && suggestionsToShow.length === 0 && (
+                <p className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
+                  Assim que você registrar mais alguns dias por aqui, vou conseguir trazer sugestões cada vez mais certeiras.
+                </p>
+              )}
+
+              {!isLoading &&
+                suggestionsToShow.length > 0 &&
+                suggestionsToShow.map((suggestion) => (
+                  <div key={suggestion.id} className="flex gap-3">
+                    <div className="flex-shrink-0 pt-1">
+                      <AppIcon
+                        name="idea"
+                        className="w-4 h-4 md:w-5 md:h-5 text-[#ff005e]"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm md:text-base font-semibold text-[#2f3a56] font-poppins">
+                        {suggestion.title}
                       </p>
-                    )}
+                      {suggestion.description && (
+                        <p className="text-xs md:text-sm text-[#545454] font-poppins mt-1">
+                          {suggestion.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
