@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 
@@ -8,6 +10,10 @@ export interface Suggestion {
   description?: string
 }
 
+/**
+ * Sugestões editoriais padrão (fallback)
+ * — usadas quando a IA não responder ou quando vier vazio.
+ */
 function generateSuggestions(mood: string | null, intention: string | null): Suggestion[] {
   if (!mood && !intention) {
     return []
@@ -181,17 +187,109 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
   return []
 }
 
-export interface IntelligentSuggestionsSectionProps {
+interface IntelligentSuggestionsSectionProps {
   mood: string | null
   intention: string | null
+}
+
+type ApiSuggestion = {
+  id?: string
+  title?: string
+  description?: string
 }
 
 export function IntelligentSuggestionsSection({
   mood,
   intention,
 }: IntelligentSuggestionsSectionProps) {
-  const suggestions = generateSuggestions(mood, intention)
-  const hasSelection = mood || intention
+  const [aiSuggestions, setAiSuggestions] = useState<Suggestion[] | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const hasSelection = Boolean(mood || intention)
+
+  // Chama a IA de Meu Dia sempre que humor/intenção mudarem,
+  // com fallback automático para as sugestões editoriais.
+  useEffect(() => {
+    // Se não tem nada selecionado, limpamos estado e não chamamos IA
+    if (!mood && !intention) {
+      setAiSuggestions(null)
+      setIsLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    const fetchSuggestions = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch('/api/ai/meu-dia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            feature: 'intelligent_suggestions',
+            mood,
+            dayIntention: intention,
+          }),
+        })
+
+        if (!res.ok) {
+          throw new Error('Resposta inválida da IA')
+        }
+
+        const data = await res.json()
+        const raw = data?.suggestions
+
+        if (!Array.isArray(raw) || raw.length === 0) {
+          if (!cancelled) {
+            setAiSuggestions(null)
+          }
+          return
+        }
+
+        const mapped: Suggestion[] = raw
+          .map((item: ApiSuggestion, index: number) => {
+            const title = typeof item.title === 'string' ? item.title.trim() : ''
+            const description =
+              typeof item.description === 'string' ? item.description.trim() : ''
+
+            if (!title) return null
+
+            return {
+              id: item.id || `ai-suggestion-${index}`,
+              title,
+              description,
+            }
+          })
+          .filter((s): s is Suggestion => s !== null)
+
+        if (!cancelled) {
+          setAiSuggestions(mapped.length > 0 ? mapped : null)
+        }
+      } catch (error) {
+        console.error('[Meu Dia] Erro ao buscar sugestões inteligentes:', error)
+        if (!cancelled) {
+          setAiSuggestions(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void fetchSuggestions()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mood, intention])
+
+  // Decidimos aqui qual fonte usar:
+  // 1) IA (quando veio algo válido)
+  // 2) Fallback editorial (quando IA falha ou volta vazia)
+  const effectiveSuggestions =
+    aiSuggestions && aiSuggestions.length > 0
+      ? aiSuggestions
+      : generateSuggestions(mood, intention)
 
   return (
     <div className="w-full">
@@ -213,7 +311,13 @@ export function IntelligentSuggestionsSection({
             </div>
           ) : (
             <div className="space-y-3">
-              {suggestions.map((suggestion) => (
+              {isLoading && (!effectiveSuggestions || effectiveSuggestions.length === 0) && (
+                <p className="text-xs md:text-sm text-[#545454] font-poppins">
+                  Estou pensando em algumas ideias que combinam com o seu momento de hoje…
+                </p>
+              )}
+
+              {effectiveSuggestions.map((suggestion) => (
                 <div key={suggestion.id} className="flex gap-3">
                   <div className="flex-shrink-0 pt-1">
                     <AppIcon
@@ -233,6 +337,13 @@ export function IntelligentSuggestionsSection({
                   </div>
                 </div>
               ))}
+
+              {!isLoading && effectiveSuggestions.length === 0 && (
+                <p className="text-xs md:text-sm text-[#545454] font-poppins">
+                  Hoje eu não trouxe sugestões específicas, mas você sempre pode começar escolhendo
+                  uma pequena ação que te faça bem agora.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -240,6 +351,3 @@ export function IntelligentSuggestionsSection({
     </div>
   )
 }
-
-// Default export para compatibilizar com `import IntelligentSuggestionsSection from '...'`
-export default IntelligentSuggestionsSection
