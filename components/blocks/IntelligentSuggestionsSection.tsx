@@ -10,11 +10,23 @@ export interface Suggestion {
   description?: string
 }
 
-/**
- * Sugestões editoriais padrão (fallback)
- * — usadas quando a IA não responder ou quando vier vazio.
- */
-function generateSuggestions(mood: string | null, intention: string | null): Suggestion[] {
+type ApiSuggestion = {
+  id?: string
+  title?: string
+  description?: string
+}
+
+interface IntelligentSuggestionsSectionProps {
+  mood: string | null
+  intention: string | null
+}
+
+// ---------- FALLBACK LOCAL (regra simples) ----------
+
+function generateLocalSuggestions(
+  mood: string | null,
+  intention: string | null,
+): Suggestion[] {
   if (!mood && !intention) {
     return []
   }
@@ -24,12 +36,13 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'automatico-1',
         title: 'Observe como você se sente ao longo do dia.',
-        description: 'Talvez seja hora de retomar o controle com pequenas escolhas.',
+        description:
+          'Talvez seja hora de retomar o controle com pequenas escolhas.',
       },
       {
         id: 'automatico-2',
-        title: 'Comece anotando uma coisa que é realmente importante pra você hoje.',
-        description: '',
+        title:
+          'Comece anotando uma coisa que é realmente importante pra você hoje.',
       },
     ]
   }
@@ -39,12 +52,11 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'stressed-slow-1',
         title: 'Separe 5 minutos para respirar fundo e alongar o corpo.',
-        description: '',
       },
       {
         id: 'stressed-slow-2',
-        title: 'Que tal uma pausa sem telas agora, só você e um copo de água?',
-        description: '',
+        title:
+          'Que tal uma pausa sem telas agora, só você e um copo de água?',
       },
     ]
   }
@@ -53,13 +65,13 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
     return [
       {
         id: 'stressed-prod-1',
-        title: 'Antes de mergulhar nas tarefas, escolha UMA prioridade principal.',
-        description: '',
+        title:
+          'Antes de mergulhar nas tarefas, escolha UMA prioridade principal.',
       },
       {
         id: 'stressed-prod-2',
-        title: 'Inclua uma pequena pausa entre os compromissos para evitar sobrecarga.',
-        description: '',
+        title:
+          'Inclua uma pequena pausa entre os compromissos para evitar sobrecarga.',
       },
     ]
   }
@@ -68,13 +80,13 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
     return [
       {
         id: 'happy-leve-1',
-        title: 'Aproveite para brincar ou conversar um pouco com seu filho hoje.',
-        description: '',
+        title:
+          'Aproveite para brincar ou conversar um pouco com seu filho hoje.',
       },
       {
         id: 'happy-leve-2',
-        title: 'Inclua um momento só seu, nem que sejam 10 min com algo que você gosta.',
-        description: '',
+        title:
+          'Inclua um momento só seu, nem que sejam 10 min com algo que você gosta.',
       },
     ]
   }
@@ -83,13 +95,12 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
     return [
       {
         id: 'happy-prod-1',
-        title: 'Use essa energia para tirar da frente uma tarefa que você vem adiando.',
-        description: '',
+        title:
+          'Use essa energia para tirar da frente uma tarefa que você vem adiando.',
       },
       {
         id: 'happy-prod-2',
         title: 'Defina claramente as suas 3 prioridades do dia.',
-        description: '',
       },
     ]
   }
@@ -104,7 +115,6 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'stressed-generic-2',
         title: 'Reserve um tempo para uma atividade que te acalme.',
-        description: '',
       },
     ]
   }
@@ -113,13 +123,12 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
     return [
       {
         id: 'happy-generic-1',
-        title: 'Use essa boa energia para conectar com as pessoas que você ama.',
-        description: '',
+        title:
+          'Use essa boa energia para conectar com as pessoas que você ama.',
       },
       {
         id: 'happy-generic-2',
         title: 'Que tal tentar algo novo hoje com essa disposição?',
-        description: '',
       },
     ]
   }
@@ -129,12 +138,11 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'focado-1',
         title: 'Elimine as distrações: desligue notificações por um tempo.',
-        description: '',
       },
       {
         id: 'focado-2',
-        title: 'Escolha uma única tarefa importante para as próximas horas.',
-        description: '',
+        title:
+          'Escolha uma única tarefa importante para as próximas horas.',
       },
     ]
   }
@@ -144,12 +152,11 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'prod-1',
         title: 'Defina suas 3 prioridades principais agora.',
-        description: '',
       },
       {
         id: 'prod-2',
-        title: 'Organize o seu tempo em blocos de 90 minutos com pausas curtas.',
-        description: '',
+        title:
+          'Organize o seu tempo em blocos de 90 minutos com pausas curtas.',
       },
     ]
   }
@@ -158,13 +165,12 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
     return [
       {
         id: 'leve-1',
-        title: 'Deixe espaço para o improviso e para as surpresas do dia.',
-        description: '',
+        title:
+          'Deixe espaço para o improviso e para as surpresas do dia.',
       },
       {
         id: 'leve-2',
         title: 'Lembre-se: você não precisa fazer tudo hoje.',
-        description: '',
       },
     ]
   }
@@ -174,12 +180,10 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
       {
         id: 'slow-1',
         title: 'Curta os pequenos momentos do dia com atenção.',
-        description: '',
       },
       {
         id: 'slow-2',
         title: 'Faça menos, mas com mais presença e propósito.',
-        description: '',
       },
     ]
   }
@@ -187,113 +191,126 @@ function generateSuggestions(mood: string | null, intention: string | null): Sug
   return []
 }
 
-interface IntelligentSuggestionsSectionProps {
-  mood: string | null
-  intention: string | null
+// ---------- CHAMADA DE IA PARA SUGESTÕES DO DIA ----------
+
+async function fetchAISuggestions(
+  mood: string | null,
+  intention: string | null,
+): Promise<Suggestion[]> {
+  try {
+    const res = await fetch('/api/ai/meu-dia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'daily_suggestions',
+        origin: 'meu-dia',
+        mood,
+        dayIntention: intention,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const raw = data?.suggestions
+
+    if (!Array.isArray(raw) || raw.length === 0) {
+      throw new Error('Nenhuma sugestão recebida da IA')
+    }
+
+    const mapped: Suggestion[] = raw
+      .map((item: ApiSuggestion, index: number) => {
+        const title =
+          typeof item.title === 'string' ? item.title.trim() : ''
+        const description =
+          typeof item.description === 'string'
+            ? item.description.trim()
+            : undefined
+
+        if (!title) {
+          return null
+        }
+
+        return {
+          id: item.id || `ai-suggestion-${index}`,
+          title,
+          description,
+        }
+      })
+      .filter((s): s is Suggestion => s !== null)
+
+    if (!mapped.length) {
+      throw new Error('Sugestões da IA inválidas')
+    }
+
+    return mapped
+  } catch (error) {
+    console.error(
+      '[Meu Dia] Erro ao buscar sugestões inteligentes de IA, usando fallback local:',
+      error,
+    )
+    return []
+  }
 }
 
-type ApiSuggestion = {
-  id?: string
-  title?: string
-  description?: string
-}
+// ---------- COMPONENTE PRINCIPAL ----------
 
 export function IntelligentSuggestionsSection({
   mood,
   intention,
 }: IntelligentSuggestionsSectionProps) {
-  const [aiSuggestions, setAiSuggestions] = useState<Suggestion[] | null>(null)
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [isLoading, setIsLoading] = useState(false)
+
   const hasSelection = Boolean(mood || intention)
 
-  // Chama a IA de Meu Dia sempre que humor/intenção mudarem,
-  // com fallback automático para as sugestões editoriais.
   useEffect(() => {
-    // Se não tem nada selecionado, limpamos estado e não chamamos IA
-    if (!mood && !intention) {
-      setAiSuggestions(null)
-      setIsLoading(false)
+    if (!hasSelection) {
+      setSuggestions([])
       return
     }
 
-    let cancelled = false
+    let isMounted = true
 
-    const fetchSuggestions = async () => {
+    const run = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch('/api/ai/meu-dia', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            feature: 'intelligent_suggestions',
-            mood,
-            dayIntention: intention,
-          }),
-        })
+        // 1) tenta IA
+        const aiSuggestions = await fetchAISuggestions(mood, intention)
 
-        if (!res.ok) {
-          throw new Error('Resposta inválida da IA')
+        // 2) se IA vier vazia, usa fallback local
+        const finalSuggestions =
+          aiSuggestions.length > 0
+            ? aiSuggestions
+            : generateLocalSuggestions(mood, intention)
+
+        if (isMounted) {
+          setSuggestions(finalSuggestions)
         }
-
-        const data = await res.json()
-        const raw = data?.suggestions
-
-        if (!Array.isArray(raw) || raw.length === 0) {
-          if (!cancelled) {
-            setAiSuggestions(null)
-          }
-          return
-        }
-
-        const mapped: Suggestion[] = raw
-          .map((item: ApiSuggestion, index: number) => {
-            const title = typeof item.title === 'string' ? item.title.trim() : ''
-            const description =
-              typeof item.description === 'string' ? item.description.trim() : ''
-
-            if (!title) return null
-
-            return {
-              id: item.id || `ai-suggestion-${index}`,
-              title,
-              description,
-            }
-          })
-          .filter((s): s is Suggestion => s !== null)
-
-        if (!cancelled) {
-          setAiSuggestions(mapped.length > 0 ? mapped : null)
-        }
-      } catch (error) {
-        console.error('[Meu Dia] Erro ao buscar sugestões inteligentes:', error)
-        if (!cancelled) {
-          setAiSuggestions(null)
+      } catch {
+        // fallback hard, se der algum erro inesperado
+        if (isMounted) {
+          setSuggestions(generateLocalSuggestions(mood, intention))
         }
       } finally {
-        if (!cancelled) {
+        if (isMounted) {
           setIsLoading(false)
         }
       }
     }
 
-    void fetchSuggestions()
+    run()
 
     return () => {
-      cancelled = true
+      isMounted = false
     }
-  }, [mood, intention])
-
-  // Decidimos aqui qual fonte usar:
-  // 1) IA (quando veio algo válido)
-  // 2) Fallback editorial (quando IA falha ou volta vazia)
-  const effectiveSuggestions =
-    aiSuggestions && aiSuggestions.length > 0
-      ? aiSuggestions
-      : generateSuggestions(mood, intention)
+  }, [mood, intention, hasSelection])
 
   return (
     <div className="w-full">
-      <SoftCard className="p-5 md:p-6">
+      <SoftCard className="p-5 md:p-6 rounded-3xl border border-[#ffd8e6] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
         <div className="space-y-4">
           <div>
             <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide mb-1 font-poppins">
@@ -306,18 +323,23 @@ export function IntelligentSuggestionsSection({
 
           {!hasSelection ? (
             <div className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
-              Comece contando como você está e que tipo de dia você quer ter. Assim eu consigo
-              sugerir algo que faça sentido pra você.
+              Comece contando como você está e que tipo de dia você quer ter.
+              Assim eu consigo sugerir algo que faça sentido pra você.
+            </div>
+          ) : isLoading ? (
+            <div className="text-sm text-[#545454] font-poppins leading-relaxed">
+              Estou pensando em algumas sugestões que combinam com o seu
+              momento de hoje…
+            </div>
+          ) : suggestions.length === 0 ? (
+            <div className="text-sm text-[#545454] font-poppins leading-relaxed">
+              Hoje, talvez o mais importante seja apenas respeitar o seu
+              ritmo. Se quiser, defina uma única prioridade e deixe o resto
+              mais leve.
             </div>
           ) : (
             <div className="space-y-3">
-              {isLoading && (!effectiveSuggestions || effectiveSuggestions.length === 0) && (
-                <p className="text-xs md:text-sm text-[#545454] font-poppins">
-                  Estou pensando em algumas ideias que combinam com o seu momento de hoje…
-                </p>
-              )}
-
-              {effectiveSuggestions.map((suggestion) => (
+              {suggestions.map((suggestion) => (
                 <div key={suggestion.id} className="flex gap-3">
                   <div className="flex-shrink-0 pt-1">
                     <AppIcon
@@ -337,13 +359,6 @@ export function IntelligentSuggestionsSection({
                   </div>
                 </div>
               ))}
-
-              {!isLoading && effectiveSuggestions.length === 0 && (
-                <p className="text-xs md:text-sm text-[#545454] font-poppins">
-                  Hoje eu não trouxe sugestões específicas, mas você sempre pode começar escolhendo
-                  uma pequena ação que te faça bem agora.
-                </p>
-              )}
             </div>
           )}
         </div>
