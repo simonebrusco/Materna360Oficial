@@ -90,7 +90,7 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        feature: 'daily_insight',
+        feature: 'daily_inspiration',
         origin: 'como-estou-hoje',
       }),
     })
@@ -100,19 +100,21 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
     }
 
     const data = await res.json()
-    const insight = data?.dailyInsight
+    const inspiration = data?.inspiration
 
-    if (!insight || typeof insight !== 'object') {
-      throw new Error('Insight diário vazio')
+    if (!inspiration || typeof inspiration !== 'object') {
+      throw new Error('Inspiração diária vazia')
     }
 
     return {
-      title: insight.title ?? 'Um olhar gentil para o seu dia',
+      title:
+        inspiration.phrase ??
+        'Um olhar gentil para o seu dia',
       body:
-        insight.body ??
+        inspiration.care ??
         'Pelos sinais que você tem dado, parece que o dia de hoje veio com uma mistura de cansaço e responsabilidade. Mesmo assim, você continua aparecendo para a sua família – isso já é enorme.',
       gentleReminder:
-        insight.gentleReminder ??
+        inspiration.ritual ??
         'Você não precisa fazer tudo hoje. Escolha uma coisa importante e permita que o resto seja “suficientemente bom”.',
     }
   } catch (error) {
