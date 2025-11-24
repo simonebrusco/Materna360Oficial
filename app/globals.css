@@ -121,31 +121,42 @@ body {
   background-attachment: fixed;
 }
 
-/* ===== Hero do Meu Dia — título em branco e menor sobre o degradê ===== */
+/* ===== Hero do Meu Dia — texto branco com espaçamento refinado ===== */
+.materna360-premium-bg header {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* espaço bem pequeno entre título e subtítulo */
+}
+
+/* Título */
 .materna360-premium-bg header h1 {
   color: #ffffff !important;
   font-size: 24px;
-  line-height: 1.25;
+  line-height: 1.2;
   font-weight: 600;
+  margin: 0; /* remove espaços extras */
+}
+
+/* Subtítulo */
+.materna360-premium-bg header p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0; /* encosta no título, controlado só pelo gap */
 }
 
 @media (min-width: 768px) {
   .materna360-premium-bg header h1 {
     font-size: 28px;
   }
-}
 
-.materna360-premium-bg header p {
-  color: rgba(255, 255, 255, 0.92) !important;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-@media (min-width: 768px) {
   .materna360-premium-bg header p {
     font-size: 14px;
   }
 }
+
 
 @layer base {
   html,
