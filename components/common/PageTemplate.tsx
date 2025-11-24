@@ -32,10 +32,10 @@ export function PageTemplate({
       {/* Hero gradient global do Materna360 (topo da página) */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-56 md:h-64"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] md:h-[460px] lg:h-[500px]"
         style={{
           backgroundImage:
-            'linear-gradient(135deg, rgba(155,77,150,0.22) 0%, rgba(255,0,94,0.20) 28%, rgba(255,216,230,0.16) 60%, rgba(255,232,242,0) 100%)',
+            'linear-gradient(135deg, rgba(155,77,150,0.32) 0%, rgba(255,0,94,0.26) 26%, rgba(255,216,230,0.22) 60%, rgba(255,232,242,0.10) 82%, rgba(255,232,242,0) 100%)',
         }}
       />
 
