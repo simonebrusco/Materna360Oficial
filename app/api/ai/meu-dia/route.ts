@@ -80,10 +80,9 @@ export async function POST(req: Request) {
       req,
     )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
 
-    // Chamada única ao núcleo de IA para o Meu Dia
-    const result: any = await callMaternaAI({
-      // usamos "as any" para não amarrar o tipo aqui e manter flexibilidade
-      mode: 'meu-dia' as any,
+    // Montamos o payload como `any` para não prender o tipo aqui.
+    const aiPayload: any = {
+      mode: 'meu-dia',
       profile,
       child,
       context: {
@@ -91,7 +90,9 @@ export async function POST(req: Request) {
         dayIntention, // leve / focado / produtivo / slow / automático
         focusOfDay: normalizeFocus(focusOfDayRaw),
       },
-    })
+    }
+
+    const result: any = await callMaternaAI(aiPayload)
 
     // -----------------------------
     // 1) Sugestões inteligentes
