@@ -55,7 +55,7 @@ type Eu360ProfileApiResponse = {
 
   figurinha?: string
 
-  // campos auxiliares de idade
+  // campos auxiliares de idade (vindo da tabela babies)
   birthdate?: string | null
   age_months?: number | null
 }
@@ -92,7 +92,7 @@ function normalizeChildren(raw: unknown): MaternaChildProfile[] {
 
       return {
         id: c.id ?? undefined,
-        genero: c.genero === 'menina' ? 'menina' : 'menino',
+        genero: c.genero === 'menina' ? 'menina' : c.genero === 'menino' ? 'menino' : undefined,
         idadeMeses,
         nome: typeof c.nome === 'string' ? c.nome.trim() : undefined,
         alergias: asStringArray(c.alergias),
@@ -115,8 +115,7 @@ function buildMaternaProfileFromEu360(raw: Eu360ProfileApiResponse): MaternaProf
       ? raw.name.trim()
       : undefined
 
-  const children =
-    normalizeChildren(raw.children ?? raw.filhos) // aceita tanto children quanto filhos
+  const children = normalizeChildren(raw.children ?? raw.filhos) // aceita tanto children quanto filhos
 
   return {
     nomeMae,
@@ -188,9 +187,36 @@ export function adaptEu360ProfileToMaterna(
   }
 
   const data = raw as Eu360ProfileApiResponse
-  const profile = buildMaternaProfileFromEu360(data)
-  const children = profile.filhos ?? []
+  const baseProfile = buildMaternaProfileFromEu360(data)
+
+  // Começamos com as crianças vindas do próprio perfil (children/filhos)
+  let children = baseProfile.filhos ?? []
+
+  // Se não houver nenhuma criança cadastrada, tentamos usar age_months
+  // do Eu360 para criar uma criança "principal" sintética, garantindo
+  // que a IA tenha pelo menos uma faixa etária de referência.
+  if (!children.length && typeof data.age_months === 'number' && Number.isFinite(data.age_months)) {
+    const idadeMeses = Math.max(0, Math.floor(data.age_months))
+
+    const syntheticChild: MaternaChildProfile = {
+      id: undefined,
+      genero: undefined,
+      idadeMeses,
+      nome: undefined,
+      alergias: [],
+      ageRange: deriveAgeRangeFromMonths(idadeMeses),
+      currentPhase: undefined,
+      notes: undefined,
+    }
+
+    children = [syntheticChild]
+  }
+
   const primaryChild = pickPrimaryChild(children)
+  const profile: MaternaProfile = {
+    ...baseProfile,
+    filhos: children,
+  }
 
   return {
     profile,
