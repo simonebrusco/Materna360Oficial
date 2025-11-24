@@ -125,21 +125,21 @@ export default function MaternarClient() {
                 <div className="relative z-10 flex flex-col justify-between gap-2 md:gap-3">
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base md:text-lg font-semibold text-[#2F3A56] leading-snug">
+                      <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                         Um carinho pra você hoje
                       </h3>
                       <AppIcon
                         name="heart"
-                        className="h-4 w-4 md:h-5 md:w-5 text-[#FF1475]"
+                        className="h-4 w-4 md:h-5 md:w-5 text-[#FFD3E6]"
                         aria-hidden="true"
                       />
                     </div>
 
-                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    <p className="text-xs md:text-sm text-white/90 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                       &quot;{dailyMessage}&quot;
                     </p>
 
-                    <p className="text-[11px] md:text-xs text-[#545454]/80 leading-snug pt-0.5">
+                    <p className="text-[11px] md:text-xs text-white/80 leading-snug pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                       Uma mensagem especial para começar seu dia com mais leveza.
                     </p>
                   </div>
@@ -152,7 +152,7 @@ export default function MaternarClient() {
                           timestamp: new Date().toISOString(),
                         })
                       }
-                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-[#FF1475] transition-all duration-150 hover:gap-1"
+                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-white/95 transition-all duration-150 hover:gap-1 hover:text-white"
                     >
                       <span>Preciso disso hoje</span>
                       <span aria-hidden="true">→</span>
