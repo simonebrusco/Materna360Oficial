@@ -1,281 +1,94 @@
+// app/hooks/useDailyAISuggestions.ts
+
 'use client'
 
-import React, { useEffect } from 'react'
-import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
-import { useDailyAISuggestions } from '@/app/hooks/useDailyAISuggestions'
+import { useCallback, useState } from 'react'
+import { toast } from '@/app/lib/toast'
 
-export interface Suggestion {
+export type DailyAISuggestion = {
   id: string
   title: string
   description?: string
+  category?: string
+  priority?: 'alta' | 'media' | 'baixa'
 }
 
-function generateSuggestions(mood: string | null, intention: string | null): Suggestion[] {
-  if (!mood && !intention) {
-    return []
-  }
+/**
+ * Hook de alto nível para consumir a IA de sugestões diárias do /meu-dia.
+ *
+ * Usa o endpoint /api/ai/rotina no modo "quick-ideas".
+ * Se der erro ou vier vazio, o componente cai no fallback editorial.
+ */
+export function useDailyAISuggestions() {
+  const [suggestions, setSuggestions] = useState<DailyAISuggestion[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  if (intention === 'automático') {
-    return [
-      {
-        id: 'automatico-1',
-        title: 'Observe como você se sente ao longo do dia.',
-        description: 'Talvez seja hora de retomar o controle com pequenas escolhas.',
-      },
-      {
-        id: 'automatico-2',
-        title: 'Comece anotando uma coisa que é realmente importante pra você hoje.',
-        description: '',
-      },
-    ]
-  }
+  const requestSuggestions = useCallback(
+    async (params: { mood: string | null; intention: string | null }) => {
+      try {
+        setIsLoading(true)
+        setError(null)
 
-  if (mood === 'stressed' && intention === 'slow') {
-    return [
-      {
-        id: 'stressed-slow-1',
-        title: 'Separe 5 minutos para respirar fundo e alongar o corpo.',
-        description: '',
-      },
-      {
-        id: 'stressed-slow-2',
-        title: 'Que tal uma pausa sem telas agora, só você e um copo de água?',
-        description: '',
-      },
-    ]
-  }
+        const res = await fetch('/api/ai/rotina', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            feature: 'quick-ideas',
+            origin: 'meu-dia',
+            // contexto extra para a IA (mesmo que hoje ela não use tudo)
+            mood: params.mood,
+            intention: params.intention,
+          }),
+        })
 
-  if (mood === 'stressed' && intention === 'produtivo') {
-    return [
-      {
-        id: 'stressed-prod-1',
-        title: 'Antes de mergulhar nas tarefas, escolha UMA prioridade principal.',
-        description: '',
-      },
-      {
-        id: 'stressed-prod-2',
-        title: 'Inclua uma pequena pausa entre os compromissos para evitar sobrecarga.',
-        description: '',
-      },
-    ]
-  }
+        if (!res.ok) {
+          const data = await res.json().catch(() => null)
+          const message =
+            (data && typeof data.error === 'string' && data.error) ||
+            'Não foi possível trazer sugestões agora.'
+          throw new Error(message)
+        }
 
-  if (mood === 'happy' && intention === 'leve') {
-    return [
-      {
-        id: 'happy-leve-1',
-        title: 'Aproveite para brincar ou conversar um pouco com seu filho hoje.',
-        description: '',
-      },
-      {
-        id: 'happy-leve-2',
-        title: 'Inclua um momento só seu, nem que sejam 10 min com algo que você gosta.',
-        description: '',
-      },
-    ]
-  }
+        const data = await res.json()
+        const raw = Array.isArray(data?.suggestions) ? data.suggestions : []
 
-  if (mood === 'happy' && intention === 'produtivo') {
-    return [
-      {
-        id: 'happy-prod-1',
-        title: 'Use essa energia para tirar da frente uma tarefa que você vem adiando.',
-        description: '',
-      },
-      {
-        id: 'happy-prod-2',
-        title: 'Defina claramente as suas 3 prioridades do dia.',
-      },
-    ]
-  }
+        const normalized: DailyAISuggestion[] = raw.map(
+          (item: any, index: number) => ({
+            id: item.id ?? `ai-suggestion-${index}`,
+            title: item.title ?? item.heading ?? 'Sugestão para o seu dia',
+            description:
+              item.description ??
+              item.text ??
+              'Uma pequena ação que pode deixar seu dia mais leve e organizado.',
+            category: item.category,
+            priority: item.priority,
+          }),
+        )
 
-  if (mood === 'stressed') {
-    return [
-      {
-        id: 'stressed-generic-1',
-        title: 'Comece o dia com uma ação pequena e alcançável.',
-        description: 'Isso cria momentum e reduz a sensação de sobrecarga.',
-      },
-      {
-        id: 'stressed-generic-2',
-        title: 'Reserve um tempo para uma atividade que te acalme.',
-        description: '',
-      },
-    ]
-  }
+        setSuggestions(normalized)
 
-  if (mood === 'happy') {
-    return [
-      {
-        id: 'happy-generic-1',
-        title: 'Use essa boa energia para conectar com as pessoas que você ama.',
-        description: '',
-      },
-      {
-        id: 'happy-generic-2',
-        title: 'Que tal tentar algo novo hoje com essa disposição?',
-        description: '',
-      },
-    ]
-  }
+        if (normalized.length > 0) {
+          toast.success('Sugestões pensadas para o seu dia foram atualizadas ✨')
+        }
+      } catch (err: any) {
+        console.error('[useDailyAISuggestions] Erro ao buscar sugestões:', err)
+        const message =
+          err?.message ??
+          'Não consegui carregar sugestões agora. Tente novamente em instantes.'
+        setError(message)
+        toast.error(message)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [],
+  )
 
-  if (intention === 'focado') {
-    return [
-      {
-        id: 'focado-1',
-        title: 'Elimine as distrações: desligue notificações por um tempo.',
-        description: '',
-      },
-      {
-        id: 'focado-2',
-        title: 'Escolha uma única tarefa importante para as próximas horas.',
-        description: '',
-      },
-    ]
-  }
-
-  if (intention === 'produtivo') {
-    return [
-      {
-        id: 'prod-1',
-        title: 'Defina suas 3 prioridades principais agora.',
-        description: '',
-      },
-      {
-        id: 'prod-2',
-        title: 'Organize o seu tempo em blocos de 90 minutos com pausas curtas.',
-        description: '',
-      },
-    ]
-  }
-
-  if (intention === 'leve') {
-    return [
-      {
-        id: 'leve-1',
-        title: 'Deixe espaço para o improviso e para as surpresas do dia.',
-        description: '',
-      },
-      {
-        id: 'leve-2',
-        title: 'Lembre-se: você não precisa fazer tudo hoje.',
-        description: '',
-      },
-    ]
-  }
-
-  if (intention === 'slow') {
-    return [
-      {
-        id: 'slow-1',
-        title: 'Curta os pequenos momentos do dia com atenção.',
-        description: '',
-      },
-      {
-        id: 'slow-2',
-        title: 'Faça menos, mas com mais presença e propósito.',
-        description: '',
-      },
-    ]
-  }
-
-  return []
-}
-
-interface IntelligentSuggestionsSectionProps {
-  mood: string | null
-  intention: string | null
-}
-
-export default function IntelligentSuggestionsSection({
-  mood,
-  intention,
-}: IntelligentSuggestionsSectionProps) {
-  const hasSelection = !!mood || !!intention
-
-  const {
-    suggestions: aiSuggestions,
+  return {
+    suggestions,
     isLoading,
     error,
     requestSuggestions,
-  } = useDailyAISuggestions()
-
-  // Sempre que a mãe escolher humor/intenção, pedimos novas sugestões
-  useEffect(() => {
-    if (!hasSelection) return
-    void requestSuggestions({ mood, intention })
-  }, [hasSelection, mood, intention, requestSuggestions])
-
-  // Fallback editorial se IA não responder ou vier vazia
-  const fallbackSuggestions = generateSuggestions(mood, intention)
-
-  const shouldUseFallback =
-    !isLoading &&
-    (error || !aiSuggestions || aiSuggestions.length === 0)
-
-  const suggestionsToShow = shouldUseFallback
-    ? fallbackSuggestions
-    : aiSuggestions
-
-  return (
-    <div className="w-full">
-      <SoftCard className="p-5 md:p-6">
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide mb-1 font-poppins">
-              Sugestões inteligentes para o seu dia
-            </p>
-            <p className="text-xs md:text-sm text-[#545454]/70 font-poppins">
-              Ideias rápidas pensadas para o seu momento.
-            </p>
-          </div>
-
-          {!hasSelection ? (
-            <div className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
-              Comece contando como você está e que tipo de dia você quer ter. Assim eu consigo sugerir algo que faça sentido pra
-              você.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {isLoading && (
-                <p className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
-                  Estou pensando em algumas ideias que combinem com o seu momento de hoje…
-                </p>
-              )}
-
-              {!isLoading && suggestionsToShow.length === 0 && (
-                <p className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
-                  Assim que você registrar mais alguns dias por aqui, vou conseguir trazer sugestões cada vez mais certeiras.
-                </p>
-              )}
-
-              {!isLoading &&
-                suggestionsToShow.length > 0 &&
-                suggestionsToShow.map((suggestion) => (
-                  <div key={suggestion.id} className="flex gap-3">
-                    <div className="flex-shrink-0 pt-1">
-                      <AppIcon
-                        name="idea"
-                        className="w-4 h-4 md:w-5 md:h-5 text-[#ff005e]"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm md:text-base font-semibold text-[#2f3a56] font-poppins">
-                        {suggestion.title}
-                      </p>
-                      {suggestion.description && (
-                        <p className="text-xs md:text-sm text-[#545454] font-poppins mt-1">
-                          {suggestion.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      </SoftCard>
-    </div>
-  )
+  }
 }
