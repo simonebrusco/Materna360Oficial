@@ -126,30 +126,21 @@ export function MeuDiaClient() {
     >
       <ClientOnly>
         <div className="px-4 py-8">
-          {/* GREETING + MOOD SECTION */}
+          {/* HERO EDITORIAL + MOOD SECTION */}
           <Reveal delay={0}>
             <section className="space-y-6 mb-6 md:mb-8">
-              {/* Hero de saudação em formato de card */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FFD8E6] via-[#FFE8F2] to-[#FFD8E6] px-5 py-5 md:px-6 md:py-6 shadow-card">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]/80">
-                      Hoje por aqui
-                    </p>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-[#2F3A56] leading-snug font-poppins">
-                      {greeting}
-                    </h2>
-                    <p className="text-xs md:text-sm text-[#545454] max-w-md">
-                      Vamos organizar seu dia com leveza, priorizando o que
-                      realmente importa pra você e pra sua família.
-                    </p>
-                  </div>
-
-                  {/* Bolinha decorativa estilo app de produtividade */}
-                  <div className="mt-1 h-9 w-9 rounded-full border border-white/70 bg-white/60 shadow-card flex items-center justify-center">
-                    <span className="h-2 w-2 rounded-full bg-[#FF1475]" />
-                  </div>
-                </div>
+              {/* Hero editorial, sem card pesado */}
+              <div className="space-y-2">
+                <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                  Hoje por aqui
+                </p>
+                <h2 className="text-2xl md:text-3xl font-semibold text-[#2F3A56] leading-snug font-poppins">
+                  {greeting}
+                </h2>
+                <p className="text-xs md:text-sm text-[#545454] max-w-xl">
+                  Vamos organizar seu dia com leveza, priorizando o que
+                  realmente importa pra você e pra sua família.
+                </p>
               </div>
 
               {/* Mood Pills */}
