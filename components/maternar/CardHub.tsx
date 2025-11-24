@@ -71,7 +71,7 @@ const HUB_CARDS: HubCard[] = [
       {
         id: 'rotina-leve',
         href: '/meu-dia/rotina-leve',
-        icon: 'lightbulb',
+        icon: 'idea', // ✅ trocado de 'lightbulb' para 'idea'
       },
     ],
   },
