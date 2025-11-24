@@ -121,13 +121,17 @@ body {
   background-attachment: fixed;
 }
 
-/* ===== Hero do Meu Dia — texto branco com espaçamento refinado ===== */
+/* ===== Hero do Meu Dia — texto branco alinhado à esquerda ===== */
 .materna360-premium-bg header {
   max-width: 720px;
-  margin: 0 auto;
+  /* volta pro alinhado à esquerda dentro do container */
+  margin: 0;
+  padding-left: 24px; /* opcional: ajusta para ficar alinhado com o conteúdo */
   display: flex;
   flex-direction: column;
-  gap: 2px; /* espaço bem pequeno entre título e subtítulo */
+  gap: 2px; /* espaço pequeno entre título e subtítulo */
+  text-align: left;
+  align-items: flex-start;
 }
 
 /* Título */
@@ -144,10 +148,14 @@ body {
   color: rgba(255, 255, 255, 0.9) !important;
   font-size: 13px;
   line-height: 1.4;
-  margin: 0; /* encosta no título, controlado só pelo gap */
+  margin: 0;
 }
 
 @media (min-width: 768px) {
+  .materna360-premium-bg header {
+    padding-left: 32px; /* um pouco mais de respiro no desktop */
+  }
+
   .materna360-premium-bg header h1 {
     font-size: 28px;
   }
@@ -156,6 +164,7 @@ body {
     font-size: 14px;
   }
 }
+
 
 
 @layer base {
