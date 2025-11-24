@@ -13,8 +13,8 @@ type Item = {
 };
 
 /**
- * 3-item premium floating dock navigation
- * Mobile-first design with floating pill bar style
+ * 3-item premium dock navigation
+ * Agora em versão mais estática (não flutuante pela tela)
  */
 const ITEMS: Item[] = [
   {
@@ -64,19 +64,17 @@ export default function BottomNav({
   return (
     <nav
       className="
-        fixed bottom-4 inset-x-4
-        z-50
-        bg-white/90 backdrop-blur-xl
-        border border-black/5 border-t-2 border-t-[var(--color-soft-strong)]
-        rounded-3xl
-        shadow-[0_10px_40px_rgba(0,0,0,0.18)]
+        w-full
+        bg-white/92 backdrop-blur-2xl
+        border-t border-[#FFD8E6]
+        shadow-[0_-10px_30px_rgba(0,0,0,0.14)]
       "
       role="navigation"
       aria-label="Main navigation"
-      data-debug-nav={debugNav ?? 'count:3;floating-dock'}
+      data-debug-nav={debugNav ?? 'count:3;premium-dock-static'}
       {...props}
     >
-      <ul className="flex items-center justify-between gap-2 px-4 py-3 max-w-4xl mx-auto">
+      <ul className="flex items-center justify-between gap-2 px-4 py-3 max-w-3xl mx-auto">
         {ITEMS.map((item) => {
           const isActive = item.match
             ? item.match(pathname)
@@ -92,12 +90,12 @@ export default function BottomNav({
                   px-3 py-2
                   rounded-2xl
                   transition-all duration-200
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1475]/60
                   active:scale-95
                   ${
                     isActive
-                      ? 'bg-[var(--color-brand)]/10 border border-[var(--color-brand)]/40 shadow-[0_0_18px_rgba(253,37,151,0.35)]'
-                      : 'bg-transparent border border-transparent hover:opacity-80'
+                      ? 'bg-[#FF1475]/10 border border-[#FF1475]/40 shadow-[0_0_18px_rgba(253,37,151,0.35)]'
+                      : 'bg-transparent border border-transparent hover:opacity-85'
                   }
                 `}
                 aria-label={item.label}
@@ -108,8 +106,8 @@ export default function BottomNav({
                   size={isActive ? 18 : 16}
                   className={
                     isActive
-                      ? 'text-[var(--color-brand)] transition-all duration-200'
-                      : 'text-[var(--color-text-muted)]/70 transition-all duration-200'
+                      ? 'text-[#FF1475] transition-all duration-200'
+                      : 'text-[#545454]/70 transition-all duration-200'
                   }
                   decorative
                 />
@@ -118,8 +116,8 @@ export default function BottomNav({
                     text-[11px] leading-tight transition-all duration-200
                     ${
                       isActive
-                        ? 'font-semibold text-[var(--color-brand)]'
-                        : 'font-medium text-[var(--color-text-muted)] opacity-80'
+                        ? 'font-semibold text-[#FF1475]'
+                        : 'font-medium text-[#545454] opacity-80'
                     }
                   `}
                 >
