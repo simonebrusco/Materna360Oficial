@@ -10,7 +10,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { SoftCard } from '@/components/ui/card'
 import { DailyPriorities } from '@/components/blocks/DailyPriorities'
-import IntelligentSuggestionsSection from '@/components/blocks/IntelligentSuggestionsSection'
+import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 
 const MOOD_LABELS: Record<string, string> = {
@@ -70,8 +70,12 @@ function generateSummaryText(
 
   return {
     show: true,
-    main:
-      'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.',
+    main: (
+      <>
+        Conte pra gente como você está e que tipo de dia você quer ter. Vamos
+        organizar tudo a partir disso.
+      </>
+    ),
   }
 }
 
@@ -81,7 +85,7 @@ export function MeuDiaClient() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  // Greeting
+  // Greeting dinâmico
   useEffect(() => {
     const firstName = name ? name.split(' ')[0] : 'Mãe'
     const timeGreeting = getTimeGreeting(firstName)
@@ -95,12 +99,12 @@ export function MeuDiaClient() {
     return () => clearInterval(interval)
   }, [name])
 
-  // Track nav
+  // Telemetria de navegação
   useEffect(() => {
     track('nav.click', { tab: 'meu-dia', timestamp: new Date().toISOString() })
   }, [])
 
-  // Daily reload
+  // Reload diário (vira o dia, reseta o estado visual)
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(
@@ -123,22 +127,22 @@ export function MeuDiaClient() {
         <div className="px-4 py-8">
           {/* GREETING SECTION */}
           <Reveal delay={0}>
-            <section className="mb-6 space-y-4 md:mb-8">
-              <h2 className="font-poppins text-2xl font-semibold leading-snug text-[#3A3A3A] md:text-3xl">
+            <section className="space-y-4 mb-6 md:mb-8">
+              <h2 className="text-2xl md:text-3xl font-semibold text-[#3A3A3A] leading-snug font-poppins">
                 {greeting}
               </h2>
 
               {/* Mood Pills */}
               <div className="space-y-4 md:space-y-5">
                 <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#3A3A3A] md:text-sm">
+                  <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
                     Como você está?
                   </p>
-                  <p className="font-poppins text-xs text-[#6A6A6A] md:text-sm">
+                  <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
                     Escolha como você se sente agora.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {[
                     { id: 'happy', label: 'Feliz' },
                     { id: 'okay', label: 'Normal' },
@@ -151,10 +155,10 @@ export function MeuDiaClient() {
                           selectedMood === mood.id ? null : mood.id,
                         )
                       }
-                      className={`rounded-full px-4 py-2 text-sm font-semibold font-poppins transition-all ${
+                      className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                         selectedMood === mood.id
-                          ? 'border-[#FF1475] bg-[#FF1475] text-white shadow-sm'
-                          : 'border border-[#FFE8F2] bg-white text-[#3A3A3A] hover:border-[#FF1475]/50'
+                          ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
+                          : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
                       }`}
                     >
                       {mood.label}
@@ -166,27 +170,25 @@ export function MeuDiaClient() {
               {/* Day Tags */}
               <div className="space-y-4 md:space-y-5">
                 <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#3A3A3A] md:text-sm">
+                  <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
                     Hoje eu quero um dia...
                   </p>
-                  <p className="font-poppins text-xs text-[#6A6A6A] md:text-sm">
+                  <p className="text-xs md:text-sm text-[#6A6A6A] font-poppins">
                     Selecione o estilo do seu dia.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(
                     (tag) => (
                       <button
                         key={tag}
                         onClick={() =>
-                          setSelectedDay(
-                            selectedDay === tag ? null : tag,
-                          )
+                          setSelectedDay(selectedDay === tag ? null : tag)
                         }
-                        className={`rounded-full px-4 py-2 text-sm font-semibold font-poppins transition-all ${
+                        className={`px-4 py-2 rounded-full text-sm font-semibold font-poppins transition-all ${
                           selectedDay === tag
-                            ? 'border-[#FF1475] bg-[#FF1475] text-white shadow-sm'
-                            : 'border border-[#FFE8F2] bg-white text-[#3A3A3A] hover:border-[#FF1475]/50'
+                            ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
+                            : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
                         }`}
                       >
                         {tag}
@@ -198,27 +200,26 @@ export function MeuDiaClient() {
 
               {/* Summary Block */}
               {(() => {
-                const summary = generateSummaryText(
-                  selectedMood,
-                  selectedDay,
-                )
+                const summary = generateSummaryText(selectedMood, selectedDay)
                 return (
-                  <div className="mt-4 font-poppins text-sm leading-relaxed text-[#6A6A6A] md:text-base">
-                    {summary.main}
-                  </div>
+                  summary.show && (
+                    <div className="mt-4 text-sm md:text-base text-[#6A6A6A] font-poppins leading-relaxed">
+                      {summary.main}
+                    </div>
+                  )
                 )
               })()}
             </section>
           </Reveal>
 
           {/* MAIN PLANNER CARD */}
-          <div className="space-y-6 rounded-3xl border border-[#FFE8F2] bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] md:space-y-8 md:p-8">
-            {/* Prioridades do Dia */}
-            <Reveal delay={100}>
+          <SoftCard className="rounded-3xl bg-white border border-[#FFE8F2] p-6 md:p-8 shadow-sm space-y-6 md:space-y-8 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] transition-shadow duration-200">
+            {/* DAILY PRIORITIES */}
+            <Reveal delay={150}>
               <DailyPriorities />
             </Reveal>
 
-            {/* Sugestões Inteligentes */}
+            {/* INTELLIGENT SUGGESTIONS */}
             <Reveal delay={200}>
               <IntelligentSuggestionsSection
                 mood={selectedMood}
@@ -226,9 +227,11 @@ export function MeuDiaClient() {
               />
             </Reveal>
 
-            {/* Weekly planner */}
-            <WeeklyPlannerShell />
-          </div>
+            {/* WEEKLY PLANNER SHELL */}
+            <Reveal delay={250}>
+              <WeeklyPlannerShell />
+            </Reveal>
+          </SoftCard>
 
           <MotivationalFooter routeKey="meu-dia" />
         </div>
@@ -236,3 +239,5 @@ export function MeuDiaClient() {
     </PageTemplate>
   )
 }
+
+export default MeuDiaClient
