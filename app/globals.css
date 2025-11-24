@@ -102,18 +102,17 @@ body {
   background: #FFFFFF;
 }
 
-/* Materna360 — Fundo Premium (ameixa concentrado no topo → rosa → branco) */
+/* Materna360 — Fundo Premium leve (ameixa delicado → rosa suave → branco) */
 .materna360-premium-bg {
   background-color: #ffffff;
   background-image:
     linear-gradient(
       180deg,
-      #2f3a56 0%,    /* ameixa forte bem no topo */
-      #2f3a56 8%,    /* faixa escura curta */
-      #3d3965 16%,   /* ameixa um pouco mais clara */
-      #ff4c8e 30%,   /* pink da marca já entrando */
-      #ffd8e6 50%,   /* rosa claro oficial na região do card */
-      #fff5fa 72%,   /* quase branco */
+      #3b3563 0%,    /* ameixa suavizado no topo */
+      #4c3f72 8%,    /* transição roxo mais claro, faixa curta */
+      #ff6fa3 22%,   /* pink mais leve */
+      #ffd8e6 42%,   /* rosa claro oficial, já na região do card */
+      #fff5fa 62%,   /* quase branco */
       #ffffff 100%   /* branco total na base */
     );
   background-repeat: no-repeat;
