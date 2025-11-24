@@ -26,13 +26,13 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'como-estou-hoje',
-        href: '/meu-dia/como-estou-hoje',
+        href: '/meu-dia/como-estou-hoje?abrir=humor',
         icon: 'smile',
       },
       {
         id: 'energia-emocao',
-        href: '/meu-dia/como-estou-hoje',
-        icon: 'heart',
+        href: '/meu-dia/como-estou-hoje?abrir=energia',
+        icon: 'time',
       },
       {
         id: 'autocuidado-inteligente',
@@ -41,7 +41,7 @@ const HUB_CARDS: HubCard[] = [
       },
       {
         id: 'pausa-guiada',
-        href: '/meu-dia/como-estou-hoje',
+        href: '/meu-dia/como-estou-hoje?abrir=pausa',
         icon: 'idea',
       },
     ],
@@ -55,23 +55,23 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'planner-dia',
-        href: '/meu-dia',
+        href: '/meu-dia?abrir=planner',
         icon: 'calendar',
       },
       {
         id: 'rotina-casa',
-        href: '/meu-dia',
+        href: '/meu-dia/rotina-leve?abrir=casa',
         icon: 'home',
       },
       {
         id: 'rotina-filho',
-        href: '/meu-dia',
+        href: '/meu-dia/rotina-leve?abrir=filho',
         icon: 'care',
       },
       {
         id: 'rotina-leve',
         href: '/meu-dia/rotina-leve',
-        icon: 'idea', // ✅ trocado de 'lightbulb' para 'idea'
+        icon: 'play',
       },
     ],
   },
@@ -84,17 +84,17 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'sinais-do-dia',
-        href: '/cuidar/cuidar-com-amor',
+        href: '/cuidar/cuidar-com-amor?abrir=sinais',
         icon: 'star',
       },
       {
         id: 'cuidado-por-idade',
-        href: '/cuidar/cuidar-com-amor',
-        icon: 'crown',
+        href: '/cuidar/cuidar-com-amor?abrir=idade',
+        icon: 'books',
       },
       {
         id: 'cuidados-do-dia',
-        href: '/cuidar/cuidar-com-amor',
+        href: '/cuidar/cuidar-com-amor?abrir=cuidados',
         icon: 'heart',
       },
       {
@@ -142,36 +142,27 @@ export default function CardHub() {
       className="mt-8 md:mt-10 pb-24 md:pb-28"
     >
       <Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+        <div className="grid grid-cols-2 gap-4 md:gap-5">
           {HUB_CARDS.map((card) => (
             <div
               key={card.id}
-              className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/55 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.08)] px-4 py-4 md:px-5 md:py-5"
+              className="flex flex-col items-stretch gap-2 md:gap-3"
             >
-              {/* Glow de fundo discreto */}
-              <div className="pointer-events-none absolute inset-0 opacity-70">
-                <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.14)] blur-2xl" />
-                <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.14)] blur-3xl" />
-              </div>
-
-              <div className="relative z-10 flex flex-col gap-3">
-                {/* Header do card */}
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#FF1475]/90">
-                    {card.tag}
-                  </span>
-                  <h2 className="text-[15px] md:text-[16px] leading-snug font-semibold text-[#2F3A56]">
-                    {card.title}
-                  </h2>
+              {/* Card translúcido com ícones 2x2 */}
+              <div className="relative overflow-hidden rounded-3xl border border-white/65 bg-white/18 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
+                {/* Glows suaves de fundo */}
+                <div className="pointer-events-none absolute inset-0 opacity-80">
+                  <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                  <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
                 </div>
 
-                {/* Grade de ícones 2x2 */}
-                <div className="grid grid-cols-4 gap-2 pt-1">
+                {/* Conteúdo principal */}
+                <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
                   {card.icons.map((item) => (
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/75 border border-white/80 shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[1px] hover:shadow-[0_10px_26px_rgba(0,0,0,0.09)] active:translate-y-0 active:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/82 border border-white/90 shadow-[0_10px_26px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_38px_rgba(0,0,0,0.24)] active:translate-y-0 active:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
                     >
                       <AppIcon
                         name={item.icon}
@@ -181,6 +172,16 @@ export default function CardHub() {
                     </Link>
                   ))}
                 </div>
+              </div>
+
+              {/* Nome da pasta fora, centralizado */}
+              <div className="text-center">
+                <span className="block text-[10px] font-semibold tracking-[0.24em] uppercase text-white/75">
+                  {card.tag}
+                </span>
+                <span className="block text-[13px] md:text-[14px] font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                  {card.title}
+                </span>
               </div>
             </div>
           ))}
