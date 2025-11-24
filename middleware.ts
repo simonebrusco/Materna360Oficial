@@ -6,9 +6,9 @@ const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Redirect root to /meu-dia
+  // Redirect root to /maternar (aba principal do app)
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/meu-dia', request.url))
+    return NextResponse.redirect(new URL('/maternar', request.url))
   }
 
   // Allow Builder preview mode to pass through (both ?builder.preview=1 and /builder-embed paths)
