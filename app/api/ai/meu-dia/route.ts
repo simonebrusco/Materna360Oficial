@@ -15,7 +15,7 @@ export const runtime = 'nodejs'
 type MeuDiaFeature =
   | 'intelligent_suggestions' // sugestões rápidas com base em humor + intenção
   | 'planner_summary' // resumo do dia/semana para o planner
-  | 'daily_focus' // foco emocional do dia (opcional, se você já estiver usando)
+  | 'daily_focus' // foco emocional do dia (opcional)
 
 type MeuDiaRequestBody = {
   feature?: MeuDiaFeature
@@ -38,16 +38,20 @@ const NO_STORE_HEADERS = {
 function normalizeFocus(value: string | null | undefined): MaternaFocusOfDay | null {
   if (!value) return null
 
-  const allowed: MaternaFocusOfDay[] = [
-    'cansaco',
-    'culpa',
-    'organizacao',
-    'conexao_com_filho',
-  ]
+  // Mapa flexível: aceita com/sem acento e devolve o valor "oficial"
+  const map: Record<string, string> = {
+    cansaco: 'Cansaço',
+    Cansaço: 'Cansaço',
+    culpa: 'Culpa',
+    Culpa: 'Culpa',
+    organizacao: 'Organização',
+    Organização: 'Organização',
+    conexao_com_filho: 'Conexão com o filho',
+    'Conexão com o filho': 'Conexão com o filho',
+  }
 
-  return allowed.includes(value as MaternaFocusOfDay)
-    ? (value as MaternaFocusOfDay)
-    : null
+  const mapped = map[value] ?? null
+  return mapped as MaternaFocusOfDay | null
 }
 
 export async function POST(req: Request) {
@@ -85,8 +89,6 @@ export async function POST(req: Request) {
       context: {
         mood, // string simples do front (feliz / normal / estressada, etc.)
         dayIntention, // leve / focado / produtivo / slow / automático
-        // 🔴 Aqui estava o erro: antes passava string | null
-        // ✅ Agora convertemos para MaternaFocusOfDay | null
         focusOfDay: normalizeFocus(focusOfDayRaw),
       },
     })
