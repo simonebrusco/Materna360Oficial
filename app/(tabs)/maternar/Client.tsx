@@ -70,4 +70,112 @@ export default function MaternarClient() {
         {/* Premium Hero Header - HUB principal */}
         <header className="pt-8 md:pt-10 mb-8 md:mb-10">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 sp
+            <div className="flex-1 space-y-2">
+              {/* Eyebrow capsule no padrão global */}
+              <span className="eyebrow-capsule">
+                MATERNAR • HUB PRINCIPAL
+              </span>
+
+              {/* Título dinâmico (saudação) */}
+              <ClientOnly>
+                <h1 className="text-3xl md:text-4xl font-semibold text-[#3A3A3A] leading-tight font-poppins">
+                  {greeting}
+                </h1>
+              </ClientOnly>
+
+              {/* Subtítulo explicando o hub */}
+              <p className="text-sm md:text-base text-[#545454] leading-relaxed">
+                Aqui é o seu ponto de partida no Materna360: um lugar para cuidar
+                de você, do seu filho e da sua jornada, com tudo o que você
+                precisa em um só lugar.
+              </p>
+            </div>
+
+            {/* Botão de completar perfil à direita */}
+            {isProfileIncomplete && (
+              <div className="flex-shrink-0">
+                <Link
+                  href="/eu360?focus=perfil"
+                  onClick={() => {
+                    track('maternar.profile_premium_button_click', {
+                      timestamp: new Date().toISOString(),
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-[#FF1475]/70 bg-white/90 text-[#FF1475] text-sm font-medium tracking-tight shadow-[0_6px_18px_rgba(255,20,117,0.18)] hover:shadow-[0_8px_22px_rgba(255,20,117,0.24)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-150"
+                  aria-label="Completar perfil"
+                >
+                  <AppIcon
+                    name="hand-heart"
+                    className="w-[14px] h-[14px]"
+                    style={{ color: 'rgba(255, 20, 117, 0.7)' }}
+                    decorative
+                  />
+                  <span>Completar perfil</span>
+                </Link>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <div className="space-y-8 md:space-y-10">
+          {/* Daily Message Card */}
+          <Reveal delay={100}>
+            <div className="mt-0 mb-0 px-0 md:px-0 max-w-7xl mx-auto">
+              <div className="bg-white rounded-3xl border border-[#FFE8F2] shadow-sm hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] px-4 py-3 md:px-6 md:py-4 relative overflow-hidden transition-all duration-200">
+                {/* Very subtle accent - only in corner */}
+                <div className="pointer-events-none select-none absolute -top-8 -right-8 h-20 w-20 bg-gradient-to-br from-[#FF1475]/10 to-transparent rounded-full" />
+
+                {/* Content wrapper */}
+                <div className="flex h-full flex-col justify-between gap-2 relative z-10 min-h-[140px] max-h-[210px] md:max-h-[220px]">
+                  {/* Top content */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base md:text-lg font-semibold text-[#3A3A3A] leading-snug font-poppins">
+                        Um carinho pra você hoje
+                      </h3>
+                      <AppIcon
+                        name="heart"
+                        className="h-4 w-4 md:h-5 md:w-5 text-[#FF1475] flex-shrink-0"
+                        aria-hidden="true"
+                      />
+                    </div>
+
+                    <p className="text-xs md:text-sm text-[#6A6A6A] leading-relaxed font-poppins">
+                      &quot;{dailyMessage}&quot;
+                    </p>
+
+                    <p className="text-xs text-[#6A6A6A]/70 leading-snug pt-0.5">
+                      Uma mensagem especial para começar seu dia.
+                    </p>
+                  </div>
+
+                  {/* CTA inferior */}
+                  <div className="mt-3">
+                    <Link
+                      href="/meu-dia"
+                      onClick={() => {
+                        track('maternar.daily_message_cta_click', {
+                          timestamp: new Date().toISOString(),
+                        });
+                      }}
+                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-medium text-[#FF1475] transition-all duration-150 hover:gap-1"
+                    >
+                      <span>Preciso disso hoje</span>
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Hub principal de cards */}
+          <CardHub />
+
+          <MotivationalFooter routeKey="maternar-minha-jornada" />
+        </div>
+      </div>
+    </main>
+  );
+}
