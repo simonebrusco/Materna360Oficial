@@ -5,7 +5,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  FormEvent,
 } from 'react'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
@@ -54,7 +53,12 @@ type PlannerData = {
   notes: string
 }
 
-type ViewMode = 'month' | 'week'
+type MonthCell = {
+  date: Date
+  isCurrentMonth: boolean
+  isToday: boolean
+  isSelected: boolean
+}
 
 export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
@@ -75,32 +79,32 @@ export default function WeeklyPlannerShell() {
     notes: '',
   })
 
-  const [viewMode, setViewMode] = useState<ViewMode>('month')
+  // novo: mês atual mostrado no calendário (sempre no dia 1)
+  const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
 
-  // ----- ESTADO DO MODAL DE COMPROMISSO -----
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalDate, setModalDate] = useState<Date | null>(null)
-  const [modalType, setModalType] = useState('Compromisso')
-  const [modalTime, setModalTime] = useState('')
-  const [modalNotes, setModalNotes] = useState('')
+  // visão: mês ou semana
+  const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
 
-  // =========================================
-  // HYDRATE + CARREGAR / SALVAR DADOS
-  // =========================================
-
+  // ==== HYDRATAÇÃO INICIAL ====
   useEffect(() => {
-    const dateKey = getBrazilDateKey(new Date())
+    const today = new Date()
+    const dateKey = getBrazilDateKey(today)
+
     setSelectedDateKey(dateKey)
+    setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
+
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
   }, [plannerHook])
 
+  // Mantém o hook do planner sincronizado com o dia selecionado
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
+  // ==== CARREGAR ESTADO DO DIA ====
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
@@ -130,6 +134,7 @@ export default function WeeklyPlannerShell() {
     setPlannerData(loadedData)
   }, [selectedDateKey, isHydrated])
 
+  // ==== SALVAR QUANDO MUDA ====
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(
@@ -161,10 +166,7 @@ export default function WeeklyPlannerShell() {
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
-  // =========================================
-  // HANDLERS PRINCIPAIS
-  // =========================================
-
+  // ==== HANDLERS ====
   const handleAddAppointment = useCallback(
     (appointment: Omit<Appointment, 'id'>) => {
       const newAppointment: Appointment = {
@@ -260,64 +262,21 @@ export default function WeeklyPlannerShell() {
 
   const handleMonthChange = useCallback(
     (direction: 'prev' | 'next') => {
-      if (!selectedDateKey) return
-      const [year, month, day] = selectedDateKey
-        .split('-')
-        .map(Number)
-      const current = new Date(year, month - 1, day)
-      current.setMonth(
-        current.getMonth() + (direction === 'next' ? 1 : -1),
-      )
-      setSelectedDateKey(getBrazilDateKey(current))
-    },
-    [selectedDateKey],
-  )
-
-  // =========================================
-  // MODAL DE NOVO COMPROMISSO
-  // =========================================
-
-  const openNewAppointmentModal = useCallback(
-    (date: Date) => {
-      setModalDate(date)
-      setSelectedDateKey(getBrazilDateKey(date))
-      setModalType('Compromisso')
-      setModalTime('')
-      setModalNotes('')
-      setIsModalOpen(true)
+      setCurrentMonth((prev) => {
+        if (!prev) return prev
+        const next = new Date(prev)
+        next.setMonth(prev.getMonth() + (direction === 'next' ? 1 : -1))
+        return new Date(
+          next.getFullYear(),
+          next.getMonth(),
+          1,
+        )
+      })
     },
     [],
   )
 
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false)
-  }, [])
-
-  const handleSubmitModal = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault()
-      if (!modalDate) return
-
-      const title =
-        modalNotes.trim().length > 0
-          ? modalNotes.trim()
-          : modalType
-
-      handleAddAppointment({
-        title,
-        time: modalTime || '--:--',
-        tag: modalType,
-      })
-
-      setIsModalOpen(false)
-    },
-    [modalDate, modalNotes, modalTime, modalType, handleAddAppointment],
-  )
-
-  // =========================================
-  // DERIVADOS DE DATA
-  // =========================================
-
+  // ==== DERIVADOS ====
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
     const [year, month, day] = selectedDateKey.split('-').map(Number)
@@ -325,25 +284,26 @@ export default function WeeklyPlannerShell() {
   }, [selectedDateKey, isHydrated])
 
   const monthYearLabel = useMemo(() => {
-    if (!isHydrated || !selectedDateKey) return ''
-    const [year, month] = selectedDateKey.split('-').map(Number)
-    const date = new Date(year, month - 1, 1)
-    return date.toLocaleDateString('pt-BR', {
+    if (!currentMonth) return ''
+    return currentMonth.toLocaleDateString('pt-BR', {
       month: 'long',
       year: 'numeric',
     })
-  }, [selectedDateKey, isHydrated])
+  }, [currentMonth])
 
   const capitalizedDateFormatted = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
-    const formatted = date.toLocaleDateString('pt-BR', {
+    const selectedDateFormatted = date.toLocaleDateString('pt-BR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     })
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+    return (
+      selectedDateFormatted.charAt(0).toUpperCase() +
+      selectedDateFormatted.slice(1)
+    )
   }, [selectedDateKey, isHydrated])
 
   const getMonday = (date: Date) => {
@@ -362,7 +322,8 @@ export default function WeeklyPlannerShell() {
 
     return {
       dayNumber,
-      dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
+      dayName:
+        dayName.charAt(0).toUpperCase() + dayName.slice(1),
       agendaCount: Math.floor(Math.random() * 3),
       top3Count: Math.floor(Math.random() * 2),
       careCount: Math.floor(Math.random() * 2),
@@ -370,103 +331,156 @@ export default function WeeklyPlannerShell() {
     }
   })
 
-  // MATRIZ DO MÊS (6 linhas x 7 colunas)
-  const monthMatrix = useMemo(() => {
-    const base = selectedDate
-    const year = base.getFullYear()
-    const month = base.getMonth()
+  const monthGrid: MonthCell[] = useMemo(() => {
+    if (!currentMonth) return []
 
-    const firstDay = new Date(year, month, 1)
-    // segunda-feira = coluna 0
-    const startWeekDay = (firstDay.getDay() + 6) % 7
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
 
-    const cells: (Date | null)[] = Array(42).fill(null)
+    const firstOfMonth = new Date(year, month, 1)
+    const lastOfMonth = new Date(year, month + 1, 0)
 
+    // Dia da semana (0 = domingo) → queremos segunda como primeiro
+    const startWeekday = firstOfMonth.getDay() === 0 ? 7 : firstOfMonth.getDay()
+    const daysInMonth = lastOfMonth.getDate()
+
+    const cells: MonthCell[] = []
+
+    // Preenche dias do mês anterior para completar a primeira linha
+    for (let i = startWeekday - 1; i > 0; i--) {
+      const d = new Date(year, month, 1 - i)
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: isSameDate(d, new Date()),
+        isSelected: isSameDateKey(d, selectedDateKey),
+      })
+    }
+
+    // Dias do mês atual
     for (let day = 1; day <= daysInMonth; day++) {
-      const index = startWeekDay + day - 1
-      cells[index] = new Date(year, month, day)
+      const d = new Date(year, month, day)
+      cells.push({
+        date: d,
+        isCurrentMonth: true,
+        isToday: isSameDate(d, new Date()),
+        isSelected: isSameDateKey(d, selectedDateKey),
+      })
+    }
+
+    // Completa até 6 linhas (42 células) com início do próximo mês
+    while (cells.length < 42) {
+      const last = cells[cells.length - 1].date
+      const d = new Date(last)
+      d.setDate(last.getDate() + 1)
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: isSameDate(d, new Date()),
+        isSelected: isSameDateKey(d, selectedDateKey),
+      })
     }
 
     return cells
-  }, [selectedDate])
+  }, [currentMonth, selectedDateKey])
 
   if (!isHydrated) return null
-
-  // =========================================
-  // RENDER
-  // =========================================
 
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
-        {/* ===========================
-            CALENDÁRIO MENSAL PREMIUM
-        ============================ */}
-        <div className="rounded-3xl bg-white/80 border border-white/60 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-2xl p-4 md:p-6 space-y-4 md:space-y-6">
-          {/* Cabeçalho: mês + navegação + toggle */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)]">
-                <AppIcon name="calendar" className="w-4 h-4" />
-              </span>
-              <div>
-                <p className="text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
+        {/* PLANNER — CALENDÁRIO MENSAL + TOGGLE */}
+        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-3xl mx-auto">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AppIcon
+                name="calendar"
+                className="w-5 h-5 text-[var(--color-brand)]"
+              />
+              <div className="flex flex-col">
+                <span className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                   Seu planner de hoje
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleMonthChange('prev')}
-                    className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] bg-white/80 px-2 py-1 text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand-soft)] transition-colors"
-                    aria-label="Mês anterior"
-                  >
-                    <AppIcon name="chevron-left" className="w-4 h-4" />
-                  </button>
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
-                    {monthYearLabel}
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => handleMonthChange('next')}
-                    className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] bg-white/80 px-2 py-1 text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand-soft)] transition-colors"
-                    aria-label="Próximo mês"
-                  >
-                    <AppIcon name="chevron-right" className="w-4 h-4" />
-                  </button>
-                </div>
+                </span>
+                <span className="text-sm md:text-base text-[var(--color-text-muted)]">
+                  Tudo o que você organiza aqui vale para o dia selecionado.
+                </span>
               </div>
             </div>
 
-            <div className="flex self-start md:self-auto gap-2 bg-[var(--color-soft-bg)]/80 px-1 py-1 rounded-full">
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                  viewMode === 'month'
-                    ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
-                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                }`}
-              >
-                Mês
-              </button>
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                  viewMode === 'week'
-                    ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
-                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                }`}
-              >
-                Semana
-              </button>
+            <div className="flex items-center gap-3">
+              {/* Navegação de mês */}
+              <div className="hidden md:flex items-center gap-2 rounded-full bg-[var(--color-soft-bg)] px-2 py-1">
+                <button
+                  type="button"
+                  onClick={() => handleMonthChange('prev')}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-xs text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
+                >
+                  ‹
+                </button>
+                <span className="text-xs font-medium text-[var(--color-text-main)] capitalize">
+                  {monthYearLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleMonthChange('next')}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-xs text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
+                >
+                  ›
+                </button>
+              </div>
+
+              {/* Toggle Mês / Semana */}
+              <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
+                <button
+                  onClick={() => setViewMode('month')}
+                  className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                    viewMode === 'month'
+                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.12)]'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+                  }`}
+                >
+                  Mês
+                </button>
+                <button
+                  onClick={() => setViewMode('week')}
+                  className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                    viewMode === 'week'
+                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.12)]'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+                  }`}
+                >
+                  Semana
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Semana x Mês */}
-          {viewMode === 'month' ? (
-            <>
-              {/* Cabeçalho dos dias da semana */}
-              <div className="grid grid-cols-7 gap-1 text-center text-[0.7rem] md:text-xs font-semibold text-[var(--color-text-muted)]/80 mt-2">
+          {/* header de mês em mobile */}
+          <div className="md:hidden flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => handleMonthChange('prev')}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-sm text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
+            >
+              ‹
+            </button>
+            <span className="text-sm font-medium text-[var(--color-text-main)] capitalize">
+              {monthYearLabel}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleMonthChange('next')}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-sm text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* Calendário MENSAL */}
+          {viewMode === 'month' && (
+            <div className="space-y-3">
+              {/* cabeçalho dos dias da semana */}
+              <div className="grid grid-cols-7 text-center text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.16em]">
                 <span>Seg</span>
                 <span>Ter</span>
                 <span>Qua</span>
@@ -476,72 +490,70 @@ export default function WeeklyPlannerShell() {
                 <span>Dom</span>
               </div>
 
-              {/* Grade do mês */}
-              <div className="grid grid-cols-7 gap-1.5 md:gap-2 mt-1 md:mt-2">
-                {monthMatrix.map((cell, index) => {
-                  if (!cell) {
-                    return (
-                      <div
-                        key={index}
-                        className="aspect-square flex items-center justify-center text-xs text-transparent"
-                      >
-                        .
-                      </div>
-                    )
-                  }
-
-                  const cellKey = getBrazilDateKey(cell)
-                  const isSelected = cellKey === selectedDateKey
-                  const isToday =
-                    cell.toDateString() === new Date().toDateString()
+              <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+                {monthGrid.map((cell, index) => {
+                  const dayNumber = cell.date.getDate()
+                  const isDisabled = !cell.isCurrentMonth
+                  const isSelected = cell.isSelected
+                  const isToday = cell.isToday
 
                   return (
                     <button
-                      key={index}
+                      key={`${cell.date.toISOString()}-${index}`}
                       type="button"
-                      onClick={() => openNewAppointmentModal(cell)}
-                      className={`aspect-square flex items-center justify-center rounded-full text-xs md:text-sm font-medium transition-all ${
-                        isSelected
-                          ? 'bg-[var(--color-brand)] text-white shadow-[0_10px_25px_rgba(255,0,94,0.35)]'
-                          : isToday
-                          ? 'border border-[var(--color-brand-soft)] bg-white text-[var(--color-brand)]'
-                          : 'border border-transparent text-[var(--color-text-main)] hover:border-[var(--color-brand-soft)] hover:bg-white'
-                      }`}
+                      onClick={() => handleDateSelect(cell.date)}
+                      className={[
+                        'aspect-square rounded-full flex items-center justify-center text-xs md:text-sm transition-all',
+                        isDisabled
+                          ? 'text-[var(--color-text-muted)]/35'
+                          : 'text-[var(--color-text-main)]',
+                        isSelected &&
+                          'bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(253,37,151,0.35)]',
+                        !isSelected &&
+                          !isDisabled &&
+                          'hover:bg-[var(--color-soft-strong)] hover:text-[var(--color-brand)]',
+                        isToday && !isSelected && 'ring-1 ring-[var(--color-brand)]/35',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
-                      {cell.getDate()}
+                      {dayNumber}
                     </button>
                   )
                 })}
               </div>
 
-              <div className="space-y-1 pt-3 md:pt-4 text-center">
+              <div className="space-y-1 text-center">
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
                   Tudo aqui vale para:{' '}
                   <span className="font-semibold">
                     {capitalizedDateFormatted}
                   </span>
                 </p>
-                <p className="text-[0.7rem] md:text-xs text-[var(--color-text-muted)]/70">
-                  Toque em um dia para adicionar compromissos e organizar
-                  sua rotina.
+                <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70">
+                  Toque em outro dia para adicionar compromissos e organizar sua rotina.
                 </p>
               </div>
-            </>
-          ) : (
-            <div className="pt-2">
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)]/70 text-center mb-4">
-                Visão geral da sua semana. Toque em um dia para ver em
-                detalhes.
+            </div>
+          )}
+
+          {/* Visão SEMANA dentro do mesmo card */}
+          {viewMode === 'week' && (
+            <div className="mt-2">
+              <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center mb-3">
+                Visão geral da semana de{' '}
+                <span className="font-semibold">
+                  {capitalizedDateFormatted}
+                </span>
+                .
               </p>
               <WeekView weekData={weekData} />
             </div>
           )}
-        </div>
+        </SoftCard>
 
-        {/* ===========================
-            VISÃO DIA (CARDS)
-        ============================ */}
-        <div className="mt-4 md:mt-6 space-y-6 md:space-y-8 pb-12">
+        {/* VISÃO DIA (cards abaixo do planner) */}
+        <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
           {/* PAR 1 — Prioridades + Casa & rotina */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
             <div className="flex h-full">
@@ -576,8 +588,7 @@ export default function WeeklyPlannerShell() {
                     Agenda &amp; compromissos
                   </h2>
                   <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                    Compromissos com horário, para enxergar seu dia com
-                    clareza.
+                    Compromissos com horário, para enxergar seu dia com clareza.
                   </p>
                 </div>
                 <AgendaSection
@@ -635,8 +646,12 @@ export default function WeeklyPlannerShell() {
                   subtitle="Tarefas com os filhos."
                   icon="smile"
                   items={plannerData.familyItems}
-                  onToggle={(id) => handleToggleCareItem(id, 'family')}
-                  onAdd={(title) => handleAddCareItem(title, 'family')}
+                  onToggle={(id) =>
+                    handleToggleCareItem(id, 'family')
+                  }
+                  onAdd={(title) =>
+                    handleAddCareItem(title, 'family')
+                  }
                   placeholder="Novo momento com a família…"
                   hideTitle
                 />
@@ -654,12 +669,12 @@ export default function WeeklyPlannerShell() {
                 Inspirações &amp; conteúdos salvos
               </h2>
               <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                Receitas, ideias, brincadeiras e conteúdos que você salvou
-                nos mini-hubs para acessar quando precisar.
+                Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs para acessar quando precisar.
               </p>
             </div>
 
-            {plannerHook.items.length > 0 || savedContents.length > 0 ? (
+            {plannerHook.items.length > 0 ||
+            savedContents.length > 0 ? (
               <>
                 <SavedContentsSection
                   contents={savedContents}
@@ -680,8 +695,7 @@ export default function WeeklyPlannerShell() {
                   className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
                 />
                 <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                  Quando você salvar receitas, brincadeiras ou conteúdos
-                  nos mini-hubs, eles aparecem aqui.
+                  Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
                 </p>
                 <a
                   href="/biblioteca-materna"
@@ -704,8 +718,7 @@ export default function WeeklyPlannerShell() {
                 Lembretes rápidos
               </h2>
               <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                Anotações soltas para não esquecer — como um post-it
-                digital.
+                Anotações soltas para não esquecer — como um post-it digital.
               </p>
             </div>
             <NotesSection
@@ -715,119 +728,26 @@ export default function WeeklyPlannerShell() {
             />
           </div>
         </div>
-
-        {/* ===========================
-            MODAL NOVO COMPROMISSO
-        ============================ */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 py-10">
-            {/* fundo blur */}
-            <button
-              type="button"
-              onClick={closeModal}
-              className="absolute inset-0 bg-black/25 backdrop-blur-[18px]"
-              aria-label="Fechar"
-            />
-            {/* card */}
-            <div className="relative z-[90] w-full max-w-md rounded-3xl bg-white/90 border border-white/70 shadow-[0_20px_55px_rgba(0,0,0,0.35)] p-5 md:p-6 space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
-                    Novo compromisso
-                  </p>
-                  <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)] mt-1">
-                    {modalDate?.toLocaleDateString('pt-BR', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                    })}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-brand)] transition-colors"
-                  aria-label="Fechar modal"
-                >
-                  <AppIcon name="x" className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmitModal} className="space-y-4">
-                {/* Tipo */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[var(--color-text-muted)]">
-                    Tipo de compromisso
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={modalType}
-                      onChange={(e) => setModalType(e.target.value)}
-                      className="w-full rounded-2xl border border-[var(--color-border-soft)] bg-white/90 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-soft)]"
-                    >
-                      <option value="Compromisso">Compromisso</option>
-                      <option value="Médico">Médico</option>
-                      <option value="Trabalho">Trabalho</option>
-                      <option value="Escola">Escola</option>
-                      <option value="Vacina">Vacina</option>
-                      <option value="Mercado">Mercado</option>
-                      <option value="Outro">Outro</option>
-                    </select>
-                    <AppIcon
-                      name="chevron-down"
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]"
-                    />
-                  </div>
-                </div>
-
-                {/* Horário */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[var(--color-text-muted)]">
-                    Horário
-                  </label>
-                  <input
-                    type="time"
-                    value={modalTime}
-                    onChange={(e) => setModalTime(e.target.value)}
-                    className="w-full rounded-2xl border border-[var(--color-border-soft)] bg-white/90 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-soft)]"
-                  />
-                </div>
-
-                {/* Notas */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[var(--color-text-muted)]">
-                    Anotações importantes
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: levar exames, buscar na escola..."
-                    value={modalNotes}
-                    onChange={(e) => setModalNotes(e.target.value)}
-                    className="w-full rounded-2xl border border-[var(--color-border-soft)] bg-white/90 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-soft)]"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="px-3 py-2 rounded-2xl text-xs md:text-sm font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-soft-bg)] transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-xs md:text-sm font-semibold text-white bg-[var(--color-brand)] hover:bg-[var(--color-brand-deep)] transition-colors shadow-[0_10px_25px_rgba(255,0,94,0.35)]"
-                  >
-                    <AppIcon name="check" className="w-4 h-4" />
-                    Salvar compromisso
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </Reveal>
+  )
+}
+
+// helpers locais
+function isSameDate(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+function isSameDateKey(date: Date, key: string) {
+  if (!key) return false
+  const [year, month, day] = key.split('-').map(Number)
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
   )
 }
