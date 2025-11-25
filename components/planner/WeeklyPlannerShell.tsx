@@ -21,7 +21,6 @@ import CareSection from './CareSection'
 import AgendaSection from './AgendaSection'
 import NotesSection from './NotesSection'
 import SavedContentsSection from './SavedContentsSection'
-import DayCalendarStrip from './DayCalendarStrip'
 import WeekView from './WeekView'
 import { Reveal } from '@/components/ui/Reveal'
 
@@ -30,6 +29,7 @@ type Appointment = {
   time: string
   title: string
   tag?: string
+  notes?: string
 }
 
 type Top3Item = {
@@ -57,13 +57,32 @@ type PlannerData = {
 const MOOD_OPTIONS = ['Feliz', 'Normal', 'Estressada'] as const
 const DAY_STYLE_OPTIONS = ['Leve', 'Focado', 'Produtivo', 'Slow', 'Automático'] as const
 
+const APPOINTMENT_TYPES = [
+  'Consulta médica',
+  'Trabalho',
+  'Escola',
+  'Vacina',
+  'Mercado',
+  'Família',
+  'Outro',
+] as const
+
 export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Contexto do dia (humor + tipo de dia)
+  // Contexto rápido do dia
   const [mood, setMood] = useState<string | null>(null)
   const [dayStyle, setDayStyle] = useState<string | null>(null)
+
+  // Modal de compromisso via calendário
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] =
+    useState(false)
+  const [appointmentDate, setAppointmentDate] = useState<Date | null>(null)
+  const [appointmentType, setAppointmentType] = useState<string>('')
+  const [appointmentTime, setAppointmentTime] = useState<string>('')
+  const [appointmentTitle, setAppointmentTitle] = useState<string>('')
+  const [appointmentNotes, setAppointmentNotes] = useState<string>('')
 
   const [selectedSavedItem, setSelectedSavedItem] =
     useState<PlannerSavedContent | null>(null)
@@ -82,6 +101,12 @@ export default function WeeklyPlannerShell() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
+  // Dia atual (para destaque no calendário)
+  const todayKey = useMemo(
+    () => getBrazilDateKey(new Date()),
+    [],
+  )
+
   // --- Inicialização do dia atual ---
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
@@ -96,25 +121,29 @@ export default function WeeklyPlannerShell() {
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
-  // --- Carregar dados do planner + contexto do dia ---
+  // --- Carregar dados + contexto do dia ---
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
     const loadedAppointments =
-      load<Appointment[]>(`planner/appointments/${selectedDateKey}`, []) ?? []
+      load<Appointment[]>(`planner/appointments/${selectedDateKey}`, []) ??
+      []
     const loadedTop3 =
       load<Top3Item[]>(`planner/top3/${selectedDateKey}`, []) ?? []
     const loadedCareItems =
-      load<CareItem[]>(`planner/careItems/${selectedDateKey}`, []) ?? []
+      load<CareItem[]>(`planner/careItems/${selectedDateKey}`, []) ??
+      []
     const loadedFamilyItems =
-      load<CareItem[]>(`planner/familyItems/${selectedDateKey}`, []) ?? []
+      load<CareItem[]>(`planner/familyItems/${selectedDateKey}`, []) ??
+      []
     const loadedNotes =
       load<string>(`planner/notes/${selectedDateKey}`, '') ?? ''
 
     const loadedMood =
       load<string | null>(`planner/mood/${selectedDateKey}`, null) ?? null
     const loadedDayStyle =
-      load<string | null>(`planner/dayStyle/${selectedDateKey}`, null) ?? null
+      load<string | null>(`planner/dayStyle/${selectedDateKey}`, null) ??
+      null
 
     setPlannerData({
       appointments: loadedAppointments,
@@ -128,7 +157,7 @@ export default function WeeklyPlannerShell() {
     setDayStyle(loadedDayStyle)
   }, [selectedDateKey, isHydrated])
 
-  // --- Persistência do planner ---
+  // --- Persistência planner ---
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(
@@ -160,7 +189,7 @@ export default function WeeklyPlannerShell() {
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
-  // --- Persistência do contexto do dia ---
+  // --- Persistência contexto do dia ---
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/mood/${selectedDateKey}`, mood)
@@ -260,11 +289,6 @@ export default function WeeklyPlannerShell() {
     setPlannerData((prev) => ({ ...prev, notes: content }))
   }, [])
 
-  const handleDateSelect = useCallback((date: Date) => {
-    const newDateKey = getBrazilDateKey(date)
-    setSelectedDateKey(newDateKey)
-  }, [])
-
   const handleMoodSelect = useCallback((value: string) => {
     setMood((prev) => (prev === value ? null : value))
   }, [])
@@ -272,6 +296,58 @@ export default function WeeklyPlannerShell() {
   const handleDayStyleSelect = useCallback((value: string) => {
     setDayStyle((prev) => (prev === value ? null : value))
   }, [])
+
+  const handleDateSelect = useCallback((date: Date) => {
+    const newDateKey = getBrazilDateKey(date)
+    setSelectedDateKey(newDateKey)
+  }, [])
+
+  const handleDayClickOpenModal = useCallback((date: Date) => {
+    const newKey = getBrazilDateKey(date)
+    setSelectedDateKey(newKey)
+    setAppointmentDate(date)
+    setAppointmentType('')
+    setAppointmentTime('')
+    setAppointmentTitle('')
+    setAppointmentNotes('')
+    setIsAppointmentModalOpen(true)
+  }, [])
+
+  const handleSaveAppointmentFromModal = useCallback(() => {
+    if (!selectedDateKey) return
+
+    const finalTitle =
+      appointmentTitle ||
+      appointmentType ||
+      'Compromisso importante'
+
+    handleAddAppointment({
+      time: appointmentTime || '',
+      title: finalTitle,
+      tag: appointmentType || undefined,
+      notes: appointmentNotes || '',
+    })
+
+    setIsAppointmentModalOpen(false)
+    setAppointmentDate(null)
+    setAppointmentType('')
+    setAppointmentTime('')
+    setAppointmentTitle('')
+    setAppointmentNotes('')
+  }, [
+    selectedDateKey,
+    appointmentTitle,
+    appointmentTime,
+    appointmentType,
+    appointmentNotes,
+    handleAddAppointment,
+  ])
+
+  const selectedDate = useMemo(() => {
+    if (!isHydrated || !selectedDateKey) return new Date()
+    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }, [selectedDateKey, isHydrated])
 
   // --- Datas formatadas ---
   const monthYear = useMemo(() => {
@@ -299,10 +375,31 @@ export default function WeeklyPlannerShell() {
     )
   }, [selectedDateKey, isHydrated])
 
-  const selectedDate = useMemo(() => {
-    if (!isHydrated || !selectedDateKey) return new Date()
-    const [year, month, day] = selectedDateKey.split('-').map(Number)
-    return new Date(year, month - 1, day)
+  // --- Grade de mês ---
+  const monthCells = useMemo(() => {
+    if (!isHydrated || !selectedDateKey) return []
+
+    const [year, month] = selectedDateKey.split('-').map(Number)
+    const firstDay = new Date(year, month - 1, 1)
+    const firstWeekday = (firstDay.getDay() + 6) % 7 // 0 = segunda
+
+    const daysInMonth = new Date(year, month, 0).getDate()
+
+    const cells: (Date | null)[] = []
+
+    for (let i = 0; i < firstWeekday; i++) {
+      cells.push(null)
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push(new Date(year, month - 1, d))
+    }
+
+    while (cells.length % 7 !== 0) {
+      cells.push(null)
+    }
+
+    return cells
   }, [selectedDateKey, isHydrated])
 
   const getMonday = (date: Date) => {
@@ -337,7 +434,7 @@ export default function WeeklyPlannerShell() {
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
-        {/* BLOCO 0 — HOJE POR AQUI (versão compacta) */}
+        {/* BLOCO 0 — HOJE POR AQUI (compacto, já existente) */}
         <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-5">
           <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
             Hoje por aqui
@@ -407,7 +504,7 @@ export default function WeeklyPlannerShell() {
           </div>
         </SoftCard>
 
-        {/* MINI CALENDÁRIO + TOGGLE */}
+        {/* PLANNER — CALENDÁRIO MENSAL + TOGGLE */}
         <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -428,7 +525,7 @@ export default function WeeklyPlannerShell() {
                     : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                 }`}
               >
-                Dia
+                Mês
               </button>
               <button
                 onClick={() => setViewMode('week')}
@@ -443,11 +540,46 @@ export default function WeeklyPlannerShell() {
             </div>
           </div>
 
-          <DayCalendarStrip
-            selectedDate={selectedDate}
-            selectedDateKey={selectedDateKey}
-            onDateSelect={handleDateSelect}
-          />
+          {/* Cabeçalho dias da semana */}
+          <div className="grid grid-cols-7 gap-2 text-center text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mt-1">
+            <span>Seg</span>
+            <span>Ter</span>
+            <span>Qua</span>
+            <span>Qui</span>
+            <span>Sex</span>
+            <span>Sáb</span>
+            <span>Dom</span>
+          </div>
+
+          {/* Grade do mês */}
+          <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+            {monthCells.map((date, idx) => {
+              if (!date) {
+                return <div key={idx} className="h-9 md:h-10" />
+              }
+
+              const cellKey = getBrazilDateKey(date)
+              const isSelected = cellKey === selectedDateKey
+              const isToday = cellKey === todayKey
+
+              return (
+                <button
+                  key={cellKey}
+                  type="button"
+                  onClick={() => handleDayClickOpenModal(date)}
+                  className={`h-9 md:h-10 rounded-full text-xs md:text-sm font-semibold flex items-center justify-center transition-all border ${
+                    isSelected
+                      ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_4px_12px_rgba(253,37,151,0.35)]'
+                      : isToday
+                      ? 'bg-white text-[var(--color-brand)] border-[var(--color-brand)]/50'
+                      : 'bg-white text-[var(--color-text-main)] border-transparent hover:border-[var(--color-brand)]/40 hover:text-[var(--color-brand)]'
+                  }`}
+                >
+                  {date.getDate()}
+                </button>
+              )
+            })}
+          </div>
 
           <div className="space-y-1">
             <p className="text-sm text-[var(--color-text-muted)] text-center">
@@ -457,12 +589,62 @@ export default function WeeklyPlannerShell() {
               </span>
             </p>
             <p className="text-xs text-[var(--color-text-muted)]/60 text-center">
-              Toque em outro dia para planejar ou rever sua semana.
+              Toque em um dia para adicionar compromissos e organizar sua rotina.
             </p>
           </div>
         </SoftCard>
 
-        {/* VISÃO DIA */}
+        {/* GRID DE CARDS DOS COMPROMISSOS DO DIA */}
+        {plannerData.appointments.length > 0 && (
+          <SoftCard className="p-4 md:p-6 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                  Compromissos do dia
+                </h2>
+                <p className="text-xs md:text-sm text-[var(--color-text-muted)] font-poppins">
+                  Tudo que você marcou no calendário para este dia aparece aqui em forma de cards.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {plannerData.appointments.map((appt) => (
+                <div
+                  key={appt.id}
+                  className="rounded-2xl bg-white border border-[var(--color-border-muted)] p-4 flex flex-col gap-2 shadow-[0_8px_20px_rgba(15,23,42,0.04)]"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <AppIcon
+                        name="calendar"
+                        className="w-5 h-5 text-[var(--color-brand)]"
+                      />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                        {appt.tag || 'Compromisso'}
+                      </span>
+                    </div>
+                    {appt.time && (
+                      <span className="text-xs font-semibold text-[var(--color-text-main)]">
+                        {appt.time}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--color-text-main)]">
+                    {appt.title}
+                  </p>
+                  {appt.notes && (
+                    <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
+                      {appt.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </SoftCard>
+        )}
+
+        {/* VISÃO MÊS (detalhes do dia) */}
         {viewMode === 'day' && (
           <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
             {/* PAR 1 — Prioridades + Casa & rotina */}
@@ -639,7 +821,7 @@ export default function WeeklyPlannerShell() {
               />
             </div>
 
-            {/* SUGESTÕES INTELIGENTES — recriado, pronto para IA */}
+            {/* SUGESTÕES INTELIGENTES (já pronto pra IA) */}
             <SoftCard className="p-5 md:p-6 space-y-4 mt-2">
               <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 Sugestões inteligentes
@@ -689,6 +871,134 @@ export default function WeeklyPlannerShell() {
               </p>
             </div>
             <WeekView weekData={weekData} />
+          </div>
+        )}
+
+        {/* MODAL DE COMPROMISSO DO CALENDÁRIO */}
+        {isAppointmentModalOpen && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/30 px-4">
+            <div className="w-full max-w-md rounded-3xl bg-white p-5 md:p-6 space-y-4 shadow-[0_18px_45px_rgba(15,23,42,0.24)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+                    Novo compromisso
+                  </p>
+                  <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                    Adicionar ao seu dia
+                  </h2>
+                  {appointmentDate && (
+                    <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                      {appointmentDate.toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      })}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAppointmentModalOpen(false)}
+                  className="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-sm font-semibold"
+                >
+                  Fechar
+                </button>
+              </div>
+
+              {/* Tipo de compromisso */}
+              <div className="space-y-2">
+                <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+                  Tipo de compromisso
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {APPOINTMENT_TYPES.map((type) => {
+                    const selected = appointmentType === type
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() =>
+                          setAppointmentType(
+                            selected ? '' : type,
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold border transition-all ${
+                          selected
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)]'
+                            : 'bg-white text-[var(--color-text-main)] border-[var(--color-border-muted)] hover:border-[var(--color-brand)]/60 hover:text-[var(--color-brand)]'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Horário + título */}
+              <div className="grid grid-cols-[0.9fr_2fr] gap-3 md:gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+                    Horário
+                  </label>
+                  <input
+                    type="time"
+                    value={appointmentTime}
+                    onChange={(e) =>
+                      setAppointmentTime(e.target.value)
+                    }
+                    className="w-full rounded-2xl border border-[var(--color-border-muted)] px-3 py-2 text-sm outline-none focus:border-[var(--color-brand)] focus:ring-1 focus:ring-[var(--color-brand)] bg-[var(--color-soft-bg)]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+                    Nome do compromisso
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex.: Pediatra do Arthur"
+                    value={appointmentTitle}
+                    onChange={(e) =>
+                      setAppointmentTitle(e.target.value)
+                    }
+                    className="w-full rounded-2xl border border-[var(--color-border-muted)] px-3 py-2 text-sm outline-none focus:border-[var(--color-brand)] focus:ring-1 focus:ring-[var(--color-brand)] bg-[var(--color-soft-bg)]"
+                  />
+                </div>
+              </div>
+
+              {/* Notas */}
+              <div className="space-y-1.5">
+                <label className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+                  Anotações importantes
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Endereço, documentos para levar, observações…"
+                  value={appointmentNotes}
+                  onChange={(e) =>
+                    setAppointmentNotes(e.target.value)
+                  }
+                  className="w-full rounded-2xl border border-[var(--color-border-muted)] px-3 py-2 text-sm outline-none focus:border-[var(--color-brand)] focus:ring-1 focus:ring-[var(--color-brand)] bg-[var(--color-soft-bg)] resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAppointmentModalOpen(false)}
+                  className="px-4 py-2 rounded-full text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAppointmentFromModal}
+                  className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-[var(--color-brand)] hover:bg-[var(--color-brand-deep)] shadow-[0_8px_20px_rgba(253,37,151,0.35)] transition-all"
+                >
+                  Salvar compromisso
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
