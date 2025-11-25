@@ -126,31 +126,31 @@ export function MeuDiaClient() {
     >
       <ClientOnly>
         <div className="space-y-8 md:space-y-10 pb-28">
-          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO */}
+          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO (AGORA MAIS COMPACTO) */}
           <Reveal delay={0}>
             <section>
-              <div className="space-y-6 rounded-3xl bg-white/80 border border-[#FFD8E6] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-5 md:px-6 md:py-7">
+              <div className="space-y-5 rounded-3xl bg-white/80 border border-[#FFD8E6] shadow-[0_8px_24px_rgba(0,0,0,0.08)] px-4 py-4 md:px-6 md:py-5">
                 {/* Texto principal */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                     Hoje por aqui
                   </p>
-                  <h2 className="text-2xl md:text-3xl font-semibold text-[#3A3A3A] leading-snug">
+                  <h2 className="text-xl md:text-2xl font-semibold text-[#3A3A3A] leading-snug">
                     {greeting}
                   </h2>
                   <p className="text-xs md:text-sm text-[#545454] max-w-xl">
-                    Vamos organizar seu dia com leveza, priorizando o que
-                    realmente importa pra você e pra sua família.
+                    Conte pra gente como você está e que tipo de dia você quer
+                    ter. O planner cuida do resto.
                   </p>
                 </div>
 
                 {/* Humor */}
-                <div className="space-y-3 md:space-y-4">
+                <div className="space-y-2.5 md:space-y-3">
                   <div>
-                    <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
+                    <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-0.5">
                       Como você está?
                     </p>
-                    <p className="text-xs md:text-sm text-[#6A6A6A]">
+                    <p className="text-[11px] md:text-xs text-[#6A6A6A]">
                       Escolha como você se sente agora.
                     </p>
                   </div>
@@ -180,12 +180,12 @@ export function MeuDiaClient() {
                 </div>
 
                 {/* Intenção do dia */}
-                <div className="space-y-3 md:space-y-4">
+                <div className="space-y-2.5 md:space-y-3">
                   <div>
-                    <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
+                    <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-0.5">
                       Hoje eu quero um dia...
                     </p>
-                    <p className="text-xs md:text-sm text-[#6A6A6A]">
+                    <p className="text-[11px] md:text-xs text-[#6A6A6A]">
                       Selecione o estilo do seu dia.
                     </p>
                   </div>
@@ -215,7 +215,7 @@ export function MeuDiaClient() {
                   const summary = generateSummaryText(selectedMood, selectedDay)
                   return (
                     summary.show && (
-                      <div className="pt-1 text-sm md:text-base text-[#6A6A6A] leading-relaxed">
+                      <div className="pt-0.5 text-sm md:text-base text-[#6A6A6A] leading-relaxed">
                         {summary.main}
                       </div>
                     )
@@ -225,12 +225,11 @@ export function MeuDiaClient() {
             </section>
           </Reveal>
 
-          {/* BLOCO 2 — PLANNER EM UM ÚNICO CARD PREMIUM */}
+          {/* BLOCO 2 — PLANNER COMO PROTAGONISTA */}
           <Reveal delay={80}>
             <section>
               <SoftCard
-                className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.12)]
-                           space-y-6 md:space-y-7
+                className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.12)] space-y-6 md:space-y-7
                            before:absolute before:inset-x-8 before:top-0 before:h-[3px] before:rounded-full
                            before:bg-gradient-to-r before:from-[#FF1475]/10 before:via-[#9B4D96]/40 before:to-[#FF1475]/10"
               >
@@ -240,32 +239,33 @@ export function MeuDiaClient() {
                     Seu planner de hoje
                   </p>
                   <h3 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
-                    Veja seu dia em um único lugar
+                    Tudo o que importa em um só lugar
                   </h3>
                 </div>
 
-                {/* Grid com prioridades + sugestões */}
-                <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7">
-                  <section id="prioridades">
-                    <DailyPriorities />
-                  </section>
+                {/* Prioridades do dia */}
+                <section id="prioridades" className="relative z-10">
+                  <DailyPriorities />
+                </section>
 
-                  <section id="sugestoes">
-                    <IntelligentSuggestionsSection
-                      mood={selectedMood}
-                      intention={selectedDay}
-                    />
-                  </section>
-                </div>
-
-                {/* Planner semanal / calendário */}
+                {/* Planner semanal / blocos avançados */}
                 <section
                   id="planner-semanal"
-                  className="relative z-10 pt-4 md:pt-6 border-t border-[#FFE8F2]/80"
+                  className="relative z-10 pt-3 md:pt-4 border-t border-[#FFE8F2]/80"
                 >
                   <WeeklyPlannerShell />
                 </section>
               </SoftCard>
+            </section>
+          </Reveal>
+
+          {/* BLOCO 3 — SUGESTÕES INTELIGENTES (IA) NO FINAL, COMO EXTRA */}
+          <Reveal delay={140}>
+            <section id="sugestoes-ia">
+              <IntelligentSuggestionsSection
+                mood={selectedMood}
+                intention={selectedDay}
+              />
             </section>
           </Reveal>
 
