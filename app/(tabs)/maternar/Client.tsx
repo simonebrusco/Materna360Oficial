@@ -20,7 +20,7 @@ export default function MaternarClient() {
   const { name } = useProfile();
   const [greeting, setGreeting] = useState<string>('');
 
-  // tracking
+  // tracking de navegação
   useEffect(() => {
     track('nav.click', {
       tab: 'maternar',
@@ -28,7 +28,7 @@ export default function MaternarClient() {
     });
   }, []);
 
-  // saudação dinâmica
+  // saudação dinâmica (Bom dia / Boa tarde / Boa noite + nome)
   useEffect(() => {
     const firstName = name ? name.split(' ')[0] : '';
     const updateGreeting = () => setGreeting(getTimeGreeting(firstName));
@@ -38,7 +38,7 @@ export default function MaternarClient() {
     return () => clearInterval(interval);
   }, [name]);
 
-  // recarregar mensagem diária à meia-noite
+  // recarrega mensagem diária à meia-noite
   useEffect(() => {
     const now = new Date();
     const midnight = new Date(
@@ -51,17 +51,13 @@ export default function MaternarClient() {
     return () => window.clearTimeout(timeoutId);
   }, []);
 
-  const firstName = name ? name.split(' ')[0] : '';
-  const isProfileIncomplete = !name || name.trim() === '';
-
-  // mensagem do dia
   const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length);
   const dailyMessage = DAILY_MESSAGES[dayIndex];
 
   return (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-24 bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_35%,#FFD3E6_70%,#FFFFFF_100%)]"
+      className="min-h-[100dvh] pb-24 bg-[#FFE8F2] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_32%,#FF7BB1_65%,#FFD3E6_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -85,7 +81,7 @@ export default function MaternarClient() {
               </p>
             </div>
 
-            {/* Botão "Completar perfil" removido a pedido da Simone */}
+            {/* Botão "Completar perfil" REMOVIDO */}
           </div>
         </header>
 
@@ -93,11 +89,11 @@ export default function MaternarClient() {
           {/* CARD — UM CARINHO PRA VOCÊ HOJE */}
           <Reveal delay={80}>
             <div className="mt-0 mb-0">
-              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,20,117,0.16),rgba(255,255,255,0.96))] shadow-[0_18px_45px_rgba(0,0,0,0.22)] px-4 py-4 md:px-6 md:py-5">
+              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,20,117,0.22),rgba(255,255,255,0.9))] shadow-[0_18px_45px_rgba(0,0,0,0.22)] px-4 py-4 md:px-6 md:py-5">
                 {/* brilho suave */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
-                  <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-[rgba(255,255,255,0.8)] blur-3xl" />
-                  <div className="absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.12)] blur-3xl" />
+                  <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-[rgba(255,255,255,0.9)] blur-3xl" />
+                  <div className="absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.18)] blur-3xl" />
                 </div>
 
                 <div className="relative z-10 flex flex-col justify-between gap-2 md:gap-3">
@@ -106,11 +102,11 @@ export default function MaternarClient() {
                       Um carinho pra você hoje
                     </h3>
 
-                    <p className="text-xs md:text-sm text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                    <p className="text-xs md:text-sm text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.55)]">
                       &quot;{dailyMessage}&quot;
                     </p>
 
-                    <p className="text-[11px] md:text-xs text-white/80 leading-snug pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+                    <p className="text-[11px] md:text-xs text-white/85 leading-snug pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]">
                       Uma mensagem especial para começar seu dia com mais leveza.
                     </p>
                   </div>
@@ -124,7 +120,7 @@ export default function MaternarClient() {
                           source: 'maternar_hub',
                         })
                       }
-                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)] transition-all duration-150 hover:gap-1"
+                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] transition-all duration-150 hover:gap-1"
                     >
                       <span>Preciso disso hoje</span>
                       <span aria-hidden="true">→</span>
