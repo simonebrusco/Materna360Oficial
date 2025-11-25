@@ -8,6 +8,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import { SoftCard } from '@/components/ui/card'
 import { DailyPriorities } from '@/components/blocks/DailyPriorities'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
@@ -78,13 +79,6 @@ function generateSummaryText(
   }
 }
 
-function scrollToSection(id: string) {
-  if (typeof document === 'undefined') return
-  const el = document.getElementById(id)
-  if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
 export function MeuDiaClient() {
   const { name } = useProfile()
   const [greeting, setGreeting] = useState<string>('')
@@ -132,7 +126,7 @@ export function MeuDiaClient() {
     >
       <ClientOnly>
         <div className="space-y-8 md:space-y-10 pb-28">
-          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO (HERO WIDGET) */}
+          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO */}
           <Reveal delay={0}>
             <section>
               <div className="space-y-6 rounded-3xl bg-white/80 border border-[#FFD8E6] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-5 md:px-6 md:py-7">
@@ -231,93 +225,47 @@ export function MeuDiaClient() {
             </section>
           </Reveal>
 
-          {/* BLOCO 2 — ATALHOS EM GRID (ESTILO HOME / HUB) */}
-          <Reveal delay={60}>
-            <section aria-label="Atalhos rápidos do planner de hoje">
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('prioridades')}
-                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
-                >
-                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                    Foco
+          {/* BLOCO 2 — PLANNER EM UM ÚNICO CARD PREMIUM */}
+          <Reveal delay={80}>
+            <section>
+              <SoftCard
+                className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.12)]
+                           space-y-6 md:space-y-7
+                           before:absolute before:inset-x-8 before:top-0 before:h-[3px] before:rounded-full
+                           before:bg-gradient-to-r before:from-[#FF1475]/10 before:via-[#9B4D96]/40 before:to-[#FF1475]/10"
+              >
+                {/* Header do planner */}
+                <div className="relative z-10 space-y-1">
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Seu planner de hoje
                   </p>
-                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
-                    Prioridades de hoje
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('sugestoes')}
-                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
-                >
-                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                    Inspiração
-                  </p>
-                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
-                    Sugestões do momento
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('planner-semanal')}
-                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
-                >
-                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                    Rotina
-                  </p>
-                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
-                    Compromissos & semana
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('sugestoes')}
-                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
-                >
-                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                    Cuidado
-                  </p>
-                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
-                    Um carinho pra você
-                  </p>
-                </button>
-              </div>
-            </section>
-          </Reveal>
-
-          {/* BLOCO 3 — GRID COM OS CARDS ORIGINAIS (SEM DUPLICAR LAYOUT) */}
-          <Reveal delay={100}>
-            <section className="space-y-4">
-              <div className="px-1">
-                <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                  Seu planner de hoje
-                </p>
-                <h3 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
-                  Veja seu dia em um único lugar
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div id="prioridades" className="h-full">
-                  <DailyPriorities />
+                  <h3 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
+                    Veja seu dia em um único lugar
+                  </h3>
                 </div>
 
-                <div id="sugestoes" className="h-full">
-                  <IntelligentSuggestionsSection
-                    mood={selectedMood}
-                    intention={selectedDay}
-                  />
+                {/* Grid com prioridades + sugestões */}
+                <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7">
+                  <section id="prioridades">
+                    <DailyPriorities />
+                  </section>
+
+                  <section id="sugestoes">
+                    <IntelligentSuggestionsSection
+                      mood={selectedMood}
+                      intention={selectedDay}
+                    />
+                  </section>
                 </div>
 
-                <div id="planner-semanal" className="md:col-span-2">
+                {/* Planner semanal / calendário */}
+                <section
+                  id="planner-semanal"
+                  className="relative z-10 pt-4 md:pt-6 border-t border-[#FFE8F2]/80"
+                >
                   <WeeklyPlannerShell />
-                </div>
-              </div>
+                </section>
+              </SoftCard>
             </section>
           </Reveal>
 
@@ -330,4 +278,3 @@ export function MeuDiaClient() {
 }
 
 export default MeuDiaClient
-
