@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useProfile } from '@/app/hooks/useProfile'
-import { getTimeGreeting } from '@/app/lib/greetings'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import { SoftCard } from '@/components/ui/card'
+import { DailyPriorities } from '@/components/blocks/DailyPriorities'
+import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 
 const MOOD_LABELS: Record<string, string> = {
@@ -16,85 +17,9 @@ const MOOD_LABELS: Record<string, string> = {
   stressed: 'Estressada',
 }
 
-function generateSummaryText(
-  mood: string | null,
-  day: string | null,
-): { main: React.ReactNode; show: boolean } {
-  if (mood && day) {
-    return {
-      show: true,
-      main: (
-        <>
-          Hoje você está{' '}
-          <span className="font-semibold text-[#FF1475]">
-            {MOOD_LABELS[mood]}
-          </span>{' '}
-          e escolheu um dia{' '}
-          <span className="font-semibold text-[#FF1475]">{day}</span>. Que tal
-          começar definindo suas três prioridades?
-        </>
-      ),
-    }
-  }
-
-  if (mood) {
-    return {
-      show: true,
-      main: (
-        <>
-          Hoje você está{' '}
-          <span className="font-semibold text-[#FF1475]">
-            {MOOD_LABELS[mood]}
-          </span>
-          . Agora escolha que tipo de dia você quer ter.
-        </>
-      ),
-    }
-  }
-
-  if (day) {
-    return {
-      show: true,
-      main: (
-        <>
-          Você escolheu um dia{' '}
-          <span className="font-semibold text-[#FF1475]">{day}</span>. Conte
-          pra gente como você está agora.
-        </>
-      ),
-    }
-  }
-
-  return {
-    show: true,
-    main: (
-      <>
-        Conte pra gente como você está e que tipo de dia você quer ter. Vamos
-        organizar tudo a partir disso.
-      </>
-    ),
-  }
-}
-
 export function MeuDiaClient() {
-  const { name } = useProfile()
-  const [greeting, setGreeting] = useState<string>('')
   const [selectedMood, setSelectedMood] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
-
-  // Saudação dinâmica
-  useEffect(() => {
-    const firstName = name ? name.split(' ')[0] : 'Mãe'
-    const timeGreeting = getTimeGreeting(firstName)
-    setGreeting(timeGreeting)
-
-    const interval = window.setInterval(() => {
-      const updatedGreeting = getTimeGreeting(firstName)
-      setGreeting(updatedGreeting)
-    }, 60000)
-
-    return () => window.clearInterval(interval)
-  }, [name])
 
   // Telemetria
   useEffect(() => {
@@ -123,21 +48,18 @@ export function MeuDiaClient() {
     >
       <ClientOnly>
         <div className="space-y-8 md:space-y-10 pb-28">
-          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO (mais compacto) */}
+          {/* BLOCO 1 — CONTEXTO DO DIA (CARD MENOR, SEM SAUDAÇÃO) */}
           <Reveal delay={0}>
             <section>
-              <div className="space-y-5 rounded-3xl bg-white/80 border border-[#FFD8E6] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-4 md:px-6 md:py-5">
-                {/* Texto principal */}
+              <div className="space-y-4 rounded-3xl bg-white/80 border border-[#FFD8E6] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-4 md:px-6 md:py-5">
+                {/* Texto principal bem direto */}
                 <div className="space-y-2">
                   <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                     Hoje por aqui
                   </p>
-                  <h2 className="text-3xl md:text-4xl font-semibold text-[#3A3A3A] leading-tight tracking-[-0.02em]">
-                    {greeting}
-                  </h2>
-                  <p className="text-xs md:text-sm text-[#545454] max-w-xl">
-                    Conte pra gente como você está e que tipo de dia você quer
-                    ter. O planner cuida do resto lá embaixo.
+                  <p className="text-sm md:text-base text-[#545454] max-w-2xl">
+                    Conte pra gente como você está e que tipo de dia você quer ter.
+                    O planner cuida do resto lá embaixo.
                   </p>
                 </div>
 
@@ -198,7 +120,8 @@ export function MeuDiaClient() {
                             selectedDay === tag
                               ? 'bg-[#FF1475] border border-[#FF1475] text-white shadow-sm'
                               : 'bg-white border border-[#FFE8F2] text-[#3A3A3A] hover:border-[#FF1475]/50'
-                          }`}
+                          }
+                          `}
                         >
                           {tag}
                         </button>
@@ -206,26 +129,19 @@ export function MeuDiaClient() {
                     )}
                   </div>
                 </div>
-
-                {/* Resumo */}
-                {(() => {
-                  const summary = generateSummaryText(selectedMood, selectedDay)
-                  return (
-                    summary.show && (
-                      <div className="pt-1 text-sm md:text-base text-[#6A6A6A] leading-relaxed">
-                        {summary.main}
-                      </div>
-                    )
-                  )
-                })()}
               </div>
             </section>
           </Reveal>
 
-          {/* BLOCO 2+ — PLANNER EM WIDGETS */}
+          {/* BLOCO 2 — PLANNER COMO PROTAGONISTA */}
           <Reveal delay={100}>
-            <section className="space-y-4 md:space-y-6">
-              <div className="space-y-1">
+            <SoftCard
+              className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.12)] space-y-6 md:space-y-8
+                         before:absolute before:inset-x-8 before:top-0 before:h-[3px] before:rounded-full
+                         before:bg-gradient-to-r before:from-[#FF1475]/10 before:via-[#9B4D96]/40 before:to-[#FF1475]/10"
+            >
+              {/* Título do bloco do planner */}
+              <div className="relative z-10 space-y-1">
                 <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                   Seu planner de hoje
                 </p>
@@ -233,16 +149,51 @@ export function MeuDiaClient() {
                   Tudo o que importa em um só lugar
                 </h3>
                 <p className="text-xs md:text-sm text-[#6A6A6A] max-w-xl">
-                  Prioridades, compromissos, autocuidado, família, lembretes e
-                  inspirações — organizados em blocos práticos, como a tela do
-                  seu celular.
+                  Prioridades, compromissos e inspirações conectados ao dia que você escolher no calendário.
                 </p>
               </div>
 
-              <WeeklyPlannerShell />
+              {/* CONTEÚDO DO PLANNER */}
+              <div className="relative z-10 space-y-6 md:space-y-7">
+                {/* Prioridades do dia */}
+                <section id="prioridades">
+                  <DailyPriorities />
+                </section>
+
+                {/* Calendário + visão de dia/semana + blocos (agenda, você, filho, notas, inspirações) */}
+                <section id="planner-semanal">
+                  <WeeklyPlannerShell />
+                </section>
+              </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* BLOCO 3 — SUGESTÕES INTELIGENTES (IA) MAIS DISCRETO */}
+          <Reveal delay={200}>
+            <section>
+              <SoftCard className="rounded-3xl bg-white/95 border border-[#FFE8F2] p-5 md:p-6 space-y-3">
+                <div>
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Sugestões inteligentes
+                  </p>
+                  <h3 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
+                    Ideias rápidas para o seu momento
+                  </h3>
+                  <p className="mt-1 text-xs md:text-sm text-[#6A6A6A] max-w-xl">
+                    Com base em como você disse que está e no tipo de dia que escolheu,
+                    eu trago algumas sugestões que podem deixar sua rotina mais leve.
+                  </p>
+                </div>
+
+                <IntelligentSuggestionsSection
+                  mood={selectedMood}
+                  intention={selectedDay}
+                />
+              </SoftCard>
             </section>
           </Reveal>
 
+          {/* Rodapé motivacional */}
           <MotivationalFooter routeKey="meu-dia" />
         </div>
       </ClientOnly>
