@@ -339,9 +339,4 @@ export default function CardHub() {
                 </span>
               </div>
             </div>
-          ))}
-        </div>
-      </Reveal>
-    </section>
-  );
-}
+          )
