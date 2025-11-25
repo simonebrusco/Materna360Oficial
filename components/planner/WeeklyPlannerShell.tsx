@@ -1,3 +1,5 @@
+'use client'
+
 import React, {
   useState,
   useCallback,
@@ -53,20 +55,16 @@ type PlannerData = {
 }
 
 export default function WeeklyPlannerShell() {
-  // Data base
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Saved contents (inspirações)
-  const { savedItems: savedContents } = useSavedInspirations()
-  const plannerHook = usePlannerSavedContents()
-
-  // Drawer de conteúdo salvo
   const [selectedSavedItem, setSelectedSavedItem] =
     useState<PlannerSavedContent | null>(null)
   const [isSavedItemOpen, setIsSavedItemOpen] = useState(false)
 
-  // Dados do planner (por dia)
+  const { savedItems: savedContents } = useSavedInspirations()
+  const plannerHook = usePlannerSavedContents()
+
   const [plannerData, setPlannerData] = useState<PlannerData>({
     appointments: [],
     top3: [],
@@ -75,10 +73,8 @@ export default function WeeklyPlannerShell() {
     notes: '',
   })
 
-  // Modo de visualização
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  // ---------- BOOTSTRAP DO DIA ATUAL ----------
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
@@ -86,14 +82,12 @@ export default function WeeklyPlannerShell() {
     setIsHydrated(true)
   }, [plannerHook])
 
-  // Atualiza o hook global quando o dia muda
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
-  // Carrega os dados do dia selecionado
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
@@ -104,7 +98,8 @@ export default function WeeklyPlannerShell() {
           [],
         ) ?? [],
       top3:
-        load<Top3Item[]>(`planner/top3/${selectedDateKey}`, []) ?? [],
+        load<Top3Item[]>(`planner/top3/${selectedDateKey}`, []) ??
+        [],
       careItems:
         load<CareItem[]>(
           `planner/careItems/${selectedDateKey}`,
@@ -122,7 +117,6 @@ export default function WeeklyPlannerShell() {
     setPlannerData(loadedData)
   }, [selectedDateKey, isHydrated])
 
-  // ---------- PERSISTÊNCIA ----------
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(
@@ -154,14 +148,13 @@ export default function WeeklyPlannerShell() {
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
-  // ---------- HANDLERS ----------
   const handleAddAppointment = useCallback(
     (appointment: Omit<Appointment, 'id'>) => {
       const newAppointment: Appointment = {
         ...appointment,
         id: Math.random().toString(36).slice(2, 9),
       }
-      setPlannerData(prev => ({
+      setPlannerData((prev) => ({
         ...prev,
         appointments: [...prev.appointments, newAppointment],
       }))
@@ -170,33 +163,35 @@ export default function WeeklyPlannerShell() {
   )
 
   const handleToggleTop3 = useCallback((id: string) => {
-    setPlannerData(prev => ({
+    setPlannerData((prev) => ({
       ...prev,
-      top3: prev.top3.map(item =>
+      top3: prev.top3.map((item) =>
         item.id === id ? { ...item, done: !item.done } : item,
       ),
     }))
   }, [])
 
   const handleAddTop3 = useCallback((title: string) => {
-    setPlannerData(prev => {
-      if (prev.top3.length >= 3) return prev
-      const newItem: Top3Item = {
-        id: Math.random().toString(36).slice(2, 9),
-        title,
-        done: false,
+    setPlannerData((prev) => {
+      if (prev.top3.length < 3) {
+        const newItem: Top3Item = {
+          id: Math.random().toString(36).slice(2, 9),
+          title,
+          done: false,
+        }
+        return { ...prev, top3: [...prev.top3, newItem] }
       }
-      return { ...prev, top3: [...prev.top3, newItem] }
+      return prev
     })
   }, [])
 
   const handleToggleCareItem = useCallback(
     (id: string, type: 'care' | 'family') => {
-      setPlannerData(prev => {
+      setPlannerData((prev) => {
         const field = type === 'care' ? 'careItems' : 'familyItems'
         return {
           ...prev,
-          [field]: prev[field].map(item =>
+          [field]: prev[field].map((item) =>
             item.id === id ? { ...item, done: !item.done } : item,
           ),
         }
@@ -207,7 +202,7 @@ export default function WeeklyPlannerShell() {
 
   const handleAddCareItem = useCallback(
     (title: string, type: 'care' | 'family') => {
-      setPlannerData(prev => {
+      setPlannerData((prev) => {
         const field = type === 'care' ? 'careItems' : 'familyItems'
         const newItem: CareItem = {
           id: Math.random().toString(36).slice(2, 9),
@@ -238,7 +233,7 @@ export default function WeeklyPlannerShell() {
   }, [])
 
   const handleNotesChange = useCallback((content: string) => {
-    setPlannerData(prev => ({ ...prev, notes: content }))
+    setPlannerData((prev) => ({ ...prev, notes: content }))
   }, [])
 
   const handleDateSelect = useCallback((date: Date) => {
@@ -246,7 +241,6 @@ export default function WeeklyPlannerShell() {
     setSelectedDateKey(newDateKey)
   }, [])
 
-  // ---------- DERIVADOS ----------
   const monthYear = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
     const [year, month, day] = selectedDateKey.split('-').map(Number)
@@ -261,12 +255,15 @@ export default function WeeklyPlannerShell() {
     if (!isHydrated || !selectedDateKey) return ''
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
-    const formatted = date.toLocaleDateString('pt-BR', {
+    const selectedDateFormatted = date.toLocaleDateString('pt-BR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     })
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+    return (
+      selectedDateFormatted.charAt(0).toUpperCase() +
+      selectedDateFormatted.slice(1)
+    )
   }, [selectedDateKey, isHydrated])
 
   const selectedDate = useMemo(() => {
@@ -275,7 +272,6 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
-  // ---------- WEEK VIEW MOCK (mantém estrutura, mas visual é novo) ----------
   const getMonday = (date: Date) => {
     const d = new Date(date)
     const day = d.getDay()
@@ -292,7 +288,8 @@ export default function WeeklyPlannerShell() {
 
     return {
       dayNumber,
-      dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
+      dayName:
+        dayName.charAt(0).toUpperCase() + dayName.slice(1),
       agendaCount: Math.floor(Math.random() * 3),
       top3Count: Math.floor(Math.random() * 2),
       careCount: Math.floor(Math.random() * 2),
@@ -302,13 +299,10 @@ export default function WeeklyPlannerShell() {
 
   if (!isHydrated) return null
 
-  // ============================================================
-  // LAYOUT PREMIUM — MINI CALENDÁRIO + BLOCO ÚNICO POR DIA
-  // ============================================================
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
-        {/* MINI CALENDÁRIO + TOGGLE DIA/SEMANA */}
+        {/* MINI CALENDÁRIO + TOGGLE */}
         <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -320,7 +314,6 @@ export default function WeeklyPlannerShell() {
                 {monthYear}
               </h2>
             </div>
-
             <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
               <button
                 onClick={() => setViewMode('day')}
@@ -351,14 +344,14 @@ export default function WeeklyPlannerShell() {
             onDateSelect={handleDateSelect}
           />
 
-          <div className="space-y-1 text-center">
-            <p className="text-sm text-[var(--color-text-muted)]">
+          <div className="space-y-1">
+            <p className="text-sm text-[var(--color-text-muted)] text-center">
               Tudo aqui vale para:{' '}
               <span className="font-semibold">
                 {capitalizedDateFormatted}
               </span>
             </p>
-            <p className="text-xs text-[var(--color-text-muted)]/60">
+            <p className="text-xs text-[var(--color-text-muted)]/60 text-center">
               Toque em outro dia para planejar ou rever sua semana.
             </p>
           </div>
@@ -366,8 +359,8 @@ export default function WeeklyPlannerShell() {
 
         {/* VISÃO DIA */}
         {viewMode === 'day' && (
-          <div className="mt-4 md:mt-6 space-y-8 pb-4">
-            {/* PAR 1: Prioridades + Casa & rotina */}
+          <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
+            {/* PAR 1 */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
@@ -375,9 +368,9 @@ export default function WeeklyPlannerShell() {
                     VOCÊ
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Prioridades do dia
-                    </h3>
+                    </h2>
                     <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Escolha até três coisas que realmente importam hoje.
                     </p>
@@ -397,12 +390,11 @@ export default function WeeklyPlannerShell() {
                     ROTINA
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Casa &amp; rotina
-                    </h3>
+                    </h2>
                     <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Compromissos com horário, para enxergar seu dia com
-                      clareza.
+                      Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
                   <AgendaSection
@@ -414,7 +406,7 @@ export default function WeeklyPlannerShell() {
               </div>
             </section>
 
-            {/* PAR 2: Cuidar de mim + Cuidar do meu filho */}
+            {/* PAR 2 */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
               <div className="flex h-full">
                 <div className="space-y-3 w-full flex flex-col">
@@ -422,9 +414,9 @@ export default function WeeklyPlannerShell() {
                     VOCÊ
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Cuidar de mim
-                    </h3>
+                    </h2>
                     <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Pequenos gestos que cuidam da sua energia.
                     </p>
@@ -434,8 +426,8 @@ export default function WeeklyPlannerShell() {
                     subtitle="Atividades de autocuidado."
                     icon="heart"
                     items={plannerData.careItems}
-                    onToggle={id => handleToggleCareItem(id, 'care')}
-                    onAdd={title => handleAddCareItem(title, 'care')}
+                    onToggle={(id) => handleToggleCareItem(id, 'care')}
+                    onAdd={(title) => handleAddCareItem(title, 'care')}
                     placeholder="Novo gesto de autocuidado…"
                     hideTitle
                   />
@@ -448,9 +440,9 @@ export default function WeeklyPlannerShell() {
                     SEU FILHO
                   </span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Cuidar do meu filho
-                    </h3>
+                    </h2>
                     <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                       Um momento de conexão faz diferença no dia.
                     </p>
@@ -460,10 +452,10 @@ export default function WeeklyPlannerShell() {
                     subtitle="Tarefas com os filhos."
                     icon="smile"
                     items={plannerData.familyItems}
-                    onToggle={id =>
+                    onToggle={(id) =>
                       handleToggleCareItem(id, 'family')
                     }
-                    onAdd={title =>
+                    onAdd={(title) =>
                       handleAddCareItem(title, 'family')
                     }
                     placeholder="Novo momento com a família…"
@@ -473,15 +465,15 @@ export default function WeeklyPlannerShell() {
               </div>
             </section>
 
-            {/* LEMBRETES RÁPIDOS */}
-            <section className="space-y-3">
+            {/* LEMBRETES */}
+            <div className="space-y-3">
               <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 LEMBRETES
               </span>
               <div>
-                <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                   Lembretes rápidos
-                </h3>
+                </h2>
                 <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
                   Anotações soltas para não esquecer.
                 </p>
@@ -491,20 +483,19 @@ export default function WeeklyPlannerShell() {
                 onChange={handleNotesChange}
                 hideTitle
               />
-            </section>
+            </div>
 
-            {/* INSPIRAÇÕES & CONTEÚDOS SALVOS */}
-            <section className="space-y-3 pb-2">
+            {/* INSPIRAÇÕES */}
+            <div className="space-y-3">
               <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                 INSPIRAÇÕES
               </span>
               <div>
-                <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                   Inspirações &amp; conteúdos salvos
-                </h3>
+                </h2>
                 <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                  Receitas, ideias e conteúdos que você salvou para usar
-                  quando precisar.
+                  Receitas, ideias e conteúdos que você salvou para usar quando precisar.
                 </p>
               </div>
 
@@ -530,32 +521,27 @@ export default function WeeklyPlannerShell() {
                     className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
                   />
                   <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                    Quando você salvar receitas, brincadeiras ou
-                    conteúdos nos mini-hubs, eles aparecem aqui.
+                    Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
                   </p>
                   <a
                     href="/biblioteca-materna"
                     className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
                   >
                     Ver tudo na Biblioteca Materna
-                    <AppIcon
-                      name="arrow-right"
-                      className="w-4 h-4"
-                    />
+                    <AppIcon name="arrow-right" className="w-4 h-4" />
                   </a>
                 </SoftCard>
               )}
-            </section>
+            </div>
           </div>
         )}
 
         {/* VISÃO SEMANA */}
         {viewMode === 'week' && (
-          <div className="space-y-4 pb-2">
-            <div className="text-center mb-4">
+          <div className="space-y-4">
+            <div className="text-center mb-6">
               <p className="text-sm text-[var(--color-text-muted)]/70">
-                Visão geral da sua semana. Toque em um dia para ver em
-                detalhes.
+                Visão geral da sua semana. Toque em um dia para ver em detalhes.
               </p>
             </div>
             <WeekView weekData={weekData} />
