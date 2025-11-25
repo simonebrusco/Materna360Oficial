@@ -12,7 +12,6 @@ import { SoftCard } from '@/components/ui/card'
 import { DailyPriorities } from '@/components/blocks/DailyPriorities'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
-import AppIcon from '@/components/ui/AppIcon'
 
 const MOOD_LABELS: Record<string, string> = {
   happy: 'Feliz',
@@ -35,7 +34,7 @@ function generateSummaryText(
           </span>{' '}
           e escolheu um dia{' '}
           <span className="font-semibold text-[#FF1475]">{day}</span>. Que tal
-            começar definindo suas três prioridades?
+          começar definindo suas três prioridades?
         </>
       ),
     }
@@ -105,7 +104,7 @@ export function MeuDiaClient() {
     track('nav.click', { tab: 'meu-dia', timestamp: new Date().toISOString() })
   }, [])
 
-  // Reload diário (vira o dia)
+  // Reload diário
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(
@@ -123,15 +122,15 @@ export function MeuDiaClient() {
       label="MEU DIA"
       title="Seu Dia Organizado"
       subtitle="Um espaço para planejar com leveza."
+      className="materna360-premium-bg"
     >
       <ClientOnly>
-        {/* espaçamento geral da página + respiro pro BottomNav */}
         <div className="space-y-8 md:space-y-10 pb-28">
-          {/* BLOCO: SAUDAÇÃO + HUMOR + INTENÇÃO */}
+          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO */}
           <Reveal delay={0}>
             <section>
-              <div className="space-y-6 rounded-3xl bg-white/70 border border-[#FFD8E6] shadow-card px-4 py-5 md:px-5 md:py-6">
-                {/* texto principal */}
+              <div className="space-y-6 rounded-3xl bg-white/80 border border-[#FFD8E6] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-5 md:px-6 md:py-7">
+                {/* Texto principal */}
                 <div className="space-y-2">
                   <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                     Hoje por aqui
@@ -145,7 +144,7 @@ export function MeuDiaClient() {
                   </p>
                 </div>
 
-                {/* humor */}
+                {/* Humor */}
                 <div className="space-y-3 md:space-y-4">
                   <div>
                     <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
@@ -180,7 +179,7 @@ export function MeuDiaClient() {
                   </div>
                 </div>
 
-                {/* intenção do dia */}
+                {/* Intenção do dia */}
                 <div className="space-y-3 md:space-y-4">
                   <div>
                     <p className="text-xs md:text-sm font-semibold text-[#3A3A3A] uppercase tracking-wide mb-1">
@@ -211,7 +210,7 @@ export function MeuDiaClient() {
                   </div>
                 </div>
 
-                {/* resumo */}
+                {/* Resumo */}
                 {(() => {
                   const summary = generateSummaryText(selectedMood, selectedDay)
                   return (
@@ -226,97 +225,52 @@ export function MeuDiaClient() {
             </section>
           </Reveal>
 
-          {/* SEÇÃO: SEU PLANNER DE HOJE (card resumo, mais editorial) */}
-          <Reveal delay={80}>
-            <SoftCard className="rounded-3xl bg-white/82 border border-[#FFD8E6] p-5 md:p-6 shadow-card">
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FF1475]">
+          {/* BLOCO 2 — PLANNER COMPLETO (UM ÚNICO CARD) */}
+          <Reveal delay={100}>
+            <SoftCard
+              className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.12)] space-y-6 md:space-y-8
+                         before:absolute before:inset-x-8 before:top-0 before:h-[3px] before:rounded-full
+                         before:bg-gradient-to-r before:from-[#FF1475]/10 before:via-[#9B4D96]/40 before:to-[#FF1475]/10"
+            >
+              {/* Título do bloco do planner */}
+              <div className="relative z-10 space-y-1">
+                <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                   Seu planner de hoje
                 </p>
-                <h3 className="text-base md:text-lg font-semibold text-[#2F3A56]">
+                <h3 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
                   Veja seu dia em um único lugar
                 </h3>
-                <p className="text-xs md:text-sm text-[#545454] max-w-xl">
+                <p className="text-xs md:text-sm text-[#6A6A6A] max-w-xl">
                   Aqui você reúne prioridades, compromissos e lembretes. Um
-                  espaço prático pra tirar o peso da cabeça e colocar tudo no papel, com leveza.
+                  espaço pra tirar o peso da cabeça e colocar tudo no papel, com
+                  leveza.
                 </p>
               </div>
 
-              <div className="pt-3">
-                <button
-                  type="button"
-                  className="text-sm font-medium text-[#FF1475] underline underline-offset-2"
-                >
-                  Abrir Planner completo →
-                </button>
+              {/* CONTEÚDO DO PLANNER — tudo dentro do mesmo card */}
+              <div className="relative z-10 space-y-6 md:space-y-7">
+                {/* Prioridades do dia */}
+                <section id="prioridades">
+                  <DailyPriorities />
+                </section>
+
+                {/* Sugestões inteligentes */}
+                <section id="sugestoes">
+                  <IntelligentSuggestionsSection
+                    mood={selectedMood}
+                    intention={selectedDay}
+                  />
+                </section>
+
+                {/* Planner semanal / calendário */}
+                <section id="planner-semanal">
+                  <WeeklyPlannerShell />
+                </section>
               </div>
             </SoftCard>
           </Reveal>
 
-          {/* MINI-HUB 2x2 — atalhos para partes do planner (inspiração no Maternar Hub) */}
-          <Reveal delay={120}>
-            <section aria-label="Atalhos do seu dia">
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                {[
-                  {
-                    id: 'prioridades',
-                    label: 'Prioridades do dia',
-                    icon: 'check' as const,
-                  },
-                  {
-                    id: 'tarefas',
-                    label: 'Compromissos',
-                    icon: 'calendar' as const,
-                  },
-                  {
-                    id: 'cuidar',
-                    label: 'Cuidar de mim hoje',
-                    icon: 'heart' as const,
-                  },
-                  {
-                    id: 'lembretes',
-                    label: 'Lembretes rápidos',
-                    icon: 'idea' as const,
-                  },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="group rounded-2xl bg-white/78 border border-[#FFE8F2] shadow-card px-3 py-4 flex flex-col items-center justify-center aspect-square hover:-translate-y-[2px] hover:shadow-[0_10px_26px_rgba(0,0,0,0.12)] transition-all duration-150"
-                  >
-                    <AppIcon
-                      name={item.icon}
-                      className="w-6 h-6 md:w-7 md:h-7 text-[#FF1475] mb-2 group-hover:scale-110 transition-transform duration-150"
-                      decorative
-                    />
-                    <span className="text-xs md:text-[13px] font-medium text-[#3A3A3A] text-center">
-                      {item.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </Reveal>
-
-          {/* BLOCO PREMIUM UNIFICADO DO PLANNER */}
-          <Reveal delay={200}>
-            <SoftCard
-              className="relative overflow-hidden rounded-3xl bg-white/90 border border-[#FFE8F2] p-6 md:p-8 shadow-card space-y-6 md:space-y-8"
-            >
-              {/* Prioridades do dia */}
-              <DailyPriorities />
-
-              {/* Sugestões inteligentes da IA */}
-              <IntelligentSuggestionsSection
-                mood={selectedMood}
-                intention={selectedDay}
-              />
-
-              {/* Planner semanal */}
-              <WeeklyPlannerShell />
-            </SoftCard>
-          </Reveal>
-
+          {/* Rodapé motivacional */}
           <MotivationalFooter routeKey="meu-dia" />
         </div>
       </ClientOnly>
