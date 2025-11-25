@@ -23,7 +23,6 @@ function generateSummaryText(
   mood: string | null,
   day: string | null,
 ): { main: React.ReactNode; show: boolean } {
-  // Agora o resumo só aparece quando ela escolheu humor + tipo de dia
   if (mood && day) {
     return {
       show: true,
@@ -42,10 +41,7 @@ function generateSummaryText(
     }
   }
 
-  return {
-    show: false,
-    main: null,
-  }
+  return { show: false, main: null }
 }
 
 export function MeuDiaClient() {
@@ -95,10 +91,10 @@ export function MeuDiaClient() {
     >
       <ClientOnly>
         <div className="space-y-8 md:space-y-10 pb-28">
-          {/* BLOCO 1 — SAUDAÇÃO + HUMOR + INTENÇÃO (AGORA MAIS ENXUTO) */}
+          {/* BLOCO 1 — SAUDAÇÃO, AGORA MAIS ENXUTO E CENTRALIZADO */}
           <Reveal delay={0}>
             <section>
-              <div className="space-y-5 rounded-3xl bg-white/85 border border-[#FFD8E6] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-4 py-4 md:px-6 md:py-5">
+              <div className="max-w-3xl mx-auto space-y-5 rounded-3xl bg-white/85 border border-[#FFD8E6] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-4 py-4 md:px-6 md:py-5">
                 {/* Texto principal */}
                 <div className="space-y-1.5">
                   <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
@@ -197,14 +193,13 @@ export function MeuDiaClient() {
             </section>
           </Reveal>
 
-          {/* BLOCO 2 — PLANNER (PRIORIDADES + IA + CALENDÁRIO) */}
+          {/* BLOCO 2 — PLANNER COMPLETO */}
           <Reveal delay={100}>
             <SoftCard
               className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-7 shadow-[0_16px_40px_rgba(0,0,0,0.12)] space-y-6 md:space-y-7
                          before:absolute before:inset-x-8 before:top-0 before:h-[3px] before:rounded-full
                          before:bg-gradient-to-r before:from-[#FF1475]/10 before:via-[#9B4D96]/40 before:to-[#FF1475]/10"
             >
-              {/* Título do bloco do planner */}
               <div className="relative z-10 space-y-1">
                 <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                   Seu planner de hoje
@@ -219,14 +214,11 @@ export function MeuDiaClient() {
                 </p>
               </div>
 
-              {/* CONTEÚDO DO PLANNER — tudo dentro do mesmo card */}
               <div className="relative z-10 space-y-6 md:space-y-7">
-                {/* Prioridades do dia */}
                 <section id="prioridades">
                   <DailyPriorities />
                 </section>
 
-                {/* Sugestões inteligentes */}
                 <section id="sugestoes">
                   <IntelligentSuggestionsSection
                     mood={selectedMood}
@@ -234,7 +226,6 @@ export function MeuDiaClient() {
                   />
                 </section>
 
-                {/* Planner semanal / calendário + widgets do dia */}
                 <section id="planner-semanal">
                   <WeeklyPlannerShell />
                 </section>
@@ -242,7 +233,6 @@ export function MeuDiaClient() {
             </SoftCard>
           </Reveal>
 
-          {/* Rodapé motivacional */}
           <MotivationalFooter routeKey="meu-dia" />
         </div>
       </ClientOnly>
