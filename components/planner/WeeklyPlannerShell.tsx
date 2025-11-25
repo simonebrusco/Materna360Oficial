@@ -266,11 +266,7 @@ export default function WeeklyPlannerShell() {
         if (!prev) return prev
         const next = new Date(prev)
         next.setMonth(prev.getMonth() + (direction === 'next' ? 1 : -1))
-        return new Date(
-          next.getFullYear(),
-          next.getMonth(),
-          1,
-        )
+        return new Date(next.getFullYear(), next.getMonth(), 1)
       })
     },
     [],
@@ -345,7 +341,7 @@ export default function WeeklyPlannerShell() {
 
     const cells: MonthCell[] = []
 
-    // dias anteriores para completar a primeira linha
+    // dias anteriores para completar a linha
     for (let i = startWeekday - 1; i > 0; i--) {
       const d = new Date(year, month, 1 - i)
       cells.push({
@@ -388,9 +384,9 @@ export default function WeeklyPlannerShell() {
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
-        {/* PLANNER — card mais compacto */}
-        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-5 max-w-[520px] mx-auto">
-          <div className="flex items-center justify-between gap-3">
+        {/* PLANNER — card largo, layout limpo */}
+        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-5 max-w-3xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-2">
               <AppIcon
                 name="calendar"
@@ -406,9 +402,9 @@ export default function WeeklyPlannerShell() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Navegação de mês (desktop) */}
-              <div className="hidden md:flex items-center gap-2 rounded-full bg-[var(--color-soft-bg)] px-2 py-1">
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
+              {/* Navegação de mês */}
+              <div className="flex items-center gap-2 rounded-full bg-[var(--color-soft-bg)] px-3 py-1">
                 <button
                   type="button"
                   onClick={() => handleMonthChange('prev')}
@@ -416,7 +412,7 @@ export default function WeeklyPlannerShell() {
                 >
                   ‹
                 </button>
-                <span className="text-[11px] font-medium text-[var(--color-text-main)] capitalize">
+                <span className="text-[11px] md:text-xs font-medium text-[var(--color-text-main)] capitalize">
                   {monthYearLabel}
                 </span>
                 <button
@@ -454,28 +450,7 @@ export default function WeeklyPlannerShell() {
             </div>
           </div>
 
-          {/* header de mês em mobile */}
-          <div className="md:hidden flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => handleMonthChange('prev')}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-sm text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
-            >
-              ‹
-            </button>
-            <span className="text-xs font-medium text-[var(--color-text-main)] capitalize">
-              {monthYearLabel}
-            </span>
-            <button
-              type="button"
-              onClick={() => handleMonthChange('next')}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-sm text-[var(--color-text-muted)] hover:bg:white/70 hover:text-[var(--color-brand)] transition-colors"
-            >
-              ›
-            </button>
-          </div>
-
-          {/* Calendário MENSAL compacto */}
+          {/* Calendário MENSAL */}
           {viewMode === 'month' && (
             <div className="space-y-2">
               <div className="grid grid-cols-7 text-center text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.16em]">
@@ -550,7 +525,7 @@ export default function WeeklyPlannerShell() {
           )}
         </SoftCard>
 
-        {/* VISÃO DIA — cards abaixo do planner */}
+        {/* VISÃO DIA — cards abaixo do planner (tudo como já estava, com salvamento) */}
         <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
           {/* PAR 1 — Prioridades + Agenda */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
@@ -749,3 +724,4 @@ function isSameDateKey(date: Date, key: string) {
     date.getDate() === day
   )
 }
+
