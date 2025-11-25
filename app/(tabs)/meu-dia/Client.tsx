@@ -8,7 +8,6 @@ import { Reveal } from '@/components/ui/Reveal'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-import { SoftCard } from '@/components/ui/card'
 import { DailyPriorities } from '@/components/blocks/DailyPriorities'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
@@ -303,10 +302,9 @@ export function MeuDiaClient() {
             </section>
           </Reveal>
 
-          {/* BLOCO 3 — GRID DE WIDGETS DO PLANNER */}
+          {/* BLOCO 3 — GRID COM OS CARDS ORIGINAIS (SEM DUPLICAR LAYOUT) */}
           <Reveal delay={100}>
             <section className="space-y-4">
-              {/* Título geral do painel */}
               <div className="px-1">
                 <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
                   Seu planner de hoje
@@ -315,87 +313,27 @@ export function MeuDiaClient() {
                   Veja seu dia em um único lugar
                 </h3>
                 <p className="text-xs md:text-sm text-[#6A6A6A] max-w-xl">
-                  Widgets pensados para você acompanhar prioridades, inspirações
-                  e compromissos com a mesma sensação de uma tela inicial de
-                  celular, mas com a profundidade do Planner Materna360.
+                  Acompanhe prioridades, inspirações e compromissos com a
+                  sensação de tela inicial, mas com a profundidade do Planner
+                  Materna360.
                 </p>
               </div>
 
-              {/* GRID PRINCIPAL */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {/* Widget — Prioridades do Dia */}
-                <SoftCard
-                  id="prioridades"
-                  className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.10)]
-                             flex flex-col justify-between"
-                >
-                  <div className="space-y-1 mb-3">
-                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                      Prioridades do dia
-                    </p>
-                    <h4 className="text-base md:text-lg font-semibold text-[#2F3A56]">
-                      Escolha o que realmente importa hoje
-                    </h4>
-                    <p className="text-[11px] md:text-xs text-[#6A6A6A]">
-                      Três focos principais para tirar o peso da cabeça e
-                      colocar no planner.
-                    </p>
-                  </div>
-                  <div className="mt-2">
-                    <DailyPriorities />
-                  </div>
-                </SoftCard>
+                <div id="prioridades" className="h-full">
+                  <DailyPriorities />
+                </div>
 
-                {/* Widget — Sugestões Inteligentes */}
-                <SoftCard
-                  id="sugestoes"
-                  className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.10)]
-                             flex flex-col justify-between"
-                >
-                  <div className="space-y-1 mb-3">
-                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                      Sugestões inteligentes
-                    </p>
-                    <h4 className="text-base md:text-lg font-semibold text-[#2F3A56]">
-                      Ideias rápidas para o seu momento
-                    </h4>
-                    <p className="text-[11px] md:text-xs text-[#6A6A6A]">
-                      Eu uso seu humor e o tipo de dia que você escolheu para
-                      sugerir conteúdos, ideias e cuidados que façam sentido
-                      agora.
-                    </p>
-                  </div>
-                  <div className="mt-2">
-                    <IntelligentSuggestionsSection
-                      mood={selectedMood}
-                      intention={selectedDay}
-                    />
-                  </div>
-                </SoftCard>
+                <div id="sugestoes" className="h-full">
+                  <IntelligentSuggestionsSection
+                    mood={selectedMood}
+                    intention={selectedDay}
+                  />
+                </div>
 
-                {/* Widget — Planner Semanal / Calendário */}
-                <SoftCard
-                  id="planner-semanal"
-                  className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.10)]
-                             md:col-span-2"
-                >
-                  <div className="space-y-1 mb-3">
-                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
-                      Compromissos & rotina
-                    </p>
-                    <h4 className="text-base md:text-lg font-semibold text-[#2F3A56]">
-                      Veja sua semana numa visão leve
-                    </h4>
-                    <p className="text-[11px] md:text-xs text-[#6A6A6A]">
-                      Um calendário pensado para mães ocupadas: você enxerga o
-                      hoje, mas também se organiza para os próximos dias sem
-                      sobrecarregar a mente.
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <WeeklyPlannerShell />
-                  </div>
-                </SoftCard>
+                <div id="planner-semanal" className="md:col-span-2">
+                  <WeeklyPlannerShell />
+                </div>
               </div>
             </section>
           </Reveal>
