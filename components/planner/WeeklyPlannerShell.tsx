@@ -79,7 +79,7 @@ export default function WeeklyPlannerShell() {
     notes: '',
   })
 
-  // novo: mês atual mostrado no calendário (sempre no dia 1)
+  // mês atual mostrado no calendário (sempre dia 1)
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
 
   // visão: mês ou semana
@@ -340,13 +340,12 @@ export default function WeeklyPlannerShell() {
     const firstOfMonth = new Date(year, month, 1)
     const lastOfMonth = new Date(year, month + 1, 0)
 
-    // Dia da semana (0 = domingo) → queremos segunda como primeiro
     const startWeekday = firstOfMonth.getDay() === 0 ? 7 : firstOfMonth.getDay()
     const daysInMonth = lastOfMonth.getDate()
 
     const cells: MonthCell[] = []
 
-    // Preenche dias do mês anterior para completar a primeira linha
+    // dias anteriores para completar a primeira linha
     for (let i = startWeekday - 1; i > 0; i--) {
       const d = new Date(year, month, 1 - i)
       cells.push({
@@ -357,7 +356,7 @@ export default function WeeklyPlannerShell() {
       })
     }
 
-    // Dias do mês atual
+    // dias do mês atual
     for (let day = 1; day <= daysInMonth; day++) {
       const d = new Date(year, month, day)
       cells.push({
@@ -368,7 +367,7 @@ export default function WeeklyPlannerShell() {
       })
     }
 
-    // Completa até 6 linhas (42 células) com início do próximo mês
+    // completa até 6 linhas (42 células)
     while (cells.length < 42) {
       const last = cells[cells.length - 1].date
       const d = new Date(last)
@@ -389,8 +388,8 @@ export default function WeeklyPlannerShell() {
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
-        {/* PLANNER — CALENDÁRIO MENSAL + TOGGLE */}
-        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-3xl mx-auto">
+        {/* PLANNER — card mais compacto */}
+        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-5 max-w-[520px] mx-auto">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <AppIcon
@@ -401,14 +400,14 @@ export default function WeeklyPlannerShell() {
                 <span className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                   Seu planner de hoje
                 </span>
-                <span className="text-sm md:text-base text-[var(--color-text-muted)]">
+                <span className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
                   Tudo o que você organiza aqui vale para o dia selecionado.
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Navegação de mês */}
+              {/* Navegação de mês (desktop) */}
               <div className="hidden md:flex items-center gap-2 rounded-full bg-[var(--color-soft-bg)] px-2 py-1">
                 <button
                   type="button"
@@ -417,7 +416,7 @@ export default function WeeklyPlannerShell() {
                 >
                   ‹
                 </button>
-                <span className="text-xs font-medium text-[var(--color-text-main)] capitalize">
+                <span className="text-[11px] font-medium text-[var(--color-text-main)] capitalize">
                   {monthYearLabel}
                 </span>
                 <button
@@ -430,10 +429,10 @@ export default function WeeklyPlannerShell() {
               </div>
 
               {/* Toggle Mês / Semana */}
-              <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
+              <div className="flex gap-1.5 bg-[var(--color-soft-bg)] p-1 rounded-full">
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-semibold transition-all ${
                     viewMode === 'month'
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.12)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
@@ -443,7 +442,7 @@ export default function WeeklyPlannerShell() {
                 </button>
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-semibold transition-all ${
                     viewMode === 'week'
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.12)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
@@ -464,23 +463,22 @@ export default function WeeklyPlannerShell() {
             >
               ‹
             </button>
-            <span className="text-sm font-medium text-[var(--color-text-main)] capitalize">
+            <span className="text-xs font-medium text-[var(--color-text-main)] capitalize">
               {monthYearLabel}
             </span>
             <button
               type="button"
               onClick={() => handleMonthChange('next')}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-sm text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full text-sm text-[var(--color-text-muted)] hover:bg:white/70 hover:text-[var(--color-brand)] transition-colors"
             >
               ›
             </button>
           </div>
 
-          {/* Calendário MENSAL */}
+          {/* Calendário MENSAL compacto */}
           {viewMode === 'month' && (
-            <div className="space-y-3">
-              {/* cabeçalho dos dias da semana */}
-              <div className="grid grid-cols-7 text-center text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.16em]">
+            <div className="space-y-2">
+              <div className="grid grid-cols-7 text-center text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.16em]">
                 <span>Seg</span>
                 <span>Ter</span>
                 <span>Qua</span>
@@ -490,7 +488,7 @@ export default function WeeklyPlannerShell() {
                 <span>Dom</span>
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+              <div className="grid grid-cols-7 gap-1.5">
                 {monthGrid.map((cell, index) => {
                   const dayNumber = cell.date.getDate()
                   const isDisabled = !cell.isCurrentMonth
@@ -503,7 +501,7 @@ export default function WeeklyPlannerShell() {
                       type="button"
                       onClick={() => handleDateSelect(cell.date)}
                       className={[
-                        'aspect-square rounded-full flex items-center justify-center text-xs md:text-sm transition-all',
+                        'aspect-square rounded-full flex items-center justify-center text-[11px] transition-all',
                         isDisabled
                           ? 'text-[var(--color-text-muted)]/35'
                           : 'text-[var(--color-text-main)]',
@@ -524,23 +522,23 @@ export default function WeeklyPlannerShell() {
               </div>
 
               <div className="space-y-1 text-center">
-                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                <p className="text-[11px] text-[var(--color-text-muted)]">
                   Tudo aqui vale para:{' '}
                   <span className="font-semibold">
                     {capitalizedDateFormatted}
                   </span>
                 </p>
-                <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70">
+                <p className="text-[10px] text-[var(--color-text-muted)]/70">
                   Toque em outro dia para adicionar compromissos e organizar sua rotina.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Visão SEMANA dentro do mesmo card */}
+          {/* Visão SEMANA dentro do card */}
           {viewMode === 'week' && (
-            <div className="mt-2">
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center mb-3">
+            <div className="mt-1">
+              <p className="text-[11px] text-[var(--color-text-muted)] text-center mb-3">
                 Visão geral da semana de{' '}
                 <span className="font-semibold">
                   {capitalizedDateFormatted}
@@ -552,9 +550,9 @@ export default function WeeklyPlannerShell() {
           )}
         </SoftCard>
 
-        {/* VISÃO DIA (cards abaixo do planner) */}
+        {/* VISÃO DIA — cards abaixo do planner */}
         <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
-          {/* PAR 1 — Prioridades + Casa & rotina */}
+          {/* PAR 1 — Prioridades + Agenda */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
             <div className="flex h-full">
               <div className="space-y-3 w-full flex flex-col">
