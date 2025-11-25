@@ -54,6 +54,65 @@ type PlannerData = {
   notes: string
 }
 
+type OpenPanel =
+  | 'priorities'
+  | 'agenda'
+  | 'selfCare'
+  | 'familyCare'
+  | null
+
+function QuickPanelCard(props: {
+  id: OpenPanel
+  icon: string
+  label: string
+  title: string
+  subtitle: string
+  isActive: boolean
+  onClick: () => void
+}) {
+  const { icon, label, title, subtitle, isActive, onClick } = props
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group relative flex h-full w-full flex-col items-stretch rounded-3xl border text-left transition-all ${
+        isActive
+          ? 'border-[var(--color-brand)] bg-white shadow-[0_14px_34px_rgba(0,0,0,0.12)]'
+          : 'border-[#FFE8F2] bg-white/70 hover:border-[var(--color-brand-soft)] hover:bg-white/90 hover:shadow-[0_10px_26px_rgba(0,0,0,0.08)]'
+      } p-4 md:p-5`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-soft-strong)]">
+            <AppIcon
+              name={icon as any}
+              className="h-5 w-5 text-[var(--color-brand)]"
+            />
+          </div>
+          <div className="space-y-0.5">
+            <span className="inline-flex rounded-full bg-[var(--color-soft-strong)] px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.16em] text-[var(--color-brand)] uppercase">
+              {label}
+            </span>
+            <p className="text-sm font-semibold text-[var(--color-text-main)] md:text-base">
+              {title}
+            </p>
+          </div>
+        </div>
+        <AppIcon
+          name="chevron-down"
+          className={`h-4 w-4 text-[var(--color-text-muted)] transition-transform ${
+            isActive ? 'rotate-180' : ''
+          }`}
+        />
+      </div>
+      <p className="mt-3 text-xs text-[var(--color-text-muted)] md:text-sm">
+        {subtitle}
+      </p>
+    </button>
+  )
+}
+
 export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
@@ -74,6 +133,7 @@ export default function WeeklyPlannerShell() {
   })
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+  const [openPanel, setOpenPanel] = useState<OpenPanel>('priorities')
 
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
@@ -297,27 +357,31 @@ export default function WeeklyPlannerShell() {
     }
   })
 
+  const togglePanel = (panel: OpenPanel) => {
+    setOpenPanel((current) => (current === panel ? null : panel))
+  }
+
   if (!isHydrated) return null
 
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
         {/* MINI CALENDÁRIO + TOGGLE */}
-        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <SoftCard className="space-y-4 p-4 md:space-y-6 md:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AppIcon
                 name="calendar"
-                className="w-5 h-5 text-[var(--color-brand)]"
+                className="h-5 w-5 text-[var(--color-brand)]"
               />
-              <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)] capitalize">
+              <h2 className="text-lg font-bold capitalize text-[var(--color-text-main)] md:text-xl">
                 {monthYear}
               </h2>
             </div>
-            <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
+            <div className="flex gap-2 rounded-full bg-[var(--color-soft-bg)] p-1">
               <button
                 onClick={() => setViewMode('day')}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
                   viewMode === 'day'
                     ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
                     : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
@@ -327,7 +391,7 @@ export default function WeeklyPlannerShell() {
               </button>
               <button
                 onClick={() => setViewMode('week')}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
                   viewMode === 'week'
                     ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.1)]'
                     : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
@@ -344,14 +408,14 @@ export default function WeeklyPlannerShell() {
             onDateSelect={handleDateSelect}
           />
 
-          <div className="space-y-1">
-            <p className="text-sm text-[var(--color-text-muted)] text-center">
+          <div className="space-y-1 text-center">
+            <p className="text-sm text-[var(--color-text-muted)]">
               Tudo aqui vale para:{' '}
               <span className="font-semibold">
                 {capitalizedDateFormatted}
               </span>
             </p>
-            <p className="text-xs text-[var(--color-text-muted)]/60 text-center">
+            <p className="text-xs text-[var(--color-text-muted)]/60">
               Toque em outro dia para planejar ou rever sua semana.
             </p>
           </div>
@@ -359,143 +423,148 @@ export default function WeeklyPlannerShell() {
 
         {/* VISÃO DIA */}
         {viewMode === 'day' && (
-          <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
-            {/* PAR 1 */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-              <div className="flex h-full">
-                <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    VOCÊ
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                      Prioridades do dia
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Escolha até três coisas que realmente importam hoje.
-                    </p>
-                  </div>
-                  <Top3Section
-                    items={plannerData.top3}
-                    onToggle={handleToggleTop3}
-                    onAdd={handleAddTop3}
-                    hideTitle
-                  />
-                </div>
-              </div>
-
-              <div className="flex h-full">
-                <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    ROTINA
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                      Casa &amp; rotina
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Compromissos com horário, para enxergar seu dia com clareza.
-                    </p>
-                  </div>
-                  <AgendaSection
-                    items={plannerData.appointments}
-                    onAddAppointment={handleAddAppointment}
-                    hideTitle
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* PAR 2 */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-              <div className="flex h-full">
-                <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    VOCÊ
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                      Cuidar de mim
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Pequenos gestos que cuidam da sua energia.
-                    </p>
-                  </div>
-                  <CareSection
-                    title="Cuidar de mim"
-                    subtitle="Atividades de autocuidado."
-                    icon="heart"
-                    items={plannerData.careItems}
-                    onToggle={(id) => handleToggleCareItem(id, 'care')}
-                    onAdd={(title) => handleAddCareItem(title, 'care')}
-                    placeholder="Novo gesto de autocuidado…"
-                    hideTitle
-                  />
-                </div>
-              </div>
-
-              <div className="flex h-full">
-                <div className="space-y-3 w-full flex flex-col">
-                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    SEU FILHO
-                  </span>
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                      Cuidar do meu filho
-                    </h2>
-                    <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Um momento de conexão faz diferença no dia.
-                    </p>
-                  </div>
-                  <CareSection
-                    title="Cuidar da família"
-                    subtitle="Tarefas com os filhos."
-                    icon="smile"
-                    items={plannerData.familyItems}
-                    onToggle={(id) =>
-                      handleToggleCareItem(id, 'family')
-                    }
-                    onAdd={(title) =>
-                      handleAddCareItem(title, 'family')
-                    }
-                    placeholder="Novo momento com a família…"
-                    hideTitle
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* LEMBRETES */}
-            <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                LEMBRETES
-              </span>
-              <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                  Lembretes rápidos
-                </h2>
-                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                  Anotações soltas para não esquecer.
-                </p>
-              </div>
-              <NotesSection
-                content={plannerData.notes}
-                onChange={handleNotesChange}
-                hideTitle
+          <div className="space-y-6 pb-12 md:space-y-8">
+            {/* ATALHOS 2x2 */}
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+              <QuickPanelCard
+                id="priorities"
+                icon="target"
+                label="VOCÊ"
+                title="Prioridades do dia"
+                subtitle="Escolha até três coisas que realmente importam hoje."
+                isActive={openPanel === 'priorities'}
+                onClick={() => togglePanel('priorities')}
               />
-            </div>
+              <QuickPanelCard
+                id="agenda"
+                icon="calendar"
+                label="ROTINA"
+                title="Agenda & compromissos"
+                subtitle="Compromissos com horário para enxergar seu dia com clareza."
+                isActive={openPanel === 'agenda'}
+                onClick={() => togglePanel('agenda')}
+              />
+              <QuickPanelCard
+                id="selfCare"
+                icon="heart"
+                label="VOCÊ"
+                title="Cuidar de mim"
+                subtitle="Pequenos gestos para recarregar sua energia."
+                isActive={openPanel === 'selfCare'}
+                onClick={() => togglePanel('selfCare')}
+              />
+              <QuickPanelCard
+                id="familyCare"
+                icon="smile"
+                label="SEU FILHO"
+                title="Cuidar do meu filho"
+                subtitle="Momentos de conexão que fazem diferença no dia."
+                isActive={openPanel === 'familyCare'}
+                onClick={() => togglePanel('familyCare')}
+              />
+            </section>
 
-            {/* INSPIRAÇÕES */}
-            <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+            {/* PAINEL DETALHES — abre conforme o atalho selecionado */}
+            {openPanel && (
+              <SoftCard className="space-y-4 p-4 md:p-6">
+                {openPanel === 'priorities' && (
+                  <>
+                    <h3 className="text-base font-semibold text-[var(--color-text-main)] md:text-lg">
+                      Prioridades do dia
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mb-2">
+                      Comece adicionando sua primeira prioridade. Você
+                      não precisa preencher as três: às vezes, uma única
+                      prioridade já muda o dia.
+                    </p>
+                    <Top3Section
+                      items={plannerData.top3}
+                      onToggle={handleToggleTop3}
+                      onAdd={handleAddTop3}
+                      hideTitle
+                    />
+                  </>
+                )}
+
+                {openPanel === 'agenda' && (
+                  <>
+                    <h3 className="text-base font-semibold text-[var(--color-text-main)] md:text-lg">
+                      Agenda & compromissos
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mb-2">
+                      Adicione compromissos com horário para visualizar o seu
+                      dia com clareza.
+                    </p>
+                    <AgendaSection
+                      items={plannerData.appointments}
+                      onAddAppointment={handleAddAppointment}
+                      hideTitle
+                    />
+                  </>
+                )}
+
+                {openPanel === 'selfCare' && (
+                  <>
+                    <h3 className="text-base font-semibold text-[var(--color-text-main)] md:text-lg">
+                      Cuidar de mim
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mb-2">
+                      Use este espaço para registrar pequenas pausas, respiros e
+                      gestos por você.
+                    </p>
+                    <CareSection
+                      title="Cuidar de mim"
+                      subtitle="Atividades de autocuidado."
+                      icon="heart"
+                      items={plannerData.careItems}
+                      onToggle={(id) => handleToggleCareItem(id, 'care')}
+                      onAdd={(title) => handleAddCareItem(title, 'care')}
+                      placeholder="Novo gesto de autocuidado…"
+                      hideTitle
+                    />
+                  </>
+                )}
+
+                {openPanel === 'familyCare' && (
+                  <>
+                    <h3 className="text-base font-semibold text-[var(--color-text-main)] md:text-lg">
+                      Cuidar do meu filho
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mb-2">
+                      Tarefas e momentos que aproximam sua família e organizam a
+                      rotina.
+                    </p>
+                    <CareSection
+                      title="Cuidar da família"
+                      subtitle="Tarefas com os filhos."
+                      icon="smile"
+                      items={plannerData.familyItems}
+                      onToggle={(id) =>
+                        handleToggleCareItem(id, 'family')
+                      }
+                      onAdd={(title) =>
+                        handleAddCareItem(title, 'family')
+                      }
+                      placeholder="Novo momento com a família…"
+                      hideTitle
+                    />
+                  </>
+                )}
+              </SoftCard>
+            )}
+
+            {/* INSPIRAÇÕES — agora antes dos lembretes */}
+            <section className="space-y-3">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
                 INSPIRAÇÕES
               </span>
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                  Inspirações &amp; conteúdos salvos
+                <h2 className="text-lg font-semibold text-[var(--color-text-main)] md:text-xl">
+                  Inspirações & conteúdos salvos
                 </h2>
-                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                  Receitas, ideias e conteúdos que você salvou para usar quando precisar.
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                  Receitas, ideias e conteúdos que você salvou para usar quando
+                  precisar.
                 </p>
               </div>
 
@@ -515,31 +584,52 @@ export default function WeeklyPlannerShell() {
                   />
                 </>
               ) : (
-                <SoftCard className="p-5 md:p-6 text-center py-6">
+                <SoftCard className="py-6 p-5 text-center md:p-6">
                   <AppIcon
                     name="bookmark"
-                    className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+                    className="mx-auto mb-3 h-8 w-8 text-[var(--color-border-muted)]"
                   />
-                  <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                    Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
+                  <p className="mb-3 text-sm text-[var(--color-text-muted)]/70">
+                    Quando você salvar receitas, brincadeiras ou conteúdos nos
+                    mini-hubs, eles aparecem aqui.
                   </p>
                   <a
                     href="/biblioteca-materna"
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] transition-colors hover:text-[var(--color-brand)]/80"
                   >
                     Ver tudo na Biblioteca Materna
-                    <AppIcon name="arrow-right" className="w-4 h-4" />
+                    <AppIcon name="arrow-right" className="h-4 w-4" />
                   </a>
                 </SoftCard>
               )}
-            </div>
+            </section>
+
+            {/* LEMBRETES — mais compacto */}
+            <section className="space-y-3">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+                LEMBRETES
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--color-text-main)] md:text-xl">
+                  Lembretes rápidos
+                </h2>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                  Anotações soltas para não esquecer.
+                </p>
+              </div>
+              <NotesSection
+                content={plannerData.notes}
+                onChange={handleNotesChange}
+                hideTitle
+              />
+            </section>
           </div>
         )}
 
         {/* VISÃO SEMANA */}
         {viewMode === 'week' && (
           <div className="space-y-4">
-            <div className="text-center mb-6">
+            <div className="mb-4 text-center md:mb-6">
               <p className="text-sm text-[var(--color-text-muted)]/70">
                 Visão geral da sua semana. Toque em um dia para ver em detalhes.
               </p>
