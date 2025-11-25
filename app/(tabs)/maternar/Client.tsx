@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { track } from '@/app/lib/telemetry';
 import { useProfile } from '@/app/hooks/useProfile';
-import AppIcon from '@/components/ui/AppIcon';
 import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
 import { getDailyIndex } from '@/app/lib/dailyMessage';
 import { getTimeGreeting } from '@/app/lib/greetings';
@@ -62,7 +61,7 @@ export default function MaternarClient() {
   return (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-24 bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_38%,#FFD3E6_72%,#FFE8F2_94%,#FFE8F2_100%)]"
+      className="min-h-[100dvh] pb-24 bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_35%,#FFD3E6_70%,#FFFFFF_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -86,27 +85,7 @@ export default function MaternarClient() {
               </p>
             </div>
 
-            {isProfileIncomplete && (
-              <div className="flex-shrink-0">
-                <Link
-                  href="/eu360?focus=perfil"
-                  onClick={() =>
-                    track('maternar.profile_premium_button_click', {
-                      timestamp: new Date().toISOString(),
-                    })
-                  }
-                  className="inline-flex items-center gap-1.5 rounded-2xl border border-white/60 bg-white/18 px-[12px] py-[7px] text-xs md:text-sm font-medium text-white shadow-[0_6px_18px_rgba(0,0,0,0.25)] backdrop-blur-lg transition-all duration-150 hover:-translate-y-[1px] hover:shadow-[0_10px_26px_rgba(0,0,0,0.35)] active:translate-y-0"
-                  aria-label="Completar perfil"
-                >
-                  <AppIcon
-                    name="hand-heart"
-                    className="h-[14px] w-[14px]"
-                    decorative
-                  />
-                  <span>Completar perfil</span>
-                </Link>
-              </div>
-            )}
+            {/* Botão "Completar perfil" removido a pedido da Simone */}
           </div>
         </header>
 
@@ -114,31 +93,24 @@ export default function MaternarClient() {
           {/* CARD — UM CARINHO PRA VOCÊ HOJE */}
           <Reveal delay={80}>
             <div className="mt-0 mb-0">
-              <div className="relative overflow-hidden rounded-3xl border border-white/80 bg-[radial-gradient(circle_at_top_left,rgba(255,20,117,0.42),rgba(255,255,255,0.94))] shadow-[0_22px_55px_rgba(0,0,0,0.28)] px-4 py-4 md:px-6 md:py-5">
+              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,20,117,0.16),rgba(255,255,255,0.96))] shadow-[0_18px_45px_rgba(0,0,0,0.22)] px-4 py-4 md:px-6 md:py-5">
                 {/* brilho suave */}
-                <div className="pointer-events-none absolute inset-0 opacity-90">
-                  <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-[rgba(255,255,255,0.95)] blur-3xl" />
-                  <div className="absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.32)] blur-3xl" />
+                <div className="pointer-events-none absolute inset-0 opacity-80">
+                  <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-[rgba(255,255,255,0.8)] blur-3xl" />
+                  <div className="absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.12)] blur-3xl" />
                 </div>
 
                 <div className="relative z-10 flex flex-col justify-between gap-2 md:gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-                        Um carinho pra você hoje
-                      </h3>
-                      <AppIcon
-                        name="heart"
-                        className="h-4 w-4 md:h-5 md:w-5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
-                        aria-hidden="true"
-                      />
-                    </div>
+                    <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                      Um carinho pra você hoje
+                    </h3>
 
-                    <p className="text-xs md:text-sm text-white/92 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+                    <p className="text-xs md:text-sm text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
                       &quot;{dailyMessage}&quot;
                     </p>
 
-                    <p className="text-[11px] md:text-xs text-white/85 leading-snug pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+                    <p className="text-[11px] md:text-xs text-white/80 leading-snug pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
                       Uma mensagem especial para começar seu dia com mais leveza.
                     </p>
                   </div>
@@ -149,9 +121,10 @@ export default function MaternarClient() {
                       onClick={() =>
                         track('maternar.daily_message_cta_click', {
                           timestamp: new Date().toISOString(),
+                          source: 'maternar_hub',
                         })
                       }
-                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-all duration-150 hover:gap-1"
+                      className="inline-flex items-center gap-0.5 text-xs md:text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)] transition-all duration-150 hover:gap-1"
                     >
                       <span>Preciso disso hoje</span>
                       <span aria-hidden="true">→</span>
