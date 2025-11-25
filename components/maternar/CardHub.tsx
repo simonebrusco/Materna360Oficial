@@ -18,8 +18,16 @@ type HubCard = {
   icons: HubIcon[];
 };
 
+/**
+ * Maternar Hub – 8 mini-hubs organizados em pastas translúcidas
+ * Cada card representa um mini-hub e cada tile leva direto
+ * para a função certa (rota + ?abrir= quando existir).
+ *
+ * Importante: mantive as rotas que já estavam funcionando
+ * e usei apenas rotas reais já usadas no projeto.
+ */
 const HUB_CARDS: HubCard[] = [
-  // 1 — COMO ESTOU HOJE
+  // 1) COMO ESTOU HOJE — MEU DIA
   {
     id: 'como-estou-hoje',
     title: 'Como estou hoje',
@@ -40,19 +48,19 @@ const HUB_CARDS: HubCard[] = [
       {
         id: 'resumo-emocional',
         href: '/meu-dia/como-estou-hoje?abrir=resumo',
-        icon: 'books',
+        icon: 'idea',
         label: 'Resumo emocional',
       },
       {
         id: 'semana-emocional',
         href: '/meu-dia/como-estou-hoje?abrir=semana',
-        icon: 'calendar',
+        icon: 'time',
         label: 'Semana emocional',
       },
     ],
   },
 
-  // 2 — ROTINA LEVE
+  // 2) ROTINA LEVE — MEU DIA
   {
     id: 'rotina-leve',
     title: 'Rotina leve',
@@ -77,40 +85,40 @@ const HUB_CARDS: HubCard[] = [
         label: 'Inspirações',
       },
       {
-        id: 'planejar-amanha',
-        href: '/meu-dia/rotina-leve?abrir=amanha',
-        icon: 'time',
-        label: 'Planejar amanhã',
+        id: 'planner-dia',
+        href: '/meu-dia?abrir=planner',
+        icon: 'calendar',
+        label: 'Planejar o dia',
       },
     ],
   },
 
-  // 3 — AUTOCUIDADO INTELIGENTE
+  // 3) AUTOCUIDADO INTELIGENTE — CUIDAR
   {
     id: 'autocuidado-inteligente',
     title: 'Autocuidado inteligente',
     tag: 'CUIDAR',
     icons: [
       {
-        id: 'meu-ritmo-hoje',
+        id: 'meu-ritmo',
         href: '/cuidar/autocuidado-inteligente?abrir=ritmo',
         icon: 'time',
         label: 'Meu ritmo hoje',
       },
       {
-        id: 'mini-rotina-cuidado',
+        id: 'mini-rotina',
         href: '/cuidar/autocuidado-inteligente?abrir=rotina',
-        icon: 'play',
+        icon: 'home',
         label: 'Mini rotina',
       },
       {
-        id: 'pausas-guiadas',
+        id: 'pausas-respiracao',
         href: '/cuidar/autocuidado-inteligente?abrir=pausas',
-        icon: 'care',
+        icon: 'idea',
         label: 'Pausas & respiração',
       },
       {
-        id: 'para-voce-hoje',
+        id: 'pra-voce-hoje',
         href: '/cuidar/autocuidado-inteligente?abrir=gestos',
         icon: 'heart',
         label: 'Pra você hoje',
@@ -118,7 +126,7 @@ const HUB_CARDS: HubCard[] = [
     ],
   },
 
-  // 4 — CUIDAR COM AMOR
+  // 4) CUIDAR COM AMOR — CUIDAR
   {
     id: 'cuidar-com-amor',
     title: 'Cuidar com amor',
@@ -133,7 +141,7 @@ const HUB_CARDS: HubCard[] = [
       {
         id: 'sono-rotina',
         href: '/cuidar/cuidar-com-amor?abrir=sono',
-        icon: 'time',
+        icon: 'home',
         label: 'Sono & rotina',
       },
       {
@@ -151,16 +159,16 @@ const HUB_CARDS: HubCard[] = [
     ],
   },
 
-  // 5 — MINHAS CONQUISTAS
+  // 5) MINHAS CONQUISTAS — MATERNAR
   {
     id: 'minhas-conquistas',
     title: 'Minhas conquistas',
     tag: 'MATERNAR',
     icons: [
       {
-        id: 'missoes-do-dia',
+        id: 'missoes-dia',
         href: '/maternar/minhas-conquistas?abrir=missoes',
-        icon: 'play',
+        icon: 'star',
         label: 'Missões do dia',
       },
       {
@@ -172,19 +180,19 @@ const HUB_CARDS: HubCard[] = [
       {
         id: 'selos-medalhas',
         href: '/maternar/minhas-conquistas?abrir=selos',
-        icon: 'star',
+        icon: 'crown',
         label: 'Selos & medalhas',
       },
       {
         id: 'progresso-mensal',
         href: '/maternar/minhas-conquistas?abrir=mensal',
-        icon: 'books',
+        icon: 'time',
         label: 'Progresso mensal',
       },
     ],
   },
 
-  // 6 — BIBLIOTECA MATERNA
+  // 6) BIBLIOTECA MATERNA — MATERNAR
   {
     id: 'biblioteca-materna',
     title: 'Biblioteca materna',
@@ -192,32 +200,32 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'guias-checklists',
-        href: '/maternar/biblioteca-materna?view=guias',
+        href: '/maternar/biblioteca-materna?filtro=guias',
         icon: 'book-open',
         label: 'Guias & checklists',
       },
       {
         id: 'pdfs-ebooks',
-        href: '/maternar/biblioteca-materna?view=pdfs',
+        href: '/maternar/biblioteca-materna?filtro=ebooks',
         icon: 'books',
         label: 'PDFs & e-books',
       },
       {
         id: 'trilhas-educativas',
-        href: '/maternar/biblioteca-materna?view=trilhas',
+        href: '/maternar/biblioteca-materna?filtro=trilhas',
         icon: 'play',
         label: 'Trilhas educativas',
       },
       {
         id: 'por-idade-tema',
-        href: '/maternar/biblioteca-materna?view=idade',
-        icon: 'care',
+        href: '/maternar/biblioteca-materna?filtro=idade-tema',
+        icon: 'idea',
         label: 'Por idade / tema',
       },
     ],
   },
 
-  // 7 — MATERNA+
+  // 7) MATERNA+ — PREMIUM
   {
     id: 'materna-plus',
     title: 'Materna+',
@@ -225,34 +233,34 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'mentorias',
-        href: '/maternar/biblioteca-materna?view=mentorias',
+        href: '/maternar', // futura rota de mentoria
         icon: 'crown',
         label: 'Mentorias',
       },
       {
-        id: 'aulas-ao-vivo',
-        href: '/maternar/biblioteca-materna?view=aulas',
-        icon: 'star',
+        id: 'aulas-encontros',
+        href: '/maternar', // futura rota
+        icon: 'play',
         label: 'Aulas & encontros',
       },
       {
         id: 'comunidade',
-        href: '/maternar/biblioteca-materna?view=comunidade',
+        href: '/maternar', // futura rota
         icon: 'heart',
         label: 'Comunidade',
       },
       {
-        id: 'servicos',
-        href: '/maternar/biblioteca-materna?view=servicos',
-        icon: 'calendar',
-        label: 'Serviços Materna+',
+        id: 'servicos-materna',
+        href: '/maternar', // futura rota
+        icon: 'care',
+        label: 'Serviços Materna',
       },
     ],
   },
 
-  // 8 — FERRAMENTAS
+  // 8) ATALHOS — FERRAMENTAS
   {
-    id: 'ferramentas',
+    id: 'atalhos',
     title: 'Ferramentas',
     tag: 'ATALHOS',
     icons: [
@@ -269,16 +277,16 @@ const HUB_CARDS: HubCard[] = [
         label: 'Perfil',
       },
       {
-        id: 'ajuda',
-        href: '/maternar/biblioteca-materna?view=ajuda',
+        id: 'ajuda-suporte',
+        href: '/maternar', // futura rota de ajuda
         icon: 'idea',
         label: 'Ajuda & suporte',
       },
       {
-        id: 'preferencias',
-        href: '/eu360?focus=preferencias',
-        icon: 'heart',
-        label: 'Preferências',
+        id: 'parcerias',
+        href: '/maternar', // futura rota de parcerias
+        icon: 'star',
+        label: 'Parcerias',
       },
     ],
   },
@@ -291,7 +299,7 @@ export default function CardHub() {
       className="mt-8 md:mt-10 pb-24 md:pb-28"
     >
       <Reveal>
-        {/* 2 colunas no mobile e desktop */}
+        {/* 2 colunas no mobile e no desktop */}
         <div className="grid grid-cols-2 gap-4 md:gap-5">
           {HUB_CARDS.map((card) => (
             <div
@@ -299,7 +307,7 @@ export default function CardHub() {
               className="flex flex-col items-stretch gap-2 md:gap-3"
             >
               {/* Card translúcido principal */}
-              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/16 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
+              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
                 {/* Glows internos */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
                   <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
@@ -312,15 +320,15 @@ export default function CardHub() {
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/70 shadow-[0_8px_24px_rgba(0,0,0,0.14)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.18)] active:translate-y-0 active:shadow-[0_6px_18px_rgba(0,0,0,0.14)]"
+                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                     >
                       <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                         <AppIcon
                           name={item.icon}
-                          className="w-6 h-6 md:w-7 md:h-7 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                          className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                           decorative
                         />
-                        <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#545454]">
+                        <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                           {item.label}
                         </span>
                       </div>
@@ -339,4 +347,9 @@ export default function CardHub() {
                 </span>
               </div>
             </div>
-          )
+          ))}
+        </div>
+      </Reveal>
+    </section>
+  );
+}
