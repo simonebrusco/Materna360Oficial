@@ -34,7 +34,7 @@ function generateSummaryText(
           </span>{' '}
           e escolheu um dia{' '}
           <span className="font-semibold text-[#FF1475]">{day}</span>. Que tal
-            começar definindo suas três prioridades?
+          começar definindo suas três prioridades?
         </>
       ),
     }
@@ -77,6 +77,13 @@ function generateSummaryText(
       </>
     ),
   }
+}
+
+function scrollToSection(id: string) {
+  if (typeof document === 'undefined') return
+  const el = document.getElementById(id)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 export function MeuDiaClient() {
@@ -225,7 +232,78 @@ export function MeuDiaClient() {
             </section>
           </Reveal>
 
-          {/* BLOCO 2 — GRID DE WIDGETS DO PLANNER (ESTILO HOME DO CELULAR) */}
+          {/* BLOCO 2 — ATALHOS EM GRID (ESTILO HOME / HUB) */}
+          <Reveal delay={60}>
+            <section aria-label="Atalhos rápidos do planner de hoje">
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('prioridades')}
+                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
+                >
+                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Foco
+                  </p>
+                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
+                    Prioridades de hoje
+                  </p>
+                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
+                    Toque para definir até três prioridades.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('sugestoes')}
+                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
+                >
+                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Inspiração
+                  </p>
+                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
+                    Sugestões do momento
+                  </p>
+                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
+                    Ideias e conteúdos baseados no seu humor e intenção do dia.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('planner-semanal')}
+                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
+                >
+                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Rotina
+                  </p>
+                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
+                    Compromissos & semana
+                  </p>
+                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
+                    Veja hoje e os próximos dias em uma visão leve.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('sugestoes')}
+                  className="rounded-3xl bg-white/90 border border-[#FFE8F2] px-3 py-3 md:px-4 md:py-4 text-left shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition-shadow"
+                >
+                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#FF1475]">
+                    Cuidado
+                  </p>
+                  <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
+                    Um carinho pra você
+                  </p>
+                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
+                    Use as sugestões para encontrar um respiro no seu dia.
+                  </p>
+                </button>
+              </div>
+            </section>
+          </Reveal>
+
+          {/* BLOCO 3 — GRID DE WIDGETS DO PLANNER */}
           <Reveal delay={100}>
             <section className="space-y-4">
               {/* Título geral do painel */}
@@ -247,6 +325,7 @@ export function MeuDiaClient() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Widget — Prioridades do Dia */}
                 <SoftCard
+                  id="prioridades"
                   className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.10)]
                              flex flex-col justify-between"
                 >
@@ -269,6 +348,7 @@ export function MeuDiaClient() {
 
                 {/* Widget — Sugestões Inteligentes */}
                 <SoftCard
+                  id="sugestoes"
                   className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.10)]
                              flex flex-col justify-between"
                 >
@@ -295,6 +375,7 @@ export function MeuDiaClient() {
 
                 {/* Widget — Planner Semanal / Calendário */}
                 <SoftCard
+                  id="planner-semanal"
                   className="relative overflow-hidden rounded-3xl bg-white/92 border border-[#FFE8F2] p-5 md:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.10)]
                              md:col-span-2"
                 >
