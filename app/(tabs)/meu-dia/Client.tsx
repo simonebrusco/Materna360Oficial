@@ -246,9 +246,6 @@ export function MeuDiaClient() {
                   <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
                     Prioridades de hoje
                   </p>
-                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
-                    Toque para definir até três prioridades.
-                  </p>
                 </button>
 
                 <button
@@ -261,9 +258,6 @@ export function MeuDiaClient() {
                   </p>
                   <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
                     Sugestões do momento
-                  </p>
-                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
-                    Ideias e conteúdos baseados no seu humor e intenção do dia.
                   </p>
                 </button>
 
@@ -278,9 +272,6 @@ export function MeuDiaClient() {
                   <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
                     Compromissos & semana
                   </p>
-                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
-                    Veja hoje e os próximos dias em uma visão leve.
-                  </p>
                 </button>
 
                 <button
@@ -293,9 +284,6 @@ export function MeuDiaClient() {
                   </p>
                   <p className="text-xs md:text-sm font-semibold text-[#2F3A56]">
                     Um carinho pra você
-                  </p>
-                  <p className="mt-1 text-[11px] md:text-xs text-[#6A6A6A]">
-                    Use as sugestões para encontrar um respiro no seu dia.
                   </p>
                 </button>
               </div>
@@ -312,11 +300,6 @@ export function MeuDiaClient() {
                 <h3 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
                   Veja seu dia em um único lugar
                 </h3>
-                <p className="text-xs md:text-sm text-[#6A6A6A] max-w-xl">
-                  Acompanhe prioridades, inspirações e compromissos com a
-                  sensação de tela inicial, mas com a profundidade do Planner
-                  Materna360.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -347,3 +330,4 @@ export function MeuDiaClient() {
 }
 
 export default MeuDiaClient
+
