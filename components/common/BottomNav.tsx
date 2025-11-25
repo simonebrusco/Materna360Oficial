@@ -13,8 +13,8 @@ type Item = {
 };
 
 /**
- * 3-item premium dock navigation
- * Agora em versão mais estática (não flutuante pela tela)
+ * 3-item premium floating dock navigation
+ * Mobile-first design with floating pill bar style
  */
 const ITEMS: Item[] = [
   {
@@ -64,17 +64,20 @@ export default function BottomNav({
   return (
     <nav
       className="
-        w-full
-        bg-white/92 backdrop-blur-2xl
-        border-t border-[#FFD8E6]
-        shadow-[0_-10px_30px_rgba(0,0,0,0.14)]
+        fixed inset-x-4 bottom-4
+        z-40
+        max-w-3xl mx-auto
+        rounded-full
+        bg-white/14 backdrop-blur-2xl
+        border border-white/40
+        shadow-[0_18px_45px_rgba(0,0,0,0.35)]
       "
       role="navigation"
       aria-label="Main navigation"
-      data-debug-nav={debugNav ?? 'count:3;premium-dock-static'}
+      data-debug-nav={debugNav ?? 'count:3;floating-dock'}
       {...props}
     >
-      <ul className="flex items-center justify-between gap-2 px-4 py-3 max-w-3xl mx-auto">
+      <ul className="flex items-center justify-between gap-2 px-4 py-2.5">
         {ITEMS.map((item) => {
           const isActive = item.match
             ? item.match(pathname)
@@ -90,12 +93,10 @@ export default function BottomNav({
                   px-3 py-2
                   rounded-2xl
                   transition-all duration-200
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1475]/60
-                  active:scale-95
-                  ${
-                    isActive
-                      ? 'bg-[#FF1475]/10 border border-[#FF1475]/40 shadow-[0_0_18px_rgba(253,37,151,0.35)]'
-                      : 'bg-transparent border border-transparent hover:opacity-85'
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,0,94,0.55)]
+                  ${isActive
+                    ? 'bg-white text-[var(--color-brand)] shadow-[0_0_20px_rgba(255,0,94,0.45)]'
+                    : 'bg-transparent text-white/80 hover:bg-white/10'
                   }
                 `}
                 aria-label={item.label}
@@ -103,21 +104,20 @@ export default function BottomNav({
               >
                 <AppIcon
                   name={item.icon}
-                  size={isActive ? 18 : 16}
+                  size={18}
                   className={
                     isActive
-                      ? 'text-[#FF1475] transition-all duration-200'
-                      : 'text-[#545454]/70 transition-all duration-200'
+                      ? 'text-[var(--color-brand)] transition-all duration-200'
+                      : 'text-white/85 transition-all duration-200'
                   }
                   decorative
                 />
                 <span
                   className={`
                     text-[11px] leading-tight transition-all duration-200
-                    ${
-                      isActive
-                        ? 'font-semibold text-[#FF1475]'
-                        : 'font-medium text-[#545454] opacity-80'
+                    ${isActive
+                      ? 'font-semibold text-[var(--color-brand)]'
+                      : 'font-medium text-white/85'
                     }
                   `}
                 >
