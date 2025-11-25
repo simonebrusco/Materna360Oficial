@@ -303,14 +303,14 @@ export default function WeeklyPlannerShell() {
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
         {/* MINI CALENDÁRIO + TOGGLE */}
-        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
+        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <AppIcon
                 name="calendar"
-                className="w-5 h-5 text-[var(--color-brand)] flex-shrink-0"
+                className="w-5 h-5 text-[var(--color-brand)]"
               />
-              <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)] capitalize truncate">
+              <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)] capitalize">
                 {monthYear}
               </h2>
             </div>
@@ -338,13 +338,11 @@ export default function WeeklyPlannerShell() {
             </div>
           </div>
 
-          <div className="relative z-10 pointer-events-auto">
-            <DayCalendarStrip
-              selectedDate={selectedDate}
-              selectedDateKey={selectedDateKey}
-              onDateSelect={handleDateSelect}
-            />
-          </div>
+          <DayCalendarStrip
+            selectedDate={selectedDate}
+            selectedDateKey={selectedDateKey}
+            onDateSelect={handleDateSelect}
+          />
 
           <div className="space-y-1">
             <p className="text-sm text-[var(--color-text-muted)] text-center">
@@ -362,12 +360,12 @@ export default function WeeklyPlannerShell() {
         {/* VISÃO DIA */}
         {viewMode === 'day' && (
           <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
-            {/* PAR 1 */}
+            {/* PAR 1 — Prioridades + Casa & rotina */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-              <div className="flex h-full max-w-full">
-                <div className="space-y-3 w-full flex flex-col overflow-hidden">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    VOCÊ
+                    Você
                   </span>
                   <div>
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
@@ -386,18 +384,17 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
 
-              <div className="flex h-full max-w-full">
-                <div className="space-y-3 w-full flex flex-col overflow-hidden">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    ROTINA
+                    Rotina
                   </span>
                   <div>
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                       Casa &amp; rotina
                     </h2>
                     <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Compromissos com horário, para enxergar seu dia com
-                      clareza.
+                      Compromissos com horário, para enxergar seu dia com clareza.
                     </p>
                   </div>
                   <AgendaSection
@@ -409,12 +406,12 @@ export default function WeeklyPlannerShell() {
               </div>
             </section>
 
-            {/* PAR 2 */}
+            {/* PAR 2 — Cuidar de mim + Cuidar do meu filho */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-              <div className="flex h-full max-w-full">
-                <div className="space-y-3 w-full flex flex-col overflow-hidden">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    VOCÊ
+                    Você
                   </span>
                   <div>
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
@@ -437,10 +434,10 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
 
-              <div className="flex h-full max-w-full">
-                <div className="space-y-3 w-full flex flex-col overflow-hidden">
+              <div className="flex h-full">
+                <div className="space-y-3 w-full flex flex-col">
                   <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    SEU FILHO
+                    Seu filho
                   </span>
                   <div>
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
@@ -468,38 +465,17 @@ export default function WeeklyPlannerShell() {
               </div>
             </section>
 
-            {/* LEMBRETES */}
-            <div className="space-y-3 max-w-full overflow-hidden">
+            {/* INSPIRAÇÕES — agora vem antes dos lembretes */}
+            <div className="space-y-3">
               <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                LEMBRETES
-              </span>
-              <div>
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                  Lembretes rápidos
-                </h2>
-                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                  Anotações soltas para não esquecer.
-                </p>
-              </div>
-              <NotesSection
-                content={plannerData.notes}
-                onChange={handleNotesChange}
-                hideTitle
-              />
-            </div>
-
-            {/* INSPIRAÇÕES */}
-            <div className="space-y-3 max-w-full overflow-hidden">
-              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                INSPIRAÇÕES
+                Inspirações
               </span>
               <div>
                 <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
                   Inspirações &amp; conteúdos salvos
                 </h2>
                 <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                  Receitas, ideias e conteúdos que você salvou para usar quando
-                  precisar.
+                  Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs para acessar quando precisar.
                 </p>
               </div>
 
@@ -525,8 +501,7 @@ export default function WeeklyPlannerShell() {
                     className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
                   />
                   <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                    Quando você salvar receitas, brincadeiras ou conteúdos nos
-                    mini-hubs, eles aparecem aqui.
+                    Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
                   </p>
                   <a
                     href="/biblioteca-materna"
@@ -537,6 +512,26 @@ export default function WeeklyPlannerShell() {
                   </a>
                 </SoftCard>
               )}
+            </div>
+
+            {/* LEMBRETES — mais “post-it” e logo depois */}
+            <div className="space-y-3">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+                Lembretes
+              </span>
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                  Lembretes rápidos
+                </h2>
+                <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+                  Anotações soltas para não esquecer — como um post-it digital.
+                </p>
+              </div>
+              <NotesSection
+                content={plannerData.notes}
+                onChange={handleNotesChange}
+                hideTitle
+              />
             </div>
           </div>
         )}
