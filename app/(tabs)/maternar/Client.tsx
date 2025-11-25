@@ -55,9 +55,10 @@ export default function MaternarClient() {
   const dailyMessage = DAILY_MESSAGES[dayIndex];
 
   return (
-    <main
-      data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-24 bg-[#FFE8F2] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_32%,#FF7BB1_65%,#FFD3E6_100%)]"
+   <main
+  data-layout="page-template-v1"
+  className="min-h-[100dvh] pb-32 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+>
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
