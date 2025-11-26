@@ -6,7 +6,6 @@ import React, {
   useEffect,
   useMemo,
 } from 'react'
-import Link from 'next/link'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { useSavedInspirations } from '@/app/hooks/useSavedInspirations'
@@ -55,6 +54,8 @@ type PlannerData = {
   notes: string
 }
 
+type ShortcutModalType = 'priorities' | 'agenda' | 'self' | 'child' | null
+
 export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
@@ -77,10 +78,12 @@ export default function WeeklyPlannerShell() {
   const [viewMode, setViewMode] =
     useState<'day' | 'week'>('day')
 
-  const [modalDate, setModalDate] = useState<Date | null>(
-    null
-  )
+  const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // modal dos atalhos (vidro)
+  const [shortcutModal, setShortcutModal] =
+    useState<ShortcutModalType>(null)
 
   // ===========================
   // HYDRATION
@@ -370,7 +373,7 @@ export default function WeeklyPlannerShell() {
                       {day.getDate()}
                     </button>
                   ) : (
-                    <div key={i} className="h-8 md:h-9"></div>
+                    <div key={i} className="h-8 md:h-9" />
                   )
                 )}
               </div>
@@ -484,11 +487,11 @@ export default function WeeklyPlannerShell() {
                         Comece pelo que faz mais sentido hoje
                       </h2>
                       <p className="mt-1 mb-3 text-sm text-[var(--color-text-muted)] font-poppins">
-                        Toque em um atalho para ir direto para prioridades, agenda ou cuidados.
+                        Toque em um atalho para abrir um cartão rápido de prioridades, agenda ou cuidados.
                       </p>
                     </div>
 
-                    {/* Card espelhado translucido estilo Maternar */}
+                    {/* Card vidro 2x2 (mantém visual atual) */}
                     <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] h-full">
                       {/* Glows de fundo */}
                       <div className="pointer-events-none absolute inset-0 opacity-80">
@@ -499,8 +502,9 @@ export default function WeeklyPlannerShell() {
                       {/* Grid 2x2 de atalhos */}
                       <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
                         {/* Prioridades do dia */}
-                        <Link
-                          href="#prioridades-dia"
+                        <button
+                          type="button"
+                          onClick={() => setShortcutModal('priorities')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -526,11 +530,12 @@ export default function WeeklyPlannerShell() {
                               Prioridades do dia
                             </span>
                           </div>
-                        </Link>
+                        </button>
 
                         {/* Agenda & compromissos */}
-                        <Link
-                          href="#agenda-compromissos"
+                        <button
+                          type="button"
+                          onClick={() => setShortcutModal('agenda')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -556,11 +561,12 @@ export default function WeeklyPlannerShell() {
                               Agenda &amp; compromissos
                             </span>
                           </div>
-                        </Link>
+                        </button>
 
                         {/* Cuidar de mim */}
-                        <Link
-                          href="#cuidar-de-mim"
+                        <button
+                          type="button"
+                          onClick={() => setShortcutModal('self')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -584,11 +590,12 @@ export default function WeeklyPlannerShell() {
                               Cuidar de mim
                             </span>
                           </div>
-                        </Link>
+                        </button>
 
                         {/* Cuidar do meu filho */}
-                        <Link
-                          href="#cuidar-do-meu-filho"
+                        <button
+                          type="button"
+                          onClick={() => setShortcutModal('child')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -615,7 +622,7 @@ export default function WeeklyPlannerShell() {
                               Cuidar do meu filho
                             </span>
                           </div>
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -723,7 +730,7 @@ export default function WeeklyPlannerShell() {
       </Reveal>
 
       {/* =====================================================
-                MODAL DE NOVO COMPROMISSO
+                MODAL DE NOVO COMPROMISSO (calendário)
       ===================================================== */}
       {isModalOpen && modalDate && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
@@ -754,12 +761,101 @@ export default function WeeklyPlannerShell() {
           </div>
         </div>
       )}
+
+      {/* =====================================================
+                MODAL DOS ATALHOS (cards vidro)
+      ===================================================== */}
+      {shortcutModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-[var(--color-text-main)]">
+                {shortcutModal === 'priorities' && 'Prioridades do dia'}
+                {shortcutModal === 'agenda' && 'Agenda & compromissos'}
+                {shortcutModal === 'self' && 'Cuidar de mim'}
+                {shortcutModal === 'child' && 'Cuidar do meu filho'}
+              </h3>
+              <button
+                onClick={() => setShortcutModal(null)}
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Conteúdo espelhando os cards brancos */}
+            <div className="space-y-3">
+              {shortcutModal === 'priorities' && (
+                <>
+                  <p className="text-sm text-[var(--color-text-muted)]">
+                    Comece adicionando sua primeira prioridade do dia. Você não precisa preencher as três:
+                    às vezes, uma única prioridade já muda o dia.
+                  </p>
+                  <Top3Section
+                    items={plannerData.top3}
+                    onToggle={handleToggleTop3}
+                    onAdd={handleAddTop3}
+                    hideTitle
+                  />
+                </>
+              )}
+
+              {shortcutModal === 'agenda' && (
+                <>
+                  <p className="text-sm text-[var(--color-text-muted)]">
+                    Adicione compromissos rápidos para hoje e organize sua rotina em poucos toques.
+                  </p>
+                  <AgendaSection
+                    items={plannerData.appointments}
+                    onAddAppointment={handleAddAppointment}
+                    hideTitle
+                  />
+                </>
+              )}
+
+              {shortcutModal === 'self' && (
+                <>
+                  <p className="text-sm text-[var(--color-text-muted)]">
+                    Use este espaço para registrar pequenas pausas, respirações e gestos por você.
+                  </p>
+                  <CareSection
+                    title="Cuidar de mim"
+                    subtitle="Gestos de autocuidado"
+                    icon="heart"
+                    items={plannerData.careItems}
+                    onToggle={(id) => handleToggleCareItem(id, 'care')}
+                    onAdd={(t) => handleAddCareItem(t, 'care')}
+                    hideTitle
+                  />
+                </>
+              )}
+
+              {shortcutModal === 'child' && (
+                <>
+                  <p className="text-sm text-[var(--color-text-muted)]">
+                    Tarefas que aproximam sua família e organizam a rotina com seu filho.
+                  </p>
+                  <CareSection
+                    title="Cuidar do meu filho"
+                    subtitle="Momentos em família"
+                    icon="smile"
+                    items={plannerData.familyItems}
+                    onToggle={(id) => handleToggleCareItem(id, 'family')}
+                    onAdd={(t) => handleAddCareItem(t, 'family')}
+                    hideTitle
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 // =====================================================
-// GERADOR DO CALENDÁRIO (IDÊNTICO AO DO TERM)
+// GERADOR DO CALENDÁRIO
 // =====================================================
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
@@ -799,7 +895,7 @@ function generateWeekData(base: Date) {
 }
 
 // =====================================================
-// FORM DO MODAL (COMPROMISSO)
+// FORM DO MODAL (COMPROMISSO DO CALENDÁRIO)
 // =====================================================
 function ModalAppointmentForm({
   onSubmit,
