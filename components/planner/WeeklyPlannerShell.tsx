@@ -79,32 +79,25 @@ export default function WeeklyPlannerShell() {
     notes: '',
   })
 
-  // mês atual mostrado no calendário (sempre dia 1)
-  const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
-
-  // visão: mês ou semana
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
 
-  // ==== HYDRATAÇÃO INICIAL ====
+  // ===== HYDRATAÇÃO INICIAL =====
   useEffect(() => {
     const today = new Date()
     const dateKey = getBrazilDateKey(today)
-
     setSelectedDateKey(dateKey)
-    setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
-
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
   }, [plannerHook])
 
-  // Mantém o hook do planner sincronizado com o dia selecionado
+  // mantém hook do planner em sincronia
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
-  // ==== CARREGAR ESTADO DO DIA ====
+  // ===== CARREGAR ESTADO DO DIA =====
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
@@ -134,7 +127,7 @@ export default function WeeklyPlannerShell() {
     setPlannerData(loadedData)
   }, [selectedDateKey, isHydrated])
 
-  // ==== SALVAR QUANDO MUDA ====
+  // ===== SALVAR QUANDO MUDA =====
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(
@@ -166,7 +159,7 @@ export default function WeeklyPlannerShell() {
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
-  // ==== HANDLERS ====
+  // ===== HANDLERS =====
   const handleAddAppointment = useCallback(
     (appointment: Omit<Appointment, 'id'>) => {
       const newAppointment: Appointment = {
@@ -260,19 +253,30 @@ export default function WeeklyPlannerShell() {
     setSelectedDateKey(newDateKey)
   }, [])
 
+  // mudar mês usando SEMPRE o selectedDate como base
   const handleMonthChange = useCallback(
     (direction: 'prev' | 'next') => {
-      setCurrentMonth((prev) => {
-        if (!prev) return prev
-        const next = new Date(prev)
-        next.setMonth(prev.getMonth() + (direction === 'next' ? 1 : -1))
-        return new Date(next.getFullYear(), next.getMonth(), 1)
-      })
+      if (!selectedDateKey) return
+      const [year, month, day] = selectedDateKey
+        .split('-')
+        .map(Number)
+
+      const base = new Date(year, month - 1, day)
+      base.setMonth(base.getMonth() + (direction === 'next' ? 1 : -1))
+
+      // sempre joga para o dia 1 do novo mês (mais previsível)
+      const newMonthDate = new Date(
+        base.getFullYear(),
+        base.getMonth(),
+        1,
+      )
+      const newKey = getBrazilDateKey(newMonthDate)
+      setSelectedDateKey(newKey)
     },
-    [],
+    [selectedDateKey],
   )
 
-  // ==== DERIVADOS ====
+  // ===== DERIVADOS =====
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
     const [year, month, day] = selectedDateKey.split('-').map(Number)
@@ -280,26 +284,25 @@ export default function WeeklyPlannerShell() {
   }, [selectedDateKey, isHydrated])
 
   const monthYearLabel = useMemo(() => {
-    if (!currentMonth) return ''
-    return currentMonth.toLocaleDateString('pt-BR', {
+    if (!isHydrated || !selectedDateKey) return ''
+    const [year, month] = selectedDateKey.split('-').map(Number)
+    const base = new Date(year, month - 1, 1)
+    return base.toLocaleDateString('pt-BR', {
       month: 'long',
       year: 'numeric',
     })
-  }, [currentMonth])
+  }, [selectedDateKey, isHydrated])
 
   const capitalizedDateFormatted = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return ''
     const [year, month, day] = selectedDateKey.split('-').map(Number)
     const date = new Date(year, month - 1, day)
-    const selectedDateFormatted = date.toLocaleDateString('pt-BR', {
+    const formatted = date.toLocaleDateString('pt-BR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     })
-    return (
-      selectedDateFormatted.charAt(0).toUpperCase() +
-      selectedDateFormatted.slice(1)
-    )
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1)
   }, [selectedDateKey, isHydrated])
 
   const getMonday = (date: Date) => {
@@ -318,8 +321,7 @@ export default function WeeklyPlannerShell() {
 
     return {
       dayNumber,
-      dayName:
-        dayName.charAt(0).toUpperCase() + dayName.slice(1),
+      dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
       agendaCount: Math.floor(Math.random() * 3),
       top3Count: Math.floor(Math.random() * 2),
       careCount: Math.floor(Math.random() * 2),
@@ -327,23 +329,23 @@ export default function WeeklyPlannerShell() {
     }
   })
 
+  // GRID DO MÊS baseado no mês do selectedDate
   const monthGrid: MonthCell[] = useMemo(() => {
-    if (!currentMonth) return []
+    if (!isHydrated || !selectedDateKey) return []
 
-    const year = currentMonth.getFullYear()
-    const month = currentMonth.getMonth()
+    const [year, month] = selectedDateKey.split('-').map(Number)
+    const firstOfMonth = new Date(year, month - 1, 1)
+    const lastOfMonth = new Date(year, month, 0)
 
-    const firstOfMonth = new Date(year, month, 1)
-    const lastOfMonth = new Date(year, month + 1, 0)
-
-    const startWeekday = firstOfMonth.getDay() === 0 ? 7 : firstOfMonth.getDay()
+    const startWeekday =
+      firstOfMonth.getDay() === 0 ? 7 : firstOfMonth.getDay()
     const daysInMonth = lastOfMonth.getDate()
 
     const cells: MonthCell[] = []
 
-    // dias anteriores para completar a linha
+    // dias anteriores
     for (let i = startWeekday - 1; i > 0; i--) {
-      const d = new Date(year, month, 1 - i)
+      const d = new Date(year, month - 1, 1 - i)
       cells.push({
         date: d,
         isCurrentMonth: false,
@@ -354,7 +356,7 @@ export default function WeeklyPlannerShell() {
 
     // dias do mês atual
     for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month, day)
+      const d = new Date(year, month - 1, day)
       cells.push({
         date: d,
         isCurrentMonth: true,
@@ -377,15 +379,15 @@ export default function WeeklyPlannerShell() {
     }
 
     return cells
-  }, [currentMonth, selectedDateKey])
+  }, [selectedDateKey, isHydrated])
 
   if (!isHydrated) return null
 
   return (
     <Reveal delay={200}>
       <div className="space-y-6 md:space-y-8">
-        {/* PLANNER — card largo, layout limpo */}
-        <SoftCard className="p-4 md:p-6 space-y-4 md:space-y-5 max-w-3xl mx-auto">
+        {/* PLANNER — largura controlada, layout limpo */}
+        <SoftCard className="p-4 md:p-5 space-y-4 md:space-y-5 max-w-2xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-2">
               <AppIcon
@@ -397,7 +399,8 @@ export default function WeeklyPlannerShell() {
                   Seu planner de hoje
                 </span>
                 <span className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                  Tudo o que você organiza aqui vale para o dia selecionado.
+                  Tudo o que você organiza aqui vale para o dia
+                  selecionado.
                 </span>
               </div>
             </div>
@@ -418,7 +421,7 @@ export default function WeeklyPlannerShell() {
                 <button
                   type="button"
                   onClick={() => handleMonthChange('next')}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-xs text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-brand)] transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-xs text-[var(--color-text-muted)] hover:bg.white/70 hover:text-[var(--color-brand)] transition-colors"
                 >
                   ›
                 </button>
@@ -485,7 +488,9 @@ export default function WeeklyPlannerShell() {
                         !isSelected &&
                           !isDisabled &&
                           'hover:bg-[var(--color-soft-strong)] hover:text-[var(--color-brand)]',
-                        isToday && !isSelected && 'ring-1 ring-[var(--color-brand)]/35',
+                        isToday &&
+                          !isSelected &&
+                          'ring-1 ring-[var(--color-brand)]/35',
                       ]
                         .filter(Boolean)
                         .join(' ')}
@@ -504,7 +509,8 @@ export default function WeeklyPlannerShell() {
                   </span>
                 </p>
                 <p className="text-[10px] text-[var(--color-text-muted)]/70">
-                  Toque em outro dia para adicionar compromissos e organizar sua rotina.
+                  Toque em outro dia para adicionar compromissos e organizar sua
+                  rotina.
                 </p>
               </div>
             </div>
@@ -525,7 +531,7 @@ export default function WeeklyPlannerShell() {
           )}
         </SoftCard>
 
-        {/* VISÃO DIA — cards abaixo do planner (tudo como já estava, com salvamento) */}
+        {/* VISÃO DIA — cards abaixo, com toda a lógica preservada */}
         <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
           {/* PAR 1 — Prioridades + Agenda */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
@@ -561,7 +567,8 @@ export default function WeeklyPlannerShell() {
                     Agenda &amp; compromissos
                   </h2>
                   <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                    Compromissos com horário, para enxergar seu dia com clareza.
+                    Compromissos com horário, para enxergar seu dia com
+                    clareza.
                   </p>
                 </div>
                 <AgendaSection
@@ -642,7 +649,8 @@ export default function WeeklyPlannerShell() {
                 Inspirações &amp; conteúdos salvos
               </h2>
               <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs para acessar quando precisar.
+                Receitas, ideias, brincadeiras e conteúdos que você salvou nos
+                mini-hubs para acessar quando precisar.
               </p>
             </div>
 
@@ -668,7 +676,8 @@ export default function WeeklyPlannerShell() {
                   className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
                 />
                 <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                  Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
+                  Quando você salvar receitas, brincadeiras ou conteúdos nos
+                  mini-hubs, eles aparecem aqui.
                 </p>
                 <a
                   href="/biblioteca-materna"
@@ -724,4 +733,3 @@ function isSameDateKey(date: Date, key: string) {
     date.getDate() === day
   )
 }
-
