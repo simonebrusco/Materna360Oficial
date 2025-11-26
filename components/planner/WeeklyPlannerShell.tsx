@@ -558,119 +558,180 @@ export default function WeeklyPlannerShell() {
   </div>
 </SoftCard>
 
-          {/* ================= VISÃO DIA ================= */}
-          {viewMode === 'day' && (
-            <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
-              {/* PAR 1 — Prioridades + Casa & rotina */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                <div className="flex h-full">
-                  <div className="space-y-3 w-full flex flex-col">
-                    <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                      Você
-                    </span>
-                    <div>
-                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                        Prioridades do dia
-                      </h2>
-                      <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                        Escolha até três coisas que realmente importam
-                        hoje.
-                      </p>
-                    </div>
-                    <Top3Section
-                      items={plannerData.top3}
-                      onToggle={handleToggleTop3}
-                      onAdd={handleAddTop3}
-                      hideTitle
-                    />
-                  </div>
-                </div>
+          {/* VISÃO DIA */}
+{viewMode === 'day' && (
+  <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
+    {/* 1 — INSPIRAÇÕES · logo depois do calendário */}
+    <section className="space-y-3">
+      <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+        Inspirações
+      </span>
+      <div>
+        <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+          Inspirações &amp; conteúdos salvos
+        </h2>
+        <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+          Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs para acessar quando precisar.
+        </p>
+      </div>
 
-                <div className="flex h-full">
-                  <div className="space-y-3 w-full flex flex-col">
-                    <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                      Rotina
-                    </span>
-                    <div>
-                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                        Agenda &amp; compromissos
-                      </h2>
-                      <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                        Compromissos com horário, para enxergar seu dia
-                        com clareza.
-                      </p>
-                    </div>
-                    <AgendaSection
-                      items={plannerData.appointments}
-                      onAddAppointment={handleAddAppointment}
-                      hideTitle
-                    />
-                  </div>
-                </div>
-              </section>
+      {plannerHook.items.length > 0 || savedContents.length > 0 ? (
+        <>
+          <SavedContentsSection
+            contents={savedContents}
+            plannerContents={plannerHook.items}
+            onItemClick={handleOpenSavedItem}
+            hideTitle
+          />
+          <SavedContentDrawer
+            open={isSavedItemOpen}
+            onClose={handleCloseSavedItem}
+            item={selectedSavedItem}
+          />
+        </>
+      ) : (
+        <SoftCard className="p-5 md:p-6 text-center py-6">
+          <AppIcon
+            name="bookmark"
+            className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+          />
+          <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
+            Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui.
+          </p>
+          <a
+            href="/biblioteca-materna"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+          >
+            Ver tudo na Biblioteca Materna
+            <AppIcon name="arrow-right" className="w-4 h-4" />
+          </a>
+        </SoftCard>
+      )}
+    </section>
 
-              {/* PAR 2 — Cuidar de mim + Cuidar do meu filho */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                <div className="flex h-full">
-                  <div className="space-y-3 w-full flex flex-col">
-                    <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                      Você
-                    </span>
-                    <div>
-                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                        Cuidar de mim
-                      </h2>
-                      <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                        Pequenos gestos que cuidam da sua energia.
-                      </p>
-                    </div>
-                    <CareSection
-                      title="Cuidar de mim"
-                      subtitle="Atividades de autocuidado."
-                      icon="heart"
-                      items={plannerData.careItems}
-                      onToggle={(id) =>
-                        handleToggleCareItem(id, 'care')
-                      }
-                      onAdd={(title) =>
-                        handleAddCareItem(title, 'care')
-                      }
-                      placeholder="Novo gesto de autocuidado…"
-                      hideTitle
-                    />
-                  </div>
-                </div>
+    {/* 2 — PAR 1 · Prioridades + Agenda & compromissos */}
+    <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+      <div className="flex h-full">
+        <div className="space-y-3 w-full flex flex-col">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+            Você
+          </span>
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+              Prioridades do dia
+            </h2>
+            <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+              Escolha até três coisas que realmente importam hoje.
+            </p>
+          </div>
+          <Top3Section
+            items={plannerData.top3}
+            onToggle={handleToggleTop3}
+            onAdd={handleAddTop3}
+            hideTitle
+          />
+        </div>
+      </div>
 
-                <div className="flex h-full">
-                  <div className="space-y-3 w-full flex flex-col">
-                    <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                      Seu filho
-                    </span>
-                    <div>
-                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                        Cuidar do meu filho
-                      </h2>
-                      <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
-                        Um momento de conexão faz diferença no dia.
-                      </p>
-                    </div>
-                    <CareSection
-                      title="Cuidar da família"
-                      subtitle="Tarefas com os filhos."
-                      icon="smile"
-                      items={plannerData.familyItems}
-                      onToggle={(id) =>
-                        handleToggleCareItem(id, 'family')
-                      }
-                      onAdd={(title) =>
-                        handleAddCareItem(title, 'family')
-                      }
-                      placeholder="Novo momento com a família…"
-                      hideTitle
-                    />
-                  </div>
-                </div>
-              </section>
+      <div className="flex h-full">
+        <div className="space-y-3 w-full flex flex-col">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+            Rotina
+          </span>
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+              Agenda &amp; compromissos
+            </h2>
+            <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+              Compromissos com horário, para enxergar seu dia com clareza.
+            </p>
+          </div>
+          <AgendaSection
+            items={plannerData.appointments}
+            onAddAppointment={handleAddAppointment}
+            hideTitle
+          />
+        </div>
+      </div>
+    </section>
+
+    {/* 3 — PAR 2 · Cuidar de mim + Cuidar do meu filho */}
+    <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+      <div className="flex h-full">
+        <div className="space-y-3 w-full flex flex-col">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+            Você
+          </span>
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+              Cuidar de mim
+            </h2>
+            <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+              Pequenos gestos que cuidam da sua energia.
+            </p>
+          </div>
+          <CareSection
+            title="Cuidar de mim"
+            subtitle="Atividades de autocuidado."
+            icon="heart"
+            items={plannerData.careItems}
+            onToggle={(id) => handleToggleCareItem(id, 'care')}
+            onAdd={(title) => handleAddCareItem(title, 'care')}
+            placeholder="Novo gesto de autocuidado…"
+            hideTitle
+          />
+        </div>
+      </div>
+
+      <div className="flex h-full">
+        <div className="space-y-3 w-full flex flex-col">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+            Seu filho
+          </span>
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+              Cuidar do meu filho
+            </h2>
+            <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+              Um momento de conexão faz diferença no dia.
+            </p>
+          </div>
+          <CareSection
+            title="Cuidar da família"
+            subtitle="Tarefas com os filhos."
+            icon="smile"
+            items={plannerData.familyItems}
+            onToggle={(id) => handleToggleCareItem(id, 'family')}
+            onAdd={(title) => handleAddCareItem(title, 'family')}
+            placeholder="Novo momento com a família…"
+            hideTitle
+          />
+        </div>
+      </div>
+    </section>
+
+    {/* 4 — LEMBRETES · “post-it digital” */}
+    <section className="space-y-3">
+      <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+        Lembretes
+      </span>
+      <div>
+        <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+          Lembretes rápidos
+        </h2>
+        <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)] font-poppins">
+          Anotações soltas para não esquecer — como um post-it digital.
+        </p>
+      </div>
+      <NotesSection
+        content={plannerData.notes}
+        onChange={handleNotesChange}
+        hideTitle
+      />
+    </section>
+  </div>
+)}
+
 
               {/* INSPIRAÇÕES */}
               <div className="space-y-3">
