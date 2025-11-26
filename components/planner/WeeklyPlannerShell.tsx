@@ -427,135 +427,136 @@ export default function WeeklyPlannerShell() {
       <Reveal delay={200}>
         <div className="space-y-6 md:space-y-8">
           {/* ================= CALENDÁRIO + TOGGLE ================= */}
-          <SoftCard className="max-w-[520px] w-full mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <span className="inline-flex items-center gap-2 text-[10px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[var(--color-brand)]">
-                  <AppIcon
-                    name="calendar"
-                    className="w-4 h-4 text-[var(--color-brand)]"
-                  />
-                  Seu planner de hoje
-                </span>
-                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                  Tudo o que você organiza aqui vale para o dia selecionado.
-                </p>
-              </div>
+         {/* ================= CALENDÁRIO + TOGGLE ================= */}
+<SoftCard
+  className="rounded-3xl bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.04)] transition-all duration-150 will-change-transform hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] md:hover:-translate-y-[2px] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)]"
+>
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div className="flex items-center gap-2">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
+        <AppIcon
+          name="calendar"
+          className="w-4 h-4 text-[var(--color-brand)]"
+        />
+      </span>
 
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleMonthChange(-1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] hover:bg-white hover:text-[var(--color-brand)] shadow-sm transition"
-                    aria-label="Mês anterior"
-                  >
-                    <AppIcon name="chevron-left" className="w-3 h-3" />
-                  </button>
+      {/* Título + setinhas de mês */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => handleMonthChange(-1)}
+          className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+        >
+          ‹
+        </button>
 
-                  <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)] capitalize">
-                    {monthYearLabel}
-                  </p>
+        <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
+          {monthYearLabel}
+        </h2>
 
-                  <button
-                    type="button"
-                    onClick={() => handleMonthChange(1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] hover:bg-white hover:text-[var(--color-brand)] shadow-sm transition"
-                    aria-label="Próximo mês"
-                  >
-                    <AppIcon name="chevron-right" className="w-3 h-3" />
-                  </button>
-                </div>
+        <button
+          type="button"
+          onClick={() => handleMonthChange(1)}
+          className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+        >
+          ›
+        </button>
+      </div>
+    </div>
 
-                <div className="flex gap-2 bg-[var(--color-soft-bg)] p-1 rounded-full">
-                  <button
-                    onClick={() => setViewMode('day')}
-                    className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                      viewMode === 'day'
-                        ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.12)]'
-                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                    }`}
-                  >
-                    Dia
-                  </button>
-                  <button
-                    onClick={() => setViewMode('week')}
-                    className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                      viewMode === 'week'
-                        ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.12)]'
-                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                    }`}
-                  >
-                    Semana
-                  </button>
-                </div>
-              </div>
-            </div>
+    {/* Dia / Semana */}
+    <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
+      <button
+        className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+          viewMode === 'day'
+            ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+            : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+        }`}
+        onClick={() => setViewMode('day')}
+      >
+        Dia
+      </button>
+      <button
+        className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+          viewMode === 'week'
+            ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+            : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+        }`}
+        onClick={() => setViewMode('week')}
+      >
+        Semana
+      </button>
+    </div>
+  </div>
 
-            {/* cabeçalho dos dias da semana */}
-            <div className="grid grid-cols-7 gap-1.5 md:gap-2 text-center pt-3 md:pt-4">
-              {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(
-                (label) => (
-                  <div
-                    key={label}
-                    className="text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide"
-                  >
-                    {label}
-                  </div>
-                ),
-              )}
-            </div>
+  {/* Cabeçalho dias da semana */}
+  <div className="space-y-2 md:space-y-3">
+    <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
+      <span>Seg</span>
+      <span>Ter</span>
+      <span>Qua</span>
+      <span>Qui</span>
+      <span>Sex</span>
+      <span>Sáb</span>
+      <span>Dom</span>
+    </div>
 
-            {/* grade de dias */}
-            <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-              {monthCells.map((cell) => {
-                const dayNumber = cell.date.getDate()
-                const isSelected = cell.key === selectedDateKey
-                const isToday =
-                  cell.key === getBrazilDateKey(new Date())
-                const baseClasses =
-                  'flex items-center justify-center rounded-full text-xs md:text-sm h-8 w-8 md:h-9 md:w-9 transition-all'
+    {/* Grade de dias – aqui entra a nossa lógica de monthCells */}
+    <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+      {monthCells.map((cell) => {
+        const dayNumber = cell.date.getDate()
+        const isSelected = cell.key === selectedDateKey
+        const isToday = cell.key === getBrazilDateKey(new Date())
 
-                let stateClasses =
-                  'bg-transparent text-[var(--color-text-main)] hover:bg-[var(--color-soft-bg)]'
-                if (!cell.inCurrentMonth) {
-                  stateClasses =
-                    'bg-transparent text-[var(--color-text-muted)]/50 hover:bg-[var(--color-soft-bg)]'
-                }
-                if (isSelected) {
-                  stateClasses =
-                    'bg-[var(--color-brand)] text-white shadow-[0_10px_25px_rgba(255,0,94,0.45)]'
-                } else if (isToday && cell.inCurrentMonth) {
-                  stateClasses =
-                    'border border-[var(--color-brand)]/60 text-[var(--color-brand)] bg-white shadow-sm'
-                }
+        // estilos base do snippet
+        let classes =
+          'h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border '
 
-                return (
-                  <button
-                    key={cell.key}
-                    type="button"
-                    onClick={() => openModalForDate(cell.date)}
-                    className={`${baseClasses} ${stateClasses}`}
-                  >
-                    {dayNumber}
-                  </button>
-                )
-              })}
-            </div>
+        if (!cell.inCurrentMonth) {
+          // dias fora do mês: só “ocupam espaço”
+          classes +=
+            'bg-transparent text-[var(--color-text-muted)]/40 border-transparent'
+        } else if (isSelected) {
+          // dia selecionado (bolinha rosa cheia)
+          classes +=
+            'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+        } else if (isToday) {
+          // hoje
+          classes +=
+            'bg-white/80 text-[var(--color-brand)] border-[var(--color-brand)]'
+        } else {
+          // dia normal do mês
+          classes +=
+            'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+        }
 
-            <div className="space-y-1 pt-2">
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center">
-                Tudo aqui vale para:{' '}
-                <span className="font-semibold">
-                  {capitalizedDateFormatted}
-                </span>
-              </p>
-              <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/60 text-center">
-                Toque em um dia para adicionar compromissos e organizar
-                sua rotina.
-              </p>
-            </div>
-          </SoftCard>
+        return (
+          <button
+            key={cell.key}
+            type="button"
+            className={classes}
+            onClick={() => openModalForDate(cell.date)}
+          >
+            {dayNumber}
+          </button>
+        )
+      })}
+    </div>
+  </div>
+
+  <div className="space-y-1 pt-2">
+    <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center">
+      Tudo aqui vale para:{' '}
+      <span className="font-semibold">
+        {capitalizedDateFormatted}
+      </span>
+    </p>
+    <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70 text-center">
+      Toque em um dia para adicionar compromissos e organizar sua
+      rotina.
+    </p>
+  </div>
+</SoftCard>
 
           {/* ================= VISÃO DIA ================= */}
           {viewMode === 'day' && (
