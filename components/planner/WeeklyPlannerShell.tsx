@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useMemo,
 } from 'react'
+import Link from 'next/link'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { useSavedInspirations } from '@/app/hooks/useSavedInspirations'
@@ -53,122 +54,6 @@ type PlannerData = {
   notes: string
 }
 
-type ShortcutModalType = 'priorities' | 'agenda' | 'self' | 'child' | null
-
-// =====================================================
-// CARD "HOJE POR AQUI"
-// =====================================================
-function TodayIntroCard() {
-  type Mood = 'feliz' | 'normal' | 'estressada' | null
-  type DayStyle = 'leve' | 'focado' | 'produtivo' | 'slow' | 'automatico' | null
-
-  const [mood, setMood] = useState<Mood>(null)
-  const [dayStyle, setDayStyle] = useState<DayStyle>(null)
-
-  useEffect(() => {
-    const savedMood = load<Mood>('meu-dia/mood', null)
-    const savedStyle = load<DayStyle>('meu-dia/day-style', null)
-    if (savedMood) setMood(savedMood)
-    if (savedStyle) setDayStyle(savedStyle)
-  }, [])
-
-  useEffect(() => {
-    save('meu-dia/mood', mood)
-  }, [mood])
-
-  useEffect(() => {
-    save('meu-dia/day-style', dayStyle)
-  }, [dayStyle])
-
-  const moodOptions: { key: Mood; label: string }[] = [
-    { key: 'feliz', label: 'Feliz' },
-    { key: 'normal', label: 'Normal' },
-    { key: 'estressada', label: 'Estressada' },
-  ]
-
-  const styleOptions: { key: DayStyle; label: string }[] = [
-    { key: 'leve', label: 'leve' },
-    { key: 'focado', label: 'focado' },
-    { key: 'produtivo', label: 'produtivo' },
-    { key: 'slow', label: 'slow' },
-    { key: 'automatico', label: 'automático' },
-  ]
-
-  return (
-    <section className="space-y-6 md:space-y-8">
-      <SoftCard className="space-y-6 rounded-3xl bg-white/80 border border-[var(--color-soft-strong)] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-5 md:px-6 md:py-5">
-        <span className="inline-flex items-center rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-          Hoje por aqui
-        </span>
-
-        <div className="space-y-1">
-          <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-            Como você quer viver o seu dia?
-          </h2>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Vamos organizar seu dia com leveza, priorizando o que realmente importa pra você e pra sua família.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
-            Como você está?
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {moodOptions.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => setMood(option.key)}
-                className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm border transition-all
-                  ${
-                    mood === option.key
-                      ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_4px_14px_rgba(255,20,117,0.35)]'
-                      : 'bg-white text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]'
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
-            Hoje eu quero um dia...
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {styleOptions.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => setDayStyle(option.key)}
-                className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm border transition-all
-                  ${
-                    dayStyle === option.key
-                      ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_4px_14px_rgba(255,20,117,0.35)]'
-                      : 'bg-white text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]'
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-          Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.
-        </p>
-      </SoftCard>
-    </section>
-  )
-}
-
-// =====================================================
-// PLANNER PRINCIPAL
-// =====================================================
 export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
@@ -188,13 +73,11 @@ export default function WeeklyPlannerShell() {
     notes: '',
   })
 
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+  const [viewMode, setViewMode] =
+    useState<'day' | 'week'>('day')
 
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-
-  const [shortcutModal, setShortcutModal] =
-    useState<ShortcutModalType>(null)
 
   // ===========================
   // HYDRATION
@@ -219,11 +102,22 @@ export default function WeeklyPlannerShell() {
     if (!isHydrated || !selectedDateKey) return
 
     const loadedData: PlannerData = {
-      appointments: load(`planner/appointments/${selectedDateKey}`, []) ?? [],
-      top3: load(`planner/top3/${selectedDateKey}`, []) ?? [],
-      careItems: load(`planner/careItems/${selectedDateKey}`, []) ?? [],
-      familyItems: load(`planner/familyItems/${selectedDateKey}`, []) ?? [],
-      notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
+      appointments:
+        load(`planner/appointments/${selectedDateKey}`, []) ?? [],
+      top3:
+        load(`planner/top3/${selectedDateKey}`, []) ?? [],
+      careItems:
+        load(
+          `planner/careItems/${selectedDateKey}`,
+          []
+        ) ?? [],
+      familyItems:
+        load(
+          `planner/familyItems/${selectedDateKey}`,
+          []
+        ) ?? [],
+      notes:
+        load(`planner/notes/${selectedDateKey}`, '') ?? '',
     }
 
     setPlannerData(loadedData)
@@ -234,7 +128,10 @@ export default function WeeklyPlannerShell() {
   // ===========================
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
-    save(`planner/appointments/${selectedDateKey}`, plannerData.appointments)
+    save(
+      `planner/appointments/${selectedDateKey}`,
+      plannerData.appointments
+    )
   }, [plannerData.appointments, selectedDateKey, isHydrated])
 
   useEffect(() => {
@@ -244,17 +141,26 @@ export default function WeeklyPlannerShell() {
 
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
-    save(`planner/careItems/${selectedDateKey}`, plannerData.careItems)
+    save(
+      `planner/careItems/${selectedDateKey}`,
+      plannerData.careItems
+    )
   }, [plannerData.careItems, selectedDateKey, isHydrated])
 
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
-    save(`planner/familyItems/${selectedDateKey}`, plannerData.familyItems)
+    save(
+      `planner/familyItems/${selectedDateKey}`,
+      plannerData.familyItems
+    )
   }, [plannerData.familyItems, selectedDateKey, isHydrated])
 
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
-    save(`planner/notes/${selectedDateKey}`, plannerData.notes)
+    save(
+      `planner/notes/${selectedDateKey}`,
+      plannerData.notes
+    )
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
   // ===========================
@@ -281,7 +187,9 @@ export default function WeeklyPlannerShell() {
   const handleToggleTop3 = useCallback((id: string) => {
     setPlannerData((prev) => ({
       ...prev,
-      top3: prev.top3.map((i) => (i.id === id ? { ...i, done: !i.done } : i)),
+      top3: prev.top3.map((i) =>
+        i.id === id ? { ...i, done: !i.done } : i
+      ),
     }))
   }, [])
 
@@ -307,8 +215,9 @@ export default function WeeklyPlannerShell() {
       setPlannerData((prev) => ({
         ...prev,
         [t === 'care' ? 'careItems' : 'familyItems']:
-          prev[t === 'care' ? 'careItems' : 'familyItems'].map((i) =>
-            i.id === id ? { ...i, done: !i.done } : i
+          prev[t === 'care' ? 'careItems' : 'familyItems'].map(
+            (i) =>
+              i.id === id ? { ...i, done: !i.done } : i
           ),
       }))
     },
@@ -320,7 +229,9 @@ export default function WeeklyPlannerShell() {
       setPlannerData((prev) => ({
         ...prev,
         [t === 'care' ? 'careItems' : 'familyItems']: [
-          ...prev[t === 'care' ? 'careItems' : 'familyItems'],
+          ...prev[
+            t === 'care' ? 'careItems' : 'familyItems'
+          ],
           {
             id: Math.random().toString(36).slice(2, 9),
             title,
@@ -333,34 +244,43 @@ export default function WeeklyPlannerShell() {
     []
   )
 
+  // ==================================================
+  //  MODAL ABRE NO CENTRO DO CALENDÁRIO
+  // ==================================================
   const openModalForDate = (date: Date) => {
     setModalDate(date)
     setIsModalOpen(true)
   }
 
+  // ==================================================
+  //  FORMATAÇÕES
+  // ==================================================
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
-    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    const [year, month, day] = selectedDateKey
+      .split('-')
+      .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
-  const formattedDate = selectedDate.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+  const formattedDate = selectedDate.toLocaleDateString(
+    'pt-BR',
+    {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }
+  )
 
+  // ==================================================
+  // RENDER
+  // ==================================================
   if (!isHydrated) return null
 
   return (
     <>
       <Reveal delay={150}>
         <div className="space-y-6 md:space-y-8">
-          {/* =====================================================
-                HOJE POR AQUI
-          ===================================================== */}
-          <TodayIntroCard />
-
           {/* =====================================================
                 CALENDÁRIO NOVO PREMIUM
           ===================================================== */}
@@ -433,6 +353,7 @@ export default function WeeklyPlannerShell() {
               </div>
             </div>
 
+            {/* ===== CALENDÁRIO MENSAL ===== */}
             <div className="space-y-2 md:space-y-3">
               <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
                 <span>Seg</span>
@@ -445,22 +366,26 @@ export default function WeeklyPlannerShell() {
               </div>
 
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
-                    <button
-                      key={i}
-                      onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                      }`}
-                    >
-                      {day.getDate()}
-                    </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  )
+                {generateMonthMatrix(selectedDate).map(
+                  (day, i) =>
+                    day ? (
+                      <button
+                        key={i}
+                        onClick={() => openModalForDate(day)}
+                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                          getBrazilDateKey(day) === selectedDateKey
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                        }`}
+                      >
+                        {day.getDate()}
+                      </button>
+                    ) : (
+                      <div
+                        key={i}
+                        className="h-8 md:h-9"
+                      ></div>
+                    )
                 )}
               </div>
             </div>
@@ -468,226 +393,387 @@ export default function WeeklyPlannerShell() {
             <div className="space-y-1 pt-2">
               <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center">
                 Tudo aqui vale para:{' '}
-                <span className="font-semibold">{formattedDate}</span>
+                <span className="font-semibold">
+                  {formattedDate}
+                </span>
               </p>
               <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70 text-center">
-                Toque em um dia para adicionar compromissos e organizar sua rotina.
+                Toque em um dia para adicionar compromissos e
+                organizar sua rotina.
               </p>
             </div>
           </SoftCard>
 
           {/* =====================================================
-                  INSPIRAÇÕES & SALVOS (QUADRO / BOARD)
+                  INSPIRAÇÕES & SALVOS (abaixo do calendário)
           ===================================================== */}
-          <section className="space-y-3">
+          <div className="space-y-3">
+            {/* tiramos a pílula INSPIRAÇÕES, deixamos só título */}
             <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
               Inspirações & conteúdos salvos
             </h2>
 
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs aparecem aqui para você
-              revisitar quando quiser.
+            <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)]">
+              Receitas, ideias, brincadeiras e conteúdos que
+              você salvou nos mini-hubs.
             </p>
 
-            <SoftCard className="p-4 md:p-5 bg-white/80 border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] rounded-3xl">
-              {plannerHook.items.length > 0 || savedContents.length > 0 ? (
-                <div className="max-h-[360px] overflow-y-auto pr-1">
-                  <SavedContentsSection
-                    contents={savedContents}
-                    plannerContents={plannerHook.items}
-                    onItemClick={(item) => {
-                      setSelectedSavedItem(item)
-                      setIsSavedItemOpen(true)
-                    }}
-                    hideTitle
-                  />
-                </div>
-              ) : (
-                <div className="text-center py-6 md:py-8">
+            {plannerHook.items.length > 0 ||
+            savedContents.length > 0 ? (
+              <>
+                <SavedContentsSection
+                  contents={savedContents}
+                  plannerContents={plannerHook.items}
+                  onItemClick={(item) => {
+                    setSelectedSavedItem(item)
+                    setIsSavedItemOpen(true)
+                  }}
+                  hideTitle
+                />
+
+                <SavedContentDrawer
+                  open={isSavedItemOpen}
+                  onClose={() => {
+                    setIsSavedItemOpen(false)
+                    setSelectedSavedItem(null)
+                  }}
+                  item={selectedSavedItem}
+                />
+              </>
+            ) : (
+              <SoftCard className="p-5 md:p-6 text-center py-6">
+                <AppIcon
+                  name="bookmark"
+                  className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+                />
+                <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
+                  Quando você salvar receitas, brincadeiras ou
+                  conteúdos nos mini-hubs, eles aparecem aqui.
+                </p>
+                <a
+                  href="/biblioteca-materna"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+                >
+                  Ver tudo na Biblioteca Materna
                   <AppIcon
-                    name="bookmark"
-                    className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+                    name="arrow-right"
+                    className="w-4 h-4"
                   />
-                  <p className="text-sm text-[var(--color-text-muted)]/80 mb-3">
-                    Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs, eles aparecem aqui
-                    como cartões rápidos para você acessar sempre que quiser.
-                  </p>
-                  <a
-                    href="/biblioteca-materna"
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
-                  >
-                    Ver tudo na Biblioteca Materna
-                    <AppIcon name="arrow-right" className="w-4 h-4" />
-                  </a>
-                </div>
-              )}
-            </SoftCard>
-          </section>
+                </a>
+              </SoftCard>
+            )}
+          </div>
 
           {/* =====================================================
-                  DIA — LEMBRETES + ATALHOS
+                  VISÃO DIA (Lembretes + Atalhos + blocos)
           ===================================================== */}
           {viewMode === 'day' && (
-            <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
+            <div className="mt-8 md:mt-10 space-y-8 md:space-y-10 pb-12">
+              {/* GRID LEMBRETES x ATALHOS */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                {/* LEMBRETES – COLUNA ESQUERDA */}
-                <div className="flex">
-                  <div className="w-full flex flex-col h-full space-y-3">
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                {/* LEMBRETES RÁPIDOS – sem pílula, card cresce junto com atalhos */}
+                <div className="flex h-full">
+                  <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
                       Lembretes rápidos
                     </h2>
+                    <p className="text-sm text-[var(--color-text-muted)] mb-4">
+                      Anote pensamentos, recados e pequenas
+                      coisas para lembrar ao longo do dia.
+                    </p>
 
                     <div className="flex-1">
                       <NotesSection
                         content={plannerData.notes}
                         onChange={(v) =>
-                          setPlannerData((p) => ({ ...p, notes: v }))
+                          setPlannerData((p) => ({
+                            ...p,
+                            notes: v,
+                          }))
                         }
                         hideTitle
                       />
                     </div>
+                  </SoftCard>
+                </div>
+
+                {/* ATALHOS DO DIA – card vidro 2x2 */}
+                <div className="flex h-full">
+                  <div className="flex-1 relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)]">
+                    {/* Glows de fundo */}
+                    <div className="pointer-events-none absolute inset-0 opacity-80">
+                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
+                    </div>
+
+                    <div className="relative z-10 h-full flex flex-col">
+                      <div className="mb-3">
+                        {/* título igual ao hero */}
+                        <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                          Comece pelo que faz mais sentido hoje
+                        </h2>
+                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                          Toque em um atalho para abrir um
+                          cartão rápido de prioridades, agenda
+                          ou cuidados.
+                        </p>
+                      </div>
+
+                      {/* Grid 2x2 de atalhos */}
+                      <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
+                        {/* Prioridades do dia */}
+                        <Link
+                          href="#prioridades-dia"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <path d="M9 18h6" />
+                              <path d="M10 22h4" />
+                              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Prioridades do dia
+                            </span>
+                          </div>
+                        </Link>
+
+                        {/* Agenda & compromissos */}
+                        <Link
+                          href="#agenda-compromissos"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <line
+                                x1="10"
+                                x2="14"
+                                y1="2"
+                                y2="2"
+                              />
+                              <line
+                                x1="12"
+                                x2="15"
+                                y1="14"
+                                y2="11"
+                              />
+                              <circle
+                                cx="12"
+                                cy="14"
+                                r="8"
+                              />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Agenda &amp; compromissos
+                            </span>
+                          </div>
+                        </Link>
+
+                        {/* Cuidar de mim */}
+                        <Link
+                          href="#cuidar-de-mim"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <path d="M19 14.5a5 5 0 0 0-9-3 5 5 0 1 0-7 7l7 7 7-7a5 5 0 0 0 2-4z" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Cuidar de mim
+                            </span>
+                          </div>
+                        </Link>
+
+                        {/* Cuidar do meu filho */}
+                        <Link
+                          href="#cuidar-do-meu-filho"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                              <circle
+                                cx="9"
+                                cy="7"
+                                r="4"
+                              />
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Cuidar do meu filho
+                            </span>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* PAR 1 — Prioridades + Agenda (com ids para os atalhos) */}
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+                <div className="flex h-full" id="prioridades-dia">
+                  <div className="space-y-3 w-full">
+                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+                      Você
+                    </span>
+
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                      Prioridades do dia
+                    </h2>
+
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Escolha até três coisas que realmente
+                      importam hoje.
+                    </p>
+
+                    <Top3Section
+                      items={plannerData.top3}
+                      onToggle={handleToggleTop3}
+                      onAdd={handleAddTop3}
+                      hideTitle
+                    />
                   </div>
                 </div>
 
-                {/* ATALHOS DO DIA – COLUNA DIREITA */}
-                <div className="flex">
-                  <div className="w-full flex flex-col h-full space-y-3">
+                <div
+                  className="flex h-full"
+                  id="agenda-compromissos"
+                >
+                  <div className="space-y-3 w-full">
+                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+                      Rotina
+                    </span>
+
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                      Comece pelo que faz mais sentido hoje
+                      Agenda & compromissos
                     </h2>
-                    <p className="mt-1 mb-2 text-sm text-[var(--color-text-muted)]">
-                      Toque em um atalho para abrir um cartão rápido de prioridades, agenda ou cuidados.
+
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Compromissos com horário, para enxergar
+                      seu dia com clareza.
                     </p>
 
-                    <div className="flex-1">
-                      <div className="relative h-full overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)]">
-                        <div className="pointer-events-none absolute inset-0 opacity-80">
-                          <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-                          <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
-                        </div>
+                    <AgendaSection
+                      items={plannerData.appointments}
+                      onAddAppointment={handleAddAppointment}
+                      hideTitle
+                    />
+                  </div>
+                </div>
+              </section>
 
-                        <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3 h-full">
-                          {/* Prioridades do dia */}
-                          <button
-                            type="button"
-                            onClick={() => setShortcutModal('priorities')}
-                            className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                          >
-                            <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                                aria-hidden="true"
-                              >
-                                <path d="M9 18h6" />
-                                <path d="M10 22h4" />
-                                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-                              </svg>
-                              <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                                Prioridades do dia
-                              </span>
-                            </div>
-                          </button>
+              {/* PAR 2 — Cuidar de mim + Cuidar do filho */}
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+                <div className="flex h-full" id="cuidar-de-mim">
+                  <div className="space-y-3 w-full">
+                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+                      Você
+                    </span>
 
-                          {/* Agenda & compromissos */}
-                          <button
-                            type="button"
-                            onClick={() => setShortcutModal('agenda')}
-                            className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                          >
-                            <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                                aria-hidden="true"
-                              >
-                                <line x1="10" x2="14" y1="2" y2="2" />
-                                <line x1="12" x2="15" y1="14" y2="11" />
-                                <circle cx="12" cy="14" r="8" />
-                              </svg>
-                              <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                                Agenda &amp; compromissos
-                              </span>
-                            </div>
-                          </button>
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                      Cuidar de mim
+                    </h2>
 
-                          {/* Cuidar de mim */}
-                          <button
-                            type="button"
-                            onClick={() => setShortcutModal('self')}
-                            className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                          >
-                            <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                                aria-hidden="true"
-                              >
-                                <path d="M19 14.5a5 5 0 0 0-9-3 5 5 0 1 0-7 7l7 7 7-7a5 5 0 0 0 2-4z" />
-                              </svg>
-                              <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                                Cuidar de mim
-                              </span>
-                            </div>
-                          </button>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Pequenos gestos que cuidam da sua energia.
+                    </p>
 
-                          {/* Cuidar do meu filho */}
-                          <button
-                            type="button"
-                            onClick={() => setShortcutModal('child')}
-                            className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                          >
-                            <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                                aria-hidden="true"
-                              >
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                <circle cx="9" cy="7" r="4" />
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                              </svg>
-                              <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                                Cuidar do meu filho
-                              </span>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <CareSection
+                      title="Cuidar de mim"
+                      subtitle="Gestos de autocuidado"
+                      icon="heart"
+                      items={plannerData.careItems}
+                      onToggle={(id) =>
+                        handleToggleCareItem(id, 'care')
+                      }
+                      onAdd={(t) =>
+                        handleAddCareItem(t, 'care')
+                      }
+                      hideTitle
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="flex h-full"
+                  id="cuidar-do-meu-filho"
+                >
+                  <div className="space-y-3 w-full">
+                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+                      Seu filho
+                    </span>
+
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                      Cuidar do meu filho
+                    </h2>
+
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Um momento de conexão faz diferença no dia.
+                    </p>
+
+                    <CareSection
+                      title="Cuidar do meu filho"
+                      subtitle="Momentos em família"
+                      icon="smile"
+                      items={plannerData.familyItems}
+                      onToggle={(id) =>
+                        handleToggleCareItem(id, 'family')
+                      }
+                      onAdd={(t) =>
+                        handleAddCareItem(t, 'family')
+                      }
+                      hideTitle
+                    />
                   </div>
                 </div>
               </section>
@@ -697,7 +783,9 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4">
-              <WeekView weekData={generateWeekData(selectedDate)} />
+              <WeekView
+                weekData={generateWeekData(selectedDate)}
+              />
             </div>
           )}
         </div>
@@ -711,7 +799,8 @@ export default function WeeklyPlannerShell() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-[var(--color-text-main)]">
-                Novo compromisso – {modalDate.toLocaleDateString('pt-BR')}
+                Novo compromisso –{' '}
+                {modalDate.toLocaleDateString('pt-BR')}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -734,94 +823,6 @@ export default function WeeklyPlannerShell() {
           </div>
         </div>
       )}
-
-      {/* =====================================================
-                MODAIS DOS ATALHOS (CARDS VIDRO)
-      ===================================================== */}
-      {shortcutModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-[var(--color-text-main)]">
-                {shortcutModal === 'priorities' && 'Prioridades do dia'}
-                {shortcutModal === 'agenda' && 'Agenda & compromissos'}
-                {shortcutModal === 'self' && 'Cuidar de mim'}
-                {shortcutModal === 'child' && 'Cuidar do meu filho'}
-              </h3>
-              <button
-                onClick={() => setShortcutModal(null)}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {shortcutModal === 'priorities' && (
-                <>
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    Escolha até três coisas que realmente importam hoje. Você não precisa preencher as três;
-                    às vezes, uma única prioridade já muda o dia.
-                  </p>
-                  <Top3Section
-                    items={plannerData.top3}
-                    onToggle={handleToggleTop3}
-                    onAdd={handleAddTop3}
-                    hideTitle
-                  />
-                </>
-              )}
-
-              {shortcutModal === 'agenda' && (
-                <>
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    Adicione compromissos rápidos para hoje e organize sua rotina em poucos toques.
-                  </p>
-                  <AgendaSection
-                    items={plannerData.appointments}
-                    onAddAppointment={handleAddAppointment}
-                    hideTitle
-                  />
-                </>
-              )}
-
-              {shortcutModal === 'self' && (
-                <>
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    Use este espaço para registrar pequenas pausas, respirações e gestos por você.
-                  </p>
-                  <CareSection
-                    title="Cuidar de mim"
-                    subtitle="Gestos de autocuidado"
-                    icon="heart"
-                    items={plannerData.careItems}
-                    onToggle={(id) => handleToggleCareItem(id, 'care')}
-                    onAdd={(t) => handleAddCareItem(t, 'care')}
-                    hideTitle
-                  />
-                </>
-              )}
-
-              {shortcutModal === 'child' && (
-                <>
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    Tarefas que aproximam sua família e organizam a rotina com seu filho.
-                  </p>
-                  <CareSection
-                    title="Cuidar do meu filho"
-                    subtitle="Momentos em família"
-                    icon="smile"
-                    items={plannerData.familyItems}
-                    onToggle={(id) => handleToggleCareItem(id, 'family')}
-                    onAdd={(t) => handleAddCareItem(t, 'family')}
-                    hideTitle
-                  />
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
@@ -829,7 +830,9 @@ export default function WeeklyPlannerShell() {
 // =====================================================
 // GERADOR DO CALENDÁRIO
 // =====================================================
-function generateMonthMatrix(currentDate: Date): (Date | null)[] {
+function generateMonthMatrix(
+  currentDate: Date
+): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   const firstDay = new Date(year, month, 1)
@@ -857,7 +860,9 @@ function generateWeekData(base: Date) {
     d.setDate(monday.getDate() + i)
     return {
       dayNumber: d.getDate(),
-      dayName: d.toLocaleDateString('pt-BR', { weekday: 'long' }),
+      dayName: d.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+      }),
       agendaCount: 0,
       top3Count: 0,
       careCount: 0,
