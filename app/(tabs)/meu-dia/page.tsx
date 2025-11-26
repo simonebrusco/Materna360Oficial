@@ -4,5 +4,9 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default function Page() {
-  return <MeuDiaClient />
+  return (
+    <main className="materna360-premium-bg min-h-screen">
+      <MeuDiaClient />
+    </main>
+  )
 }
