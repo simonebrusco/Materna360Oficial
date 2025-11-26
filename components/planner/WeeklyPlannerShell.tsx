@@ -489,46 +489,48 @@ export default function WeeklyPlannerShell() {
               </div>
             </section>
 
-            {/* PAR 2 — Cuidar de mim + Cuidar do filho */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              <div className="space-y-3">
-                <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                  Você
-                </span>
+         {/* PAR 2 — Cuidar de mim + Cuidar do filho */}
+<section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+  <div className="space-y-3">
+    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+      Você
+    </span>
 
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                  Cuidar de mim
-                </h2>
+    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+      Cuidar de mim
+    </h2>
 
-                <CareSection
-                  title="Cuidar de mim"
-                  subtitle="Gestos de autocuidado"
-                  items={plannerData.careItems}
-                  onToggle={(id) => handleToggleCareItem(id, 'care')}
-                  onAdd={(t) => handleAddCareItem(t, 'care')}
-                  hideTitle
-                />
-              </div>
+    <CareSection
+      title="Cuidar de mim"
+      subtitle="Gestos de autocuidado"
+      icon="heart"
+      items={plannerData.careItems}
+      onToggle={(id) => handleToggleCareItem(id, 'care')}
+      onAdd={(t) => handleAddCareItem(t, 'care')}
+      hideTitle
+    />
+  </div>
 
-              <div className="space-y-3">
-                <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                  Seu filho
-                </span>
+  <div className="space-y-3">
+    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+      Seu filho
+    </span>
 
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                  Cuidar do meu filho
-                </h2>
+    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+      Cuidar do meu filho
+    </h2>
 
-                <CareSection
-                  title="Cuidar do meu filho"
-                  subtitle="Momentos em família"
-                  items={plannerData.familyItems}
-                  onToggle={(id) => handleToggleCareItem(id, 'family')}
-                  onAdd={(t) => handleAddCareItem(t, 'family')}
-                  hideTitle
-                />
-              </div>
-            </section>
+    <CareSection
+      title="Cuidar do meu filho"
+      subtitle="Momentos em família"
+      icon="smile"
+      items={plannerData.familyItems}
+      onToggle={(id) => handleToggleCareItem(id, 'family')}
+      onAdd={(t) => handleAddCareItem(t, 'family')}
+      hideTitle
+    />
+  </div>
+</section>
 
             {/* NOTAS */}
             <div className="space-y-3">
