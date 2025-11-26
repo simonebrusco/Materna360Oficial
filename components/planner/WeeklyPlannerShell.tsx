@@ -387,222 +387,241 @@ export default function WeeklyPlannerShell() {
           </SoftCard>
 
           {/* =====================================================
-                  INSPIRAÇÕES & SALVOS + ATALHOS (lado a lado)
+                  INSPIRAÇÕES & SALVOS (full width)
           ===================================================== */}
-          <section className="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-            {/* Bloco Inspirações (esquerda) */}
-            <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                Inspirações
-              </span>
+          <section className="space-y-3">
+            <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+              Inspirações
+            </span>
 
-              <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                Inspirações & conteúdos salvos
-              </h2>
+            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+              Inspirações & conteúdos salvos
+            </h2>
 
-              <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)]">
-                Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs.
-              </p>
+            <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)]">
+              Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs.
+            </p>
 
-              {plannerHook.items.length > 0 || savedContents.length > 0 ? (
-                <>
-                  <SavedContentsSection
-                    contents={savedContents}
-                    plannerContents={plannerHook.items}
-                    onItemClick={(item) => {
-                      setSelectedSavedItem(item)
-                      setIsSavedItemOpen(true)
-                    }}
-                    hideTitle
-                  />
+            {plannerHook.items.length > 0 || savedContents.length > 0 ? (
+              <>
+                <SavedContentsSection
+                  contents={savedContents}
+                  plannerContents={plannerHook.items}
+                  onItemClick={(item) => {
+                    setSelectedSavedItem(item)
+                    setIsSavedItemOpen(true)
+                  }}
+                  hideTitle
+                />
 
-                  <SavedContentDrawer
-                    open={isSavedItemOpen}
-                    onClose={() => {
-                      setIsSavedItemOpen(false)
-                      setSelectedSavedItem(null)
-                    }}
-                    item={selectedSavedItem}
-                  />
-                </>
-              ) : (
-                <SoftCard className="p-5 md:p-6 text-center py-6 h-full flex flex-col items-center justify-center">
-                  <AppIcon
-                    name="bookmark"
-                    className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
-                  />
-                  <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                    Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs,
-                    eles aparecem aqui.
-                  </p>
-                  <a
-                    href="/biblioteca-materna"
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
-                  >
-                    Ver tudo na Biblioteca Materna
-                    <AppIcon name="arrow-right" className="w-4 h-4" />
-                  </a>
-                </SoftCard>
-              )}
-            </div>
-
-            {/* Hub 2x2 de atalhos (direita) */}
-            <div className="space-y-3">
-              {viewMode === 'day' && (
-                <>
-                  <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
-                    Atalhos do dia
-                  </span>
-
-                  <div>
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
-                      Comece pelo que faz mais sentido hoje
-                    </h2>
-                    <p className="mt-1 mb-3 text-sm text-[var(--color-text-muted)] font-poppins">
-                      Toque em um atalho para ir direto para prioridades, agenda ou cuidados.
-                    </p>
-                  </div>
-
-                  {/* Card espelhado translucido estilo Maternar */}
-                  <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] h-full">
-                    {/* Glows de fundo */}
-                    <div className="pointer-events-none absolute inset-0 opacity-80">
-                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
-                    </div>
-
-                    {/* Grid 2x2 de atalhos */}
-                    <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
-                      {/* Prioridades do dia */}
-                      <Link
-                        href="#prioridades-dia"
-                        className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                      >
-                        <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                          {/* ícone lâmpada (ideia/prioridade) */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            aria-hidden="true"
-                          >
-                            <path d="M9 18h6" />
-                            <path d="M10 22h4" />
-                            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-                          </svg>
-                          <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                            Prioridades do dia
-                          </span>
-                        </div>
-                      </Link>
-
-                      {/* Agenda & compromissos */}
-                      <Link
-                        href="#agenda-compromissos"
-                        className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                      >
-                        <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                          {/* ícone calendário / relógio */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            aria-hidden="true"
-                          >
-                            <line x1="10" x2="14" y1="2" y2="2" />
-                            <line x1="12" x2="15" y1="14" y2="11" />
-                            <circle cx="12" cy="14" r="8" />
-                          </svg>
-                          <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                            Agenda &amp; compromissos
-                          </span>
-                        </div>
-                      </Link>
-
-                      {/* Cuidar de mim */}
-                      <Link
-                        href="#cuidar-de-mim"
-                        className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                      >
-                        <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                          {/* ícone coração */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            aria-hidden="true"
-                          >
-                            <path d="M19 14.5a5 5 0 0 0-9-3 5 5 0 1 0-7 7l7 7 7-7a5 5 0 0 0 2-4z" />
-                          </svg>
-                          <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                            Cuidar de mim
-                          </span>
-                        </div>
-                      </Link>
-
-                      {/* Cuidar do meu filho */}
-                      <Link
-                        href="#cuidar-do-meu-filho"
-                        className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                      >
-                        <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                          {/* ícone família / usuários */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            aria-hidden="true"
-                          >
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                          </svg>
-                          <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                            Cuidar do meu filho
-                          </span>
-                        </div>
-                      </Link>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+                <SavedContentDrawer
+                  open={isSavedItemOpen}
+                  onClose={() => {
+                    setIsSavedItemOpen(false)
+                    setSelectedSavedItem(null)
+                  }}
+                  item={selectedSavedItem}
+                />
+              </>
+            ) : (
+              <SoftCard className="p-5 md:p-6 text-center py-6">
+                <AppIcon
+                  name="bookmark"
+                  className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+                />
+                <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
+                  Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs,
+                  eles aparecem aqui.
+                </p>
+                <a
+                  href="/biblioteca-materna"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+                >
+                  Ver tudo na Biblioteca Materna
+                  <AppIcon name="arrow-right" className="w-4 h-4" />
+                </a>
+              </SoftCard>
+            )}
           </section>
 
           {/* =====================================================
-                  RESTO DO PLANNER (Prioridades, Rotina, etc)
+                  DIA — LEMBRETES + ATALHOS + RESTO
           ===================================================== */}
           {viewMode === 'day' && (
             <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
+              {/* PAR 0 — Lembretes rápidos + Atalhos do dia */}
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+                {/* Lembretes (esquerda) */}
+                <div className="flex h-full">
+                  <div className="w-full space-y-3">
+                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
+                      Lembretes
+                    </span>
+
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                      Lembretes rápidos
+                    </h2>
+
+                    <NotesSection
+                      content={plannerData.notes}
+                      onChange={(v) =>
+                        setPlannerData((p) => ({ ...p, notes: v }))
+                      }
+                      hideTitle
+                    />
+                  </div>
+                </div>
+
+                {/* Atalhos do dia (direita) */}
+                <div className="flex h-full">
+                  <div className="w-full space-y-3">
+                    <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+                      Atalhos do dia
+                    </span>
+
+                    <div>
+                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] font-poppins">
+                        Comece pelo que faz mais sentido hoje
+                      </h2>
+                      <p className="mt-1 mb-3 text-sm text-[var(--color-text-muted)] font-poppins">
+                        Toque em um atalho para ir direto para prioridades, agenda ou cuidados.
+                      </p>
+                    </div>
+
+                    {/* Card espelhado translucido estilo Maternar */}
+                    <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] h-full">
+                      {/* Glows de fundo */}
+                      <div className="pointer-events-none absolute inset-0 opacity-80">
+                        <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                        <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
+                      </div>
+
+                      {/* Grid 2x2 de atalhos */}
+                      <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
+                        {/* Prioridades do dia */}
+                        <Link
+                          href="#prioridades-dia"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            {/* ícone lâmpada */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <path d="M9 18h6" />
+                              <path d="M10 22h4" />
+                              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Prioridades do dia
+                            </span>
+                          </div>
+                        </Link>
+
+                        {/* Agenda & compromissos */}
+                        <Link
+                          href="#agenda-compromissos"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            {/* ícone relógio */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <line x1="10" x2="14" y1="2" y2="2" />
+                              <line x1="12" x2="15" y1="14" y2="11" />
+                              <circle cx="12" cy="14" r="8" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Agenda &amp; compromissos
+                            </span>
+                          </div>
+                        </Link>
+
+                        {/* Cuidar de mim */}
+                        <Link
+                          href="#cuidar-de-mim"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            {/* ícone coração */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <path d="M19 14.5a5 5 0 0 0-9-3 5 5 0 1 0-7 7l7 7 7-7a5 5 0 0 0 2-4z" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Cuidar de mim
+                            </span>
+                          </div>
+                        </Link>
+
+                        {/* Cuidar do meu filho */}
+                        <Link
+                          href="#cuidar-do-meu-filho"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            {/* ícone família */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              aria-hidden="true"
+                            >
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                              <circle cx="9" cy="7" r="4" />
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Cuidar do meu filho
+                            </span>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {/* PAR 1 — Prioridades + Casa & rotina */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
                 <div className="flex h-full" id="prioridades-dia">
@@ -689,25 +708,6 @@ export default function WeeklyPlannerShell() {
                   </div>
                 </div>
               </section>
-
-              {/* NOTAS */}
-              <div className="space-y-3">
-                <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                  Lembretes
-                </span>
-
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                  Lembretes rápidos
-                </h2>
-
-                <NotesSection
-                  content={plannerData.notes}
-                  onChange={(v) =>
-                    setPlannerData((p) => ({ ...p, notes: v }))
-                  }
-                  hideTitle
-                />
-              </div>
             </div>
           )}
 
