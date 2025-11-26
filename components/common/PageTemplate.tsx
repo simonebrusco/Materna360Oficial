@@ -1,52 +1,52 @@
-'use client';
+'use client'
 
-import React from 'react';
-import clsx from 'clsx';
-import { PageHeader } from '@/components/common/PageHeader';
+import { ReactNode } from 'react'
 
-export interface PageTemplateProps {
-  label?: string;
-  title: string;
-  subtitle?: string;
-  hero?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
+type PageTemplateProps = {
+  label?: string
+  title: string
+  subtitle?: string
+  children: ReactNode
 }
 
 export function PageTemplate({
   label,
   title,
   subtitle,
-  hero,
   children,
-  className,
 }: PageTemplateProps) {
   return (
     <main
       data-layout="page-template-v1"
-      className={clsx(
-        'relative min-h-[100dvh] pb-24 bg-white',
-        className
-      )}
+      className="relative min-h-[100dvh] pb-24 materna360-premium-bg"
     >
-      {/* Hero gradient global do Materna360 (topo da página, agora contínuo) */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            'linear-gradient(135deg, rgba(155,77,150,0.32) 0%, rgba(255,0,94,0.26) 26%, rgba(255,216,230,0.22) 60%, rgba(255,232,242,0.10) 82%, rgba(255,232,242,0) 100%)',
-        }}
-      />
+      {/* 🔥 REMOVIDO o overlay extra de degradê aqui */}
 
       <div className="mx-auto max-w-3xl px-4 md:px-6 relative z-10">
         <header className="pt-6 md:pt-8 mb-8 md:mb-10">
-          <PageHeader label={label} title={title} subtitle={subtitle} />
-          {hero ? <div className="mt-4 md:mt-6">{hero}</div> : null}
+          <div className="space-y-2 md:space-y-3">
+            {label && (
+              <span className="inline-flex items-center rounded-full border border-white/45 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+                {label}
+              </span>
+            )}
+
+            <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+              {title}
+            </h1>
+
+            {subtitle && (
+              <p className="text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </header>
 
         <div className="space-y-6 md:space-y-8">{children}</div>
       </div>
     </main>
-  );
+  )
 }
+
+export default PageTemplate
