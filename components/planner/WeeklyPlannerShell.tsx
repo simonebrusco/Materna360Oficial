@@ -21,7 +21,6 @@ import CareSection from './CareSection'
 import AgendaSection from './AgendaSection'
 import NotesSection from './NotesSection'
 import SavedContentsSection from './SavedContentsSection'
-import DayCalendarStrip from './DayCalendarStrip'
 import WeekView from './WeekView'
 import { Reveal } from '@/components/ui/Reveal'
 
@@ -56,6 +55,129 @@ type PlannerData = {
 
 type ShortcutModalType = 'priorities' | 'agenda' | 'self' | 'child' | null
 
+// =====================================================
+// CARD "HOJE POR AQUI"
+// =====================================================
+function TodayIntroCard() {
+  type Mood = 'feliz' | 'normal' | 'estressada' | null
+  type DayStyle = 'leve' | 'focado' | 'produtivo' | 'slow' | 'automatico' | null
+
+  const [mood, setMood] = useState<Mood>(null)
+  const [dayStyle, setDayStyle] = useState<DayStyle>(null)
+
+  // carrega escolhas
+  useEffect(() => {
+    const savedMood = load<Mood>('meu-dia/mood', null)
+    const savedStyle = load<DayStyle>('meu-dia/day-style', null)
+    if (savedMood) setMood(savedMood)
+    if (savedStyle) setDayStyle(savedStyle)
+  }, [])
+
+  // salva escolhas
+  useEffect(() => {
+    save('meu-dia/mood', mood)
+  }, [mood])
+
+  useEffect(() => {
+    save('meu-dia/day-style', dayStyle)
+  }, [dayStyle])
+
+  const moodOptions: { key: Mood; label: string }[] = [
+    { key: 'feliz', label: 'Feliz' },
+    { key: 'normal', label: 'Normal' },
+    { key: 'estressada', label: 'Estressada' },
+  ]
+
+  const styleOptions: { key: DayStyle; label: string }[] = [
+    { key: 'leve', label: 'leve' },
+    { key: 'focado', label: 'focado' },
+    { key: 'produtivo', label: 'produtivo' },
+    { key: 'slow', label: 'slow' },
+    { key: 'automatico', label: 'automático' },
+  ]
+
+  return (
+    <section className="space-y-6 md:space-y-8">
+      <SoftCard className="space-y-6 rounded-3xl bg-white/80 border border-[var(--color-soft-strong)] shadow-[0_10px_30px_rgba(0,0,0,0.10)] px-4 py-5 md:px-6 md:py-5">
+        {/* TAG */}
+        <span className="inline-flex items-center rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
+          Hoje por aqui
+        </span>
+
+        {/* TÍTULO (sem “Bom dia, Mãe”) */}
+        <div className="space-y-1">
+          <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+            Como você quer viver o seu dia?
+          </h2>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Vamos organizar seu dia com leveza, priorizando o que realmente
+            importa pra você e pra sua família.
+          </p>
+        </div>
+
+        {/* COMO VOCÊ ESTÁ? */}
+        <div className="space-y-2">
+          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+            Como você está?
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {moodOptions.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setMood(option.key)}
+                className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm border transition-all
+                  ${
+                    mood === option.key
+                      ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_4px_14px_rgba(255,20,117,0.35)]'
+                      : 'bg-white text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]'
+                  }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* HOJE EU QUERO UM DIA... */}
+        <div className="space-y-2">
+          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+            Hoje eu quero um dia...
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {styleOptions.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setDayStyle(option.key)}
+                className={`px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm border transition-all
+                  ${
+                    dayStyle === option.key
+                      ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_4px_14px_rgba(255,20,117,0.35)]'
+                      : 'bg-white text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]'
+                  }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* TEXTO FINAL */}
+        <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+          Conte pra gente como você está e que tipo de dia você quer ter.
+          Vamos organizar tudo a partir disso.
+        </p>
+      </SoftCard>
+    </section>
+  )
+}
+
+// =====================================================
+// PLANNER PRINCIPAL
+// =====================================================
 export default function WeeklyPlannerShell() {
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
@@ -75,8 +197,7 @@ export default function WeeklyPlannerShell() {
     notes: '',
   })
 
-  const [viewMode, setViewMode] =
-    useState<'day' | 'week'>('day')
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -113,17 +234,10 @@ export default function WeeklyPlannerShell() {
       top3:
         load(`planner/top3/${selectedDateKey}`, []) ?? [],
       careItems:
-        load(
-          `planner/careItems/${selectedDateKey}`,
-          []
-        ) ?? [],
+        load(`planner/careItems/${selectedDateKey}`, []) ?? [],
       familyItems:
-        load(
-          `planner/familyItems/${selectedDateKey}`,
-          []
-        ) ?? [],
-      notes:
-        load(`planner/notes/${selectedDateKey}`, '') ?? '',
+        load(`planner/familyItems/${selectedDateKey}`, []) ?? [],
+      notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
     }
 
     setPlannerData(loadedData)
@@ -163,10 +277,7 @@ export default function WeeklyPlannerShell() {
 
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
-    save(
-      `planner/notes/${selectedDateKey}`,
-      plannerData.notes
-    )
+    save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
   // ===========================
@@ -235,9 +346,7 @@ export default function WeeklyPlannerShell() {
       setPlannerData((prev) => ({
         ...prev,
         [t === 'care' ? 'careItems' : 'familyItems']: [
-          ...prev[
-            t === 'care' ? 'careItems' : 'familyItems'
-          ],
+          ...prev[t === 'care' ? 'careItems' : 'familyItems'],
           {
             id: Math.random().toString(36).slice(2, 9),
             title,
@@ -263,7 +372,9 @@ export default function WeeklyPlannerShell() {
   // ==================================================
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
-    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    const [year, month, day] = selectedDateKey
+      .split('-')
+      .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
@@ -283,13 +394,21 @@ export default function WeeklyPlannerShell() {
       <Reveal delay={150}>
         <div className="space-y-6 md:space-y-8">
           {/* =====================================================
+                HOJE POR AQUI
+          ===================================================== */}
+          <TodayIntroCard />
+
+          {/* =====================================================
                 CALENDÁRIO NOVO PREMIUM
           ===================================================== */}
           <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
-                  <AppIcon name="calendar" className="w-4 h-4 text-[var(--color-brand)]" />
+                  <AppIcon
+                    name="calendar"
+                    className="w-4 h-4 text-[var(--color-brand)]"
+                  />
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -354,8 +473,13 @@ export default function WeeklyPlannerShell() {
             {/* ===== CALENDÁRIO MENSAL ===== */}
             <div className="space-y-2 md:space-y-3">
               <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
-                <span>Seg</span><span>Ter</span><span>Qua</span>
-                <span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+                <span>Seg</span>
+                <span>Ter</span>
+                <span>Qua</span>
+                <span>Qui</span>
+                <span>Sex</span>
+                <span>Sáb</span>
+                <span>Dom</span>
               </div>
 
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
@@ -381,10 +505,14 @@ export default function WeeklyPlannerShell() {
 
             <div className="space-y-1 pt-2">
               <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center">
-                Tudo aqui vale para: <span className="font-semibold">{formattedDate}</span>
+                Tudo aqui vale para:{' '}
+                <span className="font-semibold">
+                  {formattedDate}
+                </span>
               </p>
               <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70 text-center">
-                Toque em um dia para adicionar compromissos e organizar sua rotina.
+                Toque em um dia para adicionar compromissos e organizar
+                sua rotina.
               </p>
             </div>
           </SoftCard>
@@ -402,10 +530,12 @@ export default function WeeklyPlannerShell() {
             </h2>
 
             <p className="mt-1 mb-4 text-sm text-[var(--color-text-muted)]">
-              Receitas, ideias, brincadeiras e conteúdos que você salvou nos mini-hubs.
+              Receitas, ideias, brincadeiras e conteúdos que você salvou
+              nos mini-hubs.
             </p>
 
-            {plannerHook.items.length > 0 || savedContents.length > 0 ? (
+            {plannerHook.items.length > 0 ||
+            savedContents.length > 0 ? (
               <>
                 <SavedContentsSection
                   contents={savedContents}
@@ -433,29 +563,32 @@ export default function WeeklyPlannerShell() {
                   className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
                 />
                 <p className="text-sm text-[var(--color-text-muted)]/70 mb-3">
-                  Quando você salvar receitas, brincadeiras ou conteúdos nos mini-hubs,
-                  eles aparecem aqui.
+                  Quando você salvar receitas, brincadeiras ou
+                  conteúdos nos mini-hubs, eles aparecem aqui.
                 </p>
                 <a
                   href="/biblioteca-materna"
                   className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
                 >
                   Ver tudo na Biblioteca Materna
-                  <AppIcon name="arrow-right" className="w-4 h-4" />
+                  <AppIcon
+                    name="arrow-right"
+                    className="w-4 h-4"
+                  />
                 </a>
               </SoftCard>
             )}
           </section>
 
           {/* =====================================================
-                  DIA — LEMBRETES + ATALHOS (sem os 4 cards brancos)
+                  DIA — LEMBRETES + ATALHOS
           ===================================================== */}
           {viewMode === 'day' && (
             <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
               {/* Lembretes rápidos + Atalhos do dia */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
                 {/* Lembretes (esquerda) */}
-                <div className="flex h-full">
+                <div className="flex">
                   <div className="w-full space-y-3">
                     <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
                       Lembretes
@@ -476,7 +609,7 @@ export default function WeeklyPlannerShell() {
                 </div>
 
                 {/* Atalhos do dia (direita) */}
-                <div className="flex h-full">
+                <div className="flex">
                   <div className="w-full space-y-3">
                     <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-xs md:text-sm font-semibold tracking-wide text-[var(--color-brand)] uppercase font-poppins">
                       Atalhos do dia
@@ -487,12 +620,13 @@ export default function WeeklyPlannerShell() {
                         Comece pelo que faz mais sentido hoje
                       </h2>
                       <p className="mt-1 mb-3 text-sm text-[var(--color-text-muted)] font-poppins">
-                        Toque em um atalho para abrir um cartão rápido de prioridades, agenda ou cuidados.
+                        Toque em um atalho para abrir um cartão rápido
+                        de prioridades, agenda ou cuidados.
                       </p>
                     </div>
 
-                    {/* Card vidro 2x2 (visual mantido) */}
-                    <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] h-full">
+                    {/* Card vidro 2x2 MAIS CURTO */}
+                    <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)]">
                       {/* Glows de fundo */}
                       <div className="pointer-events-none absolute inset-0 opacity-80">
                         <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
@@ -539,7 +673,7 @@ export default function WeeklyPlannerShell() {
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                            {/* ícone relógio */}
+                            {/* ícone calendário / relógio */}
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="24"
@@ -599,7 +733,7 @@ export default function WeeklyPlannerShell() {
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                            {/* ícone família */}
+                            {/* ícone família / usuários */}
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="24"
@@ -634,16 +768,14 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4">
-              <WeekView
-                weekData={generateWeekData(selectedDate)}
-              />
+              <WeekView weekData={generateWeekData(selectedDate)} />
             </div>
           )}
         </div>
       </Reveal>
 
       {/* =====================================================
-                MODAL DE NOVO COMPROMISSO (calendário)
+                MODAL DE NOVO COMPROMISSO (CALENDÁRIO)
       ===================================================== */}
       {isModalOpen && modalDate && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
@@ -676,7 +808,7 @@ export default function WeeklyPlannerShell() {
       )}
 
       {/* =====================================================
-                MODAL DOS ATALHOS (cards vidro)
+                MODAIS DOS ATALHOS (CARDS VIDRO)
       ===================================================== */}
       {shortcutModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
@@ -696,13 +828,13 @@ export default function WeeklyPlannerShell() {
               </button>
             </div>
 
-            {/* Conteúdo espelhando os cards brancos (lógica mantida) */}
             <div className="space-y-3">
               {shortcutModal === 'priorities' && (
                 <>
                   <p className="text-sm text-[var(--color-text-muted)]">
-                    Escolha até três coisas que realmente importam hoje. Você não precisa preencher as três;
-                    às vezes, uma única prioridade já muda o dia.
+                    Escolha até três coisas que realmente importam
+                    hoje. Você não precisa preencher as três; às vezes,
+                    uma única prioridade já muda o dia.
                   </p>
                   <Top3Section
                     items={plannerData.top3}
@@ -716,7 +848,8 @@ export default function WeeklyPlannerShell() {
               {shortcutModal === 'agenda' && (
                 <>
                   <p className="text-sm text-[var(--color-text-muted)]">
-                    Adicione compromissos rápidos para hoje e organize sua rotina em poucos toques.
+                    Adicione compromissos rápidos para hoje e organize
+                    sua rotina em poucos toques.
                   </p>
                   <AgendaSection
                     items={plannerData.appointments}
@@ -729,14 +862,17 @@ export default function WeeklyPlannerShell() {
               {shortcutModal === 'self' && (
                 <>
                   <p className="text-sm text-[var(--color-text-muted)]">
-                    Use este espaço para registrar pequenas pausas, respirações e gestos por você.
+                    Use este espaço para registrar pequenas pausas,
+                    respirações e gestos por você.
                   </p>
                   <CareSection
                     title="Cuidar de mim"
                     subtitle="Gestos de autocuidado"
                     icon="heart"
                     items={plannerData.careItems}
-                    onToggle={(id) => handleToggleCareItem(id, 'care')}
+                    onToggle={(id) =>
+                      handleToggleCareItem(id, 'care')
+                    }
                     onAdd={(t) => handleAddCareItem(t, 'care')}
                     hideTitle
                   />
@@ -746,14 +882,17 @@ export default function WeeklyPlannerShell() {
               {shortcutModal === 'child' && (
                 <>
                   <p className="text-sm text-[var(--color-text-muted)]">
-                    Tarefas que aproximam sua família e organizam a rotina com seu filho.
+                    Tarefas que aproximam sua família e organizam a
+                    rotina com seu filho.
                   </p>
                   <CareSection
                     title="Cuidar do meu filho"
                     subtitle="Momentos em família"
                     icon="smile"
                     items={plannerData.familyItems}
-                    onToggle={(id) => handleToggleCareItem(id, 'family')}
+                    onToggle={(id) =>
+                      handleToggleCareItem(id, 'family')
+                    }
                     onAdd={(t) => handleAddCareItem(t, 'family')}
                     hideTitle
                   />
@@ -770,7 +909,9 @@ export default function WeeklyPlannerShell() {
 // =====================================================
 // GERADOR DO CALENDÁRIO
 // =====================================================
-function generateMonthMatrix(currentDate: Date): (Date | null)[] {
+function generateMonthMatrix(
+  currentDate: Date
+): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   const firstDay = new Date(year, month, 1)
@@ -798,7 +939,9 @@ function generateWeekData(base: Date) {
     d.setDate(monday.getDate() + i)
     return {
       dayNumber: d.getDate(),
-      dayName: d.toLocaleDateString('pt-BR', { weekday: 'long' }),
+      dayName: d.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+      }),
       agendaCount: 0,
       top3Count: 0,
       careCount: 0,
