@@ -448,11 +448,11 @@ export default function WeeklyPlannerShell() {
           </section>
 
           {/* =====================================================
-                  DIA — LEMBRETES + ATALHOS + RESTO
+                  DIA — LEMBRETES + ATALHOS (sem os 4 cards brancos)
           ===================================================== */}
           {viewMode === 'day' && (
             <div className="mt-6 md:mt-10 space-y-6 md:space-y-8 pb-12">
-              {/* PAR 0 — Lembretes rápidos + Atalhos do dia */}
+              {/* Lembretes rápidos + Atalhos do dia */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
                 {/* Lembretes (esquerda) */}
                 <div className="flex h-full">
@@ -491,7 +491,7 @@ export default function WeeklyPlannerShell() {
                       </p>
                     </div>
 
-                    {/* Card vidro 2x2 (mantém visual atual) */}
+                    {/* Card vidro 2x2 (visual mantido) */}
                     <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4 bg-white/10 border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] h-full">
                       {/* Glows de fundo */}
                       <div className="pointer-events-none absolute inset-0 opacity-80">
@@ -628,93 +628,6 @@ export default function WeeklyPlannerShell() {
                   </div>
                 </div>
               </section>
-
-              {/* PAR 1 — Prioridades + Casa & rotina */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                <div className="flex h-full" id="prioridades-dia">
-                  <div className="space-y-3">
-                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                      Você
-                    </span>
-
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                      Prioridades do dia
-                    </h2>
-
-                    <Top3Section
-                      items={plannerData.top3}
-                      onToggle={handleToggleTop3}
-                      onAdd={handleAddTop3}
-                      hideTitle
-                    />
-                  </div>
-                </div>
-
-                <div className="flex h-full" id="agenda-compromissos">
-                  <div className="space-y-3">
-                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                      Rotina
-                    </span>
-
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                      Agenda & compromissos
-                    </h2>
-
-                    <AgendaSection
-                      items={plannerData.appointments}
-                      onAddAppointment={handleAddAppointment}
-                      hideTitle
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* PAR 2 — Cuidar de mim + Cuidar do meu filho */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                <div className="flex h-full" id="cuidar-de-mim">
-                  <div className="space-y-3">
-                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                      Você
-                    </span>
-
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                      Cuidar de mim
-                    </h2>
-
-                    <CareSection
-                      title="Cuidar de mim"
-                      subtitle="Gestos de autocuidado"
-                      icon="heart"
-                      items={plannerData.careItems}
-                      onToggle={(id) => handleToggleCareItem(id, 'care')}
-                      onAdd={(t) => handleAddCareItem(t, 'care')}
-                      hideTitle
-                    />
-                  </div>
-                </div>
-
-                <div className="flex h-full" id="cuidar-do-meu-filho">
-                  <div className="space-y-3">
-                    <span className="inline-flex px-3 py-1 rounded-full bg-[var(--color-soft-strong)] text-xs md:text-sm font-semibold text-[var(--color-brand)]">
-                      Seu filho
-                    </span>
-
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                      Cuidar do meu filho
-                    </h2>
-
-                    <CareSection
-                      title="Cuidar do meu filho"
-                      subtitle="Momentos em família"
-                      icon="smile"
-                      items={plannerData.familyItems}
-                      onToggle={(id) => handleToggleCareItem(id, 'family')}
-                      onAdd={(t) => handleAddCareItem(t, 'family')}
-                      hideTitle
-                    />
-                  </div>
-                </div>
-              </section>
             </div>
           )}
 
@@ -783,12 +696,12 @@ export default function WeeklyPlannerShell() {
               </button>
             </div>
 
-            {/* Conteúdo espelhando os cards brancos */}
+            {/* Conteúdo espelhando os cards brancos (lógica mantida) */}
             <div className="space-y-3">
               {shortcutModal === 'priorities' && (
                 <>
                   <p className="text-sm text-[var(--color-text-muted)]">
-                    Comece adicionando sua primeira prioridade do dia. Você não precisa preencher as três:
+                    Escolha até três coisas que realmente importam hoje. Você não precisa preencher as três;
                     às vezes, uma única prioridade já muda o dia.
                   </p>
                   <Top3Section
