@@ -220,7 +220,6 @@ async function fetchAISuggestions(
       throw new Error('Nenhuma sugestão recebida da IA')
     }
 
-    // 🔧 AQUI é onde ajustamos o problema: nada de retornar null.
     const mapped: Suggestion[] = raw
       .filter((item: ApiSuggestion) => {
         if (typeof item.title !== 'string') return false
@@ -276,10 +275,8 @@ export function IntelligentSuggestionsSection({
     const run = async () => {
       setIsLoading(true)
       try {
-        // 1) tenta IA
         const aiSuggestions = await fetchAISuggestions(mood, intention)
 
-        // 2) se IA vier vazia, usa fallback local
         const finalSuggestions =
           aiSuggestions.length > 0
             ? aiSuggestions
@@ -289,7 +286,6 @@ export function IntelligentSuggestionsSection({
           setSuggestions(finalSuggestions)
         }
       } catch {
-        // fallback hard, se der algum erro inesperado
         if (isMounted) {
           setSuggestions(generateLocalSuggestions(mood, intention))
         }
