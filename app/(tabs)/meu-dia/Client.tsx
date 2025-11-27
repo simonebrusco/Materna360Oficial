@@ -39,7 +39,7 @@ export default function MeuDiaClient() {
   const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length);
   const dailyMessage = DAILY_MESSAGES[dayIndex];
 
-  // recarrega a mensagem à meia-noite (mesmo comportamento do Maternar)
+  // recarrega a mensagem à meia-noite
   useEffect(() => {
     const now = new Date();
     const midnight = new Date(
@@ -58,10 +58,11 @@ export default function MeuDiaClient() {
   return (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-32 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+      // 🔥 Volta o fundo padrão do Meu Dia (mesmo do PageTemplate)
+      className="relative min-h-[100dvh] pb-32 materna360-premium-bg"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
-        {/* HERO — cópia do Maternar, só mudando textos */}
+        {/* HERO — mesma hierarquia do Maternar */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
@@ -77,7 +78,7 @@ export default function MeuDiaClient() {
                 Um espaço para planejar com leveza.
               </p>
 
-              {/* Saudação + frase diária, alinhadas ao hero */}
+              {/* Saudação + frase diária */}
               <div className="pt-3 space-y-1">
                 <ClientOnly>
                   <h2 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
