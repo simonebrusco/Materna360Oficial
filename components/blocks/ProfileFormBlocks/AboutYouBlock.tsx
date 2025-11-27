@@ -29,13 +29,18 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-
       <div className="space-y-3 pt-2">
         <div>
-          <h3 className="text-xs font-semibold text-[var(--color-text-main)]">Escolha uma figurinha de perfil</h3>
-          <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">Escolha a vibe que mais combina com você hoje.</p>
+          <h3 className="text-xs font-semibold text-[var(--color-text-main)]">
+            Escolha uma figurinha de perfil
+          </h3>
+          <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+            Escolha a vibe que mais combina com você hoje.
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 max-w-3xl">
+
+        {/* ⬇⬇⬇ AQUI mudamos o grid para ficar 2 colunas no mobile e 3 no desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 max-w-3xl">
           {STICKER_OPTIONS.map((sticker) => {
             const isActive = form.figurinha === sticker.id
             return (
@@ -64,8 +69,12 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                   />
                 </span>
                 <div className="flex flex-col items-center gap-0.5 min-h-[32px] flex-1 justify-center">
-                  <span className="text-[9px] font-bold text-[var(--color-text-main)] line-clamp-2 text-center leading-tight">{sticker.label}</span>
-                  <span className="text-[8px] text-[var(--color-text-muted)] line-clamp-1 text-center">{STICKER_DESCRIPTIONS[sticker.id]}</span>
+                  <span className="text-[9px] font-bold text-[var(--color-text-main)] line-clamp-2 text-center leading-tight">
+                    {sticker.label}
+                  </span>
+                  <span className="text-[8px] text-[var(--color-text-muted)] line-clamp-1 text-center">
+                    {STICKER_DESCRIPTIONS[sticker.id]}
+                  </span>
                 </div>
               </button>
             )
@@ -74,7 +83,10 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="mother-name" className="text-xs font-medium text-[var(--color-text-main)]">
+        <label
+          htmlFor="mother-name"
+          className="text-xs font-medium text-[var(--color-text-main)]"
+        >
           Seu nome
         </label>
         <input
@@ -84,35 +96,54 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           value={form.nomeMae}
           onChange={(event) => onChange({ nomeMae: event.target.value })}
           className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 ${
-            errors.nomeMae ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30' : 'border-[var(--color-border-soft)]'
+            errors.nomeMae
+              ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30'
+              : 'border-[var(--color-border-soft)]'
           }`}
           aria-invalid={Boolean(errors.nomeMae)}
         />
-        {errors.nomeMae && <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.nomeMae}</p>}
+        {errors.nomeMae && (
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">
+            {errors.nomeMae}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="preferred-name" className="text-xs font-medium text-[var(--color-text-main)]">
+        <label
+          htmlFor="preferred-name"
+          className="text-xs font-medium text-[var(--color-text-main)]"
+        >
           Como você prefere ser chamada?
         </label>
         <input
           id="preferred-name"
           type="text"
           value={form.userPreferredName || ''}
-          onChange={(event) => onChange({ userPreferredName: event.target.value })}
+          onChange={(event) =>
+            onChange({ userPreferredName: event.target.value })
+          }
           placeholder="Ex.: Ju, Mãe, Simone..."
           className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
         />
-        <p className="text-[11px] text-[var(--color-text-muted)]">Opcional, mas faz tudo mais pessoal.</p>
+        <p className="text-[11px] text-[var(--color-text-muted)]">
+          Opcional, mas faz tudo mais pessoal.
+        </p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">Você é:</label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">
+          Você é:
+        </label>
         <select
           value={form.userRole || ''}
-          onChange={(event) => onChange({ userRole: event.target.value as any })}
+          onChange={(event) =>
+            onChange({ userRole: event.target.value as any })
+          }
           className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none ${
-            errors.userRole ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30' : 'border-[var(--color-border-soft)]'
+            errors.userRole
+              ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30'
+              : 'border-[var(--color-border-soft)]'
           }`}
         >
           <option value="">Selecione...</option>
@@ -120,7 +151,11 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <option value="pai">Pai</option>
           <option value="outro">Outro cuidador</option>
         </select>
-        {errors.userRole && <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userRole}</p>}
+        {errors.userRole && (
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">
+            {errors.userRole}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -129,7 +164,9 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         </label>
         <select
           value={form.userEmotionalBaseline || ''}
-          onChange={(event) => onChange({ userEmotionalBaseline: event.target.value as any })}
+          onChange={(event) =>
+            onChange({ userEmotionalBaseline: event.target.value as any })
+          }
           className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
         >
           <option value="">Selecione...</option>
@@ -138,36 +175,62 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <option value="equilibrada">Equilibrada na maior parte do tempo</option>
           <option value="leve">Em uma fase mais leve</option>
         </select>
-        <p className="text-[11px] text-[var(--color-text-muted)]">Opcional, mas ajuda a personalizar sugestões.</p>
+        <p className="text-[11px] text-[var(--color-text-muted)]">
+          Opcional, mas ajuda a personalizar sugestões.
+        </p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">Qual é o seu maior desafio hoje?</label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">
+          Qual é o seu maior desafio hoje?
+        </label>
         <div className="space-y-2">
-          {['Falta de tempo', 'Culpa', 'Organização da rotina', 'Comportamento do filho', 'Cansaço físico', 'Relação com parceiro(a) / família'].map(
-            (challenge) => (
-              <label key={challenge} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={(form.userMainChallenges || []).includes(challenge)}
-                  onChange={() => toggleArrayField('userMainChallenges', challenge)}
-                  className="h-4 w-4 rounded border-[var(--color-border-soft)] text-[var(--color-brand)] focus:ring-[var(--color-brand)]/30"
-                />
-                <span className="text-xs text-[var(--color-text-main)]">{challenge}</span>
-              </label>
-            )
-          )}
+          {[
+            'Falta de tempo',
+            'Culpa',
+            'Organização da rotina',
+            'Comportamento do filho',
+            'Cansaço físico',
+            'Relação com parceiro(a) / família',
+          ].map((challenge) => (
+            <label
+              key={challenge}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={(form.userMainChallenges || []).includes(challenge)}
+                onChange={() =>
+                  toggleArrayField('userMainChallenges', challenge)
+                }
+                className="h-4 w-4 rounded border-[var(--color-border-soft)] text-[var(--color-brand)] focus:ring-[var(--color-brand)]/30"
+              />
+              <span className="text-xs text-[var(--color-text-main)]">
+                {challenge}
+              </span>
+            </label>
+          ))}
         </div>
-        {errors.userMainChallenges && <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userMainChallenges}</p>}
+        {errors.userMainChallenges && (
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">
+            {errors.userMainChallenges}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">Quando você sente mais energia?</label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">
+          Quando você sente mais energia?
+        </label>
         <select
           value={form.userEnergyPeakTime || ''}
-          onChange={(event) => onChange({ userEnergyPeakTime: event.target.value as any })}
+          onChange={(event) =>
+            onChange({ userEnergyPeakTime: event.target.value as any })
+          }
           className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none ${
-            errors.userEnergyPeakTime ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30' : 'border-[var(--color-border-soft)]'
+            errors.userEnergyPeakTime
+              ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30'
+              : 'border-[var(--color-border-soft)]'
           }`}
         >
           <option value="">Selecione...</option>
@@ -175,7 +238,11 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <option value="tarde">Tarde (meio do dia)</option>
           <option value="noite">Noite (depois que crianças dormem)</option>
         </select>
-        {errors.userEnergyPeakTime && <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userEnergyPeakTime}</p>}
+        {errors.userEnergyPeakTime && (
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">
+            {errors.userEnergyPeakTime}
+          </p>
+        )}
       </div>
     </div>
   )
