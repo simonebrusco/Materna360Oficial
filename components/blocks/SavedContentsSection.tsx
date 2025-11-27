@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import Link from 'next/link'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import type { PlannerSavedContent } from '@/app/hooks/usePlannerSavedContents'
@@ -215,27 +214,8 @@ export default function SavedContentsSection({
             receitas, ideias ou brincadeiras nos mini-hubs, elas aparecem aqui.
           </p>
         ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
-              {limitedItems.map(renderCard)}
-            </div>
-
-            <div className="pt-1">
-              <Link
-                href="/descobrir/salvos"
-                className="inline-flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-[var(--color-border-soft)] bg-white/80 px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-muted)]/80 transition-all hover:border-[var(--color-brand)] hover:bg-white hover:text-[var(--color-brand)] md:w-auto md:text-sm"
-              >
-                <div className="flex items-center gap-1.5">
-                  <AppIcon
-                    name="plus"
-                    className="h-4 w-4 text-[var(--color-text-muted)]/60"
-                  />
-                  <span className="uppercase tracking-wide">
-                    Ver tudo que você salvou
-                  </span>
-                </div>
-              </Link>
-            </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+            {limitedItems.map(renderCard)}
           </div>
         )}
       </SoftCard>
