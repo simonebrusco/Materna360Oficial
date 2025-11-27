@@ -18,69 +18,56 @@ const STEPS: { id: Eu360Step; index: number; label: string }[] = [
 
 export function Eu360Stepper({ currentStep, onStepClick }: Eu360StepperProps) {
   return (
-    <div className="mx-auto max-w-2xl px-4 -mt-2 md:-mt-4">
-      <div className="
-        rounded-3xl 
-        border border-white/30 
-        bg-white/12 
-        px-3 md:px-4 
-        py-3 md:py-4 
-        shadow-[0_12px_32px_rgba(0,0,0,0.18)] 
-        backdrop-blur-xl
-      ">
-        {/* STEP LINE */}
-        <div className="flex items-center justify-between gap-1 md:gap-3">
-          {STEPS.map((step, idx) => {
-            const isActive = step.id === currentStep
+    <div className="mx-auto w-full max-w-xl px-4 -mt-1 md:-mt-3 mb-4">
+      {/* Linha principal do stepper */}
+      <div className="flex items-center justify-between gap-1.5 rounded-full bg-white/14 px-2.5 py-2 shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl border border-white/35">
+        {STEPS.map((step, idx) => {
+          const isActive = step.id === currentStep
 
-            return (
-              <React.Fragment key={step.id}>
-                <button
-                  type="button"
-                  onClick={() => onStepClick?.(step.id)}
+          return (
+            <React.Fragment key={step.id}>
+              <button
+                type="button"
+                onClick={() => onStepClick?.(step.id)}
+                className={[
+                  'group flex items-center gap-1.5 rounded-full px-2.5 md:px-3 py-1.5 transition-all',
+                  isActive
+                    ? 'bg-white text-[var(--color-text-main)] shadow-[0_4px_14px_rgba(0,0,0,0.16)]'
+                    : 'bg-white/80 text-[var(--color-text-main)] hover:bg-white',
+                ].join(' ')}
+              >
+                <span
                   className={[
-                    'group flex items-center gap-2 rounded-full px-3 md:px-4 py-1.5 transition-all',
-                    'bg-white/90 text-[var(--color-text-main)] shadow-[0_4px_14px_rgba(0,0,0,0.12)]',
-
+                    'inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold',
                     isActive
-                      ? 'border border-[var(--color-brand)]'
-                      : 'border border-white/60 hover:bg-white'
+                      ? 'bg-[var(--color-brand)] text-white'
+                      : 'bg-[#FFE8F2] text-[var(--color-brand)]',
                   ].join(' ')}
                 >
-                  <span
-                    className={[
-                      'inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold',
-                      isActive
-                        ? 'bg-[var(--color-brand)] text-white'
-                        : 'bg-[#FFE8F2] text-[var(--color-brand)]',
-                    ].join(' ')}
-                  >
-                    {step.index}
-                  </span>
+                  {step.index}
+                </span>
 
-                  <span className="text-xs md:text-sm font-semibold tracking-wide truncate">
-                    {step.label}
-                  </span>
-                </button>
+                <span className="text-[11px] md:text-xs font-semibold tracking-wide truncate">
+                  {step.label}
+                </span>
+              </button>
 
-                {/* Connector */}
-                {idx < STEPS.length - 1 && (
-                  <div className="hidden md:flex flex-1 justify-center">
-                    <div className="h-[1px] w-full bg-white/40" />
-                  </div>
-                )}
-              </React.Fragment>
-            )
-          })}
-        </div>
-
-        {/* SUBTEXT */}
-        <p className="mt-2 text-center text-[10px] md:text-xs text-white/85 leading-relaxed px-4">
-          Comece por você e avance pelas etapas no seu tempo.  
-          Suas respostas deixam todas as sugestões do Materna360
-          mais próximas da sua rotina real.
-        </p>
+              {/* conector só no desktop */}
+              {idx < STEPS.length - 1 && (
+                <div className="hidden md:flex flex-1 justify-center">
+                  <div className="h-[1px] w-full bg-white/50" />
+                </div>
+              )}
+            </React.Fragment>
+          )
+        })}
       </div>
+
+      {/* Texto de apoio bem colado no stepper */}
+      <p className="mt-2 text-center text-[10px] md:text-xs text-white/90 leading-relaxed">
+        Comece por você e avance pelas etapas no seu tempo. Suas respostas deixam
+        todas as sugestões do Materna360 mais próximas da sua rotina real.
+      </p>
     </div>
   )
 }
