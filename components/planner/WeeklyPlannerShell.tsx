@@ -345,7 +345,7 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+            <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
                 {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
                   <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
