@@ -14,7 +14,12 @@ import {
 import { Eu360Stepper, type Eu360Step } from '@/components/eu360/Eu360Stepper'
 import { WizardBand } from '@/components/eu360/WizardBand'
 
-import { DEFAULT_STICKER_ID, STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
+import {
+  DEFAULT_STICKER_ID,
+  STICKER_OPTIONS,
+  isProfileStickerId,
+  type ProfileStickerId,
+} from '@/app/lib/stickers'
 
 export type ChildProfile = {
   id: string
@@ -105,12 +110,15 @@ export function ProfileForm() {
   const [statusMessage, setStatusMessage] = useState('')
   const [todayISO, setTodayISO] = useState<string>('')
   const [currentStep, setCurrentStep] = useState<Eu360Step>('about-you')
-  const [autoSaveStatus, setAutoSaveStatus] = useState<Record<Eu360Step, 'idle' | 'saving' | 'saved'>>({
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    Record<Eu360Step, 'idle' | 'saving' | 'saved'>
+  >({
     'about-you': 'idle',
     children: 'idle',
     routine: 'idle',
     support: 'idle',
   })
+
   const autoSaveTimeoutRef = useRef<Record<Eu360Step, NodeJS.Timeout>>({
     'about-you': undefined as any,
     children: undefined as any,
@@ -135,7 +143,7 @@ export function ProfileForm() {
 
         if (response.ok && isMounted) {
           const data = await response.json()
-          setForm((previous) => ({
+          setForm(previous => ({
             ...previous,
             nomeMae: data?.name || '',
             userPreferredName: data?.userPreferredName || '',
@@ -143,9 +151,10 @@ export function ProfileForm() {
             userEmotionalBaseline: data?.userEmotionalBaseline || undefined,
             userMainChallenges: data?.userMainChallenges || [],
             userEnergyPeakTime: data?.userEnergyPeakTime || undefined,
-            filhos: data?.children && Array.isArray(data.children) && data.children.length > 0
-              ? data.children
-              : [createEmptyChild(0)],
+            filhos:
+              data?.children && Array.isArray(data.children) && data.children.length > 0
+                ? data.children
+                : [createEmptyChild(0)],
             routineChaosMoments: data?.routineChaosMoments || [],
             routineScreenTime: data?.routineScreenTime || undefined,
             routineDesiredSupport: data?.routineDesiredSupport || [],
@@ -169,10 +178,14 @@ export function ProfileForm() {
     }
   }, [])
 
-  const updateChild = (id: string, key: keyof ChildProfile, value: string | number | string[]) => {
-    setForm((previous) => ({
+  const updateChild = (
+    id: string,
+    key: keyof ChildProfile,
+    value: string | number | string[],
+  ) => {
+    setForm(previous => ({
       ...previous,
-      filhos: previous.filhos.map((child) => {
+      filhos: previous.filhos.map(child => {
         if (child.id !== id) return child
 
         if (key === 'idadeMeses') {
@@ -185,15 +198,24 @@ export function ProfileForm() {
         }
 
         if (key === 'alergias') {
-          const base = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []
+          const base = Array.isArray(value)
+            ? value
+            : typeof value === 'string'
+              ? value.split(',')
+              : []
           const normalized = base
-            .map((item) => (typeof item === 'string' ? item.trim() : ''))
-            .filter((item) => item.length > 0)
+            .map(item => (typeof item === 'string' ? item.trim() : ''))
+            .filter(item => item.length > 0)
           const unique = Array.from(
-            new Set(normalized.map((item) => item.toLocaleLowerCase('pt-BR')))
+            new Set(normalized.map(item => item.toLocaleLowerCase('pt-BR'))),
           )
-            .map((keyName) => normalized.find((item) => item.toLocaleLowerCase('pt-BR') === keyName) ?? '')
-            .filter((item) => item.length > 0)
+            .map(
+              keyName =>
+                normalized.find(
+                  item => item.toLocaleLowerCase('pt-BR') === keyName,
+                ) ?? '',
+            )
+            .filter(item => item.length > 0)
           return { ...child, alergias: unique }
         }
 
@@ -203,25 +225,27 @@ export function ProfileForm() {
   }
 
   const addChild = () => {
-    setForm((previous) => ({
+    setForm(previous => ({
       ...previous,
       filhos: [...previous.filhos, createEmptyChild(previous.filhos.length)],
     }))
   }
 
   const removeChild = (id: string) => {
-    setForm((previous) => ({
+    setForm(previous => ({
       ...previous,
       filhos:
-        previous.filhos.length > 1 ? previous.filhos.filter((child) => child.id !== id) : previous.filhos,
+        previous.filhos.length > 1
+          ? previous.filhos.filter(child => child.id !== id)
+          : previous.filhos,
     }))
   }
 
   const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
-    setForm((previous) => {
+    setForm(previous => {
       const current = previous[fieldName] as string[] | undefined
       const updated = (current || []).includes(value)
-        ? (current || []).filter((item) => item !== value)
+        ? (current || []).filter(item => item !== value)
         : [...(current || []), value]
       return { ...previous, [fieldName]: updated }
     })
@@ -258,8 +282,12 @@ export function ProfileForm() {
       nextErrors.routineDesiredSupport = 'Informe em que você gostaria de ajuda.'
     }
 
-    if (!state.userContentPreferences || state.userContentPreferences.length === 0) {
-      nextErrors.userContentPreferences = 'Selecione pelo menos uma preferência de conteúdo.'
+    if (
+      !state.userContentPreferences ||
+      state.userContentPreferences.length === 0
+    ) {
+      nextErrors.userContentPreferences =
+        'Selecione pelo menos uma preferência de conteúdo.'
     }
 
     return nextErrors
@@ -267,7 +295,7 @@ export function ProfileForm() {
 
   const triggerAutoSave = useCallback(
     async (step: Eu360Step) => {
-      setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saving' }))
+      setAutoSaveStatus(prev => ({ ...prev, [step]: 'saving' }))
 
       try {
         const normalizedBirthdate = babyBirthdate || null
@@ -275,7 +303,9 @@ export function ProfileForm() {
         const normalizedAgeMonths =
           normalizedBirthdate !== null
             ? null
-            : typeof firstChildAge === 'number' && Number.isFinite(firstChildAge) && firstChildAge >= 0
+            : typeof firstChildAge === 'number' &&
+              Number.isFinite(firstChildAge) &&
+              firstChildAge >= 0
               ? Math.floor(firstChildAge)
               : null
 
@@ -301,51 +331,46 @@ export function ProfileForm() {
             userContentPreferences: form.userContentPreferences,
             userGuidanceStyle: form.userGuidanceStyle,
             userSelfcareFrequency: form.userSelfcareFrequency,
-            figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID,
+            figurinha: isProfileStickerId(form.figurinha)
+              ? form.figurinha
+              : DEFAULT_STICKER_ID,
             children: form.filhos,
           }),
         })
 
         if (response.ok) {
-          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saved' }))
-          // Clear saved status after 3 seconds
+          setAutoSaveStatus(prev => ({ ...prev, [step]: 'saved' }))
           if (autoSaveTimeoutRef.current[step]) {
             clearTimeout(autoSaveTimeoutRef.current[step])
           }
           autoSaveTimeoutRef.current[step] = setTimeout(() => {
-            setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+            setAutoSaveStatus(prev => ({ ...prev, [step]: 'idle' }))
           }, 3000)
         } else {
-          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+          setAutoSaveStatus(prev => ({ ...prev, [step]: 'idle' }))
         }
       } catch (error) {
         console.warn('Autosave failed:', error)
-        setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+        setAutoSaveStatus(prev => ({ ...prev, [step]: 'idle' }))
       }
     },
-    [form, babyBirthdate]
+    [form, babyBirthdate],
   )
 
-  // Setup debounced autosave on form change
+  // autosave debounced
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       triggerAutoSave(currentStep)
-    }, 1500) // 1.5 second debounce
+    }, 1500)
 
     return () => clearTimeout(timeoutId)
   }, [form, currentStep, triggerAutoSave])
 
-  // Handle step change with smooth scroll
   const handleStepClick = (step: Eu360Step) => {
     setCurrentStep(step)
-    triggerAutoSave(step) // Save when changing steps
-
-    // Smooth scroll to the section
-    const element = document.getElementById(step)
-    if (element) {
-      setTimeout(() => {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
+    triggerAutoSave(step)
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
@@ -368,7 +393,9 @@ export function ProfileForm() {
       const normalizedAgeMonths =
         normalizedBirthdate !== null
           ? null
-          : typeof firstChildAge === 'number' && Number.isFinite(firstChildAge) && firstChildAge >= 0
+          : typeof firstChildAge === 'number' &&
+            Number.isFinite(firstChildAge) &&
+            firstChildAge >= 0
             ? Math.floor(firstChildAge)
             : null
 
@@ -394,7 +421,9 @@ export function ProfileForm() {
           userContentPreferences: form.userContentPreferences,
           userGuidanceStyle: form.userGuidanceStyle,
           userSelfcareFrequency: form.userSelfcareFrequency,
-          figurinha: isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID,
+          figurinha: isProfileStickerId(form.figurinha)
+            ? form.figurinha
+            : DEFAULT_STICKER_ID,
           children: form.filhos,
         }),
       })
@@ -403,14 +432,16 @@ export function ProfileForm() {
         setStatusMessage('Salvo com carinho!')
 
         if (typeof window !== 'undefined') {
-          const figurinhaToPersist = isProfileStickerId(form.figurinha) ? form.figurinha : DEFAULT_STICKER_ID
+          const figurinhaToPersist = isProfileStickerId(form.figurinha)
+            ? form.figurinha
+            : DEFAULT_STICKER_ID
           window.dispatchEvent(
             new CustomEvent('materna:profile-updated', {
               detail: {
                 figurinha: figurinhaToPersist,
                 nomeMae: form.nomeMae,
               },
-            })
+            }),
           )
         }
 
@@ -419,8 +450,11 @@ export function ProfileForm() {
       } else {
         const data = await eu360Response.json().catch(() => ({}))
         const message =
-          data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
-            ? data.error
+          data &&
+          typeof data === 'object' &&
+          'error' in data &&
+          typeof (data as any).error === 'string'
+            ? (data as any).error
             : 'Não foi possível salvar agora. Tente novamente em instantes.'
         setStatusMessage(message)
       }
@@ -433,83 +467,123 @@ export function ProfileForm() {
   }
 
   const handleChange = (updates: Partial<ProfileFormState>) => {
-    setForm((previous) => ({ ...previous, ...updates }))
+    setForm(previous => ({ ...previous, ...updates }))
   }
 
   return (
     <Reveal>
-      <form className="w-full" onSubmit={handleSubmit} noValidate suppressHydrationWarning>
-        {/* Stepper Navigation */}
+      <form
+        className="w-full"
+        onSubmit={handleSubmit}
+        noValidate
+        suppressHydrationWarning
+      >
+        {/* NAV DO WIZARD */}
         <Eu360Stepper currentStep={currentStep} onStepClick={handleStepClick} />
 
-        {/* Wizard Bands */}
-        <div className="space-y-0">
-          {/* Band 1: About You */}
-          <WizardBand
-            id="about-you"
-            title="Sobre você"
-            description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
-            autoSaveStatus={autoSaveStatus['about-you']}
-          >
-            <AboutYouBlock form={form} errors={errors} onChange={handleChange} />
-          </WizardBand>
+        {/* CONTEÚDO – UM PASSO POR VEZ */}
+        <div className="mt-4 md:mt-6 space-y-0">
+          {currentStep === 'about-you' && (
+            <WizardBand
+              id="about-you"
+              title="Sobre você"
+              description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
+              autoSaveStatus={autoSaveStatus['about-you']}
+            >
+              <AboutYouBlock
+                form={form}
+                errors={errors}
+                onChange={handleChange}
+              />
+            </WizardBand>
+          )}
 
-          {/* Band 2: Children */}
-          <WizardBand
-            id="children"
-            title="Sobre seu(s) filho(s)"
-            description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
-            autoSaveStatus={autoSaveStatus['children']}
-          >
-            <ChildrenBlock
-              form={form}
-              errors={errors}
-              babyBirthdate={babyBirthdate}
-              todayISO={todayISO}
-              onBirthdateChange={setBabyBirthdate}
-              onUpdateChild={updateChild}
-              onAddChild={addChild}
-              onRemoveChild={removeChild}
-            />
-          </WizardBand>
+          {currentStep === 'children' && (
+            <WizardBand
+              id="children"
+              title="Sobre seu(s) filho(s)"
+              description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
+              autoSaveStatus={autoSaveStatus['children']}
+            >
+              <ChildrenBlock
+                form={form}
+                errors={errors}
+                babyBirthdate={babyBirthdate}
+                todayISO={todayISO}
+                onBirthdateChange={setBabyBirthdate}
+                onUpdateChild={updateChild}
+                onAddChild={addChild}
+                onRemoveChild={removeChild}
+              />
+            </WizardBand>
+          )}
 
-          {/* Band 3: Routine & Moments */}
-          <WizardBand
-            id="routine"
-            title="Rotina & momentos críticos"
-            description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
-            autoSaveStatus={autoSaveStatus['routine']}
-          >
-            <RoutineBlock form={form} errors={errors} onChange={handleChange} onToggleArrayField={toggleArrayField} />
-          </WizardBand>
+          {currentStep === 'routine' && (
+            <WizardBand
+              id="routine"
+              title="Rotina & momentos críticos"
+              description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
+              autoSaveStatus={autoSaveStatus['routine']}
+            >
+              <RoutineBlock
+                form={form}
+                errors={errors}
+                onChange={handleChange}
+                onToggleArrayField={toggleArrayField}
+              />
+            </WizardBand>
+          )}
 
-          {/* Band 4: Support Network */}
-          <WizardBand
-            id="support"
-            title="Rede de apoio"
-            description="Conectar você com sua rede pode ser a melhor ajuda."
-            autoSaveStatus={autoSaveStatus['support']}
-          >
-            <SupportBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
+          {currentStep === 'support' && (
+            <WizardBand
+              id="support"
+              title="Rede de apoio"
+              description="Conectar você com sua rede pode ser a melhor ajuda."
+              autoSaveStatus={autoSaveStatus['support']}
+            >
+              <SupportBlock
+                form={form}
+                onChange={handleChange}
+                onToggleArrayField={toggleArrayField}
+              />
 
-            {/* Preferences in same band */}
-            <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[var(--color-text-main)]">Preferências no app</h3>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">Assim a gente personaliza tudo para você.</p>
+              <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-[var(--color-text-main)]">
+                    Preferências no app
+                  </h3>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Assim a gente personaliza tudo para você.
+                  </p>
+                </div>
+                <PreferencesBlock
+                  form={form}
+                  onChange={handleChange}
+                  onToggleArrayField={toggleArrayField}
+                />
               </div>
-              <PreferencesBlock form={form} onChange={handleChange} onToggleArrayField={toggleArrayField} />
-            </div>
-          </WizardBand>
+            </WizardBand>
+          )}
 
-          {/* Submit Button Band */}
+          {/* CTA FINAL */}
           <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
             <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-3">
-              <Button type="submit" variant="primary" disabled={saving} className="w-full">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saving}
+                className="w-full"
+              >
                 {saving ? 'Salvando...' : 'Salvar e continuar'}
               </Button>
-              <p className="text-center text-[11px] text-[var(--color-text-muted)]">Você poderá editar essas informações no seu Perfil.</p>
-              {statusMessage && <p className="text-center text-xs font-semibold text-[var(--color-text-main)]">{statusMessage}</p>}
+              <p className="text-center text-[11px] text-[var(--color-text-muted)]">
+                Você poderá editar essas informações no seu Perfil.
+              </p>
+              {statusMessage && (
+                <p className="text-center text-xs font-semibold text-[var(--color-text-main)]">
+                  {statusMessage}
+                </p>
+              )}
             </div>
           </div>
         </div>
