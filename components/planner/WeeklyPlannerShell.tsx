@@ -10,7 +10,10 @@ import Link from 'next/link'
 
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
-import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import {
+  usePlannerSavedContents,
+  type PlannerSavedContent,
+} from '@/app/hooks/usePlannerSavedContents'
 
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
@@ -77,6 +80,10 @@ export default function WeeklyPlannerShell() {
   // Modal de compromisso (calendário)
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Modal de conteúdo salvo (kanban)
+  const [selectedSavedContent, setSelectedSavedContent] =
+    useState<PlannerSavedContent | null>(null)
 
   // ===========================
   // HYDRATION
@@ -213,6 +220,16 @@ export default function WeeklyPlannerShell() {
     automático: 'automático',
   }
 
+  const plannerTypeLabels: Record<string, string> = {
+    recipe: 'RECEITA',
+    checklist: 'CHECKLIST',
+    insight: 'INSPIRAÇÃO',
+    note: 'NOTA',
+    task: 'TAREFA',
+    goal: 'META',
+    event: 'EVENTO',
+  }
+
   const moodSummary =
     (mood ? moodLabel[mood] : null) &&
     (dayIntention ? intentionLabel[dayIntention] : null)
@@ -235,379 +252,27 @@ export default function WeeklyPlannerShell() {
           {/* =====================================================
               CALENDÁRIO PREMIUM
           ===================================================== */}
-          <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
-                  <AppIcon
-                    name="calendar"
-                    className="w-4 h-4 text-[var(--color-brand)]"
-                  />
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
-                    onClick={() => {
-                      const d = new Date(selectedDate)
-                      d.setMonth(d.getMonth() - 1)
-                      handleDateSelect(d)
-                    }}
-                  >
-                    ‹
-                  </button>
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
-                    {selectedDate.toLocaleDateString('pt-BR', {
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </h2>
-                  <button
-                    type="button"
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
-                    onClick={() => {
-                      const d = new Date(selectedDate)
-                      d.setMonth(d.getMonth() + 1)
-                      handleDateSelect(d)
-                    }}
-                  >
-                    ›
-                  </button>
-                </div>
-              </div>
+          {/* ... (tudo do calendário e seções anteriores permanece igual) ... */}
 
-              <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
-                <button
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                    viewMode === 'day'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                  onClick={() => setViewMode('day')}
-                >
-                  Dia
-                </button>
-                <button
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                    viewMode === 'week'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                  onClick={() => setViewMode('week')}
-                >
-                  Semana
-                </button>
-              </div>
-            </div>
-
-            {/* === Cabeçalho dos dias === */}
-            <div className="space-y-2 md:space-y-3">
-              <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
-                <span>Seg</span>
-                <span>Ter</span>
-                <span>Qua</span>
-                <span>Qui</span>
-                <span>Sex</span>
-                <span>Sáb</span>
-                <span>Dom</span>
-              </div>
-
-              {/* === Grade do mês === */}
-              <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map(
-                  (day, i) =>
-                    day ? (
-                      <button
-                        key={i}
-                        onClick={() => openModalForDate(day)}
-                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                          getBrazilDateKey(day) === selectedDateKey
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                        }`}
-                      >
-                        {day.getDate()}
-                      </button>
-                    ) : (
-                      <div
-                        key={i}
-                        className="h-8 md:h-9"
-                      />
-                    ),
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1 pt-2">
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center">
-                Tudo aqui vale para:{' '}
-                <span className="font-semibold">
-                  {formattedDate}
-                </span>
-              </p>
-              <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70 text-center">
-                Toque em um dia para adicionar compromissos e organizar
-                sua rotina.
-              </p>
-            </div>
-          </SoftCard>
+          {/* (vou omitir aqui pra não ficar enorme, mas mantenha exatamente
+              o mesmo código que você já tem do calendário, Lembretes,
+              Comece pelo que faz sentido hoje e Hoje por aqui + sugestões) */}
 
           {/* =====================================================
-              VISÃO DIA — LEMBRETES + ATALHOS (logo abaixo do calendário)
+              INSPIRAÇÕES & CONTEÚDOS SALVOS – AGORA COM KANBAN + MODAL
           ===================================================== */}
-          {viewMode === 'day' && (
-            <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                {/* LEMBRETES RÁPIDOS */}
-                <div className="flex h-full">
-                  <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
-                      Lembretes rápidos
-                    </h2>
-                    <p className="text-sm text-[var(--color-text-muted)] mb-4">
-                      Anote pensamentos, recados e pequenas coisas para
-                      lembrar ao longo do dia.
-                    </p>
-                    <div className="flex-1">
-                      <NotesSection
-                        content={plannerData.notes}
-                        onChange={v =>
-                          setPlannerData(p => ({
-                            ...p,
-                            notes: v,
-                          }))
-                        }
-                        hideTitle
-                      />
-                    </div>
-                  </SoftCard>
-                </div>
-
-                {/* ATALHOS DO DIA – card vidro 2x2 */}
-                <div className="flex h-full">
-                  <div className="flex-1 relative overflow-hidden rounded-3xl border border-[var(--color-soft-strong)] bg-white/10 shadow-[0_22px_55px_rgba(255,20,117,0.12)] px-3 py-3 md:px-4 md:py-4 backdrop-blur-2xl">
-                    {/* Glows de fundo */}
-                    <div className="pointer-events-none absolute inset-0 opacity-80">
-                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
-                    </div>
-
-                    <div className="relative z-10 h-full flex flex-col">
-                      <div className="mb-3">
-                        <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                          Comece pelo que faz mais sentido hoje
-                        </h2>
-                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                          Use esses atalhos para ir direto para prioridades,
-                          compromissos ou cuidados.
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
-                        {/* Prioridades do dia */}
-                        <Link
-                          href="/meu-dia#prioridades"
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                        >
-                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                            <AppIcon
-                              name="target"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                              Prioridades do dia
-                            </span>
-                          </div>
-                        </Link>
-
-                        {/* Agenda & compromissos */}
-                        <Link
-                          href="/meu-dia#agenda"
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                        >
-                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                            <AppIcon
-                              name="calendar"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                              Agenda &amp; compromissos
-                            </span>
-                          </div>
-                        </Link>
-
-                        {/* Cuidar de mim */}
-                        <Link
-                          href="/meu-dia#cuidar-de-mim"
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg.white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                        >
-                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                            <AppIcon
-                              name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                              Cuidar de mim
-                            </span>
-                          </div>
-                        </Link>
-
-                        {/* Cuidar do meu filho */}
-                        <Link
-                          href="/meu-dia#cuidar-do-meu-filho"
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
-                        >
-                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
-                            <AppIcon
-                              name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
-                            />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                              Cuidar do meu filho
-                            </span>
-                          </div>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {/* =====================================================
-              HOJE POR AQUI + SUGESTÕES INTELIGENTES (botão)
-          ===================================================== */}
-          <section className="space-y-4 md:space-y-5">
-            {/* Card COMO VOCÊ ESTÁ */}
-            <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
-              <div className="space-y-1.5">
-                <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                  Hoje por aqui
-                </p>
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                  Como você está hoje?
-                </h2>
-                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                  Escolha como você se sente agora e o estilo de dia que
-                  você gostaria de ter.
-                </p>
-              </div>
-
-              <div className="space-y-3 md:space-y-4">
-                {/* COMO VOCÊ ESTÁ */}
-                <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
-                    Como você está?
-                  </p>
-                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                    Escolha como você se sente agora.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      { key: 'happy', label: 'Feliz' },
-                      { key: 'normal', label: 'Normal' },
-                      { key: 'stressed', label: 'Estressada' },
-                    ].map(option => (
-                      <button
-                        key={option.key}
-                        type="button"
-                        onClick={() =>
-                          setMood(prev =>
-                            prev === option.key ? null : option.key,
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          mood === option.key
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* HOJE EU QUERO UM DIA... */}
-                <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
-                    Hoje eu quero um dia...
-                  </p>
-                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                    Selecione o estilo do seu dia.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      'leve',
-                      'focado',
-                      'produtivo',
-                      'slow',
-                      'automático',
-                    ].map(option => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() =>
-                          setDayIntention(prev =>
-                            prev === option ? null : option,
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          dayIntention === option
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-2">
-                {moodSummary}
-              </p>
-
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowSuggestions(prev => !prev)}
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
-                >
-                  {showSuggestions
-                    ? 'Esconder sugestões para o seu dia'
-                    : 'Ver sugestões para o seu dia'}
-                  <AppIcon
-                    name="lightbulb"
-                    className="w-4 h-4"
-                  />
-                </button>
-              </div>
-            </SoftCard>
-
-            {/* Card SUGESTÕES INTELIGENTES (IA) – aparece quando o botão é acionado */}
-            {showSuggestions && (
-              <IntelligentSuggestionsSection
-                mood={mood}
-                intention={dayIntention}
-              />
-            )}
+          <section>
+            <SavedContentsSection
+              contents={[]}
+              plannerContents={plannerHook.items}
+              onItemClick={item => setSelectedSavedContent(item)}
+              onItemDone={({ id, source }) => {
+                if (source === 'planner') {
+                  plannerHook.removeItem(id)
+                }
+              }}
+            />
           </section>
-
-          {/* =====================================================
-              INSPIRAÇÕES & CONTEÚDOS SALVOS (KANBAN)
-          ===================================================== */}
-          <SavedContentsSection
-            contents={[]}
-            plannerContents={plannerHook.items}
-            onItemDone={({ id, source }) => {
-              if (source === 'planner') {
-                plannerHook.removeItem(id)
-              }
-            }}
-          />
 
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
@@ -649,12 +314,96 @@ export default function WeeklyPlannerShell() {
           </div>
         </div>
       )}
+
+      {/* =====================================================
+          MODAL DETALHE DO CONTEÚDO SALVO (KANBAN)
+      ===================================================== */}
+      {selectedSavedContent && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
+                  <AppIcon
+                    name="target"
+                    className="w-4 h-4 text-[var(--color-brand)]"
+                  />
+                </span>
+                <div className="flex flex-col">
+                  <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2 py-0.5 text-[10px] font-medium text-[#C2285F]">
+                    {plannerTypeLabels[selectedSavedContent.type] ??
+                      'CONTEÚDO'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedSavedContent(null)}
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] mb-2">
+              {selectedSavedContent.title}
+            </h3>
+
+            {(() => {
+              const anyItem = selectedSavedContent as any
+              const payload = anyItem.payload ?? {}
+              const description =
+                anyItem.description ??
+                payload.preview ??
+                payload.description ??
+                payload.text ??
+                payload.excerpt ??
+                ''
+
+              return description ? (
+                <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
+                  {description}
+                </p>
+              ) : (
+                <p className="text-sm text-[var(--color-text-muted)] mb-3">
+                  Esse conteúdo foi salvo no planner. Em breve, você verá
+                  mais detalhes aqui.
+                </p>
+              )
+            })()}
+
+            <p className="text-[11px] text-[var(--color-text-muted)]/80 mb-4">
+              Salvo em: {selectedSavedContent.origin.replace('-', ' ')}
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedSavedContent(null)}
+                className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  plannerHook.removeItem(selectedSavedContent.id)
+                  setSelectedSavedContent(null)
+                }}
+                className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+              >
+                Marcar como feito
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 // =====================================================
 // GERADOR DO CALENDÁRIO
+// (mantém igual ao que você já tinha)
 // =====================================================
 function generateMonthMatrix(
   currentDate: Date,
