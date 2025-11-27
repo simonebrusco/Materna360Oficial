@@ -38,8 +38,8 @@ function DailyGreetingSection() {
         </p>
       </ClientOnly>
 
-      {/* Frase motivacional do dia (dinâmica) */}
-      <p className="text-sm md:text-base text-white/92 max-w-xl leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+      {/* Frase motivacional do dia — OPÇÃO A: texto branco com glow suave */}
+      <p className="text-sm md:text-base text-white/95 max-w-xl leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
         &quot;{dailyMessage}&quot;
       </p>
     </section>
