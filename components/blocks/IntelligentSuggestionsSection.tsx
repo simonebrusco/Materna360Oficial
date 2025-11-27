@@ -304,50 +304,50 @@ export function IntelligentSuggestionsSection({
   }, [mood, intention, hasSelection])
 
   return (
-    <div className="w-full">
-      <SoftCard className="p-5 md:p-6 rounded-3xl border border-[#ffd8e6] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs md:text-sm font-semibold text-[#ff005e] uppercase tracking-wide mb-1 font-poppins">
-              Sugestões inteligentes para o seu dia
-            </p>
-            <p className="text-xs md:text-sm text-[#545454]/70 font-poppins">
-              Ideias rápidas pensadas para o seu momento.
-            </p>
-          </div>
+    <div className="w-full h-full">
+      <SoftCard className="h-full flex flex-col rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6">
+        <div className="space-y-1.5">
+          <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+            Sugestões inteligentes para o seu dia
+          </p>
+          <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+            Ideias rápidas pensadas para o seu momento.
+          </p>
+        </div>
 
+        <div className="mt-3 md:mt-4 flex-1 flex">
           {!hasSelection ? (
-            <div className="text-sm md:text-base text-[#545454] font-poppins leading-relaxed">
-              Comece contando como você está e que tipo de dia você quer ter.
-              Assim eu consigo sugerir algo que faça sentido pra você.
+            <div className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
+              Comece contando como você está e que tipo de dia você quer
+              ter. Assim eu consigo sugerir algo que faça sentido pra você.
             </div>
           ) : isLoading ? (
-            <div className="text-sm text-[#545454] font-poppins leading-relaxed">
+            <div className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
               Estou pensando em algumas sugestões que combinam com o seu
               momento de hoje…
             </div>
           ) : suggestions.length === 0 ? (
-            <div className="text-sm text-[#545454] font-poppins leading-relaxed">
+            <div className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
               Hoje, talvez o mais importante seja apenas respeitar o seu
               ritmo. Se quiser, defina uma única prioridade e deixe o resto
               mais leve.
             </div>
           ) : (
             <div className="space-y-3">
-              {suggestions.map((suggestion) => (
+              {suggestions.map(suggestion => (
                 <div key={suggestion.id} className="flex gap-3">
                   <div className="flex-shrink-0 pt-1">
                     <AppIcon
                       name="idea"
-                      className="w-4 h-4 md:w-5 md:h-5 text-[#ff005e]"
+                      className="w-4 h-4 md:w-5 md:h-5 text-[var(--color-brand)]"
                     />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm md:text-base font-semibold text-[#2f3a56] font-poppins">
+                    <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
                       {suggestion.title}
                     </p>
                     {suggestion.description && (
-                      <p className="text-xs md:text-sm text-[#545454] font-poppins mt-1">
+                      <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
                         {suggestion.description}
                       </p>
                     )}
