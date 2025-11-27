@@ -85,6 +85,7 @@ export default function SavedContentsSection({
       ...plannerContents.map(item => ({
         id: item.id,
         title: item.title,
+        // se no futuro tivermos preview no payload, dá pra trocar aqui
         description: (item as any).description ?? '',
         tag: plannerTypeLabels[item.type] ?? 'CONTEÚDO',
         source: 'planner' as const,
@@ -138,7 +139,7 @@ export default function SavedContentsSection({
       key={item.id}
       type="button"
       onClick={() => handleClick(item)}
-      className="group relative min-w-[160px] max-w-[200px] rounded-2xl border border-[#FFE8F2] bg-white/90 px-3 py-3 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-4 md:py-4"
+      className="group relative min-w-[240px] max-w-[320px] w-full rounded-2xl border border-[#FFE8F2] bg-white/90 px-4 py-3 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-5 md:py-4"
     >
       {/* Botão 'feito' */}
       <button
@@ -147,30 +148,30 @@ export default function SavedContentsSection({
           e.stopPropagation()
           handleDone(item)
         }}
-        className="absolute right-2 top-2 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
+        className="absolute right-3 top-3 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
         aria-label="Marcar como feito"
       >
         <AppIcon name="check" className="h-3 w-3" />
       </button>
 
-      <div className="flex items-start gap-2.5 pr-4 md:gap-3">
+      <div className="flex items-start gap-3 pr-5 md:gap-3.5">
         <div className="mt-0.5 shrink-0">
           <AppIcon
             name={item.source === 'planner' ? 'target' : 'bookmark'}
-            className="h-4 w-4 text-[var(--color-brand)] md:h-5 md:w-5"
+            className="h-5 w-5 text-[var(--color-brand)]"
           />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-semibold text-[var(--color-text-main)] md:text-base">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold leading-snug text-[var(--color-text-main)] md:text-base line-clamp-2">
               {item.title}
             </p>
-            <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2 py-0.5 text-[10px] font-medium text-[#C2285F] md:text-xs">
+            <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2.5 py-0.5 text-[10px] font-medium text-[#C2285F] md:text-xs">
               {item.tag}
             </span>
           </div>
           {item.description && (
-            <p className="line-clamp-3 text-[11px] text-[var(--color-text-muted)] md:text-xs">
+            <p className="text-[11px] text-[var(--color-text-muted)] md:text-xs line-clamp-3">
               {item.description}
             </p>
           )}
