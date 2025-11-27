@@ -17,7 +17,6 @@ import {
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import WeekView from './WeekView'
-import NotesSection from './NotesSection'
 import { Reveal } from '@/components/ui/Reveal'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import SavedContentsSection from '@/components/blocks/SavedContentsSection'
@@ -29,26 +28,19 @@ type Appointment = {
   tag?: string
 }
 
-type Top3Item = {
-  id: string
-  title: string
-  done: boolean
-}
+type TaskOrigin = 'top3' | 'agenda' | 'selfcare' | 'family' | 'manual'
 
-type CareItem = {
+type TaskItem = {
   id: string
   title: string
   done: boolean
-  source?: 'manual' | 'from_hub'
-  origin?: string
+  origin: TaskOrigin
 }
 
 type PlannerData = {
   appointments: Appointment[]
-  top3: Top3Item[]
-  careItems: CareItem[]
-  familyItems: CareItem[]
-  notes: string
+  tasks: TaskItem[]
+  notes: string // mantido só por compatibilidade, não usamos mais
 }
 
 export default function WeeklyPlannerShell() {
@@ -60,9 +52,7 @@ export default function WeeklyPlannerShell() {
 
   const [plannerData, setPlannerData] = useState<PlannerData>({
     appointments: [],
-    top3: [],
-    careItems: [],
-    familyItems: [],
+    tasks: [],
     notes: '',
   })
 
@@ -114,11 +104,7 @@ export default function WeeklyPlannerShell() {
     const loadedData: PlannerData = {
       appointments:
         load(`planner/appointments/${selectedDateKey}`, []) ?? [],
-      top3: load(`planner/top3/${selectedDateKey}`, []) ?? [],
-      careItems:
-        load(`planner/careItems/${selectedDateKey}`, []) ?? [],
-      familyItems:
-        load(`planner/familyItems/${selectedDateKey}`, []) ?? [],
+      tasks: load(`planner/tasks/${selectedDateKey}`, []) ?? [],
       notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
     }
 
@@ -138,25 +124,10 @@ export default function WeeklyPlannerShell() {
 
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
-    save(`planner/top3/${selectedDateKey}`, plannerData.top3)
-  }, [plannerData.top3, selectedDateKey, isHydrated])
+    save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
+  }, [plannerData.tasks, selectedDateKey, isHydrated])
 
-  useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
-    save(
-      `planner/careItems/${selectedDateKey}`,
-      plannerData.careItems,
-    )
-  }, [plannerData.careItems, selectedDateKey, isHydrated])
-
-  useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
-    save(
-      `planner/familyItems/${selectedDateKey}`,
-      plannerData.familyItems,
-    )
-  }, [plannerData.familyItems, selectedDateKey, isHydrated])
-
+  // (notes mantido só por compatibilidade, mas não é mais usado na UI)
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
@@ -188,70 +159,25 @@ export default function WeeklyPlannerShell() {
     setIsModalOpen(true)
   }
 
-  // Ações rápidas – helpers
-  const addTop3Item = (title: string) => {
-    const newItem: Top3Item = {
+  // TAREFAS – helpers
+  const addTask = (title: string, origin: TaskOrigin) => {
+    const newTask: TaskItem = {
       id: Math.random().toString(36).slice(2, 9),
       title,
       done: false,
+      origin,
     }
     setPlannerData(prev => ({
       ...prev,
-      top3: [...prev.top3, newItem],
+      tasks: [...prev.tasks, newTask],
     }))
   }
 
-  const toggleTop3Item = (id: string) => {
+  const toggleTask = (id: string) => {
     setPlannerData(prev => ({
       ...prev,
-      top3: prev.top3.map(item =>
-        item.id === id ? { ...item, done: !item.done } : item,
-      ),
-    }))
-  }
-
-  const addCareItem = (title: string) => {
-    const newItem: CareItem = {
-      id: Math.random().toString(36).slice(2, 9),
-      title,
-      done: false,
-      source: 'manual',
-      origin: 'cuidar-de-mim',
-    }
-    setPlannerData(prev => ({
-      ...prev,
-      careItems: [...prev.careItems, newItem],
-    }))
-  }
-
-  const toggleCareItem = (id: string) => {
-    setPlannerData(prev => ({
-      ...prev,
-      careItems: prev.careItems.map(item =>
-        item.id === id ? { ...item, done: !item.done } : item,
-      ),
-    }))
-  }
-
-  const addFamilyItem = (title: string) => {
-    const newItem: CareItem = {
-      id: Math.random().toString(36).slice(2, 9),
-      title,
-      done: false,
-      source: 'manual',
-      origin: 'cuidar-do-meu-filho',
-    }
-    setPlannerData(prev => ({
-      ...prev,
-      familyItems: [...prev.familyItems, newItem],
-    }))
-  }
-
-  const toggleFamilyItem = (id: string) => {
-    setPlannerData(prev => ({
-      ...prev,
-      familyItems: prev.familyItems.map(item =>
-        item.id === id ? { ...item, done: !item.done } : item,
+      tasks: prev.tasks.map(task =>
+        task.id === id ? { ...task, done: !task.done } : task,
       ),
     }))
   }
@@ -307,6 +233,10 @@ export default function WeeklyPlannerShell() {
           ]
         }. Que tal começar definindo suas prioridades?`
       : 'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.'
+
+  // Lista para o modal por origem
+  const tasksByOrigin = (origin: TaskOrigin) =>
+    plannerData.tasks.filter(task => task.origin === origin)
 
   // ===========================
   // RENDER
@@ -425,28 +355,55 @@ export default function WeeklyPlannerShell() {
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
-                {/* LEMBRETES RÁPIDOS */}
+                {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
                   <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
                       Lembretes rápidos
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)] mb-4">
-                      Anote pensamentos, recados e pequenas coisas para
-                      lembrar ao longo do dia.
+                    <p className="text-sm text-[var(--color-text-muted)] mb-3">
+                      Tudo que você salvar nos atalhos aparece aqui como
+                      uma lista simples para o seu dia.
                     </p>
-                    <div className="flex-1">
-                      <NotesSection
-                        content={plannerData.notes}
-                        onChange={v =>
-                          setPlannerData(p => ({
-                            ...p,
-                            notes: v,
-                          }))
-                        }
-                        hideTitle
-                      />
+
+                    {/* Lista de tarefas */}
+                    <div className="flex-1 min-h-[120px] max-h-48 overflow-y-auto pr-1 space-y-2">
+                      {plannerData.tasks.length === 0 && (
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          Ainda não há lembretes para hoje. Use os atalhos
+                          ao lado ou adicione algo rápido abaixo.
+                        </p>
+                      )}
+
+                      {plannerData.tasks.map(task => (
+                        <button
+                          key={task.id}
+                          type="button"
+                          onClick={() => toggleTask(task.id)}
+                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                            task.done
+                              ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
+                              : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                              task.done
+                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                            }`}
+                          >
+                            {task.done ? '✓' : ''}
+                          </span>
+                          <span>{task.title}</span>
+                        </button>
+                      ))}
                     </div>
+
+                    {/* Campo rápido para novo lembrete */}
+                    <QuickAddTaskInput
+                      onAdd={title => addTask(title, 'manual')}
+                    />
                   </SoftCard>
                 </div>
 
@@ -465,8 +422,8 @@ export default function WeeklyPlannerShell() {
                           Comece pelo que faz mais sentido hoje
                         </h2>
                         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                          Use esses atalhos para ir direto para prioridades,
-                          compromissos ou cuidados.
+                          Use esses atalhos para criar lembretes rápidos
+                          de prioridades, compromissos e cuidados.
                         </p>
                       </div>
 
@@ -482,7 +439,7 @@ export default function WeeklyPlannerShell() {
                               name="target"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Prioridades do dia
                             </span>
                           </div>
@@ -491,7 +448,10 @@ export default function WeeklyPlannerShell() {
                         {/* Agenda & compromissos */}
                         <button
                           type="button"
-                          onClick={() => openModalForDate(selectedDate)}
+                          onClick={() => {
+                            // abrir modal de compromisso rápido
+                            openModalForDate(selectedDate)
+                          }}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -499,7 +459,7 @@ export default function WeeklyPlannerShell() {
                               name="calendar"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Agenda &amp; compromissos
                             </span>
                           </div>
@@ -516,7 +476,7 @@ export default function WeeklyPlannerShell() {
                               name="heart"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar de mim
                             </span>
                           </div>
@@ -533,7 +493,7 @@ export default function WeeklyPlannerShell() {
                               name="smile"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
                             </span>
                           </div>
@@ -813,21 +773,18 @@ export default function WeeklyPlannerShell() {
           mode={quickAction}
           items={
             quickAction === 'top3'
-              ? plannerData.top3
+              ? tasksByOrigin('top3')
               : quickAction === 'selfcare'
-              ? plannerData.careItems
-              : plannerData.familyItems
+              ? tasksByOrigin('selfcare')
+              : tasksByOrigin('family')
           }
           onAdd={title => {
-            if (quickAction === 'top3') addTop3Item(title)
-            else if (quickAction === 'selfcare') addCareItem(title)
-            else addFamilyItem(title)
+            if (quickAction === 'top3') addTask(title, 'top3')
+            else if (quickAction === 'selfcare')
+              addTask(title, 'selfcare')
+            else addTask(title, 'family')
           }}
-          onToggle={id => {
-            if (quickAction === 'top3') toggleTop3Item(id)
-            else if (quickAction === 'selfcare') toggleCareItem(id)
-            else toggleFamilyItem(id)
-          }}
+          onToggle={id => toggleTask(id)}
           onClose={() => setQuickAction(null)}
         />
       )}
@@ -945,11 +902,40 @@ function ModalAppointmentForm({
 }
 
 // =====================================================
+// COMPONENTE: INPUT RÁPIDO DE TAREFA
+// =====================================================
+function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
+  const [value, setValue] = useState('')
+
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault()
+        if (!value.trim()) return
+        onAdd(value.trim())
+        setValue('')
+      }}
+      className="mt-3 space-y-1"
+    >
+      <label className="text-[11px] font-medium text-[var(--color-text-main)]">
+        Adicionar lembrete rápido
+      </label>
+      <input
+        className="w-full rounded-xl border px-3 py-2 text-sm bg-[var(--color-soft-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/40 focus:border-[var(--color-brand)]/60"
+        placeholder="Ex: Levar exame no pediatra, separar uniforme..."
+        value={value}
+        onChange={e => setValue(e.target.value)}
+      />
+    </form>
+  )
+}
+
+// =====================================================
 // MODAL GENÉRICO LISTA RÁPIDA (TOP3 / CUIDAR)
 // =====================================================
 type QuickListModalProps = {
   mode: 'top3' | 'selfcare' | 'family'
-  items: { id: string; title: string; done: boolean }[]
+  items: TaskItem[]
   onAdd: (title: string) => void
   onToggle: (id: string) => void
   onClose: () => void
@@ -973,10 +959,10 @@ function QuickListModal({
 
   const helper =
     mode === 'top3'
-      ? 'Escolha até três coisas que realmente importam para hoje.'
+      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus Lembretes rápidos.'
       : mode === 'selfcare'
-      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia.'
-      : 'Anote os cuidados ou momentos importantes com seu filho hoje.'
+      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos Lembretes rápidos.'
+      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos Lembretes rápidos.'
 
   const placeholder =
     mode === 'top3'
@@ -1004,7 +990,7 @@ function QuickListModal({
           {helper}
         </p>
 
-        <div className="space-y-3 max-h-56 overflow-y-auto mb-4">
+        <div className="space-y-2 max-h-56 overflow-y-auto mb-4 pr-1">
           {items.length === 0 && (
             <p className="text-xs text-[var(--color-text-muted)]">
               Ainda não há nada aqui. Comece adicionando o primeiro item.
@@ -1015,16 +1001,22 @@ function QuickListModal({
               key={item.id}
               type="button"
               onClick={() => onToggle(item.id)}
-              className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 text-sm text-left ${
+              className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-left ${
                 item.done
                   ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-[var(--color-text-muted)]'
                   : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
               }`}
             >
-              <span>{item.title}</span>
-              <span className="text-xs text-[var(--color-brand)]">
-                {item.done ? 'Feito' : 'Marcar como feito'}
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                  item.done
+                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                }`}
+              >
+                {item.done ? '✓' : ''}
               </span>
+              <span>{item.title}</span>
             </button>
           ))}
         </div>
