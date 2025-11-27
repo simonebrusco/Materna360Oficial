@@ -21,6 +21,7 @@ export function PageTemplate({
       className="relative min-h-[100dvh] pb-24 materna360-premium-bg"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6 relative z-10">
+        {/* HERO PADRONIZADO PARA TODAS AS ABAS QUE USAM TEMPLATE */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <div className="space-y-2.5 md:space-y-3">
             {label && (
@@ -29,13 +30,13 @@ export function PageTemplate({
               </span>
             )}
 
-            {/* título agora no mesmo “peso visual” do Maternar/Eu360 */}
-            <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+            {/* TÍTULO AGORA MAIS FORTE (ALINHADO COM A PERCEPÇÃO DO “MATERNAR”) */}
+            <h1 className="text-4xl md:text-5xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
               {title}
             </h1>
 
             {subtitle && (
-              <p className="text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+              <p className="text-base md:text-lg text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
                 {subtitle}
               </p>
             )}
