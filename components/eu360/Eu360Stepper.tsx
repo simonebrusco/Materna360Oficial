@@ -1,65 +1,73 @@
 'use client'
 
-import clsx from 'clsx'
+import React from 'react'
 
 export type Eu360Step = 'about-you' | 'children' | 'routine' | 'support'
 
-const STEPS: Eu360Step[] = ['about-you', 'children', 'routine', 'support']
-
-const LABELS: Record<Eu360Step, string> = {
-  'about-you': 'Você',
-  children: 'Seu(s) filho(s)',
-  routine: 'Rotina',
-  support: 'Rede & prefs',
-}
-
-type Props = {
+type Eu360StepperProps = {
   currentStep: Eu360Step
-  onStepClick: (step: Eu360Step) => void
+  onStepClick?: (step: Eu360Step) => void
 }
 
-export function Eu360Stepper({ currentStep, onStepClick }: Props) {
-  return (
-    <div className="mx-auto max-w-xl px-4">
-      <div className="rounded-3xl border border-white/22 bg-white/10 px-4 py-5 flex flex-col items-center gap-4 shadow-[0_14px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-        {/* STEPS */}
-        <div className="flex items-center gap-3">
-          {STEPS.map((step, index) => (
-            <div key={step} className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => onStepClick(step)}
-                className={clsx(
-                  'px-4 py-1.5 rounded-full flex items-center gap-2 text-sm font-semibold transition-all shadow-sm max-w-[150px]',
-                  step === currentStep
-                    ? 'bg-white text-[var(--color-brand)] shadow-[0_4px_14px_rgba(255,20,117,0.35)]'
-                    : 'bg-white/55 text-white/85 hover:bg-white/80'
-                )}
-              >
-                <span
-                  className={clsx(
-                    'h-6 w-6 flex items-center justify-center rounded-full text-xs font-bold',
-                    step === currentStep
-                      ? 'bg-[var(--color-brand)] text-white'
-                      : 'bg-white/40 text-[var(--color-brand)]'
-                  )}
-                >
-                  {index + 1}
-                </span>
-                <span className="truncate">{LABELS[step]}</span>
-              </button>
+const STEPS: { id: Eu360Step; index: number; label: string }[] = [
+  { id: 'about-you', index: 1, label: 'Você' },
+  { id: 'children', index: 2, label: 'Seu(s) filho(s)' },
+  { id: 'routine', index: 3, label: 'Rotina' },
+  { id: 'support', index: 4, label: 'Rede & preferências' },
+]
 
-              {index < STEPS.length - 1 && (
-                <div className="h-[1.5px] w-8 rounded-full bg-white/30" />
-              )}
-            </div>
-          ))}
+export function Eu360Stepper({ currentStep, onStepClick }: Eu360StepperProps) {
+  return (
+    <div className="mx-auto max-w-2xl px-4">
+      <div className="rounded-3xl border border-white/30 bg-white/12 px-4 py-4 shadow-[0_12px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
+        {/* Linha de passos */}
+        <div className="flex items-center justify-between gap-2 md:gap-4">
+          {STEPS.map((step, idx) => {
+            const isActive = step.id === currentStep
+
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  type="button"
+                  onClick={() => onStepClick?.(step.id)}
+                  className={[
+                    'group flex items-center gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 transition-all',
+                    'bg-white/90 text-[var(--color-text-main)] shadow-[0_6px_18px_rgba(0,0,0,0.16)]',
+                    isActive
+                      ? 'border border-[var(--color-brand)]'
+                      : 'border border-white/60 hover:bg-white',
+                  ].join(' ')}
+                >
+                  <span
+                    className={[
+                      'inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold',
+                      isActive
+                        ? 'bg-[var(--color-brand)] text-white'
+                        : 'bg-[#FFE8F2] text-[var(--color-brand)]',
+                    ].join(' ')}
+                  >
+                    {step.index}
+                  </span>
+                  <span className="text-xs md:text-sm font-semibold tracking-wide truncate">
+                    {step.label}
+                  </span>
+                </button>
+
+                {/* Linha conectora (entre os passos) */}
+                {idx < STEPS.length - 1 && (
+                  <div className="hidden flex-1 items-center justify-center md:flex">
+                    <div className="h-[1px] w-full bg-gradient-to-r from-white/40 via-white/70 to-white/40" />
+                  </div>
+                )}
+              </React.Fragment>
+            )
+          })}
         </div>
 
-        {/* SUBTEXTO */}
-        <p className="text-xs text-white/75 text-center leading-relaxed max-w-sm">
-          Comece por você e avance pelas etapas no seu tempo. Suas respostas deixam todas as sugestões do Materna360 mais
-          próximas da sua rotina real.
+        {/* Texto de apoio */}
+        <p className="mt-3 text-center text-[11px] md:text-xs text-white/85 leading-relaxed px-4">
+          Comece por você e avance pelas etapas no seu tempo. Suas respostas deixam todas as
+          sugestões do Materna360 mais próximas da sua rotina real.
         </p>
       </div>
     </div>
