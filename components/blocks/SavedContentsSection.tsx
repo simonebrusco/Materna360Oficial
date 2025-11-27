@@ -19,10 +19,6 @@ type SavedContentsSectionProps = {
   contents: SavedContent[]
   plannerContents?: PlannerSavedContent[]
   onItemClick?: (item: PlannerSavedContent) => void
-  /**
-   * Chamado quando a mãe marca um conteúdo como "feito" / tira da lista.
-   * Você pode usar isso depois para remover do storage, se quiser.
-   */
   onItemDone?: (params: {
     id: string
     source: 'legacy' | 'planner'
@@ -65,13 +61,11 @@ export default function SavedContentsSection({
   onItemDone,
   hideTitle = false,
 }: SavedContentsSectionProps) {
-  // Hook de estado SEMPRE no topo
   const [dismissedIds, setDismissedIds] = useState<string[]>([])
 
-  // Combina os conteúdos legados + planner
   const combined: CombinedItem[] = useMemo(
     () => [
-      // Itens legados (useSavedInspirations)
+      // conteúdos antigos
       ...contents.map(item => ({
         id: item.id,
         title: item.title,
@@ -81,17 +75,29 @@ export default function SavedContentsSection({
         raw: null,
         href: item.href,
       })),
-      // Itens novos do planner
-      ...plannerContents.map(item => ({
-        id: item.id,
-        title: item.title,
-        // se no futuro tivermos preview no payload, dá pra trocar aqui
-        description: (item as any).description ?? '',
-        tag: plannerTypeLabels[item.type] ?? 'CONTEÚDO',
-        source: 'planner' as const,
-        raw: item,
-        href: undefined as string | undefined,
-      })),
+      // conteúdos do planner
+      ...plannerContents.map(item => {
+        const anyItem = item as any
+        const payload = anyItem.payload ?? {}
+
+        const description =
+          anyItem.description ??
+          payload.preview ??
+          payload.description ??
+          payload.text ??
+          payload.excerpt ??
+          ''
+
+        return {
+          id: item.id,
+          title: item.title,
+          description: description ?? '',
+          tag: plannerTypeLabels[item.type] ?? 'CONTEÚDO',
+          source: 'planner' as const,
+          raw: item,
+          href: undefined as string | undefined,
+        }
+      }),
     ],
     [contents, plannerContents],
   )
@@ -100,19 +106,16 @@ export default function SavedContentsSection({
     item => !dismissedIds.includes(item.id),
   )
 
-  // Limitador para não poluir visualmente
   const MAX_VISIBLE = 10
   const limitedItems =
     visibleItems.length > MAX_VISIBLE
       ? visibleItems.slice(0, MAX_VISIBLE)
       : visibleItems
 
-  // Divide em 2 faixas horizontais (tipo "kanban" de duas linhas)
-  const lane1 = limitedItems.filter((_, index) => index % 2 === 0)
-  const lane2 = limitedItems.filter((_, index) => index % 2 === 1)
-
   const handleDone = (item: CombinedItem) => {
-    setDismissedIds(prev => (prev.includes(item.id) ? prev : [...prev, item.id]))
+    setDismissedIds(prev =>
+      prev.includes(item.id) ? prev : [...prev, item.id],
+    )
 
     if (onItemDone) {
       onItemDone({
@@ -139,7 +142,7 @@ export default function SavedContentsSection({
       key={item.id}
       type="button"
       onClick={() => handleClick(item)}
-      className="group relative min-w-[240px] max-w-[320px] w-full rounded-2xl border border-[#FFE8F2] bg-white/90 px-4 py-3 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-5 md:py-4"
+      className="group relative w-full rounded-2xl border border-[#FFE8F2] bg-white/90 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-5 md:py-5"
     >
       {/* Botão 'feito' */}
       <button
@@ -148,33 +151,37 @@ export default function SavedContentsSection({
           e.stopPropagation()
           handleDone(item)
         }}
-        className="absolute right-3 top-3 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
+        className="absolute right-4 top-4 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
         aria-label="Marcar como feito"
       >
         <AppIcon name="check" className="h-3 w-3" />
       </button>
 
-      <div className="flex items-start gap-3 pr-5 md:gap-3.5">
+      <div className="flex items-start gap-3 pr-6">
         <div className="mt-0.5 shrink-0">
           <AppIcon
             name={item.source === 'planner' ? 'target' : 'bookmark'}
             className="h-5 w-5 text-[var(--color-brand)]"
           />
         </div>
+
         <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold leading-snug text-[var(--color-text-main)] md:text-base line-clamp-2">
-              {item.title}
-            </p>
-            <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2.5 py-0.5 text-[10px] font-medium text-[#C2285F] md:text-xs">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2.5 py-0.5 text-[10px] font-medium text-[#C2285F] md:text-xs">
               {item.tag}
             </span>
           </div>
+
+          <p className="mb-1.5 text-sm font-semibold leading-snug text-[var(--color-text-main)] md:text-base line-clamp-2">
+            {item.title}
+          </p>
+
           {item.description && (
             <p className="text-[11px] text-[var(--color-text-muted)] md:text-xs line-clamp-3">
               {item.description}
             </p>
           )}
+
           {item.source === 'planner' && onItemClick && (
             <p className="mt-1.5 text-[10px] text-[var(--color-brand)]/80 md:text-xs">
               Toque para ver mais detalhes desse conteúdo.
@@ -211,21 +218,10 @@ export default function SavedContentsSection({
           </p>
         ) : (
           <div className="space-y-3">
-            {/* Faixa 1 */}
-            {lane1.length > 0 && (
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {lane1.map(renderCard)}
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {limitedItems.map(renderCard)}
+            </div>
 
-            {/* Faixa 2 */}
-            {lane2.length > 0 && (
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {lane2.map(renderCard)}
-              </div>
-            )}
-
-            {/* CTA 'Ver tudo' */}
             <div className="pt-1">
               <Link
                 href="/descobrir/salvos"
