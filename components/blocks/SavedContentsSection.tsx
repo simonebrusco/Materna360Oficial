@@ -65,6 +65,7 @@ export default function SavedContentsSection({
   // Junta conteúdos legados + conteúdos do planner
   const combined: CombinedItem[] = useMemo(
     () => [
+      // legados
       ...contents.map(item => ({
         id: item.id,
         title: item.title,
@@ -74,6 +75,7 @@ export default function SavedContentsSection({
         raw: null,
         href: item.href,
       })),
+      // planner
       ...plannerContents.map(item => {
         const anyItem = item as any
         const payload = anyItem.payload ?? {}
@@ -193,14 +195,14 @@ export default function SavedContentsSection({
     <div className="space-y-3">
       {!hideTitle && (
         <div>
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-main)] md:text-xl">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl">
             <AppIcon
               name="bookmark"
               className="h-4 w-4 text-[var(--color-brand)]"
             />
             Inspirações &amp; conteúdos salvos
           </h3>
-          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]/70 md:text-sm">
+          <p className="mt-0.5 text-xs text-white/85 md:text-sm">
             Receitas, ideias, brincadeiras e conteúdos que você guardou para
             deixar seu dia mais leve.
           </p>
