@@ -10,20 +10,16 @@ import Link from 'next/link'
 
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
-import { useSavedInspirations } from '@/app/hooks/useSavedInspirations'
 import {
   usePlannerSavedContents,
-  type PlannerSavedContent,
 } from '@/app/hooks/usePlannerSavedContents'
 
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
-import SavedContentDrawer from '@/components/ui/SavedContentDrawer'
 import WeekView from './WeekView'
 import NotesSection from './NotesSection'
 import { Reveal } from '@/components/ui/Reveal'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
-import SavedContentsSection from '@/components/blocks/SavedContentsSection'
 
 type Appointment = {
   id: string
@@ -71,12 +67,7 @@ export default function WeeklyPlannerShell() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  // Sugestões & salvos
-  const [selectedSavedItem, setSelectedSavedItem] =
-    useState<PlannerSavedContent | null>(null)
-  const [isSavedItemOpen, setIsSavedItemOpen] = useState(false)
-
-  const { savedItems: savedContents } = useSavedInspirations()
+  // Planner (para manter a data em sincronia com os mini-hubs)
   const plannerHook = usePlannerSavedContents()
 
   // Estado local para IA (humor + intenção do dia)
@@ -364,7 +355,7 @@ export default function WeeklyPlannerShell() {
           {/* =====================================================
               HUMOR + SUGESTÕES INTELIGENTES (lado a lado)
           ===================================================== */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <section className="grid grid-cols-1 md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)] gap-6 md:gap-8 items-start">
             {/* Card COMO VOCÊ ESTÁ */}
             <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
               <div className="space-y-1.5">
@@ -457,11 +448,13 @@ export default function WeeklyPlannerShell() {
               </p>
             </SoftCard>
 
-            {/* Card SUGESTÕES INTELIGENTES (IA) */}
-            <IntelligentSuggestionsSection
-              mood={mood}
-              intention={dayIntention}
-            />
+            {/* Card SUGESTÕES INTELIGENTES (IA) — mais compacto, quadradinho */}
+            <div className="md:max-w-xs lg:max-w-sm w-full md:justify-self-end md:self-start">
+              <IntelligentSuggestionsSection
+                mood={mood}
+                intention={dayIntention}
+              />
+            </div>
           </section>
 
           {/* =====================================================
@@ -476,47 +469,23 @@ export default function WeeklyPlannerShell() {
               nos mini-hubs.
             </p>
 
-            {plannerHook.items.length > 0 ||
-            savedContents.length > 0 ? (
-              <>
-                <SavedContentsSection
-                  contents={savedContents}
-                  plannerContents={plannerHook.items}
-                  onItemClick={item => {
-                    setSelectedSavedItem(item)
-                    setIsSavedItemOpen(true)
-                  }}
-                  hideTitle
-                />
-
-                <SavedContentDrawer
-                  open={isSavedItemOpen}
-                  onClose={() => {
-                    setIsSavedItemOpen(false)
-                    setSelectedSavedItem(null)
-                  }}
-                  item={selectedSavedItem}
-                />
-              </>
-            ) : (
-              <SoftCard className="p-5 md:p-6 text-center py-6 rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                <AppIcon
-                  name="bookmark"
-                  className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
-                />
-                <p className="text-sm md:text-base text-[var(--color-text-muted)]/80 mb-3">
-                  Quando você salvar receitas, brincadeiras ou conteúdos
-                  nos mini-hubs, eles aparecem aqui.
-                </p>
-                <Link
-                  href="/biblioteca-materna"
-                  className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
-                >
-                  Ver tudo na Biblioteca Materna
-                  <AppIcon name="info" className="w-4 h-4" />
-                </Link>
-              </SoftCard>
-            )}
+            <SoftCard className="p-5 md:p-6 text-center py-6 rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+              <AppIcon
+                name="bookmark"
+                className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+              />
+              <p className="text-sm md:text-base text-[var(--color-text-muted)]/80 mb-3">
+                Quando você salvar receitas, brincadeiras ou conteúdos
+                nos mini-hubs, eles aparecem aqui.
+              </p>
+              <Link
+                href="/biblioteca-materna"
+                className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+              >
+                Ver tudo na Biblioteca Materna
+                <AppIcon name="info" className="w-4 h-4" />
+              </Link>
+            </SoftCard>
           </div>
 
           {/* =====================================================
