@@ -22,8 +22,8 @@ import SavedContentDrawer from '@/components/ui/SavedContentDrawer'
 import WeekView from './WeekView'
 import NotesSection from './NotesSection'
 import { Reveal } from '@/components/ui/Reveal'
-import { IntelligentSuggestionsSection } from './IntelligentSuggestionsSection'
-import SavedContentsSection from './SavedContentsSection'
+import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
+import SavedContentsSection from '@/components/blocks/SavedContentsSection'
 
 type Appointment = {
   id: string
