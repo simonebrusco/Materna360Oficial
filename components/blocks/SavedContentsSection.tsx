@@ -63,9 +63,9 @@ export default function SavedContentsSection({
 }: SavedContentsSectionProps) {
   const [dismissedIds, setDismissedIds] = useState<string[]>([])
 
+  // Junta conteúdos legados + conteúdos do planner
   const combined: CombinedItem[] = useMemo(
     () => [
-      // conteúdos antigos
       ...contents.map(item => ({
         id: item.id,
         title: item.title,
@@ -75,7 +75,6 @@ export default function SavedContentsSection({
         raw: null,
         href: item.href,
       })),
-      // conteúdos do planner
       ...plannerContents.map(item => {
         const anyItem = item as any
         const payload = anyItem.payload ?? {}
@@ -106,7 +105,8 @@ export default function SavedContentsSection({
     item => !dismissedIds.includes(item.id),
   )
 
-  const MAX_VISIBLE = 10
+  // Máximo de 8 cards visíveis (4 x 2)
+  const MAX_VISIBLE = 8
   const limitedItems =
     visibleItems.length > MAX_VISIBLE
       ? visibleItems.slice(0, MAX_VISIBLE)
@@ -142,7 +142,7 @@ export default function SavedContentsSection({
       key={item.id}
       type="button"
       onClick={() => handleClick(item)}
-      className="group relative w-full rounded-2xl border border-[#FFE8F2] bg-white/90 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-5 md:py-5"
+      className="group relative flex h-full flex-col rounded-2xl border border-[#FFE8F2] bg-white/90 px-3 py-3 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-4 md:py-4"
     >
       {/* Botão 'feito' */}
       <button
@@ -151,28 +151,26 @@ export default function SavedContentsSection({
           e.stopPropagation()
           handleDone(item)
         }}
-        className="absolute right-4 top-4 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
+        className="absolute right-3 top-3 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
         aria-label="Marcar como feito"
       >
         <AppIcon name="check" className="h-3 w-3" />
       </button>
 
-      <div className="flex items-start gap-3 pr-6">
+      <div className="flex items-start gap-2.5 pr-5">
         <div className="mt-0.5 shrink-0">
           <AppIcon
             name={item.source === 'planner' ? 'target' : 'bookmark'}
-            className="h-5 w-5 text-[var(--color-brand)]"
+            className="h-4 w-4 text-[var(--color-brand)] md:h-5 md:w-5"
           />
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2.5 py-0.5 text-[10px] font-medium text-[#C2285F] md:text-xs">
-              {item.tag}
-            </span>
-          </div>
+          <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2 py-0.5 text-[9px] font-medium text-[#C2285F] md:text-[10px]">
+            {item.tag}
+          </span>
 
-          <p className="mb-1.5 text-sm font-semibold leading-snug text-[var(--color-text-main)] md:text-base line-clamp-2">
+          <p className="mt-1.5 mb-1 text-[13px] font-semibold leading-snug text-[var(--color-text-main)] md:text-sm line-clamp-2">
             {item.title}
           </p>
 
@@ -183,7 +181,7 @@ export default function SavedContentsSection({
           )}
 
           {item.source === 'planner' && onItemClick && (
-            <p className="mt-1.5 text-[10px] text-[var(--color-brand)]/80 md:text-xs">
+            <p className="mt-1 text-[10px] text-[var(--color-brand)]/80 md:text-[11px]">
               Toque para ver mais detalhes desse conteúdo.
             </p>
           )}
@@ -218,7 +216,7 @@ export default function SavedContentsSection({
           </p>
         ) : (
           <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
               {limitedItems.map(renderCard)}
             </div>
 
