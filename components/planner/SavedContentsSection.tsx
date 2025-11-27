@@ -37,6 +37,16 @@ const plannerTypeLabels: Record<string, string> = {
   event: 'EVENTO',
 }
 
+// Helpers para pegar origem / data sem quebrar o tipo
+function getPlannerOrigin(item: PlannerSavedContent): string | undefined {
+  return (item as any).originLabel ?? (item as any).origin
+}
+
+function getPlannerExtra(item: PlannerSavedContent): string | undefined {
+  // se um dia você adicionar createdAt / savedAt, é só adaptar aqui
+  return (item as any).metaLabel
+}
+
 export default function SavedContentsSection({
   contents,
   plannerContents = [],
@@ -54,65 +64,90 @@ export default function SavedContentsSection({
     <div className="space-y-4">
       {!hideTitle && (
         <div>
-          <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] flex items-center gap-2">
+          <h3 className="text-lg md:text-base font-semibold text-[var(--color-text-main)] flex items-center gap-2">
             <AppIcon
               name="bookmark"
               className="w-4 h-4 text-[var(--color-brand)]"
             />
-            Inspirações &amp; conteúdos salvos
+            Inspirações & conteúdos salvos
           </h3>
-          <p className="text-sm md:text-base text-[var(--color-text-muted)]/80 mt-0.5">
-            Receitas, ideias, brincadeiras e conteúdos que você guardou
-            para usar no seu dia.
+          <p className="text-xs md:text-sm text-[var(--color-text-muted)]/70 mt-0.5">
+            Receitas, ideias, brincadeiras e frases que você guardou para voltar
+            quando precisar.
           </p>
         </div>
       )}
 
-      <div className="rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-4 md:p-5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-          {/* Conteúdos antigos (mini-hubs) */}
-          {contents.map(content => (
+      {/* Kanban 2 x N com scroll horizontal */}
+      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+        <div className="grid grid-rows-2 auto-flow-col gap-4 md:gap-5 min-w-max pb-1">
+          {/* Legacy saved contents (useSavedInspirations) */}
+          {contents.map((content) => (
             <Link
               key={content.id}
               href={content.href || '#'}
-              className="flex flex-col p-3 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-page-bg)] shadow-[0_6px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all cursor-pointer group"
+              className="flex-shrink-0 w-[240px] h-[140px] flex flex-col p-4 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-page-bg)] shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all cursor-pointer group"
             >
-              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-[11px] font-semibold text-[var(--color-brand)] uppercase w-fit">
+              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-[10px] font-semibold text-[var(--color-brand)] uppercase tracking-wide w-fit">
                 {typeLabels[content.type]}
               </span>
-              <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)] line-clamp-2 mt-2 flex-1">
+
+              <p className="text-sm font-semibold text-[var(--color-text-main)] line-clamp-2 mt-2 flex-1">
                 {content.title}
+              </p>
+
+              <p className="text-[10px] text-[var(--color-text-muted)]/70 mt-1">
+                Salvo em <span className="font-medium">{content.origin}</span>
               </p>
             </Link>
           ))}
 
-          {/* Conteúdos salvos no planner */}
-          {plannerContents.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onItemClick?.(item)}
-              className="flex flex-col p-3 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-page-bg)] shadow-[0_6px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all cursor-pointer text-left group"
-            >
-              <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-[11px] font-semibold text-[var(--color-brand)] uppercase w-fit">
-                {plannerTypeLabels[item.type] ?? 'CONTEÚDO'}
-              </span>
-              <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)] line-clamp-2 mt-2 flex-1">
-                {item.title}
-              </p>
-            </button>
-          ))}
+          {/* Planner saved contents (usePlannerSavedContents) */}
+          {plannerContents.map((item) => {
+            const origin = getPlannerOrigin(item)
+            const extra = getPlannerExtra(item)
 
-          {/* “Ver tudo” */}
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onItemClick?.(item)}
+                className="flex-shrink-0 w-[240px] h-[140px] flex flex-col p-4 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-page-bg)] shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all cursor-pointer text-left group"
+              >
+                <span className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)] px-3 py-1 text-[10px] font-semibold text-[var(--color-brand)] uppercase tracking-wide w-fit">
+                  {plannerTypeLabels[item.type] ?? 'CONTEÚDO'}
+                </span>
+
+                <p className="text-sm font-semibold text-[var(--color-text-main)] line-clamp-2 mt-2 flex-1">
+                  {item.title}
+                </p>
+
+                {(origin || extra) && (
+                  <p className="text-[10px] text-[var(--color-text-muted)]/70 mt-1">
+                    {origin && (
+                      <>
+                        Salvo em{' '}
+                        <span className="font-medium">{origin}</span>
+                      </>
+                    )}
+                    {origin && extra && ' • '}
+                    {extra && <span>{extra}</span>}
+                  </p>
+                )}
+              </button>
+            )
+          })}
+
+          {/* Card "Ver tudo" */}
           <Link
             href="/descobrir/salvos"
-            className="flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-dashed border-[var(--color-border-soft)] bg-[var(--color-page-bg)] shadow-[0_6px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.06)] hover:border-[var(--color-brand)] hover:-translate-y-0.5 transition-all cursor-pointer group"
+            className="flex-shrink-0 w-[240px] h-[140px] flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-[var(--color-border-soft)] bg-[var(--color-page-bg)] shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.08)] hover:border-[var(--color-brand)] hover:-translate-y-0.5 transition-all cursor-pointer group"
           >
             <AppIcon
               name="plus"
-              className="w-5 h-5 text-[var(--color-text-muted)]/60 group-hover:text-[var(--color-brand)] transition-colors"
+              className="w-5 h-5 text-[var(--color-text-muted)]/50 group-hover:text-[var(--color-brand)] transition-colors"
             />
-            <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 group-hover:text-[var(--color-brand)] transition-colors mt-1.5 uppercase tracking-wide">
+            <p className="text-xs font-semibold text-[var(--color-text-muted)]/60 group-hover:text-[var(--color-brand)] transition-colors mt-1.5 uppercase tracking-wide">
               Ver tudo
             </p>
           </Link>
