@@ -18,6 +18,7 @@ import WeekView from './WeekView'
 import NotesSection from './NotesSection'
 import { Reveal } from '@/components/ui/Reveal'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
+import SavedContentsSection from '@/components/blocks/SavedContentsSection'
 
 type Appointment = {
   id: string
@@ -438,7 +439,7 @@ export default function WeeklyPlannerShell() {
                         {/* Cuidar de mim */}
                         <Link
                           href="/meu-dia#cuidar-de-mim"
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg.white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -596,36 +597,17 @@ export default function WeeklyPlannerShell() {
           </section>
 
           {/* =====================================================
-              INSPIRAÇÕES & CONTEÚDOS SALVOS
+              INSPIRAÇÕES & CONTEÚDOS SALVOS (KANBAN)
           ===================================================== */}
-          <div className="space-y-3">
-            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-              Inspirações &amp; conteúdos salvos
-            </h2>
-            <p className="mt-1 mb-3 text-sm md:text-base text-[var(--color-text-muted)]">
-              Receitas, ideias, brincadeiras e conteúdos que você salvou
-              nos mini-hubs.
-            </p>
-
-            {/* Ainda com estado vazio — depois entramos com o kanban */}
-            <SoftCard className="p-5 md:p-6 text-center py-6 rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-              <AppIcon
-                name="bookmark"
-                className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
-              />
-              <p className="text-sm md:text-base text-[var(--color-text-muted)]/80 mb-3">
-                Quando você salvar receitas, brincadeiras ou conteúdos
-                nos mini-hubs, eles aparecem aqui.
-              </p>
-              <Link
-                href="/biblioteca-materna"
-                className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
-              >
-                Ver tudo na Biblioteca Materna
-                <AppIcon name="info" className="w-4 h-4" />
-              </Link>
-            </SoftCard>
-          </div>
+          <SavedContentsSection
+            contents={[]}
+            plannerContents={plannerHook.items}
+            onItemDone={({ id, source }) => {
+              if (source === 'planner') {
+                plannerHook.removeItem(id)
+              }
+            }}
+          />
 
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
