@@ -29,28 +29,31 @@ function DailyGreetingSection() {
     return () => clearInterval(interval)
   }, [name])
 
-  // mensagem do dia (mesma lógica que estava no Maternar)
+  // mensagem do dia
   const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length)
   const dailyMessage = DAILY_MESSAGES[dayIndex]
 
   return (
     <section className="mb-6 md:mb-8 space-y-3">
+      {/* Saudação + frase de apoio, em branco sobre o gradiente */}
       <div className="space-y-1">
         <ClientOnly>
-          <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
+          <p className="text-lg md:text-xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]">
             {greeting || 'Bem-vinda ao seu dia organizado.'}
           </p>
         </ClientOnly>
-        <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+
+        <p className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[11px] md:text-xs text-white/90 backdrop-blur-sm drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
           Um carinho do Materna360 pra você começar o dia com mais leveza.
         </p>
       </div>
 
+      {/* Card de carinho em si */}
       <Reveal delay={80}>
         <SoftCard className="relative overflow-hidden rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_18px_45px_rgba(0,0,0,0.08)] px-4 py-4 md:px-6 md:py-5">
           <div className="absolute inset-0 pointer-events-none opacity-70">
             <div className="absolute -top-10 -right-8 h-20 w-20 rounded-full bg-[rgba(255,20,117,0.12)] blur-3xl" />
-            <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-[rgba(155,77,150,0.10)] blur-3xl" />
+            <div className="absolute -bottom-10 -left-8 h-24 w-24 rounded-full bg-[rgba(155,77,150,0.1)] blur-3xl" />
           </div>
 
           <div className="relative z-10 flex flex-col gap-2 md:gap-3">
