@@ -408,15 +408,15 @@ export default function WeeklyPlannerShell() {
                     </div>
 
                     <div className="relative z-10 h-full flex flex-col">
-                      <div className="mb-3">
-                        <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                          Comece pelo que faz mais sentido hoje
-                        </h2>
-                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                          Use esses atalhos para criar lembretes rápidos
-                          de prioridades, compromissos e cuidados.
-                        </p>
-                      </div>
+                     <div className="mb-3">
+  <h2 className="text-lg md:text-xl font-semibold text-white">
+    Comece pelo que faz mais sentido hoje
+  </h2>
+  <p className="mt-1 text-sm text-white/85">
+    Use esses atalhos para criar lembretes rápidos
+    de prioridades, compromissos e cuidados.
+  </p>
+</div>
 
                       <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
                         {/* Prioridades do dia */}
