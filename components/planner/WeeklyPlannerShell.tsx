@@ -40,7 +40,7 @@ type TaskItem = {
 type PlannerData = {
   appointments: Appointment[]
   tasks: TaskItem[]
-  notes: string // mantido só por compatibilidade, não usamos mais
+  notes: string // compatibilidade
 }
 
 export default function WeeklyPlannerShell() {
@@ -74,7 +74,7 @@ export default function WeeklyPlannerShell() {
   const [selectedSavedContent, setSelectedSavedContent] =
     useState<PlannerSavedContent | null>(null)
 
-  // Modal de ações rápidas (top3 / cuidar de mim / cuidar do filho)
+  // Modal de ações rápidas (top3 / cuidar de mim / filho)
   const [quickAction, setQuickAction] = useState<
     'top3' | 'selfcare' | 'family' | null
   >(null)
@@ -127,7 +127,6 @@ export default function WeeklyPlannerShell() {
     save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
   }, [plannerData.tasks, selectedDateKey, isHydrated])
 
-  // (notes mantido só por compatibilidade, mas não é mais usado na UI)
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
@@ -142,7 +141,7 @@ export default function WeeklyPlannerShell() {
 
   const handleAddAppointment = useCallback(
     (appointment: Omit<Appointment, 'id'>) => {
-      const newAppointment = {
+      const newAppointment: Appointment = {
         ...appointment,
         id: Math.random().toString(36).slice(2, 9),
       }
@@ -195,9 +194,6 @@ export default function WeeklyPlannerShell() {
 
   if (!isHydrated) return null
 
-  // ===========================
-  // MAPAS DE LABEL
-  // ===========================
   const moodLabel: Record<string, string> = {
     happy: 'Feliz',
     normal: 'Normal',
@@ -234,7 +230,6 @@ export default function WeeklyPlannerShell() {
         }. Que tal começar definindo suas prioridades?`
       : 'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.'
 
-  // Lista para o modal por origem
   const tasksByOrigin = (origin: TaskOrigin) =>
     plannerData.tasks.filter(task => task.origin === origin)
 
@@ -245,9 +240,7 @@ export default function WeeklyPlannerShell() {
     <>
       <Reveal delay={150}>
         <div className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-          {/* =====================================================
-              CALENDÁRIO PREMIUM
-          ===================================================== */}
+          {/* CALENDÁRIO PREMIUM */}
           <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -349,9 +342,7 @@ export default function WeeklyPlannerShell() {
             </div>
           </SoftCard>
 
-          {/* =====================================================
-              VISÃO DIA — LEMBRETES + ATALHOS
-          ===================================================== */}
+          {/* VISÃO DIA */}
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
@@ -449,7 +440,6 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => {
-                            // abrir modal de compromisso rápido
                             openModalForDate(selectedDate)
                           }}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
@@ -506,11 +496,8 @@ export default function WeeklyPlannerShell() {
             </div>
           )}
 
-          {/* =====================================================
-              HOJE POR AQUI + SUGESTÕES INTELIGENTES
-          ===================================================== */}
+          {/* HOJE POR AQUI + SUGESTÕES INTELIGENTES */}
           <section className="space-y-4 md:space-y-5">
-            {/* Card COMO VOCÊ ESTÁ */}
             <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
               <div className="space-y-1.5">
                 <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
@@ -618,7 +605,6 @@ export default function WeeklyPlannerShell() {
               </div>
             </SoftCard>
 
-            {/* Card SUGESTÕES INTELIGENTES (IA) */}
             {showSuggestions && (
               <IntelligentSuggestionsSection
                 mood={mood}
@@ -627,9 +613,7 @@ export default function WeeklyPlannerShell() {
             )}
           </section>
 
-          {/* =====================================================
-              INSPIRAÇÕES & CONTEÚDOS SALVOS – KANBAN
-          ===================================================== */}
+          {/* KANBAN DE CONTEÚDOS SALVOS */}
           <section>
             <SavedContentsSection
               contents={[]}
@@ -652,9 +636,7 @@ export default function WeeklyPlannerShell() {
         </div>
       </Reveal>
 
-      {/* =====================================================
-          MODAL NOVO COMPROMISSO (CALENDÁRIO)
-      ===================================================== */}
+      {/* MODAL NOVO COMPROMISSO */}
       {isModalOpen && modalDate && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
@@ -672,10 +654,21 @@ export default function WeeklyPlannerShell() {
             </div>
             <ModalAppointmentForm
               onSubmit={data => {
+                // salva no bloco de compromissos
                 handleAddAppointment({
-                  ...data,
-                  date: modalDate!,
-                } as any)
+                  time: data.time,
+                  title: data.title,
+                  tag: undefined,
+                })
+
+                // também cria lembrete rápido na lista
+                if (data.title?.trim()) {
+                  const label = data.time
+                    ? `${data.time} · ${data.title.trim()}`
+                    : data.title.trim()
+                  addTask(label, 'agenda')
+                }
+
                 setIsModalOpen(false)
               }}
               onCancel={() => setIsModalOpen(false)}
@@ -684,9 +677,7 @@ export default function WeeklyPlannerShell() {
         </div>
       )}
 
-      {/* =====================================================
-          MODAL DETALHE DO CONTEÚDO SALVO (KANBAN)
-      ===================================================== */}
+      {/* MODAL DETALHE CONTEÚDO SALVO */}
       {selectedSavedContent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
@@ -765,9 +756,7 @@ export default function WeeklyPlannerShell() {
         </div>
       )}
 
-      {/* =====================================================
-          MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR)
-      ===================================================== */}
+      {/* MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR) */}
       {quickAction && (
         <QuickListModal
           mode={quickAction}
@@ -792,9 +781,7 @@ export default function WeeklyPlannerShell() {
   )
 }
 
-// =====================================================
 // GERADOR DO CALENDÁRIO
-// =====================================================
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -833,14 +820,12 @@ function generateWeekData(base: Date) {
   })
 }
 
-// =====================================================
 // FORM DO MODAL (COMPROMISSO)
-// =====================================================
 function ModalAppointmentForm({
   onSubmit,
   onCancel,
 }: {
-  onSubmit: (data: any) => void
+  onSubmit: (data: { title: string; time: string }) => void
   onCancel: () => void
 }) {
   const [title, setTitle] = useState('')
@@ -901,9 +886,7 @@ function ModalAppointmentForm({
   )
 }
 
-// =====================================================
-// COMPONENTE: INPUT RÁPIDO DE TAREFA
-// =====================================================
+// INPUT RÁPIDO DE TAREFA
 function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   const [value, setValue] = useState('')
 
@@ -930,9 +913,7 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   )
 }
 
-// =====================================================
-// MODAL GENÉRICO LISTA RÁPIDA (TOP3 / CUIDAR)
-// =====================================================
+// MODAL LISTA RÁPIDA (TOP3 / CUIDAR)
 type QuickListModalProps = {
   mode: 'top3' | 'selfcare' | 'family'
   items: TaskItem[]
