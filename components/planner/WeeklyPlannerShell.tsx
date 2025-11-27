@@ -355,7 +355,7 @@ export default function WeeklyPlannerShell() {
           {/* =====================================================
               HUMOR + SUGESTÕES INTELIGENTES (lado a lado)
           ===================================================== */}
-          <section className="grid grid-cols-1 md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)] gap-6 md:gap-8 items-start">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
             {/* Card COMO VOCÊ ESTÁ */}
             <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
               <div className="space-y-1.5">
@@ -448,13 +448,11 @@ export default function WeeklyPlannerShell() {
               </p>
             </SoftCard>
 
-            {/* Card SUGESTÕES INTELIGENTES (IA) — mais compacto, quadradinho */}
-            <div className="md:max-w-xs lg:max-w-sm w-full md:justify-self-end md:self-start">
-              <IntelligentSuggestionsSection
-                mood={mood}
-                intention={dayIntention}
-              />
-            </div>
+            {/* Card SUGESTÕES INTELIGENTES (IA) — agora ocupa toda a coluna */}
+            <IntelligentSuggestionsSection
+              mood={mood}
+              intention={dayIntention}
+            />
           </section>
 
           {/* =====================================================
