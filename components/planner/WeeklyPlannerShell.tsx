@@ -6,7 +6,6 @@ import React, {
   useEffect,
   useMemo,
 } from 'react'
-import Link from 'next/link'
 
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
@@ -84,6 +83,11 @@ export default function WeeklyPlannerShell() {
   // Modal de conteúdo salvo (kanban)
   const [selectedSavedContent, setSelectedSavedContent] =
     useState<PlannerSavedContent | null>(null)
+
+  // Modal de ações rápidas (top3 / cuidar de mim / cuidar do filho)
+  const [quickAction, setQuickAction] = useState<
+    'top3' | 'selfcare' | 'family' | null
+  >(null)
 
   // ===========================
   // HYDRATION
@@ -184,6 +188,74 @@ export default function WeeklyPlannerShell() {
     setIsModalOpen(true)
   }
 
+  // Ações rápidas – helpers
+  const addTop3Item = (title: string) => {
+    const newItem: Top3Item = {
+      id: Math.random().toString(36).slice(2, 9),
+      title,
+      done: false,
+    }
+    setPlannerData(prev => ({
+      ...prev,
+      top3: [...prev.top3, newItem],
+    }))
+  }
+
+  const toggleTop3Item = (id: string) => {
+    setPlannerData(prev => ({
+      ...prev,
+      top3: prev.top3.map(item =>
+        item.id === id ? { ...item, done: !item.done } : item,
+      ),
+    }))
+  }
+
+  const addCareItem = (title: string) => {
+    const newItem: CareItem = {
+      id: Math.random().toString(36).slice(2, 9),
+      title,
+      done: false,
+      source: 'manual',
+      origin: 'cuidar-de-mim',
+    }
+    setPlannerData(prev => ({
+      ...prev,
+      careItems: [...prev.careItems, newItem],
+    }))
+  }
+
+  const toggleCareItem = (id: string) => {
+    setPlannerData(prev => ({
+      ...prev,
+      careItems: prev.careItems.map(item =>
+        item.id === id ? { ...item, done: !item.done } : item,
+      ),
+    }))
+  }
+
+  const addFamilyItem = (title: string) => {
+    const newItem: CareItem = {
+      id: Math.random().toString(36).slice(2, 9),
+      title,
+      done: false,
+      source: 'manual',
+      origin: 'cuidar-do-meu-filho',
+    }
+    setPlannerData(prev => ({
+      ...prev,
+      familyItems: [...prev.familyItems, newItem],
+    }))
+  }
+
+  const toggleFamilyItem = (id: string) => {
+    setPlannerData(prev => ({
+      ...prev,
+      familyItems: prev.familyItems.map(item =>
+        item.id === id ? { ...item, done: !item.done } : item,
+      ),
+    }))
+  }
+
   // ===========================
   // FORMATAÇÕES
   // ===========================
@@ -194,12 +266,6 @@ export default function WeeklyPlannerShell() {
       .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
-
-  const formattedDate = selectedDate.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
 
   if (!isHydrated) return null
 
@@ -351,19 +417,6 @@ export default function WeeklyPlannerShell() {
                 )}
               </div>
             </div>
-
-            <div className="space-y-1 pt-2">
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] text-center">
-                Tudo aqui vale para:{' '}
-                <span className="font-semibold">
-                  {formattedDate}
-                </span>
-              </p>
-              <p className="text-[10px] md:text-xs text-[var(--color-text-muted)]/70 text-center">
-                Toque em um dia para adicionar compromissos e organizar
-                sua rotina.
-              </p>
-            </div>
           </SoftCard>
 
           {/* =====================================================
@@ -419,8 +472,9 @@ export default function WeeklyPlannerShell() {
 
                       <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
                         {/* Prioridades do dia */}
-                        <Link
-                          href="/meu-dia#prioridades"
+                        <button
+                          type="button"
+                          onClick={() => setQuickAction('top3')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -428,15 +482,16 @@ export default function WeeklyPlannerShell() {
                               name="target"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Prioridades do dia
                             </span>
                           </div>
-                        </Link>
+                        </button>
 
                         {/* Agenda & compromissos */}
-                        <Link
-                          href="/meu-dia#agenda"
+                        <button
+                          type="button"
+                          onClick={() => openModalForDate(selectedDate)}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -444,15 +499,16 @@ export default function WeeklyPlannerShell() {
                               name="calendar"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Agenda &amp; compromissos
                             </span>
                           </div>
-                        </Link>
+                        </button>
 
                         {/* Cuidar de mim */}
-                        <Link
-                          href="/meu-dia#cuidar-de-mim"
+                        <button
+                          type="button"
+                          onClick={() => setQuickAction('selfcare')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -460,15 +516,16 @@ export default function WeeklyPlannerShell() {
                               name="heart"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar de mim
                             </span>
                           </div>
-                        </Link>
+                        </button>
 
                         {/* Cuidar do meu filho */}
-                        <Link
-                          href="/meu-dia#cuidar-do-meu-filho"
+                        <button
+                          type="button"
+                          onClick={() => setQuickAction('family')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -476,11 +533,11 @@ export default function WeeklyPlannerShell() {
                               name="smile"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
                             </span>
                           </div>
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -658,7 +715,7 @@ export default function WeeklyPlannerShell() {
                 handleAddAppointment({
                   ...data,
                   date: modalDate!,
-                })
+                } as any)
                 setIsModalOpen(false)
               }}
               onCancel={() => setIsModalOpen(false)}
@@ -746,6 +803,33 @@ export default function WeeklyPlannerShell() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* =====================================================
+          MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR)
+      ===================================================== */}
+      {quickAction && (
+        <QuickListModal
+          mode={quickAction}
+          items={
+            quickAction === 'top3'
+              ? plannerData.top3
+              : quickAction === 'selfcare'
+              ? plannerData.careItems
+              : plannerData.familyItems
+          }
+          onAdd={title => {
+            if (quickAction === 'top3') addTop3Item(title)
+            else if (quickAction === 'selfcare') addCareItem(title)
+            else addFamilyItem(title)
+          }}
+          onToggle={id => {
+            if (quickAction === 'top3') toggleTop3Item(id)
+            else if (quickAction === 'selfcare') toggleCareItem(id)
+            else toggleFamilyItem(id)
+          }}
+          onClose={() => setQuickAction(null)}
+        />
       )}
     </>
   )
@@ -857,5 +941,132 @@ function ModalAppointmentForm({
         </button>
       </div>
     </form>
+  )
+}
+
+// =====================================================
+// MODAL GENÉRICO LISTA RÁPIDA (TOP3 / CUIDAR)
+// =====================================================
+type QuickListModalProps = {
+  mode: 'top3' | 'selfcare' | 'family'
+  items: { id: string; title: string; done: boolean }[]
+  onAdd: (title: string) => void
+  onToggle: (id: string) => void
+  onClose: () => void
+}
+
+function QuickListModal({
+  mode,
+  items,
+  onAdd,
+  onToggle,
+  onClose,
+}: QuickListModalProps) {
+  const [input, setInput] = useState('')
+
+  const title =
+    mode === 'top3'
+      ? 'Prioridades do dia'
+      : mode === 'selfcare'
+      ? 'Cuidar de mim'
+      : 'Cuidar do meu filho'
+
+  const helper =
+    mode === 'top3'
+      ? 'Escolha até três coisas que realmente importam para hoje.'
+      : mode === 'selfcare'
+      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia.'
+      : 'Anote os cuidados ou momentos importantes com seu filho hoje.'
+
+  const placeholder =
+    mode === 'top3'
+      ? 'Ex: Resolver algo importante do trabalho'
+      : mode === 'selfcare'
+      ? 'Ex: Tomar um café em silêncio por 5 minutos'
+      : 'Ex: Ler uma história antes de dormir'
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-semibold text-[var(--color-text-main)]">
+            {title}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="text-sm text-[var(--color-text-muted)] mb-4">
+          {helper}
+        </p>
+
+        <div className="space-y-3 max-h-56 overflow-y-auto mb-4">
+          {items.length === 0 && (
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Ainda não há nada aqui. Comece adicionando o primeiro item.
+            </p>
+          )}
+          {items.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onToggle(item.id)}
+              className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 text-sm text-left ${
+                item.done
+                  ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-[var(--color-text-muted)]'
+                  : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
+              }`}
+            >
+              <span>{item.title}</span>
+              <span className="text-xs text-[var(--color-brand)]">
+                {item.done ? 'Feito' : 'Marcar como feito'}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <form
+          onSubmit={e => {
+            e.preventDefault()
+            if (!input.trim()) return
+            onAdd(input.trim())
+            setInput('')
+          }}
+          className="space-y-3"
+        >
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--color-text-main)]">
+              Adicionar novo item
+            </label>
+            <input
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              placeholder={placeholder}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+            >
+              Fechar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+            >
+              Adicionar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }
