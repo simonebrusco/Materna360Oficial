@@ -144,7 +144,7 @@ export default function Eu360Client() {
           {/* 2 — PAINEL DA JORNADA */}
           <SectionWrapper>
             <Reveal>
-              <SoftCard className="rounded-3xl border border-white/55 bg-white/14 px-5 py-5 md:px-7 md:py-7 shadow-[0_22px_55px_rgba(0,0,0,0.22)] backdrop-blur-2xl space-y-5">
+              <SoftCard className="rounded-3xl border border-white/55 bg-white/10 px-5 py-5 md:px-7 md:py-7 shadow-[0_22px_55px_rgba(0,0,0,0.22)] backdrop-blur-2xl space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-white/80">
@@ -190,26 +190,26 @@ export default function Eu360Client() {
                   </div>
                 </div>
 
-                {/* insight emocional da semana – versão legível */}
-                <SoftCard className="mt-3 rounded-2xl border border-[var(--color-soft-strong)] bg-white/96 px-4 py-4 md:px-5 md:py-5 shadow-[0_14px_32px_rgba(0,0,0,0.10)]">
+                {/* insight emocional da semana — agora bem translúcido */}
+                <SoftCard className="mt-3 rounded-2xl border border-white/60 bg-white/8 px-4 py-4 md:px-5 md:py-5 shadow-[0_18px_45px_rgba(0,0,0,0.30)] backdrop-blur-3xl">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">
                         <AppIcon
                           name="heart"
                           size={20}
-                          className="text-[var(--color-brand)]"
+                          className="text-[#FFD3E6]"
                           decorative
                         />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[var(--color-brand)] uppercase tracking-[0.16em]">
+                        <p className="text-[10px] font-semibold text-white/80 uppercase tracking-[0.16em]">
                           Olhar carinhoso sobre a sua semana
                         </p>
-                        <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] leading-snug">
+                        <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                           {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
-                        <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+                        <p className="text-[11px] text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                           {firstName}, este espaço é para te ajudar a enxergar seus
                           últimos dias com mais gentileza, não para te cobrar mais
                           nada.
@@ -219,13 +219,13 @@ export default function Eu360Client() {
 
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
-                        <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
+                        <p className="text-sm text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                           Estou olhando com carinho para a sua semana para trazer
                           uma reflexão pra você…
                         </p>
                       ) : (
                         <>
-                          <p className="text-sm leading-relaxed text-[var(--color-text-main)]">
+                          <p className="text-sm leading-relaxed text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                             {weeklyInsight?.summary ??
                               'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
                           </p>
@@ -233,18 +233,23 @@ export default function Eu360Client() {
                           {weeklyInsight?.suggestions &&
                             weeklyInsight.suggestions.length > 0 && (
                               <div className="space-y-1.5">
-                                <p className="text-[10px] font-semibold text-[var(--color-text-main)] uppercase tracking-[0.16em]">
+                                <p className="text-[10px] font-semibold text-white/85 uppercase tracking-[0.16em]">
                                   Pequenos passos para os próximos dias
                                 </p>
-                                <ul className="space-y-1.5 text-sm text-[var(--color-text-muted)]">
+                                <ul className="space-y-1.5 text-sm text-white/90">
                                   {weeklyInsight.suggestions.map((item, idx) => (
-                                    <li key={idx}>• {item}</li>
+                                    <li
+                                      key={idx}
+                                      className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+                                    >
+                                      • {item}
+                                    </li>
                                   ))}
                                 </ul>
                               </div>
                             )}
 
-                          <p className="text-[11px] text-[var(--color-text-muted)] mt-2 leading-relaxed">
+                          <p className="text-[11px] text-white/80 mt-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                             Isso não é um diagnóstico, e sim um convite para você se
                             observar com mais leveza e cuidado. Um passo de cada vez
                             já é muito.
