@@ -1,46 +1,39 @@
 'use client'
 
-import React from 'react'
-import AppIcon from '@/components/ui/AppIcon'
 import clsx from 'clsx'
-import { type Eu360Step } from './types'
 
-const steps: Eu360Step[] = ['about-you', 'children', 'routine', 'support']
+export type Eu360Step = 'about-you' | 'children' | 'routine' | 'support'
 
-const labels: Record<Eu360Step, string> = {
+const STEPS: Eu360Step[] = ['about-you', 'children', 'routine', 'support']
+
+const LABELS: Record<Eu360Step, string> = {
   'about-you': 'Você',
   children: 'Seu(s) filho(s)',
   routine: 'Rotina',
-  support: 'Rede & prefs'
+  support: 'Rede & prefs',
 }
 
-export function Eu360Stepper({
-  currentStep,
-  onStepClick
-}: {
+type Props = {
   currentStep: Eu360Step
-  onStepClick: (s: Eu360Step) => void
-}) {
+  onStepClick: (step: Eu360Step) => void
+}
+
+export function Eu360Stepper({ currentStep, onStepClick }: Props) {
   return (
     <div className="mx-auto max-w-xl px-4">
-      <div className="
-        rounded-3xl border border-white/20 bg-white/10 
-        backdrop-blur-xl shadow-[0_14px_40px_rgba(0,0,0,0.18)]
-        px-4 py-5 flex flex-col items-center gap-4
-      ">
-        {/* steps */}
+      <div className="rounded-3xl border border-white/22 bg-white/10 px-4 py-5 flex flex-col items-center gap-4 shadow-[0_14px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+        {/* STEPS */}
         <div className="flex items-center gap-3">
-          {steps.map((step, index) => (
-            <React.Fragment key={step}>
+          {STEPS.map((step, index) => (
+            <div key={step} className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => onStepClick(step)}
                 className={clsx(
-                  'px-4 py-1.5 rounded-full flex items-center gap-2 transition-all',
-                  'text-sm font-semibold shadow-sm',
+                  'px-4 py-1.5 rounded-full flex items-center gap-2 text-sm font-semibold transition-all shadow-sm max-w-[150px]',
                   step === currentStep
                     ? 'bg-white text-[var(--color-brand)] shadow-[0_4px_14px_rgba(255,20,117,0.35)]'
-                    : 'bg-white/50 text-white/80 hover:bg-white/70'
+                    : 'bg-white/55 text-white/85 hover:bg-white/80'
                 )}
               >
                 <span
@@ -48,27 +41,29 @@ export function Eu360Stepper({
                     'h-6 w-6 flex items-center justify-center rounded-full text-xs font-bold',
                     step === currentStep
                       ? 'bg-[var(--color-brand)] text-white'
-                      : 'bg-white/40 text-white/80'
+                      : 'bg-white/40 text-[var(--color-brand)]'
                   )}
                 >
                   {index + 1}
                 </span>
-                <span className="truncate max-w-[85px]">{labels[step]}</span>
+                <span className="truncate">{LABELS[step]}</span>
               </button>
 
-              {/* divider */}
-              {index < steps.length - 1 && (
-                <div className="h-[1.5px] w-8 bg-white/25 rounded-full" />
+              {index < STEPS.length - 1 && (
+                <div className="h-[1.5px] w-8 rounded-full bg-white/30" />
               )}
-            </React.Fragment>
+            </div>
           ))}
         </div>
 
-        {/* subtitle */}
-        <p className="text-xs text-white/70 text-center leading-relaxed max-w-sm">
-          Comece por você e avance pelas etapas no seu tempo. Suas respostas deixam todas as sugestões do Materna360 mais próximas da sua rotina real.
+        {/* SUBTEXTO */}
+        <p className="text-xs text-white/75 text-center leading-relaxed max-w-sm">
+          Comece por você e avance pelas etapas no seu tempo. Suas respostas deixam todas as sugestões do Materna360 mais
+          próximas da sua rotina real.
         </p>
       </div>
     </div>
   )
 }
+
+export default Eu360Stepper
