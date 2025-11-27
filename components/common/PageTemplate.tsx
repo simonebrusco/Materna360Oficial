@@ -20,9 +20,7 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className="relative min-h-[100dvh] pb-24 materna360-premium-bg"
     >
-      {/* 🔥 REMOVIDO o overlay extra de degradê aqui */}
-
-      <div className="mx-auto max-w-3xl px-4 md:px-6 relative z-10">
+      <div className="mx-auto max-w-4xl px-4 md:px-6 relative z-10">
         <header className="pt-6 md:pt-8 mb-8 md:mb-10">
           <div className="space-y-2 md:space-y-3">
             {label && (
@@ -31,18 +29,20 @@ export function PageTemplate({
               </span>
             )}
 
+            {/* Título no mesmo padrão visual do Maternar */}
             <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
               {title}
             </h1>
 
             {subtitle && (
-              <p className="text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+              <p className="mt-2 text-sm md:text-base text-white/88 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
                 {subtitle}
               </p>
             )}
           </div>
         </header>
 
+        {/* Conteúdo da página (planner, etc.) sempre alinhado ao título */}
         <div className="space-y-6 md:space-y-8">{children}</div>
       </div>
     </main>
