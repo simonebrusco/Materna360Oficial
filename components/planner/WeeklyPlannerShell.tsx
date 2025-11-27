@@ -10,9 +10,7 @@ import Link from 'next/link'
 
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
-import {
-  usePlannerSavedContents,
-} from '@/app/hooks/usePlannerSavedContents'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
@@ -67,12 +65,13 @@ export default function WeeklyPlannerShell() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  // Planner (para manter a data em sincronia com os mini-hubs)
+  // Planner (sincronizar data com mini-hubs)
   const plannerHook = usePlannerSavedContents()
 
   // Estado local para IA (humor + intenção do dia)
   const [mood, setMood] = useState<string | null>(null)
   const [dayIntention, setDayIntention] = useState<string | null>(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Modal de compromisso (calendário)
   const [modalDate, setModalDate] = useState<Date | null>(null)
@@ -353,144 +352,10 @@ export default function WeeklyPlannerShell() {
           </SoftCard>
 
           {/* =====================================================
-              HUMOR + SUGESTÕES INTELIGENTES (lado a lado)
-          ===================================================== */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
-            {/* Card COMO VOCÊ ESTÁ */}
-            <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
-              <div className="space-y-1.5">
-                <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                  Hoje por aqui
-                </p>
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                  Como você está hoje?
-                </h2>
-                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                  Escolha como você se sente agora e o estilo de dia que
-                  você gostaria de ter.
-                </p>
-              </div>
-
-              <div className="space-y-3 md:space-y-4">
-                {/* COMO VOCÊ ESTÁ */}
-                <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
-                    Como você está?
-                  </p>
-                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                    Escolha como você se sente agora.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      { key: 'happy', label: 'Feliz' },
-                      { key: 'normal', label: 'Normal' },
-                      { key: 'stressed', label: 'Estressada' },
-                    ].map(option => (
-                      <button
-                        key={option.key}
-                        type="button"
-                        onClick={() =>
-                          setMood(prev =>
-                            prev === option.key ? null : option.key,
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          mood === option.key
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* HOJE EU QUERO UM DIA... */}
-                <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
-                    Hoje eu quero um dia...
-                  </p>
-                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                    Selecione o estilo do seu dia.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      'leve',
-                      'focado',
-                      'produtivo',
-                      'slow',
-                      'automático',
-                    ].map(option => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() =>
-                          setDayIntention(prev =>
-                            prev === option ? null : option,
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          dayIntention === option
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-2">
-                {moodSummary}
-              </p>
-            </SoftCard>
-
-            {/* Card SUGESTÕES INTELIGENTES (IA) — agora ocupa toda a coluna */}
-            <IntelligentSuggestionsSection
-              mood={mood}
-              intention={dayIntention}
-            />
-          </section>
-
-          {/* =====================================================
-              INSPIRAÇÕES & CONTEÚDOS SALVOS
-          ===================================================== */}
-          <div className="space-y-3">
-            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-              Inspirações &amp; conteúdos salvos
-            </h2>
-            <p className="mt-1 mb-3 text-sm md:text-base text-[var(--color-text-muted)]">
-              Receitas, ideias, brincadeiras e conteúdos que você salvou
-              nos mini-hubs.
-            </p>
-
-            <SoftCard className="p-5 md:p-6 text-center py-6 rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-              <AppIcon
-                name="bookmark"
-                className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
-              />
-              <p className="text-sm md:text-base text-[var(--color-text-muted)]/80 mb-3">
-                Quando você salvar receitas, brincadeiras ou conteúdos
-                nos mini-hubs, eles aparecem aqui.
-              </p>
-              <Link
-                href="/biblioteca-materna"
-                className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
-              >
-                Ver tudo na Biblioteca Materna
-                <AppIcon name="info" className="w-4 h-4" />
-              </Link>
-            </SoftCard>
-          </div>
-
-          {/* =====================================================
-              VISÃO DIA (Lembretes + Atalhos vidro)
+              VISÃO DIA — LEMBRETES + ATALHOS (logo abaixo do calendário)
           ===================================================== */}
           {viewMode === 'day' && (
-            <div className="mt-8 md:mt-10 space-y-8 md:space-y-10 pb-12">
+            <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
                 {/* LEMBRETES RÁPIDOS */}
                 <div className="flex h-full">
@@ -608,6 +473,159 @@ export default function WeeklyPlannerShell() {
               </section>
             </div>
           )}
+
+          {/* =====================================================
+              HOJE POR AQUI + SUGESTÕES INTELIGENTES (botão)
+          ===================================================== */}
+          <section className="space-y-4 md:space-y-5">
+            {/* Card COMO VOCÊ ESTÁ */}
+            <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                  Hoje por aqui
+                </p>
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                  Como você está hoje?
+                </h2>
+                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                  Escolha como você se sente agora e o estilo de dia que
+                  você gostaria de ter.
+                </p>
+              </div>
+
+              <div className="space-y-3 md:space-y-4">
+                {/* COMO VOCÊ ESTÁ */}
+                <div className="space-y-1.5">
+                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+                    Como você está?
+                  </p>
+                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
+                    Escolha como você se sente agora.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {[
+                      { key: 'happy', label: 'Feliz' },
+                      { key: 'normal', label: 'Normal' },
+                      { key: 'stressed', label: 'Estressada' },
+                    ].map(option => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() =>
+                          setMood(prev =>
+                            prev === option.key ? null : option.key,
+                          )
+                        }
+                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
+                          mood === option.key
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* HOJE EU QUERO UM DIA... */}
+                <div className="space-y-1.5">
+                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+                    Hoje eu quero um dia...
+                  </p>
+                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
+                    Selecione o estilo do seu dia.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {[
+                      'leve',
+                      'focado',
+                      'produtivo',
+                      'slow',
+                      'automático',
+                    ].map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() =>
+                          setDayIntention(prev =>
+                            prev === option ? null : option,
+                          )
+                        }
+                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
+                          dayIntention === option
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-2">
+                {moodSummary}
+              </p>
+
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions(prev => !prev)}
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
+                >
+                  {showSuggestions
+                    ? 'Esconder sugestões para o seu dia'
+                    : 'Ver sugestões para o seu dia'}
+                  <AppIcon
+                    name="lightbulb"
+                    className="w-4 h-4"
+                  />
+                </button>
+              </div>
+            </SoftCard>
+
+            {/* Card SUGESTÕES INTELIGENTES (IA) – aparece quando o botão é acionado */}
+            {showSuggestions && (
+              <IntelligentSuggestionsSection
+                mood={mood}
+                intention={dayIntention}
+              />
+            )}
+          </section>
+
+          {/* =====================================================
+              INSPIRAÇÕES & CONTEÚDOS SALVOS
+          ===================================================== */}
+          <div className="space-y-3">
+            <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+              Inspirações &amp; conteúdos salvos
+            </h2>
+            <p className="mt-1 mb-3 text-sm md:text-base text-[var(--color-text-muted)]">
+              Receitas, ideias, brincadeiras e conteúdos que você salvou
+              nos mini-hubs.
+            </p>
+
+            {/* Ainda com estado vazio — depois entramos com o kanban */}
+            <SoftCard className="p-5 md:p-6 text-center py-6 rounded-3xl border border-[var(--color-soft-strong)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+              <AppIcon
+                name="bookmark"
+                className="w-8 h-8 text-[var(--color-border-muted)] mx-auto mb-3"
+              />
+              <p className="text-sm md:text-base text-[var(--color-text-muted)]/80 mb-3">
+                Quando você salvar receitas, brincadeiras ou conteúdos
+                nos mini-hubs, eles aparecem aqui.
+              </p>
+              <Link
+                href="/biblioteca-materna"
+                className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
+              >
+                Ver tudo na Biblioteca Materna
+                <AppIcon name="info" className="w-4 h-4" />
+              </Link>
+            </SoftCard>
+          </div>
 
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
