@@ -35,15 +35,15 @@ function DailyGreetingSection() {
 
   return (
     <section className="mb-6 md:mb-8 space-y-3">
-      {/* Saudação + frase de apoio, em branco sobre o gradiente */}
-      <div className="space-y-1">
+      {/* Saudação + frase de apoio, logo abaixo do subtítulo */}
+      <div className="space-y-2 mt-2 md:mt-3">
         <ClientOnly>
-          <p className="text-lg md:text-xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]">
+          <p className="text-xl md:text-2xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
             {greeting || 'Bem-vinda ao seu dia organizado.'}
           </p>
         </ClientOnly>
 
-        <p className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[11px] md:text-xs text-white/90 backdrop-blur-sm drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
+        <p className="inline-flex items-center rounded-full bg-white/12 px-4 py-1.5 text-xs md:text-sm text-white/90 backdrop-blur-sm drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
           Um carinho do Materna360 pra você começar o dia com mais leveza.
         </p>
       </div>
