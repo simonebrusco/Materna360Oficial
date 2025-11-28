@@ -1,269 +1,216 @@
-✅ CHECKLIST VIVO — Materna360
-v0.3.3 — P2 Concluída • P3 em Execução
-Branch oficial: cosmos-verse
-Status: 🟢 Estável e avançando
+📄 CHECKLIST VIVO MASTER — Materna360
+Versão: v0.4.0 – Estrutura Oficial das Ps (Aprovada)
 
-🔥 P2 — IA Emocional & Rotina Inteligente — FINALIZADA
-📌 Escopo entregue com sucesso
-🔧 Endpoints de IA
+Branch: cosmos-verse
+Status: 🟢 Estável · Layout consolidado · IA operante · Rumo à P5
 
+🌱 P1 — Estrutura Base do App (Concluída)
 
-POST /api/ai/emocional
+Objetivo: Criar a fundação técnica e a arquitetura principal do Materna360.
 
+✔ Entregues
 
-POST /api/ai/rotina
+App Router configurado
 
+Layout base
 
-🧠 IA Integrada aos Mini-Hubs
+Tabs: Meu Dia, Maternar, Eu360
 
+Infra de mini-hubs (estrutura de pastas)
 
-/meu-dia/como-estou-hoje
+Planner básico com persistência (save/load + dateKey)
 
+SoftCards e PageTemplate criados
 
-/meu-dia/rotina-leve
+Sistema de ícones Materna360
 
+Base do Visual Style Guide aplicada
 
-/eu360
+⚠ Nenhuma ação pendente
 
+(P1 é histórica, não volta)
 
-🧩 Núcleo da IA consolidado
+🤖 P2 — IA Emocional & Rotina Inteligente (CONCLUÍDA)
 
+Estado: 100% entregue e estável (CHANGELOG inteiro já está pronto)
 
-app/lib/ai/maternaCore.ts
+✔ Entregues
 
+/api/ai/emocional
 
-app/lib/ai/eu360ProfileAdapter.ts
+/api/ai/rotina
 
+MaternaCore
 
-app/lib/ai/profileAdapter.ts ← agora corrigido e sem conflitos
+Eu360ProfileAdapter
 
+ProfileAdapter
 
-app/lib/ai/rateLimit.ts
+Rate limit seguro
 
+IA integrada ao Planner
 
-📌 Rotina Leve — Estado Final P2
-Layout Premium entegue
-✔ Hero: Receitas Inteligentes
-✔ Grid 2 colunas: Ideias Rápidas + Inspirações do Dia
-✔ Card-resumo conectado ao Planner
-IA de Receitas Inteligentes
+IA integrada ao Eu360 (insight semanal)
 
+IA integrada a Rotina Leve
 
-Limite diário (3/dia)
+IA integrada a Como Estou Hoje
 
+✔ Estabilidade técnica confirmada
 
-Fallback seguro
+Build passando
 
+Zero regressões
 
-Salvamento no Planner com payload completo
+Fallback editorial seguro
 
+Layout premium preservado
 
-IA de Ideias Rápidas
+⚠ Pendências P2?
 
+Nenhuma.
+(P2 é fase fechada, intocável)
 
-Hook oficial: useRotinaAISuggestions
+🎨 P3 — Refinamento Premium Global (PARCIALMENTE CONCLUÍDA)
 
+Objetivo: Garantir um layout premium sólido e coerente.
 
-Filtros: tempo, companhia, tipo de ideia
+✔ O que foi entregue da P3
 
+Unificação das cores Materna360
 
-Fallback editorial
+Radius oficial 24–28px
 
+Buttons unificados (primary, secondary)
 
-Salvamento no Planner (type: insight)
+Sombra premium
 
+Correção de microcopy em vários mini-hubs
 
-IA de Inspirações do Dia
+Revisão de grids mobile
 
+Revisão do MotivationalFooter
 
-Foco: Cansaço, Culpa, Organização, Conexão
+Retirada de variantes antigas de UI
 
+🔶 Pendências da P3
 
-Payload: frase + pequeno cuidado + mini ritual
+Essas ficaram pendentes porque você avançou para a P4 diretamente:
 
+Conferência total de spacing entre todos os mini-hubs
+
+Atualização final da microcopy em todos os heroes
+
+Revisão de consistência entre todos os hubs (Maternar / Cuidar / Meu Dia)
+
+Revisão de tipografia + pesos globais
+
+Atualizar documentação oficial (System Design, Style Guide, Matriz)
+
+Rodar uma limpeza de código final
+
+P3 vai ser “fechada” junto com a documentação nova, quando atualizarmos todos os PDFs.
+
+🌸 P4 — Reestrutura Visual 2025 (SEU TRABALHO RECENTE)
+
+Estado: ✔ REALIZADA, mas ❗ AINDA NÃO DOCUMENTADA
+
+É aqui que estamos AGORA.
+
+✔ Entregues por você
+
+Novo /maternar (hub principal premium definitivo)
+
+Novo /meu-dia (planner completo com calendário, atalhos, lembretes, hoje por aqui, inspirações salvas)
+
+Novo /eu360 (wizard + painel + Materna360+)
+
+Novo padrão de cards das 3 abas
+
+Novo fundo rosa global premium
+
+Novo BottomNav premium
+
+Reorganização dos mini-hubs
+
+Novo desenho de todo o fluxo emocional → rotina → planejamento
+
+🔥 O que falta para ENCERRAR a P4
+
+(É exatamente o trabalho que vamos fazer agora)
+
+Documentar tudo nos arquivos oficiais:
+
+System Design
+
+Visual Style Guide
+
+Matriz Completa
+
+Builder Guidelines
+
+Copy Playbook
+
+Kit Interno
+
+README Oficial
+
+Atualizar o Checklist Vivo (já estamos fazendo)
+
+Rodar smoke test pós-reestruturação
+
+IA continua respondendo correto?
+
+Planner continua salvando?
+
+Eu360 continua lendo/adaptando perfil?
+
+Quando esses 3 itens forem concluídos → P4 fica oficialmente encerrada.
+
+📚 P5 — Biblioteca Materna + Conteúdos Premium (PRÓXIMA FASE)
+
+Objetivo da próxima fase: Transformar a Biblioteca em um dos núcleos do Materna360.
+
+O que será feito
+
+Sistema de PDFs, artigos, trilhas
+
+Filtros inteligentes (idade, tema, formato)
+
+Integração com Eu360
 
 Salvamento no Planner
 
+Conteúdos premium (para Materna+)
 
-📌 Como estou hoje — Estado Final P2
+Cards de "Continuar lendo / Estudando"
 
+Layout oficial da Biblioteca Materna (pronto para IA futura)
 
-Humor & Energia salvos por dia
+🏆 P6 — Gamificação & Engajamento
 
+Gamificação leve → profunda
 
-Insight do dia via IA
+Selos e medalhas
 
+Conquistas semanais/mensais
 
-Semana emocional via IA
+Progresso em trilhas
 
+Gamificação emocional (conquistas ligadas ao humor e rotina)
 
-Integração completa com Planner
+Integração com notificações futuras
 
+🎁 P7 — Onboarding Inteligente + Materna+
 
-📌 Eu360 — Insight emocional semanal
+Onboarding baseado no Eu360
 
+Personalização completa
 
-IA integrada
+Upsell/upgrade Materna+
 
+Notificações inteligentes
 
-Copy premium e acolhedora
+Páginas premium personalizadas
 
-
-Integração com perfil real (Eu360 → MaternaCore)
-
-
-🧪 Status técnico P2
-
-
-pnpm run build passando
-
-
-APIs 100% funcionais
-
-
-UX estável
-
-
-Fallbacks editoriais em todos os fluxos
-
-
-Zero regressões no layout principal
-
-
-
-🚧 P3 — Finalização Premium & Coerência Global
-(Em andamento agora — abril/2025)
-🎯 Objetivo
-Deixar o Materna360 100% coerente, premium e pronto para a Fase 3 (Biblioteca Materna + Conteúdos Premium).
-📦 Escopo oficial P3
-1) Polimento Visual Global
-
-
-Spacing unificado
-
-
-Radius 24–28px
-
-
-Bordas #ffd8e6
-
-
-Sombras premium
-
-
-Gradientes oficiais
-
-
-Correção de inconsistências visuais entre hubs
-
-
-2) Sistema de Botões — Unificação total
-
-
-primary: #ff005e
-
-
-secondary: borda #ffd8e6
-
-
-radius: 999px
-
-
-shadow: leve
-
-
-Remover variantes antigas
-
-
-Padronizar microcopy dos CTAs
-
-
-3) Microcopy Premium
-
-
-Hero, subtítulos, textos de apoio
-
-
-TOV acolhedor, gentil e maternal
-
-
-Revisão completa das frases do MotivationalFooter
-
-
-4) Revisão Mobile Premium
-
-
-Ajuste dos grids
-
-
-Revisão de colunas 360px / 390px / 414px
-
-
-Conferir cards sem quebra
-
-
-5) P3 — Ajuste nos Mini-Hubs
-Meu Dia
-
-
-Rotina Leve (80% pronto → revisar spacing e mobile)
-
-
-Como Estou Hoje (90% pronto → revisar botões e microcopy)
-
-
-Cuidar
-
-
-Deixar Autocuidado Inteligente e Cuidar com Amor no mesmo nível da UX de Meu Dia
-
-
-Descobrir
-
-
-Revisão dos cards da biblioteca
-
-
-Preparar para Fase 3 (conteúdos PDF + artigos premium)
-
-
-Eu360
-
-
-Revisão dos inputs + labels
-
-
-Cards de insight semanal no padrão final
-
-
-6) Footer motivacional
-
-
-Revisar todas as frases
-
-
-Alinhar com routeKey
-
-
-Aplicar TOV oficial
-
-
-7) Revisão final + Build
-
-
-pnpm build
-
-
-Revisão no Vercel Preview
-
-
-PR Final → Merge para main
-
-
-
-🔥 Tudo acima está limpo, consolidado e sem conflitos.
-Se quiser, posso agora:
-✅ transformar isso em PDF oficial
-✅ preparar a versão para colar na PR
-✅ gerar uma mensagem para enviar ao time
-Ou seguimos para os próximos arquivos com conflito?
+Sistema de sugestões contínuas para a mãe
