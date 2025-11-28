@@ -24,7 +24,7 @@ export function WizardBand({
       data-wizard-band={id}
     >
       {/* Band container */}
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 py-8 md:py-10">
         {/* Card with consistent styling */}
         <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-6">
           {/* Header with title and autosave status */}
