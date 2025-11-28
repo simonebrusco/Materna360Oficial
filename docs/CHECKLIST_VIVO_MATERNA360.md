@@ -1,216 +1,224 @@
-📄 CHECKLIST VIVO MASTER — Materna360
-Versão: v0.4.0 – Estrutura Oficial das Ps (Aprovada)
+✅ CHECKLIST VIVO — Materna360
 
-Branch: cosmos-verse
-Status: 🟢 Estável · Layout consolidado · IA operante · Rumo à P5
+Versão atual: v0.5 — Fases P1–P4 consolidadas
+Branch oficial de trabalho: cosmos-verse
+Status geral: 🟢 Estável (IA + Layout Premium 2025 ativos)
 
-🌱 P1 — Estrutura Base do App (Concluída)
+🧭 1. Mapa das Fases (P1 → P7)
 
-Objetivo: Criar a fundação técnica e a arquitetura principal do Materna360.
+P1 — Fundação do App (CONCLUÍDA)
 
-✔ Entregues
+Base Next.js (App Router)
 
-App Router configurado
+Abas: Meu Dia, Maternar, Eu360
 
-Layout base
+BottomNav + layout global
 
-Tabs: Meu Dia, Maternar, Eu360
+Primeiros mini-hubs estruturados (sem IA)
 
-Infra de mini-hubs (estrutura de pastas)
-
-Planner básico com persistência (save/load + dateKey)
-
-SoftCards e PageTemplate criados
-
-Sistema de ícones Materna360
-
-Base do Visual Style Guide aplicada
-
-⚠ Nenhuma ação pendente
-
-(P1 é histórica, não volta)
-
-🤖 P2 — IA Emocional & Rotina Inteligente (CONCLUÍDA)
-
-Estado: 100% entregue e estável (CHANGELOG inteiro já está pronto)
-
-✔ Entregues
+P2 — IA Emocional & Rotina Inteligente (CONCLUÍDA)
 
 /api/ai/emocional
 
 /api/ai/rotina
 
-MaternaCore
+IA integrada em:
 
-Eu360ProfileAdapter
+/meu-dia/como-estou-hoje
 
-ProfileAdapter
+/meu-dia/rotina-leve
 
-Rate limit seguro
+Insight semanal em /eu360
 
-IA integrada ao Planner
+MaternaCore, adapters, rate limit, fallbacks editoriais
 
-IA integrada ao Eu360 (insight semanal)
+Conexão com Planner via usePlannerSavedContents
 
-IA integrada a Rotina Leve
+P3 — Refinamento Premium Inicial (ENCERRADA / ABSORVIDA PELA P4)
 
-IA integrada a Como Estou Hoje
+Começo da padronização visual
 
-✔ Estabilidade técnica confirmada
+Alguns mini-hubs refinados
 
-Build passando
+Na prática, muito do escopo da P3 foi estendido e concluído dentro da P4.
 
-Zero regressões
+P4 — Reestrutura Visual 2025 + Planner & Eu360 (ATUAL)
 
-Fallback editorial seguro
+Layout premium 2025 (cores, sombras, spacing, cards)
 
-Layout premium preservado
+Planner /meu-dia reposicionado como tela central
 
-⚠ Pendências P2?
+/eu360 com wizard + painel da jornada
 
-Nenhuma.
-(P2 é fase fechada, intocável)
+Hub /maternar como “portal oficial” dos mini-hubs
 
-🎨 P3 — Refinamento Premium Global (PARCIALMENTE CONCLUÍDA)
+Revisão geral de tom de voz e hierarquia visual
 
-Objetivo: Garantir um layout premium sólido e coerente.
+P5 — Biblioteca & Conteúdos Premium (PRÓXIMA)
 
-✔ O que foi entregue da P3
+Evolução da Biblioteca Materna
 
-Unificação das cores Materna360
+Trilhas, filtros, capas, IA de conteúdos/brincadeiras
 
-Radius oficial 24–28px
+P6 — Gamificação & Jornada Materna (FUTURO)
 
-Buttons unificados (primary, secondary)
+Expansão de Minhas Conquistas
 
-Sombra premium
+Missões, selos, níveis, jornadas suaves
 
-Correção de microcopy em vários mini-hubs
+P7 — Onboarding & Personalização Profunda (FUTURO)
 
-Revisão de grids mobile
+Onboarding inteligente
 
-Revisão do MotivationalFooter
+Ativações automáticas de mini-hubs
 
-Retirada de variantes antigas de UI
+Recomendações mais profundas baseadas no Eu360
 
-🔶 Pendências da P3
+🧩 2. Status por Domínio / Aba
+🟣 MEU DIA
+Hub / Página	Status	Notas
+/meu-dia (Planner)	🟢 Estável	Layout premium 2025, blocos principais ok (calendário, lembretes, atalhos, Hoje por aqui, Inspirações & conteúdos salvos).
+/meu-dia/como-estou-hoje	🟢 Estável	IA emocional ativa (dia + semana), TOV alinhado, integra Planner.
+/meu-dia/rotina-leve	🟢 Estável	IA de receitas, ideias e inspirações conectada ao Planner. Modelo para outros hubs de IA.
+🌸 MATERNAR
+Hub / Página	Status	Notas
+/maternar (hub principal)	🟡 Bom, mas revisar	Layout premium ativo, mas precisa só conferência fina de espaçamentos e coerência com o Style Guide v0.5.
+/cuidar/autocuidado-inteligente	🟡 OK visual	Fluxo funcional, precisa alinhamento fino com layout P4 (spacing, sombras, cards).
+/cuidar/cuidar-com-amor	🟡 OK visual	Conteúdo coerente, também precisa ajuste fino visual P4.
+/maternar/minhas-conquistas	🟠 Em rascunho	Layout base existe, mas gamificação ainda é muito simples (escopo futuro P6).
+/maternar/biblioteca-materna	🟡 Em construção	Layout razoável; falta filtros, capas e integração futura com IA (P5).
+💛 EU360
+Hub / Página	Status	Notas
+/eu360	🟢 Estável	Wizard + painel já estruturados, TOV atualizado, integra IA emocional semanal; ainda pode ganhar refinamentos de UX, mas base está boa.
+🤖 3. IA Inteligente — Estado Atual
 
-Essas ficaram pendentes porque você avançou para a P4 diretamente:
+Entregues (P2):
 
-Conferência total de spacing entre todos os mini-hubs
+POST /api/ai/emocional
 
-Atualização final da microcopy em todos os heroes
+daily_inspiration, weekly_overview, daily_insight
 
-Revisão de consistência entre todos os hubs (Maternar / Cuidar / Meu Dia)
+Integrado com:
 
-Revisão de tipografia + pesos globais
+/meu-dia/como-estou-hoje
 
-Atualizar documentação oficial (System Design, Style Guide, Matriz)
+/eu360 (insight semanal)
 
-Rodar uma limpeza de código final
+POST /api/ai/rotina
 
-P3 vai ser “fechada” junto com a documentação nova, quando atualizarmos todos os PDFs.
+recipes, quick-ideas
 
-🌸 P4 — Reestrutura Visual 2025 (SEU TRABALHO RECENTE)
+Integrado com /meu-dia/rotina-leve
 
-Estado: ✔ REALIZADA, mas ❗ AINDA NÃO DOCUMENTADA
+Núcleo de IA:
 
-É aqui que estamos AGORA.
+app/lib/ai/maternaCore.ts
 
-✔ Entregues por você
+app/lib/ai/eu360ProfileAdapter.ts
 
-Novo /maternar (hub principal premium definitivo)
+app/lib/ai/profileAdapter.ts
 
-Novo /meu-dia (planner completo com calendário, atalhos, lembretes, hoje por aqui, inspirações salvas)
+app/lib/ai/rateLimit.ts
 
-Novo /eu360 (wizard + painel + Materna360+)
+Princípios de segurança (mantidos):
 
-Novo padrão de cards das 3 abas
+Fallback editorial em todos os fluxos
 
-Novo fundo rosa global premium
+Linguagem sempre acolhedora (seguindo o TOV)
 
-Novo BottomNav premium
+Sem diagnósticos
 
-Reorganização dos mini-hubs
+Sem exposição direta do termo “IA” para a mãe
 
-Novo desenho de todo o fluxo emocional → rotina → planejamento
+Próximos passos de IA (P5–P7):
 
-🔥 O que falta para ENCERRAR a P4
+IA de Biblioteca (trilhas, recomendações por idade).
 
-(É exatamente o trabalho que vamos fazer agora)
+IA de brincadeiras (dentro da Biblioteca / Rotina Leve, quando fizer sentido).
 
-Documentar tudo nos arquivos oficiais:
+IA de gamificação leve (Minhas Conquistas).
 
-System Design
+IA de onboarding (P7).
 
-Visual Style Guide
+🎨 4. Layout Premium — Auditoria Rápida
+Área	Status	Observação
+Sistema de cores	🟢 OK	Seguindo Visual Style Guide v0.5 (rosa #FF005E, plum, rosa suave etc.).
+Cards & sombras	🟢 OK	SoftCards padronizados; checar só consistência onde houver customização antiga.
+Spacing & grids	🟡 A revisar	Planner e mini-hubs principais ok; Cuidar + Biblioteca + Conquistas precisam daquele “acabamento Materna360”.
+BottomNav	🟢 OK	Não alterar.
+Hero / PageTemplate	🟢 OK	Padrão estabelecido; qualquer nova página deve copiar referências oficiais.
+🔐 5. Segurança do Projeto
 
-Matriz Completa
+app/layout.tsx preservado
 
-Builder Guidelines
+BottomNav preservado
 
-Copy Playbook
+Estrutura de mini-hubs respeitada
 
-Kit Interno
+Rotas de IA e adapters estáveis
 
-README Oficial
+Feature flags mantidas:
 
-Atualizar o Checklist Vivo (já estamos fazendo)
+NEXT_PUBLIC_FF_PDF_EXPORT
 
-Rodar smoke test pós-reestruturação
+NEXT_PUBLIC_FF_COACH_V1
 
-IA continua respondendo correto?
+NEXT_PUBLIC_FF_INTERNAL_INSIGHTS
 
-Planner continua salvando?
+NEXT_PUBLIC_FF_EMOTION_TRENDS
 
-Eu360 continua lendo/adaptando perfil?
+Regras de ouro (continuam valendo):
 
-Quando esses 3 itens forem concluídos → P4 fica oficialmente encerrada.
+Nada fora de /meu-dia, /maternar, /eu360.
 
-📚 P5 — Biblioteca Materna + Conteúdos Premium (PRÓXIMA FASE)
+Nada de inventar layout novo.
 
-Objetivo da próxima fase: Transformar a Biblioteca em um dos núcleos do Materna360.
+Nada de trocar cores por conta própria.
 
-O que será feito
+Builder só atua dentro dos padrões oficiais.
 
-Sistema de PDFs, artigos, trilhas
+📌 6. Prioridades Imediatas (P4 ainda em curso)
 
-Filtros inteligentes (idade, tema, formato)
+Ordem segura sugerida:
 
-Integração com Eu360
+Revisar visual dos mini-hubs em Cuidar
 
-Salvamento no Planner
+Alinhar Autocuidado Inteligente e Cuidar com Amor ao layout P4.
 
-Conteúdos premium (para Materna+)
+Dar uma “amarrada premium” em Maternar (hub principal)
 
-Cards de "Continuar lendo / Estudando"
+Garantir que o hub esteja com cara de home central organizada.
 
-Layout oficial da Biblioteca Materna (pronto para IA futura)
+Ajustes finos em Biblioteca Materna
 
-🏆 P6 — Gamificação & Engajamento
+Layout, estados vazios, microcopy alinhados ao TOV.
 
-Gamificação leve → profunda
+Revisar Minhas Conquistas como base da P6
 
-Selos e medalhas
+Deixar layout pronto e estável, mesmo que gamificação profunda fique pro futuro.
 
-Conquistas semanais/mensais
+Limpeza de possíveis restos de layout antigo
 
-Progresso em trilhas
+Conferir se não há páginas com visual “pré-P4”.
 
-Gamificação emocional (conquistas ligadas ao humor e rotina)
+🎯 7. Próximos Marcos por Fase
 
-Integração com notificações futuras
+Fechar P4
 
-🎁 P7 — Onboarding Inteligente + Materna+
+Todos os mini-hubs com layout P4
 
-Onboarding baseado no Eu360
+Navegação 100% coerente
 
-Personalização completa
+Microcopy revisado nas páginas principais
 
-Upsell/upgrade Materna+
+Iniciar P5
 
-Notificações inteligentes
+Foco total em Biblioteca Materna + conteúdos premium
 
-Páginas premium personalizadas
+Estrutura de trilhas e filtros
 
-Sistema de sugestões contínuas para a mãe
+Preparar terreno da P6
+
+Consolidar base de Minhas Conquistas
+
+Definir modelo de missões/selos
