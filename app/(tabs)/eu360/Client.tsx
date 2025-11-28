@@ -6,14 +6,13 @@ import Link from 'next/link'
 import AppShell from '@/components/common/AppShell'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
-import { ProfileForm } from '@/components/blocks/ProfileForm'
+import ProfileForm from '@/components/blocks/ProfileForm'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
-import { Eu360Stepper } from '@/components/eu360/Eu360Stepper'
 
 type WeeklyInsight = {
   title: string
@@ -82,9 +81,6 @@ export default function Eu360Client() {
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
   const [loadingInsight, setLoadingInsight] = useState(false)
 
-  // Por enquanto step fixo no primeiro (quando ligarmos de verdade ao formulário, isso vem de lá)
-  const currentStep = 'about-you' as const
-
   // mockzinho de métricas até conectar com Minhas conquistas
   const mockStats = {
     daysWithPlanner: 7,
@@ -119,7 +115,7 @@ export default function Eu360Client() {
   const content = (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-32 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+      className="min-h-[100dvh] pb-28 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -137,13 +133,6 @@ export default function Eu360Client() {
             Materna360 a cuidar de você com sugestões mais reais para a sua
             rotina.
           </p>
-
-          {/* Stepper alinhado e contido dentro da barra */}
-          <div className="mt-5 flex justify-center">
-            <div className="w-full max-w-3xl">
-              <Eu360Stepper currentStep={currentStep} />
-            </div>
-          </div>
         </header>
 
         <div className="space-y-6 md:space-y-7 pb-10">
@@ -289,9 +278,11 @@ export default function Eu360Client() {
 
                   <div className="flex flex-col items-start gap-3 md:items-end">
                     <Link href="/planos">
+                      {/* botão em rosa sólido para ter contraste */}
                       <Button
+                        type="button"
                         variant="primary"
-                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2]"
+                        className="px-6 py-2 rounded-full text-sm font-semibold shadow-[0_10px_26px_rgba(0,0,0,0.24)] !bg-white/0 !border !border-white/80 !text-white hover:!bg-white/12"
                       >
                         Conhecer os planos
                       </Button>
