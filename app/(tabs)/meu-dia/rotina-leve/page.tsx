@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
-import { PageTemplate } from '@/components/common/PageTemplate'
+import PageTemplate from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { ClientOnly } from '@/components/common/ClientOnly'
