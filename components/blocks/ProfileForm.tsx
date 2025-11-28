@@ -1,639 +1,307 @@
 'use client'
 
-import { FormEvent, useEffect, useRef, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
-import { Button } from '@/components/ui/Button'
+import AppShell from '@/components/common/AppShell'
+import { ClientOnly } from '@/components/common/ClientOnly'
+import { SectionWrapper } from '@/components/common/SectionWrapper'
+import { ProfileForm } from '@/components/blocks/ProfileForm'
+import { SoftCard } from '@/components/ui/card'
+import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
+import { Button } from '@/components/ui/Button'
+import { track } from '@/app/lib/telemetry'
+import { useProfile } from '@/app/hooks/useProfile'
 
-import {
-  AboutYouBlock,
-  ChildrenBlock,
-  RoutineBlock,
-  SupportBlock,
-  PreferencesBlock,
-} from './ProfileFormBlocks'
-
-import { Eu360Stepper, type Eu360Step } from '@/components/eu360/Eu360Stepper'
-import { WizardBand } from '@/components/eu360/WizardBand'
-
-import {
-  DEFAULT_STICKER_ID,
-  STICKER_OPTIONS,
-  isProfileStickerId,
-  type ProfileStickerId,
-} from '@/app/lib/stickers'
-
-/* ========= TYPES ========= */
-
-export type ChildProfile = {
-  id: string
-  genero: 'menino' | 'menina'
-  idadeMeses: number
-  nome: string
-  alergias: string[]
-  ageRange?: '0-1' | '1-3' | '3-6' | '6-8' | '8+'
-  currentPhase?: 'sono' | 'birras' | 'escolar' | 'socializacao' | 'alimentacao'
-  notes?: string
+type WeeklyInsight = {
+  title: string
+  summary: string
+  suggestions: string[]
 }
 
-export type ProfileFormState = {
-  nomeMae: string
-  userPreferredName?: string
-  userRole?: 'mae' | 'pai' | 'outro'
-  userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
-  userMainChallenges?: string[]
-  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite'
-  filhos: ChildProfile[]
-  routineChaosMoments?: string[]
-  routineScreenTime?: 'nada' | 'ate1h' | '1-2h' | 'mais2h'
-  routineDesiredSupport?: string[]
-  supportNetwork?: string[]
-  supportAvailability?: 'sempre' | 'as-vezes' | 'raramente'
-  userContentPreferences?: string[]
-  userGuidanceStyle?: 'diretas' | 'explicacao' | 'motivacionais'
-  userSelfcareFrequency?: 'diario' | 'semana' | 'pedido'
-  figurinha: ProfileStickerId | ''
+// Busca insight semanal emocional com fallback carinhoso
+async function fetchWeeklyInsight(): Promise<WeeklyInsight> {
+  try {
+    const res = await fetch('/api/ai/emocional', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'weekly_overview',
+        origin: 'eu360',
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA')
+    }
+
+    const data = await res.json()
+    const insight = data?.weeklyInsight
+
+    if (!insight || typeof insight !== 'object') {
+      throw new Error('Insight semanal vazio')
+    }
+
+    return {
+      title: insight.title ?? 'Seu resumo emocional da semana',
+      summary:
+        insight.summary ??
+        'Pelos seus registros recentes, esta semana parece ter sido marcada por momentos de cansaço, mas também por pequenas vitórias.',
+      suggestions:
+        Array.isArray(insight.suggestions) && insight.suggestions.length > 0
+          ? insight.suggestions
+          : [
+              'Separe um momento curto para olhar com carinho para o que você já deu conta.',
+              'Escolha apenas uma prioridade por dia para aliviar a sensação de cobrança.',
+            ],
+    }
+  } catch (error) {
+    console.error('[Eu360] Erro ao buscar insight semanal, usando fallback:', error)
+    return {
+      title: 'Seu resumo emocional da semana',
+      summary:
+        'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.',
+      suggestions: [
+        'Proteja ao menos um momento do dia que te faz bem, mesmo que sejam 10 minutos.',
+        'Perceba quais situações estão drenando demais sua energia e veja o que pode ser simplificado.',
+      ],
+    }
+  }
 }
 
-export type FormErrors = {
-  nomeMae?: string
-  userPreferredName?: string
-  userRole?: string
-  userMainChallenges?: string
-  userEnergyPeakTime?: string
-  filhos?: Record<string, string | undefined>
-  routineChaosMoments?: string
-  routineDesiredSupport?: string
-  userContentPreferences?: string
-  figurinha?: string
-  general?: string
-}
-
-/* ========= HELPERS ========= */
-
-const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
-  'mae-carinhosa': 'Amor nos pequenos gestos.',
-  'mae-leve': 'Equilíbrio e presença.',
-  'mae-determinada': 'Força com doçura.',
-  'mae-criativa': 'Inventa e transforma.',
-  'mae-tranquila': 'Serenidade e autocuidado.',
-  'mae-resiliente': 'Cai, respira fundo e recomeça.',
-}
-
-const createEmptyChild = (index: number): ChildProfile => ({
-  id: `child-${index}`,
-  genero: 'menino',
-  idadeMeses: 0,
-  nome: '',
-  alergias: [],
-})
-
-const defaultState = (): ProfileFormState => ({
-  nomeMae: '',
-  userPreferredName: undefined,
-  userRole: undefined,
-  userEmotionalBaseline: undefined,
-  userMainChallenges: [],
-  userEnergyPeakTime: undefined,
-  filhos: [createEmptyChild(0)],
-  routineChaosMoments: [],
-  routineScreenTime: undefined,
-  routineDesiredSupport: [],
-  supportNetwork: [],
-  supportAvailability: undefined,
-  userContentPreferences: [],
-  userGuidanceStyle: undefined,
-  userSelfcareFrequency: undefined,
-  figurinha: '',
-})
-
-/* ========= COMPONENT ========= */
-
-export function ProfileForm() {
-  const router = useRouter()
-
-  const [form, setForm] = useState<ProfileFormState>(() => defaultState())
-  const [babyBirthdate, setBabyBirthdate] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [statusMessage, setStatusMessage] = useState('')
-  const [todayISO, setTodayISO] = useState<string>('')
-
-  const [currentStep, setCurrentStep] = useState<Eu360Step>('about-you')
-
-  const [autoSaveStatus, setAutoSaveStatus] = useState<
-    Record<Eu360Step, 'idle' | 'saving' | 'saved'>
-  >({
-    'about-you': 'idle',
-    children: 'idle',
-    routine: 'idle',
-    support: 'idle',
-  })
-
-  const autoSaveTimeoutRef = useRef<
-    Record<Eu360Step, NodeJS.Timeout | undefined>
-  >({
-    'about-you': undefined,
-    children: undefined,
-    routine: undefined,
-    support: undefined,
-  })
-
-  /* ========= EFFECTS ========= */
-
+export default function Eu360Client() {
   useEffect(() => {
-    const date = new Date().toISOString().split('T')[0]
-    setTodayISO(date)
+    track('nav.click', { tab: 'eu360', dest: '/eu360' })
   }, [])
+
+  const { name } = useProfile()
+  const firstName = (name || '').split(' ')[0] || 'Você'
+
+  const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
+  const [loadingInsight, setLoadingInsight] = useState(false)
+
+  // mockzinho de métricas até conectar com Minhas conquistas
+  const mockStats = {
+    daysWithPlanner: 7,
+    moodCheckins: 4,
+    unlockedAchievements: 3,
+  }
 
   useEffect(() => {
     let isMounted = true
 
-    const loadProfile = async () => {
+    const loadInsight = async () => {
+      setLoadingInsight(true)
       try {
-        const response = await fetch('/api/eu360/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-
-        if (!response.ok || !isMounted) return
-
-        const data = await response.json()
-
-        setForm((previous) => ({
-          ...previous,
-          nomeMae: data?.name || '',
-          userPreferredName: data?.userPreferredName || '',
-          userRole: data?.userRole || undefined,
-          userEmotionalBaseline: data?.userEmotionalBaseline || undefined,
-          userMainChallenges: data?.userMainChallenges || [],
-          userEnergyPeakTime: data?.userEnergyPeakTime || undefined,
-          filhos:
-            data?.children &&
-            Array.isArray(data.children) &&
-            data.children.length > 0
-              ? data.children
-              : [createEmptyChild(0)],
-          routineChaosMoments: data?.routineChaosMoments || [],
-          routineScreenTime: data?.routineScreenTime || undefined,
-          routineDesiredSupport: data?.routineDesiredSupport || [],
-          supportNetwork: data?.supportNetwork || [],
-          supportAvailability: data?.supportAvailability || undefined,
-          userContentPreferences: data?.userContentPreferences || [],
-          userGuidanceStyle: data?.userGuidanceStyle || undefined,
-          userSelfcareFrequency: data?.userSelfcareFrequency || undefined,
-          figurinha:
-            (isProfileStickerId(data?.figurinha) ? data.figurinha : '') || '',
-        }))
-
-        setBabyBirthdate(data?.birthdate || '')
-      } catch (error) {
-        console.warn('Failed to load profile:', error)
+        const result = await fetchWeeklyInsight()
+        if (isMounted) {
+          setWeeklyInsight(result)
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingInsight(false)
+        }
       }
     }
 
-    void loadProfile()
+    void loadInsight()
 
     return () => {
       isMounted = false
     }
   }, [])
 
-  /* ========= HELPERS ========= */
+  const content = (
+    <main
+      data-layout="page-template-v1"
+      className="min-h-[100dvh] pb-32 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+    >
+      <div className="mx-auto max-w-3xl px-4 md:px-6">
+        {/* HERO */}
+        <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
+          <span className="inline-flex items-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+            EU360
+          </span>
 
-  const updateChild = (
-    id: string,
-    key: keyof ChildProfile,
-    value: string | number | string[],
-  ) => {
-    setForm((previous) => ({
-      ...previous,
-      filhos: previous.filhos.map((child) => {
-        if (child.id !== id) return child
+          <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+            Seu mundo em perspectiva
+          </h1>
 
-        if (key === 'idadeMeses') {
-          const parsed = Math.max(0, Number(value))
-          return { ...child, idadeMeses: Number.isFinite(parsed) ? parsed : 0 }
-        }
+          <p className="mt-2 text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+            Conte um pouco sobre você e a fase da sua família. Isso ajuda o
+            Materna360 a cuidar de você com sugestões mais reais para a sua
+            rotina.
+          </p>
+        </header>
 
-        if (key === 'genero') {
-          return { ...child, genero: value === 'menina' ? 'menina' : 'menino' }
-        }
+        <div className="space-y-6 md:space-y-7 pb-10">
+          {/* 1 — WIZARD DO PERFIL */}
+          <ProfileForm />
 
-        if (key === 'alergias') {
-          const base = Array.isArray(value)
-            ? value
-            : typeof value === 'string'
-              ? value.split(',')
-              : []
-          const normalized = base
-            .map((item) => (typeof item === 'string' ? item.trim() : ''))
-            .filter((item) => item.length > 0)
+          {/* 2 — PAINEL DA JORNADA */}
+          <SectionWrapper>
+            <Reveal>
+              <SoftCard className="rounded-3xl bg-white px-5 py-5 md:px-7 md:py-7 shadow-[0_22px_55px_rgba(0,0,0,0.18)] space-y-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
+                      Painel da sua jornada
+                    </p>
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
+                      Um olhar rápido sobre como você vem cuidando de vocês
+                    </h2>
+                  </div>
+                  <AppIcon
+                    name="sparkles"
+                    className="h-6 w-6 text-[var(--color-brand)] hidden md:block"
+                  />
+                </div>
 
-          const unique = Array.from(
-            new Set(normalized.map((item) => item.toLocaleLowerCase('pt-BR'))),
-          )
-            .map(
-              (keyName) =>
-                normalized.find(
-                  (item) => item.toLocaleLowerCase('pt-BR') === keyName,
-                ) ?? '',
-            )
-            .filter((item) => item.length > 0)
+                {/* mini métricas */}
+                <div className="grid grid-cols-3 gap-2.5 md:gap-4">
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">
+                      Dias com planner
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
+                      {mockStats.daysWithPlanner}
+                    </p>
+                  </div>
 
-          return { ...child, alergias: unique }
-        }
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">
+                      Check-ins de humor
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
+                      {mockStats.moodCheckins}
+                    </p>
+                  </div>
 
-        return {
-          ...child,
-          [key]: typeof value === 'string' ? value : (child as any)[key],
-        }
-      }),
-    }))
-  }
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">
+                      Conquistas
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
+                      {mockStats.unlockedAchievements}
+                    </p>
+                  </div>
+                </div>
 
-  const addChild = () => {
-    setForm((previous) => ({
-      ...previous,
-      filhos: [...previous.filhos, createEmptyChild(previous.filhos.length)],
-    }))
-  }
+                {/* insight emocional da semana */}
+                <SoftCard className="mt-2 rounded-2xl border border-[#FFE0F0] bg-[#FFF5FA] px-4 py-4 md:px-5 md:py-5 shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5">
+                        <AppIcon
+                          name="heart"
+                          size={20}
+                          className="text-[var(--color-brand)]"
+                          decorative
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-[0.16em]">
+                          Olhar carinhoso sobre a sua semana
+                        </p>
+                        <h3 className="text-base md:text-lg font-semibold text-[var(--color-ink)] leading-snug">
+                          {weeklyInsight?.title || 'Seu resumo emocional da semana'}
+                        </h3>
+                        <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
+                          {firstName}, este espaço é para te ajudar a enxergar seus
+                          últimos dias com mais gentileza, não para te cobrar mais
+                          nada.
+                        </p>
+                      </div>
+                    </div>
 
-  const removeChild = (id: string) => {
-    setForm((previous) => ({
-      ...previous,
-      filhos:
-        previous.filhos.length > 1
-          ? previous.filhos.filter((child) => child.id !== id)
-          : previous.filhos,
-    }))
-  }
+                    <div className="mt-1 space-y-2.5">
+                      {loadingInsight ? (
+                        <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
+                          Estou olhando com carinho para a sua semana para trazer
+                          uma reflexão pra você…
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-sm leading-relaxed text-[var(--color-ink)]">
+                            {weeklyInsight?.summary ??
+                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
+                          </p>
 
-  const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
-    setForm((previous) => {
-      const current = previous[fieldName] as string[] | undefined
-      const updated = (current || []).includes(value)
-        ? (current || []).filter((item) => item !== value)
-        : [...(current || []), value]
-      return { ...previous, [fieldName]: updated }
-    })
-  }
+                          {weeklyInsight?.suggestions &&
+                            weeklyInsight.suggestions.length > 0 && (
+                              <div className="space-y-1.5">
+                                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-[0.16em]">
+                                  Pequenos passos para os próximos dias
+                                </p>
+                                <ul className="space-y-1.5 text-sm text-[var(--color-ink)]">
+                                  {weeklyInsight.suggestions.map((item, idx) => (
+                                    <li key={idx}>• {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
-  const validateForm = (state: ProfileFormState) => {
-    const nextErrors: FormErrors = {}
+                          <p className="text-[11px] text-[var(--color-ink-muted)] mt-2 leading-relaxed">
+                            Isso não é um diagnóstico, e sim um convite para você se
+                            observar com mais leveza e cuidado. Um passo de cada vez
+                            já é muito.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </SoftCard>
+              </SoftCard>
+            </Reveal>
+          </SectionWrapper>
 
-    if (!state.nomeMae.trim()) {
-      nextErrors.nomeMae = 'Informe seu nome.'
-    }
+          {/* 3 — BANNER DE PLANOS */}
+          <SectionWrapper>
+            <Reveal>
+              <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_45%,#9B4D96_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
+                <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                  <div className="space-y-2 max-w-xl">
+                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
+                      Materna360+
+                    </p>
+                    <h2 className="text-xl md:text-2xl font-semibold leading-snug">
+                      Leve o Materna360 para o próximo nível
+                    </h2>
+                    <p className="text-sm md:text-base text-white/90 leading-relaxed">
+                      Desbloqueie conteúdos exclusivos, acompanhamento mais
+                      próximo e ferramentas avançadas para cuidar de você, da sua
+                      rotina e da sua família.
+                    </p>
+                  </div>
 
-    if (!state.userRole) {
-      nextErrors.userRole = 'Informe seu papel na rotina.'
-    }
-
-    if (!state.userMainChallenges || state.userMainChallenges.length === 0) {
-      nextErrors.userMainChallenges = 'Selecione pelo menos um desafio.'
-    }
-
-    if (!state.userEnergyPeakTime) {
-      nextErrors.userEnergyPeakTime = 'Informe quando você sente mais energia.'
-    }
-
-    if (!state.filhos.length) {
-      nextErrors.general = 'Adicione pelo menos um filho.'
-    }
-
-    if (!state.routineChaosMoments || state.routineChaosMoments.length === 0) {
-      nextErrors.routineChaosMoments =
-        'Selecione pelo menos um momento crítico.'
-    }
-
-    if (
-      !state.routineDesiredSupport ||
-      state.routineDesiredSupport.length === 0
-    ) {
-      nextErrors.routineDesiredSupport =
-        'Informe em que você gostaria de ajuda.'
-    }
-
-    if (
-      !state.userContentPreferences ||
-      state.userContentPreferences.length === 0
-    ) {
-      nextErrors.userContentPreferences =
-        'Selecione pelo menos uma preferência de conteúdo.'
-    }
-
-    return nextErrors
-  }
-
-  const triggerAutoSave = useCallback(
-    async (step: Eu360Step) => {
-      setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saving' }))
-
-      try {
-        const normalizedBirthdate = babyBirthdate || null
-        const firstChildAge = form.filhos[0]?.idadeMeses
-
-        const normalizedAgeMonths =
-          normalizedBirthdate !== null
-            ? null
-            : typeof firstChildAge === 'number' &&
-                Number.isFinite(firstChildAge) &&
-                firstChildAge >= 0
-              ? Math.floor(firstChildAge)
-              : null
-
-        const response = await fetch('/api/eu360/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          cache: 'no-store',
-          body: JSON.stringify({
-            name: form.nomeMae,
-            birthdate: normalizedBirthdate,
-            age_months: normalizedAgeMonths,
-            userPreferredName: form.userPreferredName,
-            userRole: form.userRole,
-            userEmotionalBaseline: form.userEmotionalBaseline,
-            userMainChallenges: form.userMainChallenges,
-            userEnergyPeakTime: form.userEnergyPeakTime,
-            routineChaosMoments: form.routineChaosMoments,
-            routineScreenTime: form.routineScreenTime,
-            routineDesiredSupport: form.routineDesiredSupport,
-            supportNetwork: form.supportNetwork,
-            supportAvailability: form.supportAvailability,
-            userContentPreferences: form.userContentPreferences,
-            userGuidanceStyle: form.userGuidanceStyle,
-            userSelfcareFrequency: form.userSelfcareFrequency,
-            figurinha: isProfileStickerId(form.figurinha)
-              ? form.figurinha
-              : DEFAULT_STICKER_ID,
-            children: form.filhos,
-          }),
-        })
-
-        if (response.ok) {
-          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saved' }))
-          if (autoSaveTimeoutRef.current[step]) {
-            clearTimeout(autoSaveTimeoutRef.current[step])
-          }
-          autoSaveTimeoutRef.current[step] = setTimeout(() => {
-            setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
-          }, 3000)
-        } else {
-          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
-        }
-      } catch (error) {
-        console.warn('Autosave failed:', error)
-        setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
-      }
-    },
-    [form, babyBirthdate],
+                  <div className="flex flex-col items-start gap-3 md:items-end">
+                    <Link href="/planos">
+                      <Button
+                        variant="primary"
+                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2]"
+                      >
+                        Conhecer os planos
+                      </Button>
+                    </Link>
+                    <p className="text-[11px] text-white/80 md:text-right max-w-xs">
+                      Planos pensados para diferentes fases da maternidade — você
+                      escolhe o que faz mais sentido agora.
+                    </p>
+                  </div>
+                </div>
+              </SoftCard>
+            </Reveal>
+          </SectionWrapper>
+        </div>
+      </div>
+    </main>
   )
 
-  // Debounced autosave
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      triggerAutoSave(currentStep)
-    }, 1500)
-
-    return () => clearTimeout(timeoutId)
-  }, [form, currentStep, triggerAutoSave])
-
-  const handleStepClick = (step: Eu360Step) => {
-    setCurrentStep(step)
-    triggerAutoSave(step)
-
-    const element = document.getElementById(step)
-    if (element) {
-      setTimeout(() => {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-    }
-  }
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setStatusMessage('')
-
-    const validationErrors = validateForm(form)
-    setErrors(validationErrors)
-
-    if (Object.keys(validationErrors).length > 0) {
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      const normalizedBirthdate = babyBirthdate || null
-      const firstChildAge = form.filhos[0]?.idadeMeses
-
-      const normalizedAgeMonths =
-        normalizedBirthdate !== null
-          ? null
-          : typeof firstChildAge === 'number' &&
-              Number.isFinite(firstChildAge) &&
-              firstChildAge >= 0
-            ? Math.floor(firstChildAge)
-            : null
-
-      const eu360Response = await fetch('/api/eu360/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        cache: 'no-store',
-        body: JSON.stringify({
-          name: form.nomeMae,
-          birthdate: normalizedBirthdate,
-          age_months: normalizedAgeMonths,
-          userPreferredName: form.userPreferredName,
-          userRole: form.userRole,
-          userEmotionalBaseline: form.userEmotionalBaseline,
-          userMainChallenges: form.userMainChallenges,
-          userEnergyPeakTime: form.userEnergyPeakTime,
-          routineChaosMoments: form.routineChaosMoments,
-          routineScreenTime: form.routineScreenTime,
-          routineDesiredSupport: form.routineDesiredSupport,
-          supportNetwork: form.supportNetwork,
-          supportAvailability: form.supportAvailability,
-          userContentPreferences: form.userContentPreferences,
-          userGuidanceStyle: form.userGuidanceStyle,
-          userSelfcareFrequency: form.userSelfcareFrequency,
-          figurinha: isProfileStickerId(form.figurinha)
-            ? form.figurinha
-            : DEFAULT_STICKER_ID,
-          children: form.filhos,
-        }),
-      })
-
-      if (eu360Response.ok) {
-        setStatusMessage('Salvo com carinho!')
-
-        if (typeof window !== 'undefined') {
-          const figurinhaToPersist = isProfileStickerId(form.figurinha)
-            ? form.figurinha
-            : DEFAULT_STICKER_ID
-
-          window.dispatchEvent(
-            new CustomEvent('materna:profile-updated', {
-              detail: {
-                figurinha: figurinhaToPersist,
-                nomeMae: form.nomeMae,
-              },
-            }),
-          )
-        }
-
-        router.push('/meu-dia')
-        router.refresh()
-      } else {
-        const data = await eu360Response.json().catch(() => ({}))
-        const message =
-          data &&
-          typeof data === 'object' &&
-          'error' in data &&
-          typeof (data as any).error === 'string'
-            ? (data as any).error
-            : 'Não foi possível salvar agora. Tente novamente em instantes.'
-        setStatusMessage(message)
-      }
-    } catch (error) {
-      console.error('ProfileForm submit error:', error)
-      setStatusMessage('Erro ao processar. Tente novamente.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleChange = (updates: Partial<ProfileFormState>) => {
-    setForm((previous) => ({ ...previous, ...updates }))
-  }
-
-  /* ========= RENDER ========= */
-
   return (
-    <Reveal>
-      <form
-        className="w-full"
-        onSubmit={handleSubmit}
-        noValidate
-        suppressHydrationWarning
-      >
-        {/* Stepper */}
-        <Eu360Stepper
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-        />
-
-        {/* Bands */}
-        <div className="space-y-4 md:space-y-6">
-          {/* Band 1: Sobre você */}
-          <WizardBand
-            id="about-you"
-            title="Sobre você"
-            description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
-            autoSaveStatus={autoSaveStatus['about-you']}
-            isActive={currentStep === 'about-you'}
-          >
-            <AboutYouBlock
-              form={form}
-              errors={errors}
-              onChange={handleChange}
-            />
-          </WizardBand>
-
-          {/* Band 2: Filhos */}
-          <WizardBand
-            id="children"
-            title="Sobre seu(s) filho(s)"
-            description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
-            autoSaveStatus={autoSaveStatus['children']}
-            isActive={currentStep === 'children'}
-          >
-            <ChildrenBlock
-              form={form}
-              errors={errors}
-              babyBirthdate={babyBirthdate}
-              todayISO={todayISO}
-              onBirthdateChange={setBabyBirthdate}
-              onUpdateChild={updateChild}
-              onAddChild={addChild}
-              onRemoveChild={removeChild}
-            />
-          </WizardBand>
-
-          {/* Band 3: Rotina & momentos críticos */}
-          <WizardBand
-            id="routine"
-            title="Rotina & momentos críticos"
-            description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
-            autoSaveStatus={autoSaveStatus['routine']}
-            isActive={currentStep === 'routine'}
-          >
-            <RoutineBlock
-              form={form}
-              errors={errors}
-              onChange={handleChange}
-              onToggleArrayField={toggleArrayField}
-            />
-          </WizardBand>
-
-          {/* Band 4: Rede de apoio + Preferências */}
-          <WizardBand
-            id="support"
-            title="Rede de apoio"
-            description="Conectar você com sua rede pode ser a melhor ajuda."
-            autoSaveStatus={autoSaveStatus['support']}
-            isActive={currentStep === 'support'}
-          >
-            <SupportBlock
-              form={form}
-              onChange={handleChange}
-              onToggleArrayField={toggleArrayField}
-            />
-
-            <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[var(--color-text-main)]">
-                  Preferências no app
-                </h3>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                  Assim a gente personaliza tudo para você.
-                </p>
-              </div>
-              <PreferencesBlock
-                form={form}
-                onChange={handleChange}
-                onToggleArrayField={toggleArrayField}
-              />
-            </div>
-          </WizardBand>
-
-          {/* Banda final – botão de salvar */}
-          <div className="mx-auto max-w-3xl px-4 md:px-6 py-8 md:py-10">
-            <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-3">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={saving}
-                className="w-full"
-              >
-                {saving ? 'Salvando...' : 'Salvar e continuar'}
-              </Button>
-              <p className="text-center text-[11px] text-[var(--color-text-muted)]">
-                Você poderá editar essas informações no seu Perfil.
-              </p>
-              {statusMessage && (
-                <p className="text-center text-xs font-semibold text-[var(--color-text-main)]">
-                  {statusMessage}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </form>
-    </Reveal>
+    <AppShell>
+      <ClientOnly>{content}</ClientOnly>
+    </AppShell>
   )
 }
