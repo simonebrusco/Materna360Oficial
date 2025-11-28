@@ -445,3 +445,199 @@ export function ProfileForm() {
         credentials: 'include',
         cache: 'no-store',
         body: JSON.stringify({
+          name: form.nomeMae,
+          birthdate: normalizedBirthdate,
+          age_months: normalizedAgeMonths,
+          userPreferredName: form.userPreferredName,
+          userRole: form.userRole,
+          userEmotionalBaseline: form.userEmotionalBaseline,
+          userMainChallenges: form.userMainChallenges,
+          userEnergyPeakTime: form.userEnergyPeakTime,
+          routineChaosMoments: form.routineChaosMoments,
+          routineScreenTime: form.routineScreenTime,
+          routineDesiredSupport: form.routineDesiredSupport,
+          supportNetwork: form.supportNetwork,
+          supportAvailability: form.supportAvailability,
+          userContentPreferences: form.userContentPreferences,
+          userGuidanceStyle: form.userGuidanceStyle,
+          userSelfcareFrequency: form.userSelfcareFrequency,
+          figurinha: isProfileStickerId(form.figurinha)
+            ? form.figurinha
+            : DEFAULT_STICKER_ID,
+          children: form.filhos,
+        }),
+      })
+
+      if (eu360Response.ok) {
+        setStatusMessage('Salvo com carinho!')
+
+        if (typeof window !== 'undefined') {
+          const figurinhaToPersist = isProfileStickerId(form.figurinha)
+            ? form.figurinha
+            : DEFAULT_STICKER_ID
+
+          window.dispatchEvent(
+            new CustomEvent('materna:profile-updated', {
+              detail: {
+                figurinha: figurinhaToPersist,
+                nomeMae: form.nomeMae,
+              },
+            }),
+          )
+        }
+
+        router.push('/meu-dia')
+        router.refresh()
+      } else {
+        const data = await eu360Response.json().catch(() => ({}))
+        const message =
+          data &&
+          typeof data === 'object' &&
+          'error' in data &&
+          typeof (data as any).error === 'string'
+            ? (data as any).error
+            : 'Não foi possível salvar agora. Tente novamente em instantes.'
+        setStatusMessage(message)
+      }
+    } catch (error) {
+      console.error('ProfileForm submit error:', error)
+      setStatusMessage('Erro ao processar. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChange = (updates: Partial<ProfileFormState>) => {
+    setForm((previous) => ({ ...previous, ...updates }))
+  }
+
+  /* ========= RENDER ========= */
+
+  return (
+    <Reveal>
+      <form
+        className="w-full"
+        onSubmit={handleSubmit}
+        noValidate
+        suppressHydrationWarning
+      >
+        {/* Stepper */}
+        <Eu360Stepper
+          currentStep={currentStep}
+          onStepClick={handleStepClick}
+        />
+
+        {/* Bands */}
+        <div className="space-y-4 md:space-y-6">
+          {/* Band 1: Sobre você */}
+          <WizardBand
+            id="about-you"
+            title="Sobre você"
+            description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
+            autoSaveStatus={autoSaveStatus['about-you']}
+            isActive={currentStep === 'about-you'}
+          >
+            <AboutYouBlock
+              form={form}
+              errors={errors}
+              onChange={handleChange}
+            />
+          </WizardBand>
+
+          {/* Band 2: Filhos */}
+          <WizardBand
+            id="children"
+            title="Sobre seu(s) filho(s)"
+            description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
+            autoSaveStatus={autoSaveStatus['children']}
+            isActive={currentStep === 'children'}
+          >
+            <ChildrenBlock
+              form={form}
+              errors={errors}
+              babyBirthdate={babyBirthdate}
+              todayISO={todayISO}
+              onBirthdateChange={setBabyBirthdate}
+              onUpdateChild={updateChild}
+              onAddChild={addChild}
+              onRemoveChild={removeChild}
+            />
+          </WizardBand>
+
+          {/* Band 3: Rotina & momentos críticos */}
+          <WizardBand
+            id="routine"
+            title="Rotina & momentos críticos"
+            description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
+            autoSaveStatus={autoSaveStatus['routine']}
+            isActive={currentStep === 'routine'}
+          >
+            <RoutineBlock
+              form={form}
+              errors={errors}
+              onChange={handleChange}
+              onToggleArrayField={toggleArrayField}
+            />
+          </WizardBand>
+
+          {/* Band 4: Rede de apoio + Preferências */}
+          <WizardBand
+            id="support"
+            title="Rede de apoio"
+            description="Conectar você com sua rede pode ser a melhor ajuda."
+            autoSaveStatus={autoSaveStatus['support']}
+            isActive={currentStep === 'support'}
+          >
+            <SupportBlock
+              form={form}
+              onChange={handleChange}
+              onToggleArrayField={toggleArrayField}
+            />
+
+            <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-[var(--color-text-main)]">
+                  Preferências no app
+                </h3>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  Assim a gente personaliza tudo para você.
+                </p>
+              </div>
+              <PreferencesBlock
+                form={form}
+                onChange={handleChange}
+                onToggleArrayField={toggleArrayField}
+              />
+            </div>
+          </WizardBand>
+
+          {/* Banda final – botão de salvar (mesma largura dos outros cards) */}
+          <div className="py-6 md:py-8">
+            <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-3">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? 'Salvando...' : 'Salvar e continuar'}
+              </Button>
+              <p className="text-center text-[11px] text-[var(--color-text-muted)]">
+                Você poderá editar essas informações no seu Perfil.
+              </p>
+              {statusMessage && (
+                <p className="text-center text-xs font-semibold text-[var(--color-text-main)]">
+                  {statusMessage}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </form>
+    </Reveal>
+  )
+}
+
+/* ========= DEFAULT EXPORT ========= */
+
+export default ProfileForm
