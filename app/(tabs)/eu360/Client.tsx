@@ -5,7 +5,6 @@ import Link from 'next/link'
 
 import AppShell from '@/components/common/AppShell'
 import { ClientOnly } from '@/components/common/ClientOnly'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -117,190 +116,183 @@ export default function Eu360Client() {
       data-layout="page-template-v1"
       className="min-h-[100dvh] pb-32 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
     >
-      {/* CONTÊINER PRINCIPAL – largura padronizada */}
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
-        <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
-              EU360
-            </span>
+        <header className="pt-8 md:pt-10 mb-8 md:mb-10">
+          <span className="inline-flex items-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+            EU360
+          </span>
 
-            <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-              Seu mundo em perspectiva
-            </h1>
+          <h1 className="mt-3 text-left text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+            Seu mundo em perspectiva
+          </h1>
 
-            <p className="mt-2 text-sm md:text-base text-white/85 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-              Conte um pouco sobre você e a fase da sua família. Isso ajuda o Materna360 a cuidar de você
-              com sugestões mais reais para a sua rotina.
-            </p>
-          </div>
+          <p className="mt-2 text-left text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+            Conte um pouco sobre você e a fase da sua família. Isso ajuda o Materna360 a
+            cuidar de você com sugestões mais reais para a sua rotina.
+          </p>
         </header>
 
-        {/* BLOCO CENTRAL – cards com a MESMA largura */}
-        <div className="space-y-6 md:space-y-8 pb-10">
+        <div className="space-y-8 md:space-y-10 pb-12">
           {/* 1 — WIZARD DO PERFIL */}
-          <div className="mx-auto max-w-3xl w-full">
-            <SectionWrapper>
+          <Reveal>
+            <section aria-label="Formulário Eu360" className="space-y-6">
               <ProfileForm />
-            </SectionWrapper>
-          </div>
+            </section>
+          </Reveal>
 
           {/* 2 — PAINEL DA JORNADA */}
-          <div className="mx-auto max-w-3xl w-full">
-            <SectionWrapper>
-              <Reveal>
-                <SoftCard className="rounded-3xl border border-[var(--color-soft-strong)] bg-white/96 px-5 py-5 md:px-7 md:py-7 shadow-[0_18px_45px_rgba(0,0,0,0.16)] space-y-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-text-muted)]">
-                        Painel da sua jornada
-                      </p>
-                      <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-text-main)] leading-snug">
-                        Um olhar rápido sobre como você vem cuidando de vocês
-                      </h2>
-                    </div>
-                    <AppIcon
-                      name="sparkles"
-                      className="h-6 w-6 text-[var(--color-brand)]/45 hidden md:block"
-                    />
+          <Reveal>
+            <section aria-label="Painel da sua jornada">
+              <SoftCard className="rounded-3xl border border-[var(--color-pink-snow)] bg-white px-5 py-5 md:px-7 md:py-7 shadow-[0_12px_32px_rgba(0,0,0,0.10)] space-y-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-text-muted)]">
+                      Painel da sua jornada
+                    </p>
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-text-main)] leading-snug">
+                      Um olhar rápido sobre como você vem cuidando de vocês
+                    </h2>
+                  </div>
+                  <AppIcon
+                    name="sparkles"
+                    className="h-6 w-6 text-[var(--color-brand)]/70 hidden md:block"
+                  />
+                </div>
+
+                {/* mini métricas */}
+                <div className="grid grid-cols-3 gap-2.5 md:gap-4">
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_6px_14px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
+                      Dias com planner
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
+                      {mockStats.daysWithPlanner}
+                    </p>
                   </div>
 
-                  {/* mini métricas */}
-                  <div className="grid grid-cols-3 gap-2.5 md:gap-4">
-                    <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.08)]">
-                      <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
-                        Dias com planner
-                      </p>
-                      <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
-                        {mockStats.daysWithPlanner}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.08)]">
-                      <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
-                        Check-ins de humor
-                      </p>
-                      <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
-                        {mockStats.moodCheckins}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.08)]">
-                      <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
-                        Conquistas
-                      </p>
-                      <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
-                        {mockStats.unlockedAchievements}
-                      </p>
-                    </div>
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_6px_14px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
+                      Check-ins de humor
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
+                      {mockStats.moodCheckins}
+                    </p>
                   </div>
 
-                  {/* insight emocional da semana */}
-                  <SoftCard className="mt-2 rounded-2xl border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)] px-4 py-4 md:px-5 md:py-5 shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5">
-                          <AppIcon
-                            name="heart"
-                            size={20}
-                            className="text-[var(--color-brand)]"
-                            decorative
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-semibold text-[var(--color-brand)] uppercase tracking-[0.16em]">
-                            Olhar carinhoso sobre a sua semana
-                          </p>
-                          <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] leading-snug">
-                            {weeklyInsight?.title || 'Seu resumo emocional da semana'}
-                          </h3>
-                          <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-                            {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com mais
-                            gentileza, não para te cobrar mais nada.
-                          </p>
-                        </div>
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_6px_14px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
+                      Conquistas
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
+                      {mockStats.unlockedAchievements}
+                    </p>
+                  </div>
+                </div>
+
+                {/* insight emocional da semana */}
+                <SoftCard className="mt-2 rounded-2xl border border-[var(--color-pink-snow)] bg-[var(--color-soft-bg)] px-4 py-4 md:px-5 md:py-5 shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5">
+                        <AppIcon
+                          name="heart"
+                          size={20}
+                          className="text-[var(--color-brand)]"
+                          decorative
+                        />
                       </div>
-
-                      <div className="mt-1 space-y-2.5">
-                        {loadingInsight ? (
-                          <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
-                            Estou olhando com carinho para a sua semana para trazer uma reflexão pra você…
-                          </p>
-                        ) : (
-                          <>
-                            <p className="text-sm leading-relaxed text-[var(--color-text-main)]">
-                              {weeklyInsight?.summary ??
-                                'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
-                            </p>
-
-                            {weeklyInsight?.suggestions &&
-                              weeklyInsight.suggestions.length > 0 && (
-                                <div className="space-y-1.5">
-                                  <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.16em]">
-                                    Pequenos passos para os próximos dias
-                                  </p>
-                                  <ul className="space-y-1.5 text-sm text-[var(--color-text-main)]">
-                                    {weeklyInsight.suggestions.map((item, idx) => (
-                                      <li key={idx}>• {item}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                            <p className="text-[11px] text-[var(--color-text-muted)] mt-2 leading-relaxed">
-                              Isso não é um diagnóstico, e sim um convite para você se observar com mais
-                              leveza e cuidado. Um passo de cada vez já é muito.
-                            </p>
-                          </>
-                        )}
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-semibold text-[var(--color-brand)] uppercase tracking-[0.16em]">
+                          Olhar carinhoso sobre a sua semana
+                        </p>
+                        <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] leading-snug">
+                          {weeklyInsight?.title || 'Seu resumo emocional da semana'}
+                        </h3>
+                        <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+                          {firstName}, este espaço é para te ajudar a enxergar seus últimos dias
+                          com mais gentileza, não para te cobrar mais nada.
+                        </p>
                       </div>
                     </div>
-                  </SoftCard>
+
+                    <div className="mt-1 space-y-2.5">
+                      {loadingInsight ? (
+                        <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
+                          Estou olhando com carinho para a sua semana para trazer uma reflexão
+                          pra você…
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-sm leading-relaxed text-[var(--color-text-main)]">
+                            {weeklyInsight?.summary ??
+                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
+                          </p>
+
+                          {weeklyInsight?.suggestions &&
+                            weeklyInsight.suggestions.length > 0 && (
+                              <div className="space-y-1.5">
+                                <p className="text-[10px] font-semibold text-[var(--color-text-main)] uppercase tracking-[0.16em]">
+                                  Pequenos passos para os próximos dias
+                                </p>
+                                <ul className="space-y-1.5 text-sm text-[var(--color-text-main)]">
+                                  {weeklyInsight.suggestions.map((item, idx) => (
+                                    <li key={idx}>• {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                          <p className="text-[11px] text-[var(--color-text-muted)] mt-2 leading-relaxed">
+                            Isso não é um diagnóstico, e sim um convite para você se observar com
+                            mais leveza e cuidado. Um passo de cada vez já é muito.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </SoftCard>
-              </Reveal>
-            </SectionWrapper>
-          </div>
+              </SoftCard>
+            </section>
+          </Reveal>
 
           {/* 3 — BANNER DE PLANOS */}
-          <div className="mx-auto max-w-3xl w-full">
-            <SectionWrapper>
-              <Reveal>
-                <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_45%,#9B4D96_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
-                  <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-white/18 blur-3xl" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                    <div className="space-y-2 max-w-xl">
-                      <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/85">
-                        Materna360+
-                      </p>
-                      <h2 className="text-xl md:text-2xl font-semibold leading-snug">
-                        Leve o Materna360 para o próximo nível
-                      </h2>
-                      <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                        Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas
-                        avançadas para cuidar de você, da sua rotina e da sua família.
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col items-start gap-3 md:items-end">
-                      <Link href="/planos">
-                        <Button
-                          type="button"
-                          className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_6px_16px_rgba(0,0,0,0.25)] hover:bg-[#FFE8F2]"
-                        >
-                          Conhecer os planos
-                        </Button>
-                      </Link>
-                      <p className="text-[11px] text-white/85 md:text-right max-w-xs">
-                        Planos pensados para diferentes fases da maternidade — você escolhe o que faz mais
-                        sentido agora.
-                      </p>
-                    </div>
+          <Reveal>
+            <section aria-label="Planos Materna360+">
+              <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_45%,#9B4D96_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
+                <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                  <div className="space-y-2 max-w-xl">
+                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
+                      Materna360+
+                    </p>
+                    <h2 className="text-xl md:text-2xl font-semibold leading-snug">
+                      Leve o Materna360 para o próximo nível
+                    </h2>
+                    <p className="text-sm md:text-base text-white/90 leading-relaxed">
+                      Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas
+                      avançadas para cuidar de você, da sua rotina e da sua família.
+                    </p>
                   </div>
-                </SoftCard>
-              </Reveal>
-            </SectionWrapper>
-          </div>
+
+                  <div className="flex flex-col items-start gap-3 md:items-end">
+                    <Link href="/planos">
+                      <Button
+                        variant="secondary"
+                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand-deep)] hover:bg-[#FFE8F2] hover:text-[var(--color-brand-deep)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] border-none"
+                      >
+                        Conhecer os planos
+                      </Button>
+                    </Link>
+                    <p className="text-[11px] text-white/80 md:text-right max-w-xs">
+                      Planos pensados para diferentes fases da maternidade — você escolhe o que
+                      faz mais sentido agora.
+                    </p>
+                  </div>
+                </div>
+              </SoftCard>
+            </section>
+          </Reveal>
         </div>
       </div>
     </main>
