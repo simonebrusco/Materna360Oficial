@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import AppShell from '@/components/common/AppShell'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { ProfileForm } from '@/components/blocks/ProfileForm'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -12,6 +13,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
+import { Eu360Stepper } from '@/components/eu360/Eu360Stepper'
 
 type WeeklyInsight = {
   title: string
@@ -118,51 +120,55 @@ export default function Eu360Client() {
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
-        <header className="pt-8 md:pt-10 mb-8 md:mb-10">
+        <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
             EU360
           </span>
 
-          <h1 className="mt-3 text-left text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+          <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
             Seu mundo em perspectiva
           </h1>
 
-          <p className="mt-2 text-left text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-            Conte um pouco sobre você e a fase da sua família. Isso ajuda o Materna360 a
-            cuidar de você com sugestões mais reais para a sua rotina.
+          <p className="mt-2 text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+            Conte um pouco sobre você e a fase da sua família. Isso ajuda o
+            Materna360 a cuidar de você com sugestões mais reais para a sua
+            rotina.
           </p>
+
+          {/* Stepper alinhado e contido dentro da barra */}
+          <div className="mt-5 flex justify-center">
+            <div className="w-full max-w-3xl">
+              <Eu360Stepper />
+            </div>
+          </div>
         </header>
 
-        <div className="space-y-8 md:space-y-10 pb-12">
+        <div className="space-y-6 md:space-y-7 pb-10">
           {/* 1 — WIZARD DO PERFIL */}
-          <Reveal>
-            <section aria-label="Formulário Eu360" className="space-y-6">
-              <ProfileForm />
-            </section>
-          </Reveal>
+          <ProfileForm />
 
           {/* 2 — PAINEL DA JORNADA */}
-          <Reveal>
-            <section aria-label="Painel da sua jornada">
-              <SoftCard className="rounded-3xl border border-[var(--color-pink-snow)] bg-white px-5 py-5 md:px-7 md:py-7 shadow-[0_12px_32px_rgba(0,0,0,0.10)] space-y-5">
+          <SectionWrapper>
+            <Reveal>
+              <SoftCard className="rounded-3xl border border-white/55 bg-white/14 px-5 py-5 md:px-7 md:py-7 shadow-[0_22px_55px_rgba(0,0,0,0.22)] backdrop-blur-2xl space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-text-muted)]">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-white/80">
                       Painel da sua jornada
                     </p>
-                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-text-main)] leading-snug">
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                       Um olhar rápido sobre como você vem cuidando de vocês
                     </h2>
                   </div>
                   <AppIcon
                     name="sparkles"
-                    className="h-6 w-6 text-[var(--color-brand)]/70 hidden md:block"
+                    className="h-6 w-6 text-[#FFD3E6] hidden md:block"
                   />
                 </div>
 
                 {/* mini métricas */}
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
-                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_6px_14px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.12)]">
                     <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
                       Dias com planner
                     </p>
@@ -171,7 +177,7 @@ export default function Eu360Client() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_6px_14px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.12)]">
                     <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
                       Check-ins de humor
                     </p>
@@ -180,7 +186,7 @@ export default function Eu360Client() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_6px_14px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.12)]">
                     <p className="text-[11px] font-medium text-[var(--color-text-muted)]">
                       Conquistas
                     </p>
@@ -191,40 +197,41 @@ export default function Eu360Client() {
                 </div>
 
                 {/* insight emocional da semana */}
-                <SoftCard className="mt-2 rounded-2xl border border-[var(--color-pink-snow)] bg-[var(--color-soft-bg)] px-4 py-4 md:px-5 md:py-5 shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
+                <SoftCard className="mt-2 rounded-2xl border border-white/40 bg-white/12 px-4 py-4 md:px-5 md:py-5 shadow-[0_16px_40px_rgba(0,0,0,0.22)] backdrop-blur-2xl">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">
                         <AppIcon
                           name="heart"
                           size={20}
-                          className="text-[var(--color-brand)]"
+                          className="text-[#FFD3E6]"
                           decorative
                         />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[var(--color-brand)] uppercase tracking-[0.16em]">
+                        <p className="text-[10px] font-semibold text-white/80 uppercase tracking-[0.16em]">
                           Olhar carinhoso sobre a sua semana
                         </p>
-                        <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] leading-snug">
+                        <h3 className="text-base md:text-lg font-semibold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                           {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
-                        <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-                          {firstName}, este espaço é para te ajudar a enxergar seus últimos dias
-                          com mais gentileza, não para te cobrar mais nada.
+                        <p className="text-[11px] text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                          {firstName}, este espaço é para te ajudar a enxergar seus
+                          últimos dias com mais gentileza, não para te cobrar mais
+                          nada.
                         </p>
                       </div>
                     </div>
 
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
-                        <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
-                          Estou olhando com carinho para a sua semana para trazer uma reflexão
-                          pra você…
+                        <p className="text-sm text-white/85 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                          Estou olhando com carinho para a sua semana para trazer
+                          uma reflexão pra você…
                         </p>
                       ) : (
                         <>
-                          <p className="text-sm leading-relaxed text-[var(--color-text-main)]">
+                          <p className="text-sm leading-relaxed text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
                             {weeklyInsight?.summary ??
                               'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
                           </p>
@@ -232,20 +239,26 @@ export default function Eu360Client() {
                           {weeklyInsight?.suggestions &&
                             weeklyInsight.suggestions.length > 0 && (
                               <div className="space-y-1.5">
-                                <p className="text-[10px] font-semibold text-[var(--color-text-main)] uppercase tracking-[0.16em]">
+                                <p className="text-[10px] font-semibold text-white/85 uppercase tracking-[0.16em]">
                                   Pequenos passos para os próximos dias
                                 </p>
-                                <ul className="space-y-1.5 text-sm text-[var(--color-text-main)]">
+                                <ul className="space-y-1.5 text-sm text-white/90">
                                   {weeklyInsight.suggestions.map((item, idx) => (
-                                    <li key={idx}>• {item}</li>
+                                    <li
+                                      key={idx}
+                                      className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+                                    >
+                                      • {item}
+                                    </li>
                                   ))}
                                 </ul>
                               </div>
                             )}
 
-                          <p className="text-[11px] text-[var(--color-text-muted)] mt-2 leading-relaxed">
-                            Isso não é um diagnóstico, e sim um convite para você se observar com
-                            mais leveza e cuidado. Um passo de cada vez já é muito.
+                          <p className="text-[11px] text-white/80 mt-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+                            Isso não é um diagnóstico, e sim um convite para você se
+                            observar com mais leveza e cuidado. Um passo de cada vez
+                            já é muito.
                           </p>
                         </>
                       )}
@@ -253,12 +266,12 @@ export default function Eu360Client() {
                   </div>
                 </SoftCard>
               </SoftCard>
-            </section>
-          </Reveal>
+            </Reveal>
+          </SectionWrapper>
 
           {/* 3 — BANNER DE PLANOS */}
-          <Reveal>
-            <section aria-label="Planos Materna360+">
+          <SectionWrapper>
+            <Reveal>
               <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_45%,#9B4D96_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
                 <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
@@ -270,29 +283,30 @@ export default function Eu360Client() {
                       Leve o Materna360 para o próximo nível
                     </h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                      Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas
-                      avançadas para cuidar de você, da sua rotina e da sua família.
+                      Desbloqueie conteúdos exclusivos, acompanhamento mais
+                      próximo e ferramentas avançadas para cuidar de você, da sua
+                      rotina e da sua família.
                     </p>
                   </div>
 
                   <div className="flex flex-col items-start gap-3 md:items-end">
                     <Link href="/planos">
                       <Button
-                        variant="secondary"
-                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand-deep)] hover:bg-[#FFE8F2] hover:text-[var(--color-brand-deep)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] border-none"
+                        variant="primary"
+                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2]"
                       >
                         Conhecer os planos
                       </Button>
                     </Link>
                     <p className="text-[11px] text-white/80 md:text-right max-w-xs">
-                      Planos pensados para diferentes fases da maternidade — você escolhe o que
-                      faz mais sentido agora.
+                      Planos pensados para diferentes fases da maternidade — você
+                      escolhe o que faz mais sentido agora.
                     </p>
                   </div>
                 </div>
               </SoftCard>
-            </section>
-          </Reveal>
+            </Reveal>
+          </SectionWrapper>
         </div>
       </div>
     </main>
