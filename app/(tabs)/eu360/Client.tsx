@@ -82,6 +82,9 @@ export default function Eu360Client() {
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
   const [loadingInsight, setLoadingInsight] = useState(false)
 
+  // Passo atual do stepper (por enquanto fixo no primeiro passo)
+  const currentStep = 'about-you' as const
+
   // mockzinho de métricas até conectar com Minhas conquistas
   const mockStats = {
     daysWithPlanner: 7,
@@ -138,7 +141,7 @@ export default function Eu360Client() {
           {/* Stepper alinhado e contido dentro da barra */}
           <div className="mt-5 flex justify-center">
             <div className="w-full max-w-3xl">
-              <Eu360Stepper />
+              <Eu360Stepper currentStep={currentStep} />
             </div>
           </div>
         </header>
