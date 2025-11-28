@@ -30,7 +30,9 @@ export function DailyPriorities() {
 
   const handleToggleCompleted = (id: number) => {
     setPriorities((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, completed: !p.completed } : p)),
+      prev.map((p) =>
+        p.id === id ? { ...p, completed: !p.completed } : p,
+      ),
     )
   }
 
@@ -121,7 +123,7 @@ export function DailyPriorities() {
           onClick={handleSaveToPlanner}
           className="mt-1"
         >
-          Salvar prioridades no planner
+          Salvar no planner
         </Button>
       </div>
     </SoftCard>

@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import BuilderErrorBoundary from '@/components/dev/BuilderErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import BottomNav from '@/components/common/BottomNav';
-import { MeuDiaClient } from '@/app/(tabs)/meu-dia/Client';
+import MeuDiaClient from '@/app/(tabs)/meu-dia/Client';
 
 const fallbackProfile: any = {
   motherName: 'Mãe',

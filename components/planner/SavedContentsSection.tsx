@@ -61,7 +61,7 @@ export default function SavedContentsSection({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {!hideTitle && (
         <div>
           <h3 className="text-lg md:text-base font-semibold text-[var(--color-text-main)] flex items-center gap-2">

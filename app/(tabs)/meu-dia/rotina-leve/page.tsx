@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import clsx from 'clsx'
-import { PageTemplate } from '@/components/common/PageTemplate'
+import PageTemplate from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -162,9 +162,7 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
     }
 
     return {
-      phrase:
-        inspiration.phrase ??
-        'Você não precisa dar conta de tudo hoje.',
+      phrase: inspiration.phrase ?? 'Você não precisa dar conta de tudo hoje.',
       care:
         inspiration.care ??
         '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
@@ -246,8 +244,6 @@ export default function RotinaLevePage() {
 
   const handleSaveIdeia = () => {
     try {
-      // Se a IA já trouxe ideias, salvamos exatamente essas no planner.
-      // Se ainda não, usamos o conjunto padrão como fallback.
       const ideasToSave =
         ideas && ideas.length > 0
           ? ideas.map((idea) => idea.text)
@@ -369,7 +365,8 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 py-8">
+        {/* IMPORTANTE: sem mx-auto / max-w aqui, o PageTemplate já cuida disso */}
+        <div className="pt-6 pb-10 space-y-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
@@ -481,7 +478,7 @@ export default function RotinaLevePage() {
                           return (
                             <div
                               key={recipe.id}
-                              className="rounded-2xl bg_WHITE border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
                             >
                               <div
                                 className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
@@ -587,7 +584,7 @@ export default function RotinaLevePage() {
                   <button
                     type="button"
                     onClick={() => setOpenIdeas((prev) => !prev)}
-                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-visible focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
                   >
                     {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
                   </button>
@@ -671,7 +668,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'so-eu'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Só eu
@@ -688,7 +685,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'eu-e-meu-filho'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Eu e meu filho
@@ -705,7 +702,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               comQuem === 'familia-toda'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Família toda
@@ -727,7 +724,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'brincadeira'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Brincadeira
@@ -744,7 +741,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'organizacao'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Organização da casa
@@ -761,7 +758,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'autocuidado'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg_WHITE text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Autocuidado
@@ -778,7 +775,7 @@ export default function RotinaLevePage() {
                               'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
                               tipoIdeia === 'receita-rapida'
                                 ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover-border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                             )}
                           >
                             Receita rápida
@@ -842,7 +839,7 @@ export default function RotinaLevePage() {
               </SoftCard>
 
               {/* Inspirações do Dia */}
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg_WHITE border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col h-full">
                   <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
@@ -856,7 +853,7 @@ export default function RotinaLevePage() {
                   <button
                     type="button"
                     onClick={() => setOpenInspiration((prev) => !prev)}
-                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff005e]/60"
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
                   >
                     {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
                   </button>
@@ -943,55 +940,53 @@ export default function RotinaLevePage() {
           </div>
 
           {/* Resumo rápido do que já foi salvo no Planner */}
-          <div className="mt-8">
-            <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                    Seu resumo na Rotina Leve
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                  Seu resumo na Rotina Leve
+                </p>
+                {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
+                  <p className="text-sm text-[#545454]">
+                    Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
+                    resumo rápido do que já está no seu planner.
                   </p>
-                  {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
-                    <p className="text-sm text-[#545454]">
-                      Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
-                      resumo rápido do que já está no seu planner.
+                ) : (
+                  <p className="text-sm text-[#545454]">
+                    Você já salvou{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedRecipesCount} receita(s)
+                    </span>{' '}
+                    e{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedInspirationCount} inspiração(ões)
+                    </span>{' '}
+                    deste mini-hub no seu planner.
+                  </p>
+                )}
+              </div>
+
+              {lastInspiration && (
+                <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
+                  <p className="text-[11px] font-semibold text-[#2f3a56] uppercase tracking-wide">
+                    Última inspiração salva
+                  </p>
+                  {lastInspiration.payload?.frase && (
+                    <p className="text-xs text-[#545454]">
+                      <span className="font-medium">Frase: </span>
+                      {lastInspiration.payload.frase}
                     </p>
-                  ) : (
-                    <p className="text-sm text-[#545454]">
-                      Você já salvou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedRecipesCount} receita(s)
-                      </span>{' '}
-                      e{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedInspirationCount} inspiração(ões)
-                      </span>{' '}
-                      deste mini-hub no seu planner.
+                  )}
+                  {lastInspiration.payload?.pequenoCuidado && (
+                    <p className="text-xs text-[#545454]">
+                      <span className="font-medium">Cuidado: </span>
+                      {lastInspiration.payload.pequenoCuidado}
                     </p>
                   )}
                 </div>
-
-                {lastInspiration && (
-                  <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
-                    <p className="text-[11px] font-semibold text-[#2f3a56] uppercase tracking-wide">
-                      Última inspiração salva
-                    </p>
-                    {lastInspiration.payload?.frase && (
-                      <p className="text-xs text-[#545454]">
-                        <span className="font-medium">Frase: </span>
-                        {lastInspiration.payload.frase}
-                      </p>
-                    )}
-                    {lastInspiration.payload?.pequenoCuidado && (
-                      <p className="text-xs text-[#545454]">
-                        <span className="font-medium">Cuidado: </span>
-                        {lastInspiration.payload.pequenoCuidado}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </SoftCard>
-          </div>
+              )}
+            </div>
+          </SoftCard>
 
           <MotivationalFooter routeKey="meu-dia-rotina-leve" />
         </div>

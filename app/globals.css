@@ -102,25 +102,23 @@ body {
   background: #FFFFFF;
 }
 
-/* Materna360 — Fundo Premium Fase P4 (ameixa no topo → rosa suave → branco) */
+/* Materna360 — Fundo Premium / Meu Dia – amanhecer calmo */
 .materna360-premium-bg {
   background-color: #ffffff;
-  background-image:
-    linear-gradient(
-      180deg,
-      #3b3563 0%,    /* ameixa suavizado no topo */
-      #4c3f72 6%,    /* transição roxo mais claro, faixa curtinha */
-      #ff6fa3 14%,   /* pink mais leve */
-      #ffd8e6 26%,   /* rosa claro oficial, começa um pouco mais alto */
-      #fff5fa 48%,   /* quase branco na área do card */
-      #ffffff 100%   /* branco total na base */
-    );
+  background-image: linear-gradient(
+    180deg,
+    #2f3a56 0%,     /* roxo profundo no topo */
+    #ff5f9a 40%,    /* rosa intermediário */
+    #ffe8f2 78%,    /* rosa clarinho */
+    #ffffff 100%    /* branco na base */
+  );
   background-repeat: no-repeat;
-  background-attachment: scroll;
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 @layer utilities {
-  /* Fundo premium do hub Maternar – alinhado ao Meu Dia */
+  /* Fundo premium do hub Maternar – mantém o pink vibrante que você gosta */
   .maternar-hub-bg {
     background-color: #ffffff;
     background-image:
@@ -134,8 +132,25 @@ body {
       );
     background-repeat: no-repeat;
     background-attachment: fixed;
+    background-size: cover;
+  }
+
+  /* Fundo premium do hub Eu360 – fim de tarde / reflexão */
+  .eu360-hub-bg {
+    background-color: #ffffff;
+    background-image: linear-gradient(
+      180deg,
+      #9b4d96 0%,    /* ameixa no topo */
+      #ff5f9a 42%,   /* transição rosa vibrante */
+      #ffe8f2 80%,   /* rosa suave */
+      #ffffff 100%   /* base branca */
+    );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
   }
 }
+
 /* ===== Hero do Meu Dia — texto branco alinhado à esquerda ===== */
 .materna360-premium-bg header {
   max-width: 720px;

@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
-import AppIcon from '@/components/ui/AppIcon'
+import { useState, KeyboardEvent } from 'react'
 import { SoftCard } from '@/components/ui/card'
+import AppIcon from '@/components/ui/AppIcon'
 
 type Top3Item = {
   id: string
@@ -17,138 +17,131 @@ type Top3SectionProps = {
   hideTitle?: boolean
 }
 
+/**
+ * Bloco de "Prioridades do dia"
+ * - Mostra até 3 prioridades
+ * - Permite adicionar novas
+ * - Permite marcar / desmarcar como concluídas
+ * - NÃO tem botão "Salvar prioridades no planner"
+ */
 export default function Top3Section({
   items,
   onToggle,
   onAdd,
-  hideTitle = false,
+  hideTitle,
 }: Top3SectionProps) {
-  const [isAddingForm, setIsAddingForm] = useState(false)
-  const [newTitle, setNewTitle] = useState('')
+  const [inputValue, setInputValue] = useState('')
 
-  const handleAddItem = () => {
-    if (newTitle.trim() && items.length < 3) {
-      onAdd(newTitle)
-      setNewTitle('')
-      setIsAddingForm(false)
+  function handleAdd() {
+    const value = inputValue.trim()
+    if (!value || items.length >= 3) return
+    onAdd(value)
+    setInputValue('')
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      handleAdd()
     }
   }
 
-  const allComplete = items.length === 3 && items.every(item => item.done)
-  const emptySlots = 3 - items.length
-
   return (
-    <div className="space-y-3 flex-1 flex flex-col">
+    <SoftCard className="w-full border border-[var(--color-border-soft)] bg-white/80 shadow-sm">
+      {/* Cabeçalho interno (opcional, normalmente escondido porque o título vem de fora) */}
       {!hideTitle && (
-        <div>
-          <h3 className="text-lg md:text-base font-semibold text-[var(--color-text-main)] flex items-center gap-2 font-poppins">
-            <AppIcon name="target" className="w-4 h-4 text-[var(--color-brand)]" />
-            Top 3 do dia
+        <div className="mb-4">
+          <p className="text-[11px] md:text-xs font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+            Seu foco de hoje
+          </p>
+          <h3 className="mt-1 text-base md:text-lg font-semibold text-[var(--color-text-main)] font-poppins">
+            Prioridades do dia
           </h3>
-          <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-0.5 font-poppins">
-            As três coisas que realmente importam hoje.
+          <p className="mt-1 text-xs md:text-sm text-[var(--color-text-muted)]">
+            Escolha até três coisas que realmente importam para hoje.
           </p>
         </div>
       )}
 
-      <SoftCard className="p-5 md:p-6 space-y-3 h-full flex flex-col">
-        <div className="flex-1 flex flex-col space-y-3">
-          {items.map((item, idx) => (
-            <div
+      <div className="space-y-4">
+        {/* Lista de prioridades */}
+        <div className="space-y-2">
+          {items.length === 0 && (
+            <p className="text-xs md:text-sm text-[var(--color-text-muted)]/70">
+              Comece adicionando sua primeira prioridade do dia.
+            </p>
+          )}
+
+          {items.map((item, index) => (
+            <button
               key={item.id}
-              className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
-                item.done
-                  ? 'bg-[var(--color-soft-bg)] border-[var(--color-border-soft)]'
-                  : 'bg-white border-[var(--color-border-soft)] hover:border-[var(--color-brand)]/30'
-              }`}
+              type="button"
+              onClick={() => onToggle(item.id)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-[var(--color-border-soft)] bg-white px-3 py-2.5 text-left hover:border-[var(--color-brand-soft)] transition-colors"
             >
-              <button
-                onClick={() => onToggle(item.id)}
-                className="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all mt-0.5"
-                style={{
-                  borderColor: item.done ? 'var(--color-brand)' : 'var(--color-border-muted)',
-                  backgroundColor: item.done ? 'var(--color-brand)' : 'transparent',
-                }}
-              >
-                {item.done && <AppIcon name="check" className="w-3 h-3 text-white" />}
-              </button>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--color-border-soft)] text-[11px] font-semibold text-[var(--color-text-muted)]">
+                {index + 1}
+              </span>
+              <div className="flex-1">
+                <p
+                  className={`text-xs md:text-sm font-medium text-[var(--color-text-main)] ${
+                    item.done ? 'line-through opacity-60' : ''
+                  }`}
+                >
+                  {item.title}
+                </p>
+              </div>
               <span
-                className={`flex-1 text-sm font-medium ${
+                className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-semibold ${
                   item.done
-                    ? 'text-[var(--color-text-muted)]/50 line-through'
-                    : 'text-[var(--color-text-main)]'
+                    ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
+                    : 'border-[var(--color-border-soft)] text-[var(--color-text-muted)]'
                 }`}
               >
-                {item.title}
+                {item.done ? (
+                  <AppIcon name="check" className="h-3 w-3" />
+                ) : (
+                  <AppIcon name="plus" className="h-3 w-3" />
+                )}
               </span>
-              <span className="text-xs font-bold text-[var(--color-brand)]/60">{idx + 1}.</span>
-            </div>
+            </button>
           ))}
-
-          {emptySlots > 0 &&
-            Array.from({ length: emptySlots }).map((_, idx) => (
-              <div
-                key={`empty-${idx}`}
-                className="flex items-start gap-3 p-3 rounded-xl border border-dashed border-[var(--color-border-soft)] bg-[var(--color-soft-bg)]"
-              >
-                <div className="flex-shrink-0 w-5 h-5 rounded-md border-2 border-[var(--color-border-muted)] opacity-40" />
-                <span className="flex-1 text-sm text-[var(--color-text-muted)]/40">
-                  Espaço {items.length + idx + 1}
-                </span>
-                <span className="text-xs font-bold text-[var(--color-text-muted)]/20">
-                  {items.length + idx + 1}.
-                </span>
-              </div>
-            ))}
         </div>
 
-        {allComplete && (
-          <div className="mt-auto p-3 rounded-lg bg-white border border-[var(--color-brand)]/20 text-center">
-            <p className="text-sm font-semibold text-[var(--color-brand)]">
-              Parabéns! Você concluiu seus 3 focos principais ✨
-            </p>
-          </div>
-        )}
-
-        {!isAddingForm && items.length < 3 ? (
-          <button
-            onClick={() => setIsAddingForm(true)}
-            className="mt-2 pt-3 border-t border-[#F0F0F0] inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 transition-colors"
-          >
-            <AppIcon name="plus" className="w-4 h-4" />
-            Adicionar foco
-          </button>
-        ) : isAddingForm ? (
-          <div className="mt-3 pt-3 border-t border-[#F0F0F0] space-y-2">
-            <input
-              type="text"
-              value={newTitle}
-              onChange={e => setNewTitle(e.target.value)}
-              placeholder="Novo foco do dia..."
-              className="w-full px-3 py-2 rounded-lg border border-[#EDEDED] text-sm text-[var(--color-text-main)] placeholder-[#9A9A9A] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
-              autoFocus
-              onKeyDown={e => e.key === 'Enter' && handleAddItem()}
-            />
-            <div className="flex gap-2">
+        {/* Campo para adicionar nova prioridade */}
+        {items.length < 3 && (
+          <>
+            <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-center">
+              <div className="flex-1">
+                <label className="sr-only" htmlFor="nova-prioridade">
+                  Nova prioridade
+                </label>
+                <input
+                  id="nova-prioridade"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Adicionar nova prioridade de hoje…"
+                  className="w-full rounded-2xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-sm text-[var(--color-text-main)] outline-none focus:border-[var(--color-brand)] focus:ring-1 focus:ring-[var(--color-brand)]"
+                />
+              </div>
               <button
-                onClick={handleAddItem}
-                className="flex-1 px-3 py-2 bg-[var(--color-brand)] text-white rounded-lg text-xs font-semibold hover:bg-[var(--color-brand)]/90 transition-colors"
+                type="button"
+                onClick={handleAdd}
+                disabled={!inputValue.trim()}
+                className="inline-flex items-center justify-center gap-1 rounded-full px-4 py-2 text-xs md:text-sm font-semibold font-poppins transition-all border border-[var(--color-brand)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--color-brand)] mt-1 md:mt-0"
               >
-                Adicionar
-              </button>
-              <button
-                onClick={() => {
-                  setIsAddingForm(false)
-                  setNewTitle('')
-                }}
-                className="px-3 py-2 bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] rounded-lg text-xs font-semibold hover:bg-[var(--color-soft-bg)]/80 transition-colors"
-              >
-                Cancelar
+                <AppIcon name="check" className="h-3 w-3" />
+                Salvar prioridade
               </button>
             </div>
-          </div>
-        ) : null}
-      </SoftCard>
-    </div>
+            <p className="mt-1 text-[11px] md:text-xs text-[var(--color-text-muted)]/70">
+              Você não precisa preencher as três. Às vezes, uma única prioridade já
+              muda o dia.
+            </p>
+          </>
+        )}
+      </div>
+    </SoftCard>
   )
 }

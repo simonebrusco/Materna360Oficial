@@ -1,5 +1,14 @@
-import type { ReactNode } from 'react'
+'use client';
 
-export default function AppShell({ children }: { children: ReactNode }) {
-  return <div className="min-h-dvh pb-24">{children}</div>
-}
+import React, { type ReactNode } from 'react';
+
+type AppShellProps = {
+  children: ReactNode;
+};
+
+const AppShell: React.FC<AppShellProps> = ({ children }) => {
+  // Só controla o espaço da página; o BottomNav fica em layout.tsx
+  return <div className="relative min-h-[100dvh] pb-24">{children}</div>;
+};
+
+export default AppShell;

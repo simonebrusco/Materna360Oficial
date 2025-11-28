@@ -1,8 +1,9 @@
-import { MeuDiaClient } from './Client'
+import MeuDiaClient from './Client';
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function Page() {
-  return <MeuDiaClient />
+  // O <main> e o fundo já estão dentro do MeuDiaClient
+  return <MeuDiaClient />;
 }
