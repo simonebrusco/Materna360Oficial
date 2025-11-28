@@ -110,7 +110,7 @@ const defaultState = (): ProfileFormState => ({
 
 /* ========= COMPONENT ========= */
 
-export function ProfileForm() {
+export default function ProfileForm() {
   const router = useRouter()
 
   const [form, setForm] = useState<ProfileFormState>(() => defaultState())
@@ -522,97 +522,102 @@ export function ProfileForm() {
         suppressHydrationWarning
       >
         {/* Stepper */}
-        <Eu360Stepper
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-        />
+        <Eu360Stepper currentStep={currentStep} onStepClick={handleStepClick} />
 
         {/* Bands */}
         <div className="space-y-4 md:space-y-6">
           {/* Band 1: Sobre você */}
-          <WizardBand
-            id="about-you"
-            title="Sobre você"
-            description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
-            autoSaveStatus={autoSaveStatus['about-you']}
-            isActive={currentStep === 'about-you'}
-          >
-            <AboutYouBlock
-              form={form}
-              errors={errors}
-              onChange={handleChange}
-            />
-          </WizardBand>
+          {currentStep === 'about-you' && (
+            <WizardBand
+              id="about-you"
+              title="Sobre você"
+              description="Isso nos ajuda a adaptar as sugestões à sua rotina real."
+              autoSaveStatus={autoSaveStatus['about-you']}
+              isActive
+            >
+              <AboutYouBlock
+                form={form}
+                errors={errors}
+                onChange={handleChange}
+              />
+            </WizardBand>
+          )}
 
           {/* Band 2: Filhos */}
-          <WizardBand
-            id="children"
-            title="Sobre seu(s) filho(s)"
-            description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
-            autoSaveStatus={autoSaveStatus['children']}
-            isActive={currentStep === 'children'}
-          >
-            <ChildrenBlock
-              form={form}
-              errors={errors}
-              babyBirthdate={babyBirthdate}
-              todayISO={todayISO}
-              onBirthdateChange={setBabyBirthdate}
-              onUpdateChild={updateChild}
-              onAddChild={addChild}
-              onRemoveChild={removeChild}
-            />
-          </WizardBand>
+          {currentStep === 'children' && (
+            <WizardBand
+              id="children"
+              title="Sobre seu(s) filho(s)"
+              description="Isso ajuda a personalizar tudo: conteúdo, receitas, atividades."
+              autoSaveStatus={autoSaveStatus['children']}
+              isActive
+            >
+              <ChildrenBlock
+                form={form}
+                errors={errors}
+                babyBirthdate={babyBirthdate}
+                todayISO={todayISO}
+                onBirthdateChange={setBabyBirthdate}
+                onUpdateChild={updateChild}
+                onAddChild={addChild}
+                onRemoveChild={removeChild}
+              />
+            </WizardBand>
+          )}
 
           {/* Band 3: Rotina & momentos críticos */}
-          <WizardBand
-            id="routine"
-            title="Rotina & momentos críticos"
-            description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
-            autoSaveStatus={autoSaveStatus['routine']}
-            isActive={currentStep === 'routine'}
-          >
-            <RoutineBlock
-              form={form}
-              errors={errors}
-              onChange={handleChange}
-              onToggleArrayField={toggleArrayField}
-            />
-          </WizardBand>
+          {currentStep === 'routine' && (
+            <WizardBand
+              id="routine"
+              title="Rotina & momentos críticos"
+              description="Aqui a gente entende onde o dia costuma apertar para te ajudar com soluções mais realistas."
+              autoSaveStatus={autoSaveStatus['routine']}
+              isActive
+            >
+              <RoutineBlock
+                form={form}
+                errors={errors}
+                onChange={handleChange}
+                onToggleArrayField={toggleArrayField}
+              />
+            </WizardBand>
+          )}
 
           {/* Band 4: Rede de apoio + Preferências */}
-          <WizardBand
-            id="support"
-            title="Rede de apoio"
-            description="Conectar você com sua rede pode ser a melhor ajuda."
-            autoSaveStatus={autoSaveStatus['support']}
-            isActive={currentStep === 'support'}
-          >
-            <SupportBlock
-              form={form}
-              onChange={handleChange}
-              onToggleArrayField={toggleArrayField}
-            />
-
-            <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[var(--color-text-main)]">
-                  Preferências no app
-                </h3>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                  Assim a gente personaliza tudo para você.
-                </p>
-              </div>
-              <PreferencesBlock
+          {currentStep === 'support' && (
+            <WizardBand
+              id="support"
+              title="Rede de apoio"
+              description="Conectar você com sua rede pode ser a melhor ajuda."
+              autoSaveStatus={autoSaveStatus['support']}
+              isActive
+            >
+              <SupportBlock
                 form={form}
                 onChange={handleChange}
                 onToggleArrayField={toggleArrayField}
               />
-            </div>
-          </WizardBand>
 
-          {/* Banda final – botão de salvar (mesma largura dos outros cards) */}
-          <div className="py-6 md:py-8">
+              <div className="border-t border-[var(--color-pink-snow)] pt-6 mt-6">
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-[var(--color-text-main)]">
+                    Preferências no app
+                  </h3>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Assim a gente personaliza tudo para você.
+                  </p>
+                </div>
+                <PreferencesBlock
+                  form={form}
+                  onChange={handleChange}
+                  onToggleArrayField={toggleArrayField}
+                />
+              </div>
+            </WizardBand>
+          )}
+
+          {/* Banda final – botão de salvar */}
+          <div className="mx-auto max-w-3xl px-4 md:px-6 py-8 md:py-10">
             <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-3">
               <Button
                 type="submit"
@@ -637,7 +642,3 @@ export function ProfileForm() {
     </Reveal>
   )
 }
-
-/* ========= DEFAULT EXPORT ========= */
-
-export default ProfileForm
