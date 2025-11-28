@@ -115,7 +115,7 @@ export default function Eu360Client() {
   const content = (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-28 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+      className="min-h-[100dvh] pb-12 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -135,7 +135,7 @@ export default function Eu360Client() {
           </p>
         </header>
 
-        <div className="space-y-6 md:space-y-7 pb-10">
+        <div className="space-y-6 md:space-y-7 pb-6">
           {/* 1 — WIZARD DO PERFIL */}
           <ProfileForm />
 
@@ -278,11 +278,11 @@ export default function Eu360Client() {
 
                   <div className="flex flex-col items-start gap-3 md:items-end">
                     <Link href="/planos">
-                      {/* botão em rosa sólido para ter contraste */}
+                      {/* botão pill branco com texto rosa – bem visível */}
                       <Button
                         type="button"
                         variant="primary"
-                        className="px-6 py-2 rounded-full text-sm font-semibold shadow-[0_10px_26px_rgba(0,0,0,0.24)] !bg-white/0 !border !border-white/80 !text-white hover:!bg-white/12"
+                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2]"
                       >
                         Conhecer os planos
                       </Button>
