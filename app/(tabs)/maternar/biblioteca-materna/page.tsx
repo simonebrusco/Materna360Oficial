@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -35,6 +35,7 @@ const THEMES = [
   'Parentalidade Sem Culpa',
 ]
 
+// Inclui “Trilha educativa” no sistema de formatos
 const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Trilha educativa']
 
 // Versão inicial – placeholders. Depois é só trocar title/description/href pelos materiais reais.
@@ -101,14 +102,16 @@ const MATERIALS: MaterialCard[] = [
   },
 ]
 
+type PresetFilter = 'guias' | 'pdfs-ebooks' | 'trilhas' | 'tema-fase' | null
+
 export default function BibliotecaMaternaPage() {
   const searchParams = useSearchParams()
 
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [selectedFormat, setSelectedFormat] = useState<string | null>(null)
-  const [presetFilter, setPresetFilter] = useState<
-    'guias' | 'pdfs-ebooks' | 'trilhas' | 'tema-fase' | null
-  >(null)
+  const [presetFilter, setPresetFilter] = useState<PresetFilter>(null)
+
+  const materialsRef = useRef<HTMLDivElement | null>(null)
 
   // Lê o ?filtro= vindo do hub Maternar (Biblioteca Materna)
   useEffect(() => {
@@ -130,6 +133,13 @@ export default function BibliotecaMaternaPage() {
       setPresetFilter('tema-fase')
     }
   }, [searchParams])
+
+  // Quando vier de um atalho do hub, desce direto para a lista de materiais
+  useEffect(() => {
+    if (presetFilter && materialsRef.current) {
+      materialsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [presetFilter])
 
   const handleThemeSelect = (theme: string) => {
     setSelectedTheme((prev) => (prev === theme ? null : theme))
@@ -190,6 +200,20 @@ export default function BibliotecaMaternaPage() {
             ? 'Atalho: Por idade & fase'
             : null
 
+  const formatIsActive = (format: string) => {
+    if (presetFilter === 'guias') {
+      return format === 'Guia Prático' || format === 'Checklist'
+    }
+    if (presetFilter === 'pdfs-ebooks') {
+      return format === 'PDF' || format === 'eBook'
+    }
+    if (presetFilter === 'trilhas') {
+      return format === 'Trilha educativa'
+    }
+    // sem preset: utiliza seleção manual
+    return !presetFilter && selectedFormat === format
+  }
+
   return (
     <PageTemplate
       label="MATERNAR"
@@ -227,12 +251,14 @@ export default function BibliotecaMaternaPage() {
                     Escolha um tema e um formato para encontrar conteúdos que
                     conversem com o seu momento.
                   </p>
+
                   {!hasActiveFilter && (
                     <p className="text-[11px] md:text-xs text-white/75">
                       Nenhum filtro ativo no momento — você está vendo uma
                       amostra geral da biblioteca.
                     </p>
                   )}
+
                   {presetLabel && (
                     <p className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white/85 mt-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#FFD8E6]" />
@@ -269,7 +295,7 @@ export default function BibliotecaMaternaPage() {
                       {FORMATS.map((format) => (
                         <FilterPill
                           key={format}
-                          active={selectedFormat === format && !presetFilter}
+                          active={formatIsActive(format)}
                           onClick={() => handleFormatSelect(format)}
                         >
                           {format}
@@ -284,15 +310,19 @@ export default function BibliotecaMaternaPage() {
 
           {/* MATERIAIS DISPONÍVEIS */}
           <Reveal delay={80}>
-            <div className="space-y-4">
+            <div ref={materialsRef} className="space-y-4">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
                     Materiais disponíveis
                   </h2>
                   <p className="text-xs md:text-sm text-[var(--color-text-muted)] max-w-xl">
-                    Uma prévia de como os materiais da Biblioteca Materna vão
-                    aparecer por aqui.
+                    {presetLabel
+                      ? `Você está vendo uma seleção de materiais baseada no atalho “${presetLabel.replace(
+                          'Atalho: ',
+                          '',
+                        )}”.`
+                      : 'Uma prévia de como os materiais da Biblioteca Materna vão aparecer por aqui.'}
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-[var(--color-text-muted)] shadow-sm">
