@@ -101,10 +101,10 @@ export default function BibliotecaMaternaPage() {
 
               <div className="relative z-10 space-y-8">
                 <div className="space-y-2">
-                  <h2 className="text-base font-semibold text-[var(--color-text-main)] md:text-lg">
+                  <h2 className="text-base font-semibold text-white md:text-lg">
                     Filtrar por
                   </h2>
-                  <p className="text-xs leading-relaxed text-[var(--color-text-muted)] md:text-sm">
+                  <p className="text-xs leading-relaxed text-white/80 md:text-sm">
                     Selecione um tema e um formato para encontrar conteúdos que
                     façam sentido para o seu momento.
                   </p>
@@ -112,7 +112,7 @@ export default function BibliotecaMaternaPage() {
 
                 {/* Tema */}
                 <div className="space-y-3">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-main)]">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-white/90">
                     Tema
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -130,7 +130,7 @@ export default function BibliotecaMaternaPage() {
 
                 {/* Formato */}
                 <div className="space-y-3">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-main)]">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-white/90">
                     Formato
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -149,7 +149,7 @@ export default function BibliotecaMaternaPage() {
             </SoftCard>
           </Reveal>
 
-          {/* LISTA DE MATERIAIS */}
+          {/* LISTA DE MATERIAIS (CARDS BRANCOS → TEXTO ESCURO) */}
           <Reveal delay={70}>
             <div className="space-y-4">
               <div className="space-y-1">
@@ -213,7 +213,7 @@ export default function BibliotecaMaternaPage() {
             </div>
           </Reveal>
 
-          {/* INSIGHT PERSONALIZADO - CARD TRANSLÚCIDO */}
+          {/* INSIGHT PERSONALIZADO - CARD TRANSLÚCIDO (TEXTO BRANCO) */}
           <Reveal delay={110}>
             <SoftCard className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/10 px-5 py-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-2xl md:px-8 md:py-8">
               <div className="pointer-events-none absolute inset-0 opacity-80">
@@ -221,16 +221,16 @@ export default function BibliotecaMaternaPage() {
               </div>
 
               <div className="relative z-10 space-y-3">
-                <h2 className="text-base font-semibold text-[var(--color-text-main)] md:text-lg">
+                <h2 className="text-base font-semibold text-white md:text-lg">
                   Insight personalizado
                 </h2>
-                <p className="text-xs text-[var(--color-text-muted)] md:text-sm">
+                <p className="text-xs text-white/80 md:text-sm">
                   Em breve, você verá aqui recomendações inteligentes com base
                   na idade e fase do seu filho.
                 </p>
 
                 <div className="mt-4 flex items-start gap-4">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/70">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/80">
                     <AppIcon
                       name="idea"
                       size={22}
@@ -238,7 +238,7 @@ export default function BibliotecaMaternaPage() {
                       decorative
                     />
                   </div>
-                  <p className="text-sm leading-relaxed text-[var(--color-text-main)]">
+                  <p className="text-sm leading-relaxed text-white/90">
                     Seu filho está passando por uma fase importante de
                     desenvolvimento. Quando a Biblioteca estiver ativa, você vai
                     receber aqui sugestões feitas para esse momento.
@@ -248,7 +248,7 @@ export default function BibliotecaMaternaPage() {
             </SoftCard>
           </Reveal>
 
-          {/* CTA PREMIUM - CARD TRANSLÚCIDO */}
+          {/* CTA PREMIUM - CARD TRANSLÚCIDO (TEXTO BRANCO) */}
           <Reveal delay={130}>
             <SoftCard className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/10 px-5 py-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-2xl md:px-8 md:py-8">
               <div className="pointer-events-none absolute inset-0 opacity-90">
@@ -258,14 +258,14 @@ export default function BibliotecaMaternaPage() {
 
               <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex-1 space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[var(--color-brand)]">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--color-brand)]">
                     <AppIcon name="sparkles" size={14} decorative />
                     <span>Premium</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-[var(--color-text-main)] md:text-xl">
+                  <h3 className="text-lg font-semibold text-white md:text-xl">
                     Desbloqueie conteúdos completos
                   </h3>
-                  <p className="text-sm text-[var(--color-text-muted)]">
+                  <p className="text-sm text-white/80">
                     PDFs avançados, eBooks exclusivos, trilhas educativas e
                     guias profissionais em um só lugar.
                   </p>
