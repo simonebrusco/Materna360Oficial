@@ -313,10 +313,10 @@ export default function BibliotecaMaternaPage() {
             <div ref={materialsRef} className="space-y-4">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
+                  <h2 className="text-base md:text-lg font-semibold text-white">
                     Materiais disponíveis
                   </h2>
-                  <p className="text-xs md:text-sm text-[var(--color-text-muted)] max-w-xl">
+                  <p className="text-xs md:text-sm text-white/90 max-w-xl">
                     {presetLabel
                       ? `Você está vendo uma seleção de materiais baseada no atalho “${presetLabel.replace(
                           'Atalho: ',
@@ -325,9 +325,6 @@ export default function BibliotecaMaternaPage() {
                       : 'Uma prévia de como os materiais da Biblioteca Materna vão aparecer por aqui.'}
                   </p>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-[var(--color-text-muted)] shadow-sm">
-                  Versão inicial — em construção
-                </span>
               </div>
 
               {filteredMaterials.length === 0 ? (
@@ -425,19 +422,19 @@ export default function BibliotecaMaternaPage() {
             </SoftCard>
           </Reveal>
 
-          {/* CTA PREMIUM */}
+          {/* CTA PREMIUM COM DEGRADÊ */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl bg-white p-6 md:p-8 shadow-md border border-[var(--color-border-soft)]">
+            <SoftCard className="rounded-3xl p-6 md:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.25)] border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_40%,#9B4D96_100%)] text-white">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex-1">
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-soft-strong)]/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
                     <AppIcon name="sparkles" size={12} decorative />
                     <span>Premium</span>
                   </div>
-                  <h3 className="mb-1 text-lg font-semibold text-[var(--color-text-main)] md:text-xl">
+                  <h3 className="mb-1 text-lg font-semibold md:text-xl">
                     Desbloqueie conteúdos completos
                   </h3>
-                  <p className="text-xs md:text-sm text-[var(--color-text-muted)] max-w-xl">
+                  <p className="text-xs md:text-sm text-white/90 max-w-xl">
                     PDFs avançados, eBooks exclusivos, trilhas educativas e
                     guias profissionais em um só lugar — tudo pensado para a sua
                     rotina real.
@@ -447,7 +444,7 @@ export default function BibliotecaMaternaPage() {
                 <Button
                   variant="primary"
                   size="sm"
-                  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto"
+                  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto bg-white text-[var(--color-brand)] hover:bg-white/90"
                 >
                   <AppIcon
                     name="crown"
