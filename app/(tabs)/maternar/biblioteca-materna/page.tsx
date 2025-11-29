@@ -442,18 +442,22 @@ export default function BibliotecaMaternaPage() {
                 </div>
 
                 <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto bg-white text-[var(--color-brand)] hover:bg-white/90"
-                >
-                  <AppIcon
-                    name="crown"
-                    size={14}
-                    decorative
-                    className="mr-1"
-                  />
-                  Conhecer Materna+
-                </Button>
+  variant="primary"
+  size="sm"
+  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto
+             bg-white/95 hover:bg-white
+             shadow-[0_10px_26px_rgba(0,0,0,0.25)]
+             rounded-full px-5
+             !text-[var(--color-brand)]"
+>
+  <AppIcon
+    name="crown"
+    size={14}
+    decorative
+    className="mr-2 !text-[var(--color-brand)]"
+  />
+  Conhecer Materna+
+</Button>
               </div>
             </SoftCard>
           </Reveal>
