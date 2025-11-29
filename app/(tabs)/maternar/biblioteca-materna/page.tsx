@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { FilterPill } from '@/components/ui/FilterPill'
@@ -34,14 +35,15 @@ const THEMES = [
   'Parentalidade Sem Culpa',
 ]
 
-const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Insights (IA)']
+const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Trilha educativa']
 
 // Versão inicial – placeholders. Depois é só trocar title/description/href pelos materiais reais.
 const MATERIALS: MaterialCard[] = [
   {
     id: 'checklist-rotina-manha',
     title: 'Checklist da Rotina da Manhã',
-    description: 'Um passo a passo simples para começar o dia com um pouco mais de calma.',
+    description:
+      'Um passo a passo simples para começar o dia com um pouco mais de calma.',
     theme: 'Rotinas',
     format: 'Checklist',
     icon: 'book-open',
@@ -50,7 +52,8 @@ const MATERIALS: MaterialCard[] = [
   {
     id: 'guia-leve-birras',
     title: 'Guia Leve Sobre Birras',
-    description: 'Ideias práticas para lidar com explosões emocionais sem culpa.',
+    description:
+      'Ideias práticas para lidar com explosões emocionais sem culpa.',
     theme: 'Birras & Comportamento',
     format: 'Guia Prático',
     icon: 'book-open',
@@ -59,7 +62,8 @@ const MATERIALS: MaterialCard[] = [
   {
     id: 'pdf-sono-noturno',
     title: 'PDF – Sono em Noites Difíceis',
-    description: 'Sugestões de pequenos ajustes para noites um pouco mais tranquilas.',
+    description:
+      'Sugestões de pequenos ajustes para noites um pouco mais tranquilas.',
     theme: 'Sono',
     format: 'PDF',
     icon: 'book-open',
@@ -68,7 +72,8 @@ const MATERIALS: MaterialCard[] = [
   {
     id: 'caderno-emocoes-familia',
     title: 'Caderno de Emoções da Família',
-    description: 'Um material para ajudar todos a nomearem o que sentem com mais gentileza.',
+    description:
+      'Um material para ajudar todos a nomearem o que sentem com mais gentileza.',
     theme: 'Emoções & Autorregulação',
     format: 'eBook',
     icon: 'book-open',
@@ -77,32 +82,66 @@ const MATERIALS: MaterialCard[] = [
   {
     id: 'guia-linguagem-brincar',
     title: 'Guia – Linguagem no Brincar Diário',
-    description: 'Pequenas ideias para apoiar a fala no meio da rotina real.',
+    description:
+      'Pequenas ideias para apoiar a fala no meio da rotina real.',
     theme: 'Linguagem & Comunicação',
     format: 'Guia Prático',
     icon: 'book-open',
     href: '#',
   },
   {
-    id: 'insights-parentalidade',
-    title: 'Insights de Parentalidade Sem Culpa',
-    description: 'Reflexões curtas para dias em que a cobrança pesa demais.',
+    id: 'trilha-parentalidade-leve',
+    title: 'Trilha Educativa – Parentalidade Mais Leve',
+    description:
+      'Uma sequência de conteúdos para ajudar você a sair da culpa e caminhar com mais calma, um passo por vez.',
     theme: 'Parentalidade Sem Culpa',
-    format: 'Insights (IA)',
+    format: 'Trilha educativa',
     icon: 'book-open',
     href: '#',
   },
 ]
 
 export default function BibliotecaMaternaPage() {
+  const searchParams = useSearchParams()
+
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [selectedFormat, setSelectedFormat] = useState<string | null>(null)
+  const [presetFilter, setPresetFilter] = useState<string | null>(null)
+
+  // Lê o ?filtro= vindo do hub Maternar (Biblioteca Materna)
+  useEffect(() => {
+    const filtro = searchParams.get('filtro')
+    if (!filtro) return
+
+    switch (filtro) {
+      case 'guias':
+        setPresetFilter('guias')
+        setSelectedFormat(null)
+        break
+      case 'ebooks':
+        setPresetFilter('pdfs-ebooks')
+        setSelectedFormat(null)
+        break
+      case 'trilhas':
+        setPresetFilter('trilhas')
+        setSelectedFormat('Trilha educativa')
+        break
+      case 'tema-fase':
+        setPresetFilter('tema-fase')
+        // por enquanto, não aplicamos filtro extra — futuro: conectar com Eu360
+        break
+      default:
+        break
+    }
+  }, [searchParams])
 
   const handleThemeSelect = (theme: string) => {
     setSelectedTheme((prev) => (prev === theme ? null : theme))
   }
 
   const handleFormatSelect = (format: string) => {
+    // ao escolher um formato manualmente, saímos do preset vindo do hub
+    setPresetFilter(null)
     setSelectedFormat((prev) => (prev === format ? null : format))
   }
 
@@ -110,13 +149,44 @@ export default function BibliotecaMaternaPage() {
     () =>
       MATERIALS.filter((material) => {
         if (selectedTheme && material.theme !== selectedTheme) return false
-        if (selectedFormat && material.format !== selectedFormat) return false
+
+        // Se veio de um atalho do hub (presetFilter), ele tem prioridade
+        if (presetFilter) {
+          if (presetFilter === 'guias') {
+            if (
+              !(
+                material.format === 'Guia Prático' ||
+                material.format === 'Checklist'
+              )
+            ) {
+              return false
+            }
+          } else if (presetFilter === 'pdfs-ebooks') {
+            if (
+              !(
+                material.format === 'PDF' ||
+                material.format === 'eBook'
+              )
+            ) {
+              return false
+            }
+          } else if (presetFilter === 'trilhas') {
+            if (material.format !== 'Trilha educativa') {
+              return false
+            }
+          }
+          // preset 'tema-fase' por enquanto não restringe nada
+        } else if (selectedFormat && material.format !== selectedFormat) {
+          return false
+        }
+
         return true
       }),
-    [selectedTheme, selectedFormat],
+    [selectedTheme, selectedFormat, presetFilter],
   )
 
-  const hasActiveFilter = !!selectedTheme || !!selectedFormat
+  const hasActiveFilter =
+    !!selectedTheme || !!selectedFormat || !!presetFilter
 
   return (
     <PageTemplate
@@ -130,8 +200,9 @@ export default function BibliotecaMaternaPage() {
           <Reveal delay={0}>
             <div className="max-w-3xl">
               <p className="text-sm md:text-base leading-relaxed text-white/90">
-                Encontre materiais selecionados — PDFs, eBooks, guias práticos e conteúdos
-                personalizados — filtrados por tema e formato para facilitar sua jornada.
+                Encontre materiais selecionados — PDFs, eBooks, guias práticos e
+                conteúdos personalizados — filtrados por tema e formato para
+                facilitar sua jornada.
               </p>
             </div>
           </Reveal>
@@ -151,13 +222,13 @@ export default function BibliotecaMaternaPage() {
                     Filtrar por
                   </h2>
                   <p className="text-xs md:text-sm text-white/90 max-w-2xl">
-                    Escolha um tema e um formato para encontrar conteúdos que conversem com o seu
-                    momento.
+                    Escolha um tema e um formato para encontrar conteúdos que
+                    conversem com o seu momento.
                   </p>
                   {!hasActiveFilter && (
                     <p className="text-[11px] md:text-xs text-white/75">
-                      Nenhum filtro ativo no momento — você está vendo uma amostra geral da
-                      biblioteca.
+                      Nenhum filtro ativo no momento — você está vendo uma
+                      amostra geral da biblioteca.
                     </p>
                   )}
                 </div>
@@ -190,7 +261,7 @@ export default function BibliotecaMaternaPage() {
                       {FORMATS.map((format) => (
                         <FilterPill
                           key={format}
-                          active={selectedFormat === format}
+                          active={selectedFormat === format && !presetFilter}
                           onClick={() => handleFormatSelect(format)}
                         >
                           {format}
@@ -212,7 +283,8 @@ export default function BibliotecaMaternaPage() {
                     Materiais disponíveis
                   </h2>
                   <p className="text-xs md:text-sm text-[var(--color-text-muted)] max-w-xl">
-                    Uma prévia de como os materiais da Biblioteca Materna vão aparecer por aqui.
+                    Uma prévia de como os materiais da Biblioteca Materna vão
+                    aparecer por aqui.
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-[var(--color-text-muted)] shadow-sm">
@@ -222,8 +294,9 @@ export default function BibliotecaMaternaPage() {
 
               {filteredMaterials.length === 0 ? (
                 <SoftCard className="mt-2 rounded-3xl bg-white p-6 text-sm text-[var(--color-text-muted)] shadow-md">
-                  Nenhum material encontrado para esse filtro. Você pode ajustar os filtros ou
-                  limpar as seleções para ver a lista completa novamente.
+                  Nenhum material encontrado para esse filtro. Você pode ajustar
+                  os filtros ou limpar as seleções para ver a lista completa
+                  novamente.
                 </SoftCard>
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
@@ -264,7 +337,11 @@ export default function BibliotecaMaternaPage() {
                           onClick={() => {
                             if (!material.href) return
                             if (material.external) {
-                              window.open(material.href, '_blank', 'noopener,noreferrer')
+                              window.open(
+                                material.href,
+                                '_blank',
+                                'noopener,noreferrer',
+                              )
                             } else {
                               window.location.href = material.href
                             }
@@ -287,18 +364,24 @@ export default function BibliotecaMaternaPage() {
                 Insight personalizado
               </h2>
               <p className="mb-4 text-xs md:text-sm text-[var(--color-text-muted)]">
-                Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida
-                para a fase do seu filho.
+                Em breve, a Biblioteca vai conversar com o Eu360 para sugerir
+                materiais sob medida para a fase do seu filho.
               </p>
 
               <div className="mt-2 flex items-start gap-3 md:gap-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-soft-strong)]/60">
-                  <AppIcon name="idea" size={20} className="text-[var(--color-brand)]" decorative />
+                  <AppIcon
+                    name="idea"
+                    size={20}
+                    className="text-[var(--color-brand)]"
+                    decorative
+                  />
                 </div>
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)] leading-relaxed">
-                  Quando essa área estiver ativa, você vai receber aqui recomendações explicadas com
-                  carinho: por que aquele material foi sugerido e como ele pode deixar o seu dia um
-                  pouco mais leve.
+                  Quando essa área estiver ativa, você vai receber aqui
+                  recomendações explicadas com carinho: por que aquele material
+                  foi sugerido e como ele pode deixar o seu dia um pouco mais
+                  leve.
                 </p>
               </div>
             </SoftCard>
@@ -317,8 +400,9 @@ export default function BibliotecaMaternaPage() {
                     Desbloqueie conteúdos completos
                   </h3>
                   <p className="text-xs md:text-sm text-[var(--color-text-muted)] max-w-xl">
-                    PDFs avançados, eBooks exclusivos, trilhas educativas e guias profissionais em
-                    um só lugar — tudo pensado para a sua rotina real.
+                    PDFs avançados, eBooks exclusivos, trilhas educativas e
+                    guias profissionais em um só lugar — tudo pensado para a sua
+                    rotina real.
                   </p>
                 </div>
 
@@ -327,7 +411,12 @@ export default function BibliotecaMaternaPage() {
                   size="sm"
                   className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto"
                 >
-                  <AppIcon name="crown" size={14} decorative className="mr-1" />
+                  <AppIcon
+                    name="crown"
+                    size={14}
+                    decorative
+                    className="mr-1"
+                  />
                   Conhecer Materna+
                 </Button>
               </div>
