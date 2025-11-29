@@ -195,7 +195,7 @@ const HUB_CARDS: HubCard[] = [
   // 6) BIBLIOTECA MATERNA — MATERNAR
   {
     id: 'biblioteca-materna',
-    title: 'Biblioteca materna',
+    title: 'Biblioteca Materna',
     tag: 'MATERNAR',
     icons: [
       {
@@ -217,10 +217,10 @@ const HUB_CARDS: HubCard[] = [
         label: 'Trilhas educativas',
       },
       {
-        id: 'por-idade-tema',
-        href: '/maternar/biblioteca-materna?filtro=idade-tema',
+        id: 'por-tema-fase',
+        href: '/maternar/biblioteca-materna?filtro=tema-fase',
         icon: 'idea',
-        label: 'Por idade / tema',
+        label: 'Por tema & fase',
       },
     ],
   },
