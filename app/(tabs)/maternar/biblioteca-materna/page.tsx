@@ -106,32 +106,28 @@ export default function BibliotecaMaternaPage() {
 
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [selectedFormat, setSelectedFormat] = useState<string | null>(null)
-  const [presetFilter, setPresetFilter] = useState<string | null>(null)
+  const [presetFilter, setPresetFilter] = useState<
+    'guias' | 'pdfs-ebooks' | 'trilhas' | 'tema-fase' | null
+  >(null)
 
   // Lê o ?filtro= vindo do hub Maternar (Biblioteca Materna)
   useEffect(() => {
     const filtro = searchParams.get('filtro')
     if (!filtro) return
 
-    switch (filtro) {
-      case 'guias':
-        setPresetFilter('guias')
-        setSelectedFormat(null)
-        break
-      case 'ebooks':
-        setPresetFilter('pdfs-ebooks')
-        setSelectedFormat(null)
-        break
-      case 'trilhas':
-        setPresetFilter('trilhas')
-        setSelectedFormat('Trilha educativa')
-        break
-      case 'tema-fase':
-        setPresetFilter('tema-fase')
-        // por enquanto, não aplicamos filtro extra — futuro: conectar com Eu360
-        break
-      default:
-        break
+    // sempre que vier um novo filtro via URL, limpamos seleções manuais
+    setSelectedTheme(null)
+    setSelectedFormat(null)
+
+    if (filtro === 'guias') {
+      setPresetFilter('guias')
+    } else if (filtro === 'ebooks') {
+      setPresetFilter('pdfs-ebooks')
+    } else if (filtro === 'trilhas') {
+      setPresetFilter('trilhas')
+    } else if (filtro === 'tema-fase' || filtro === 'idade-tema') {
+      // aceita os dois jeitos de escrever
+      setPresetFilter('tema-fase')
     }
   }, [searchParams])
 
@@ -162,12 +158,7 @@ export default function BibliotecaMaternaPage() {
               return false
             }
           } else if (presetFilter === 'pdfs-ebooks') {
-            if (
-              !(
-                material.format === 'PDF' ||
-                material.format === 'eBook'
-              )
-            ) {
+            if (!(material.format === 'PDF' || material.format === 'eBook')) {
               return false
             }
           } else if (presetFilter === 'trilhas') {
@@ -187,6 +178,17 @@ export default function BibliotecaMaternaPage() {
 
   const hasActiveFilter =
     !!selectedTheme || !!selectedFormat || !!presetFilter
+
+  const presetLabel =
+    presetFilter === 'guias'
+      ? 'Atalho: Guias & checklists'
+      : presetFilter === 'pdfs-ebooks'
+        ? 'Atalho: PDFs & e-books'
+        : presetFilter === 'trilhas'
+          ? 'Atalho: Trilhas educativas'
+          : presetFilter === 'tema-fase'
+            ? 'Atalho: Por idade & fase'
+            : null
 
   return (
     <PageTemplate
@@ -229,6 +231,12 @@ export default function BibliotecaMaternaPage() {
                     <p className="text-[11px] md:text-xs text-white/75">
                       Nenhum filtro ativo no momento — você está vendo uma
                       amostra geral da biblioteca.
+                    </p>
+                  )}
+                  {presetLabel && (
+                    <p className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white/85 mt-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#FFD8E6]" />
+                      {presetLabel}
                     </p>
                   )}
                 </div>
