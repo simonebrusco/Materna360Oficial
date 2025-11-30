@@ -130,7 +130,7 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
       body:
         'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.',
       gentleReminder:
-        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo, tomar um café quente ou ficar em silêncio por um momento.',
+        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo ou ficar em silêncio por um momento.',
     }
   }
 }
@@ -279,7 +279,7 @@ export default function ComoEstouHojePage() {
       try {
         track('energy.registered', { tab: 'como-estou-hoje', energy })
       } catch {}
-      toast.success('Energia registrada!')
+      toast.success('Energia registrado!')
     }
   }
 
@@ -329,7 +329,7 @@ export default function ComoEstouHojePage() {
 
   const handleSaveSuggestionToPlanner = (tag: string, title: string, desc: string) => {
     addItem({
-      origin: 'como-estou-hoje:semana',
+      origin: 'como-estou-hoje', // <- FIX: usar origin já aceito pelo Planner
       type: 'idea',
       title,
       payload: { tag, description: desc },
