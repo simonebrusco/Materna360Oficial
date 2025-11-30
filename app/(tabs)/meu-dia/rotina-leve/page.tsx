@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import PageTemplate from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -187,12 +187,6 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
 
-  // refs para scroll controlado vindo do hub
-  const recipesRef = useRef<HTMLDivElement | null>(null)
-  const ideasRef = useRef<HTMLDivElement | null>(null)
-  const inspirationsRef = useRef<HTMLDivElement | null>(null)
-  const plannerRef = useRef<HTMLDivElement | null>(null)
-
   // Receitas Inteligentes
   const [recipesLoading, setRecipesLoading] = useState(false)
   const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
@@ -257,7 +251,7 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
   // Scroll vindo do hub Maternar (?abrir=...)
   useEffect(() => {
     const target = searchParams?.abrir
-    if (!target) return
+    if (!target || typeof window === 'undefined') return
 
     const options: ScrollIntoViewOptions = {
       behavior: 'smooth',
@@ -266,21 +260,29 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
     }
 
     if (target === 'receitas') {
-      recipesRef.current?.scrollIntoView(options)
+      document
+        .getElementById('rotina-leve-receitas')
+        ?.scrollIntoView(options)
     }
 
     if (target === 'ideias') {
       setOpenIdeas(true)
-      ideasRef.current?.scrollIntoView(options)
+      document
+        .getElementById('rotina-leve-ideias')
+        ?.scrollIntoView(options)
     }
 
     if (target === 'inspiracoes') {
       setOpenInspiration(true)
-      inspirationsRef.current?.scrollIntoView(options)
+      document
+        .getElementById('rotina-leve-inspiracoes')
+        ?.scrollIntoView(options)
     }
 
     if (target === 'planejar') {
-      plannerRef.current?.scrollIntoView(options)
+      document
+        .getElementById('rotina-leve-planner')
+        ?.scrollIntoView(options)
     }
   }, [searchParams?.abrir])
 
@@ -407,11 +409,12 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
+        {/* IMPORTANTE: sem mx-auto / max-w aqui, o PageTemplate já cuida disso */}
         <div className="pt-6 pb-10 space-y-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
             <SoftCard
-              ref={recipesRef}
+              id="rotina-leve-receitas"
               className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
             >
               <div className="space-y-6 flex flex-col">
@@ -616,7 +619,7 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Ideias Rápidas */}
               <SoftCard
-                ref={ideasRef}
+                id="rotina-leve-ideias"
                 className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
               >
                 <div className="space-y-6 flex flex-col h-full">
@@ -887,7 +890,7 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
 
               {/* Inspirações do Dia */}
               <SoftCard
-                ref={inspirationsRef}
+                id="rotina-leve-inspiracoes"
                 className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
               >
                 <div className="space-y-6 flex flex-col h-full">
@@ -991,7 +994,7 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
 
           {/* Resumo rápido do que já foi salvo no Planner */}
           <SoftCard
-            ref={plannerRef}
+            id="rotina-leve-planner"
             className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]"
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
