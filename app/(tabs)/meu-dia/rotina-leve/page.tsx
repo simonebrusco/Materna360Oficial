@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import PageTemplate from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -177,13 +178,10 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
   }
 }
 
-type RotinaLevePageProps = {
-  searchParams?: {
-    abrir?: string
-  }
-}
+export default function RotinaLevePage() {
+  const searchParams = useSearchParams()
+  const abrir = searchParams?.get('abrir') ?? undefined
 
-export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
 
@@ -250,8 +248,7 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
 
   // Scroll vindo do hub Maternar (?abrir=...)
   useEffect(() => {
-    const target = searchParams?.abrir
-    if (!target || typeof window === 'undefined') return
+    if (!abrir || typeof window === 'undefined') return
 
     const options: ScrollIntoViewOptions = {
       behavior: 'smooth',
@@ -259,32 +256,24 @@ export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
       inline: 'nearest',
     }
 
-    if (target === 'receitas') {
-      document
-        .getElementById('rotina-leve-receitas')
-        ?.scrollIntoView(options)
+    if (abrir === 'receitas') {
+      document.getElementById('rotina-leve-receitas')?.scrollIntoView(options)
     }
 
-    if (target === 'ideias') {
+    if (abrir === 'ideias') {
       setOpenIdeas(true)
-      document
-        .getElementById('rotina-leve-ideias')
-        ?.scrollIntoView(options)
+      document.getElementById('rotina-leve-ideias')?.scrollIntoView(options)
     }
 
-    if (target === 'inspiracoes') {
+    if (abrir === 'inspiracoes') {
       setOpenInspiration(true)
-      document
-        .getElementById('rotina-leve-inspiracoes')
-        ?.scrollIntoView(options)
+      document.getElementById('rotina-leve-inspiracoes')?.scrollIntoView(options)
     }
 
-    if (target === 'planejar') {
-      document
-        .getElementById('rotina-leve-planner')
-        ?.scrollIntoView(options)
+    if (abrir === 'planejar') {
+      document.getElementById('rotina-leve-planner')?.scrollIntoView(options)
     }
-  }, [searchParams?.abrir])
+  }, [abrir])
 
   const handleSaveIdeia = () => {
     try {
