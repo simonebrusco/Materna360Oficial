@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import PageTemplate from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -178,6 +179,9 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
 }
 
 export default function RotinaLevePage() {
+  const searchParams = useSearchParams()
+  const abrir = searchParams?.get('abrir') ?? undefined
+
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
 
@@ -241,6 +245,35 @@ export default function RotinaLevePage() {
       setIdeas(quickIdeas)
     }
   }, [aiSuggestions])
+
+  // Scroll vindo do hub Maternar (?abrir=...)
+  useEffect(() => {
+    if (!abrir || typeof window === 'undefined') return
+
+    const options: ScrollIntoViewOptions = {
+      behavior: 'smooth',
+      block: 'start',
+      inline: 'nearest',
+    }
+
+    if (abrir === 'receitas') {
+      document.getElementById('rotina-leve-receitas')?.scrollIntoView(options)
+    }
+
+    if (abrir === 'ideias') {
+      setOpenIdeas(true)
+      document.getElementById('rotina-leve-ideias')?.scrollIntoView(options)
+    }
+
+    if (abrir === 'inspiracoes') {
+      setOpenInspiration(true)
+      document.getElementById('rotina-leve-inspiracoes')?.scrollIntoView(options)
+    }
+
+    if (abrir === 'planejar') {
+      document.getElementById('rotina-leve-planner')?.scrollIntoView(options)
+    }
+  }, [abrir])
 
   const handleSaveIdeia = () => {
     try {
@@ -369,9 +402,12 @@ export default function RotinaLevePage() {
         <div className="pt-6 pb-10 space-y-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+            <SoftCard
+              id="rotina-leve-receitas"
+              className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+            >
               <div className="space-y-6 flex flex-col">
-                <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                <div className="space-y-1 pb-2">
                   <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                     Receitas Inteligentes
                   </h3>
@@ -571,9 +607,12 @@ export default function RotinaLevePage() {
             {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Ideias Rápidas */}
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <SoftCard
+                id="rotina-leve-ideias"
+                className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+              >
                 <div className="space-y-6 flex flex-col h-full">
-                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <div className="space-y-1 pb-2">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Ideias Rápidas
                     </h3>
@@ -839,9 +878,12 @@ export default function RotinaLevePage() {
               </SoftCard>
 
               {/* Inspirações do Dia */}
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <SoftCard
+                id="rotina-leve-inspiracoes"
+                className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+              >
                 <div className="space-y-6 flex flex-col h-full">
-                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <div className="space-y-1 pb-2">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Inspirações do Dia
                     </h3>
@@ -940,7 +982,10 @@ export default function RotinaLevePage() {
           </div>
 
           {/* Resumo rápido do que já foi salvo no Planner */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]">
+          <SoftCard
+            id="rotina-leve-planner"
+            className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]"
+          >
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
