@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -129,13 +130,22 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
 }
 
 export default function ComoEstouHojePage() {
+  const searchParams = useSearchParams()
+
   const [isHydrated, setIsHydrated] = useState(false)
   const [selectedHumor, setSelectedHumor] = useState<string | null>(null)
   const [selectedEnergy, setSelectedEnergy] = useState<string | null>(null)
   const [dayNotes, setDayNotes] = useState('')
+  const [activeShortcut, setActiveShortcut] = useState<string | null>(null)
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
   const { addItem, getByOrigin } = usePlannerSavedContents()
+
+  // Refs para atalhos vindos do hub Maternar
+  const humorRef = useRef<HTMLDivElement | null>(null)
+  const notasRef = useRef<HTMLDivElement | null>(null)
+  const insightRef = useRef<HTMLDivElement | null>(null)
+  const semanaRef = useRef<HTMLDivElement | null>(null)
 
   // Insight semanal
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
@@ -149,6 +159,31 @@ export default function ComoEstouHojePage() {
   useEffect(() => {
     setIsHydrated(true)
   }, [])
+
+  // Ler atalho da URL (?abrir=humor|notas|resumo|semana)
+  useEffect(() => {
+    const abrir = searchParams?.get('abrir') as
+      | 'humor'
+      | 'notas'
+      | 'resumo'
+      | 'semana'
+      | null
+
+    if (!abrir) return
+
+    const map: Record<string, React.RefObject<HTMLDivElement>> = {
+      humor: humorRef,
+      notas: notasRef,
+      resumo: insightRef,
+      semana: semanaRef,
+    }
+
+    const target = map[abrir]
+    if (target?.current) {
+      setActiveShortcut(abrir)
+      target.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [searchParams])
 
   // Load persisted data (humor/energia/notas)
   useEffect(() => {
@@ -297,6 +332,13 @@ export default function ComoEstouHojePage() {
     toast.success('Insight salvo no planner!')
   }
 
+  const shortcutLabels: Record<string, string> = {
+    humor: 'Humor & Energia',
+    notas: 'Notas do Dia',
+    resumo: 'Resumo Emocional',
+    semana: 'Semana Emocional',
+  }
+
   return (
     <PageTemplate
       label="MEU DIA"
@@ -305,251 +347,272 @@ export default function ComoEstouHojePage() {
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-12 md:space-y-14">
+          {/* Aviso de atalho vindo do hub */}
+          {activeShortcut && (
+            <Reveal>
+              <div className="rounded-2xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_18px_40px_rgba(0,0,0,0.22)] px-4 py-3 md:px-5 md:py-4 flex items-center gap-2 text-xs md:text-sm text-white">
+                <AppIcon name="sparkles" size={16} decorative />
+                <span>
+                  Você chegou por um atalho do Maternar:{" "}
+                  <strong>{shortcutLabels[activeShortcut]}</strong>.
+                </span>
+              </div>
+            </Reveal>
+          )}
+
           {/* ============= BLOCO HOJE ============= */}
           <section className="space-y-4">
             {/* Section Header */}
             <div className="px-2">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] flex items-center gap-2">
-                <span className="inline-block w-1 h-6 bg-[#ff005e] rounded-full"></span>
+              <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]">
+                <span className="inline-block w-1 h-6 bg-[#ff005e] rounded-full bg-opacity-90"></span>
                 Hoje
               </h2>
             </div>
 
             {/* CARD 1: Meu Humor & Minha Energia */}
-            <Reveal delay={0}>
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="mb-6">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                    <AppIcon name="heart" size={18} className="text-[#ff005e]" decorative />
-                    Meu Humor & Minha Energia
-                  </h3>
-                  <p className="text-sm text-[#545454]">
-                    Conte como você se sente agora. Um passo de cada vez já ajuda muito.
-                  </p>
-                </div>
-
-                {/* Humor Section */}
-                <div className="mb-8 space-y-3">
-                  <h4 className="text-sm font-semibold text-[#2f3a56] uppercase tracking-wide">
-                    Meu Humor
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {['Muito bem', 'Bem', 'Neutro', 'Cansada', 'Exausta'].map((humor) => (
-                      <button
-                        key={humor}
-                        onClick={() => handleHumorSelect(humor)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
-                          selectedHumor === humor
-                            ? 'bg-[#ff005e] text-white shadow-md'
-                            : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
-                        }`}
-                      >
-                        {humor}
-                      </button>
-                    ))}
+            <div ref={humorRef}>
+              <Reveal delay={0}>
+                <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <div className="mb-6">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                      <AppIcon name="heart" size={18} className="text-[#ff005e]" decorative />
+                      Meu Humor & Minha Energia
+                    </h3>
+                    <p className="text-sm text-[#545454]">
+                      Conte como você se sente agora. Um passo de cada vez já ajuda muito.
+                    </p>
                   </div>
-                </div>
 
-                {/* Energy Section */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-[#2f3a56] uppercase tracking-wide">
-                    Minha Energia
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {['Alta', 'Média', 'Baixa'].map((energy) => (
-                      <button
-                        key={energy}
-                        onClick={() => handleEnergySelect(energy)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
-                          selectedEnergy === energy
-                            ? 'bg-[#ff005e] text-white shadow-md'
-                            : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
-                        }`}
-                      >
-                        {energy}
-                      </button>
-                    ))}
+                  {/* Humor Section */}
+                  <div className="mb-8 space-y-3">
+                    <h4 className="text-sm font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      Meu Humor
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['Muito bem', 'Bem', 'Neutro', 'Cansada', 'Exausta'].map((humor) => (
+                        <button
+                          key={humor}
+                          onClick={() => handleHumorSelect(humor)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                            selectedHumor === humor
+                              ? 'bg-[#ff005e] text-white shadow-md'
+                              : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
+                          }`}
+                        >
+                          {humor}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Confirmation Note */}
-                <div className="mt-6 pt-6 border-t border-[#ffd8e6] text-sm text-[#545454]">
-                  ✓ Seus registros ajudam você a entender seus padrões.
-                </div>
-              </SoftCard>
-            </Reveal>
+                  {/* Energy Section */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      Minha Energia
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['Alta', 'Média', 'Baixa'].map((energy) => (
+                        <button
+                          key={energy}
+                          onClick={() => handleEnergySelect(energy)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                            selectedEnergy === energy
+                              ? 'bg-[#ff005e] text-white shadow-md'
+                              : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
+                          }`}
+                        >
+                          {energy}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Confirmation Note */}
+                  <div className="mt-6 pt-6 border-t border-[#ffd8e6] text-sm text-[#545454]">
+                    ✓ Seus registros ajudam você a entender seus padrões.
+                  </div>
+                </SoftCard>
+              </Reveal>
+            </div>
 
             {/* CARD 2: Como Foi Meu Dia? */}
-            <Reveal delay={50}>
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="mb-6">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                    <AppIcon name="pen" size={18} className="text-[#ff005e]" decorative />
-                    Como Foi Meu Dia?
-                  </h3>
-                  <p className="text-sm text-[#545454]">
-                    Um olhar rápido sobre o que realmente importou hoje.
-                  </p>
-                </div>
-
-                {/* Notes Section */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-[#2f3a56] mb-2.5 block uppercase tracking-wide">
-                      Notas do dia
-                    </label>
-                    <textarea
-                      value={dayNotes}
-                      onChange={(e) => setDayNotes(e.target.value)}
-                      placeholder="Escreva algumas linhas sobre seu dia…"
-                      className="w-full min-h-[100px] rounded-2xl border border-[#ffd8e6] bg-white p-4 text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
-                    />
-                    <div className="flex justify-end mt-3">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSaveNotes}
-                        disabled={!dayNotes.trim()}
-                      >
-                        Salvar no planner
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Today's notes history from Planner */}
-                  {getByOrigin('como-estou-hoje').filter((item) => item.type === 'note').length >
-                    0 && (
-                    <div className="pt-4 border-t border-[#ffd8e6] space-y-3">
-                      <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                        Notas de hoje no planner
-                      </p>
-                      <ul className="space-y-2">
-                        {getByOrigin('como-estou-hoje')
-                          .filter((item) => item.type === 'note')
-                          .map((item) => (
-                            <li
-                              key={item.id}
-                              className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/50 px-4 py-3 text-sm text-[#545454]"
-                            >
-                              {item.payload?.text}
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </SoftCard>
-            </Reveal>
-
-            {/* CARD 3: Insight do Dia (agora conectado e integrado ao Planner) */}
-            <Reveal delay={100}>
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]">
-                <div className="mb-4">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                    <AppIcon name="sparkles" size={18} className="text-[#9B4D96]" decorative />
-                    Insight do Dia
-                  </h3>
-                </div>
-
-                <div className="space-y-4">
-                  {loadingDailyInsight ? (
-                    <p className="text-sm leading-relaxed text-[#545454]">
-                      Estou olhando com carinho para o seu dia para trazer uma reflexão para você…
+            <div ref={notasRef}>
+              <Reveal delay={50}>
+                <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <div className="mb-6">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                      <AppIcon name="pen" size={18} className="text-[#ff005e]" decorative />
+                      Como Foi Meu Dia?
+                    </h3>
+                    <p className="text-sm text-[#545454]">
+                      Um olhar rápido sobre o que realmente importou hoje.
                     </p>
-                  ) : (
-                    <>
-                      <p className="text-sm leading-relaxed text-[#545454]">
-                        {dailyInsight?.body ??
-                          'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.'}
-                      </p>
-                      <div className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 p-3">
-                        <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">
-                          Lembrete suave para hoje
-                        </p>
-                        <p className="text-sm text-[#545454]">
-                          {dailyInsight?.gentleReminder ??
-                            'Se conseguir, separe alguns minutos só seus – mesmo que seja para respirar fundo em silêncio.'}
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveDailyInsightToPlanner}
-                      className="mt-2 text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1"
-                    >
-                      Levar este insight para o planner
-                      <AppIcon name="arrow-right" size={14} decorative />
-                    </button>
                   </div>
-                </div>
-              </SoftCard>
-            </Reveal>
+
+                  {/* Notes Section */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-semibold text-[#2f3a56] mb-2.5 block uppercase tracking-wide">
+                        Notas do dia
+                      </label>
+                      <textarea
+                        value={dayNotes}
+                        onChange={(e) => setDayNotes(e.target.value)}
+                        placeholder="Escreva algumas linhas sobre seu dia…"
+                        className="w-full min-h-[100px] rounded-2xl border border-[#ffd8e6] bg-white p-4 text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
+                      />
+                      <div className="flex justify-end mt-3">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSaveNotes}
+                          disabled={!dayNotes.trim()}
+                        >
+                          Salvar no planner
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Today's notes history from Planner */}
+                    {getByOrigin('como-estou-hoje').filter((item) => item.type === 'note').length >
+                      0 && (
+                      <div className="pt-4 border-t border-[#ffd8e6] space-y-3">
+                        <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                          Notas de hoje no planner
+                        </p>
+                        <ul className="space-y-2">
+                          {getByOrigin('como-estou-hoje')
+                            .filter((item) => item.type === 'note')
+                            .map((item) => (
+                              <li
+                                key={item.id}
+                                className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/50 px-4 py-3 text-sm text-[#545454]"
+                              >
+                                {item.payload?.text}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </SoftCard>
+              </Reveal>
+            </div>
+
+            {/* CARD 3: Insight do Dia – com efeito vidro */}
+            <div ref={insightRef}>
+              <Reveal delay={100}>
+                <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/10 border border-white/70 backdrop-blur-2xl shadow-[0_18px_40px_rgba(0,0,0,0.25)]">
+                  <div className="mb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-white flex items-center gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]">
+                      <AppIcon name="sparkles" size={18} className="text-white" decorative />
+                      Insight do Dia
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    {loadingDailyInsight ? (
+                      <p className="text-sm leading-relaxed text-white/90">
+                        Estou olhando com carinho para o seu dia para trazer uma reflexão para você…
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-sm leading-relaxed text-white/90">
+                          {dailyInsight?.body ??
+                            'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.'}
+                        </p>
+                        <div className="rounded-2xl bg-white/12 border border-white/50 p-3">
+                          <p className="text-xs font-semibold text-white uppercase tracking-wide mb-1">
+                            Lembrete suave para hoje
+                          </p>
+                          <p className="text-sm text-white/90">
+                            {dailyInsight?.gentleReminder ??
+                              'Se conseguir, separe alguns minutos só seus – mesmo que seja para respirar fundo em silêncio.'}
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSaveDailyInsightToPlanner}
+                        className="mt-2 text-sm font-semibold text-white hover:text-white/80 transition-colors flex items-center gap-1"
+                      >
+                        Levar este insight para o planner
+                        <AppIcon name="arrow-right" size={14} decorative />
+                      </button>
+                    </div>
+                  </div>
+                </SoftCard>
+              </Reveal>
+            </div>
           </section>
 
           {/* ============= BLOCO SEMANA ============= */}
           <section className="space-y-4">
             {/* Section Header */}
             <div className="px-2">
-              <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] flex items-center gap-2">
-                <span className="inline-block w-1 h-6 bg-[#ff005e] rounded-full"></span>
+              <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]">
+                <span className="inline-block w-1 h-6 bg-[#ff005e] rounded-full bg-opacity-90"></span>
                 Semana
               </h2>
             </div>
 
             {/* CARD 4: Minha Semana Emocional (conectado à IA) */}
-            <Reveal delay={150}>
-              <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <div className="mb-6">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
-                    <AppIcon name="chart" size={18} className="text-[#ff005e]" decorative />
-                    Minha Semana Emocional
-                  </h3>
-                  <p className="text-sm text-[#545454]">
-                    Veja seus padrões emocionais com mais leveza, sem julgamentos.
-                  </p>
-                </div>
-
-                {/* Texto principal da semana */}
-                <div className="mb-6 p-5 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/50">
-                  {loadingWeeklyInsight ? (
+            <div ref={semanaRef}>
+              <Reveal delay={150}>
+                <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <div className="mb-6">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
+                      <AppIcon name="chart" size={18} className="text-[#ff005e]" decorative />
+                      Minha Semana Emocional
+                    </h3>
                     <p className="text-sm text-[#545454]">
-                      Estou olhando com carinho para os seus registros para trazer um resumo da sua
-                      semana…
+                      Veja seus padrões emocionais com mais leveza, sem julgamentos.
                     </p>
-                  ) : (
-                    <p className="text-sm text-[#545454] leading-relaxed">
-                      {weeklyInsight?.summary ??
-                        'Conforme você registra seu humor e sua energia, este espaço vai te mostrar com mais clareza como anda a sua semana – sem julgamento, só com acolhimento.'}
-                    </p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Highlights */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
-                    <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
-                      Quando seus dias fluem melhor
-                    </p>
-                    <p className="text-sm font-semibold text-[#2f3a56]">
-                      {weeklyInsight?.highlights.bestDay ??
-                        'Seus melhores dias costumam aparecer quando você respeita seu ritmo e não tenta fazer tudo ao mesmo tempo.'}
-                    </p>
+                  {/* Texto principal da semana */}
+                  <div className="mb-6 p-5 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/50">
+                    {loadingWeeklyInsight ? (
+                      <p className="text-sm text-[#545454]">
+                        Estou olhando com carinho para os seus registros para trazer um resumo da
+                        sua semana…
+                      </p>
+                    ) : (
+                      <p className="text-sm text-[#545454] leading-relaxed">
+                        {weeklyInsight?.summary ??
+                          'Conforme você registra seu humor e sua energia, este espaço vai te mostrar com mais clareza como anda a sua semana – sem julgamento, só com acolhimento.'}
+                      </p>
+                    )}
                   </div>
-                  <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
-                    <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
-                      Quando o dia pesa um pouco mais
-                    </p>
-                    <p className="text-sm font-semibold text-[#2f3a56]">
-                      {weeklyInsight?.highlights.toughDays ??
-                        'Os dias mais desafiadores costumam vir acompanhados de muita cobrança interna. Lembre-se: pedir ajuda ou fazer menos também é cuidado.'}
-                    </p>
+
+                  {/* Highlights */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
+                      <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
+                        Quando seus dias fluem melhor
+                      </p>
+                      <p className="text-sm font-semibold text-[#2f3a56]">
+                        {weeklyInsight?.highlights.bestDay ??
+                          'Seus melhores dias costumam aparecer quando você respeita seu ritmo e não tenta fazer tudo ao mesmo tempo.'}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-4 space-y-2">
+                      <p className="text-xs text-[#545454] font-medium uppercase tracking-wide">
+                        Quando o dia pesa um pouco mais
+                      </p>
+                      <p className="text-sm font-semibold text-[#2f3a56]">
+                        {weeklyInsight?.highlights.toughDays ??
+                          'Os dias mais desafiadores costumam vir acompanhados de muita cobrança interna. Lembre-se: pedir ajuda ou fazer menos também é cuidado.'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </SoftCard>
-            </Reveal>
+                </SoftCard>
+              </Reveal>
+            </div>
 
             {/* CARD 5: Sugestões Pensadas Para Você Esta Semana */}
             <Reveal delay={200}>
