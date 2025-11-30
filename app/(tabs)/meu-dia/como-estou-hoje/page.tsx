@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -72,7 +71,7 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
       '[Como Estou Hoje] Erro ao buscar insight semanal, usando fallback:',
       error,
     )
-
+    // Fallback carinhoso, sem exposição de "IA" para a mãe
     return {
       title: 'Como sua semana tem se desenhado',
       summary:
@@ -124,21 +123,20 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
       '[Como Estou Hoje] Erro ao buscar insight do dia, usando fallback:',
       error,
     )
-
+    // Fallback carinhoso
     return {
       title: 'Um olhar gentil para o seu dia',
       body:
         'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.',
       gentleReminder:
-        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo ou ficar em silêncio por um momento.',
+        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo, tomar um café quente ou ficar em silêncio por um momento.',
     }
   }
 }
 
-export default function ComoEstouHojePage() {
-  const searchParams = useSearchParams()
-  const abrir = searchParams?.get('abrir')
-
+export default function ComoEstouHojePage(props: {
+  searchParams?: Promise<Record<string, string | string[]>>
+}) {
   const [isHydrated, setIsHydrated] = useState(false)
   const [selectedHumor, setSelectedHumor] = useState<string | null>(null)
   const [selectedEnergy, setSelectedEnergy] = useState<string | null>(null)
@@ -155,12 +153,60 @@ export default function ComoEstouHojePage() {
   const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null)
   const [loadingDailyInsight, setLoadingDailyInsight] = useState(false)
 
-  // Marca como hidratado
+  // Query param para abrir bloco direto do hub
+  const [sectionToOpen, setSectionToOpen] = useState<string | null>(null)
+
+  // Refs para scroll suave
+  const [refsReady, setRefsReady] = useState(false)
+  const humorSectionId = 'sec-humor'
+  const notesSectionId = 'sec-notas'
+  const resumoSectionId = 'sec-resumo'
+  const semanaSectionId = 'sec-semana'
+
+  // Mark as hydrated on mount
   useEffect(() => {
     setIsHydrated(true)
   }, [])
 
-  // Carrega dados persistidos (humor/energia/notas)
+  // Ler searchParams (?abrir=) para navegação vinda do hub
+  useEffect(() => {
+    async function resolveSearch() {
+      try {
+        const params = await props.searchParams
+        const abrirParam = params?.abrir
+        if (typeof abrirParam === 'string') {
+          setSectionToOpen(abrirParam)
+        }
+      } catch {
+        // ignora erro
+      }
+    }
+    resolveSearch()
+  }, [props.searchParams])
+
+  // Depois que tudo estiver pronto, faz scroll suave para a seção certa
+  useEffect(() => {
+    if (!sectionToOpen) return
+    // pequeno timeout para garantir DOM montado
+    const t = setTimeout(() => {
+      let elementId: string | null = null
+
+      if (sectionToOpen === 'humor') elementId = humorSectionId
+      if (sectionToOpen === 'notas') elementId = notesSectionId
+      if (sectionToOpen === 'resumo') elementId = resumoSectionId
+      if (sectionToOpen === 'semana') elementId = semanaSectionId
+
+      if (!elementId) return
+      const el = document.getElementById(elementId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 350)
+
+    return () => clearTimeout(t)
+  }, [sectionToOpen, refsReady])
+
+  // Load persisted data (humor/energia/notas)
   useEffect(() => {
     if (!isHydrated) return
 
@@ -175,9 +221,12 @@ export default function ComoEstouHojePage() {
     if (typeof savedHumor === 'string') setSelectedHumor(savedHumor)
     if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
     if (typeof savedNotes === 'string') setDayNotes(savedNotes)
+
+    // refs considerados prontos após primeira hidratação
+    setRefsReady(true)
   }, [isHydrated, currentDateKey])
 
-  // Carrega Insight semanal
+  // Load weekly emotional insight once
   useEffect(() => {
     let isMounted = true
 
@@ -189,17 +238,20 @@ export default function ComoEstouHojePage() {
           setWeeklyInsight(result)
         }
       } finally {
-        if (isMounted) setLoadingWeeklyInsight(false)
+        if (isMounted) {
+          setLoadingWeeklyInsight(false)
+        }
       }
     }
 
     loadInsight()
+
     return () => {
       isMounted = false
     }
   }, [])
 
-  // Carrega Insight diário
+  // Load daily emotional insight once
   useEffect(() => {
     let isMounted = true
 
@@ -211,53 +263,18 @@ export default function ComoEstouHojePage() {
           setDailyInsight(result)
         }
       } finally {
-        if (isMounted) setLoadingDailyInsight(false)
+        if (isMounted) {
+          setLoadingDailyInsight(false)
+        }
       }
     }
 
     loadDaily()
+
     return () => {
       isMounted = false
     }
   }, [])
-
-  // Deep-link dos mini-hubs (?abrir=humor|notas|insight|semana|sugestoes)
-  useEffect(() => {
-    if (!abrir) return
-
-    const map: Record<string, string> = {
-      humor: 'block-humor',
-      notas: 'block-notas',
-      insight: 'block-insight-dia',
-      semana: 'block-semana',
-      sugestoes: 'block-sugestoes',
-    }
-
-    const targetId = map[abrir]
-    if (!targetId) return
-
-    const el = document.getElementById(targetId)
-    if (!el) return
-
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-
-    el.classList.add(
-      'ring-2',
-      'ring-[#ff005e]',
-      'ring-offset-2',
-      'ring-offset-[#FFB3D3]',
-    )
-    const timeout = setTimeout(() => {
-      el.classList.remove(
-        'ring-2',
-        'ring-[#ff005e]',
-        'ring-offset-2',
-        'ring-offset-[#FFB3D3]',
-      )
-    }, 1600)
-
-    return () => clearTimeout(timeout)
-  }, [abrir])
 
   const handleHumorSelect = (humor: string) => {
     setSelectedHumor(selectedHumor === humor ? null : humor)
@@ -265,7 +282,10 @@ export default function ComoEstouHojePage() {
       const humorKey = `como-estou-hoje:${currentDateKey}:humor`
       save(humorKey, humor)
       try {
-        track('mood.registered', { tab: 'como-estou-hoje', mood: humor })
+        track('mood.registered', {
+          tab: 'como-estou-hoje',
+          mood: humor,
+        })
       } catch {}
       toast.success('Humor registrado!')
     }
@@ -277,29 +297,36 @@ export default function ComoEstouHojePage() {
       const energyKey = `como-estou-hoje:${currentDateKey}:energy`
       save(energyKey, energy)
       try {
-        track('energy.registered', { tab: 'como-estou-hoje', energy })
+        track('energy.registered', {
+          tab: 'como-estou-hoje',
+          energy: energy,
+        })
       } catch {}
-      toast.success('Energia registrado!')
+      toast.success('Energia registrada!')
     }
   }
 
   const handleSaveNotes = () => {
     if (!dayNotes.trim()) return
-
     const notesKey = `como-estou-hoje:${currentDateKey}:notes`
-    save(notesKey, dayNotes.trim())
+    save(notesKey, dayNotes)
 
+    // Also save to Planner
     addItem({
       origin: 'como-estou-hoje',
       type: 'note',
       title: 'Nota do dia',
-      payload: { text: dayNotes.trim() },
+      payload: {
+        text: dayNotes.trim(),
+      },
     })
 
     try {
-      track('day_notes.saved', { tab: 'como-estou-hoje' })
+      track('day_notes.saved', {
+        tab: 'como-estou-hoje',
+      })
     } catch {}
-    toast.success('Notas salvas no planner!')
+    toast.success('Notas salvas!')
   }
 
   const handleSaveDailyInsightToPlanner = () => {
@@ -308,7 +335,7 @@ export default function ComoEstouHojePage() {
       body:
         'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.',
       gentleReminder:
-        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo ou ficar em silêncio por um momento.',
+        'Se puder, separe alguns minutos só seus – nem que seja para respirar fundo, tomar um café quente ou ficar em silêncio por um momento.',
     }
 
     addItem({
@@ -322,15 +349,21 @@ export default function ComoEstouHojePage() {
     })
 
     try {
-      track('daily_insight.saved', { tab: 'como-estou-hoje' })
+      track('daily_insight.saved', {
+        tab: 'como-estou-hoje',
+      })
     } catch {}
     toast.success('Insight salvo no planner!')
   }
 
-  const handleSaveSuggestionToPlanner = (tag: string, title: string, desc: string) => {
+  const handleSaveSuggestionToPlanner = (
+    tag: string,
+    title: string,
+    desc: string,
+  ) => {
     addItem({
-      origin: 'como-estou-hoje', // <- FIX: usar origin já aceito pelo Planner
-      type: 'idea',
+      origin: 'como-estou-hoje', // usar origin já aceito pelo Planner
+      type: 'insight', // FIX: usar um tipo válido em PlannerContentType
       title,
       payload: { tag, description: desc },
     })
@@ -339,32 +372,11 @@ export default function ComoEstouHojePage() {
       track('weekly_suggestion.saved', {
         tab: 'como-estou-hoje',
         tag,
+        title,
       })
     } catch {}
-    toast.success('Sugestão enviada para o planner!')
+    toast.success('Sugestão salva no planner!')
   }
-
-  const plannerNotesToday = getByOrigin('como-estou-hoje').filter(
-    (item) => item.type === 'note',
-  )
-
-  const weeklySuggestions = [
-    {
-      tag: 'Pausa',
-      title: 'Respire fundo nos momentos difíceis',
-      desc: 'Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.',
-    },
-    {
-      tag: 'Conexão',
-      title: 'Momento com seu filho',
-      desc: 'Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma ambos.',
-    },
-    {
-      tag: 'Rotina',
-      title: 'Mantenha um pequeno ritual',
-      desc: 'Café da manhã tranquilo ou alongamento matinal criam estabilidade.',
-    },
-  ]
 
   return (
     <PageTemplate
@@ -373,40 +385,45 @@ export default function ComoEstouHojePage() {
       subtitle="Entenda seu dia com clareza, leveza e acolhimento."
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 pb-24 pt-2 md:px-6 space-y-10 md:space-y-12">
-          {/* ================= HOJE ================= */}
-          <Reveal>
-            <section
-              id="block-hoje-wrapper"
-              className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22)_0,rgba(255,255,255,0)_40%)] px-4 py-6 shadow-[0_22px_55px_rgba(0,0,0,0.35)] backdrop-blur-2xl md:px-8 md:py-8"
-            >
-              {/* glows */}
-              <div className="pointer-events-none absolute inset-0 opacity-70">
-                <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.28)] blur-3xl" />
-                <div className="absolute -bottom-16 -right-12 h-32 w-32 rounded-full bg-[rgba(155,77,150,0.32)] blur-3xl" />
-              </div>
+        <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-12 md:space-y-16">
+          {/* ============= BLOCO HOJE ============= */}
+          <section
+            className="space-y-6 md:space-y-8"
+            aria-label="Como você está hoje"
+          >
+            {/* Card de vidro grande englobando os 3 cards principais do dia */}
+            <Reveal>
+              <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8">
+                {/* Glows */}
+                <div className="pointer-events-none absolute inset-0 opacity-80">
+                  <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                  <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
+                </div>
 
-              <div className="relative z-10 space-y-6 md:space-y-8">
-                <header className="space-y-2">
-                  <span className="inline-flex items-center rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur">
-                    HOJE
-                  </span>
-                  <h2 className="text-2xl md:text-3xl font-semibold leading-tight text-white">
-                    Como Você Está Agora
-                  </h2>
-                  <p className="text-sm md:text-base text-white/85 max-w-2xl">
-                    Registre seu humor, energia e um pequeno resumo do dia – isso
-                    ajuda o Materna360 a cuidar melhor de você ao longo da semana.
-                  </p>
-                </header>
+                <div className="relative z-10 space-y-6 md:space-y-8">
+                  {/* Header do bloco */}
+                  <header className="space-y-2">
+                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.24em] uppercase text-white/80">
+                      Hoje
+                    </p>
+                    <h2 className="text-lg md:text-2xl font-semibold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                      Como Você Está Agora
+                    </h2>
+                    <p className="text-xs md:text-sm text-white/90 max-w-2xl">
+                      Registre seu humor, energia e um pequeno resumo do dia –
+                      isso ajuda o Materna360 a cuidar melhor de você.
+                    </p>
+                  </header>
 
-                {/* Grid principal: Humor + Notas */}
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:gap-6">
-                  {/* Card: Humor & Energia */}
-                  <div id="block-humor">
-                    <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/95 p-6 shadow-[0_10px_26px_rgba(0,0,0,0.16)] md:p-7">
-                      <div className="mb-5 md:mb-6">
-                        <h3 className="mb-1 text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                  {/* Grid principal: humor + notas + insight */}
+                  <div className="grid gap-4 md:gap-5 lg:gap-6 md:grid-cols-2">
+                    {/* CARD 1: Meu Humor & Minha Energia */}
+                    <SoftCard
+                      id={humorSectionId}
+                      className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]"
+                    >
+                      <div className="mb-5">
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1 flex items-center gap-2">
                           <AppIcon
                             name="heart"
                             size={18}
@@ -415,15 +432,15 @@ export default function ComoEstouHojePage() {
                           />
                           Meu Humor & Minha Energia
                         </h3>
-                        <p className="text-sm text-[#545454]">
-                          Um registro rápido para você se entender melhor ao longo da
-                          semana.
+                        <p className="text-xs md:text-sm text-[#545454]">
+                          Um registro rápido para você se entender melhor ao
+                          longo da semana.
                         </p>
                       </div>
 
-                      {/* Humor */}
-                      <div className="mb-7 space-y-2">
-                        <h4 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-[#2f3a56]">
+                      {/* Humor Section */}
+                      <div className="mb-6 space-y-3">
+                        <h4 className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                           Meu humor
                         </h4>
                         <div className="flex flex-wrap gap-2">
@@ -431,7 +448,6 @@ export default function ComoEstouHojePage() {
                             (humor) => (
                               <button
                                 key={humor}
-                                type="button"
                                 onClick={() => handleHumorSelect(humor)}
                                 className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
                                   selectedHumor === humor
@@ -446,16 +462,15 @@ export default function ComoEstouHojePage() {
                         </div>
                       </div>
 
-                      {/* Energia */}
-                      <div className="space-y-2">
-                        <h4 className="text-xs md:text-sm font-semibold uppercase tracking-wide text-[#2f3a56]">
+                      {/* Energy Section */}
+                      <div className="space-y-3">
+                        <h4 className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                           Minha energia
                         </h4>
                         <div className="flex flex-wrap gap-2">
                           {['Alta', 'Média', 'Baixa'].map((energy) => (
                             <button
                               key={energy}
-                              type="button"
                               onClick={() => handleEnergySelect(energy)}
                               className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
                                 selectedEnergy === energy
@@ -469,218 +484,238 @@ export default function ComoEstouHojePage() {
                         </div>
                       </div>
 
-                      <p className="mt-6 border-t border-[#ffd8e6] pt-4 text-xs md:text-sm text-[#545454]">
-                        ✓ Cada registro é um cuidado com você mesma – e ajuda o
+                      {/* Confirmation Note */}
+                      <div className="mt-6 pt-4 border-t border-[#ffd8e6] text-[11px] md:text-xs text-[#545454]">
+                        ✓ Cada registro é um cuidado com você mesma — e ajuda o
                         Materna360 a entender seus padrões.
-                      </p>
+                      </div>
                     </SoftCard>
-                  </div>
 
-                  {/* Card: Como Foi Meu Dia */}
-                  <div id="block-notas">
-                    <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/96 p-6 shadow-[0_10px_26px_rgba(0,0,0,0.16)] md:p-7">
-                      <div className="mb-5 md:mb-6">
-                        <h3 className="mb-1 text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                    {/* Coluna direita: Notas do dia + Insight do Dia */}
+                    <div className="space-y-4 md:space-y-5">
+                      {/* CARD 2: Como foi meu dia? */}
+                      <SoftCard
+                        id={notesSectionId}
+                        className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]"
+                      >
+                        <div className="mb-5">
+                          <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1 flex items-center gap-2">
+                            <AppIcon
+                              name="pen"
+                              size={18}
+                              className="text-[#ff005e]"
+                              decorative
+                            />
+                            Como Foi Meu Dia?
+                          </h3>
+                          <p className="text-xs md:text-sm text-[#545454]">
+                            Escreva algumas linhas sobre o que realmente importou
+                            hoje.
+                          </p>
+                        </div>
+
+                        {/* Notes Section */}
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] mb-2.5 block uppercase tracking-wide">
+                              Notas do dia
+                            </label>
+                            <textarea
+                              value={dayNotes}
+                              onChange={(e) => setDayNotes(e.target.value)}
+                              placeholder="Conte para você mesma como foi o seu dia…"
+                              className="w-full min-h-[90px] rounded-2xl border border-[#ffd8e6] bg-white p-3 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
+                            />
+                            <div className="flex justify-end mt-3">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleSaveNotes}
+                                disabled={!dayNotes.trim()}
+                              >
+                                Salvar no planner
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Today's notes history from Planner */}
+                          {getByOrigin('como-estou-hoje').filter(
+                            (item) => item.type === 'note',
+                          ).length > 0 && (
+                            <div className="pt-3 border-t border-[#ffd8e6] space-y-2">
+                              <p className="text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                                Notas de hoje no planner
+                              </p>
+                              <ul className="space-y-2">
+                                {getByOrigin('como-estou-hoje')
+                                  .filter((item) => item.type === 'note')
+                                  .map((item) => (
+                                    <li
+                                      key={item.id}
+                                      className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/50 px-3 py-2 text-xs md:text-sm text-[#545454]"
+                                    >
+                                      {item.payload?.text}
+                                    </li>
+                                  ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </SoftCard>
+
+                      {/* CARD 3: Insight do Dia */}
+                      <SoftCard
+                        id={resumoSectionId}
+                        className="rounded-3xl p-5 md:p-6 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]"
+                      >
+                        <div className="mb-3">
+                          <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                            <AppIcon
+                              name="sparkles"
+                              size={18}
+                              className="text-[#9B4D96]"
+                              decorative
+                            />
+                            Insight Do Dia
+                          </h3>
+                        </div>
+
+                        <div className="space-y-4">
+                          {loadingDailyInsight ? (
+                            <p className="text-sm leading-relaxed text-[#545454]">
+                              Estou olhando com carinho para o seu dia para trazer
+                              uma reflexão para você…
+                            </p>
+                          ) : (
+                            <>
+                              <p className="text-sm leading-relaxed text-[#545454]">
+                                {dailyInsight?.body ??
+                                  'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.'}
+                              </p>
+                              <div className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 p-3">
+                                <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-1">
+                                  Lembrete suave para hoje
+                                </p>
+                                <p className="text-xs md:text-sm text-[#545454]">
+                                  {dailyInsight?.gentleReminder ??
+                                    'Se conseguir, separe alguns minutos só seus – mesmo que seja para respirar fundo em silêncio.'}
+                                </p>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={handleSaveDailyInsightToPlanner}
+                              className="mt-1 text-xs md:text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1"
+                            >
+                              Levar este insight para o planner
+                              <AppIcon name="arrow-right" size={14} decorative />
+                            </button>
+                          </div>
+                        </div>
+                      </SoftCard>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </section>
+
+          {/* ============= BLOCO SEMANA ============= */}
+          <section
+            className="space-y-6 md:space-y-8"
+            aria-label="Como sua semana tem se desenhado"
+          >
+            <Reveal>
+              <div
+                id={semanaSectionId}
+                className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
+              >
+                {/* Glows */}
+                <div className="pointer-events-none absolute inset-0 opacity-80">
+                  <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                  <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
+                </div>
+
+                <div className="relative z-10 space-y-6 md:space-y-8">
+                  {/* Header */}
+                  <header className="space-y-2">
+                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.24em] uppercase text-white/80">
+                      Semana
+                    </p>
+                    <h2 className="text-lg md:text-2xl font-semibold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                      Como Sua Semana Tem Se Desenhado
+                    </h2>
+                    <p className="text-xs md:text-sm text-white/90 max-w-2xl">
+                      Um olhar mais amplo para os seus dias: padrões emocionais e
+                      pequenas ideias para deixar a semana mais leve.
+                    </p>
+                  </header>
+
+                  {/* Grid: Semana emocional + Sugestões */}
+                  <div className="grid gap-4 md:gap-5 lg:gap-6 md:grid-cols-2">
+                    {/* CARD: Minha Semana Emocional */}
+                    <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                      <div className="mb-5">
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1 flex items-center gap-2">
                           <AppIcon
-                            name="pen"
+                            name="chart"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
                           />
-                          Como Foi Meu Dia?
+                          Minha Semana Emocional
                         </h3>
-                        <p className="text-sm text-[#545454]">
-                          Escreva algumas linhas sobre o que realmente importou hoje.
+                        <p className="text-xs md:text-sm text-[#545454]">
+                          Enxergue seus padrões emocionais com mais leveza — sem
+                          julgamentos.
                         </p>
                       </div>
 
+                      {/* Texto principal da semana */}
+                      <div className="mb-5 p-4 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/50">
+                        {loadingWeeklyInsight ? (
+                          <p className="text-sm text-[#545454]">
+                            Estou olhando com carinho para os seus registros para
+                            trazer um resumo da sua semana…
+                          </p>
+                        ) : (
+                          <p className="text-sm text-[#545454] leading-relaxed">
+                            {weeklyInsight?.summary ??
+                              'Conforme você registra seu humor e sua energia, este espaço vai te mostrar com mais clareza como anda a sua semana – sem julgamento, só com acolhimento.'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Highlights */}
                       <div className="space-y-3">
-                        <label className="block text-xs md:text-sm font-semibold uppercase tracking-wide text-[#2f3a56]">
-                          Notas do dia
-                        </label>
-                        <textarea
-                          value={dayNotes}
-                          onChange={(e) => setDayNotes(e.target.value)}
-                          placeholder="Conte para você mesma como foi o seu dia…"
-                          className="w-full min-h-[110px] resize-none rounded-2xl border border-[#ffd8e6] bg-white p-4 text-sm text-[#2f3a56] placeholder:text-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30"
-                        />
-                        <div className="flex justify-end pt-1">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleSaveNotes}
-                            disabled={!dayNotes.trim()}
-                          >
-                            Salvar no planner
-                          </Button>
+                        <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-3 space-y-2">
+                          <p className="text-[11px] md:text-xs text-[#545454] font-medium uppercase tracking-wide">
+                            Quando seus dias fluem melhor
+                          </p>
+                          <p className="text-sm font-semibold text-[#2f3a56]">
+                            {weeklyInsight?.highlights.bestDay ??
+                              'Seus melhores dias costumam aparecer quando você respeita seu ritmo e não tenta fazer tudo ao mesmo tempo.'}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/40 p-3 space-y-2">
+                          <p className="text-[11px] md:text-xs text-[#545454] font-medium uppercase tracking-wide">
+                            Quando o dia pesa um pouco mais
+                          </p>
+                          <p className="text-sm font-semibold text-[#2f3a56]">
+                            {weeklyInsight?.highlights.toughDays ??
+                              'Os dias mais desafiadores costumam vir acompanhados de muita cobrança interna. Lembre-se: pedir ajuda ou fazer menos também é cuidado.'}
+                          </p>
                         </div>
                       </div>
-
-                      {plannerNotesToday.length > 0 && (
-                        <div className="mt-5 space-y-2 border-t border-[#ffd8e6] pt-4">
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#545454]">
-                            Notas de hoje no planner
-                          </p>
-                          <ul className="space-y-2">
-                            {plannerNotesToday.map((item) => (
-                              <li
-                                key={item.id}
-                                className="rounded-2xl border border-[#ffd8e6]/60 bg-[#ffd8e6]/15 px-4 py-3 text-xs md:text-sm text-[#545454]"
-                              >
-                                {item.payload?.text}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </SoftCard>
-                  </div>
-                </div>
 
-                {/* Card: Insight do Dia */}
-                <div id="block-insight-dia">
-                  <SoftCard className="rounded-3xl border border-[#9B4D96]/25 bg-white/96 p-6 shadow-[0_10px_26px_rgba(155,77,150,0.18)] md:p-7">
-                    <div className="mb-4 flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon
-                            name="sparkles"
-                            size={18}
-                            className="text-[#9B4D96]"
-                            decorative
-                          />
-                          Insight do Dia
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {loadingDailyInsight ? (
-                        <p className="text-sm leading-relaxed text-[#545454]">
-                          Estou olhando com carinho para o seu dia para trazer uma
-                          reflexão para você…
-                        </p>
-                      ) : (
-                        <>
-                          <p className="text-sm leading-relaxed text-[#545454]">
-                            {dailyInsight?.body ??
-                              'Talvez hoje não tenha sido perfeito, mas perfeição nunca foi o objetivo. O que importa é que, mesmo cansada, você continua tentando fazer o melhor que consegue com o que tem.'}
-                          </p>
-                          <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#ffd8e6]/25 p-3">
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#2f3a56]">
-                              Lembrete suave para hoje
-                            </p>
-                            <p className="text-sm text-[#545454]">
-                              {dailyInsight?.gentleReminder ??
-                                'Se conseguir, separe alguns minutos só seus – mesmo que seja para respirar fundo em silêncio.'}
-                            </p>
-                          </div>
-                        </>
-                      )}
-
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSaveDailyInsightToPlanner}
-                          className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-[#9B4D96] transition-colors hover:text-[#9B4D96]/85"
-                        >
-                          Levar este insight para o planner
-                          <AppIcon name="arrow-right" size={14} decorative />
-                        </button>
-                      </div>
-                    </div>
-                  </SoftCard>
-                </div>
-              </div>
-            </section>
-          </Reveal>
-
-          {/* ================= SEMANA ================= */}
-          <Reveal>
-            <section
-              id="block-semana"
-              className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22)_0,rgba(255,255,255,0)_40%)] px-4 py-6 shadow-[0_22px_55px_rgba(0,0,0,0.35)] backdrop-blur-2xl md:px-8 md:py-8"
-            >
-              {/* glows */}
-              <div className="pointer-events-none absolute inset-0 opacity-70">
-                <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.24)] blur-3xl" />
-                <div className="absolute -bottom-16 -right-12 h-32 w-32 rounded-full bg-[rgba(155,77,150,0.34)] blur-3xl" />
-              </div>
-
-              <div className="relative z-10 space-y-6 md:space-y-8">
-                <header className="space-y-2">
-                  <span className="inline-flex items-center rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur">
-                    SEMANA
-                  </span>
-                  <h2 className="text-2xl md:text-3xl font-semibold leading-tight text-white">
-                    Como Sua Semana Tem Se Desenhado
-                  </h2>
-                  <p className="text-sm md:text-base text-white/85 max-w-2xl">
-                    Um olhar mais amplo para os seus dias: padrões emocionais e pequenas
-                    ideias para deixar a semana mais leve.
-                  </p>
-                </header>
-
-                <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-                  {/* Minha Semana Emocional */}
-                  <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/96 p-6 shadow-[0_10px_26px_rgba(0,0,0,0.16)] md:p-7">
-                    <div className="mb-5 md:mb-6">
-                      <h3 className="mb-1 text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                        <AppIcon
-                          name="chart"
-                          size={18}
-                          className="text-[#ff005e]"
-                          decorative
-                        />
-                        Minha Semana Emocional
-                      </h3>
-                      <p className="text-sm text-[#545454]">
-                        Enxergue seus padrões emocionais com mais leveza – sem
-                        julgamentos.
-                      </p>
-                    </div>
-
-                    <div className="mb-6 rounded-2xl border border-[#ffd8e6]/60 bg-[#ffd8e6]/15 p-4">
-                      {loadingWeeklyInsight ? (
-                        <p className="text-sm text-[#545454]">
-                          Estou olhando com carinho para os seus registros para trazer
-                          um resumo da sua semana…
-                        </p>
-                      ) : (
-                        <p className="text-sm leading-relaxed text-[#545454]">
-                          {weeklyInsight?.summary ??
-                            'Conforme você registra seu humor e sua energia, este espaço vai te mostrar com mais clareza como anda a sua semana – sem julgamento, só com acolhimento.'}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-3 md:gap-4">
-                      <div className="rounded-2xl border border-[#ffd8e6]/40 bg-[#ffd8e6]/15 p-4 space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#545454]">
-                          Quando seus dias fluem melhor
-                        </p>
-                        <p className="text-sm font-semibold text-[#2f3a56]">
-                          {weeklyInsight?.highlights.bestDay ??
-                            'Seus melhores dias costumam aparecer quando você respeita seu ritmo e não tenta fazer tudo ao mesmo tempo.'}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-[#ffd8e6]/40 bg-[#ffd8e6]/15 p-4 space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#545454]">
-                          Quando o dia pesa um pouco mais
-                        </p>
-                        <p className="text-sm font-semibold text-[#2f3a56]">
-                          {weeklyInsight?.highlights.toughDays ??
-                            'Os dias mais desafiadores costumam vir acompanhados de muita cobrança interna. Lembre-se: pedir ajuda ou fazer menos também é cuidado.'}
-                        </p>
-                      </div>
-                    </div>
-                  </SoftCard>
-
-                  {/* Sugestões da semana */}
-                  <div id="block-sugestoes">
-                    <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/96 p-6 shadow-[0_10px_26px_rgba(0,0,0,0.16)] md:p-7">
-                      <div className="mb-5 md:mb-6">
-                        <h3 className="mb-1 text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
+                    {/* CARD: Sugestões pensadas para você esta semana */}
+                    <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                      <div className="mb-5">
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-1 flex items-center gap-2">
                           <AppIcon
                             name="lightbulb"
                             size={18}
@@ -689,30 +724,50 @@ export default function ComoEstouHojePage() {
                           />
                           Sugestões Pensadas Para Você Esta Semana
                         </h3>
-                        <p className="text-sm text-[#545454]">
-                          Pequenas ideias práticas para cuidar de você sem se
+                        <p className="text-xs md:text-sm text-[#545454]">
+                          Pequenas ideias práticas para cuidar de você sem
                           sobrecarregar.
                         </p>
                       </div>
 
                       <div className="space-y-3">
-                        {weeklySuggestions.map((suggestion) => (
+                        {[
+                          {
+                            tag: 'Pausa',
+                            title: 'Respire fundo nos momentos difíceis',
+                            desc: 'Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.',
+                          },
+                          {
+                            tag: 'Conexão',
+                            title: 'Momento com seu filho',
+                            desc: 'Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma ambos.',
+                          },
+                          {
+                            tag: 'Rotina',
+                            title: 'Mantenha um pequeno ritual',
+                            desc: 'Café da manhã tranquilo ou alongamento matinal criam estabilidade.',
+                          },
+                        ].map((suggestion, idx) => (
                           <div
-                            key={suggestion.title}
-                            className="rounded-2xl border border-[#ffd8e6] bg-white p-4 md:p-5 transition-colors hover:bg-[#ffd8e6]/8 space-y-2"
+                            key={idx}
+                            className="rounded-2xl border border-[#ffd8e6] bg-white p-4 md:p-5 hover:bg-[#ffd8e6]/5 transition-colors space-y-2"
                           >
-                            <div className="flex flex-col gap-1">
-                              <span className="inline-flex w-fit items-center rounded-full bg-[#ffd8e6] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#ff005e]">
-                                {suggestion.tag}
-                              </span>
-                              <h4 className="text-sm md:text-base font-semibold text-[#2f3a56]">
-                                {suggestion.title}
-                              </h4>
-                              <p className="text-sm text-[#545454]">
-                                {suggestion.desc}
-                              </p>
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="inline-flex items-center rounded-full bg-[#ffd8e6] px-2.5 py-1 text-[10px] md:text-xs font-semibold tracking-wide text-[#ff005e] uppercase">
+                                    {suggestion.tag}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm md:text-base font-semibold text-[#2f3a56]">
+                                  {suggestion.title}
+                                </h4>
+                                <p className="text-xs md:text-sm text-[#545454] mt-1.5">
+                                  {suggestion.desc}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex justify-end pt-1">
+                            <div className="flex justify-end pt-2">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -722,7 +777,7 @@ export default function ComoEstouHojePage() {
                                     suggestion.desc,
                                   )
                                 }
-                                className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-[#ff005e] transition-colors hover:text-[#ff005e]/85"
+                                className="text-[11px] md:text-xs font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
                               >
                                 Levar para o planner
                                 <AppIcon name="arrow-right" size={14} decorative />
@@ -735,8 +790,8 @@ export default function ComoEstouHojePage() {
                   </div>
                 </div>
               </div>
-            </section>
-          </Reveal>
+            </Reveal>
+          </section>
 
           <MotivationalFooter routeKey="meu-dia-como-estou-hoje" />
         </div>
