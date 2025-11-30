@@ -106,7 +106,19 @@ function mockGenerateInspiration(): Promise<Inspiration> {
 
 // ---------- IA de receitas com fallback suave ----------
 
-async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
+type RecipeAIParams = {
+  mainIngredient: string
+  mealType: string
+  prepTime: string
+  ageMonths: number | null
+}
+
+async function generateRecipesWithAI({
+  mainIngredient,
+  mealType,
+  prepTime,
+  ageMonths,
+}: RecipeAIParams): Promise<GeneratedRecipe[]> {
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -114,6 +126,10 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
       body: JSON.stringify({
         feature: 'recipes',
         origin: 'rotina-leve',
+        mainIngredient,
+        mealType,
+        prepTimeMinutes: prepTime,
+        ageMonths,
       }),
     })
 
@@ -185,6 +201,11 @@ export default function RotinaLevePage() {
   const [recipesLoading, setRecipesLoading] = useState(false)
   const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
+
+  // Campos da IA de receitas
+  const [mainIngredient, setMainIngredient] = useState('')
+  const [mealType, setMealType] = useState('Lanche')
+  const [prepTime, setPrepTime] = useState('10')
 
   // Plan limits for Receitas Inteligentes
   const DAILY_RECIPE_LIMIT = 3
@@ -326,9 +347,19 @@ export default function RotinaLevePage() {
       return
     }
 
+    if (!mainIngredient.trim()) {
+      toast.info('Conte pelo menos um ingrediente principal para eu te ajudar melhor 💗')
+      return
+    }
+
     setRecipesLoading(true)
     try {
-      const result = await generateRecipesWithAI()
+      const result = await generateRecipesWithAI({
+        mainIngredient: mainIngredient.trim(),
+        mealType,
+        prepTime,
+        ageMonths,
+      })
       setRecipes(result)
     } finally {
       setRecipesLoading(false)
@@ -394,7 +425,7 @@ export default function RotinaLevePage() {
               {/* HERO CARD: Receitas Inteligentes */}
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="space-y-6 flex flex-col">
-                  <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                  <div className="space-y-2 pb-2 md:pb-3">
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                       Receitas Inteligentes
                     </h3>
@@ -409,6 +440,8 @@ export default function RotinaLevePage() {
                       <input
                         type="text"
                         placeholder="Ex.: banana, aveia, frango..."
+                        value={mainIngredient}
+                        onChange={(e) => setMainIngredient(e.target.value)}
                         className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
                       />
                     </div>
@@ -416,21 +449,29 @@ export default function RotinaLevePage() {
                     <div className="flex gap-2">
                       <div className="flex-1 space-y-1">
                         <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
-                        <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
-                          <option>Lanche</option>
-                          <option>Almoço / Jantar</option>
-                          <option>Café da manhã</option>
-                          <option>Sobremesa leve</option>
+                        <select
+                          className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                          value={mealType}
+                          onChange={(e) => setMealType(e.target.value)}
+                        >
+                          <option value="Lanche">Lanche</option>
+                          <option value="Almoço / Jantar">Almoço / Jantar</option>
+                          <option value="Café da manhã">Café da manhã</option>
+                          <option value="Sobremesa leve">Sobremesa leve</option>
                         </select>
                       </div>
 
                       <div className="flex-1 space-y-1">
                         <p className="font-medium text-[#2f3a56]">Tempo de preparo</p>
-                        <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
-                          <option>10 min</option>
-                          <option>20 min</option>
-                          <option>30 min</option>
-                          <option>40+ min</option>
+                        <select
+                          className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                          value={prepTime}
+                          onChange={(e) => setPrepTime(e.target.value)}
+                        >
+                          <option value="10">10 min</option>
+                          <option value="20">20 min</option>
+                          <option value="30">30 min</option>
+                          <option value="40+">40+ min</option>
                         </select>
                       </div>
                     </div>
@@ -598,7 +639,7 @@ export default function RotinaLevePage() {
                 {/* Ideias Rápidas */}
                 <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                   <div className="space-y-6 flex flex-col h-full">
-                    <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <div className="space-y-2 pb-2 md:pb-3">
                       <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                         Ideias Rápidas
                       </h3>
@@ -866,7 +907,7 @@ export default function RotinaLevePage() {
                 {/* Inspirações do Dia */}
                 <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                   <div className="space-y-6 flex flex-col h-full">
-                    <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                    <div className="space-y-2 pb-2 md:pb-3">
                       <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                         Inspirações do Dia
                       </h3>
@@ -980,9 +1021,9 @@ export default function RotinaLevePage() {
                 ) : (
                   <p className="text-sm text-[#545454]">
                     Você já salvou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedRecipesCount} receita(s)
-                      </span>{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedRecipesCount} receita(s)
+                    </span>{' '}
                     e{' '}
                     <span className="font-semibold text-[#2f3a56]">
                       {savedInspirationCount} inspiração(ões)
