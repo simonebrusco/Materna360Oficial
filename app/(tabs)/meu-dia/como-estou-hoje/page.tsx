@@ -107,9 +107,7 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
     }
 
     return {
-      title:
-        inspiration.phrase ??
-        'Um olhar gentil para o seu dia',
+      title: inspiration.phrase ?? 'Um olhar gentil para o seu dia',
       body:
         inspiration.care ??
         'Pelos sinais que você tem dado, parece que o dia de hoje veio com uma mistura de cansaço e responsabilidade. Mesmo assim, você continua aparecendo para a sua família – isso já é enorme.',
@@ -303,7 +301,7 @@ export default function ComoEstouHojePage() {
     <PageTemplate
       label="MEU DIA"
       title="Como Estou Hoje"
-      subtitle="Entenda seu dia com clareza, leveza e acolhimento."
+      subtitle="Entenda seu dia com mais clareza, leveza e acolhimento."
     >
       <ClientOnly>
         <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-12 md:space-y-14">
@@ -326,7 +324,7 @@ export default function ComoEstouHojePage() {
                     Meu Humor & Minha Energia
                   </h3>
                   <p className="text-sm text-[#545454]">
-                    Registre como você se sente agora.
+                    Conte como você se sente agora. Um passo de cada vez já ajuda muito.
                   </p>
                 </div>
 
@@ -381,16 +379,16 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 2: Como foi meu dia? */}
+            {/* CARD 2: Como Foi Meu Dia? */}
             <Reveal delay={50}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="mb-6">
                   <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
                     <AppIcon name="pen" size={18} className="text-[#ff005e]" decorative />
-                    Como foi meu dia?
+                    Como Foi Meu Dia?
                   </h3>
                   <p className="text-sm text-[#545454]">
-                    Um olhar rápido sobre o que realmente importa.
+                    Um olhar rápido sobre o que realmente importou hoje.
                   </p>
                 </div>
 
@@ -510,7 +508,7 @@ export default function ComoEstouHojePage() {
                     Minha Semana Emocional
                   </h3>
                   <p className="text-sm text-[#545454]">
-                    Enxergue seus padrões emocionais com mais leveza.
+                    Veja seus padrões emocionais com mais leveza, sem julgamentos.
                   </p>
                 </div>
 
@@ -553,13 +551,13 @@ export default function ComoEstouHojePage() {
               </SoftCard>
             </Reveal>
 
-            {/* CARD 5: Sugestões para a Mãe */}
+            {/* CARD 5: Sugestões Pensadas Para Você Esta Semana */}
             <Reveal delay={200}>
               <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div className="mb-6">
                   <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] mb-2 flex items-center gap-2">
                     <AppIcon name="lightbulb" size={18} className="text-[#ff005e]" decorative />
-                    Sugestões pensadas para você esta semana
+                    Sugestões Pensadas Para Você Esta Semana
                   </h3>
                   <p className="text-sm text-[#545454]">
                     Pequenas ideias que fazem diferença no seu bem-estar.
