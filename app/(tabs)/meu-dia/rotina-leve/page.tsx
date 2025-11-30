@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import PageTemplate from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -107,19 +106,7 @@ function mockGenerateInspiration(): Promise<Inspiration> {
 
 // ---------- IA de receitas com fallback suave ----------
 
-type RecipeAIParams = {
-  mainIngredient: string
-  mealType: string
-  prepTime: string
-  ageMonths: number | null
-}
-
-async function generateRecipesWithAI({
-  mainIngredient,
-  mealType,
-  prepTime,
-  ageMonths,
-}: RecipeAIParams): Promise<GeneratedRecipe[]> {
+async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -127,10 +114,6 @@ async function generateRecipesWithAI({
       body: JSON.stringify({
         feature: 'recipes',
         origin: 'rotina-leve',
-        mainIngredient,
-        mealType,
-        prepTimeMinutes: prepTime,
-        ageMonths,
       }),
     })
 
@@ -194,27 +177,26 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
   }
 }
 
-export default function RotinaLevePage() {
-  const searchParams = useSearchParams()
+type RotinaLevePageProps = {
+  searchParams?: {
+    abrir?: string
+  }
+}
 
-  // Refs para navegação vinda do hub Maternar
-  const receitasRef = useRef<HTMLDivElement | null>(null)
-  const ideiasRef = useRef<HTMLDivElement | null>(null)
-  const inspiracoesRef = useRef<HTMLDivElement | null>(null)
-  const plannerResumoRef = useRef<HTMLDivElement | null>(null)
-
+export default function RotinaLevePage({ searchParams }: RotinaLevePageProps) {
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
+
+  // refs para scroll controlado vindo do hub
+  const recipesRef = useRef<HTMLDivElement | null>(null)
+  const ideasRef = useRef<HTMLDivElement | null>(null)
+  const inspirationsRef = useRef<HTMLDivElement | null>(null)
+  const plannerRef = useRef<HTMLDivElement | null>(null)
 
   // Receitas Inteligentes
   const [recipesLoading, setRecipesLoading] = useState(false)
   const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
-
-  // Campos da IA de receitas
-  const [mainIngredient, setMainIngredient] = useState('')
-  const [mealType, setMealType] = useState('Lanche')
-  const [prepTime, setPrepTime] = useState('10')
 
   // Plan limits for Receitas Inteligentes
   const DAILY_RECIPE_LIMIT = 3
@@ -236,15 +218,6 @@ export default function RotinaLevePage() {
   // Idade principal do filho (Eu360)
   const { ageMonths } = usePrimaryChildAge()
   const isBabyUnderSixMonths = ageMonths !== null && ageMonths < 6
-
-  const primaryAgeLabel =
-    ageMonths === null
-      ? null
-      : ageMonths < 12
-      ? `${ageMonths} ${ageMonths === 1 ? 'mês' : 'meses'}`
-      : `${Math.floor(ageMonths / 12)} ${
-          Math.floor(ageMonths / 12) === 1 ? 'ano' : 'anos'
-        }`
 
   const {
     suggestions: aiSuggestions,
@@ -281,41 +254,35 @@ export default function RotinaLevePage() {
     }
   }, [aiSuggestions])
 
-  // Scroll suave quando vier de um atalho do hub Maternar
+  // Scroll vindo do hub Maternar (?abrir=...)
   useEffect(() => {
-    const section = searchParams.get('abrir')
-    if (!section) return
+    const target = searchParams?.abrir
+    if (!target) return
 
-    const map: Record<
-      string,
-      React.RefObject<HTMLDivElement> | undefined
-    > = {
-      receitas: receitasRef,
-      ideias: ideiasRef,
-      inspiracoes: inspiracoesRef,
-      planejar: plannerResumoRef,
-    }
-
-    const targetRef = map[section]
-    if (!targetRef?.current) return
-
-    const offset = 120 // compensa header + respiro
-    const top =
-      targetRef.current.getBoundingClientRect().top + window.scrollY - offset
-
-    window.scrollTo({
-      top,
+    const options: ScrollIntoViewOptions = {
       behavior: 'smooth',
-    })
+      block: 'start',
+      inline: 'nearest',
+    }
 
-    // Se for ideias ou inspirações, já abre o conteúdo
-    if (section === 'ideias') {
+    if (target === 'receitas') {
+      recipesRef.current?.scrollIntoView(options)
+    }
+
+    if (target === 'ideias') {
       setOpenIdeas(true)
+      ideasRef.current?.scrollIntoView(options)
     }
-    if (section === 'inspiracoes') {
+
+    if (target === 'inspiracoes') {
       setOpenInspiration(true)
+      inspirationsRef.current?.scrollIntoView(options)
     }
-  }, [searchParams])
+
+    if (target === 'planejar') {
+      plannerRef.current?.scrollIntoView(options)
+    }
+  }, [searchParams?.abrir])
 
   const handleSaveIdeia = () => {
     try {
@@ -392,19 +359,9 @@ export default function RotinaLevePage() {
       return
     }
 
-    if (!mainIngredient.trim()) {
-      toast.info('Conte pelo menos um ingrediente principal para eu te ajudar melhor 💗')
-      return
-    }
-
     setRecipesLoading(true)
     try {
-      const result = await generateRecipesWithAI({
-        mainIngredient: mainIngredient.trim(),
-        mealType,
-        prepTime,
-        ageMonths,
-      })
+      const result = await generateRecipesWithAI()
       setRecipes(result)
     } finally {
       setRecipesLoading(false)
@@ -451,664 +408,638 @@ export default function RotinaLevePage() {
     >
       <ClientOnly>
         <div className="pt-6 pb-10 space-y-8">
-          {/* BLOCO PRINCIPAL DE VIDRO: Receitas + Ideias + Inspirações */}
-          <div
-            className={clsx(
-              'relative overflow-hidden rounded-[32px]',
-              'border border-white/70 bg-white/10',
-              'backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.16)]',
-              'px-4 py-5 md:px-6 md:py-7 space-y-6'
-            )}
-          >
-            {/* Glows suaves de fundo */}
-            <div className="pointer-events-none absolute inset-0 opacity-80">
-              <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-              <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
-            </div>
+          <div className="space-y-6">
+            {/* HERO CARD: Receitas Inteligentes */}
+            <SoftCard
+              ref={recipesRef}
+              className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+            >
+              <div className="space-y-6 flex flex-col">
+                <div className="space-y-1 pb-2">
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Receitas Inteligentes
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Você diz o ingrediente, eu te ajudo com o resto.
+                  </p>
+                </div>
 
-            <div className="relative z-10 space-y-6">
-              {/* Receitas Inteligentes */}
-              <div ref={receitasRef}>
-                <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                  <div className="space-y-6 flex flex-col">
-                    <div className="space-y-2 pb-2 md:pb-3">
-                      <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                        Receitas Inteligentes
-                      </h3>
-                      <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                        Você diz o ingrediente, eu te ajudo com o resto.
-                      </p>
+                <div className="space-y-3 text-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium text-[#2f3a56]">Ingrediente principal</p>
+                    <input
+                      type="text"
+                      placeholder="Ex.: banana, aveia, frango..."
+                      className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="flex-1 space-y-1">
+                      <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
+                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                        <option>Lanche</option>
+                        <option>Almoço / Jantar</option>
+                        <option>Café da manhã</option>
+                        <option>Sobremesa leve</option>
+                      </select>
                     </div>
 
-                    <div className="space-y-3 text-xs">
-                      <div className="space-y-1">
-                        <p className="font-medium text-[#2f3a56]">Ingrediente principal</p>
-                        <input
-                          type="text"
-                          placeholder="Ex.: banana, aveia, frango..."
-                          value={mainIngredient}
-                          onChange={(e) => setMainIngredient(e.target.value)}
-                          className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                        />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <div className="flex-1 space-y-1">
-                          <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
-                          <select
-                            className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                            value={mealType}
-                            onChange={(e) => setMealType(e.target.value)}
-                          >
-                            <option value="Lanche">Lanche</option>
-                            <option value="Almoço / Jantar">Almoço / Jantar</option>
-                            <option value="Café da manhã">Café da manhã</option>
-                            <option value="Sobremesa leve">Sobremesa leve</option>
-                          </select>
-                        </div>
-
-                        <div className="flex-1 space-y-1">
-                          <p className="font-medium text-[#2f3a56]">Tempo de preparo</p>
-                          <select
-                            className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                            value={prepTime}
-                            onChange={(e) => setPrepTime(e.target.value)}
-                          >
-                            <option value="10">10 min</option>
-                            <option value="20">20 min</option>
-                            <option value="30">30 min</option>
-                            <option value="40+">40+ min</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {primaryAgeLabel &&
-                        <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#ff005e]">
-                          <span>Idade principal: {primaryAgeLabel}</span>
-                        </div>
-                      }
-                    </div>
-
-                    <p className="text-[11px] text-[#545454]">
-                      Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
-                      sempre a orientação do pediatra.
-                    </p>
-
-                    <div className="space-y-2">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleGenerateRecipes}
-                        disabled={recipesLoading || isBabyUnderSixMonths}
-                        className="w-full"
-                      >
-                        {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
-                      </Button>
-
-                      <p className="text-[11px] text-[#545454]">
-                        Hoje você já usou{' '}
-                        <span className="font-semibold text-[#2f3a56]">
-                          {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
-                        </span>{' '}
-                        sugestões do seu plano.
-                      </p>
-
-                      {isOverLimit && (
-                        <p className="text-[11px] text-[#ff005e] font-medium">
-                          Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã
-                          tem mais 💗
-                        </p>
-                      )}
-
-                      {isBabyUnderSixMonths && (
-                        <p className="text-[11px] text-[#ff005e] font-medium">
-                          Como o seu bebê tem menos de 6 meses, o foco agora é o aleitamento materno
-                          exclusivo. As receitinhas serão liberadas mais pra frente, sempre
-                          respeitando a orientação do pediatra.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      {recipesLoading && (
-                        <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                          <p className="text-[11px] text-[#545454]">
-                            Estou pensando nas melhores opções pra hoje…
-                          </p>
-                        </div>
-                      )}
-
-                      {!recipesLoading && hasRecipes && !isBabyUnderSixMonths && (
-                        <>
-                          <p className="text-xs font-medium text-[#2f3a56]">
-                            Sugestões de hoje (até 3)
-                          </p>
-                          <div className="space-y-3">
-                            {recipes!.slice(0, 3).map((recipe) => {
-                              const canSave = hasRecipes && !isOverLimit
-
-                              return (
-                                <div
-                                  key={recipe.id}
-                                  className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
-                                >
-                                  <div
-                                    className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
-                                    onClick={() =>
-                                      setExpandedRecipeId(
-                                        expandedRecipeId === recipe.id ? null : recipe.id
-                                      )
-                                    }
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex-1">
-                                        <h4 className="text-sm font-semibold text-[#2f3a56]">
-                                          {recipe.title}
-                                        </h4>
-                                        <p className="text-xs text-[#545454] mt-1 line-clamp-2">
-                                          {recipe.description}
-                                        </p>
-                                        <p className="text-[10px] text-[#545454] mt-1.5">
-                                          {recipe.timeLabel} · {recipe.ageLabel}
-                                        </p>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          setExpandedRecipeId(
-                                            expandedRecipeId === recipe.id ? null : recipe.id
-                                          )
-                                        }}
-                                        className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
-                                      >
-                                        {expandedRecipeId === recipe.id
-                                          ? 'Ver menos ↑'
-                                          : 'Ver detalhes →'}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {expandedRecipeId === recipe.id && (
-                                    <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
-                                      <div>
-                                        <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
-                                          Modo de preparo
-                                        </h5>
-                                        <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
-                                          {recipe.preparation}
-                                        </p>
-                                      </div>
-
-                                      <p className="text-[10px] text-[#545454] italic">
-                                        Lembre-se: adapte sempre às orientações do pediatra.
-                                      </p>
-
-                                      <Button
-                                        variant="primary"
-                                        size="sm"
-                                        onClick={() => handleSaveRecipe(recipe)}
-                                        disabled={!canSave}
-                                        className="w-full"
-                                      >
-                                        Salvar esta receita no planner
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
-                          <p className="text-[11px] text-[#545454] mt-2">
-                            Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
-                            planner.
-                          </p>
-                        </>
-                      )}
-
-                      {!recipesLoading &&
-                        (!recipes || recipes.length === 0) &&
-                        !isBabyUnderSixMonths && (
-                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                            <p className="text-[11px] text-[#545454]">
-                              Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas
-                              à idade do seu filho.
-                            </p>
-                          </div>
-                        )}
+                    <div className="flex-1 space-y-1">
+                      <p className="font-medium text-[#2f3a56]">Tempo de preparo</p>
+                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
+                        <option>10 min</option>
+                        <option>20 min</option>
+                        <option>30 min</option>
+                        <option>40+ min</option>
+                      </select>
                     </div>
                   </div>
-                </SoftCard>
-              </div>
 
-              {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* Ideias Rápidas */}
-                <div ref={ideiasRef}>
-                  <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-2 pb-2 md:pb-3">
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                          Ideias Rápidas
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Inspirações simples para deixar o dia mais leve.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setOpenIdeas((prev) => !prev)}
-                        className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
-                      >
-                        {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
-                      </button>
-
-                      {openIdeas && (
-                        <div className="space-y-3 text-xs flex-1">
-                          <div>
-                            <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTempoDisponivel((current) => (current === '5' ? null : '5'))
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tempoDisponivel === '5'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                5 min
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTempoDisponivel((current) => (current === '10' ? null : '10'))
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tempoDisponivel === '10'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                10 min
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTempoDisponivel((current) => (current === '20' ? null : '20'))
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tempoDisponivel === '20'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                20 min
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTempoDisponivel((current) =>
-                                    current === '30+' ? null : '30+'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tempoDisponivel === '30+'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                30+
-                              </button>
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  comQuem === 'so-eu'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Só eu
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setComQuem((current) =>
-                                    current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  comQuem === 'eu-e-meu-filho'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Eu e meu filho
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setComQuem((current) =>
-                                    current === 'familia-toda' ? null : 'familia-toda'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  comQuem === 'familia-toda'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Família toda
-                              </button>
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="mb-1 font-medium text-[#2f3a56]">Tipo de ideia</p>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTipoIdeia((current) =>
-                                    current === 'brincadeira' ? null : 'brincadeira'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tipoIdeia === 'brincadeira'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Brincadeira
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTipoIdeia((current) =>
-                                    current === 'organizacao' ? null : 'organizacao'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tipoIdeia === 'organizacao'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Organização da casa
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTipoIdeia((current) =>
-                                    current === 'autocuidado' ? null : 'autocuidado'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tipoIdeia === 'autocuidado'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Autocuidado
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTipoIdeia((current) =>
-                                    current === 'receita-rapida' ? null : 'receita-rapida'
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                                  tipoIdeia === 'receita-rapida'
-                                    ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                    : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
-                                )}
-                              >
-                                Receita rápida
-                              </button>
-                            </div>
-                          </div>
-
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleGenerateIdeas}
-                            disabled={ideasLoading}
-                            className="w-full"
-                          >
-                            {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
-                          </Button>
-
-                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                            <p className="text-xs font-medium text-[#2f3a56] mb-2">
-                              Sugestões para agora
-                            </p>
-
-                            {ideasLoading && (
-                              <p className="text-[11px] text-[#545454]">
-                                Pensando em pequenas ações que cabem no seu momento…
-                              </p>
-                            )}
-
-                            {!ideasLoading && ideas && (
-                              <ul className="space-y-2 text-xs text-[#545454]">
-                                {ideas.map((idea) => (
-                                  <li key={idea.id}>• {idea.text}</li>
-                                ))}
-                              </ul>
-                            )}
-
-                            {!ideasLoading && !ideas && (
-                              <ul className="space-y-2 text-xs text-[#545454]">
-                                <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                                <li>
-                                  • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
-                                </li>
-                                <li>
-                                  • Ritual rápido: uma respiração profunda juntas antes de recomeçar.
-                                </li>
-                              </ul>
-                            )}
-
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={handleSaveIdeia}
-                              className="w-full mt-3"
-                            >
-                              Salvar no planner
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </SoftCard>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#ff005e]">
+                    <span>Idade principal: 2 anos</span>
+                  </div>
                 </div>
 
-                {/* Inspirações do Dia */}
-                <div ref={inspiracoesRef}>
-                  <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-2 pb-2 md:pb-3">
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                          Inspirações do Dia
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Uma frase e um pequeno cuidado para hoje.
-                        </p>
-                      </div>
+                <p className="text-[11px] text-[#545454]">
+                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
+                  sempre a orientação do pediatra.
+                </p>
 
-                      <button
-                        type="button"
-                        onClick={() => setOpenInspiration((prev) => !prev)}
-                        className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
-                      >
-                        {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
-                      </button>
+                <div className="space-y-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleGenerateRecipes}
+                    disabled={recipesLoading || isBabyUnderSixMonths}
+                    className="w-full"
+                  >
+                    {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
+                  </Button>
 
-                      {openInspiration && (
-                        <div className="text-xs space-y-3 flex-1">
-                          <div className="space-y-1">
-                            <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
-                            <select
-                              className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                              value={focusOfDay}
-                              onChange={(e) => setFocusOfDay(e.target.value)}
-                            >
-                              <option>Cansaço</option>
-                              <option>Culpa</option>
-                              <option>Organização</option>
-                              <option>Conexão com o filho</option>
-                            </select>
-                          </div>
-
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleGenerateInspiration}
-                            disabled={inspirationLoading}
-                            className="w-full"
-                          >
-                            {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
-                          </Button>
-
-                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
-                            {inspirationLoading && (
-                              <p className="text-[11px]">
-                                Pensando em uma frase e um cuidado especial para hoje…
-                              </p>
-                            )}
-
-                            {!inspirationLoading && (
-                              <>
-                                <div>
-                                  <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
-                                    Frase de hoje
-                                  </p>
-                                  <p>
-                                    {(inspiration && inspiration.phrase) ||
-                                      'Você não precisa dar conta de tudo hoje.'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
-                                    Pequeno cuidado
-                                  </p>
-                                  <p>
-                                    {(inspiration && inspiration.care) ||
-                                      '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
-                                    Mini ritual
-                                  </p>
-                                  <p>
-                                    {(inspiration && inspiration.ritual) ||
-                                      'Envie uma mensagem carinhosa para alguém que te apoia.'}
-                                  </p>
-                                </div>
-                              </>
-                            )}
-
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={handleSaveInspiracao}
-                              className="w-full mt-2"
-                            >
-                              Salvar inspiração no planner
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </SoftCard>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Resumo rápido do que já foi salvo no Planner */}
-          <div ref={plannerResumoRef}>
-            <SoftCard className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                    Seu resumo na Rotina Leve
+                  <p className="text-[11px] text-[#545454]">
+                    Hoje você já usou{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
+                    </span>{' '}
+                    sugestões do seu plano.
                   </p>
-                  {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
-                    <p className="text-sm text-[#545454]">
-                      Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
-                      resumo rápido do que já está no seu planner.
+
+                  {isOverLimit && (
+                    <p className="text-[11px] text-[#ff005e] font-medium">
+                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
+                      mais 💗
                     </p>
-                  ) : (
-                    <p className="text-sm text-[#545454]">
-                      Você já salvou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedRecipesCount} receita(s)
-                      </span>{' '}
-                      e{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedInspirationCount} inspiração(ões)
-                      </span>{' '}
-                      deste mini-hub no seu planner.
+                  )}
+
+                  {isBabyUnderSixMonths && (
+                    <p className="text-[11px] text-[#ff005e] font-medium">
+                      Como o seu bebê tem menos de 6 meses, o foco agora é o aleitamento materno
+                      exclusivo. As receitinhas serão liberadas mais pra frente, sempre respeitando
+                      a orientação do pediatra.
                     </p>
                   )}
                 </div>
 
-                {lastInspiration && (
-                  <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
-                    <p className="text-[11px] font-semibold text-[#2f3a56] uppercase tracking-wide">
-                      Última inspiração salva
-                    </p>
-                    {lastInspiration.payload?.frase && (
-                      <p className="text-xs text-[#545454]">
-                        <span className="font-medium">Frase: </span>
-                        {lastInspiration.payload.frase}
+                <div className="space-y-3">
+                  {recipesLoading && (
+                    <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
+                      <p className="text-[11px] text-[#545454]">
+                        Estou pensando nas melhores opções pra hoje…
                       </p>
-                    )}
-                    {lastInspiration.payload?.pequenoCuidado && (
-                      <p className="text-xs text-[#545454]">
-                        <span className="font-medium">Cuidado: </span>
-                        {lastInspiration.payload.pequenoCuidado}
+                    </div>
+                  )}
+
+                  {!recipesLoading && hasRecipes && !isBabyUnderSixMonths && (
+                    <>
+                      <p className="text-xs font-medium text-[#2f3a56]">
+                        Sugestões de hoje (até 3)
                       </p>
+                      <div className="space-y-3">
+                        {recipes!.slice(0, 3).map((recipe) => {
+                          const canSave = hasRecipes && !isOverLimit
+
+                          return (
+                            <div
+                              key={recipe.id}
+                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                            >
+                              <div
+                                className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
+                                onClick={() =>
+                                  setExpandedRecipeId(
+                                    expandedRecipeId === recipe.id ? null : recipe.id
+                                  )
+                                }
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1">
+                                    <h4 className="text-sm font-semibold text-[#2f3a56]">
+                                      {recipe.title}
+                                    </h4>
+                                    <p className="text-xs text-[#545454] mt-1 line-clamp-2">
+                                      {recipe.description}
+                                    </p>
+                                    <p className="text-[10px] text-[#545454] mt-1.5">
+                                      {recipe.timeLabel} · {recipe.ageLabel}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setExpandedRecipeId(
+                                        expandedRecipeId === recipe.id ? null : recipe.id
+                                      )
+                                    }}
+                                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                                  >
+                                    {expandedRecipeId === recipe.id
+                                      ? 'Ver menos ↑'
+                                      : 'Ver detalhes →'}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {expandedRecipeId === recipe.id && (
+                                <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
+                                  <div>
+                                    <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
+                                      Modo de preparo
+                                    </h5>
+                                    <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
+                                      {recipe.preparation}
+                                    </p>
+                                  </div>
+
+                                  <p className="text-[10px] text-[#545454] italic">
+                                    Lembre-se: adapte sempre às orientações do pediatra.
+                                  </p>
+
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleSaveRecipe(recipe)}
+                                    disabled={!canSave}
+                                    className="w-full"
+                                  >
+                                    Salvar esta receita no planner
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <p className="text-[11px] text-[#545454] mt-2">
+                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
+                        planner.
+                      </p>
+                    </>
+                  )}
+
+                  {!recipesLoading &&
+                    (!recipes || recipes.length === 0) &&
+                    !isBabyUnderSixMonths && (
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
+                        <p className="text-[11px] text-[#545454]">
+                          Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
+                          idade do seu filho.
+                        </p>
+                      </div>
                     )}
-                  </div>
-                )}
+                </div>
               </div>
             </SoftCard>
+
+            {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Ideias Rápidas */}
+              <SoftCard
+                ref={ideasRef}
+                className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+              >
+                <div className="space-y-6 flex flex-col h-full">
+                  <div className="space-y-1 pb-2">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                      Ideias Rápidas
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Inspirações simples para deixar o dia mais leve.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenIdeas((prev) => !prev)}
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
+                  >
+                    {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
+                  </button>
+
+                  {openIdeas && (
+                    <div className="space-y-3 text-xs flex-1">
+                      <div>
+                        <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '5' ? null : '5'))
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '5'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            5 min
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '10' ? null : '10'))
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '10'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            10 min
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '20' ? null : '20'))
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '20'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            20 min
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tempoDisponivel === '30+'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            30+
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              comQuem === 'so-eu'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Só eu
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) =>
+                                current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho'
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              comQuem === 'eu-e-meu-filho'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Eu e meu filho
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComQuem((current) =>
+                                current === 'familia-toda' ? null : 'familia-toda'
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              comQuem === 'familia-toda'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Família toda
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="mb-1 font-medium text-[#2f3a56]">Tipo de ideia</p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'brincadeira' ? null : 'brincadeira'
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'brincadeira'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Brincadeira
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'organizacao' ? null : 'organizacao'
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'organizacao'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Organização da casa
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'autocuidado' ? null : 'autocuidado'
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'autocuidado'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Autocuidado
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTipoIdeia((current) =>
+                                current === 'receita-rapida' ? null : 'receita-rapida'
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                              tipoIdeia === 'receita-rapida'
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                            )}
+                          >
+                            Receita rápida
+                          </button>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateIdeas}
+                        disabled={ideasLoading}
+                        className="w-full"
+                      >
+                        {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
+                      </Button>
+
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
+                        <p className="text-xs font-medium text-[#2f3a56] mb-2">
+                          Sugestões para agora
+                        </p>
+
+                        {ideasLoading && (
+                          <p className="text-[11px] text-[#545454]">
+                            Pensando em pequenas ações que cabem no seu momento…
+                          </p>
+                        )}
+
+                        {!ideasLoading && ideas && (
+                          <ul className="space-y-2 text-xs text-[#545454]">
+                            {ideas.map((idea) => (
+                              <li key={idea.id}>• {idea.text}</li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {!ideasLoading && !ideas && (
+                          <ul className="space-y-2 text-xs text-[#545454]">
+                            <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                            <li>
+                              • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
+                            </li>
+                            <li>
+                              • Ritual rápido: uma respiração profunda juntas antes de recomeçar.
+                            </li>
+                          </ul>
+                        )}
+
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSaveIdeia}
+                          className="w-full mt-3"
+                        >
+                          Salvar no planner
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SoftCard>
+
+              {/* Inspirações do Dia */}
+              <SoftCard
+                ref={inspirationsRef}
+                className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+              >
+                <div className="space-y-6 flex flex-col h-full">
+                  <div className="space-y-1 pb-2">
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                      Inspirações do Dia
+                    </h3>
+                    <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                      Uma frase e um pequeno cuidado para hoje.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOpenInspiration((prev) => !prev)}
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
+                  >
+                    {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
+                  </button>
+
+                  {openInspiration && (
+                    <div className="text-xs space-y-3 flex-1">
+                      <div className="space-y-1">
+                        <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
+                        <select
+                          className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                          value={focusOfDay}
+                          onChange={(e) => setFocusOfDay(e.target.value)}
+                        >
+                          <option>Cansaço</option>
+                          <option>Culpa</option>
+                          <option>Organização</option>
+                          <option>Conexão com o filho</option>
+                        </select>
+                      </div>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateInspiration}
+                        disabled={inspirationLoading}
+                        className="w-full"
+                      >
+                        {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
+                      </Button>
+
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
+                        {inspirationLoading && (
+                          <p className="text-[11px]">
+                            Pensando em uma frase e um cuidado especial para hoje…
+                          </p>
+                        )}
+
+                        {!inspirationLoading && (
+                          <>
+                            <div>
+                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                                Frase de hoje
+                              </p>
+                              <p>
+                                {(inspiration && inspiration.phrase) ||
+                                  'Você não precisa dar conta de tudo hoje.'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                                Pequeno cuidado
+                              </p>
+                              <p>
+                                {(inspiration && inspiration.care) ||
+                                  '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                                Mini ritual
+                              </p>
+                              <p>
+                                {(inspiration && inspiration.ritual) ||
+                                  'Envie uma mensagem carinhosa para alguém que te apoia.'}
+                              </p>
+                            </div>
+                          </>
+                        )}
+
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSaveInspiracao}
+                          className="w-full mt-2"
+                        >
+                          Salvar inspiração no planner
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SoftCard>
+            </div>
           </div>
+
+          {/* Resumo rápido do que já foi salvo no Planner */}
+          <SoftCard
+            ref={plannerRef}
+            className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]"
+          >
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                  Seu resumo na Rotina Leve
+                </p>
+                {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
+                  <p className="text-sm text-[#545454]">
+                    Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
+                    resumo rápido do que já está no seu planner.
+                  </p>
+                ) : (
+                  <p className="text-sm text-[#545454]">
+                    Você já salvou{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedRecipesCount} receita(s)
+                    </span>{' '}
+                    e{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedInspirationCount} inspiração(ões)
+                    </span>{' '}
+                    deste mini-hub no seu planner.
+                  </p>
+                )}
+              </div>
+
+              {lastInspiration && (
+                <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
+                  <p className="text-[11px] font-semibold text-[#2f3a56] uppercase tracking-wide">
+                    Última inspiração salva
+                  </p>
+                  {lastInspiration.payload?.frase && (
+                    <p className="text-xs text-[#545454]">
+                      <span className="font-medium">Frase: </span>
+                      {lastInspiration.payload.frase}
+                    </p>
+                  )}
+                  {lastInspiration.payload?.pequenoCuidado && (
+                    <p className="text-xs text-[#545454]">
+                      <span className="font-medium">Cuidado: </span>
+                      {lastInspiration.payload.pequenoCuidado}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </SoftCard>
 
           <MotivationalFooter routeKey="meu-dia-rotina-leve" />
         </div>
