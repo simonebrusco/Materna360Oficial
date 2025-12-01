@@ -157,14 +157,13 @@ export default function ComoEstouHojePage(props: {
   // Query param para abrir bloco direto do hub
   const [sectionToOpen, setSectionToOpen] = useState<string | null>(null)
 
-  // Refs para scroll suave (marcador lógico)
+  // marcador lógico para o scroll
   const [refsReady, setRefsReady] = useState(false)
   const humorSectionId = 'sec-humor'
   const notesSectionId = 'sec-notas'
   const resumoSectionId = 'sec-resumo'
   const semanaSectionId = 'sec-semana'
 
-  // Marcar como hidratado
   useEffect(() => {
     setIsHydrated(true)
   }, [])
@@ -289,7 +288,7 @@ export default function ComoEstouHojePage(props: {
 
       // Pontos por registrar humor
       try {
-        void updateXP(10, { source: 'como-estou-hoje', reason: 'mood' })
+        void updateXP(10)
       } catch (e) {
         console.error(
           '[Como Estou Hoje] Erro ao atualizar XP de humor:',
@@ -315,7 +314,7 @@ export default function ComoEstouHojePage(props: {
 
       // Pontos por registrar energia
       try {
-        void updateXP(8, { source: 'como-estou-hoje', reason: 'energy' })
+        void updateXP(8)
       } catch (e) {
         console.error(
           '[Como Estou Hoje] Erro ao atualizar XP de energia:',
@@ -350,7 +349,7 @@ export default function ComoEstouHojePage(props: {
 
     // Pontos por registrar notas do dia
     try {
-      void updateXP(12, { source: 'como-estou-hoje', reason: 'notes' })
+      void updateXP(12)
     } catch (e) {
       console.error(
         '[Como Estou Hoje] Erro ao atualizar XP das notas do dia:',
@@ -388,10 +387,7 @@ export default function ComoEstouHojePage(props: {
 
     // Pontos por levar insight para o planner
     try {
-      void updateXP(15, {
-        source: 'como-estou-hoje',
-        reason: 'daily_insight',
-      })
+      void updateXP(15)
     } catch (e) {
       console.error(
         '[Como Estou Hoje] Erro ao atualizar XP do insight do dia:',
@@ -424,10 +420,7 @@ export default function ComoEstouHojePage(props: {
 
     // Pontos por levar sugestão semanal para o planner
     try {
-      void updateXP(10, {
-        source: 'como-estou-hoje',
-        reason: 'weekly_suggestion',
-      })
+      void updateXP(10)
     } catch (e) {
       console.error(
         '[Como Estou Hoje] Erro ao atualizar XP da sugestão semanal:',
