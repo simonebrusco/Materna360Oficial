@@ -280,6 +280,10 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
       })
       setCurrentSuggestion(data)
+    } catch (error) {
+      console.error('[Cuidar com Amor] Erro ao buscar sugestão:', error)
+      toast.danger('Não conseguimos trazer as ideias agora. Tente novamente em alguns instantes.')
+      setCurrentSuggestion(null)
     } finally {
       setSuggestionLoading(false)
     }
@@ -295,6 +299,53 @@ export default function CuidarComAmorPage() {
         return 'Ideias suaves para o vínculo de hoje'
       default:
         return 'Ideias de cuidado para hoje'
+    }
+  }
+
+  const suggestionPlannerTitle = (feature: CuidarComAmorFeature | null) => {
+    switch (feature) {
+      case 'alimentacao':
+        return 'Ideias de cuidado na alimentação'
+      case 'sono':
+        return 'Ideias de cuidado para o sono'
+      case 'conexao':
+        return 'Ideias de cuidado para o vínculo'
+      default:
+        return 'Ideias de cuidado para hoje'
+    }
+  }
+
+  const handleSaveSuggestionToPlanner = async () => {
+    if (!currentSuggestion || !currentFeature) {
+      toast.info('Escolha um foco e carregue as ideias antes de salvar.')
+      return
+    }
+
+    try {
+      await addItem({
+        origin: 'cuidar-com-amor',
+        type: 'insight',
+        title: suggestionPlannerTitle(currentFeature),
+        payload: {
+          foco: currentFeature,
+          descricao: currentSuggestion.description,
+          dicas: currentSuggestion.tips,
+          observacao: currentSuggestion.disclaimer,
+          dateKey: currentDateKey,
+        },
+      })
+
+      try {
+        track('care_suggestion_saved', {
+          origin: 'cuidar-com-amor',
+          feature: currentFeature,
+        })
+      } catch {}
+
+      toast.success('Essas ideias foram salvas no seu planner.')
+    } catch (error) {
+      console.error('[Cuidar com Amor] Erro ao salvar sugestão no planner:', error)
+      toast.danger('Não foi possível salvar agora. Tente novamente em alguns instantes.')
     }
   }
 
@@ -512,7 +563,7 @@ export default function CuidarComAmorPage() {
 
           {/* SEÇÃO 2 — CUIDADOS & VÍNCULO */}
           <Reveal>
-            <section className="rounded-[40px] md:rounded-[44px] border border白/35 bg-white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
+            <section className="rounded-[40px] md:rounded-[44px] border border-white/35 bg-white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
               <div className="space-y-6 md:space-y-7">
                 <div className="space-y-2">
                   <span className="inline-flex items-center rounded-full bg-white/16 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/80">
@@ -546,7 +597,7 @@ export default function CuidarComAmorPage() {
                   {/* CUIDADOS DO DIA */}
                   <div ref={cuidadosBlockRef}>
                     <SoftCard
-                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg白 border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
+                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg-white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
                         highlightTarget === 'alimentacao'
                           ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                           : 'border-[#ffd8e6]'
@@ -609,7 +660,7 @@ export default function CuidarComAmorPage() {
                     {/* PARA FORTALECER O VÍNCULO */}
                     <div ref={rituaisBlockRef}>
                       <SoftCard
-                        className={`rounded-[28px] p-5 md:p-6 bg白 border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-[28px] p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
                           highlightTarget === 'rituais'
                             ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                             : 'border-[#ffd8e6]'
@@ -759,7 +810,7 @@ export default function CuidarComAmorPage() {
                           </Button>
                         </div>
 
-                        <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-2">
+                        <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-3">
                           {suggestionLoading && (
                             <p className="text-xs text-[#545454]">
                               Estamos preparando algumas ideias para você…
@@ -768,13 +819,15 @@ export default function CuidarComAmorPage() {
 
                           {!suggestionLoading && currentSuggestion && (
                             <>
-                              <p className="text-sm font-semibold text-[#2f3a56]">
-                                {suggestionTitle(currentFeature)}
-                              </p>
-                              <p className="text-xs text-[#545454]">
-                                {currentSuggestion.description}
-                              </p>
-                              <ul className="mt-2 space-y-1.5">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-[#2f3a56]">
+                                  {suggestionTitle(currentFeature)}
+                                </p>
+                                <p className="text-xs text-[#545454]">
+                                  {currentSuggestion.description}
+                                </p>
+                              </div>
+                              <ul className="space-y-1.5">
                                 {currentSuggestion.tips.map((tip, idx) => (
                                   <li
                                     key={`${idx}-${tip.slice(0, 10)}`}
@@ -786,10 +839,22 @@ export default function CuidarComAmorPage() {
                                 ))}
                               </ul>
                               {currentSuggestion.disclaimer && (
-                                <p className="mt-2 text-[11px] text-[#545454]/80">
+                                <p className="text-[11px] text-[#545454]/80">
                                   {currentSuggestion.disclaimer}
                                 </p>
                               )}
+
+                              <div className="pt-1">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleSaveSuggestionToPlanner}
+                                  className="w-full text-xs"
+                                >
+                                  Salvar essas ideias no planner
+                                </Button>
+                              </div>
                             </>
                           )}
 
