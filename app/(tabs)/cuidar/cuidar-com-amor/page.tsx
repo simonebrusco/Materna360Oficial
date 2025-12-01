@@ -228,7 +228,7 @@ export default function CuidarComAmorPage() {
                   {/* CARD — Sinais do Dia */}
                   <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                      <div className="space-y-3 pb-1 md:pb-2">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon name="smile" size={18} className="text-[#ff005e]" decorative />
                           Sinais do Dia
@@ -293,7 +293,7 @@ export default function CuidarComAmorPage() {
                   {/* CARD — Cuidado Emocional por Idade */}
                   <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                      <div className="space-y-3 pb-1 md:pb-2">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon name="heart" size={18} className="text-[#ff005e]" decorative />
                           Cuidado Emocional por Idade
@@ -359,9 +359,14 @@ export default function CuidarComAmorPage() {
                   {/* CARD — Cuidados do Dia */}
                   <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                      <div className="space-y-3 pb-1 md:pb-2">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon name="check-circle" size={18} className="text-[#ff005e]" decorative />
+                          <AppIcon
+                            name="check-circle"
+                            size={18}
+                            className="text-[#ff005e]"
+                            decorative
+                          />
                           Cuidados do Dia
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
@@ -407,9 +412,14 @@ export default function CuidarComAmorPage() {
                   {/* CARD — Para Fortalecer o Vínculo */}
                   <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
+                      <div className="space-y-3 pb-1 md:pb-2">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon name="heart-handshake" size={18} className="text-[#ff005e]" decorative />
+                          <AppIcon
+                            name="heart-handshake"
+                            size={18}
+                            className="text-[#ff005e]"
+                            decorative
+                          />
                           Para Fortalecer o Vínculo
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
