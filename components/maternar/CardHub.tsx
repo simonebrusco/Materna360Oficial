@@ -154,7 +154,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'pequenos-rituais',
         href: '/cuidar/cuidar-com-amor?abrir=rituais',
         icon: 'star',
-        label: 'Pequenos rituais',
+        label: 'Pequenos rituaIs',
       },
     ],
   },
@@ -238,10 +238,10 @@ const HUB_CARDS: HubCard[] = [
         label: 'Mentorias',
       },
       {
-        id: 'aulas-encontros',
-        href: '/maternar', // futura rota
-        icon: 'play',
-        label: 'Aulas & encontros',
+        id: 'maternabox',
+        href: '/maternar/materna-plus/maternabox', // NOVA LANDING PAGE
+        icon: 'star', // destaque para o produto MaternaBox
+        label: 'MaternaBox',
       },
       {
         id: 'comunidade',
