@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { clsx } from 'clsx'
 
@@ -12,6 +12,7 @@ import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
+import { getXpSnapshot, updateXP, type XpSnapshot } from '@/app/lib/xp'
 
 // ===== TYPES & CONSTANTS =====
 
@@ -58,20 +59,68 @@ export default function MinhasConquistasPage() {
     INITIAL_MISSIONS.map((m) => ({ ...m, done: false }))
   )
 
+  const [xp, setXp] = useState<XpSnapshot | null>(null)
+
+  // Carrega XP salvo ao abrir a página
+  useEffect(() => {
+    try {
+      const snapshot = getXpSnapshot()
+      setXp(snapshot)
+    } catch (error) {
+      console.error('[MinhasConquistas] Erro ao carregar XP inicial:', error)
+      setXp({ today: 0, total: 0, streak: 0 })
+    }
+  }, [])
+
   const completedMissions = missions.filter((m) => m.done).length
 
   const handleMissionToggle = (id: string) => {
+    const mission = missions.find((m) => m.id === id)
+    if (!mission) return
+
+    const wasDone = !!mission.done
+    const delta = wasDone ? -mission.xp : mission.xp
+
+    // Atualiza missões visualmente
     setMissions((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, done: !item.done } : item
       )
     )
+
+    // Atualiza XP com fallback seguro (sempre mexe nos números)
+    setXp((prev) => {
+      const base: XpSnapshot = prev ?? { today: 0, total: 0, streak: 0 }
+
+      // Fallback calculado no estado local
+      const fallback: XpSnapshot = {
+        today: Math.max(0, base.today + delta),
+        total: Math.max(0, base.total + delta),
+        // streak: mantém o que já existe; uma lógica mais fina pode ser feita depois
+        streak: base.streak || (delta > 0 ? 1 : 0),
+      }
+
+      try {
+        const fromStore = updateXP(delta)
+        return fromStore
+      } catch (error) {
+        console.error('[MinhasConquistas] Erro ao atualizar XP global, usando fallback local:', error)
+        return fallback
+      }
+    })
   }
 
   const highlightRing = (target: HighlightTarget) =>
     highlightFromQuery === target
       ? 'ring-2 ring-[#ff005e] ring-offset-2 ring-offset-pink-100/60'
       : ''
+
+  const todayXp = xp?.today ?? 0
+  const totalXp = xp?.total ?? 0
+  const streak = xp?.streak ?? 0
+
+  const xpProgressPercent =
+    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100) // 400 é só um exemplo de meta diária
 
   return (
     <PageTemplate
@@ -116,7 +165,7 @@ export default function MinhasConquistasPage() {
                       Nível 3 · Jornada em andamento
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
-                      Dados fictícios por enquanto — em breve conectados à sua rotina real.
+                      Os números abaixo acompanham o que você já fez na plataforma.
                     </span>
                   </div>
                 </div>
@@ -125,32 +174,35 @@ export default function MinhasConquistasPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                   <StatCard
                     label="Pontuação de hoje"
-                    value="320"
-                    helper="+80 XP desde ontem"
+                    value={String(todayXp)}
+                    helper="+XP somados a partir das ações de hoje"
                     icon="sparkles"
                   />
                   <StatCard
                     label="Pontuação total"
-                    value="4.250"
-                    helper="Soma de todos os pequenos passos"
+                    value={String(totalXp)}
+                    helper="Soma de todos os pequenos passos registrados"
                     icon="star"
                   />
                   <StatCard
                     label="Dias de sequência"
-                    value="3"
-                    helper="Ontem, hoje… e o próximo dia conta também"
+                    value={String(streak)}
+                    helper="Dias seguidos em que você conseguiu aparecer por aqui"
                     icon="calendar"
                   />
                 </div>
 
-                {/* Barra de progresso geral */}
+                {/* Barra de progresso geral (mock simples usando XP de hoje) */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
-                    <span>Faltam 80 XP</span>
+                    <span>{todayXp} XP hoje</span>
                   </div>
                   <div className="w-full h-2.5 rounded-full bg-[#ffd8e6]/60 overflow-hidden">
-                    <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-[#ff005e] to-[#ff8fb4]" />
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#ff005e] to-[#ff8fb4]"
+                      style={{ width: `${xpProgressPercent}%` }}
+                    />
                   </div>
                   <p className="text-xs text-[#545454]/80">
                     Você não precisa fazer tudo. Só continuar aparecendo um pouquinho por dia.
@@ -228,7 +280,7 @@ export default function MinhasConquistasPage() {
                             </span>
                           </div>
                           <span className="ml-3 inline-flex items-center rounded-full bg-[#ffd8e6]/80 px-2.5 py-0.5 text-[11px] font-semibold text-[#ff005e]">
-                            +{mission.xp} XP
+                            {isDone ? `-${mission.xp} XP` : `+${mission.xp} XP`}
                           </span>
                         </button>
                       )
@@ -294,8 +346,9 @@ export default function MinhasConquistasPage() {
                     size="sm"
                     variant="ghost"
                     className="w-full justify-center border border-[#ff005e]/20 text-[#ff005e]"
+                    disabled
                   >
-                    Ver sugestões no planner em breve
+                    Sugestões automáticas chegam em breve
                   </Button>
                 </div>
               </SoftCard>
@@ -306,7 +359,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
+                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg:white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)] bg-white',
                 highlightRing('selos')
               )}
             >
