@@ -19,7 +19,7 @@ import {
   type CuidarComAmorFeature,
   type CuidarComAmorSuggestion,
 } from '@/app/lib/ai/cuidarComAmorClient'
-import updateXP from '@/app/lib/xp'
+import { updateXP } from '@/app/lib/xp' // 👈 ajuste aqui
 
 type SignalsDayData = {
   selectedSignals: string[]
@@ -370,7 +370,7 @@ export default function CuidarComAmorPage() {
       } catch (e) {
         console.error(
           '[Cuidar com Amor] Erro ao atualizar XP ao salvar ideias de cuidado:',
-          e,
+          e
         )
       }
 
@@ -595,25 +595,25 @@ export default function CuidarComAmorPage() {
 
           {/* SEÇÃO 2 — CUIDADOS & VÍNCULO */}
           <Reveal>
-            <section className="rounded-[40px] md:rounded-[44px] border border-white/35 bg.white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
+            <section className="rounded-[40px] md:rounded-[44px] border border-white/35 bg-white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
               <div className="space-y-6 md:space-y-7">
                 <div className="space-y-2">
-                  <span className="inline-flex items-center rounded-full bg-white/16 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text.white/80">
+                  <span className="inline-flex items-center rounded-full bg-white/16 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/80">
                     Cuidados & vínculo
                   </span>
                   <div className="space-y-1">
-                    <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text.white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
                       Acompanhe os cuidados do dia e escolha um gesto especial.
                     </h2>
-                    <p className="text-xs md:text-sm text.white/85 max-w-2xl">
+                    <p className="text-xs md:text-sm text-white/85 max-w-2xl">
                       Marque o que já conseguiu cuidar hoje e defina um gesto ou ritual simples
                       para fortalecer o vínculo com seu filho.
                     </p>
                   </div>
 
                   {highlightTarget && (
-                    <div className="inline-flex items-center gap-2 rounded-full bg.white/20 px-3 py-1 text-[11px] text.white/95">
-                      <AppIcon name="sparkles" className="w-3.5 h-3.5 text.white" decorative />
+                    <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[11px] text-white/95">
+                      <AppIcon name="sparkles" className="w-3.5 h-3.5 text-white" decorative />
                       <span>
                         Você veio de um atalho focado em{' '}
                         <span className="font-semibold">
@@ -629,7 +629,7 @@ export default function CuidarComAmorPage() {
                   {/* CUIDADOS DO DIA */}
                   <div ref={cuidadosBlockRef}>
                     <SoftCard
-                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg.white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
+                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg-white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
                         highlightTarget === 'alimentacao'
                           ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                           : 'border-[#ffd8e6]'
@@ -692,7 +692,7 @@ export default function CuidarComAmorPage() {
                     {/* PARA FORTALECER O VÍNCULO */}
                     <div ref={rituaisBlockRef}>
                       <SoftCard
-                        className={`rounded-[28px] p-5 md:p-6 bg.white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-[28px] p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
                           highlightTarget === 'rituais'
                             ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                             : 'border-[#ffd8e6]'
@@ -790,7 +790,7 @@ export default function CuidarComAmorPage() {
                     </div>
 
                     {/* IDEIAS DE CUIDADO PARA HOJE */}
-                    <SoftCard className="rounded-[28px] p-5 md:p-6 bg.white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
+                    <SoftCard className="rounded-[28px] p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
                       <div className="space-y-4">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2">
@@ -842,7 +842,7 @@ export default function CuidarComAmorPage() {
                           </Button>
                         </div>
 
-                        <div className="rounded-2xl border border-[#ffd8e6]/70 bg[#fff7fb] px-4 py-3 space-y-3">
+                        <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-3">
                           {suggestionLoading && (
                             <p className="text-xs text-[#545454]">
                               Estamos preparando algumas ideias para você…
