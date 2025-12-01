@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import PageTemplate from '@/components/common/PageTemplate';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
 import SoftCard from '@/components/ui/SoftCard';
@@ -6,12 +7,14 @@ import AppIcon from '@/components/ui/AppIcon';
 
 type MaternaPlusSearchParams = {
   abrir?: 'profissionais' | 'comunidade' | 'servicos' | string;
+  especialidade?: string;
 };
 
 type Professional = {
   id: string;
   name: string;
-  specialty: string;
+  specialtyLabel: string;
+  specialtyKey: 'pediatria' | 'nutricao' | 'psicologia' | 'psicopedagogia' | 'fonoaudiologia' | 'parentalidade';
   shortBio: string;
   whatsappLink?: string;
 };
@@ -28,11 +31,21 @@ export const metadata: Metadata = {
   title: 'Materna+ | Materna360',
 };
 
+const SPECIALTY_FILTERS: { key: Professional['specialtyKey']; label: string }[] = [
+  { key: 'pediatria', label: 'Pediatria' },
+  { key: 'nutricao', label: 'Nutrição' },
+  { key: 'psicologia', label: 'Psicologia' },
+  { key: 'psicopedagogia', label: 'Psicopedagogia' },
+  { key: 'fonoaudiologia', label: 'Fonoaudiologia' },
+  { key: 'parentalidade', label: 'Parentalidade' },
+];
+
 const PROFESSIONALS: Professional[] = [
   {
     id: 'pediatra',
     name: 'Dra. Ana Paula Ribeiro',
-    specialty: 'Pediatra',
+    specialtyLabel: 'Pediatra',
+    specialtyKey: 'pediatria',
     shortBio:
       'Atendimento online focado em acolher dúvidas do dia a dia, sem alarmismo.',
     whatsappLink: '#',
@@ -40,7 +53,8 @@ const PROFESSIONALS: Professional[] = [
   {
     id: 'nutricionista',
     name: 'Dra. Juliana Martins',
-    specialty: 'Nutricionista materno-infantil',
+    specialtyLabel: 'Nutricionista materno-infantil',
+    specialtyKey: 'nutricao',
     shortBio:
       'Ajuda famílias a construírem uma relação leve com a alimentação.',
     whatsappLink: '#',
@@ -48,7 +62,8 @@ const PROFESSIONALS: Professional[] = [
   {
     id: 'psicopedagoga',
     name: 'Profa. Carla Souza',
-    specialty: 'Psicopedagoga',
+    specialtyLabel: 'Psicopedagoga',
+    specialtyKey: 'psicopedagogia',
     shortBio:
       'Acompanha desafios de aprendizagem com orientações práticas para os pais.',
     whatsappLink: '#',
@@ -96,6 +111,17 @@ export default function MaternaPlusPage({
   const abrir = searchParams?.abrir ?? 'profissionais';
   const shortcutLabel = abrir && SHORTCUT_LABEL[abrir];
 
+  const selectedSpecialty =
+    (searchParams?.especialidade as Professional['specialtyKey'] | undefined) ??
+    'todas';
+
+  const filteredProfessionals =
+    selectedSpecialty === 'todas'
+      ? PROFESSIONALS
+      : PROFESSIONALS.filter(
+          (p) => p.specialtyKey === selectedSpecialty,
+        );
+
   const heroProps = {
     eyebrow: 'PREMIUM',
     title: 'Materna+',
@@ -106,9 +132,8 @@ export default function MaternaPlusPage({
   return (
     <PageTemplate {...(heroProps as any)}>
       <SectionWrapper className="mx-auto max-w-4xl px-4 py-8 md:py-10 space-y-6 md:space-y-7">
-        {/* INTRO PREMIUM – estilo Minhas Conquistas */}
+        {/* INTRO PREMIUM */}
         <SoftCard className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/16 backdrop-blur-2xl shadow-[0_18px_45px_rgba(0,0,0,0.18)] px-4 py-5 md:px-7 md:py-6 space-y-4">
-          {/* Glow suave */}
           <div className="pointer-events-none absolute inset-0 opacity-80">
             <div className="absolute -top-10 -left-12 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
             <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
@@ -147,7 +172,7 @@ export default function MaternaPlusPage({
           </div>
         </SoftCard>
 
-        {/* GRID PRINCIPAL – híbrido Biblioteca + Minhas Conquistas */}
+        {/* GRID PRINCIPAL */}
         <div className="md:grid md:grid-cols-12 md:gap-5 lg:gap-6 md:items-start space-y-5 md:space-y-0">
           {/* COLUNA ESQUERDA – PROFISSIONAIS */}
           <section
@@ -168,83 +193,112 @@ export default function MaternaPlusPage({
               </p>
             </header>
 
-            {/* Filtros – chips estilo Biblioteca Materna */}
+            {/* Filtros – AGORA FUNCIONAM DE VERDADE */}
             <div className="flex flex-wrap gap-2 pt-1">
-              {[
-                'Pediatria',
-                'Nutrição',
-                'Psicologia',
-                'Psicopedagogia',
-                'Fonoaudiologia',
-                'Parentalidade',
-              ].map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-white/95 px-3 py-1 text-xs font-medium text-[#545454]"
-                >
-                  {tag}
-                </span>
-              ))}
+              {/* Filtro "Todas" */}
+              <Link
+                href="?abrir=profissionais"
+                scroll={false}
+                replace
+                className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  selectedSpecialty === 'todas'
+                    ? 'border-[#FF005E] bg-[#FF005E] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
+                    : 'border-[var(--color-border-soft)] bg-white/95 text-[#545454] hover:border-[#FF005E]/70'
+                }`}
+              >
+                Todas
+              </Link>
+
+              {SPECIALTY_FILTERS.map((filter) => {
+                const isActive = selectedSpecialty === filter.key;
+                const href = `?abrir=profissionais&especialidade=${filter.key}`;
+                return (
+                  <Link
+                    key={filter.key}
+                    href={href}
+                    scroll={false}
+                    replace
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'border-[#FF005E] bg-[#FF005E] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
+                        : 'border-[var(--color-border-soft)] bg-white/95 text-[#545454] hover:border-[#FF005E]/70'
+                    }`}
+                  >
+                    {filter.label}
+                  </Link>
+                );
+              })}
             </div>
 
-            {/* Lista de profissionais – cards premium, mas com respiro entre eles */}
+            {/* Lista de profissionais – cards com mais presença */}
             <div className="mt-3 space-y-3">
-              {PROFESSIONALS.map((prof) => (
-                <div
-                  key={prof.id}
-                  className="relative rounded-3xl border border-[var(--color-border-soft)] bg-white/98 shadow-[0_12px_26px_rgba(0,0,0,0.10)] px-4 py-4 md:px-5 md:py-4 flex flex-col gap-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[#2F3A56]">
-                        {prof.name}
-                      </p>
-                      <p className="text-xs font-medium text-[#9B4D96]">
-                        {prof.specialty}
-                      </p>
-                    </div>
-                    <AppIcon
-                      name="care"
-                      className="w-6 h-6 text-[#FF005E]"
-                      decorative
-                    />
-                  </div>
-
-                  <p className="text-sm text-[#545454]">{prof.shortBio}</p>
-
-                  <div className="flex flex-col gap-2 pt-1">
-                    <a
-                      href={prof.whatsappLink ?? '#'}
-                      target={prof.whatsappLink ? '_blank' : undefined}
-                      rel={
-                        prof.whatsappLink ? 'noopener noreferrer' : undefined
-                      }
-                      className="inline-flex w-fit items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-white bg-[#FF005E] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
-                    >
-                      Falar pelo WhatsApp
-                    </a>
-                    {!prof.whatsappLink || prof.whatsappLink === '#' ? (
-                      <p className="text-[11px] text-[#6A6A6A]">
-                        Em breve, este botão vai levar direto para o WhatsApp
-                        deste profissional.
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {/* Favorito / XP futuro */}
-                  <button
-                    type="button"
-                    aria-label="Favoritar profissional"
-                    className="absolute top-3.5 right-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#FFD3E6] bg-white/95 text-[#FF005E] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+              {filteredProfessionals.length === 0 ? (
+                <SoftCard className="rounded-3xl border border-dashed border-[var(--color-border-soft)] bg-white/95 px-4 py-4 md:px-5 md:py-5">
+                  <p className="text-sm text-[#545454]">
+                    Em breve, teremos profissionais cadastrados nesta área.
+                  </p>
+                </SoftCard>
+              ) : (
+                filteredProfessionals.map((prof) => (
+                  <div
+                    key={prof.id}
+                    className="relative rounded-3xl border border-[#FFD3E6] bg-white shadow-[0_16px_30px_rgba(0,0,0,0.14)] px-4 py-4 md:px-5 md:py-5 flex flex-col gap-3"
                   >
-                    <AppIcon name="heart" className="w-3.5 h-3.5" decorative />
-                  </button>
-                </div>
-              ))}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold tracking-[0.16em] uppercase text-[#FF005E]/85 mb-1">
+                          Profissional Materna360
+                        </p>
+                        <p className="text-sm font-semibold text-[#2F3A56]">
+                          {prof.name}
+                        </p>
+                        <p className="text-xs font-medium text-[#9B4D96]">
+                          {prof.specialtyLabel}
+                        </p>
+                      </div>
+                      <AppIcon
+                        name="care"
+                        className="w-6 h-6 text-[#FF005E]"
+                        decorative
+                      />
+                    </div>
+
+                    <p className="text-sm text-[#545454]">{prof.shortBio}</p>
+
+                    <div className="flex flex-col gap-2 pt-1">
+                      <a
+                        href={prof.whatsappLink ?? '#'}
+                        target={prof.whatsappLink ? '_blank' : undefined}
+                        rel={
+                          prof.whatsappLink ? 'noopener noreferrer' : undefined
+                        }
+                        className="inline-flex w-fit items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-white bg-[#FF005E] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
+                      >
+                        Falar pelo WhatsApp
+                      </a>
+                      {!prof.whatsappLink || prof.whatsappLink === '#' ? (
+                        <p className="text-[11px] text-[#6A6A6A]">
+                          Em breve, este botão vai levar direto para o WhatsApp
+                          deste profissional.
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {/* Favorito / XP futuro */}
+                    <button
+                      type="button"
+                      aria-label="Favoritar profissional"
+                      className="absolute top-3.5 right-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#FFD3E6] bg-white text-[#FF005E] shadow-[0_4px_12px_rgba(0,0,0,0.10)]"
+                    >
+                      <AppIcon name="heart" className="w-3.5 h-3.5" decorative />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
-          {/* COLUNA DIREITA – COMUNIDADE + SERVIÇOS (painel compacto) */}
+          {/* COLUNA DIREITA – COMUNIDADE + SERVIÇOS */}
           <div className="md:col-span-5 lg:col-span-5 space-y-4">
             {/* Comunidade */}
             <section
@@ -321,7 +375,7 @@ export default function MaternaPlusPage({
                       key={service.id}
                       className={`flex gap-3 ${
                         index !== 0
-                          ? 'pt-3 border-t border-[var(--color-border-soft)]'
+                          ? 'pt-3 border-top border-t border-[var(--color-border-soft)]'
                           : ''
                       }`}
                     >
