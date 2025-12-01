@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PageTemplate from '@/components/common/PageTemplate';
-import SectionWrapper from '@/components/common/SectionWrapper';
+import { SectionWrapper } from '@/components/common/SectionWrapper';
 import SoftCard from '@/components/ui/SoftCard';
 import AppIcon from '@/components/ui/AppIcon';
 
@@ -93,12 +93,15 @@ export default function MaternaPlusPage({
   const abrir = searchParams?.abrir ?? 'profissionais';
   const shortcutLabel = abrir && SHORTCUT_LABEL[abrir];
 
+  const heroProps = {
+    eyebrow: 'MATERNA+',
+    title: 'Materna+',
+    subtitle:
+      'Profissionais, comunidade e serviços selecionados com carinho para caminhar com você.',
+  };
+
   return (
-    <PageTemplate
-      eyebrow="MATERNA+"
-      title="Materna+"
-      subtitle="Profissionais, comunidade e serviços selecionados com carinho para caminhar com você."
-    >
+    <PageTemplate {...(heroProps as any)}>
       <SectionWrapper className="mx-auto max-w-3xl px-4 py-8 space-y-8">
         {shortcutLabel && (
           <div className="rounded-2xl bg-white/80 border border-[var(--color-border-soft)] px-4 py-3 text-xs md:text-sm text-[#545454] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
@@ -125,16 +128,21 @@ export default function MaternaPlusPage({
 
           {/* Filtros por especialidade (estáticos por enquanto) */}
           <div className="flex flex-wrap gap-2 pt-1">
-            {['Pediatria', 'Nutrição', 'Psicologia', 'Psicopedagogia', 'Fonoaudiologia', 'Parentalidade'].map(
-              (tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-white px-3 py-1 text-xs font-medium text-[#545454]"
-                >
-                  {tag}
-                </span>
-              ),
-            )}
+            {[
+              'Pediatria',
+              'Nutrição',
+              'Psicologia',
+              'Psicopedagogia',
+              'Fonoaudiologia',
+              'Parentalidade',
+            ].map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-white px-3 py-1 text-xs font-medium text-[#545454]"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
 
           {/* Lista de profissionais */}
