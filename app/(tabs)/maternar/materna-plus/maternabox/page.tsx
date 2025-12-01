@@ -5,7 +5,6 @@ export default function MaternaBoxPage() {
   return (
     <>
       <PageTemplate
-        eyebrow="PREMIUM"
         title="MaternaBox — surpresas que acolhem sua rotina."
         subtitle="Todo mês, uma caixa criada para aproximar você do seu filho com leveza, carinho e criatividade."
       />
@@ -41,10 +40,10 @@ export default function MaternaBoxPage() {
             </div>
           </div>
 
-          {/* Imagem hero – ajuste o caminho do src depois que subir o arquivo em /public */}
+          {/* Imagem hero – já apontando para o PNG na pasta public/images */}
           <div className="md:justify-self-end">
             <img
-              src="/images/maternabox-hero.jpg"
+              src="/images/maternabox-hero.png"
               alt="Mãe brincando com o filho em uma sala aconchegante ao lado de uma caixa Materna360."
               className="w-full rounded-3xl shadow-[0_6px_22px_rgba(0,0,0,0.08)] object-cover"
             />
