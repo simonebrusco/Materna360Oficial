@@ -97,7 +97,7 @@ export default function CuidarComAmorPage() {
   const conexaoBlockRef = useRef<HTMLDivElement | null>(null)
   const rituaisBlockRef = useRef<HTMLDivElement | null>(null)
 
-  // estado das sugestões inteligentes
+  // estado das sugestões
   const [suggestionLoading, setSuggestionLoading] = useState(false)
   const [currentFeature, setCurrentFeature] = useState<CuidarComAmorFeature | null>(null)
   const [currentSuggestion, setCurrentSuggestion] = useState<CuidarComAmorSuggestion | null>(null)
@@ -131,7 +131,7 @@ export default function CuidarComAmorPage() {
     }
   }, [isHydrated, currentDateKey])
 
-  // ler ?abrir= e direcionar foco
+  // ler ?abrir=
   useEffect(() => {
     const abrir = (searchParams.get('abrir') as HighlightTarget) ?? null
     if (!abrir) return
@@ -269,7 +269,7 @@ export default function CuidarComAmorPage() {
     }
   }
 
-  // --- sugestões de cuidado (alimentação / sono / conexão) ---
+  // --- sugestões de cuidado ---
 
   const handleAskSuggestion = async (feature: CuidarComAmorFeature) => {
     setSuggestionLoading(true)
@@ -458,11 +458,7 @@ export default function CuidarComAmorPage() {
                         <div className="space-y-4">
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
-                              <AppIcon
-                                name='time'
-                                className="w-4 h-4 text-[#ff005e]"
-                                decorative
-                              />
+                              <AppIcon name="time" className="w-4 h-4 text-[#ff005e]" decorative />
                               <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                                 Sono & rotina
                               </h3>
@@ -516,7 +512,7 @@ export default function CuidarComAmorPage() {
 
           {/* SEÇÃO 2 — CUIDADOS & VÍNCULO */}
           <Reveal>
-            <section className="rounded-[40px] md:rounded-[44px] border border-white/35 bg-white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
+            <section className="rounded-[40px] md:rounded-[44px] border border白/35 bg-white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
               <div className="space-y-6 md:space-y-7">
                 <div className="space-y-2">
                   <span className="inline-flex items-center rounded-full bg-white/16 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/80">
@@ -550,7 +546,7 @@ export default function CuidarComAmorPage() {
                   {/* CUIDADOS DO DIA */}
                   <div ref={cuidadosBlockRef}>
                     <SoftCard
-                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg-white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
+                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg白 border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
                         highlightTarget === 'alimentacao'
                           ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                           : 'border-[#ffd8e6]'
@@ -613,7 +609,7 @@ export default function CuidarComAmorPage() {
                     {/* PARA FORTALECER O VÍNCULO */}
                     <div ref={rituaisBlockRef}>
                       <SoftCard
-                        className={`rounded-[28px] p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-[28px] p-5 md:p-6 bg白 border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
                           highlightTarget === 'rituais'
                             ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                             : 'border-[#ffd8e6]'
@@ -710,104 +706,102 @@ export default function CuidarComAmorPage() {
                       </SoftCard>
                     </div>
 
-                    {/* IDEIAS DE CUIDADO PARA HOJE (usa rota inteligente, sem falar isso na UI) */}
-                    <div ref={conexaoBlockRef}>
-                      <SoftCard className="rounded-[28px] p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
-                        <div className="space-y-4">
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <AppIcon
-                                name="sparkles"
-                                className="w-4 h-4 text-[#ff005e]"
-                                decorative
-                              />
-                              <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                                Ideias de cuidado para hoje
-                              </h3>
-                            </div>
-                            <p className="text-xs md:text-sm text-[#545454]">
-                              Escolha um foco e deixe o Materna360 sugerir caminhos suaves que cabem
-                              na sua rotina real.
-                            </p>
+                    {/* IDEIAS DE CUIDADO PARA HOJE */}
+                    <SoftCard className="rounded-[28px] p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <AppIcon
+                              name="sparkles"
+                              className="w-4 h-4 text-[#ff005e]"
+                              decorative
+                            />
+                            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                              Ideias de cuidado para hoje
+                            </h3>
                           </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant={currentFeature === 'alimentacao' ? 'primary' : 'ghost'}
-                              size="xs"
-                              onClick={() => handleAskSuggestion('alimentacao')}
-                              className="px-3 py-1.5 text-xs"
-                              disabled={suggestionLoading}
-                            >
-                              Alimentação
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={currentFeature === 'sono' ? 'primary' : 'ghost'}
-                              size="xs"
-                              onClick={() => handleAskSuggestion('sono')}
-                              className="px-3 py-1.5 text-xs"
-                              disabled={suggestionLoading}
-                            >
-                              Sono & rotina
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={currentFeature === 'conexao' ? 'primary' : 'ghost'}
-                              size="xs"
-                              onClick={() => handleAskSuggestion('conexao')}
-                              className="px-3 py-1.5 text-xs"
-                              disabled={suggestionLoading}
-                            >
-                              Conexão
-                            </Button>
-                          </div>
-
-                          <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-2">
-                            {suggestionLoading && (
-                              <p className="text-xs text-[#545454]">
-                                Estamos preparando algumas ideias para você…
-                              </p>
-                            )}
-
-                            {!suggestionLoading && currentSuggestion && (
-                              <>
-                                <p className="text-sm font-semibold text-[#2f3a56]">
-                                  {suggestionTitle(currentFeature)}
-                                </p>
-                                <p className="text-xs text-[#545454]">
-                                  {currentSuggestion.description}
-                                </p>
-                                <ul className="mt-2 space-y-1.5">
-                                  {currentSuggestion.tips.map((tip, idx) => (
-                                    <li
-                                      key={`${idx}-${tip.slice(0, 10)}`}
-                                      className="flex gap-2 text-xs text-[#545454]"
-                                    >
-                                      <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
-                                      <span>{tip}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                                {currentSuggestion.disclaimer && (
-                                  <p className="mt-2 text-[11px] text-[#545454]/80">
-                                    {currentSuggestion.disclaimer}
-                                  </p>
-                                )}
-                              </>
-                            )}
-
-                            {!suggestionLoading && !currentSuggestion && (
-                              <p className="text-xs text-[#545454]">
-                                Se quiser, escolha um foco acima para receber ideias simples que
-                                podem deixar o dia de vocês um pouco mais leve.
-                              </p>
-                            )}
-                          </div>
+                          <p className="text-xs md:text-sm text-[#545454]">
+                            Escolha um foco e deixe o Materna360 sugerir caminhos suaves que cabem
+                            na sua rotina real.
+                          </p>
                         </div>
-                      </SoftCard>
-                    </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant={currentFeature === 'alimentacao' ? 'primary' : 'ghost'}
+                            size="sm"
+                            onClick={() => handleAskSuggestion('alimentacao')}
+                            className="px-3 py-1.5 text-xs"
+                            disabled={suggestionLoading}
+                          >
+                            Alimentação
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={currentFeature === 'sono' ? 'primary' : 'ghost'}
+                            size="sm"
+                            onClick={() => handleAskSuggestion('sono')}
+                            className="px-3 py-1.5 text-xs"
+                            disabled={suggestionLoading}
+                          >
+                            Sono & rotina
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={currentFeature === 'conexao' ? 'primary' : 'ghost'}
+                            size="sm"
+                            onClick={() => handleAskSuggestion('conexao')}
+                            className="px-3 py-1.5 text-xs"
+                            disabled={suggestionLoading}
+                          >
+                            Conexão
+                          </Button>
+                        </div>
+
+                        <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-2">
+                          {suggestionLoading && (
+                            <p className="text-xs text-[#545454]">
+                              Estamos preparando algumas ideias para você…
+                            </p>
+                          )}
+
+                          {!suggestionLoading && currentSuggestion && (
+                            <>
+                              <p className="text-sm font-semibold text-[#2f3a56]">
+                                {suggestionTitle(currentFeature)}
+                              </p>
+                              <p className="text-xs text-[#545454]">
+                                {currentSuggestion.description}
+                              </p>
+                              <ul className="mt-2 space-y-1.5">
+                                {currentSuggestion.tips.map((tip, idx) => (
+                                  <li
+                                    key={`${idx}-${tip.slice(0, 10)}`}
+                                    className="flex gap-2 text-xs text-[#545454]"
+                                  >
+                                    <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
+                                    <span>{tip}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {currentSuggestion.disclaimer && (
+                                <p className="mt-2 text-[11px] text-[#545454]/80">
+                                  {currentSuggestion.disclaimer}
+                                </p>
+                              )}
+                            </>
+                          )}
+
+                          {!suggestionLoading && !currentSuggestion && (
+                            <p className="text-xs text-[#545454]">
+                              Se quiser, escolha um foco acima para receber ideias simples que
+                              podem deixar o dia de vocês um pouco mais leve.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </SoftCard>
                   </div>
                 </div>
               </div>
