@@ -58,19 +58,22 @@ const EMOTIONAL_CARE_TIPS = [
 // Placeholder dos áudios de sono – depois a área admin passa os arquivos reais
 const SLEEP_AUDIO_PLACEHOLDERS = [
   {
-    id: 'respira-e-desacelera',
-    title: 'Respira e desacelera',
-    description: 'Um áudio curto para ajudar vocês a diminuírem o ritmo antes de dormir.',
+    id: 'musica-suave',
+    title: 'Música suave para acalmar',
+    description:
+      'Música instrumental curtinha para diminuir o ritmo da casa e preparar o ambiente para o soninho.',
   },
   {
-    id: 'historia-suave',
-    title: 'História curtinha para dormir',
-    description: 'Uma história leve para fechar o dia com conexão e calma.',
+    id: 'historia-calma',
+    title: 'História calma para dormir',
+    description:
+      'Uma história leve com trilha doce, feita para relaxar ao lado do seu filho.',
   },
   {
-    id: 'acolhimento-noturno',
-    title: 'Acolhimento noturno',
-    description: 'Palavras suaves para aqueles dias em que o sono demora a chegar.',
+    id: 'sons-de-ninar',
+    title: 'Sons de ninar',
+    description:
+      'Som contínuo e tranquilo, perfeito para embalar o sono do seu filho.',
   },
 ]
 
