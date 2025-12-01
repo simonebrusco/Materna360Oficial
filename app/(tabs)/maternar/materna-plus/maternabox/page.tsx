@@ -8,16 +8,16 @@ export const metadata: Metadata = {
   title: 'MaternaBox | Materna360',
 };
 
-export default function MaternaBoxPage() {
-  const heroProps = {
-    eyebrow: 'MATERNA+',
-    title: 'MaternaBox',
-    subtitle:
-      'Uma caixa de experiências afetivas e educativas para transformar pequenos momentos em grandes memórias.',
-  };
+// Cast para evitar conflito de tipos com as props de hero (eyebrow, title, subtitle)
+const AnyPageTemplate = PageTemplate as any;
 
+export default function MaternaBoxPage() {
   return (
-    <PageTemplate {...(heroProps as any)}>
+    <AnyPageTemplate
+      eyebrow="MATERNA+"
+      title="MaternaBox"
+      subtitle="Uma caixa de experiências afetivas e educativas para transformar pequenos momentos em grandes memórias."
+    >
       <SectionWrapper className="mx-auto max-w-3xl px-4 py-8 space-y-8">
         {/* Seção: O que vem na caixa */}
         <section aria-label="O que vem na MaternaBox" className="space-y-4">
@@ -150,13 +150,11 @@ export default function MaternaBoxPage() {
               todos os detalhes com calma — sem spam e sem pressão.
             </p>
 
-            {/* Aqui entra o formulário real já integrado com a API / RD Station,
-                ou você pode encaixar o componente que já está pronto no projeto */}
+            {/* TODO: conectar com a rota /api/maternabox/waitlist já existente no projeto */}
             <form
               className="flex flex-col gap-3"
               onSubmit={(e) => {
                 e.preventDefault();
-                // TODO: conectar com a rota /api/maternabox/waitlist
               }}
             >
               <div className="flex flex-col gap-1">
@@ -207,6 +205,6 @@ export default function MaternaBoxPage() {
           </SoftCard>
         </section>
       </SectionWrapper>
-    </PageTemplate>
+    </AnyPageTemplate>
   );
 }
