@@ -14,7 +14,13 @@ type Professional = {
   id: string;
   name: string;
   specialtyLabel: string;
-  specialtyKey: 'pediatria' | 'nutricao' | 'psicologia' | 'psicopedagogia' | 'fonoaudiologia' | 'parentalidade';
+  specialtyKey:
+    | 'pediatria'
+    | 'nutricao'
+    | 'psicologia'
+    | 'psicopedagogia'
+    | 'fonoaudiologia'
+    | 'parentalidade';
   shortBio: string;
   whatsappLink?: string;
 };
@@ -31,14 +37,15 @@ export const metadata: Metadata = {
   title: 'Materna+ | Materna360',
 };
 
-const SPECIALTY_FILTERS: { key: Professional['specialtyKey']; label: string }[] = [
-  { key: 'pediatria', label: 'Pediatria' },
-  { key: 'nutricao', label: 'Nutrição' },
-  { key: 'psicologia', label: 'Psicologia' },
-  { key: 'psicopedagogia', label: 'Psicopedagogia' },
-  { key: 'fonoaudiologia', label: 'Fonoaudiologia' },
-  { key: 'parentalidade', label: 'Parentalidade' },
-];
+const SPECIALTY_FILTERS: { key: Professional['specialtyKey']; label: string }[] =
+  [
+    { key: 'pediatria', label: 'Pediatria' },
+    { key: 'nutricao', label: 'Nutrição' },
+    { key: 'psicologia', label: 'Psicologia' },
+    { key: 'psicopedagogia', label: 'Psicopedagogia' },
+    { key: 'fonoaudiologia', label: 'Fonoaudiologia' },
+    { key: 'parentalidade', label: 'Parentalidade' },
+  ];
 
 const PROFESSIONALS: Professional[] = [
   {
@@ -118,9 +125,7 @@ export default function MaternaPlusPage({
   const filteredProfessionals =
     selectedSpecialty === 'todas'
       ? PROFESSIONALS
-      : PROFESSIONALS.filter(
-          (p) => p.specialtyKey === selectedSpecialty,
-        );
+      : PROFESSIONALS.filter((p) => p.specialtyKey === selectedSpecialty);
 
   const heroProps = {
     eyebrow: 'PREMIUM',
@@ -132,42 +137,55 @@ export default function MaternaPlusPage({
   return (
     <PageTemplate {...(heroProps as any)}>
       <SectionWrapper className="mx-auto max-w-4xl px-4 py-8 md:py-10 space-y-6 md:space-y-7">
-        {/* INTRO PREMIUM */}
-        <SoftCard className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/16 backdrop-blur-2xl shadow-[0_18px_45px_rgba(0,0,0,0.18)] px-4 py-5 md:px-7 md:py-6 space-y-4">
+        {/* INTRO PREMIUM – card mais compacto e rosado */}
+        <SoftCard className="relative overflow-hidden rounded-[28px] border border-white/80 bg-white/10 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.26)] px-4 py-5 md:px-7 md:py-6 space-y-4">
+          {/* Glows suaves */}
           <div className="pointer-events-none absolute inset-0 opacity-80">
-            <div className="absolute -top-10 -left-12 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-            <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
+            <div className="absolute -top-12 -left-16 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.32)] blur-3xl" />
+            <div className="absolute -bottom-14 -right-10 h-32 w-32 rounded-full bg-[rgba(155,77,150,0.3)] blur-3xl" />
           </div>
 
           <div className="relative z-10 space-y-3">
+            {/* Mensagem de atalho em formato de pílula, não barra gigante */}
             {shortcutLabel && (
-              <div className="rounded-2xl bg-white/92 border border-[var(--color-border-soft)] px-4 py-3 text-xs md:text-sm text-[#545454] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-                Você chegou aqui pelo atalho{' '}
-                <strong>{shortcutLabel}</strong>. Que tal começar por essa
-                área?
+              <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-white/92 border border-[var(--color-border-soft)] px-4 py-2 text-[11px] md:text-sm text-[#545454] shadow-[0_6px_20px_rgba(0,0,0,0.10)]">
+                <AppIcon
+                  name="idea"
+                  className="w-4 h-4 text-[#FF005E]"
+                  decorative
+                />
+                <span className="truncate">
+                  Você chegou aqui pelo atalho{' '}
+                  <strong>{shortcutLabel}</strong>. Que tal começar por essa
+                  área?
+                </span>
               </div>
             )}
 
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-white/85">
+            {/* Texto principal */}
+            <div className="space-y-1 pt-1">
+              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-white/90">
                 MATERNA+
               </p>
-              <p className="text-sm md:text-base text-white/92 max-w-2xl">
-                Aqui você encontra especialistas de confiança, um espaço seguro
-                para conversar com outras mães e serviços pensados para apoiar a
-                sua jornada.
+              <p className="text-sm md:text-base text-white/95 max-w-2xl">
+                Especialistas com selo Materna, um espaço seguro para conversar
+                com outras mães e serviços pensados para apoiar a sua jornada —
+                tudo em um só lugar.
               </p>
             </div>
 
+            {/* Chips de contexto mais visíveis */}
             <div className="flex flex-wrap gap-2 pt-1">
-              {['Profissionais', 'Comunidade', 'Serviços'].map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full border border-white/70 bg-white/20 px-3 py-1 text-[11px] font-medium text-white/90"
-                >
-                  {tag}
-                </span>
-              ))}
+              {['Profissionais Materna360', 'Comunidade oficial', 'Serviços Materna']
+                .map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/18 px-3 py-1 text-[11px] font-medium text-white/95"
+                  >
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#FF005E]" />
+                    {tag}
+                  </span>
+                ))}
             </div>
           </div>
         </SoftCard>
@@ -193,9 +211,8 @@ export default function MaternaPlusPage({
               </p>
             </header>
 
-            {/* Filtros – AGORA FUNCIONAM DE VERDADE */}
+            {/* Filtros – funcionam de verdade */}
             <div className="flex flex-wrap gap-2 pt-1">
-              {/* Filtro "Todas" */}
               <Link
                 href="?abrir=profissionais"
                 scroll={false}
@@ -230,7 +247,7 @@ export default function MaternaPlusPage({
               })}
             </div>
 
-            {/* Lista de profissionais – cards com mais presença */}
+            {/* Lista de profissionais */}
             <div className="mt-3 space-y-3">
               {filteredProfessionals.length === 0 ? (
                 <SoftCard className="rounded-3xl border border-dashed border-[var(--color-border-soft)] bg-white/95 px-4 py-4 md:px-5 md:py-5">
@@ -284,13 +301,16 @@ export default function MaternaPlusPage({
                       ) : null}
                     </div>
 
-                    {/* Favorito / XP futuro */}
                     <button
                       type="button"
                       aria-label="Favoritar profissional"
                       className="absolute top-3.5 right-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#FFD3E6] bg-white text-[#FF005E] shadow-[0_4px_12px_rgba(0,0,0,0.10)]"
                     >
-                      <AppIcon name="heart" className="w-3.5 h-3.5" decorative />
+                      <AppIcon
+                        name="heart"
+                        className="w-3.5 h-3.5"
+                        decorative
+                      />
                     </button>
                   </div>
                 ))
@@ -315,7 +335,7 @@ export default function MaternaPlusPage({
                 </h2>
               </header>
 
-              <SoftCard className="flex flex-col gap-3 p-4 md:p-5 bg-white/97 shadow-[0_10px_26px_rgba(0,0,0,0.12)]">
+              <SoftCard className="flex flex-col gap-3 p-4 md:p-5 bg:white/97 bg-white/97 shadow-[0_10px_26px_rgba(0,0,0,0.12)]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-[#2F3A56]">
@@ -375,7 +395,7 @@ export default function MaternaPlusPage({
                       key={service.id}
                       className={`flex gap-3 ${
                         index !== 0
-                          ? 'pt-3 border-top border-t border-[var(--color-border-soft)]'
+                          ? 'pt-3 border-t border-[var(--color-border-soft)]'
                           : ''
                       }`}
                     >
