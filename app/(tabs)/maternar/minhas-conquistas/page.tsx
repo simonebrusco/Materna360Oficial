@@ -11,6 +11,7 @@ import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
+import { Reveal } from '@/components/ui/Reveal'
 
 // ===== TYPES & CONSTANTS =====
 
@@ -336,7 +337,7 @@ export default function MinhasConquistasPage() {
                   {SEALS.map((seal) => (
                     <div
                       key={seal.id}
-                      className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-[#ffd8e6] bg-white/80 px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)]"
+                      className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-[#ffd8e6] bg:white/80 px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)] bg-white/80"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ffe5ef]">
                         <AppIcon
@@ -362,7 +363,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={160}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white/80 border border-white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)]',
+                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white/80 border border:white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)] border-white/70',
                 highlightRing('mensal')
               )}
             >
