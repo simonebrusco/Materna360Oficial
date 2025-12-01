@@ -22,6 +22,9 @@ type HubCard = {
  * Maternar Hub – 8 mini-hubs organizados em pastas translúcidas
  * Cada card representa um mini-hub e cada tile leva direto
  * para a função certa (rota + ?abrir= quando existir).
+ *
+ * Importante: mantive as rotas que já estavam funcionando
+ * e usei apenas rotas reais já usadas no projeto.
  */
 const HUB_CARDS: HubCard[] = [
   // 1) COMO ESTOU HOJE — MEU DIA
@@ -83,8 +86,7 @@ const HUB_CARDS: HubCard[] = [
       },
       {
         id: 'planner-dia',
-        // AGORA também aponta para /meu-dia/rotina-leve com ancora planejar
-        href: '/meu-dia/rotina-leve?abrir=planejar',
+        href: '/meu-dia?abrir=planner',
         icon: 'calendar',
         label: 'Planejar o dia',
       },
@@ -152,7 +154,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'pequenos-rituais',
         href: '/cuidar/cuidar-com-amor?abrir=rituais',
         icon: 'star',
-        label: 'Pequenos rituais',
+        label: 'Pequenos rituaIs',
       },
     ],
   },
@@ -193,7 +195,7 @@ const HUB_CARDS: HubCard[] = [
   // 6) BIBLIOTECA MATERNA — MATERNAR
   {
     id: 'biblioteca-materna',
-    title: 'Biblioteca Materna',
+    title: 'Biblioteca materna',
     tag: 'MATERNAR',
     icons: [
       {
@@ -215,10 +217,10 @@ const HUB_CARDS: HubCard[] = [
         label: 'Trilhas educativas',
       },
       {
-        id: 'por-tema-fase',
-        href: '/maternar/biblioteca-materna?filtro=tema-fase',
+        id: 'por-idade-tema',
+        href: '/maternar/biblioteca-materna?filtro=idade-tema',
         icon: 'idea',
-        label: 'Por tema & fase',
+        label: 'Por idade / tema',
       },
     ],
   },
@@ -236,10 +238,10 @@ const HUB_CARDS: HubCard[] = [
         label: 'Mentorias',
       },
       {
-        id: 'aulas-encontros',
-        href: '/maternar', // futura rota
-        icon: 'play',
-        label: 'Aulas & encontros',
+        id: 'maternabox',
+        href: '/maternar/materna-plus/maternabox', // NOVA LANDING PAGE
+        icon: 'star', // destaque para o produto MaternaBox
+        label: 'MaternaBox',
       },
       {
         id: 'comunidade',
@@ -297,18 +299,22 @@ export default function CardHub() {
       className="mt-8 md:mt-10 pb-24 md:pb-28"
     >
       <Reveal>
+        {/* 2 colunas no mobile e no desktop */}
         <div className="grid grid-cols-2 gap-4 md:gap-5">
           {HUB_CARDS.map((card) => (
             <div
               key={card.id}
               className="flex flex-col items-stretch gap-2 md:gap-3"
             >
+              {/* Card translúcido principal */}
               <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
+                {/* Glows internos */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
                   <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
                   <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
                 </div>
 
+                {/* Ícones 2x2 */}
                 <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
                   {card.icons.map((item) => (
                     <Link
@@ -331,6 +337,7 @@ export default function CardHub() {
                 </div>
               </div>
 
+              {/* Nome da pasta fora, centralizado */}
               <div className="text-center">
                 <span className="block text-[10px] font-semibold tracking-[0.24em] uppercase text-white/75">
                   {card.tag}
