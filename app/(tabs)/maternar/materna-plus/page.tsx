@@ -20,6 +20,7 @@ type Service = {
   id: string;
   name: string;
   description: string;
+  highlight?: string;
   href?: string;
 };
 
@@ -34,7 +35,6 @@ const PROFESSIONALS: Professional[] = [
     specialty: 'Pediatra',
     shortBio:
       'Atendimento online focado em acolher dúvidas do dia a dia, sem alarmismo.',
-    // TODO: substituir pelo link real de WhatsApp quando estiver definido
     whatsappLink: '#',
   },
   {
@@ -61,6 +61,7 @@ const SERVICES: Service[] = [
     name: 'Aulas & workshops Materna360',
     description:
       'Encontros online sobre temas como culpa materna, rotina leve e desenvolvimento infantil.',
+    highlight: 'Em breve',
     href: '#',
   },
   {
@@ -68,6 +69,7 @@ const SERVICES: Service[] = [
     name: 'Consultoria parental',
     description:
       'Atendimentos individuais para olhar com calma para a rotina da sua família.',
+    highlight: 'Formato em definição',
     href: '#',
   },
   {
@@ -75,6 +77,7 @@ const SERVICES: Service[] = [
     name: 'Produtos digitais Materna360',
     description:
       'E-books, guias práticos e materiais para apoiar o dia a dia com leveza.',
+    highlight: 'Catálogo em expansão',
     href: '#',
   },
 ];
@@ -103,222 +106,242 @@ export default function MaternaPlusPage({
   return (
     <PageTemplate {...(heroProps as any)}>
       <SectionWrapper className="mx-auto max-w-5xl px-4 py-8 md:py-10">
-        {/* CONTAINER PRINCIPAL – estilo Minhas Conquistas / Biblioteca Materna */}
-        <div className="rounded-[32px] border border-white/70 bg-white/18 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.18)] px-4 py-5 md:px-8 md:py-7 space-y-8">
-          {/* Mensagem de atalho / contexto */}
+        {/* CONTAINER PRINCIPAL – layout em colunas, para evitar blocos empilhados */}
+        <div className="rounded-[32px] border border-white/70 bg-white/18 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.18)] px-4 py-5 md:px-7 md:py-7 space-y-5 md:space-y-6">
+          {/* Mensagem de atalho / contexto (faixa leve no topo) */}
           {shortcutLabel && (
-            <div className="rounded-2xl bg-white/85 border border-[var(--color-border-soft)] px-4 py-3 text-xs md:text-sm text-[#545454] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+            <div className="rounded-2xl bg-white/90 border border-[var(--color-border-soft)] px-4 py-3 text-xs md:text-sm text-[#545454] shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
               Você chegou aqui pelo atalho{' '}
               <strong>{shortcutLabel}</strong>. Que tal começar por essa área?
             </div>
           )}
 
-          {/* BLOCO 1 — PROFISSIONAIS MATERNA360 */}
-          <section
-            id="profissionais"
-            aria-label="Profissionais Materna360"
-            className="space-y-4"
-          >
-            <header className="space-y-1">
-              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#9B4D96]/80">
-                PROFISSIONAIS
-              </p>
-              <h2 className="text-base md:text-lg font-semibold text-[#2F3A56]">
-                Profissionais Materna360
-              </h2>
-              <p className="text-sm text-[#545454]">
-                Um espaço com especialistas selecionados, todos com selo
-                Materna, para apoiar você em diferentes fases da maternidade.
-              </p>
-            </header>
+          {/* Cabeçalho interno do hub */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-white/80">
+              MATERNA+
+            </p>
+            <p className="text-sm md:text-base text-white/90 max-w-2xl">
+              Aqui você encontra especialistas de confiança, um espaço seguro
+              para conversar com outras mães e serviços pensados para apoiar a
+              sua jornada.
+            </p>
+          </div>
 
-            {/* Filtros por especialidade – estilo chips da Biblioteca Materna */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {[
-                'Pediatria',
-                'Nutrição',
-                'Psicologia',
-                'Psicopedagogia',
-                'Fonoaudiologia',
-                'Parentalidade',
-              ].map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-white/90 px-3 py-1 text-xs font-medium text-[#545454]"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* Lista de profissionais – cards brancos premium */}
-            <div className="grid grid-cols-1 gap-4 mt-2">
-              {PROFESSIONALS.map((prof) => (
-                <div
-                  key={prof.id}
-                  className="relative rounded-3xl border border-[var(--color-border-soft)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-4 py-4 md:px-6 md:py-5 flex flex-col gap-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[#2F3A56]">
-                        {prof.name}
-                      </p>
-                      <p className="text-xs font-medium text-[#9B4D96]">
-                        {prof.specialty}
-                      </p>
-                    </div>
-                    <AppIcon
-                      name="care"
-                      className="w-6 h-6 text-[#FF005E]"
-                      decorative
-                    />
-                  </div>
-
-                  <p className="text-sm text-[#545454]">{prof.shortBio}</p>
-
-                  <div className="flex flex-col gap-2 pt-1">
-                    <a
-                      href={prof.whatsappLink ?? '#'}
-                      target={prof.whatsappLink ? '_blank' : undefined}
-                      rel={
-                        prof.whatsappLink ? 'noopener noreferrer' : undefined
-                      }
-                      className="inline-flex w-fit items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-white bg-[#FF005E] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
-                    >
-                      Falar pelo WhatsApp
-                    </a>
-                    {!prof.whatsappLink || prof.whatsappLink === '#' ? (
-                      <p className="text-[11px] text-[#6A6A6A]">
-                        Em breve, este botão vai levar direto para o WhatsApp
-                        deste profissional.
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {/* Ícone de favorito / futuro XP – placeholder visual */}
-                  <button
-                    type="button"
-                    aria-label="Favoritar profissional"
-                    className="absolute top-4 right-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#FFD3E6] bg-white/90 text-[#FF005E] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-                  >
-                    <AppIcon name="heart" className="w-3.5 h-3.5" decorative />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Linha divisória suave */}
-          <div className="h-px bg-white/60" />
-
-          {/* BLOCO 2 — COMUNIDADE MATERNA360 */}
-          <section
-            id="comunidade"
-            aria-label="Comunidade Materna360"
-            className="space-y-4"
-          >
-            <header className="space-y-1">
-              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#9B4D96]/80">
-                COMUNIDADE
-              </p>
-              <h2 className="text-base md:text-lg font-semibold text-[#2F3A56]">
-                Comunidade Materna360
-              </h2>
-              <p className="text-sm text-[#545454]">
-                Um espaço seguro para conversar com outras mães, compartilhar
-                dúvidas e celebrar conquistas reais, sem comparações.
-              </p>
-            </header>
-
-            <SoftCard className="flex flex-col gap-3 p-5 md:p-6 bg-white/95">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-[#2F3A56]">
-                    Um lugar para você não se sentir sozinha
-                  </p>
-                  <p className="text-sm text-[#545454]">
-                    Aqui você pode desabafar, pedir ideias e se sentir acolhida
-                    por quem está vivendo algo parecido com você.
-                  </p>
-                </div>
-                <AppIcon
-                  name="heart"
-                  className="w-6 h-6 text-[#FF005E]"
-                  decorative
-                />
-              </div>
-
-              <div className="pt-1">
-                <a
-                  href="#"
-                  className="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-white bg-[#FF005E] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
-                >
-                  Entrar na comunidade
-                </a>
-                <p className="mt-2 text-[11px] text-[#6A6A6A]">
-                  Em breve, este botão vai levar direto para o espaço oficial da
-                  Comunidade Materna360.
+          {/* GRID PRINCIPAL – esquerda: Profissionais / direita: Comunidade + Serviços */}
+          <div className="md:grid md:grid-cols-12 md:gap-6 lg:gap-8 md:items-start">
+            {/* COLUNA ESQUERDA – PROFISSIONAIS (destaque) */}
+            <section
+              id="profissionais"
+              aria-label="Profissionais Materna360"
+              className="md:col-span-7 lg:col-span-8 space-y-4"
+            >
+              <header className="space-y-1">
+                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#FFE8F2]/90">
+                  PROFISSIONAIS
                 </p>
+                <h2 className="text-base md:text-lg font-semibold text-[#2F3A56]">
+                  Profissionais Materna360
+                </h2>
+                <p className="text-sm text-[#545454]">
+                  Um espaço com especialistas selecionados, todos com selo
+                  Materna, para apoiar você em diferentes fases da maternidade.
+                </p>
+              </header>
+
+              {/* Filtros – estilo Biblioteca Materna */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {[
+                  'Pediatria',
+                  'Nutrição',
+                  'Psicologia',
+                  'Psicopedagogia',
+                  'Fonoaudiologia',
+                  'Parentalidade',
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-white/92 px-3 py-1 text-xs font-medium text-[#545454]"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-            </SoftCard>
-          </section>
 
-          {/* Linha divisória suave */}
-          <div className="h-px bg-white/60" />
+              {/* Lista de profissionais – cards premium em coluna contínua */}
+              <div className="mt-3 space-y-3">
+                {PROFESSIONALS.map((prof) => (
+                  <div
+                    key={prof.id}
+                    className="relative rounded-3xl border border-[var(--color-border-soft)] bg-white/95 shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-4 py-4 md:px-5 md:py-4 flex flex-col gap-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-[#2F3A56]">
+                          {prof.name}
+                        </p>
+                        <p className="text-xs font-medium text-[#9B4D96]">
+                          {prof.specialty}
+                        </p>
+                      </div>
+                      <AppIcon
+                        name="care"
+                        className="w-6 h-6 text-[#FF005E]"
+                        decorative
+                      />
+                    </div>
 
-          {/* BLOCO 3 — SERVIÇOS MATERNA */}
-          <section
-            id="servicos"
-            aria-label="Serviços Materna"
-            className="space-y-4"
-          >
-            <header className="space-y-1">
-              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#9B4D96]/80">
-                SERVIÇOS
-              </p>
-              <h2 className="text-base md:text-lg font-semibold text-[#2F3A56]">
-                Serviços Materna
-              </h2>
-              <p className="text-sm text-[#545454]">
-                Encontros, consultorias e conteúdos especiais para aprofundar o
-                cuidado com você e com a sua família.
-              </p>
-            </header>
+                    <p className="text-sm text-[#545454]">{prof.shortBio}</p>
 
-            <div className="grid grid-cols-1 gap-4 mt-2">
-              {SERVICES.map((service) => (
-                <SoftCard
-                  key={service.id}
-                  className="flex flex-col gap-3 p-5 md:p-6 bg-white/95"
-                >
+                    <div className="flex flex-col gap-2 pt-1">
+                      <a
+                        href={prof.whatsappLink ?? '#'}
+                        target={prof.whatsappLink ? '_blank' : undefined}
+                        rel={
+                          prof.whatsappLink ? 'noopener noreferrer' : undefined
+                        }
+                        className="inline-flex w-fit items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-white bg-[#FF005E] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
+                      >
+                        Falar pelo WhatsApp
+                      </a>
+                      {!prof.whatsappLink || prof.whatsappLink === '#' ? (
+                        <p className="text-[11px] text-[#6A6A6A]">
+                          Em breve, este botão vai levar direto para o WhatsApp
+                          deste profissional.
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {/* Favorito / XP futuro */}
+                    <button
+                      type="button"
+                      aria-label="Favoritar profissional"
+                      className="absolute top-3.5 right-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#FFD3E6] bg-white/90 text-[#FF005E] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                    >
+                      <AppIcon name="heart" className="w-3.5 h-3.5" decorative />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* COLUNA DIREITA – COMUNIDADE + SERVIÇOS (painel lateral) */}
+            <div className="mt-6 md:mt-0 md:col-span-5 lg:col-span-4 space-y-4">
+              {/* Comunidade */}
+              <section
+                id="comunidade"
+                aria-label="Comunidade Materna360"
+                className="space-y-3"
+              >
+                <header className="space-y-1">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#FFE8F2]/90">
+                    COMUNIDADE
+                  </p>
+                  <h2 className="text-sm md:text-base font-semibold text-[#2F3A56]">
+                    Comunidade Materna360
+                  </h2>
+                </header>
+
+                <SoftCard className="flex flex-col gap-3 p-4 md:p-5 bg-white/96">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-[#2F3A56]">
-                        {service.name}
+                        Um lugar para você não se sentir sozinha
                       </p>
                       <p className="text-sm text-[#545454]">
-                        {service.description}
+                        Aqui você pode desabafar, pedir ideias e se sentir
+                        acolhida por quem está vivendo algo parecido com você.
                       </p>
                     </div>
                     <AppIcon
-                      name="star"
-                      className="w-6 h-6 text-[#FF005E]"
+                      name="heart"
+                      className="w-5 h-5 text-[#FF005E]"
                       decorative
                     />
                   </div>
 
                   <div className="pt-1">
+                    <a
+                      href="#"
+                      className="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-white bg-[#FF005E] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
+                    >
+                      Entrar na comunidade
+                    </a>
+                    <p className="mt-2 text-[11px] text-[#6A6A6A]">
+                      Em breve, este botão vai levar direto para o espaço
+                      oficial da Comunidade Materna360.
+                    </p>
+                  </div>
+                </SoftCard>
+              </section>
+
+              {/* Serviços */}
+              <section
+                id="servicos"
+                aria-label="Serviços Materna"
+                className="space-y-3"
+              >
+                <header className="space-y-1">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#FFE8F2]/90">
+                    SERVIÇOS
+                  </p>
+                  <h2 className="text-sm md:text-base font-semibold text-[#2F3A56]">
+                    Serviços Materna
+                  </h2>
+                </header>
+
+                <SoftCard className="p-4 md:p-5 bg-white/96 space-y-3">
+                  <p className="text-sm text-[#545454]">
+                    Encontros, consultorias e conteúdos especiais para
+                    aprofundar o cuidado com você e com a sua família.
+                  </p>
+
+                  <div className="mt-1 space-y-3">
+                    {SERVICES.map((service, index) => (
+                      <div
+                        key={service.id}
+                        className={`flex gap-3 ${
+                          index !== 0
+                            ? 'pt-3 border-t border-[var(--color-border-soft)]'
+                            : ''
+                        }`}
+                      >
+                        <div className="mt-0.5">
+                          <AppIcon
+                            name="star"
+                            className="w-4 h-4 text-[#FF005E]"
+                            decorative
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-xs font-semibold text-[#2F3A56]">
+                            {service.name}
+                          </p>
+                          <p className="text-xs text-[#545454]">
+                            {service.description}
+                          </p>
+                          {service.highlight && (
+                            <p className="text-[11px] font-medium text-[#9B4D96]">
+                              {service.highlight}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
                     <button
                       type="button"
                       className="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs md:text-sm font-medium text-[#FF005E] bg-white border border-[var(--color-border-soft)] shadow-[0_4px_14px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
                     >
-                      Saber mais em breve
+                      Receber novidades do Materna+
                     </button>
                   </div>
                 </SoftCard>
-              ))}
+              </section>
             </div>
-          </section>
+          </div>
         </div>
       </SectionWrapper>
     </PageTemplate>
