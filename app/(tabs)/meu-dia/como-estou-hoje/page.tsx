@@ -13,6 +13,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import { updateXP } from '@/app/lib/xp'
 
 type WeeklyInsight = {
   title: string
@@ -29,7 +30,7 @@ type DailyInsight = {
   gentleReminder: string
 }
 
-// Insight semanal emocional via IA + fallback suave
+// Insight semanal emocional via modelo + fallback suave
 async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
   try {
     const res = await fetch('/api/ai/emocional', {
@@ -42,7 +43,7 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
     })
 
     if (!res.ok) {
-      throw new Error('Resposta inválida da IA')
+      throw new Error('Resposta inválida da análise emocional')
     }
 
     const data = await res.json()
@@ -71,7 +72,7 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
       '[Como Estou Hoje] Erro ao buscar insight semanal, usando fallback:',
       error,
     )
-    // Fallback carinhoso, sem exposição de "IA" para a mãe
+    // Fallback carinhoso, sem exposição técnica
     return {
       title: 'Como sua semana tem se desenhado',
       summary:
@@ -86,7 +87,7 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
   }
 }
 
-// Insight do dia (emocional) via IA + fallback suave
+// Insight do dia (emocional) + fallback suave
 async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
   try {
     const res = await fetch('/api/ai/emocional', {
@@ -99,7 +100,7 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
     })
 
     if (!res.ok) {
-      throw new Error('Resposta inválida da IA')
+      throw new Error('Resposta inválida da análise emocional')
     }
 
     const data = await res.json()
@@ -156,14 +157,14 @@ export default function ComoEstouHojePage(props: {
   // Query param para abrir bloco direto do hub
   const [sectionToOpen, setSectionToOpen] = useState<string | null>(null)
 
-  // Refs para scroll suave
+  // Refs para scroll suave (marcador lógico)
   const [refsReady, setRefsReady] = useState(false)
   const humorSectionId = 'sec-humor'
   const notesSectionId = 'sec-notas'
   const resumoSectionId = 'sec-resumo'
   const semanaSectionId = 'sec-semana'
 
-  // Mark as hydrated on mount
+  // Marcar como hidratado
   useEffect(() => {
     setIsHydrated(true)
   }, [])
@@ -184,10 +185,9 @@ export default function ComoEstouHojePage(props: {
     resolveSearch()
   }, [props.searchParams])
 
-  // Depois que tudo estiver pronto, faz scroll suave para a seção certa
+  // Scroll suave para seção vinda do hub
   useEffect(() => {
     if (!sectionToOpen) return
-    // pequeno timeout para garantir DOM montado
     const t = setTimeout(() => {
       let elementId: string | null = null
 
@@ -222,11 +222,10 @@ export default function ComoEstouHojePage(props: {
     if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
     if (typeof savedNotes === 'string') setDayNotes(savedNotes)
 
-    // refs considerados prontos após primeira hidratação
     setRefsReady(true)
   }, [isHydrated, currentDateKey])
 
-  // Load weekly emotional insight once
+  // Insight semanal
   useEffect(() => {
     let isMounted = true
 
@@ -251,7 +250,7 @@ export default function ComoEstouHojePage(props: {
     }
   }, [])
 
-  // Load daily emotional insight once
+  // Insight diário
   useEffect(() => {
     let isMounted = true
 
@@ -287,6 +286,17 @@ export default function ComoEstouHojePage(props: {
           mood: humor,
         })
       } catch {}
+
+      // Pontos por registrar humor
+      try {
+        void updateXP(10, { source: 'como-estou-hoje', reason: 'mood' })
+      } catch (e) {
+        console.error(
+          '[Como Estou Hoje] Erro ao atualizar XP de humor:',
+          e,
+        )
+      }
+
       toast.success('Humor registrado!')
     }
   }
@@ -302,6 +312,17 @@ export default function ComoEstouHojePage(props: {
           energy: energy,
         })
       } catch {}
+
+      // Pontos por registrar energia
+      try {
+        void updateXP(8, { source: 'como-estou-hoje', reason: 'energy' })
+      } catch (e) {
+        console.error(
+          '[Como Estou Hoje] Erro ao atualizar XP de energia:',
+          e,
+        )
+      }
+
       toast.success('Energia registrada!')
     }
   }
@@ -311,7 +332,7 @@ export default function ComoEstouHojePage(props: {
     const notesKey = `como-estou-hoje:${currentDateKey}:notes`
     save(notesKey, dayNotes)
 
-    // Also save to Planner
+    // Também salvar no Planner
     addItem({
       origin: 'como-estou-hoje',
       type: 'note',
@@ -326,6 +347,17 @@ export default function ComoEstouHojePage(props: {
         tab: 'como-estou-hoje',
       })
     } catch {}
+
+    // Pontos por registrar notas do dia
+    try {
+      void updateXP(12, { source: 'como-estou-hoje', reason: 'notes' })
+    } catch (e) {
+      console.error(
+        '[Como Estou Hoje] Erro ao atualizar XP das notas do dia:',
+        e,
+      )
+    }
+
     toast.success('Notas salvas!')
   }
 
@@ -353,6 +385,20 @@ export default function ComoEstouHojePage(props: {
         tab: 'como-estou-hoje',
       })
     } catch {}
+
+    // Pontos por levar insight para o planner
+    try {
+      void updateXP(15, {
+        source: 'como-estou-hoje',
+        reason: 'daily_insight',
+      })
+    } catch (e) {
+      console.error(
+        '[Como Estou Hoje] Erro ao atualizar XP do insight do dia:',
+        e,
+      )
+    }
+
     toast.success('Insight salvo no planner!')
   }
 
@@ -362,8 +408,8 @@ export default function ComoEstouHojePage(props: {
     desc: string,
   ) => {
     addItem({
-      origin: 'como-estou-hoje', // usar origin já aceito pelo Planner
-      type: 'insight', // FIX: usar um tipo válido em PlannerContentType
+      origin: 'como-estou-hoje',
+      type: 'insight',
       title,
       payload: { tag, description: desc },
     })
@@ -375,6 +421,20 @@ export default function ComoEstouHojePage(props: {
         title,
       })
     } catch {}
+
+    // Pontos por levar sugestão semanal para o planner
+    try {
+      void updateXP(10, {
+        source: 'como-estou-hoje',
+        reason: 'weekly_suggestion',
+      })
+    } catch (e) {
+      console.error(
+        '[Como Estou Hoje] Erro ao atualizar XP da sugestão semanal:',
+        e,
+      )
+    }
+
     toast.success('Sugestão salva no planner!')
   }
 
@@ -391,7 +451,6 @@ export default function ComoEstouHojePage(props: {
             className="space-y-6 md:space-y-8"
             aria-label="Como você está hoje"
           >
-            {/* Card de vidro grande englobando os 3 cards principais do dia */}
             <Reveal>
               <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8">
                 {/* Glows */}
@@ -438,7 +497,7 @@ export default function ComoEstouHojePage(props: {
                         </p>
                       </div>
 
-                      {/* Humor Section */}
+                      {/* Humor */}
                       <div className="mb-6 space-y-3">
                         <h4 className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                           Meu humor
@@ -462,7 +521,7 @@ export default function ComoEstouHojePage(props: {
                         </div>
                       </div>
 
-                      {/* Energy Section */}
+                      {/* Energia */}
                       <div className="space-y-3">
                         <h4 className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                           Minha energia
@@ -484,14 +543,13 @@ export default function ComoEstouHojePage(props: {
                         </div>
                       </div>
 
-                      {/* Confirmation Note */}
                       <div className="mt-6 pt-4 border-t border-[#ffd8e6] text-[11px] md:text-xs text-[#545454]">
                         ✓ Cada registro é um cuidado com você mesma — e ajuda o
                         Materna360 a entender seus padrões.
                       </div>
                     </SoftCard>
 
-                    {/* Coluna direita: Notas do dia + Insight do Dia */}
+                    {/* Coluna direita: Notas + Insight do dia */}
                     <div className="space-y-4 md:space-y-5">
                       {/* CARD 2: Como foi meu dia? */}
                       <SoftCard
@@ -514,7 +572,6 @@ export default function ComoEstouHojePage(props: {
                           </p>
                         </div>
 
-                        {/* Notes Section */}
                         <div className="space-y-3">
                           <div>
                             <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] mb-2.5 block uppercase tracking-wide">
@@ -538,7 +595,7 @@ export default function ComoEstouHojePage(props: {
                             </div>
                           </div>
 
-                          {/* Today's notes history from Planner */}
+                          {/* Histórico de notas (origin: como-estou-hoje) */}
                           {getByOrigin('como-estou-hoje').filter(
                             (item) => item.type === 'note',
                           ).length > 0 && (
