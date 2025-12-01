@@ -148,40 +148,88 @@ export default function MaternaBoxPage() {
           </div>
         </section>
 
-        {/* PLANOS – CARD COM DOIS PLANOS DESTACADOS */}
-        <section className="rounded-3xl border border-white/80 bg-white/90 shadow-[0_12px_32px_rgba(0,0,0,0.12)] px-5 py-6 md:px-8 md:py-8 space-y-4">
-          <h2 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
-            Planos pensados para a sua rotina
-          </h2>
-          <p className="text-sm md:text-base text-[#545454]">
-            Você pode experimentar por um mês ou viver a experiência completa
-            ao longo do ano.
-          </p>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* PLANOS – 4 CARDS COM VALORES */}
+        <section className="rounded-3xl border border-white/80 bg-white/90 shadow-[0_12px_32px_rgba(0,0,0,0.12)] px-5 py-6 md:px-8 md:py-8 space-y-5">
+          <div className="space-y-2">
+            <h2 className="text-lg md:text-xl font-semibold text-[#2F3A56]">
+              Planos pensados para a sua rotina
+            </h2>
+            <p className="text-sm md:text-base text-[#545454]">
+              Você pode experimentar por um mês ou viver a experiência completa
+              ao longo do ano. Os valores abaixo são um esboço inicial e podem
+              ser ajustados antes do lançamento oficial.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* Plano mensal */}
-            <div className="rounded-2xl bg-[#FFF7FB] border border-[#FBD0E6] p-4 space-y-2 text-sm text-[#545454]">
+            <div className="rounded-2xl bg-[#FFF7FB] border border-[#FBD0E6] p-4 flex flex-col gap-2 text-sm text-[#545454]">
               <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#9B4D96]">
                 Comece leve
               </p>
               <p className="font-semibold text-[#2F3A56]">Plano mensal</p>
-              <p>Uma MaternaBox por mês, sem fidelidade. Ideal para testar.</p>
+              <p className="text-[26px] leading-tight font-semibold text-[#2F3A56]">
+                R$ 119<span className="text-sm font-normal">/mês</span>
+              </p>
+              <p className="text-xs text-[#6A6A6A]">
+                Uma MaternaBox por mês, sem fidelidade. Ideal para testar a
+                experiência.
+              </p>
+            </div>
+
+            {/* Plano trimestral */}
+            <div className="rounded-2xl bg-[#FFF7FB] border border-[#FBD0E6] p-4 flex flex-col gap-2 text-sm text-[#545454]">
+              <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#9B4D96]">
+                Ritmo constante
+              </p>
+              <p className="font-semibold text-[#2F3A56]">Plano trimestral</p>
+              <p className="text-[26px] leading-tight font-semibold text-[#2F3A56]">
+                R$ 109<span className="text-sm font-normal">/mês</span>
+              </p>
+              <p className="text-xs text-[#6A6A6A]">
+                Cobrança a cada 3 meses. Economia leve para quem já sabe que
+                quer seguir com a experiência.
+              </p>
+            </div>
+
+            {/* Plano semestral */}
+            <div className="rounded-2xl bg-[#FFF7FB] border border-[#FBD0E6] p-4 flex flex-col gap-2 text-sm text-[#545454]">
+              <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#9B4D96]">
+                Presença na rotina
+              </p>
+              <p className="font-semibold text-[#2F3A56]">Plano semestral</p>
+              <p className="text-[26px] leading-tight font-semibold text-[#2F3A56]">
+                R$ 99<span className="text-sm font-normal">/mês</span>
+              </p>
+              <p className="text-xs text-[#6A6A6A]">
+                6 meses de MaternaBox com valor mais vantajoso para quem quer
+                criar um ritual contínuo.
+              </p>
             </div>
 
             {/* Plano anual – destaque */}
-            <div className="rounded-2xl bg-[#FFEDF6] border-2 border-[#FF005E] p-4 space-y-2 text-sm text-[#545454] shadow-[0_10px_28px_rgba(0,0,0,0.16)]">
+            <div className="rounded-2xl bg-[#FFEDF6] border-2 border-[#FF005E] p-4 flex flex-col gap-2 text-sm text-[#545454] shadow-[0_10px_28px_rgba(0,0,0,0.16)] relative overflow-hidden">
+              <span className="absolute top-3 right-3 rounded-full bg-[#FF005E] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
+                Mais escolhido
+              </span>
               <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#9B4D96]">
                 Experiência completa
               </p>
               <p className="font-semibold text-[#2F3A56]">Plano anual</p>
-              <p>
+              <p className="text-[26px] leading-tight font-semibold text-[#2F3A56]">
+                R$ 89<span className="text-sm font-normal">/mês</span>
+              </p>
+              <p className="text-xs text-[#6A6A6A]">
                 MaternaBox o ano inteiro, com mimos extras e acesso a conteúdos
                 exclusivos do clube.
               </p>
             </div>
           </div>
+
           <p className="text-xs md:text-sm text-[#6A6A6A]">
-            Em breve, os valores e detalhes de cada plano estarão disponíveis
-            aqui dentro do app.
+            Os valores podem ser ajustados até o lançamento oficial. Quando a
+            assinatura estiver ativa, esta página será atualizada com as
+            condições definitivas.
           </p>
         </section>
 
