@@ -12,6 +12,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
+import { updateXP } from '@/app/lib/xp'
 
 const AUTOCUIDADO_KEY = 'eu360/autocuidado-inteligente'
 
@@ -97,7 +98,7 @@ export default function AutocuidadoInteligentePage() {
       setSelectedRotinaItems(new Set(diaData.rotina.itensSelecionados))
     }
     if (diaData.saude?.hidratacao !== undefined) {
-      setHidratacao(diaData.saude.hidratacao)
+      setHidratacao(diaData.saude.hidratacao ?? null)
     }
     if (diaData.saude?.sono) {
       setSono(diaData.saude.sono)
@@ -134,6 +135,13 @@ export default function AutocuidadoInteligentePage() {
       })
     } catch (e) {
       console.error('[Autocuidado] Erro ao rastrear ritmo:', e)
+    }
+
+    // XP por registrar o ritmo do dia
+    try {
+      void updateXP(10)
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao atualizar XP (ritmo):', e)
     }
 
     toast.success('Seu ritmo de hoje foi salvo com carinho.')
@@ -175,6 +183,13 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao rastrear rotina:', e)
     }
 
+    // XP por montar a mini rotina
+    try {
+      void updateXP(15)
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao atualizar XP (rotina):', e)
+    }
+
     toast.success('Sua mini rotina de cuidado foi salva. Você merece esse cuidado.')
   }
 
@@ -204,6 +219,13 @@ export default function AutocuidadoInteligentePage() {
       })
     } catch (e) {
       console.error('[Autocuidado] Erro ao rastrear saúde:', e)
+    }
+
+    // XP por registrar cuidado com o corpo
+    try {
+      void updateXP(15)
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao atualizar XP (saúde):', e)
     }
 
     toast.success('Seus cuidados de saúde de hoje foram salvos.')
@@ -245,6 +267,13 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao rastrear salvamento da sugestão:', e)
     }
 
+    // XP por salvar um carinho para si mesma
+    try {
+      void updateXP(10)
+    } catch (e) {
+      console.error('[Autocuidado] Erro ao atualizar XP (sugestão):', e)
+    }
+
     toast.success('Sugestão salva para você revisitar quando quiser.')
   }
 
@@ -269,8 +298,8 @@ export default function AutocuidadoInteligentePage() {
                     Cuidados que combinam com o seu ritmo de agora.
                   </h2>
                   <p className="text-xs md:text-sm text-white/80 max-w-2xl">
-                    Escolha como você está e organize pequenos gestos de cuidado que caibam no seu momento — um passo
-                    de cada vez.
+                    Escolha como você está e organize pequenos gestos de cuidado que caibam no seu
+                    momento — um passo de cada vez.
                   </p>
                 </div>
 
@@ -391,7 +420,7 @@ export default function AutocuidadoInteligentePage() {
 
           {/* BLOCO 2 — Corpo & Bem-Estar */}
           <Reveal delay={80}>
-            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:p-7 lg:p-8 bg-white/5 border border-white/40 shadow-[0_18px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:pb-7 md:px-7 lg:p-8 bg-white/5 border border-white/40 shadow-[0_18px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
               <div className="space-y-6 md:space-y-7">
                 {/* Header do bloco */}
                 <div className="space-y-2 md:space-y-3">
@@ -402,7 +431,8 @@ export default function AutocuidadoInteligentePage() {
                     Cuide do seu corpo e receba um carinho só para você.
                   </h2>
                   <p className="text-xs md:text-sm text-white/80 max-w-2xl">
-                    Registre como você está hoje e deixe o Materna360 sugerir um cuidado especial para o seu momento.
+                    Registre como você está hoje e deixe o Materna360 sugerir um cuidado especial
+                    para o seu momento.
                   </p>
                 </div>
 
