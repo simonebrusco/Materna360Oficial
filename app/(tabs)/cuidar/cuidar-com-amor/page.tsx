@@ -28,7 +28,9 @@ type BondData = {
   selectedOption: 'gesto' | 'ritual' | null
 }
 
-type HighlightTarget = 'alimentacao' | 'sono' | 'conexao' | 'rituais' | null
+// Alvos válidos de highlight / atalhos
+type HighlightTargetBase = 'alimentacao' | 'sono' | 'conexao' | 'rituais'
+type HighlightTarget = HighlightTargetBase | null
 
 const SIGNALS_OPTIONS = [
   'Alegria',
@@ -138,18 +140,30 @@ export default function CuidarComAmorPage() {
   useEffect(() => {
     if (!isHydrated) return
 
-    const abrir = searchParams.get('abrir') as HighlightTarget | null
+    const abrirParam = searchParams.get('abrir')
+
+    const validTargets: HighlightTargetBase[] = [
+      'alimentacao',
+      'sono',
+      'conexao',
+      'rituais',
+    ]
+
+    const abrir = validTargets.includes(abrirParam as HighlightTargetBase)
+      ? (abrirParam as HighlightTargetBase)
+      : null
+
     if (!abrir) return
 
     // Mensagem suave de origem do atalho
-    const labelMap: Record<HighlightTarget, string> = {
+    const labelMap: Record<HighlightTargetBase, string> = {
       alimentacao: 'Alimentação',
       sono: 'Sono & rotina',
       conexao: 'Conexão afetuosa',
       rituais: 'Pequenos rituais',
-      null: '',
     }
-    if (abrir && labelMap[abrir]) {
+
+    if (labelMap[abrir]) {
       setEntryLabel(`Você chegou aqui pelo atalho “${labelMap[abrir]}” do hub Maternar.`)
     }
 
