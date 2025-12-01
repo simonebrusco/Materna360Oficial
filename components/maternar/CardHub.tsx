@@ -154,7 +154,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'pequenos-rituais',
         href: '/cuidar/cuidar-com-amor?abrir=rituais',
         icon: 'star',
-        label: 'Pequenos rituaIs',
+        label: 'Pequenos rituais',
       },
     ],
   },
@@ -232,26 +232,26 @@ const HUB_CARDS: HubCard[] = [
     tag: 'PREMIUM',
     icons: [
       {
-        id: 'mentorias',
-        href: '/maternar', // futura rota de mentoria
+        id: 'profissionais-materna',
+        href: '/maternar/materna-plus?abrir=profissionais',
         icon: 'crown',
-        label: 'Mentorias',
+        label: 'Profissionais',
       },
       {
         id: 'maternabox',
-        href: '/maternar/materna-plus/maternabox', // NOVA LANDING PAGE
-        icon: 'star', // destaque para o produto MaternaBox
+        href: '/maternar/materna-plus/maternabox', // landing específica da MaternaBox
+        icon: 'star',
         label: 'MaternaBox',
       },
       {
         id: 'comunidade',
-        href: '/maternar', // futura rota
+        href: '/maternar/materna-plus?abrir=comunidade',
         icon: 'heart',
         label: 'Comunidade',
       },
       {
         id: 'servicos-materna',
-        href: '/maternar', // futura rota
+        href: '/maternar/materna-plus?abrir=servicos',
         icon: 'care',
         label: 'Serviços Materna',
       },
