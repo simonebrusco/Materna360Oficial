@@ -3,12 +3,11 @@ import { SectionWrapper } from '@/components/common/SectionWrapper';
 
 export default function MaternaBoxPage() {
   return (
-    <>
-      <PageTemplate
-        title="MaternaBox — surpresas que acolhem sua rotina."
-        subtitle="Todo mês, uma caixa criada para aproximar você do seu filho com leveza, carinho e criatividade."
-      />
-
+    <PageTemplate
+      label="Materna+"
+      title="MaternaBox — surpresas que acolhem sua rotina."
+      subtitle="Todo mês, uma caixa criada para aproximar você do seu filho com leveza, carinho e criatividade."
+    >
       <SectionWrapper className="mx-auto max-w-3xl px-4 py-8 space-y-10">
         {/* HERO COM IMAGEM + CTA */}
         <section className="grid gap-8 md:grid-cols-2 md:items-center">
@@ -40,7 +39,7 @@ export default function MaternaBoxPage() {
             </div>
           </div>
 
-          {/* Imagem hero – já apontando para o PNG na pasta public/images */}
+          {/* Imagem hero – aponta para o PNG na pasta public/images */}
           <div className="md:justify-self-end">
             <img
               src="/images/maternabox-hero.png"
@@ -62,10 +61,10 @@ export default function MaternaBoxPage() {
           <ul className="list-disc pl-5 space-y-1 text-sm md:text-base text-[#545454]">
             <li>1 brinquedo educativo adequado à faixa etária;</li>
             <li>1 livro ou material de histórias do tema do mês;</li>
-            <li>atividades guiadas para viver momentos juntinhos;</li>
+            <li>Atividades guiadas para viver momentos juntinhos;</li>
             <li>1 item surpresa temático;</li>
-            <li>um mini-guia Materna360 com ideias simples de uso;</li>
-            <li>um cartão de carinho para registrar memórias do mês.</li>
+            <li>Um mini-guia Materna360 com ideias simples de uso;</li>
+            <li>Um cartão de carinho para registrar memórias do mês.</li>
           </ul>
           <p className="text-xs md:text-sm text-[#6A6A6A]">
             Os itens variam a cada edição — a proposta é sempre surpresa, leve
@@ -234,6 +233,6 @@ export default function MaternaBoxPage() {
           </p>
         </section>
       </SectionWrapper>
-    </>
+    </PageTemplate>
   );
 }
