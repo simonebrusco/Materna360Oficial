@@ -308,9 +308,11 @@ export default function MaternaBoxPage() {
           id="lista-espera"
           className="rounded-3xl bg-gradient-to-r from-[#FF1475] via-[#F94292] to-[#9B4D96] shadow-[0_22px_55px_rgba(0,0,0,0.32)] border border-white/60 px-5 py-6 md:px-7 md:py-7 text-white"
         >
-          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase mb-1">
+          {/* AQUI FOI AJUSTADO PARA FICAR BRANCO VISÍVEL */}
+          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase mb-1 text-white/90">
             Lista de espera
           </p>
+
           <h2 className="text-base md:text-lg font-semibold mb-1">
             Que tal viver um mês mais leve com a MaternaBox?
           </h2>
