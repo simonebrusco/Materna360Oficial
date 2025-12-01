@@ -1,5 +1,5 @@
 import PageTemplate from '@/components/common/PageTemplate';
-import SectionWrapper from '@/components/common/SectionWrapper';
+import { SectionWrapper } from '@/components/common/SectionWrapper';
 
 export default function MaternaBoxPage() {
   return (
