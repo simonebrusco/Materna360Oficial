@@ -265,10 +265,10 @@ const HUB_CARDS: HubCard[] = [
     tag: 'ATALHOS',
     icons: [
       {
-        id: 'planner',
-        href: '/meu-dia?abrir=planner',
+        id: 'planos',
+        href: '/planos',
         icon: 'calendar',
-        label: 'Planner',
+        label: 'Planos',
       },
       {
         id: 'perfil',
