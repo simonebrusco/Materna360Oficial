@@ -1,19 +1,19 @@
-'use client';
+'use client'
 
-import React, { useState, FormEvent } from 'react';
-import PageTemplate from '@/components/PageTemplate';
+import { useState, type FormEvent } from 'react'
+import { PageTemplate } from '@/components/common/PageTemplate'
 
 type PartnershipType =
   | 'profissional_saude'
   | 'criadora_conteudo'
   | 'marca_produto'
-  | 'outros';
+  | 'outros'
 
 interface PartnershipFormState {
-  partnershipType: PartnershipType;
-  name: string;
-  email: string;
-  message: string;
+  partnershipType: PartnershipType
+  name: string
+  email: string
+  message: string
 }
 
 const initialFormState: PartnershipFormState = {
@@ -21,31 +21,31 @@ const initialFormState: PartnershipFormState = {
   name: '',
   email: '',
   message: '',
-};
+}
 
 export default function AjudaEParceriasPage() {
-  const [form, setForm] = useState<PartnershipFormState>(initialFormState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [form, setForm] = useState<PartnershipFormState>(initialFormState)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleChange = (
     event: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
-    const { name, value } = event.target;
+    const { name, value } = event.target
     setForm((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSuccessMessage(null);
-    setErrorMessage(null);
-    setIsSubmitting(true);
+    event.preventDefault()
+    setSuccessMessage(null)
+    setErrorMessage(null)
+    setIsSubmitting(true)
 
     try {
       const response = await fetch('/api/maternar/parcerias', {
@@ -54,31 +54,31 @@ export default function AjudaEParceriasPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(form),
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json().catch(() => null);
+        const data = await response.json().catch(() => null)
         const messageFromApi =
           data && typeof data.message === 'string'
             ? data.message
-            : 'Algo não saiu como esperado.';
+            : 'Algo não saiu como esperado.'
 
-        throw new Error(messageFromApi);
+        throw new Error(messageFromApi)
       }
 
       setSuccessMessage(
         'Recebemos seu interesse em parcerias com o Materna360. Em breve alguém do time entra em contato com você.',
-      );
-      setForm(initialFormState);
+      )
+      setForm(initialFormState)
     } catch (error) {
-      console.error('[Materna360][Parcerias] erro ao enviar formulário', error);
+      console.error('[Materna360][Parcerias] erro ao enviar formulário', error)
       setErrorMessage(
         'Não conseguimos enviar suas informações agora. Se fizer sentido para você, tente novamente em alguns instantes.',
-      );
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <PageTemplate
@@ -314,5 +314,5 @@ export default function AjudaEParceriasPage() {
         </div>
       </section>
     </PageTemplate>
-  );
+  )
 }
