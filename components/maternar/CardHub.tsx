@@ -278,13 +278,13 @@ const HUB_CARDS: HubCard[] = [
       },
       {
         id: 'ajuda-suporte',
-        href: '/maternar', // futura rota de ajuda
+        href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=suporte',
         icon: 'idea',
         label: 'Ajuda & suporte',
       },
       {
         id: 'parcerias',
-        href: '/maternar', // futura rota de parcerias
+        href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=parcerias',
         icon: 'star',
         label: 'Parcerias',
       },
