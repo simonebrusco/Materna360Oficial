@@ -1,291 +1,355 @@
 'use client'
 
-import React from 'react'
-import { PageTemplate } from '@/components/common/PageTemplate'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
-import { SoftCard } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
-import { upgradeToPremium, setPlan, getPlan } from '@/app/lib/plan'
-import UpgradeSheet from '@/components/premium/UpgradeSheet'
-import AppIcon from '@/components/ui/AppIcon'
-import { track } from '@/app/lib/telemetry'
+import Link from 'next/link'
+import { Reveal } from '@/components/ui/Reveal'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 
-interface PlanFeature {
+type HubIcon = {
+  id: string
+  href: string
+  icon: KnownIconName
   label: string
 }
 
-// Plan configurations
-const PLANS = [
+type HubCard = {
+  id: string
+  title: string
+  tag: string
+  icons: HubIcon[]
+}
+
+/**
+ * Maternar Hub – 8 mini-hubs organizados em pastas translúcidas
+ * Cada card representa um mini-hub e cada tile leva direto
+ * para a função certa (rota + ?abrir= quando existir).
+ *
+ * Importante: mantive as rotas que já estavam funcionando
+ * e usei apenas rotas reais já usadas no projeto.
+ */
+const HUB_CARDS: HubCard[] = [
+  // 1) COMO ESTOU HOJE — MEU DIA
   {
-    id: 'essencial',
-    name: 'Essencial',
-    badge: 'Seu plano atual',
-    price: 'R$0',
-    pricePeriod: '/mês',
-    priceNote: 'Sem necessidade de cartão de crédito',
-    subtitle: 'Essencial para começar',
-    features: [
-      { label: 'Planner diário' },
-      { label: 'Registro de humor e energia' },
-      { label: 'Atividades do dia' },
-      { label: 'Anotações rápidas' },
+    id: 'como-estou-hoje',
+    title: 'Como estou hoje',
+    tag: 'MEU DIA',
+    icons: [
+      {
+        id: 'humor-energia',
+        href: '/meu-dia/como-estou-hoje?abrir=humor',
+        icon: 'smile',
+        label: 'Humor & energia',
+      },
+      {
+        id: 'notas-do-dia',
+        href: '/meu-dia/como-estou-hoje?abrir=notas',
+        icon: 'book-open',
+        label: 'Notas do dia',
+      },
+      {
+        id: 'resumo-emocional',
+        href: '/meu-dia/como-estou-hoje?abrir=resumo',
+        icon: 'idea',
+        label: 'Resumo emocional',
+      },
+      {
+        id: 'semana-emocional',
+        href: '/meu-dia/como-estou-hoje?abrir=semana',
+        icon: 'time',
+        label: 'Semana emocional',
+      },
     ],
-    buttonText: 'Seu plano atual',
-    buttonVariant: 'secondary' as const,
-    highlighted: false,
-    badgeIcon: 'star' as const,
   },
+
+  // 2) ROTINA LEVE — MEU DIA
+  {
+    id: 'rotina-leve',
+    title: 'Rotina leve',
+    tag: 'MEU DIA',
+    icons: [
+      {
+        id: 'ideias-rapidas',
+        href: '/meu-dia/rotina-leve?abrir=ideias',
+        icon: 'idea',
+        label: 'Ideias rápidas',
+      },
+      {
+        id: 'receitas-inteligentes',
+        href: '/meu-dia/rotina-leve?abrir=receitas',
+        icon: 'heart',
+        label: 'Receitas',
+      },
+      {
+        id: 'inspiracoes-do-dia',
+        href: '/meu-dia/rotina-leve?abrir=inspiracoes',
+        icon: 'star',
+        label: 'Inspirações',
+      },
+      {
+        id: 'planner-dia',
+        href: '/meu-dia?abrir=planner',
+        icon: 'calendar',
+        label: 'Planejar o dia',
+      },
+    ],
+  },
+
+  // 3) AUTOCUIDADO INTELIGENTE — CUIDAR
+  {
+    id: 'autocuidado-inteligente',
+    title: 'Autocuidado inteligente',
+    tag: 'CUIDAR',
+    icons: [
+      {
+        id: 'meu-ritmo',
+        href: '/cuidar/autocuidado-inteligente?abrir=ritmo',
+        icon: 'time',
+        label: 'Meu ritmo hoje',
+      },
+      {
+        id: 'mini-rotina',
+        href: '/cuidar/autocuidado-inteligente?abrir=rotina',
+        icon: 'home',
+        label: 'Mini rotina',
+      },
+      {
+        id: 'pausas-respiracao',
+        href: '/cuidar/autocuidado-inteligente?abrir=pausas',
+        icon: 'idea',
+        label: 'Pausas & respiração',
+      },
+      {
+        id: 'pra-voce-hoje',
+        href: '/cuidar/autocuidado-inteligente?abrir=gestos',
+        icon: 'heart',
+        label: 'Pra você hoje',
+      },
+    ],
+  },
+
+  // 4) CUIDAR COM AMOR — CUIDAR
+  {
+    id: 'cuidar-com-amor',
+    title: 'Cuidar com amor',
+    tag: 'CUIDAR',
+    icons: [
+      {
+        id: 'alimentacao',
+        href: '/cuidar/cuidar-com-amor?abrir=alimentacao',
+        icon: 'heart',
+        label: 'Alimentação',
+      },
+      {
+        id: 'sono-rotina',
+        href: '/cuidar/cuidar-com-amor?abrir=sono',
+        icon: 'home',
+        label: 'Sono & rotina',
+      },
+      {
+        id: 'conexao-afetuosa',
+        href: '/cuidar/cuidar-com-amor?abrir=conexao',
+        icon: 'care',
+        label: 'Conexão afetuosa',
+      },
+      {
+        id: 'pequenos-rituais',
+        href: '/cuidar/cuidar-com-amor?abrir=rituais',
+        icon: 'star',
+        label: 'Pequenos rituaIs',
+      },
+    ],
+  },
+
+  // 5) MINHAS CONQUISTAS — MATERNAR
+  {
+    id: 'minhas-conquistas',
+    title: 'Minhas conquistas',
+    tag: 'MATERNAR',
+    icons: [
+      {
+        id: 'missoes-dia',
+        href: '/maternar/minhas-conquistas?abrir=missoes',
+        icon: 'star',
+        label: 'Missões do dia',
+      },
+      {
+        id: 'painel-progresso',
+        href: '/maternar/minhas-conquistas?abrir=painel',
+        icon: 'calendar',
+        label: 'Painel de progresso',
+      },
+      {
+        id: 'selos-medalhas',
+        href: '/maternar/minhas-conquistas?abrir=selos',
+        icon: 'crown',
+        label: 'Selos & medalhas',
+      },
+      {
+        id: 'progresso-mensal',
+        href: '/maternar/minhas-conquistas?abrir=mensal',
+        icon: 'time',
+        label: 'Progresso mensal',
+      },
+    ],
+  },
+
+  // 6) BIBLIOTECA MATERNA — MATERNAR
+  {
+    id: 'biblioteca-materna',
+    title: 'Biblioteca materna',
+    tag: 'MATERNAR',
+    icons: [
+      {
+        id: 'guias-checklists',
+        href: '/maternar/biblioteca-materna?filtro=guias',
+        icon: 'book-open',
+        label: 'Guias & checklists',
+      },
+      {
+        id: 'pdfs-ebooks',
+        href: '/maternar/biblioteca-materna?filtro=ebooks',
+        icon: 'books',
+        label: 'PDFs & e-books',
+      },
+      {
+        id: 'trilhas-educativas',
+        href: '/maternar/biblioteca-materna?filtro=trilhas',
+        icon: 'play',
+        label: 'Trilhas educativas',
+      },
+      {
+        id: 'por-idade-tema',
+        href: '/maternar/biblioteca-materna?filtro=idade-tema',
+        icon: 'idea',
+        label: 'Por idade / tema',
+      },
+    ],
+  },
+
+  // 7) MATERNA+ — PREMIUM
   {
     id: 'materna-plus',
-    name: 'Materna+',
-    badge: 'Recomendado',
-    price: 'R$29,90',
-    pricePeriod: '/mês',
-    priceNote: 'Teste 7 dias grátis, sem compromisso',
-    subtitle: 'Tudo liberado + recursos avançados',
-    features: [
-      { label: 'Tudo do Essencial' },
-      { label: 'Exportar PDF' },
-      { label: 'Insights avançados' },
-      { label: 'Modo offline' },
+    title: 'Materna+',
+    tag: 'PREMIUM',
+    icons: [
+      {
+        id: 'mentorias',
+        href: '/maternar', // futura rota de mentoria
+        icon: 'crown',
+        label: 'Mentorias',
+      },
+      {
+        id: 'maternabox',
+        href: '/maternar/materna-plus/maternabox', // LANDING MATERNABOX
+        icon: 'star',
+        label: 'MaternaBox',
+      },
+      {
+        id: 'comunidade',
+        href: '/maternar', // futura rota
+        icon: 'heart',
+        label: 'Comunidade',
+      },
+      {
+        id: 'servicos-materna',
+        href: '/maternar', // futura rota
+        icon: 'care',
+        label: 'Serviços Materna',
+      },
     ],
-    buttonText: 'Upgrade agora',
-    buttonVariant: 'primary' as const,
-    highlighted: true,
-    badgeIcon: 'sparkles' as const,
   },
+
+  // 8) ATALHOS — FERRAMENTAS
   {
-    id: 'materna-360',
-    name: 'Materna+ 360',
-    badge: 'Completo',
-    price: 'R$49,90',
-    pricePeriod: '/mês',
-    priceNote: 'Acesso à biblioteca completa',
-    subtitle: 'Tudo do Materna+ + conteúdos exclusivos',
-    features: [
-      { label: 'Tudo do Materna+' },
-      { label: 'Biblioteca Materna completa' },
-      { label: 'Conteúdos premium (aulas, guias, áudios)' },
-      { label: 'Novidades em primeira mão' },
+    id: 'atalhos',
+    title: 'Ferramentas',
+    tag: 'ATALHOS',
+    icons: [
+      {
+        id: 'planos',
+        href: '/planos', // 🔗 AGORA LEVA PARA A ROTA DE PLANOS CORRETA
+        icon: 'calendar',
+        label: 'Planos',
+      },
+      {
+        id: 'perfil',
+        href: '/eu360?focus=perfil',
+        icon: 'user',
+        label: 'Perfil',
+      },
+      {
+        id: 'ajuda-suporte',
+        href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=ajuda',
+        icon: 'idea',
+        label: 'Ajuda & suporte',
+      },
+      {
+        id: 'parcerias',
+        href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=parcerias',
+        icon: 'star',
+        label: 'Parcerias',
+      },
     ],
-    buttonText: 'Quero o completo',
-    buttonVariant: 'primary' as const,
-    highlighted: false,
-    badgeIcon: 'crown' as const,
   },
 ]
 
-export default function PlanosPage() {
-  const [open, setOpen] = React.useState(false)
-  const plan = typeof window !== 'undefined' ? getPlan() : 'free'
-
-  const handleViewPlans = (planId: string) => {
-    track('paywall_view', { plan: planId, source: 'planos_page' })
-  }
-
-  const handleUpgradeClick = () => {
-    track('paywall_click', { plan: 'premium', source: 'planos_page' })
-    setOpen(true)
-  }
-
-  const currentPlanId = plan === 'premium' ? 'materna-plus' : 'essencial'
-
+export default function CardHub() {
   return (
-    <PageTemplate
-      label="MATERNA+"
-      title="Escolha seu plano"
-      subtitle="Desbloqueie o potencial completo do Materna360 com recursos premium, no seu ritmo."
+    <section
+      aria-label="Atalhos principais do Maternar"
+      className="mt-8 md:mt-10 pb-24 md:pb-28"
     >
-      <SectionWrapper className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-        {/* Mensagem sobre o plano atual logo abaixo do hero */}
-        {currentPlanId && (
-          <div className="mb-6 sm:mb-8 text-center">
-            <p className="text-xs sm:text-sm font-semibold text-[#ff005e]">
-              ✓ Você já está no plano{' '}
-              {PLANS.find((p) => p.id === currentPlanId)?.name}
-            </p>
-            <p className="mt-1 text-xs sm:text-sm text-[#545454]">
-              Se fizer sentido para você, pode mudar de plano com calma, sem
-              pressa e sem multas.
-            </p>
-          </div>
-        )}
-
-        {/* Plans Grid - 3 Column Responsive */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12 lg:px-4">
-          {PLANS.map((planConfig) => {
-            const isCurrentPlan = currentPlanId === planConfig.id
-            const isHighlighted = planConfig.highlighted
-
-            return (
-              <SoftCard
-                key={planConfig.id}
-                className={`rounded-3xl border transition-all flex flex-col relative bg-white/95 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl ${
-                  isCurrentPlan
-                    ? 'border-[var(--color-brand)]/40'
-                    : isHighlighted
-                      ? 'border-[var(--color-brand-plum)]/30'
-                      : 'border-[var(--color-pink-snow)]/60'
-                } ${
-                  isHighlighted
-                    ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.22)]'
-                    : ''
-                } p-6 sm:p-8`}
-              >
-                {/* Badge */}
-                <div className="mb-4">
-                  <div
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
-                      isHighlighted
-                        ? 'bg-[var(--color-brand)] text-white'
-                        : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
-                    }`}
-                  >
-                    <AppIcon name={planConfig.badgeIcon} size={12} decorative />
-                    {planConfig.badge}
-                  </div>
+      <Reveal>
+        {/* 2 colunas no mobile e no desktop */}
+        <div className="grid grid-cols-2 gap-4 md:gap-5">
+          {HUB_CARDS.map((card) => (
+            <div
+              key={card.id}
+              className="flex flex-col items-stretch gap-2 md:gap-3"
+            >
+              {/* Card translúcido principal */}
+              <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/14 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-3 py-3 md:px-4 md:py-4">
+                {/* Glows internos */}
+                <div className="pointer-events-none absolute inset-0 opacity-80">
+                  <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                  <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
                 </div>
 
-                {/* Plan Name */}
-                <div className="mb-1">
-                  <h2
-                    className={`text-xl sm:text-2xl font-bold mb-1 ${
-                      isHighlighted
-                        ? 'text-[var(--color-brand)]'
-                        : 'text-[var(--color-text-main)]'
-                    }`}
-                  >
-                    {planConfig.name}
-                  </h2>
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    {planConfig.subtitle}
-                  </p>
-                </div>
-
-                {/* Price Section */}
-                <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
-                  <div className="flex items-baseline gap-1">
-                    <span
-                      className={`text-4xl sm:text-5xl font-bold ${
-                        isHighlighted
-                          ? 'text-[var(--color-brand)]'
-                          : 'text-[var(--color-text-main)]'
-                      }`}
+                {/* Ícones 2x2 */}
+                <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
+                  {card.icons.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                     >
-                      {planConfig.price}
-                    </span>
-                    <span className="text-sm text-[var(--color-text-muted)]">
-                      {planConfig.pricePeriod}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                    {planConfig.priceNote}
-                  </p>
-                </div>
-
-                {/* Features List */}
-                <div className="flex-1 space-y-3 mb-6">
-                  {planConfig.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <AppIcon
-                        name='check'
-                        size={16}
-                        decorative
-                        className={`flex-shrink-0 mt-0.5 ${
-                          isHighlighted
-                            ? 'text-[var(--color-brand)]'
-                            : 'text-[var(--color-brand)]'
-                        }`}
-                      />
-                      <span className="text-sm text-[var(--color-text-main)]">
-                        {feature.label}
-                      </span>
-                    </div>
+                      <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                        <AppIcon
+                          name={item.icon}
+                          className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                          decorative
+                        />
+                        <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                          {item.label}
+                        </span>
+                      </div>
+                    </Link>
                   ))}
                 </div>
+              </div>
 
-                {/* CTA Button */}
-                <Button
-                  variant={planConfig.buttonVariant}
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    handleViewPlans(planConfig.id)
-                    if (planConfig.id !== 'essencial') {
-                      handleUpgradeClick()
-                    } else {
-                      setPlan('free')
-                    }
-                  }}
-                  disabled={isCurrentPlan && planConfig.id === 'essencial'}
-                >
-                  {isCurrentPlan && planConfig.id === 'essencial'
-                    ? 'Seu plano atual'
-                    : planConfig.buttonText}
-                </Button>
-
-                {isCurrentPlan && planConfig.id !== 'essencial' && (
-                  <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
-                    ✓ Ativo até 31 de dezembro de 2025
-                  </p>
-                )}
-              </SoftCard>
-            )
-          })}
+              {/* Nome da pasta fora, centralizado */}
+              <div className="text-center">
+                <span className="block text-[10px] font-semibold tracking-[0.24em] uppercase text-white/75">
+                  {card.tag}
+                </span>
+                <span className="block text-[13px] md:text-[14px] font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                  {card.title}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
-
-        {/* FAQ Section */}
-        <div className="max-w-2xl mx-auto">
-          <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
-            Perguntas frequentes
-          </h3>
-          <div className="space-y-3">
-            <details className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                Posso mudar de plano depois?
-                <span className="transition-transform group-open:rotate-180">
-                  <AppIcon name="chevron-down" size={20} decorative />
-                </span>
-              </summary>
-              <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                Sim, você pode fazer downgrade ou cancelar a qualquer momento
-                sem penalidades. A ideia é que o Materna360 se adapte à sua
-                fase, e não o contrário.
-              </div>
-            </details>
-            <details className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                O teste premium de 7 dias é realmente grátis?
-                <span className="transition-transform group-open:rotate-180">
-                  <AppIcon name="chevron-down" size={20} decorative />
-                </span>
-              </summary>
-              <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                Sim, completamente grátis e sem necessidade de cartão de
-                crédito para começar o teste. Você só segue com o plano pago se
-                fizer sentido para você.
-              </div>
-            </details>
-            <details className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                Meus dados ficarão privados?
-                <span className="transition-transform group-open:rotate-180">
-                  <AppIcon name="chevron-down" size={20} decorative />
-                </span>
-              </summary>
-              <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                Todos os seus dados são criptografados e armazenados com
-                segurança. Nunca compartilhamos informações pessoais com
-                terceiros. O que você registra aqui é seu e permanece em
-                sigilo.
-              </div>
-            </details>
-          </div>
-        </div>
-
-        {/* Upsell Sheet */}
-        <UpgradeSheet open={open} onOpenChange={setOpen} />
-      </SectionWrapper>
-    </PageTemplate>
+      </Reveal>
+    </section>
   )
 }
