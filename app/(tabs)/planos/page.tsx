@@ -1,8 +1,6 @@
 'use client'
 
 import React from 'react'
-import { PageTemplate } from '@/components/common/PageTemplate'
-import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { setPlan, getPlan } from '@/app/lib/plan'
@@ -10,7 +8,7 @@ import UpgradeSheet from '@/components/premium/UpgradeSheet'
 import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
 
-// Plan configurations
+// Configuração dos planos
 const PLANS = [
   {
     id: 'essencial',
@@ -74,6 +72,7 @@ const PLANS = [
 export default function PlanosPage() {
   const [open, setOpen] = React.useState(false)
   const plan = typeof window !== 'undefined' ? getPlan() : 'free'
+  const currentPlanId = plan === 'premium' ? 'materna-plus' : 'essencial'
 
   const handleViewPlans = (planId: string) => {
     track('paywall_view', { plan: planId, source: 'planos_page' })
@@ -84,198 +83,216 @@ export default function PlanosPage() {
     setOpen(true)
   }
 
-  const currentPlanId = plan === 'premium' ? 'materna-plus' : 'essencial'
-
   return (
-    <PageTemplate
-      label="MATERNA+"
-      title="Escolha seu plano"
-      subtitle="Desbloqueie o potencial completo do Materna360 com recursos premium, no seu tempo e do seu jeito."
+    <main
+      data-layout="page-template-v1"
+      className="min-h-[100dvh] pb-16 bg-[#FFE4F0] bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
     >
-      <SectionWrapper className="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-        {/* Mensagem suave sobre o plano atual */}
-        {currentPlanId && (
-          <div className="mb-8 sm:mb-10 text-center">
-            <p className="text-xs sm:text-sm font-semibold text-[#ff005e]">
-              ✓ Você já está no plano{' '}
-              {PLANS.find((p) => p.id === currentPlanId)?.name}
-            </p>
-            <p className="mt-2 text-xs sm:text-sm text-[var(--color-text-muted)]">
-              Se fizer sentido para você, pode mudar de plano com calma, sem
-              pressa e sem multas.
-            </p>
-          </div>
-        )}
+      <div className="mx-auto max-w-5xl px-4 md:px-6 pt-10">
+        {/* HERO da página de planos */}
+        <header className="mb-8 sm:mb-10 text-center">
+          <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+            MATERNA+
+          </span>
+          <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+            Escolha seu plano
+          </h1>
+          <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+            Desbloqueie o potencial completo do Materna360 com recursos premium,
+            no seu ritmo.
+          </p>
 
-        {/* Plans Grid - 3 Column Responsive */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12 lg:px-4">
-          {PLANS.map((planConfig) => {
-            const isCurrentPlan = currentPlanId === planConfig.id
-            const isHighlighted = planConfig.highlighted
+          {currentPlanId && (
+            <div className="mt-4 space-y-1">
+              <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
+                ✓ Você já está no plano{' '}
+                {PLANS.find((p) => p.id === currentPlanId)?.name}
+              </p>
+              <p className="text-xs sm:text-sm text-white/90">
+                Se fizer sentido para você, pode mudar de plano com calma, sem
+                pressa e sem multas.
+              </p>
+            </div>
+          )}
+        </header>
 
-            return (
-              <SoftCard
-                key={planConfig.id}
-                className={`rounded-3xl border transition-all flex flex-col relative bg-white/95 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl ${
-                  isCurrentPlan
-                    ? 'border-[var(--color-brand)]/40'
-                    : isHighlighted
-                      ? 'border-[var(--color-brand-plum)]/30'
-                      : 'border-[var(--color-pink-snow)]/60'
-                } ${
-                  isHighlighted
-                    ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.22)]'
-                    : ''
-                } p-6 sm:p-8`}
-              >
-                {/* Badge */}
-                <div className="mb-4">
-                  <div
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
-                      isHighlighted
-                        ? 'bg-[var(--color-brand)] text-white'
-                        : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
-                    }`}
-                  >
-                    <AppIcon name={planConfig.badgeIcon} size={12} decorative />
-                    {planConfig.badge}
+        {/* Card grande com conteúdo em branco */}
+        <div className="rounded-[32px] border border-white/70 bg-white/96 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
+          {/* Grid de planos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
+            {PLANS.map((planConfig) => {
+              const isCurrentPlan = currentPlanId === planConfig.id
+              const isHighlighted = planConfig.highlighted
+
+              return (
+                <SoftCard
+                  key={planConfig.id}
+                  className={`rounded-3xl border transition-all flex flex-col relative bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] ${
+                    isCurrentPlan
+                      ? 'border-[var(--color-brand)]/40'
+                      : isHighlighted
+                        ? 'border-[var(--color-brand-plum)]/30'
+                        : 'border-[var(--color-pink-snow)]/60'
+                  } ${
+                    isHighlighted
+                      ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.18)]'
+                      : ''
+                  } p-6 sm:p-8`}
+                >
+                  {/* Badge */}
+                  <div className="mb-4">
+                    <div
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
+                        isHighlighted
+                          ? 'bg-[var(--color-brand)] text-white'
+                          : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
+                      }`}
+                    >
+                      <AppIcon
+                        name={planConfig.badgeIcon}
+                        size={12}
+                        decorative
+                      />
+                      {planConfig.badge}
+                    </div>
                   </div>
-                </div>
 
-                {/* Plan Name */}
-                <div className="mb-1">
-                  <h2
-                    className={`text-xl sm:text-2xl font-bold mb-1 ${
-                      isHighlighted
-                        ? 'text-[var(--color-brand)]'
-                        : 'text-[var(--color-text-main)]'
-                    }`}
-                  >
-                    {planConfig.name}
-                  </h2>
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    {planConfig.subtitle}
-                  </p>
-                </div>
-
-                {/* Price Section */}
-                <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
-                  <div className="flex items-baseline gap-1">
-                    <span
-                      className={`text-4xl sm:text-5xl font-bold ${
+                  {/* Nome do plano */}
+                  <div className="mb-1">
+                    <h2
+                      className={`text-xl sm:text-2xl font-bold mb-1 ${
                         isHighlighted
                           ? 'text-[var(--color-brand)]'
                           : 'text-[var(--color-text-main)]'
                       }`}
                     >
-                      {planConfig.price}
-                    </span>
-                    <span className="text-sm text-[var(--color-text-muted)]">
-                      {planConfig.pricePeriod}
-                    </span>
+                      {planConfig.name}
+                    </h2>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      {planConfig.subtitle}
+                    </p>
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                    {planConfig.priceNote}
-                  </p>
-                </div>
 
-                {/* Features List */}
-                <div className="flex-1 space-y-3 mb-6">
-                  {planConfig.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <AppIcon
-                        name="check"
-                        size={16}
-                        decorative
-                        className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
-                      />
-                      <span className="text-sm text-[var(--color-text-main)]">
-                        {feature.label}
+                  {/* Preço */}
+                  <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
+                    <div className="flex items-baseline gap-1">
+                      <span
+                        className={`text-4xl sm:text-5xl font-bold ${
+                          isHighlighted
+                            ? 'text-[var(--color-brand)]'
+                            : 'text-[var(--color-text-main)]'
+                        }`}
+                      >
+                        {planConfig.price}
+                      </span>
+                      <span className="text-sm text-[var(--color-text-muted)]">
+                        {planConfig.pricePeriod}
                       </span>
                     </div>
-                  ))}
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                      {planConfig.priceNote}
+                    </p>
+                  </div>
+
+                  {/* Lista de benefícios */}
+                  <div className="flex-1 space-y-3 mb-6">
+                    {planConfig.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        <AppIcon
+                          name="check"
+                          size={16}
+                          decorative
+                          className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
+                        />
+                        <span className="text-sm text-[var(--color-text-main)]">
+                          {feature.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botão */}
+                  <Button
+                    variant={planConfig.buttonVariant}
+                    size="lg"
+                    className="w-full"
+                    onClick={() => {
+                      handleViewPlans(planConfig.id)
+                      if (planConfig.id !== 'essencial') {
+                        handleUpgradeClick()
+                      } else {
+                        setPlan('free')
+                      }
+                    }}
+                    disabled={isCurrentPlan && planConfig.id === 'essencial'}
+                  >
+                    {isCurrentPlan && planConfig.id === 'essencial'
+                      ? 'Seu plano atual'
+                      : planConfig.buttonText}
+                  </Button>
+
+                  {isCurrentPlan && planConfig.id !== 'essencial' && (
+                    <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
+                      ✓ Ativo até 31 de dezembro de 2025
+                    </p>
+                  )}
+                </SoftCard>
+              )
+            })}
+          </div>
+
+          {/* FAQ */}
+          <div className="max-w-2xl mx-auto">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
+              Perguntas frequentes
+            </h3>
+            <div className="space-y-3">
+              <details className="group">
+                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
+                  Posso mudar de plano depois?
+                  <span className="transition-transform group-open:rotate-180">
+                    <AppIcon name="chevron-down" size={20} decorative />
+                  </span>
+                </summary>
+                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Sim, você pode fazer downgrade ou cancelar a qualquer momento
+                  sem penalidades. O plano precisa acompanhar a sua fase, não o
+                  contrário.
                 </div>
-
-                {/* CTA Button */}
-                <Button
-                  variant={planConfig.buttonVariant}
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    handleViewPlans(planConfig.id)
-                    if (planConfig.id !== 'essencial') {
-                      handleUpgradeClick()
-                    } else {
-                      setPlan('free')
-                    }
-                  }}
-                  disabled={isCurrentPlan && planConfig.id === 'essencial'}
-                >
-                  {isCurrentPlan && planConfig.id === 'essencial'
-                    ? 'Seu plano atual'
-                    : planConfig.buttonText}
-                </Button>
-
-                {isCurrentPlan && planConfig.id !== 'essencial' && (
-                  <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
-                    ✓ Ativo até 31 de dezembro de 2025
-                  </p>
-                )}
-              </SoftCard>
-            )
-          })}
-        </div>
-
-        {/* FAQ Section */}
-        <div className="max-w-2xl mx-auto">
-          <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
-            Perguntas frequentes
-          </h3>
-          <div className="space-y-3">
-            <details className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                Posso mudar de plano depois?
-                <span className="transition-transform group-open:rotate-180">
-                  <AppIcon name="chevron-down" size={20} decorative />
-                </span>
-              </summary>
-              <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                Sim, você pode fazer downgrade ou cancelar a qualquer momento
-                sem penalidades. A ideia é que o Materna360 se adapte à sua
-                fase, e não o contrário.
-              </div>
-            </details>
-            <details className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                O teste premium de 7 dias é realmente grátis?
-                <span className="transition-transform group-open:rotate-180">
-                  <AppIcon name="chevron-down" size={20} decorative />
-                </span>
-              </summary>
-              <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                Sim, completamente grátis e sem necessidade de cartão de
-                crédito para começar o teste. Você só segue com o plano pago se
-                fizer sentido para você.
-              </div>
-            </details>
-            <details className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                Meus dados ficarão privados?
-                <span className="transition-transform group-open:rotate-180">
-                  <AppIcon name="chevron-down" size={20} decorative />
-                </span>
-              </summary>
-              <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                Todos os seus dados são criptografados e armazenados com
-                segurança. Nunca compartilhamos informações pessoais.
-              </div>
-            </details>
+              </details>
+              <details className="group">
+                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
+                  O teste premium de 7 dias é realmente grátis?
+                  <span className="transition-transform group-open:rotate-180">
+                    <AppIcon name="chevron-down" size={20} decorative />
+                  </span>
+                </summary>
+                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Sim, é totalmente grátis e você não precisa de cartão de
+                  crédito para testar. Você só continua se fizer sentido para
+                  você.
+                </div>
+              </details>
+              <details className="group">
+                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
+                  Meus dados ficarão privados?
+                  <span className="transition-transform group-open:rotate-180">
+                    <AppIcon name="chevron-down" size={20} decorative />
+                  </span>
+                </summary>
+                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Sim. Seus dados são criptografados e armazenados com
+                  segurança. O que você registra aqui é seu e não é compartilhado
+                  com terceiros.
+                </div>
+              </details>
+            </div>
           </div>
         </div>
 
-        {/* Upsell Sheet */}
+        {/* Sheet de upgrade */}
         <UpgradeSheet open={open} onOpenChange={setOpen} />
-      </SectionWrapper>
-    </PageTemplate>
+      </div>
+    </main>
   )
 }
