@@ -589,7 +589,7 @@ export default function ComoEstouHojePage(props: {
             aria-label="Como você está hoje"
           >
             <Reveal>
-              <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8">
+              <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg.white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8">
                 {/* Glows */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
                   <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
@@ -599,7 +599,7 @@ export default function ComoEstouHojePage(props: {
                 <div className="relative z-10 space-y-6 md:space-y-8">
                   {/* Header do bloco */}
                   <header className="space-y-2">
-                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.24em] uppercase text.white/80">
+                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.24em] uppercase text-white/80">
                       Hoje
                     </p>
                     <h2 className="text-lg md:text-2xl font-semibold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
@@ -834,7 +834,7 @@ export default function ComoEstouHojePage(props: {
             <Reveal>
               <div
                 id={semanaSectionId}
-                className="relative overflow-hidden rounded-[32px] border border.white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
+                className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
               >
                 {/* Glows */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
