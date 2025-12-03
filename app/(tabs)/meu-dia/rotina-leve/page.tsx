@@ -169,10 +169,7 @@ async function generateRecipesWithAI(
 
     return recipes
   } catch (error) {
-    console.error(
-      '[Rotina Leve] Erro ao buscar receitas, usando fallback:',
-      error,
-    )
+    console.error('[Rotina Leve] Erro ao buscar receitas, usando fallback:', error)
     toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
     return await mockGenerateRecipes()
   }
@@ -427,6 +424,8 @@ export default function RotinaLevePage() {
     }
   }
 
+  const isOverLimit = usedRecipesToday >= RECIPES_LIMIT_PER_DAY
+
   const handleGenerateRecipes = async () => {
     if (isBabyUnderSixMonths) {
       toast.info(
@@ -435,7 +434,7 @@ export default function RotinaLevePage() {
       return
     }
 
-    if (usedRecipesToday >= RECIPES_LIMIT_PER_DAY) {
+    if (isOverLimit) {
       toast.info(
         'Hoje você já pediu 3 receitas inteligentes. Amanhã a gente pensa em novas ideias com calma, combinado?',
       )
@@ -454,7 +453,7 @@ export default function RotinaLevePage() {
         ? 40
         : undefined
 
-    // Define se a criança está por perto com base em "comQuem" (quando já tiver sido usado)
+    // Define se a criança está por perto com base em "comQuem"
     const hasKidsAround =
       comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
         ? true
@@ -530,10 +529,7 @@ export default function RotinaLevePage() {
 
         try {
           if (typeof window !== 'undefined') {
-            window.localStorage.setItem(
-              getRecipesDailyStorageKey(),
-              String(newCount),
-            )
+            window.localStorage.setItem(getRecipesDailyStorageKey(), String(newCount))
           }
         } catch (error) {
           console.error(
@@ -542,7 +538,6 @@ export default function RotinaLevePage() {
           )
         }
       }
-      // Futuro: aqui é um ótimo ponto pra telemetria *.generated
     } finally {
       setRecipesLoading(false)
     }
@@ -585,7 +580,6 @@ export default function RotinaLevePage() {
   }
 
   const hasRecipes = recipes && recipes.length > 0
-  const isOverLimit = usedRecipesToday >= RECIPES_LIMIT_PER_DAY
 
   const idadeLabel =
     ageMonths === null
@@ -601,7 +595,6 @@ export default function RotinaLevePage() {
       subtitle="Organize o seu dia com leveza e clareza."
     >
       <ClientOnly>
-        {/* IMPORTANTE: sem mx-auto / max-w aqui, o PageTemplate já cuida disso */}
         <div className="pt-6 pb-10 space-y-8">
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
@@ -667,7 +660,7 @@ export default function RotinaLevePage() {
                     </div>
                   </div>
 
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#ff005e]>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#ff005e]">
                     <span>Idade principal: {idadeLabel}</span>
                   </div>
                 </div>
