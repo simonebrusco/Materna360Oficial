@@ -10,6 +10,7 @@ import { getDailyIndex } from '@/app/lib/dailyMessage';
 import { getTimeGreeting } from '@/app/lib/greetings';
 import { ClientOnly } from '@/components/common/ClientOnly';
 import { LegalFooter } from '@/components/common/LegalFooter';
+import { MotivationalFooter } from '@/components/common/MotivationalFooter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -96,6 +97,11 @@ export default function MeuDiaClient() {
 
         {/* Planner inteiro logo abaixo do hero */}
         <WeeklyPlannerShell />
+
+        {/* Footer motivacional específico do hub Meu Dia */}
+        <div className="mt-8 md:mt-10">
+          <MotivationalFooter routeKey="meu-dia-hub" />
+        </div>
       </div>
 
       {/* Rodapé legal */}
