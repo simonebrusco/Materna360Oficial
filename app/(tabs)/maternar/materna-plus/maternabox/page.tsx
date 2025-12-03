@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
+import { LegalFooter } from '@/components/common/LegalFooter';
 
 export default function MaternaBoxPage() {
   const [name, setName] = useState('');
@@ -39,13 +40,13 @@ export default function MaternaBoxPage() {
       }
 
       setSuccessMessage(
-        'Pronto! Você entrou na lista de espera da MaternaBox. Vamos avisar quando a assinatura abrir.'
+        'Pronto! Você entrou na lista de espera da MaternaBox. Vamos avisar quando a assinatura abrir.',
       );
       setName('');
       setEmail('');
     } catch (error) {
       setErrorMessage(
-        'Não foi possível registrar sua inscrição agora. Tente novamente em alguns instantes.'
+        'Não foi possível registrar sua inscrição agora. Tente novamente em alguns instantes.',
       );
       console.error('Erro ao enviar lista de espera MaternaBox:', error);
     } finally {
@@ -371,6 +372,9 @@ export default function MaternaBoxPage() {
           </p>
         </section>
       </div>
+
+      {/* Rodapé legal */}
+      <LegalFooter />
     </main>
   );
 }
