@@ -331,7 +331,7 @@ export function IntelligentSuggestionsSection({
   const handleSaveSuggestionToPlanner = (suggestion: Suggestion) => {
     try {
       addItem({
-        origin: 'meu-dia', // <<< ORIGIN VÁLIDO NO PlannerOrigin
+        origin: 'meu-dia', // origin válido
         type: 'insight',
         title: suggestion.title,
         payload: {
@@ -426,7 +426,7 @@ export function IntelligentSuggestionsSection({
                   <div className="flex justify-end">
                     <Button
                       variant="outline"
-                      size="xs"
+                      size="sm" // <-- ajuste aqui: de "xs" para "sm"
                       onClick={() => handleSaveSuggestionToPlanner(suggestion)}
                       className="text-[11px] md:text-xs px-3 py-1 rounded-full border-[var(--color-brand)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white transition-colors"
                     >
@@ -442,3 +442,4 @@ export function IntelligentSuggestionsSection({
     </div>
   )
 }
+
