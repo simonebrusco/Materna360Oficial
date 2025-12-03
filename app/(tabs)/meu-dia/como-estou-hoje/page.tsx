@@ -30,8 +30,18 @@ type DailyInsight = {
   gentleReminder: string
 }
 
+type EmotionalContext = {
+  mood?: string | null
+  energy?: string | null
+  hasNotes?: boolean
+  notesPreview?: string
+  dateKey?: string
+}
+
 // Insight semanal emocional via modelo + fallback suave
-async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
+async function fetchWeeklyEmotionalInsight(
+  context: EmotionalContext,
+): Promise<WeeklyInsight> {
   try {
     const res = await fetch('/api/ai/emocional', {
       method: 'POST',
@@ -39,6 +49,7 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
       body: JSON.stringify({
         feature: 'weekly_overview',
         origin: 'como-estou-hoje',
+        context,
       }),
     })
 
@@ -88,7 +99,9 @@ async function fetchWeeklyEmotionalInsight(): Promise<WeeklyInsight> {
 }
 
 // Insight do dia (emocional) + fallback suave
-async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
+async function fetchDailyEmotionalInsight(
+  context: EmotionalContext,
+): Promise<DailyInsight> {
   try {
     const res = await fetch('/api/ai/emocional', {
       method: 'POST',
@@ -96,6 +109,7 @@ async function fetchDailyEmotionalInsight(): Promise<DailyInsight> {
       body: JSON.stringify({
         feature: 'daily_inspiration',
         origin: 'como-estou-hoje',
+        context,
       }),
     })
 
@@ -157,7 +171,7 @@ export default function ComoEstouHojePage(props: {
   // Query param para abrir bloco direto do hub
   const [sectionToOpen, setSectionToOpen] = useState<string | null>(null)
 
-  // marcador lógico para o scroll
+  // marcador lógico para o scroll + contexto carregado
   const [refsReady, setRefsReady] = useState(false)
   const humorSectionId = 'sec-humor'
   const notesSectionId = 'sec-notas'
@@ -224,14 +238,26 @@ export default function ComoEstouHojePage(props: {
     setRefsReady(true)
   }, [isHydrated, currentDateKey])
 
-  // Insight semanal
+  const emotionalContext: EmotionalContext = useMemo(
+    () => ({
+      mood: selectedHumor,
+      energy: selectedEnergy,
+      hasNotes: !!dayNotes.trim(),
+      notesPreview: dayNotes.trim() ? dayNotes.trim().slice(0, 160) : undefined,
+      dateKey: currentDateKey,
+    }),
+    [selectedHumor, selectedEnergy, dayNotes, currentDateKey],
+  )
+
+  // Insight semanal (já usando contexto)
   useEffect(() => {
+    if (!refsReady) return
     let isMounted = true
 
     const loadInsight = async () => {
       setLoadingWeeklyInsight(true)
       try {
-        const result = await fetchWeeklyEmotionalInsight()
+        const result = await fetchWeeklyEmotionalInsight(emotionalContext)
         if (isMounted) {
           setWeeklyInsight(result)
         }
@@ -247,16 +273,20 @@ export default function ComoEstouHojePage(props: {
     return () => {
       isMounted = false
     }
-  }, [])
+    // não dependemos de dayNotes change o tempo todo — apenas do estado
+    // carregado para o dia atual (refsReady + humor/energia)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refsReady, selectedHumor, selectedEnergy, currentDateKey])
 
-  // Insight diário
+  // Insight diário (também contextual)
   useEffect(() => {
+    if (!refsReady) return
     let isMounted = true
 
     const loadDaily = async () => {
       setLoadingDailyInsight(true)
       try {
-        const result = await fetchDailyEmotionalInsight()
+        const result = await fetchDailyEmotionalInsight(emotionalContext)
         if (isMounted) {
           setDailyInsight(result)
         }
@@ -272,7 +302,9 @@ export default function ComoEstouHojePage(props: {
     return () => {
       isMounted = false
     }
-  }, [])
+    // mesma lógica: roda quando contexto base do dia está pronto
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refsReady, selectedHumor, selectedEnergy, currentDateKey])
 
   const handleHumorSelect = (humor: string) => {
     setSelectedHumor(selectedHumor === humor ? null : humor)
@@ -455,7 +487,7 @@ export default function ComoEstouHojePage(props: {
                 <div className="relative z-10 space-y-6 md:space-y-8">
                   {/* Header do bloco */}
                   <header className="space-y-2">
-                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.24em] uppercase text-white/80">
+                    <p className="text-[11px] md:text-xs font-semibold tracking-[0.24em] uppercase text.white/80">
                       Hoje
                     </p>
                     <h2 className="text-lg md:text-2xl font-semibold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
@@ -681,7 +713,7 @@ export default function ComoEstouHojePage(props: {
             <Reveal>
               <div
                 id={semanaSectionId}
-                className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
+                className="relative overflow-hidden rounded-[32px] border border.white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
               >
                 {/* Glows */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
