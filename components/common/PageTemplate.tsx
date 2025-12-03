@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import LegalFooter from '@/components/common/LegalFooter'
 
 export type PageTemplateProps = {
   label: string
@@ -43,6 +44,9 @@ export function PageTemplate({
           {children}
         </div>
       </div>
+
+      {/* Rodapé legal global */}
+      <LegalFooter />
     </main>
   )
 }
