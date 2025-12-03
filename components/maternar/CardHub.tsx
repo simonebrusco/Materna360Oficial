@@ -22,6 +22,9 @@ type HubCard = {
  * Maternar Hub – 8 mini-hubs organizados em pastas translúcidas
  * Cada card representa um mini-hub e cada tile leva direto
  * para a função certa (rota + ?abrir= quando existir).
+ *
+ * Importante: mantive as rotas que já estavam funcionando
+ * e usei apenas rotas reais já usadas no projeto.
  */
 const HUB_CARDS: HubCard[] = [
   // 1) COMO ESTOU HOJE — MEU DIA
@@ -230,25 +233,25 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'mentorias',
-        href: '/maternar/materna-plus',
+        href: '/maternar/materna-plus?abrir=profissionais',
         icon: 'crown',
         label: 'Mentorias',
       },
       {
         id: 'maternabox',
-        href: '/maternar/materna-plus/maternabox', // rota exclusiva da MaternaBox
+        href: '/maternar/materna-plus/maternabox', // LANDING MATERNABOX
         icon: 'star',
         label: 'MaternaBox',
       },
       {
         id: 'comunidade',
-        href: '/maternar/materna-plus',
+        href: '/maternar/materna-plus?abrir=comunidade',
         icon: 'heart',
         label: 'Comunidade',
       },
       {
         id: 'servicos-materna',
-        href: '/maternar/materna-plus',
+        href: '/maternar/materna-plus?abrir=servicos',
         icon: 'care',
         label: 'Serviços Materna',
       },
@@ -263,7 +266,7 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'planos',
-        href: '/planos',
+        href: '/planos', // 🔗 rota de planos correta
         icon: 'calendar',
         label: 'Planos',
       },
