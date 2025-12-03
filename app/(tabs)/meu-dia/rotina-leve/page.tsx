@@ -13,6 +13,7 @@ import { toast } from '@/app/lib/toast'
 import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
 import { usePrimaryChildAge } from '@/app/hooks/usePrimaryChildAge'
 import { updateXP } from '@/app/lib/xp'
+import type { RotinaLeveContext } from '@/app/lib/ai/rotinaLeve'
 
 type QuickIdea = {
   id: string
@@ -106,17 +107,16 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   })
 }
 
-// ---------- motor de receitas com fallback suave ----------
+// ---------- motor de receitas com fallback suave (via /api/ai/rotina-leve) ----------
 
-async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
+async function generateRecipesWithAI(
+  context: RotinaLeveContext,
+): Promise<GeneratedRecipe[]> {
   try {
-    const res = await fetch('/api/ai/rotina', {
+    const res = await fetch('/api/ai/rotina-leve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        feature: 'recipes',
-        origin: 'rotina-leve',
-      }),
+      body: JSON.stringify({ context }),
     })
 
     if (!res.ok) {
@@ -124,15 +124,39 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
     }
 
     const data = await res.json()
-    const recipes = data?.recipes
+    const suggestions = data?.suggestions
 
-    if (!Array.isArray(recipes) || recipes.length === 0) {
-      throw new Error('Nenhuma receita recebida')
+    if (!Array.isArray(suggestions) || suggestions.length === 0) {
+      throw new Error('Nenhuma sugestão recebida')
     }
 
-    return recipes as GeneratedRecipe[]
+    const recipes: GeneratedRecipe[] = suggestions
+      .filter((s: any) => s.category === 'receita-inteligente')
+      .map((s: any, index: number) => ({
+        id: s.id || `recipe-${index}`,
+        title: s.title || 'Sugestão de receita rápida',
+        description:
+          s.description ||
+          'Uma sugestão simples para um lanche rápido que cabe no seu dia.',
+        timeLabel: s.timeLabel || 'Tempo flexível',
+        ageLabel:
+          s.ageLabel ||
+          'Idade a partir de 6 meses (sempre respeitando orientação do pediatra).',
+        preparation:
+          s.preparation ||
+          'Adapte esta sugestão aos ingredientes que você tem em casa e à fase do seu filho, sempre seguindo as orientações do pediatra.',
+      }))
+
+    if (recipes.length === 0) {
+      throw new Error('Nenhuma receita categorizada recebida')
+    }
+
+    return recipes
   } catch (error) {
-    console.error('[Rotina Leve] Erro ao buscar receitas, usando fallback:', error)
+    console.error(
+      '[Rotina Leve] Erro ao buscar receitas, usando fallback:',
+      error,
+    )
     toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
     return await mockGenerateRecipes()
   }
@@ -375,9 +399,26 @@ export default function RotinaLevePage() {
       return
     }
 
+    const context: RotinaLeveContext = {
+      mood: 'cansada',
+      energy: 'baixa',
+      timeOfDay: 'hoje',
+      hasKidsAround: comQuem !== 'so-eu',
+      availableMinutes:
+        tempoDisponivel === '5'
+          ? 5
+          : tempoDisponivel === '10'
+          ? 10
+          : tempoDisponivel === '20'
+          ? 20
+          : tempoDisponivel === '30+'
+          ? 30
+          : undefined,
+    }
+
     setRecipesLoading(true)
     try {
-      const result = await generateRecipesWithAI()
+      const result = await generateRecipesWithAI(context)
       setRecipes(result)
     } finally {
       setRecipesLoading(false)
