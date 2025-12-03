@@ -1,228 +1,190 @@
 // app/api/ai/emocional/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-type EmotionalFeature = 'daily_insight' | 'weekly_overview'
-
-type EmotionalContext = {
-  firstName?: string
-  stats?: {
-    daysWithPlanner?: number
-    moodCheckins?: number
-    unlockedAchievements?: number
-  }
-  // Campos extras para uso futuro (Como Estou Hoje etc.)
-  mood?: string
-  energy?: string
-  mainChallenges?: string[]
-  baseline?: string
-  notesSample?: string[]
-}
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const MODEL = 'gpt-4.1-mini' // pode trocar depois, se quiser
 
 type EmotionalRequestBody = {
-  feature?: EmotionalFeature
+  feature: 'weekly_overview' | 'daily_inspiration'
   origin?: string
-  context?: EmotionalContext
+  // Campos extras possíveis para contexto futuro (sem obrigação de enviar agora)
+  mood?: string | null
+  energy?: string | null
+  notesPreview?: string | null
 }
 
-/**
- * Payload esperado hoje pelo Eu360:
- * data.weeklyInsight.title
- * data.weeklyInsight.summary
- * data.weeklyInsight.suggestions
- */
-type WeeklyInsightPayload = {
-  title: string
-  summary: string
-  suggestions: string[]
-}
-
-/**
- * Payload opcional para uso em "Como Estou Hoje" no futuro.
- */
-type DailyInsightPayload = {
-  title: string
-  message: string
-  suggestions?: string[]
-}
-
-type EmotionalResponse = {
-  weeklyInsight: WeeklyInsightPayload
-  dailyInsight?: DailyInsightPayload
-}
-
-function getSafeFirstName(ctx?: EmotionalContext): string {
-  const raw = ctx?.firstName?.trim()
-  if (!raw) return 'você'
-  return raw
-}
-
-function buildWeeklyInsight(origin: string, context?: EmotionalContext): WeeklyInsightPayload {
-  const name = getSafeFirstName(context)
-  const stats = context?.stats ?? {}
-
-  const daysWithPlanner = stats.daysWithPlanner ?? 0
-  const moodCheckins = stats.moodCheckins ?? 0
-  const unlockedAchievements = stats.unlockedAchievements ?? 0
-
-  const baseTitle =
-    origin === 'eu360'
-      ? 'Seu resumo emocional da semana'
-      : 'Um olhar carinhoso sobre a sua semana'
-
-  const baseSummary =
-    daysWithPlanner > 0 || moodCheckins > 0
-      ? `${capitalize(
-          name,
-        )}, olhando para os seus últimos dias dá para perceber que você não está no piloto automático. Mesmo na correria, você vem encontrando jeitos de se organizar e se observar.`
-      : `${capitalize(
-          name,
-        )}, esta semana pode ter parecido só mais uma no meio da correria, mas o fato de você estar aqui já mostra que algo em você quer cuidar melhor de si mesma e da sua rotina.`
-
-  const extraPieces: string[] = []
-
-  if (daysWithPlanner > 0) {
-    extraPieces.push(
-      daysWithPlanner === 1
-        ? 'Você usou o planner em pelo menos um dia — isso já é um começo importante.'
-        : `Você usou o planner em cerca de ${daysWithPlanner} dia(s), o que mostra uma intenção real de colocar as coisas no papel.`,
-    )
-  }
-
-  if (moodCheckins > 0) {
-    extraPieces.push(
-      moodCheckins === 1
-        ? 'Você registrou seu humor pelo menos uma vez, e isso ajuda a enxergar como você vem se sentindo de verdade.'
-        : `Você fez alguns check-ins de humor, sinal de que está tentando se ouvir mais no meio da rotina.`,
-    )
-  }
-
-  if (unlockedAchievements > 0) {
-    extraPieces.push(
-      `Há pelo menos ${unlockedAchievements} conquista(s) registrada(s). Mesmo que pareçam pequenas, elas contam muito.`,
-    )
-  }
-
-  const summary =
-    extraPieces.length > 0
-      ? `${baseSummary} ${extraPieces.join(' ')}`
-      : `${baseSummary} Lembre-se: você não precisa dar conta de tudo, só do que é possível hoje.`
-
-  const suggestions: string[] = []
-
-  suggestions.push(
-    'Separe um momento curto para olhar com carinho para o que você já deu conta, em vez de só olhar para o que “faltou”.',
-  )
-  suggestions.push(
-    'Escolha apenas uma prioridade por dia nos próximos dias — algo pequeno, mas que faça diferença para você.',
-  )
-
-  if (moodCheckins === 0) {
-    suggestions.push(
-      'Se fizer sentido, experimente registrar seu humor ao menos uma vez por dia. Isso ajuda a perceber padrões com mais gentileza.',
-    )
-  }
-
-  if (daysWithPlanner === 0) {
-    suggestions.push(
-      'Use o planner como um aliado, não como cobrança. Ele pode ser só um lugar para anotar três coisas importantes do dia.',
-    )
-  }
-
-  return {
-    title: baseTitle,
-    summary,
-    suggestions,
-  }
-}
-
-function buildDailyInsight(origin: string, context?: EmotionalContext): DailyInsightPayload {
-  const name = getSafeFirstName(context)
-
-  const mood = context?.mood
-  const energy = context?.energy
-
-  let message =
-    'Hoje vale tentar se tratar com a mesma delicadeza que você oferece para o seu filho quando ele está cansado.'
-
-  if (mood === 'sobrecarregada' || mood === 'pesada') {
-    message = `${capitalize(
-      name,
-    )}, está tudo bem se hoje as coisas parecerem mais pesadas. Você não precisa transformar o dia inteiro, só escolher um ponto para aliviar a pressão.`
-  } else if (mood === 'leve' || mood === 'equilibrada') {
-    message = `${capitalize(
-      name,
-    )}, se hoje está um pouco mais leve, tente proteger esse clima: diga não para uma cobrança desnecessária e sim para um momento simples com quem você ama.`
-  }
-
-  if (energy === 'baixa') {
-    message +=
-      ' Se a sua energia estiver baixa, não se culpe por fazer o básico. O básico já é muita coisa quando a mente e o corpo estão cansados.'
-  } else if (energy === 'alta') {
-    message +=
-      ' Se a sua energia estiver um pouco mais alta, aproveite para organizar só o que realmente importa, sem abraçar o mundo.'
-  }
-
-  return {
-    title:
-      origin === 'como-estou-hoje'
-        ? 'Um carinho para o seu dia'
-        : 'Um olhar gentil para o hoje',
-    message,
-    suggestions: [
-      'Respire fundo três vezes antes de entrar em um momento mais tenso do seu dia.',
-      'Pergunte-se: “O que realmente importa para mim hoje?” e deixe o resto para depois.',
-    ],
-  }
-}
-
-function capitalize(text: string): string {
-  if (!text) return text
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const body = (await req.json().catch(() => null)) as EmotionalRequestBody | null
+    const apiKey = process.env.OPENAI_API_KEY
 
-    const feature: EmotionalFeature = body?.feature ?? 'weekly_overview'
-    const origin = body?.origin ?? 'unknown'
-    const context = body?.context
-
-    const weeklyInsight = buildWeeklyInsight(origin, context)
-    const dailyInsight = buildDailyInsight(origin, context)
-
-    const response: EmotionalResponse = {
-      weeklyInsight,
-      // Sempre devolvemos dailyInsight também, para uso futuro
-      dailyInsight,
+    if (!apiKey) {
+      console.error('[IA Emocional] OPENAI_API_KEY não configurada')
+      return NextResponse.json(
+        { error: 'Configuração de IA indisponível no momento.' },
+        { status: 500 },
+      )
     }
 
-    return NextResponse.json(response, { status: 200 })
+    const body = (await request.json()) as EmotionalRequestBody
+    const { feature, origin, mood, energy, notesPreview } = body
+
+    if (!feature) {
+      return NextResponse.json(
+        { error: 'Parâmetro "feature" é obrigatório.' },
+        { status: 400 },
+      )
+    }
+
+    // Prompt base alinhado ao tom do Materna360
+    const systemMessage = `
+Você é a IA emocional do Materna360, um app para mães que combina organização leve com apoio emocional.
+Sua missão é oferecer reflexões curtas, acolhedoras e sem julgamentos, sempre em TOM DE VOZ Materna360:
+- gentil, humano, realista, sem frases motivacionais vazias
+- reconhece o cansaço da mãe SEM culpá-la
+- traz alívio e não mais cobrança
+- frases em português do Brasil, curtas e diretas
+Nunca fale de diagnóstico, remédio ou temas médicos.
+Nunca mande a mãe "ser mais grata" ou "pensar positivo" – seja mais concreta e empática.
+Respeite SEMPRE o formato JSON pedido.
+    `.trim()
+
+    const userContext = {
+      origem: origin ?? 'como-estou-hoje',
+      humorAtual: mood ?? null,
+      energiaAtual: energy ?? null,
+      resumoNotas: notesPreview ?? null,
+    }
+
+    const userMessageCommon = `
+Dados de contexto (podem estar vazios):
+${JSON.stringify(userContext, null, 2)}
+    `.trim()
+
+    let userMessage = ''
+    let expectedShapeDescription = ''
+
+    if (feature === 'weekly_overview') {
+      expectedShapeDescription = `
+Responda APENAS com JSON válido neste formato:
+
+{
+  "weeklyInsight": {
+    "title": "string",
+    "summary": "string",
+    "highlights": {
+      "bestDay": "string",
+      "toughDays": "string"
+    }
+  }
+}
+
+- "title": título curto, acolhedor.
+- "summary": visão geral da semana, em 3 a 5 linhas.
+- "bestDay": quando os dias fluem melhor (sem culpar a mãe).
+- "toughDays": quando o dia pesa mais, com lembrete de gentileza consigo mesma.
+      `.trim()
+
+      userMessage = `
+Gere um insight emocional da semana da mãe a partir dos registros dela.
+
+${userMessageCommon}
+
+${expectedShapeDescription}
+      `.trim()
+    } else if (feature === 'daily_inspiration') {
+      expectedShapeDescription = `
+Responda APENAS com JSON válido neste formato:
+
+{
+  "inspiration": {
+    "phrase": "string",
+    "care": "string",
+    "ritual": "string"
+  }
+}
+
+- "phrase": frase curtinha de título (1 linha).
+- "care": texto principal, 3 a 6 linhas, acolhendo o dia da mãe.
+- "ritual": sugestão prática e simples de autocuidado ou conexão, que caiba num dia corrido.
+      `.trim()
+
+      userMessage = `
+Gere uma inspiração emocional para o dia da mãe, considerando humor, energia e notas.
+
+${userMessageCommon}
+
+${expectedShapeDescription}
+      `.trim()
+    } else {
+      return NextResponse.json(
+        { error: 'Feature inválida para IA emocional.' },
+        { status: 400 },
+      )
+    }
+
+    // Chamada para a OpenAI com timeout seguro
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15_000)
+
+    const openAiRes = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.7,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userMessage },
+        ],
+      }),
+    }).finally(() => clearTimeout(timeout))
+
+    if (!openAiRes.ok) {
+      console.error(
+        '[IA Emocional] Erro HTTP da OpenAI:',
+        openAiRes.status,
+        await openAiRes.text().catch(() => '(sem corpo)'),
+      )
+      return NextResponse.json(
+        { error: 'Não consegui gerar a análise emocional agora.' },
+        { status: 502 },
+      )
+    }
+
+    const completion = await openAiRes.json()
+
+    const content: string =
+      completion?.choices?.[0]?.message?.content?.trim() ?? '{}'
+
+    // Tenta fazer o parse do JSON, mesmo que venha com texto ao redor
+    let parsed: any
+    try {
+      parsed = JSON.parse(content)
+    } catch {
+      const first = content.indexOf('{')
+      const last = content.lastIndexOf('}')
+      if (first >= 0 && last > first) {
+        parsed = JSON.parse(content.slice(first, last + 1))
+      } else {
+        throw new Error('Resposta da IA sem JSON válido')
+      }
+    }
+
+    return NextResponse.json(parsed, { status: 200 })
   } catch (error) {
-    console.error('[IA emocional] Erro inesperado, usando fallback seguro:', error)
+    console.error('[IA Emocional] Erro geral na rota /api/ai/emocional:', error)
 
-    const fallback: EmotionalResponse = {
-      weeklyInsight: {
-        title: 'Seu resumo emocional da semana',
-        summary:
-          'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.',
-        suggestions: [
-          'Proteja ao menos um momento do dia que te faz bem, mesmo que sejam 10 minutos.',
-          'Perceba quais situações estão drenando demais sua energia e veja o que pode ser simplificado.',
-        ],
+    // Resposta genérica, mas acolhedora (o front já tem fallback extra)
+    return NextResponse.json(
+      {
+        error: 'Não foi possível gerar a análise emocional agora.',
       },
-      dailyInsight: {
-        title: 'Um carinho para o seu dia',
-        message:
-          'Hoje, tente falar com você da mesma forma que você fala com uma amiga querida: com menos cobrança e mais gentileza.',
-        suggestions: [
-          'Escolha uma coisa que você pode facilitar hoje.',
-          'Lembre-se de que pedir ajuda também é uma forma de cuidar.',
-        ],
-      },
-    }
-
-    // Mesmo em caso de erro, não quebramos a página
-    return NextResponse.json(fallback, { status: 200 })
+      { status: 500 },
+    )
   }
 }
