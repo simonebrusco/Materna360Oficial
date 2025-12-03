@@ -9,6 +9,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import CardHub from '@/components/maternar/CardHub'
+import LegalFooter from '@/components/common/LegalFooter'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -49,11 +50,16 @@ export default function MaternarClient() {
           </div>
         </header>
 
-        <div className="space-y-8 md:space-y-10">
+        <div className="space-y-8 md:space-y-10 pb-6">
           {/* GRID NOVO DE PASTAS (CARDS TRANSLÚCIDOS 2x2) */}
           <CardHub />
 
           <MotivationalFooter routeKey="maternar-minha-jornada" />
+
+          {/* Rodapé legal global */}
+          <div className="mt-4 md:mt-6">
+            <LegalFooter />
+          </div>
         </div>
       </div>
     </main>

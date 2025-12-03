@@ -13,6 +13,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
+import LegalFooter from '@/components/common/LegalFooter'
 
 type WeeklyInsight = {
   title: string
@@ -115,7 +116,7 @@ export default function Eu360Client() {
   const content = (
     <main
       data-layout="page-template-v1"
-      className="min-h-screen PageSafeBottom bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+      className="min-h-[100dvh] pb-28 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -295,6 +296,11 @@ export default function Eu360Client() {
               </SoftCard>
             </Reveal>
           </SectionWrapper>
+        </div>
+
+        {/* Rodapé legal global */}
+        <div className="mt-4 md:mt-6 pb-4">
+          <LegalFooter />
         </div>
       </div>
     </main>
