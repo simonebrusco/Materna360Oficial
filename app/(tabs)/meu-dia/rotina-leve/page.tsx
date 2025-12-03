@@ -16,6 +16,7 @@ import { updateXP } from '@/app/lib/xp'
 import type { RotinaLeveContext } from '@/app/lib/ai/rotinaLeve'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
+import { track } from '@/app/lib/telemetry'
 
 type QuickIdea = {
   id: string
@@ -353,6 +354,13 @@ export default function RotinaLevePage() {
       })
 
       try {
+        track('rotina_leve.ideas.saved', {
+          origin: 'rotina-leve',
+          count: ideasToSave.length,
+        })
+      } catch {}
+
+      try {
         void updateXP(5)
       } catch (e) {
         console.error('[Rotina Leve] Erro ao atualizar XP (ideias):', e)
@@ -387,6 +395,13 @@ export default function RotinaLevePage() {
       })
 
       try {
+        track('rotina_leve.recipe.saved', {
+          origin: 'rotina-leve',
+          title: recipe.title,
+        })
+      } catch {}
+
+      try {
         void updateXP(8)
       } catch (e) {
         console.error('[Rotina Leve] Erro ao atualizar XP (receita):', e)
@@ -415,6 +430,12 @@ export default function RotinaLevePage() {
             'Envie uma mensagem carinhosa para alguém que te apoia.',
         },
       })
+
+      try {
+        track('rotina_leve.inspiration.saved', {
+          origin: 'rotina-leve',
+        })
+      } catch {}
 
       try {
         void updateXP(5)
@@ -521,47 +542,93 @@ export default function RotinaLevePage() {
           ' Gere até 3 sugestões de receitas simples, práticas e acolhedoras, sempre respeitando as orientações pediátricas para a idade.'
         : undefined
 
-    setRecipesLoading(true)
     try {
+      try {
+        track('rotina_leve.recipes.requested', {
+          origin: 'rotina-leve',
+          availableMinutes: recipeAvailableMinutes,
+          mealType: recipeMealType,
+          comQuem,
+          ageMonths,
+        })
+      } catch {}
+
+      setRecipesLoading(true)
       const result = await generateRecipesWithAI(context, prompt)
       setRecipes(result)
-      // Futuro: aqui é um ótimo ponto pra telemetria *.generated
+
+      try {
+        track('rotina_leve.recipes.generated', {
+          origin: 'rotina-leve',
+          count: result.length,
+        })
+      } catch {}
     } finally {
       setRecipesLoading(false)
     }
   }
 
   const handleGenerateIdeas = async () => {
-    await requestSuggestions({
-      mood: 'cansada',
-      energy: 'baixa',
-      timeOfDay: 'hoje',
-      hasKidsAround:
-        comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
-          ? true
-          : comQuem === 'so-eu'
-          ? false
-          : undefined,
-      availableMinutes:
-        tempoDisponivel === '5'
-          ? 5
-          : tempoDisponivel === '10'
-          ? 10
-          : tempoDisponivel === '20'
-          ? 20
-          : tempoDisponivel === '30+'
-          ? 30
-          : undefined,
-      comQuem: comQuem as any,
-      tipoIdeia: tipoIdeia as any,
-    })
+    const availableMinutes =
+      tempoDisponivel === '5'
+        ? 5
+        : tempoDisponivel === '10'
+        ? 10
+        : tempoDisponivel === '20'
+        ? 20
+        : tempoDisponivel === '30+'
+        ? 30
+        : undefined
+
+    const hasKidsAround =
+      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
+        ? true
+        : comQuem === 'so-eu'
+        ? false
+        : undefined
+
+    try {
+      try {
+        track('rotina_leve.ideas.requested', {
+          origin: 'rotina-leve',
+          availableMinutes,
+          comQuem,
+          tipoIdeia,
+        })
+      } catch {}
+
+      await requestSuggestions({
+        mood: 'cansada',
+        energy: 'baixa',
+        timeOfDay: 'hoje',
+        hasKidsAround,
+        availableMinutes,
+        comQuem: comQuem as any,
+        tipoIdeia: tipoIdeia as any,
+      })
+    } catch (e) {
+      console.error('[Rotina Leve] Erro ao gerar ideias rápidas:', e)
+    }
   }
 
   const handleGenerateInspiration = async () => {
     setInspirationLoading(true)
     try {
+      try {
+        track('rotina_leve.inspiration.requested', {
+          origin: 'rotina-leve',
+          focusOfDay,
+        })
+      } catch {}
+
       const result = await generateInspirationWithAI(focusOfDay)
       setInspiration(result)
+
+      try {
+        track('rotina_leve.inspiration.generated', {
+          origin: 'rotina-leve',
+        })
+      } catch {}
     } finally {
       setInspirationLoading(false)
     }
