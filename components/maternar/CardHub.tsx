@@ -1,22 +1,22 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { Reveal } from '@/components/ui/Reveal';
-import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon';
+import Link from 'next/link'
+import { Reveal } from '@/components/ui/Reveal'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 
 type HubIcon = {
-  id: string;
-  href: string;
-  icon: KnownIconName;
-  label: string;
-};
+  id: string
+  href: string
+  icon: KnownIconName
+  label: string
+}
 
 type HubCard = {
-  id: string;
-  title: string;
-  tag: string;
-  icons: HubIcon[];
-};
+  id: string
+  title: string
+  tag: string
+  icons: HubIcon[]
+}
 
 /**
  * Maternar Hub – 8 mini-hubs organizados em pastas translúcidas
@@ -30,7 +30,7 @@ const HUB_CARDS: HubCard[] = [
   // 1) COMO ESTOU HOJE — MEU DIA
   {
     id: 'como-estou-hoje',
-    title: 'Como estou hoje',
+    title: 'Como Estou Hoje',
     tag: 'MEU DIA',
     icons: [
       {
@@ -63,7 +63,7 @@ const HUB_CARDS: HubCard[] = [
   // 2) ROTINA LEVE — MEU DIA
   {
     id: 'rotina-leve',
-    title: 'Rotina leve',
+    title: 'Rotina Leve',
     tag: 'MEU DIA',
     icons: [
       {
@@ -96,7 +96,7 @@ const HUB_CARDS: HubCard[] = [
   // 3) AUTOCUIDADO INTELIGENTE — CUIDAR
   {
     id: 'autocuidado-inteligente',
-    title: 'Autocuidado inteligente',
+    title: 'Autocuidado Inteligente',
     tag: 'CUIDAR',
     icons: [
       {
@@ -129,7 +129,7 @@ const HUB_CARDS: HubCard[] = [
   // 4) CUIDAR COM AMOR — CUIDAR
   {
     id: 'cuidar-com-amor',
-    title: 'Cuidar com amor',
+    title: 'Cuidar com Amor',
     tag: 'CUIDAR',
     icons: [
       {
@@ -154,7 +154,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'pequenos-rituais',
         href: '/cuidar/cuidar-com-amor?abrir=rituais',
         icon: 'star',
-        label: 'Pequenos rituaIs',
+        label: 'Pequenos rituais',
       },
     ],
   },
@@ -162,7 +162,7 @@ const HUB_CARDS: HubCard[] = [
   // 5) MINHAS CONQUISTAS — MATERNAR
   {
     id: 'minhas-conquistas',
-    title: 'Minhas conquistas',
+    title: 'Minhas Conquistas',
     tag: 'MATERNAR',
     icons: [
       {
@@ -195,7 +195,7 @@ const HUB_CARDS: HubCard[] = [
   // 6) BIBLIOTECA MATERNA — MATERNAR
   {
     id: 'biblioteca-materna',
-    title: 'Biblioteca materna',
+    title: 'Biblioteca Materna',
     tag: 'MATERNAR',
     icons: [
       {
@@ -233,25 +233,25 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'mentorias',
-        href: '/maternar', // futura rota de mentoria
+        href: '/maternar/materna-plus?abrir=profissionais',
         icon: 'crown',
         label: 'Mentorias',
       },
       {
         id: 'maternabox',
-        href: '/maternar/materna-plus/maternabox', // NOVA LANDING PAGE
-        icon: 'star', // destaque para o produto MaternaBox
+        href: '/maternar/materna-plus/maternabox', // LANDING MATERNABOX
+        icon: 'star',
         label: 'MaternaBox',
       },
       {
         id: 'comunidade',
-        href: '/maternar', // futura rota
+        href: '/maternar/materna-plus?abrir=comunidade',
         icon: 'heart',
         label: 'Comunidade',
       },
       {
         id: 'servicos-materna',
-        href: '/maternar', // futura rota
+        href: '/maternar/materna-plus?abrir=servicos',
         icon: 'care',
         label: 'Serviços Materna',
       },
@@ -265,10 +265,10 @@ const HUB_CARDS: HubCard[] = [
     tag: 'ATALHOS',
     icons: [
       {
-        id: 'planner',
-        href: '/meu-dia?abrir=planner',
+        id: 'planos',
+        href: '/planos', // 🔗 rota de planos correta
         icon: 'calendar',
-        label: 'Planner',
+        label: 'Planos',
       },
       {
         id: 'perfil',
@@ -278,19 +278,19 @@ const HUB_CARDS: HubCard[] = [
       },
       {
         id: 'ajuda-suporte',
-        href: '/maternar', // futura rota de ajuda
+        href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=ajuda',
         icon: 'idea',
         label: 'Ajuda & suporte',
       },
       {
         id: 'parcerias',
-        href: '/maternar', // futura rota de parcerias
+        href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=parcerias',
         icon: 'star',
         label: 'Parcerias',
       },
     ],
   },
-];
+]
 
 export default function CardHub() {
   return (
@@ -351,5 +351,5 @@ export default function CardHub() {
         </div>
       </Reveal>
     </section>
-  );
+  )
 }
