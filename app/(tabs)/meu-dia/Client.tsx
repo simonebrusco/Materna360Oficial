@@ -9,6 +9,7 @@ import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
 import { getDailyIndex } from '@/app/lib/dailyMessage';
 import { getTimeGreeting } from '@/app/lib/greetings';
 import { ClientOnly } from '@/components/common/ClientOnly';
+import { LegalFooter } from '@/components/common/LegalFooter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -96,6 +97,9 @@ export default function MeuDiaClient() {
         {/* Planner inteiro logo abaixo do hero */}
         <WeeklyPlannerShell />
       </div>
+
+      {/* Rodapé legal */}
+      <LegalFooter />
     </main>
   );
 }
