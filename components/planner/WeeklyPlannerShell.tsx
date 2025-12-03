@@ -238,7 +238,6 @@ export default function WeeklyPlannerShell() {
     }
 
     try {
-      // um pouco mais de XP para top3 e autocuidado
       const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
       void updateXP(base)
     } catch (e) {
@@ -1179,7 +1178,7 @@ function ModalAppointmentForm({
 
       <div className="flex justify-end gap-3 pt-2">
         <button
-          type="button'
+          type="button"
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
         >
