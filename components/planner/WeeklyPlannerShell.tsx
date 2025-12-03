@@ -20,6 +20,8 @@ import WeekView from './WeekView'
 import { Reveal } from '@/components/ui/Reveal'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import SavedContentsSection from '@/components/blocks/SavedContentsSection'
+import { track } from '@/app/lib/telemetry'
+import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
@@ -87,11 +89,30 @@ export default function WeeklyPlannerShell() {
     setSelectedDateKey(dateKey)
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
+
+    // Telemetria: planner aberto
+    try {
+      track('planner.opened', {
+        tab: 'meu-dia',
+        dateKey,
+      })
+    } catch {
+      // ignora
+    }
   }, [plannerHook])
 
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
+      // Telemetria: data do planner mudou
+      try {
+        track('planner.date_changed', {
+          tab: 'meu-dia',
+          dateKey: selectedDateKey,
+        })
+      } catch {
+        // ignora
+      }
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
@@ -136,7 +157,17 @@ export default function WeeklyPlannerShell() {
   // ACTIONS
   // ===========================
   const handleDateSelect = useCallback((date: Date) => {
-    setSelectedDateKey(getBrazilDateKey(date))
+    const dateKey = getBrazilDateKey(date)
+    setSelectedDateKey(dateKey)
+
+    try {
+      track('planner.date_clicked', {
+        tab: 'meu-dia',
+        dateKey,
+      })
+    } catch {
+      // ignora
+    }
   }, [])
 
   const handleAddAppointment = useCallback(
@@ -149,6 +180,22 @@ export default function WeeklyPlannerShell() {
         ...prev,
         appointments: [...prev.appointments, newAppointment],
       }))
+
+      // Telemetria + XP
+      try {
+        track('planner.appointment_added', {
+          tab: 'meu-dia',
+          time: appointment.time ?? null,
+        })
+      } catch {
+        // ignora
+      }
+
+      try {
+        void updateXP(6)
+      } catch (e) {
+        console.error('[Planner] Erro ao atualizar XP por compromisso:', e)
+      }
     },
     [],
   )
@@ -156,6 +203,15 @@ export default function WeeklyPlannerShell() {
   const openModalForDate = (date: Date) => {
     setModalDate(date)
     setIsModalOpen(true)
+
+    try {
+      track('planner.appointment_modal_opened', {
+        tab: 'meu-dia',
+        dateKey: getBrazilDateKey(date),
+      })
+    } catch {
+      // ignora
+    }
   }
 
   // TAREFAS – helpers
@@ -170,15 +226,174 @@ export default function WeeklyPlannerShell() {
       ...prev,
       tasks: [...prev.tasks, newTask],
     }))
+
+    // Telemetria + XP
+    try {
+      track('planner.task_added', {
+        tab: 'meu-dia',
+        origin,
+      })
+    } catch {
+      // ignora
+    }
+
+    try {
+      // um pouco mais de XP para top3 e autocuidado
+      const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
+      void updateXP(base)
+    } catch (e) {
+      console.error('[Planner] Erro ao atualizar XP por tarefa:', e)
+    }
   }
 
   const toggleTask = (id: string) => {
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(task =>
-        task.id === id ? { ...task, done: !task.done } : task,
-      ),
-    }))
+    setPlannerData(prev => {
+      const task = prev.tasks.find(t => t.id === id)
+      const willBeDone = task ? !task.done : false
+
+      const updatedTasks = prev.tasks.map(t =>
+        t.id === id ? { ...t, done: !t.done } : t,
+      )
+
+      if (task) {
+        try {
+          track('planner.task_toggled', {
+            tab: 'meu-dia',
+            id: task.id,
+            origin: task.origin,
+            done: willBeDone,
+          })
+        } catch {
+          // ignora
+        }
+
+        if (willBeDone) {
+          try {
+            void updateXP(4)
+          } catch (e) {
+            console.error(
+              '[Planner] Erro ao atualizar XP por concluir tarefa:',
+              e,
+            )
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        tasks: updatedTasks,
+      }
+    })
+  }
+
+  const handleViewModeChange = (mode: 'day' | 'week') => {
+    setViewMode(mode)
+    try {
+      track('planner.view_mode_changed', {
+        tab: 'meu-dia',
+        mode,
+      })
+    } catch {
+      // ignora
+    }
+  }
+
+  const handleMoodSelect = (key: string) => {
+    setMood(prev => {
+      const next = prev === key ? null : key
+
+      try {
+        track('planner.mood.selected', {
+          tab: 'meu-dia',
+          mood: next,
+        })
+      } catch {
+        // ignora
+      }
+
+      if (next) {
+        try {
+          void updateXP(3)
+        } catch (e) {
+          console.error(
+            '[Planner] Erro ao atualizar XP por registro de humor:',
+            e,
+          )
+        }
+      }
+
+      return next
+    })
+  }
+
+  const handleDayIntentionSelect = (value: string) => {
+    setDayIntention(prev => {
+      const next = prev === value ? null : value
+
+      try {
+        track('planner.day_intention.selected', {
+          tab: 'meu-dia',
+          intention: next,
+        })
+      } catch {
+        // ignora
+      }
+
+      if (next) {
+        try {
+          void updateXP(3)
+        } catch (e) {
+          console.error(
+            '[Planner] Erro ao atualizar XP por intenção do dia:',
+            e,
+          )
+        }
+      }
+
+      return next
+    })
+  }
+
+  const handleToggleSuggestions = () => {
+    setShowSuggestions(prev => {
+      const next = !prev
+
+      try {
+        track('planner.suggestions.toggle', {
+          tab: 'meu-dia',
+          enabled: next,
+        })
+      } catch {
+        // ignora
+      }
+
+      if (next) {
+        try {
+          void updateXP(5)
+        } catch (e) {
+          console.error(
+            '[Planner] Erro ao atualizar XP por abrir sugestões:',
+            e,
+          )
+        }
+      }
+
+      return next
+    })
+  }
+
+  const handleOpenQuickAction = (
+    mode: 'top3' | 'selfcare' | 'family',
+  ) => {
+    setQuickAction(mode)
+    try {
+      track('planner.quick_action.opened', {
+        tab: 'meu-dia',
+        mode,
+      })
+    } catch {
+      // ignora
+    }
   }
 
   // ===========================
@@ -289,7 +504,7 @@ export default function WeeklyPlannerShell() {
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                   }`}
-                  onClick={() => setViewMode('day')}
+                  onClick={() => handleViewModeChange('day')}
                 >
                   Dia
                 </button>
@@ -299,7 +514,7 @@ export default function WeeklyPlannerShell() {
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                   }`}
-                  onClick={() => setViewMode('week')}
+                  onClick={() => handleViewModeChange('week')}
                 >
                   Semana
                 </button>
@@ -345,7 +560,7 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
-            <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
+              <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
                 {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
                   <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
@@ -408,21 +623,21 @@ export default function WeeklyPlannerShell() {
                     </div>
 
                     <div className="relative z-10 h-full flex flex-col">
-                     <div className="mb-3">
-  <h2 className="text-lg md:text-xl font-semibold text-white">
-    Comece pelo que faz mais sentido hoje
-  </h2>
-  <p className="mt-1 text-sm text-white/85">
-    Use esses atalhos para criar lembretes rápidos
-    de prioridades, compromissos e cuidados.
-  </p>
-</div>
+                      <div className="mb-3">
+                        <h2 className="text-lg md:text-xl font-semibold text-white">
+                          Comece pelo que faz mais sentido hoje
+                        </h2>
+                        <p className="mt-1 text-sm text-white/85">
+                          Use esses atalhos para criar lembretes rápidos
+                          de prioridades, compromissos e cuidados.
+                        </p>
+                      </div>
 
                       <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
                         {/* Prioridades do dia */}
                         <button
                           type="button"
-                          onClick={() => setQuickAction('top3')}
+                          onClick={() => handleOpenQuickAction('top3')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -458,7 +673,7 @@ export default function WeeklyPlannerShell() {
                         {/* Cuidar de mim */}
                         <button
                           type="button"
-                          onClick={() => setQuickAction('selfcare')}
+                          onClick={() => handleOpenQuickAction('selfcare')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -475,7 +690,7 @@ export default function WeeklyPlannerShell() {
                         {/* Cuidar do meu filho */}
                         <button
                           type="button"
-                          onClick={() => setQuickAction('family')}
+                          onClick={() => handleOpenQuickAction('family')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
@@ -530,11 +745,7 @@ export default function WeeklyPlannerShell() {
                       <button
                         key={option.key}
                         type="button"
-                        onClick={() =>
-                          setMood(prev =>
-                            prev === option.key ? null : option.key,
-                          )
-                        }
+                        onClick={() => handleMoodSelect(option.key)}
                         className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                           mood === option.key
                             ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
@@ -566,11 +777,7 @@ export default function WeeklyPlannerShell() {
                       <button
                         key={option}
                         type="button"
-                        onClick={() =>
-                          setDayIntention(prev =>
-                            prev === option ? null : option,
-                          )
-                        }
+                        onClick={() => handleDayIntentionSelect(option)}
                         className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                           dayIntention === option
                             ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
@@ -591,7 +798,7 @@ export default function WeeklyPlannerShell() {
               <div className="mt-3">
                 <button
                   type="button"
-                  onClick={() => setShowSuggestions(prev => !prev)}
+                  onClick={handleToggleSuggestions}
                   className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
                 >
                   {showSuggestions
@@ -618,10 +825,46 @@ export default function WeeklyPlannerShell() {
             <SavedContentsSection
               contents={[]}
               plannerContents={plannerHook.items}
-              onItemClick={item => setSelectedSavedContent(item)}
+              onItemClick={item => {
+                setSelectedSavedContent(item)
+                try {
+                  track('planner.saved_content.opened', {
+                    tab: 'meu-dia',
+                    origin: item.origin,
+                    type: item.type,
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
               onItemDone={({ id, source }) => {
                 if (source === 'planner') {
                   plannerHook.removeItem(id)
+                  try {
+                    track('planner.saved_content.completed', {
+                      tab: 'meu-dia',
+                      source,
+                    })
+                  } catch {
+                    // ignora
+                  }
+                  try {
+                    void updateXP(6)
+                  } catch (e) {
+                    console.error(
+                      '[Planner] Erro ao atualizar XP por conteúdo concluído:',
+                      e,
+                    )
+                  }
+                } else {
+                  try {
+                    track('planner.saved_content.dismissed', {
+                      tab: 'meu-dia',
+                      source,
+                    })
+                  } catch {
+                    // ignora
+                  }
                 }
               }}
             />
@@ -646,7 +889,16 @@ export default function WeeklyPlannerShell() {
                 {modalDate.toLocaleDateString('pt-BR')}
               </h3>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false)
+                  try {
+                    track('planner.appointment_modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
               >
                 ✕
@@ -670,8 +922,24 @@ export default function WeeklyPlannerShell() {
                 }
 
                 setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_saved', {
+                    tab: 'meu-dia',
+                  })
+                } catch {
+                  // ignora
+                }
               }}
-              onCancel={() => setIsModalOpen(false)}
+              onCancel={() => {
+                setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_cancelled', {
+                    tab: 'meu-dia',
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
             />
           </div>
         </div>
@@ -695,7 +963,16 @@ export default function WeeklyPlannerShell() {
                 </span>
               </div>
               <button
-                onClick={() => setSelectedSavedContent(null)}
+                onClick={() => {
+                  setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
               >
                 ✕
@@ -736,7 +1013,16 @@ export default function WeeklyPlannerShell() {
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setSelectedSavedContent(null)}
+                onClick={() => {
+                  setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }}
                 className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
               >
                 Fechar
@@ -746,6 +1032,21 @@ export default function WeeklyPlannerShell() {
                 onClick={() => {
                   plannerHook.removeItem(selectedSavedContent.id)
                   setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.completed_from_modal', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                  try {
+                    void updateXP(6)
+                  } catch (e) {
+                    console.error(
+                      '[Planner] Erro ao atualizar XP por conteúdo concluído (modal):',
+                      e,
+                    )
+                  }
                 }}
                 className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
               >
@@ -774,7 +1075,16 @@ export default function WeeklyPlannerShell() {
             else addTask(title, 'family')
           }}
           onToggle={id => toggleTask(id)}
-          onClose={() => setQuickAction(null)}
+          onClose={() => {
+            setQuickAction(null)
+            try {
+              track('planner.quick_action.closed', {
+                tab: 'meu-dia',
+              })
+            } catch {
+              // ignora
+            }
+          }}
         />
       )}
     </>
@@ -869,7 +1179,7 @@ function ModalAppointmentForm({
 
       <div className="flex justify-end gap-3 pt-2">
         <button
-          type="button"
+          type="button'
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
         >
