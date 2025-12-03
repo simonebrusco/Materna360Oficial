@@ -410,7 +410,7 @@ export default function RotinaLevePage() {
       return
     }
 
-    // Mapeia tempo selecionado em minutos para o contexto da IA
+    // Deriva minutos disponíveis a partir do TEMPO DE PREPARO da receita
     const recipeAvailableMinutes =
       recipeTime === '10'
         ? 10
@@ -422,11 +422,19 @@ export default function RotinaLevePage() {
         ? 40
         : undefined
 
+    // Define se a criança está por perto com base em "comQuem" (quando já tiver sido usado)
+    const hasKidsAround =
+      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
+        ? true
+        : comQuem === 'so-eu'
+        ? false
+        : undefined
+
     const context: RotinaLeveContext = {
       mood: 'cansada',
       energy: 'baixa',
       timeOfDay: 'hoje',
-      hasKidsAround: comQuem !== 'so-eu',
+      hasKidsAround,
       availableMinutes: recipeAvailableMinutes,
     }
 
@@ -483,6 +491,7 @@ export default function RotinaLevePage() {
     try {
       const result = await generateRecipesWithAI(context, prompt)
       setRecipes(result)
+      // Futuro: aqui é um ótimo ponto pra telemetria *.generated
     } finally {
       setRecipesLoading(false)
     }
@@ -493,7 +502,12 @@ export default function RotinaLevePage() {
       mood: 'cansada',
       energy: 'baixa',
       timeOfDay: 'hoje',
-      hasKidsAround: comQuem !== 'so-eu',
+      hasKidsAround:
+        comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
+          ? true
+          : comQuem === 'so-eu'
+          ? false
+          : undefined,
       availableMinutes:
         tempoDisponivel === '5'
           ? 5
@@ -504,6 +518,8 @@ export default function RotinaLevePage() {
           : tempoDisponivel === '30+'
           ? 30
           : undefined,
+      comQuem: comQuem as any,
+      tipoIdeia: tipoIdeia as any,
     })
   }
 
@@ -1151,14 +1167,14 @@ export default function RotinaLevePage() {
                 ) : (
                   <p className="text-sm text-[#545454]">
                     Você já salvou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedRecipesCount} receita(s)
-                      </span>{' '}
-                      e{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedInspirationCount} inspiração(ões)
-                      </span>{' '}
-                      deste mini-hub no seu planner.
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedRecipesCount} receita(s)
+                    </span>{' '}
+                    e{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedInspirationCount} inspiração(ões)
+                    </span>{' '}
+                    deste mini-hub no seu planner.
                   </p>
                 )}
               </div>
