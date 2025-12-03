@@ -38,6 +38,9 @@ type EmotionalContext = {
   dateKey?: string
 }
 
+// Limite diário de IA emocional neste hub (daily + weekly somados)
+const EMOTIONAL_INSIGHTS_LIMIT_PER_DAY = 3
+
 // Insight semanal emocional via modelo + fallback suave
 async function fetchWeeklyEmotionalInsight(
   context: EmotionalContext,
@@ -158,6 +161,11 @@ export default function ComoEstouHojePage(props: {
   const [dayNotes, setDayNotes] = useState('')
 
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+  const insightsCountKey = useMemo(
+    () => `como-estou-hoje:${currentDateKey}:insights_count`,
+    [currentDateKey],
+  )
+
   const { addItem, getByOrigin } = usePlannerSavedContents()
 
   // Insight semanal
@@ -167,6 +175,9 @@ export default function ComoEstouHojePage(props: {
   // Insight diário
   const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null)
   const [loadingDailyInsight, setLoadingDailyInsight] = useState(false)
+
+  // Contador de usos de IA emocional hoje (daily + weekly)
+  const [emotionalInsightsUsedToday, setEmotionalInsightsUsedToday] = useState(0)
 
   // Query param para abrir bloco direto do hub
   const [sectionToOpen, setSectionToOpen] = useState<string | null>(null)
@@ -219,7 +230,7 @@ export default function ComoEstouHojePage(props: {
     return () => clearTimeout(t)
   }, [sectionToOpen, refsReady])
 
-  // Load persisted data (humor/energia/notas)
+  // Load persisted data (humor/energia/notas + contador de IA)
   useEffect(() => {
     if (!isHydrated) return
 
@@ -230,13 +241,23 @@ export default function ComoEstouHojePage(props: {
     const savedHumor = load(humorKey)
     const savedEnergy = load(energyKey)
     const savedNotes = load(notesKey)
+    const savedInsightsCount = load(insightsCountKey)
 
     if (typeof savedHumor === 'string') setSelectedHumor(savedHumor)
     if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
     if (typeof savedNotes === 'string') setDayNotes(savedNotes)
 
+    if (typeof savedInsightsCount === 'number') {
+      setEmotionalInsightsUsedToday(savedInsightsCount)
+    } else if (typeof savedInsightsCount === 'string') {
+      const parsed = parseInt(savedInsightsCount, 10)
+      if (!Number.isNaN(parsed)) {
+        setEmotionalInsightsUsedToday(parsed)
+      }
+    }
+
     setRefsReady(true)
-  }, [isHydrated, currentDateKey])
+  }, [isHydrated, currentDateKey, insightsCountKey])
 
   const emotionalContext: EmotionalContext = useMemo(
     () => ({
@@ -249,17 +270,29 @@ export default function ComoEstouHojePage(props: {
     [selectedHumor, selectedEnergy, dayNotes, currentDateKey],
   )
 
-  // Insight semanal (já usando contexto)
+  // Insight semanal (já usando contexto + limite diário)
   useEffect(() => {
     if (!refsReady) return
     let isMounted = true
 
     const loadInsight = async () => {
+      // Se já bateu o limite diário, não chama mais a IA semanal
+      if (emotionalInsightsUsedToday >= EMOTIONAL_INSIGHTS_LIMIT_PER_DAY) {
+        return
+      }
+
       setLoadingWeeklyInsight(true)
       try {
         const result = await fetchWeeklyEmotionalInsight(emotionalContext)
         if (isMounted) {
           setWeeklyInsight(result)
+
+          // Conta essa chamada de IA no limite diário do hub
+          setEmotionalInsightsUsedToday((prev) => {
+            const next = prev + 1
+            save(insightsCountKey, next)
+            return next
+          })
         }
       } finally {
         if (isMounted) {
@@ -274,21 +307,33 @@ export default function ComoEstouHojePage(props: {
       isMounted = false
     }
     // não dependemos de dayNotes change o tempo todo — apenas do estado
-    // carregado para o dia atual (refsReady + humor/energia)
+    // carregado para o dia atual (refsReady + humor/energia/data)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refsReady, selectedHumor, selectedEnergy, currentDateKey])
 
-  // Insight diário (também contextual)
+  // Insight diário (também contextual + limite diário)
   useEffect(() => {
     if (!refsReady) return
     let isMounted = true
 
     const loadDaily = async () => {
+      // Se já bateu o limite diário, não chama mais a IA diária
+      if (emotionalInsightsUsedToday >= EMOTIONAL_INSIGHTS_LIMIT_PER_DAY) {
+        return
+      }
+
       setLoadingDailyInsight(true)
       try {
         const result = await fetchDailyEmotionalInsight(emotionalContext)
         if (isMounted) {
           setDailyInsight(result)
+
+          // Conta essa chamada de IA no limite diário do hub
+          setEmotionalInsightsUsedToday((prev) => {
+            const next = prev + 1
+            save(insightsCountKey, next)
+            return next
+          })
         }
       } finally {
         if (isMounted) {
@@ -606,7 +651,7 @@ export default function ComoEstouHojePage(props: {
                               value={dayNotes}
                               onChange={(e) => setDayNotes(e.target.value)}
                               placeholder="Conte para você mesma como foi o seu dia…"
-                              className="w-full min-h-[90px] rounded-2xl border border-[#ffd8e6] bg-white p-3 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
+                              className="w-full min-h-[90px] rounded-2xl border border-[#ffd8e6] bg.white p-3 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
                             />
                             <div className="flex justify-end mt-3">
                               <Button
