@@ -436,11 +436,9 @@ export default function RotinaLevePage() {
     }
 
     if (usedRecipesToday >= RECIPES_LIMIT_PER_DAY) {
-      toast({
-        title: 'Você já usou as receitinhas de hoje 💕',
-        description:
-          'Hoje você já pediu 3 receitas inteligentes. Amanhã a gente pensa em novas ideias com calma, combinado?',
-      })
+      toast.info(
+        'Hoje você já pediu 3 receitas inteligentes. Amanhã a gente pensa em novas ideias com calma, combinado?',
+      )
       return
     }
 
@@ -669,7 +667,7 @@ export default function RotinaLevePage() {
                     </div>
                   </div>
 
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#ff005e]">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#ff005e]>
                     <span>Idade principal: {idadeLabel}</span>
                   </div>
                 </div>
