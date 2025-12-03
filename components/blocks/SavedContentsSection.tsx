@@ -4,6 +4,8 @@ import React, { useMemo, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import type { PlannerSavedContent } from '@/app/hooks/usePlannerSavedContents'
+import { track } from '@/app/lib/telemetry'
+import { updateXP } from '@/app/lib/xp'
 
 type SavedContent = {
   id: string
@@ -29,7 +31,7 @@ type SavedContentsSectionProps = {
 const typeLabels: Record<string, string> = {
   artigo: 'ARTIGO',
   receita: 'RECEITA',
-  ideia: 'IDEIA',
+  ideia: 'IDÉIA',
   frase: 'FRASE',
 }
 
@@ -106,38 +108,39 @@ export default function SavedContentsSection({
     item => !dismissedIds.includes(item.id),
   )
 
-  // Máximo de 8 cards visíveis (para não poluir visualmente)
+  // Máximo de 8 cards visíveis (4 x 2)
   const MAX_VISIBLE = 8
   const limitedItems =
     visibleItems.length > MAX_VISIBLE
       ? visibleItems.slice(0, MAX_VISIBLE)
       : visibleItems
 
-  // Colunas estilo mini-kanban, agrupadas por tag
-  const columns = useMemo(
-    () => {
-      const byTag: Record<string, CombinedItem[]> = {}
-
-      for (const item of limitedItems) {
-        const tag = item.tag || 'CONTEÚDO'
-        if (!byTag[tag]) {
-          byTag[tag] = []
-        }
-        byTag[tag].push(item)
-      }
-
-      return Object.entries(byTag).map(([tag, items]) => ({
-        tag,
-        items,
-      }))
-    },
-    [limitedItems],
-  )
-
   const handleDone = (item: CombinedItem) => {
     setDismissedIds(prev =>
       prev.includes(item.id) ? prev : [...prev, item.id],
     )
+
+    // Telemetria: marcar como feito
+    try {
+      track('saved_content.done', {
+        id: item.id,
+        source: item.source,
+        tag: item.tag,
+        title: item.title,
+      })
+    } catch {
+      // telemetria nunca deve quebrar a experiência
+    }
+
+    // XP por concluir um conteúdo salvo
+    try {
+      void updateXP(5)
+    } catch (e) {
+      console.error(
+        '[SavedContentsSection] Erro ao atualizar XP ao marcar conteúdo como feito:',
+        e,
+      )
+    }
 
     if (onItemDone) {
       onItemDone({
@@ -149,6 +152,18 @@ export default function SavedContentsSection({
   }
 
   const handleClick = (item: CombinedItem) => {
+    // Telemetria: abrir conteúdo
+    try {
+      track('saved_content.open', {
+        id: item.id,
+        source: item.source,
+        tag: item.tag,
+        title: item.title,
+      })
+    } catch {
+      // ignora
+    }
+
     if (item.source === 'planner' && item.raw && onItemClick) {
       onItemClick(item.raw)
       return
@@ -164,7 +179,7 @@ export default function SavedContentsSection({
       key={item.id}
       type="button"
       onClick={() => handleClick(item)}
-      className="group relative flex h-full flex-col rounded-2xl border border-[#FFE8F2] bg-white/90 px-3 py-3 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-3.5 md:py-3.5"
+      className="group relative flex h-full flex-col rounded-2xl border border-[#FFE8F2] bg-white/90 px-3 py-3 text-left shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] md:px-4 md:py-4"
     >
       {/* Botão 'feito' */}
       <button
@@ -173,7 +188,7 @@ export default function SavedContentsSection({
           e.stopPropagation()
           handleDone(item)
         }}
-        className="absolute right-2.5 top-2.5 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
+        className="absolute right-3 top-3 inline-flex items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/90 p-1.5 text-[10px] font-medium text-[var(--color-brand)] shadow-sm transition-colors hover:bg-[var(--color-brand)] hover:text-white"
         aria-label="Marcar como feito"
       >
         <AppIcon name="check" className="h-3 w-3" />
@@ -218,8 +233,8 @@ export default function SavedContentsSection({
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl">
             <AppIcon
-              name="bookmark"
-              className="h-4 w-4 text-[var(--color-brand)]"
+              name='bookmark'
+              className='h-4 w-4 text-[var(--color-brand)]'
             />
             Inspirações &amp; conteúdos salvos
           </h3>
@@ -237,52 +252,8 @@ export default function SavedContentsSection({
             receitas, ideias ou brincadeiras nos mini-hubs, elas aparecem aqui.
           </p>
         ) : (
-          <div className="space-y-4">
-            <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
-              Veja tudo o que você guardou organizado em colunas — como um
-              mini-quadro kanban de inspirações do seu dia.
-            </p>
-
-            {/* Mobile: colunas empilhadas */}
-            <div className="grid grid-cols-1 gap-3 md:hidden">
-              {columns.map(column => (
-                <div key={column.tag} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                      {column.tag}
-                    </p>
-                    <span className="text-[10px] text-[var(--color-text-muted)]">
-                      {column.items.length}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {column.items.map(renderCard)}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop: mini-kanban com colunas lado a lado */}
-            <div className="hidden md:flex gap-4 lg:gap-5 overflow-x-auto pb-1">
-              {columns.map(column => (
-                <div
-                  key={column.tag}
-                  className="min-w-[220px] max-w-[260px] flex-1 rounded-2xl border border-[#FFE8F2] bg-[#FFF6FA] p-3 shadow-[0_6px_16px_rgba(0,0,0,0.03)]"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#C2285F]">
-                      {column.tag}
-                    </p>
-                    <span className="text-[10px] text-[#C2285F]/70">
-                      {column.items.length}
-                    </span>
-                  </div>
-                  <div className="space-y-2.5">
-                    {column.items.map(renderCard)}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+            {limitedItems.map(renderCard)}
           </div>
         )}
       </SoftCard>
