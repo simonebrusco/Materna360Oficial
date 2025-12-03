@@ -1,14 +1,13 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
-import { save, load } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry'
-import { toast } from '@/app/lib/toast'
+import { Button } from '@/components/ui/Button'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import { toast } from '@/app/lib/toast'
 import { updateXP } from '@/app/lib/xp'
+import { track } from '@/app/lib/telemetry'
 
 export interface Suggestion {
   id: string
@@ -26,8 +25,6 @@ interface IntelligentSuggestionsSectionProps {
   mood: string | null
   intention: string | null
 }
-
-const SUGGESTIONS_LIMIT_PER_DAY = 3
 
 // ---------- FALLBACK LOCAL (regra simples) ----------
 
@@ -206,6 +203,16 @@ async function fetchAISuggestions(
   intention: string | null,
 ): Promise<Suggestion[]> {
   try {
+    try {
+      track('meu_dia.intelligent_suggestions.requested', {
+        origin: 'meu-dia',
+        mood,
+        intention,
+      })
+    } catch {
+      // telemetria nunca quebra UX
+    }
+
     const res = await fetch('/api/ai/meu-dia', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -251,6 +258,15 @@ async function fetchAISuggestions(
       throw new Error('Sugestões da IA inválidas')
     }
 
+    try {
+      track('meu_dia.intelligent_suggestions.generated', {
+        origin: 'meu-dia',
+        count: mapped.length,
+      })
+    } catch {
+      // ignora
+    }
+
     return mapped
   } catch (error) {
     console.error(
@@ -269,29 +285,10 @@ export function IntelligentSuggestionsSection({
 }: IntelligentSuggestionsSectionProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [usedSuggestionsToday, setUsedSuggestionsToday] = useState(0)
-
-  const currentDateKey = useMemo(() => getBrazilDateKey(), [])
-  const { addItem } = usePlannerSavedContents()
-
   const hasSelection = Boolean(mood || intention)
 
-  // Carrega contador diário de sugestões inteligentes
-  useEffect(() => {
-    const countKey = `meu-dia:intelligent_suggestions:${currentDateKey}:count`
-    const stored = load(countKey)
+  const { addItem } = usePlannerSavedContents()
 
-    if (typeof stored === 'number') {
-      setUsedSuggestionsToday(stored)
-    } else if (typeof stored === 'string') {
-      const parsed = Number(stored)
-      if (!Number.isNaN(parsed)) {
-        setUsedSuggestionsToday(parsed)
-      }
-    }
-  }, [currentDateKey])
-
-  // Geração automática quando humor / intenção forem definidos
   useEffect(() => {
     if (!hasSelection) {
       setSuggestions([])
@@ -299,50 +296,9 @@ export function IntelligentSuggestionsSection({
     }
 
     let isMounted = true
-    const countKey = `meu-dia:intelligent_suggestions:${currentDateKey}:count`
 
     const run = async () => {
       setIsLoading(true)
-
-      // Telemetria – tentativa de sugestão
-      try {
-        track('meu_dia.intelligent_suggestions.requested', {
-          origin: 'meu-dia-intelligent-suggestions',
-          mood: mood ?? null,
-          intention: intention ?? null,
-          dateKey: currentDateKey,
-          usedSuggestionsToday,
-          limit: SUGGESTIONS_LIMIT_PER_DAY,
-        })
-      } catch {
-        // silencioso
-      }
-
-      // Limite diário — não chama mais IA, usa apenas fallback local
-      if (usedSuggestionsToday >= SUGGESTIONS_LIMIT_PER_DAY) {
-        if (usedSuggestionsToday === SUGGESTIONS_LIMIT_PER_DAY) {
-          // mostra apenas na primeira vez que bater o limite
-          toast.info(
-            'Você já usou as sugestões inteligentes de hoje. Amanhã eu preparo novas ideias pra você 💗',
-          )
-          try {
-            track('meu_dia.intelligent_suggestions.limit_reached', {
-              origin: 'meu-dia-intelligent-suggestions',
-              dateKey: currentDateKey,
-            })
-          } catch {
-            // ignora
-          }
-        }
-
-        const local = generateLocalSuggestions(mood, intention)
-        if (isMounted) {
-          setSuggestions(local)
-        }
-        setIsLoading(false)
-        return
-      }
-
       try {
         const aiSuggestions = await fetchAISuggestions(mood, intention)
 
@@ -353,41 +309,6 @@ export function IntelligentSuggestionsSection({
 
         if (isMounted) {
           setSuggestions(finalSuggestions)
-        }
-
-        // Atualiza contador diário (apenas quando a IA é chamada)
-        setUsedSuggestionsToday(prev => {
-          const next = prev + 1
-          save(countKey, next)
-          return next
-        })
-
-        // XP por usar sugestões inteligentes
-        try {
-          void updateXP(6)
-        } catch (e) {
-          console.error(
-            '[Meu Dia] Erro ao atualizar XP (intelligent suggestions):',
-            e,
-          )
-        }
-
-        // Telemetria – IA usada ou fallback local
-        try {
-          if (aiSuggestions.length > 0) {
-            track('meu_dia.intelligent_suggestions.ai_used', {
-              origin: 'meu-dia-intelligent-suggestions',
-              dateKey: currentDateKey,
-              count: aiSuggestions.length,
-            })
-          } else {
-            track('meu_dia.intelligent_suggestions.local_fallback_used', {
-              origin: 'meu-dia-intelligent-suggestions',
-              dateKey: currentDateKey,
-            })
-          }
-        } catch {
-          // ignora
         }
       } catch {
         if (isMounted) {
@@ -405,43 +326,33 @@ export function IntelligentSuggestionsSection({
     return () => {
       isMounted = false
     }
-  }, [
-    mood,
-    intention,
-    hasSelection,
-    currentDateKey,
-    usedSuggestionsToday,
-  ])
+  }, [mood, intention, hasSelection])
 
   const handleSaveSuggestionToPlanner = (suggestion: Suggestion) => {
     try {
       addItem({
-        origin: 'meu-dia-intelligent-suggestions',
+        origin: 'meu-dia', // <<< ORIGIN VÁLIDO NO PlannerOrigin
         type: 'insight',
         title: suggestion.title,
         payload: {
-          description: suggestion.description,
-          mood,
-          intention,
-          dateKey: currentDateKey,
+          description: suggestion.description ?? null,
+          source: 'intelligent_suggestions',
         },
       })
 
-      // XP por salvar sugestão no planner
       try {
         void updateXP(8)
       } catch (e) {
         console.error(
-          '[Meu Dia] Erro ao atualizar XP (salvar sugestão):',
+          '[Meu Dia] Erro ao atualizar XP (intelligent suggestions):',
           e,
         )
       }
 
       try {
-        track('meu_dia.intelligent_suggestions.saved_to_planner', {
-          origin: 'meu-dia-intelligent-suggestions',
+        track('meu_dia.intelligent_suggestion.saved', {
+          origin: 'meu-dia',
           suggestionId: suggestion.id,
-          dateKey: currentDateKey,
         })
       } catch {
         // ignora
@@ -453,7 +364,7 @@ export function IntelligentSuggestionsSection({
         '[Meu Dia] Erro ao salvar sugestão no planner:',
         error,
       )
-      toast.danger('Não foi possível salvar esta sugestão agora.')
+      toast.danger('Não foi possível salvar a sugestão agora.')
     }
   }
 
@@ -488,60 +399,45 @@ export function IntelligentSuggestionsSection({
             </div>
           ) : (
             <div className="space-y-3 w-full">
-              {suggestions.map(suggestion => (
-                <div key={suggestion.id} className="flex gap-3">
-                  <div className="flex-shrink-0 pt-1">
-                    <AppIcon
-                      name="idea"
-                      className="w-4 h-4 md:w-5 md:h-5 text-[var(--color-brand)]"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
-                      {suggestion.title}
-                    </p>
-                    {suggestion.description && (
-                      <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
-                        {suggestion.description}
-                      </p>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => handleSaveSuggestionToPlanner(suggestion)}
-                      className="mt-2 text-[11px] md:text-xs font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand)]/80 inline-flex items-center gap-1"
-                    >
-                      Levar para o planner
+              {suggestions.map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="flex flex-col gap-2 rounded-2xl bg-white/90 border border-[var(--color-soft-strong)]/70 px-3 py-3 md:px-4 md:py-3"
+                >
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 pt-1">
                       <AppIcon
-                        name="arrow-right"
-                        className="w-3 h-3 md:w-3.5 md:h-3.5"
-                        decorative
+                        name="idea"
+                        className="w-4 h-4 md:w-5 md:h-5 text-[var(--color-brand)]"
                       />
-                    </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
+                        {suggestion.title}
+                      </p>
+                      {suggestion.description && (
+                        <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
+                          {suggestion.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      onClick={() => handleSaveSuggestionToPlanner(suggestion)}
+                      className="text-[11px] md:text-xs px-3 py-1 rounded-full border-[var(--color-brand)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white transition-colors"
+                    >
+                      Salvar no planner
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-
-        {hasSelection && (
-          <div className="mt-4 space-y-1">
-            <p className="text-[10px] md:text-[11px] text-[var(--color-text-muted)]">
-              Hoje você já usou{' '}
-              <span className="font-semibold text-[var(--color-text-main)]">
-                {usedSuggestionsToday} de {SUGGESTIONS_LIMIT_PER_DAY}
-              </span>{' '}
-              rodadas de sugestões inteligentes.
-            </p>
-            {usedSuggestionsToday >= SUGGESTIONS_LIMIT_PER_DAY && (
-              <p className="text-[10px] md:text-[11px] font-medium text-[var(--color-brand)]">
-                Limite de hoje alcançado — seguimos com ideias mais leves e
-                locais para não te sobrecarregar 💗
-              </p>
-            )}
-          </div>
-        )}
       </SoftCard>
     </div>
   )
