@@ -22,9 +22,6 @@ type HubCard = {
  * Maternar Hub – 8 mini-hubs organizados em pastas translúcidas
  * Cada card representa um mini-hub e cada tile leva direto
  * para a função certa (rota + ?abrir= quando existir).
- *
- * Importante: mantive as rotas que já estavam funcionando
- * e usei apenas rotas reais já usadas no projeto.
  */
 const HUB_CARDS: HubCard[] = [
   // 1) COMO ESTOU HOJE — MEU DIA
@@ -37,25 +34,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'humor-energia',
         href: '/meu-dia/como-estou-hoje?abrir=humor',
         icon: 'smile',
-        label: 'Humor & Energia',
+        label: 'Humor & energia',
       },
       {
         id: 'notas-do-dia',
         href: '/meu-dia/como-estou-hoje?abrir=notas',
         icon: 'book-open',
-        label: 'Notas do Dia',
+        label: 'Notas do dia',
       },
       {
         id: 'resumo-emocional',
         href: '/meu-dia/como-estou-hoje?abrir=resumo',
         icon: 'idea',
-        label: 'Resumo Emocional',
+        label: 'Resumo emocional',
       },
       {
         id: 'semana-emocional',
         href: '/meu-dia/como-estou-hoje?abrir=semana',
         icon: 'time',
-        label: 'Semana Emocional',
+        label: 'Semana emocional',
       },
     ],
   },
@@ -70,7 +67,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'ideias-rapidas',
         href: '/meu-dia/rotina-leve?abrir=ideias',
         icon: 'idea',
-        label: 'Ideias Rápidas',
+        label: 'Ideias rápidas',
       },
       {
         id: 'receitas-inteligentes',
@@ -88,7 +85,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'planner-dia',
         href: '/meu-dia?abrir=planner',
         icon: 'calendar',
-        label: 'Planejar o Dia',
+        label: 'Planejar o dia',
       },
     ],
   },
@@ -103,25 +100,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'meu-ritmo',
         href: '/cuidar/autocuidado-inteligente?abrir=ritmo',
         icon: 'time',
-        label: 'Meu Ritmo Hoje',
+        label: 'Meu ritmo hoje',
       },
       {
         id: 'mini-rotina',
         href: '/cuidar/autocuidado-inteligente?abrir=rotina',
         icon: 'home',
-        label: 'Mini Rotina',
+        label: 'Mini rotina',
       },
       {
         id: 'pausas-respiracao',
         href: '/cuidar/autocuidado-inteligente?abrir=pausas',
         icon: 'idea',
-        label: 'Pausas & Respiração',
+        label: 'Pausas & respiração',
       },
       {
         id: 'pra-voce-hoje',
         href: '/cuidar/autocuidado-inteligente?abrir=gestos',
         icon: 'heart',
-        label: 'Pra Você Hoje',
+        label: 'Pra você hoje',
       },
     ],
   },
@@ -142,19 +139,19 @@ const HUB_CARDS: HubCard[] = [
         id: 'sono-rotina',
         href: '/cuidar/cuidar-com-amor?abrir=sono',
         icon: 'home',
-        label: 'Sono & Rotina',
+        label: 'Sono & rotina',
       },
       {
         id: 'conexao-afetuosa',
         href: '/cuidar/cuidar-com-amor?abrir=conexao',
         icon: 'care',
-        label: 'Conexão Afetuosa',
+        label: 'Conexão afetuosa',
       },
       {
         id: 'pequenos-rituais',
         href: '/cuidar/cuidar-com-amor?abrir=rituais',
         icon: 'star',
-        label: 'Pequenos Rituais',
+        label: 'Pequenos rituais',
       },
     ],
   },
@@ -169,25 +166,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'missoes-dia',
         href: '/maternar/minhas-conquistas?abrir=missoes',
         icon: 'star',
-        label: 'Missões do Dia',
+        label: 'Missões do dia',
       },
       {
         id: 'painel-progresso',
         href: '/maternar/minhas-conquistas?abrir=painel',
         icon: 'calendar',
-        label: 'Painel de Progresso',
+        label: 'Painel de progresso',
       },
       {
         id: 'selos-medalhas',
         href: '/maternar/minhas-conquistas?abrir=selos',
         icon: 'crown',
-        label: 'Selos & Medalhas',
+        label: 'Selos & medalhas',
       },
       {
         id: 'progresso-mensal',
         href: '/maternar/minhas-conquistas?abrir=mensal',
         icon: 'time',
-        label: 'Progresso Mensal',
+        label: 'Progresso mensal',
       },
     ],
   },
@@ -202,25 +199,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'guias-checklists',
         href: '/maternar/biblioteca-materna?filtro=guias',
         icon: 'book-open',
-        label: 'Guias & Checklists',
+        label: 'Guias & checklists',
       },
       {
         id: 'pdfs-ebooks',
         href: '/maternar/biblioteca-materna?filtro=ebooks',
         icon: 'books',
-        label: 'PDFs & E-books',
+        label: 'PDFs & e-books',
       },
       {
         id: 'trilhas-educativas',
         href: '/maternar/biblioteca-materna?filtro=trilhas',
         icon: 'play',
-        label: 'Trilhas Educativas',
+        label: 'Trilhas educativas',
       },
       {
         id: 'por-idade-tema',
         href: '/maternar/biblioteca-materna?filtro=idade-tema',
         icon: 'idea',
-        label: 'Por idade / Tema',
+        label: 'Por idade / tema',
       },
     ],
   },
@@ -233,25 +230,25 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'mentorias',
-        href: '/maternar', // futura rota de mentoria
+        href: '/maternar/materna-plus',
         icon: 'crown',
         label: 'Mentorias',
       },
       {
         id: 'maternabox',
-        href: '/maternar/materna-plus/maternabox', // LANDING MATERNABOX
+        href: '/maternar/materna-plus/maternabox', // rota exclusiva da MaternaBox
         icon: 'star',
         label: 'MaternaBox',
       },
       {
         id: 'comunidade',
-        href: '/maternar', // futura rota
+        href: '/maternar/materna-plus',
         icon: 'heart',
         label: 'Comunidade',
       },
       {
         id: 'servicos-materna',
-        href: '/maternar', // futura rota
+        href: '/maternar/materna-plus',
         icon: 'care',
         label: 'Serviços Materna',
       },
@@ -266,7 +263,7 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'planos',
-        href: '/planos', // 🔗 AGORA LEVA PARA A ROTA DE PLANOS CORRETA
+        href: '/planos',
         icon: 'calendar',
         label: 'Planos',
       },
@@ -280,7 +277,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'ajuda-suporte',
         href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=ajuda',
         icon: 'idea',
-        label: 'Ajuda & Suporte',
+        label: 'Ajuda & suporte',
       },
       {
         id: 'parcerias',
