@@ -36,13 +36,25 @@ type Inspiration = {
   ritual: string
 }
 
-// ---------- LIMITE DIÁRIO PERSISTENTE (Receitas Inteligentes) ----------
+// ---------- LIMITES DIÁRIOS PERSISTENTES ----------
 
 const RECIPES_LIMIT_PER_DAY = 3 as const
+const IDEAS_LIMIT_PER_DAY = 3 as const
+const INSPIRATION_LIMIT_PER_DAY = 2 as const
 
 const getRecipesDailyStorageKey = () => {
   const dateKey = getBrazilDateKey()
   return `rotina-leve:recipes:${dateKey}`
+}
+
+const getIdeasDailyStorageKey = () => {
+  const dateKey = getBrazilDateKey()
+  return `rotina-leve:ideas:${dateKey}`
+}
+
+const getInspirationDailyStorageKey = () => {
+  const dateKey = getBrazilDateKey()
+  return `rotina-leve:inspiration:${dateKey}`
 }
 
 // ---------- MOCKS (fallback padrão) ----------
@@ -233,8 +245,10 @@ export default function RotinaLevePage() {
   const [recipeMealType, setRecipeMealType] = useState<string | null>(null)
   const [recipeTime, setRecipeTime] = useState<string | null>(null)
 
-  // Limite diário de Receitas Inteligentes (persistente por dia)
+  // Limites diários (persistentes por dia)
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
+  const [usedIdeasToday, setUsedIdeasToday] = useState(0)
+  const [usedInspirationsToday, setUsedInspirationsToday] = useState(0)
 
   // Ideias Rápidas
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
@@ -272,20 +286,38 @@ export default function RotinaLevePage() {
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
 
-  // Hidrata limite diário a partir do localStorage (por dia Brasil)
+  // Hidrata limites diários a partir do localStorage (por dia Brasil)
   useEffect(() => {
     if (typeof window === 'undefined') return
 
     try {
-      const stored = window.localStorage.getItem(getRecipesDailyStorageKey())
-      if (stored) {
-        const parsed = Number(stored)
+      const storedRecipes = window.localStorage.getItem(getRecipesDailyStorageKey())
+      if (storedRecipes) {
+        const parsed = Number(storedRecipes)
         if (!Number.isNaN(parsed) && parsed >= 0) {
           setUsedRecipesToday(parsed)
         }
       }
+
+      const storedIdeas = window.localStorage.getItem(getIdeasDailyStorageKey())
+      if (storedIdeas) {
+        const parsed = Number(storedIdeas)
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          setUsedIdeasToday(parsed)
+        }
+      }
+
+      const storedInspiration = window.localStorage.getItem(
+        getInspirationDailyStorageKey(),
+      )
+      if (storedInspiration) {
+        const parsed = Number(storedInspiration)
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          setUsedInspirationsToday(parsed)
+        }
+      }
     } catch (error) {
-      console.error('[Rotina Leve] Erro ao carregar limite diário de receitas:', error)
+      console.error('[Rotina Leve] Erro ao carregar limites diários:', error)
     }
   }, [])
 
@@ -424,7 +456,10 @@ export default function RotinaLevePage() {
     }
   }
 
-  const isOverLimit = usedRecipesToday >= RECIPES_LIMIT_PER_DAY
+  const isRecipesOverLimit = usedRecipesToday >= RECIPES_LIMIT_PER_DAY
+  const isIdeasOverLimit = usedIdeasToday >= IDEAS_LIMIT_PER_DAY
+  const isInspirationOverLimit =
+    usedInspirationsToday >= INSPIRATION_LIMIT_PER_DAY
 
   const handleGenerateRecipes = async () => {
     if (isBabyUnderSixMonths) {
@@ -434,7 +469,7 @@ export default function RotinaLevePage() {
       return
     }
 
-    if (isOverLimit) {
+    if (isRecipesOverLimit) {
       toast.info(
         'Hoje você já pediu 3 receitas inteligentes. Amanhã a gente pensa em novas ideias com calma, combinado?',
       )
@@ -544,6 +579,13 @@ export default function RotinaLevePage() {
   }
 
   const handleGenerateIdeas = async () => {
+    if (isIdeasOverLimit) {
+      toast.info(
+        'Hoje você já pediu 3 blocos de ideias rápidas. Amanhã a gente pensa em novas possibilidades com calma, combinado?',
+      )
+      return
+    }
+
     await requestSuggestions({
       mood: 'cansada',
       energy: 'baixa',
@@ -567,13 +609,48 @@ export default function RotinaLevePage() {
       comQuem: comQuem as any,
       tipoIdeia: tipoIdeia as any,
     })
+
+    const newCount = usedIdeasToday + 1
+    setUsedIdeasToday(newCount)
+
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(getIdeasDailyStorageKey(), String(newCount))
+      }
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao salvar limite diário de ideias:', error)
+    }
   }
 
   const handleGenerateInspiration = async () => {
+    if (isInspirationOverLimit) {
+      toast.info(
+        'Hoje você já recebeu as inspirações do dia por aqui. Amanhã eu preparo novas palavras com carinho pra você 💗',
+      )
+      return
+    }
+
     setInspirationLoading(true)
     try {
       const result = await generateInspirationWithAI(focusOfDay)
       setInspiration(result)
+
+      const newCount = usedInspirationsToday + 1
+      setUsedInspirationsToday(newCount)
+
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(
+            getInspirationDailyStorageKey(),
+            String(newCount),
+          )
+        }
+      } catch (error) {
+        console.error(
+          '[Rotina Leve] Erro ao salvar limite diário de inspirações:',
+          error,
+        )
+      }
     } finally {
       setInspirationLoading(false)
     }
@@ -675,7 +752,7 @@ export default function RotinaLevePage() {
                     variant="primary"
                     size="sm"
                     onClick={handleGenerateRecipes}
-                    disabled={recipesLoading || isBabyUnderSixMonths || isOverLimit}
+                    disabled={recipesLoading || isBabyUnderSixMonths || isRecipesOverLimit}
                     className="w-full"
                   >
                     {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
@@ -686,10 +763,10 @@ export default function RotinaLevePage() {
                     <span className="font-semibold text-[#2f3a56]">
                       {usedRecipesToday} de {RECIPES_LIMIT_PER_DAY}
                     </span>{' '}
-                    sugestões de receitas inteligentes.
+                    gerações de receitas inteligentes.
                   </p>
 
-                  {isOverLimit && (
+                  {isRecipesOverLimit && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
                       Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
                       mais 💗
@@ -1038,11 +1115,26 @@ export default function RotinaLevePage() {
                         variant="primary"
                         size="sm"
                         onClick={handleGenerateIdeas}
-                        disabled={ideasLoading}
+                        disabled={ideasLoading || isIdeasOverLimit}
                         className="w-full"
                       >
                         {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
                       </Button>
+
+                      <p className="text-[11px] text-[#545454]">
+                        Hoje você já usou{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {usedIdeasToday} de {IDEAS_LIMIT_PER_DAY}
+                        </span>{' '}
+                        gerações de ideias rápidas.
+                      </p>
+
+                      {isIdeasOverLimit && (
+                        <p className="text-[11px] text-[#ff005e] font-medium">
+                          Você chegou ao limite de ideias rápidas de hoje. Amanhã a gente pensa em
+                          novas possibilidades com calma 💗
+                        </p>
+                      )}
 
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                         <p className="text-xs font-medium text-[#2f3a56] mb-2">
@@ -1132,11 +1224,26 @@ export default function RotinaLevePage() {
                         variant="primary"
                         size="sm"
                         onClick={handleGenerateInspiration}
-                        disabled={inspirationLoading}
+                        disabled={inspirationLoading || isInspirationOverLimit}
                         className="w-full"
                       >
                         {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
                       </Button>
+
+                      <p className="text-[11px] text-[#545454]">
+                        Hoje você já usou{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {usedInspirationsToday} de {INSPIRATION_LIMIT_PER_DAY}
+                        </span>{' '}
+                        gerações de inspiração.
+                      </p>
+
+                      {isInspirationOverLimit && (
+                        <p className="text-[11px] text-[#ff005e] font-medium">
+                          Você chegou ao limite de inspirações de hoje. Amanhã eu preparo novas
+                          palavras com carinho pra você 💗
+                        </p>
+                      )}
 
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
                         {inspirationLoading && (
