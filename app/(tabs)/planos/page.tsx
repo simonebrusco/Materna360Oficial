@@ -7,6 +7,7 @@ import { setPlan, getPlan } from '@/app/lib/plan'
 import UpgradeSheet from '@/components/premium/UpgradeSheet'
 import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
+import { LegalFooter } from '@/components/common/LegalFooter'
 
 // Configuração dos planos
 const PLANS = [
@@ -293,6 +294,9 @@ export default function PlanosPage() {
         {/* Sheet de upgrade */}
         <UpgradeSheet open={open} onOpenChange={setOpen} />
       </div>
+
+      {/* Rodapé legal global */}
+      <LegalFooter />
     </main>
   )
 }
