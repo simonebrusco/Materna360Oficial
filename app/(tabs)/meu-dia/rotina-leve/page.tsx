@@ -14,6 +14,7 @@ import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
 import { usePrimaryChildAge } from '@/app/hooks/usePrimaryChildAge'
 import { updateXP } from '@/app/lib/xp'
 import type { RotinaLeveContext } from '@/app/lib/ai/rotinaLeve'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
 
 type QuickIdea = {
   id: string
@@ -33,6 +34,15 @@ type Inspiration = {
   phrase: string
   care: string
   ritual: string
+}
+
+// ---------- LIMITE DIÁRIO PERSISTENTE (Receitas Inteligentes) ----------
+
+const RECIPES_LIMIT_PER_DAY = 3 as const
+
+const getRecipesDailyStorageKey = () => {
+  const dateKey = getBrazilDateKey()
+  return `rotina-leve:recipes:${dateKey}`
 }
 
 // ---------- MOCKS (fallback padrão) ----------
@@ -226,8 +236,7 @@ export default function RotinaLevePage() {
   const [recipeMealType, setRecipeMealType] = useState<string | null>(null)
   const [recipeTime, setRecipeTime] = useState<string | null>(null)
 
-  // Plan limits para Receitas Inteligentes
-  const DAILY_RECIPE_LIMIT = 3
+  // Limite diário de Receitas Inteligentes (persistente por dia)
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
 
   // Ideias Rápidas
@@ -265,6 +274,23 @@ export default function RotinaLevePage() {
   )
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
+
+  // Hidrata limite diário a partir do localStorage (por dia Brasil)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const stored = window.localStorage.getItem(getRecipesDailyStorageKey())
+      if (stored) {
+        const parsed = Number(stored)
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          setUsedRecipesToday(parsed)
+        }
+      }
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao carregar limite diário de receitas:', error)
+    }
+  }, [])
 
   // Quando o motor de Rotina retornar sugestões, convertemos para QuickIdea
   useEffect(() => {
@@ -357,7 +383,6 @@ export default function RotinaLevePage() {
           preparation: recipe.preparation,
         },
       })
-      setUsedRecipesToday((prev) => prev + 1)
 
       try {
         void updateXP(8)
@@ -407,6 +432,15 @@ export default function RotinaLevePage() {
       toast.info(
         'Até os 6 meses, a recomendação principal é o aleitamento materno exclusivo. Sempre siga a orientação do pediatra.',
       )
+      return
+    }
+
+    if (usedRecipesToday >= RECIPES_LIMIT_PER_DAY) {
+      toast({
+        title: 'Você já usou as receitinhas de hoje 💕',
+        description:
+          'Hoje você já pediu 3 receitas inteligentes. Amanhã a gente pensa em novas ideias com calma, combinado?',
+      })
       return
     }
 
@@ -491,6 +525,25 @@ export default function RotinaLevePage() {
     try {
       const result = await generateRecipesWithAI(context, prompt)
       setRecipes(result)
+
+      if (result && result.length > 0) {
+        const newCount = usedRecipesToday + 1
+        setUsedRecipesToday(newCount)
+
+        try {
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(
+              getRecipesDailyStorageKey(),
+              String(newCount),
+            )
+          }
+        } catch (error) {
+          console.error(
+            '[Rotina Leve] Erro ao salvar limite diário de receitas:',
+            error,
+          )
+        }
+      }
       // Futuro: aqui é um ótimo ponto pra telemetria *.generated
     } finally {
       setRecipesLoading(false)
@@ -534,7 +587,7 @@ export default function RotinaLevePage() {
   }
 
   const hasRecipes = recipes && recipes.length > 0
-  const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
+  const isOverLimit = usedRecipesToday >= RECIPES_LIMIT_PER_DAY
 
   const idadeLabel =
     ageMonths === null
@@ -631,7 +684,7 @@ export default function RotinaLevePage() {
                     variant="primary"
                     size="sm"
                     onClick={handleGenerateRecipes}
-                    disabled={recipesLoading || isBabyUnderSixMonths}
+                    disabled={recipesLoading || isBabyUnderSixMonths || isOverLimit}
                     className="w-full"
                   >
                     {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
@@ -640,9 +693,9 @@ export default function RotinaLevePage() {
                   <p className="text-[11px] text-[#545454]">
                     Hoje você já usou{' '}
                     <span className="font-semibold text-[#2f3a56]">
-                      {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
+                      {usedRecipesToday} de {RECIPES_LIMIT_PER_DAY}
                     </span>{' '}
-                    sugestões do seu plano.
+                    sugestões de receitas inteligentes.
                   </p>
 
                   {isOverLimit && (
@@ -677,7 +730,7 @@ export default function RotinaLevePage() {
                       </p>
                       <div className="space-y-3">
                         {recipes!.slice(0, 3).map((recipe) => {
-                          const canSave = hasRecipes && !isOverLimit
+                          const canSave = hasRecipes && !isBabyUnderSixMonths
 
                           return (
                             <div
