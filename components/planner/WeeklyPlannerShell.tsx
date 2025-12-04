@@ -90,6 +90,7 @@ export default function WeeklyPlannerShell() {
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
 
+    // Telemetria: planner aberto
     try {
       track('planner.opened', {
         tab: 'meu-dia',
@@ -103,6 +104,7 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
+      // Telemetria: data do planner mudou
       try {
         track('planner.date_changed', {
           tab: 'meu-dia',
@@ -179,6 +181,7 @@ export default function WeeklyPlannerShell() {
         appointments: [...prev.appointments, newAppointment],
       }))
 
+      // Telemetria + XP
       try {
         track('planner.appointment_added', {
           tab: 'meu-dia',
@@ -198,6 +201,8 @@ export default function WeeklyPlannerShell() {
   )
 
   const openModalForDate = (date: Date) => {
+    // garante que a data selecionada acompanhe o dia escolhido
+    handleDateSelect(date)
     setModalDate(date)
     setIsModalOpen(true)
 
@@ -224,6 +229,7 @@ export default function WeeklyPlannerShell() {
       tasks: [...prev.tasks, newTask],
     }))
 
+    // Telemetria + XP
     try {
       track('planner.task_added', {
         tab: 'meu-dia',
@@ -402,6 +408,40 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
+  const formattedSelectedDate = useMemo(
+    () =>
+      selectedDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+      }),
+    [selectedDate],
+  )
+
+  const todaysAppointments = useMemo(() => {
+    if (!plannerData.appointments || plannerData.appointments.length === 0) {
+      return []
+    }
+
+    const clone = [...plannerData.appointments]
+
+    clone.sort((a, b) => {
+      if (!a.time && !b.time) return 0
+      if (!a.time) return 1
+      if (!b.time) return -1
+
+      const [ah, am] = a.time.split(':').map(Number)
+      const [bh, bm] = b.time.split(':').map(Number)
+
+      if (Number.isNaN(ah) || Number.isNaN(am)) return 1
+      if (Number.isNaN(bh) || Number.isNaN(bm)) return -1
+
+      if (ah !== bh) return ah - bh
+      return am - bm
+    })
+
+    return clone
+  }, [plannerData.appointments])
+
   if (!isHydrated) return null
 
   const moodLabel: Record<string, string> = {
@@ -442,13 +482,6 @@ export default function WeeklyPlannerShell() {
 
   const tasksByOrigin = (origin: TaskOrigin) =>
     plannerData.tasks.filter(task => task.origin === origin)
-
-  const appointmentsToday = plannerData.appointments
-
-  const selectedDateLabel = selectedDate.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-  })
 
   // ===========================
   // RENDER
@@ -523,6 +556,7 @@ export default function WeeklyPlannerShell() {
               </div>
             </div>
 
+            {/* Cabeçalho dos dias */}
             <div className="space-y-2 md:space-y-3">
               <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
                 <span>Seg</span>
@@ -534,26 +568,26 @@ export default function WeeklyPlannerShell() {
                 <span>Dom</span>
               </div>
 
+              {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        handleDateSelect(day)
-                        openModalForDate(day)
-                      }}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                      }`}
-                    >
-                      {day.getDate()}
-                    </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
+                {generateMonthMatrix(selectedDate).map(
+                  (day, i) =>
+                    day ? (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => openModalForDate(day)}
+                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                          getBrazilDateKey(day) === selectedDateKey
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                        }`}
+                      >
+                        {day.getDate()}
+                      </button>
+                    ) : (
+                      <div key={i} className="h-8 md:h-9" />
+                    ),
                 )}
               </div>
             </div>
@@ -564,20 +598,23 @@ export default function WeeklyPlannerShell() {
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
               {/* LEMBRETES + ATALHOS */}
               <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
-                {/* LEMBRETES RÁPIDOS */}
+                {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
                   <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
                       Lembretes rápidos
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui como uma lista simples para o seu dia.
+                      Tudo que você salvar nos atalhos aparece aqui como
+                      uma lista simples para o seu dia.
                     </p>
 
+                    {/* Lista de tarefas */}
                     <div className="flex-1 min-h-[120px] max-h-48 overflow-y-auto pr-1 space-y-2">
                       {plannerData.tasks.length === 0 && (
                         <p className="text-xs text-[var(--color-text-muted)]">
-                          Ainda não há lembretes para hoje. Use os atalhos ao lado ou adicione algo rápido abaixo.
+                          Ainda não há lembretes para hoje. Use os atalhos
+                          ao lado ou adicione algo rápido abaixo.
                         </p>
                       )}
 
@@ -606,6 +643,7 @@ export default function WeeklyPlannerShell() {
                       ))}
                     </div>
 
+                    {/* Campo rápido para novo lembrete */}
                     <QuickAddTaskInput
                       onAdd={title => addTask(title, 'manual')}
                     />
@@ -615,6 +653,7 @@ export default function WeeklyPlannerShell() {
                 {/* ATALHOS DO DIA */}
                 <div className="flex h-full">
                   <div className="flex-1 relative overflow-hidden rounded-3xl border border-[var(--color-soft-strong)] bg-white/10 shadow-[0_22px_55px_rgba(255,20,117,0.12)] px-3 py-3 md:px-4 md:py-4 backdrop-blur-2xl">
+                    {/* Glows de fundo */}
                     <div className="pointer-events-none absolute inset-0 opacity-80">
                       <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
                       <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
@@ -626,7 +665,8 @@ export default function WeeklyPlannerShell() {
                           Comece pelo que faz mais sentido hoje
                         </h2>
                         <p className="mt-1 text-sm text-white/85">
-                          Use esses atalhos para criar lembretes rápidos de prioridades, compromissos e cuidados.
+                          Use esses atalhos para criar lembretes rápidos
+                          de prioridades, compromissos e cuidados.
                         </p>
                       </div>
 
@@ -708,57 +748,64 @@ export default function WeeklyPlannerShell() {
 
               {/* COMPROMISSOS DO DIA */}
               <section>
-                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_12px_28px_rgba(0,0,0,0.06)] p-4 md:p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="space-y-1">
                       <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                         Agenda
                       </p>
-                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                      <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
                         Compromissos do dia
                       </h2>
                       <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Veja rapidamente o que você já marcou para hoje.
+                        Veja rapidamente o que você marcou para{' '}
+                        <span className="font-semibold text-[var(--color-text-main)]">
+                          {formattedSelectedDate}
+                        </span>
+                        .
                       </p>
                     </div>
-                    <div className="inline-flex items-center rounded-full bg-[var(--color-soft-strong)]/60 px-3 py-1 text-[11px] text-[var(--color-text-main)]">
-                      {selectedDateLabel}
-                    </div>
+
+                    {/* Botão redondo +Novo */}
+                    <button
+                      type="button"
+                      onClick={() => openModalForDate(selectedDate)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/60 focus-visible:ring-offset-2"
+                      aria-label="Adicionar novo compromisso"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
                   </div>
 
-                  <div className="mt-4 space-y-2 max-h-44 overflow-y-auto pr-1">
-                    {appointmentsToday.length === 0 && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {todaysAppointments.length === 0 && (
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Ainda não há compromissos marcados para este dia. Use o botão &quot;Agenda &amp; compromissos&quot; ou toque em uma data no calendário para adicionar um novo compromisso.
+                        Você ainda não marcou compromissos para este dia. Use o botão de mais ou o
+                        atalho de Agenda para adicionar o primeiro.
                       </p>
                     )}
 
-                    {appointmentsToday.length > 0 &&
-                      [...appointmentsToday]
-                        .sort((a, b) => a.time.localeCompare(b.time))
-                        .map(appointment => (
-                          <div
-                            key={appointment.id}
-                            className="flex items-start gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2.5 text-xs md:text-sm"
-                          >
-                            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
-                              <AppIcon
-                                name="clock"
-                                className="w-3.5 h-3.5 text-[var(--color-brand)]"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-semibold text-[var(--color-text-main)]">
-                                {appointment.title}
-                              </p>
-                              <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
-                                {appointment.time
-                                  ? `${appointment.time} · ${selectedDateLabel}`
-                                  : selectedDateLabel}
-                              </p>
-                            </div>
+                    {todaysAppointments.map(appointment => (
+                      <div
+                        key={appointment.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)]"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
+                            {appointment.time || '--:--'}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {appointment.title || 'Compromisso'}
+                            </span>
+                            <span className="text-[11px] text-[var(--color-text-muted)]">
+                              {appointment.time || 'Sem horário definido'} ·{' '}
+                              {formattedSelectedDate}
+                            </span>
                           </div>
-                        ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </SoftCard>
               </section>
@@ -820,7 +867,13 @@ export default function WeeklyPlannerShell() {
                     Selecione o estilo do seu dia.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(option => (
+                    {[
+                      'leve',
+                      'focado',
+                      'produtivo',
+                      'slow',
+                      'automático',
+                    ].map(option => (
                       <button
                         key={option}
                         type="button"
@@ -936,6 +989,7 @@ export default function WeeklyPlannerShell() {
                 {modalDate.toLocaleDateString('pt-BR')}
               </h3>
               <button
+                type="button"
                 onClick={() => {
                   setIsModalOpen(false)
                   try {
@@ -953,12 +1007,14 @@ export default function WeeklyPlannerShell() {
             </div>
             <ModalAppointmentForm
               onSubmit={data => {
+                // salva no bloco de compromissos
                 handleAddAppointment({
                   time: data.time,
                   title: data.title,
                   tag: undefined,
                 })
 
+                // também cria lembrete rápido na lista
                 if (data.title?.trim()) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
@@ -1008,6 +1064,7 @@ export default function WeeklyPlannerShell() {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setSelectedSavedContent(null)
                   try {
@@ -1045,7 +1102,8 @@ export default function WeeklyPlannerShell() {
                 </p>
               ) : (
                 <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                  Esse conteúdo foi salvo no planner. Em breve, você verá mais detalhes aqui.
+                  Esse conteúdo foi salvo no planner. Em breve, você verá
+                  mais detalhes aqui.
                 </p>
               )
             })()}
@@ -1101,7 +1159,7 @@ export default function WeeklyPlannerShell() {
         </div>
       )}
 
-      {/* MODAIS DE AÇÕES RÁPIDAS */}
+      {/* MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR) */}
       {quickAction && (
         <QuickListModal
           mode={quickAction}
@@ -1114,7 +1172,8 @@ export default function WeeklyPlannerShell() {
           }
           onAdd={title => {
             if (quickAction === 'top3') addTask(title, 'top3')
-            else if (quickAction === 'selfcare') addTask(title, 'selfcare')
+            else if (quickAction === 'selfcare')
+              addTask(title, 'selfcare')
             else addTask(title, 'family')
           }}
           onToggle={id => toggleTask(id)}
@@ -1152,7 +1211,6 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-// WEEK VIEW COM CONTAGEM REAL (por dia da semana)
 function generateWeekData(base: Date) {
   const monday = new Date(base)
   const day = monday.getDay()
@@ -1161,18 +1219,15 @@ function generateWeekData(base: Date) {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
-    const dateKey = getBrazilDateKey(d)
-
-    const appointments = load(`planner/appointments/${dateKey}`, []) ?? []
-    const tasks = load(`planner/tasks/${dateKey}`, []) ?? []
-
     return {
       dayNumber: d.getDate(),
-      dayName: d.toLocaleDateString('pt-BR', { weekday: 'long' }),
-      agendaCount: appointments.length,
-      top3Count: tasks.filter((t: any) => t.origin === 'top3').length,
-      careCount: tasks.filter((t: any) => t.origin === 'selfcare').length,
-      familyCount: tasks.filter((t: any) => t.origin === 'family').length,
+      dayName: d.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+      }),
+      agendaCount: 0,
+      top3Count: 0,
+      careCount: 0,
+      familyCount: 0,
     }
   })
 }
@@ -1297,10 +1352,10 @@ function QuickListModal({
 
   const helper =
     mode === 'top3'
-      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus Lembretes rápidos.'
+      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus lembretes rápidos.'
       : mode === 'selfcare'
-      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos Lembretes rápidos.'
-      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos Lembretes rápidos.'
+      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos lembretes rápidos.'
+      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos lembretes rápidos.'
 
   const placeholder =
     mode === 'top3'
@@ -1317,6 +1372,7 @@ function QuickListModal({
             {title}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
           >
