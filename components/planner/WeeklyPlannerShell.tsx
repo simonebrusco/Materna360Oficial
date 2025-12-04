@@ -1033,11 +1033,10 @@ export default function WeeklyPlannerShell() {
             <div className="mt-4 pb-10">
               <WeekView weekData={generateWeekData(selectedDate)} />
             </div>
-          )}
+           )}
         </div>
       </Reveal>
-            </div>
-          </SoftCard>
+    </SoftCard>
 
           {/* HOJE POR AQUI + SUGESTÕES INTELIGENTES */}
           <section className="space-y-4 md:space-y-5">
