@@ -746,71 +746,76 @@ export default function WeeklyPlannerShell() {
                 </div>
               </section>
 
-              {/* COMPROMISSOS DO DIA */}
-              <section>
-                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="space-y-1">
-                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        Agenda
-                      </p>
-                      <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                        Compromissos do dia
-                      </h2>
-                      <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Veja rapidamente o que você marcou para{' '}
-                        <span className="font-semibold text-[var(--color-text-main)]">
-                          {formattedSelectedDate}
-                        </span>
-                        .
-                      </p>
-                    </div>
+             {/* COMPROMISSOS DO DIA — versão A2 com formatação B */}
+<section>
+  <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
+    
+    {/* Cabeçalho do card */}
+    <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="space-y-1">
+        <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+          Agenda
+        </p>
 
-                    {/* Botão redondo +Novo */}
-                    <button
-                      type="button"
-                      onClick={() => openModalForDate(selectedDate)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/60 focus-visible:ring-offset-2"
-                      aria-label="Adicionar novo compromisso"
-                    >
-                      <span className="text-lg leading-none">+</span>
-                    </button>
-                  </div>
+        {/* Título dinâmico (A2) */}
+        <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
+          {selectedDateKey === getBrazilDateKey(new Date())
+            ? 'Sua agenda de hoje'
+            : `Agenda de ${formattedSelectedDate}`}
+        </h2>
 
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {todaysAppointments.length === 0 && (
-                      <p className="text-xs text-[var(--color-text-muted)]">
-                        Você ainda não marcou compromissos para este dia. Use o botão de mais ou o
-                        atalho de Agenda para adicionar o primeiro.
-                      </p>
-                    )}
+        <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+          Veja tudo que você marcou para este dia.
+        </p>
+      </div>
 
-                    {todaysAppointments.map(appointment => (
-                      <div
-                        key={appointment.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
-                            {appointment.time || '--:--'}
-                          </span>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {appointment.title || 'Compromisso'}
-                            </span>
-                            <span className="text-[11px] text-[var(--color-text-muted)]">
-                              {appointment.time || 'Sem horário definido'} ·{' '}
-                              {formattedSelectedDate}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </SoftCard>
-              </section>
-            </div>
-          )}
+      {/* Botão circular +Novo */}
+      <button
+        type="button"
+        onClick={() => openModalForDate(selectedDate)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/60 focus-visible:ring-offset-2"
+        aria-label="Adicionar novo compromisso"
+      >
+        <span className="text-lg leading-none">+</span>
+      </button>
+    </div>
+
+    {/* Lista de compromissos */}
+    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+      {todaysAppointments.length === 0 && (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Você ainda não marcou compromissos para este dia.  
+          Use o botão de mais ou o atalho de Agenda para adicionar o primeiro.
+        </p>
+      )}
+
+      {todaysAppointments.map(appointment => (
+        <div
+          key={appointment.id}
+          className="flex items-start gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)]"
+        >
+          {/* Horário em bolinha */}
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
+            {appointment.time || '--:--'}
+          </span>
+
+          {/* Conteúdo (formato B) */}
+          <div className="flex flex-col leading-tight">
+            <span className="font-medium text-[var(--color-text-main)]">
+              {appointment.title || 'Compromisso'}
+            </span>
+            <span className="text-[11px] text-[var(--color-text-muted)]">
+              {appointment.time || '--:--'} às {''}
+              {selectedDateKey === getBrazilDateKey(new Date())
+                ? formattedSelectedDate
+                : formattedSelectedDate}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </SoftCard>
+</section>
 
           {/* HOJE POR AQUI + SUGESTÕES INTELIGENTES */}
           <section className="space-y-4 md:space-y-5">
