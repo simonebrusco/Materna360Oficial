@@ -25,7 +25,6 @@ import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
-  dateKey: string
   time: string
   title: string
   tag?: string
@@ -122,9 +121,8 @@ export default function WeeklyPlannerShell() {
     if (!isHydrated || !selectedDateKey) return
 
     const loadedData: PlannerData = {
-      // Compromissos agora são globais (todos em um só lugar)
-      appointments: load('planner/appointments', []) ?? [],
-      // Tarefas e notas continuam por dia
+      appointments:
+        load(`planner/appointments/${selectedDateKey}`, []) ?? [],
       tasks: load(`planner/tasks/${selectedDateKey}`, []) ?? [],
       notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
     }
@@ -135,19 +133,19 @@ export default function WeeklyPlannerShell() {
   // ===========================
   // SAVE DATA
   // ===========================
-  // Compromissos: salvo em um único bucket global
   useEffect(() => {
-    if (!isHydrated) return
-    save('planner/appointments', plannerData.appointments)
-  }, [plannerData.appointments, isHydrated])
+    if (!isHydrated || !selectedDateKey) return
+    save(
+      `planner/appointments/${selectedDateKey}`,
+      plannerData.appointments,
+    )
+  }, [plannerData.appointments, selectedDateKey, isHydrated])
 
-  // Tarefas por dia
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
   }, [plannerData.tasks, selectedDateKey, isHydrated])
 
-  // Notas por dia
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
@@ -176,7 +174,6 @@ export default function WeeklyPlannerShell() {
         ...appointment,
         id: Math.random().toString(36).slice(2, 9),
       }
-
       setPlannerData(prev => ({
         ...prev,
         appointments: [...prev.appointments, newAppointment],
@@ -186,7 +183,6 @@ export default function WeeklyPlannerShell() {
         track('planner.appointment_added', {
           tab: 'meu-dia',
           time: appointment.time ?? null,
-          dateKey: appointment.dateKey,
         })
       } catch {
         // ignora
@@ -195,10 +191,7 @@ export default function WeeklyPlannerShell() {
       try {
         void updateXP(6)
       } catch (e) {
-        console.error(
-          '[Planner] Erro ao atualizar XP por compromisso:',
-          e,
-        )
+        console.error('[Planner] Erro ao atualizar XP por compromisso:', e)
       }
     },
     [],
@@ -411,6 +404,11 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
+  const todayKey = useMemo(
+    () => getBrazilDateKey(new Date()),
+    [],
+  )
+
   const formattedSelectedDate = useMemo(
     () =>
       selectedDate.toLocaleDateString('pt-BR', {
@@ -428,24 +426,9 @@ export default function WeeklyPlannerShell() {
       return []
     }
 
-    // opcional: filtrar só hoje em diante
-    const todayKey = getBrazilDateKey(new Date())
+    const clone = [...plannerData.appointments]
 
-    const filtered = plannerData.appointments.filter(app => {
-      // compromissos antigos sem dateKey continuam aparecendo
-      if (!('dateKey' in app) || !app.dateKey) return true
-      // mantém hoje e futuro
-      return app.dateKey >= todayKey
-    })
-
-    const clone = [...filtered]
-
-    // Ordena por data (dateKey) e depois por horário
     clone.sort((a, b) => {
-      if (a.dateKey && b.dateKey && a.dateKey !== b.dateKey) {
-        return a.dateKey.localeCompare(b.dateKey)
-      }
-
       if (!a.time && !b.time) return 0
       if (!a.time) return 1
       if (!b.time) return -1
@@ -462,79 +445,6 @@ export default function WeeklyPlannerShell() {
 
     return clone
   }, [plannerData.appointments])
-
-  if (!isHydrated) return null
-
-    // Ordena por data (dateKey) e depois por horário
-    clone.sort((a, b) => {
-      if (a.dateKey && b.dateKey && a.dateKey !== b.dateKey) {
-        return a.dateKey.localeCompare(b.dateKey)
-      }
-
-      if (!a.time && !b.time) return 0
-      if (!a.time) return 1
-      if (!b.time) return -1
-
-      const [ah, am] = a.time.split(':').map(Number)
-      const [bh, bm] = b.time.split(':').map(Number)
-
-      if (Number.isNaN(ah) || Number.isNaN(am)) return 1
-      if (Number.isNaN(bh) || Number.isNaN(bm)) return -1
-
-      if (ah !== bh) return ah - bh
-      return am - bm
-    })
-
-    return clone
-  }, [plannerData.appointments])
-
-  if (!isHydrated) return null
-
-  // Ordena por data (dateKey) e depois por horário
-  clone.sort((a, b) => {
-    if (a.dateKey && b.dateKey && a.dateKey !== b.dateKey) {
-      return a.dateKey.localeCompare(b.dateKey)
-    }
-
-    if (!a.time && !b.time) return 0
-    if (!a.time) return 1
-    if (!b.time) return -1
-
-    const [ah, am] = a.time.split(':').map(Number)
-    const [bh, bm] = b.time.split(':').map(Number)
-
-    if (Number.isNaN(ah) || Number.isNaN(am)) return 1
-    if (Number.isNaN(bh) || Number.isNaN(bm)) return -1
-
-    if (ah !== bh) return ah - bh
-    return am - bm
-  })
-
-  return clone
-}, [plannerData.appointments])
-
-
-    const filtered = plannerData.appointments.filter(
-      appointment => appointment.dateKey === selectedDateKey,
-    )
-
-    const sorted = [...filtered].sort((a, b) => {
-      if (!a.time && !b.time) return 0
-      if (!a.time) return 1
-      if (!b.time) return -1
-
-      const [ah, am] = a.time.split(':').map(Number)
-      const [bh, bm] = b.time.split(':').map(Number)
-
-      if (Number.isNaN(ah) || Number.isNaN(am)) return 1
-      if (Number.isNaN(bh) || Number.isNaN(bm)) return -1
-
-      if (ah !== bh) return ah - bh
-      return am - bm
-    })
-
-    return sorted
-  }, [plannerData.appointments, selectedDateKey])
 
   if (!isHydrated) return null
 
@@ -827,7 +737,7 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
@@ -840,7 +750,7 @@ export default function WeeklyPlannerShell() {
                 </div>
               </section>
 
-              {/* COMPROMISSOS DO DIA */}
+              {/* COMPROMISSOS DO DIA (PARA O DIA SELECIONADO) */}
               <section>
                 <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -874,8 +784,9 @@ export default function WeeklyPlannerShell() {
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {todaysAppointments.length === 0 && (
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Você ainda não marcou compromissos para este dia. Use o botão de mais ou o
-                        atalho de Agenda para adicionar o primeiro.
+                        Você ainda não marcou compromissos para este dia.
+                        Use o botão de mais ou o atalho de Agenda para
+                        adicionar o primeiro.
                       </p>
                     )}
 
@@ -917,7 +828,8 @@ export default function WeeklyPlannerShell() {
                   Como você está hoje?
                 </h2>
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                  Escolha como você se sente agora e o estilo de dia que você gostaria de ter.
+                  Escolha como você se sente agora e o estilo de dia que
+                  você gostaria de ter.
                 </p>
               </div>
 
@@ -1101,25 +1013,18 @@ export default function WeeklyPlannerShell() {
             </div>
             <ModalAppointmentForm
               onSubmit={data => {
-                const appointmentDateKey = modalDate
-                  ? getBrazilDateKey(modalDate)
-                  : selectedDateKey
-
-                const todayKey = getBrazilDateKey(new Date())
-
-                // 1) Salva compromisso na agenda (sempre)
+                // salva o compromisso para o dia atualmente selecionado
                 handleAddAppointment({
-                  dateKey: appointmentDateKey,
                   time: data.time,
                   title: data.title,
                   tag: undefined,
                 })
 
-                // 2) Só cria lembrete rápido se for compromisso de hoje
-                if (
-                  appointmentDateKey === todayKey &&
-                  data.title?.trim()
-                ) {
+                // se for compromisso de HOJE, também entra como lembrete rápido
+                const currentKey =
+                  selectedDateKey || getBrazilDateKey(new Date())
+
+                if (currentKey === todayKey && data.title?.trim()) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
@@ -1202,7 +1107,8 @@ export default function WeeklyPlannerShell() {
 
               return (
                 <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
-                  {description || 'Conteúdo salvo no planner.'}
+                  {description ||
+                    'Esse conteúdo foi salvo no planner. Em breve, você verá mais detalhes aqui.'}
                 </p>
               )
             })()}
@@ -1234,12 +1140,9 @@ export default function WeeklyPlannerShell() {
                   plannerHook.removeItem(selectedSavedContent.id)
                   setSelectedSavedContent(null)
                   try {
-                    track(
-                      'planner.saved_content.completed_from_modal',
-                      {
-                        tab: 'meu-dia',
-                      },
-                    )
+                    track('planner.saved_content.completed_from_modal', {
+                      tab: 'meu-dia',
+                    })
                   } catch {
                     // ignora
                   }
@@ -1454,7 +1357,7 @@ function QuickListModal({
 
   const helper =
     mode === 'top3'
-      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos lembretes rápidos.'
+      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus lembretes rápidos.'
       : mode === 'selfcare'
       ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos lembretes rápidos.'
       : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos lembretes rápidos.'
