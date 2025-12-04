@@ -406,6 +406,16 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
+  const sortedAppointments = useMemo(() => {
+    if (!plannerData.appointments?.length) return []
+    return [...plannerData.appointments].sort((a, b) => {
+      if (!a.time && !b.time) return a.title.localeCompare(b.title)
+      if (!a.time) return 1
+      if (!b.time) return -1
+      return a.time.localeCompare(b.time)
+    })
+  }, [plannerData.appointments])
+
   if (!isHydrated) return null
 
   const moodLabel: Record<string, string> = {
@@ -642,7 +652,7 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="target"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Prioridades do dia
@@ -661,7 +671,7 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Agenda &amp; compromissos
@@ -678,7 +688,7 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar de mim
@@ -690,12 +700,12 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('family')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
@@ -706,6 +716,70 @@ export default function WeeklyPlannerShell() {
                     </div>
                   </div>
                 </div>
+              </section>
+
+              {/* CARD DE COMPROMISSOS DO DIA */}
+              <section>
+                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                        Compromissos do dia
+                      </p>
+                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                        Sua agenda de hoje
+                      </h2>
+                      <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                        Veja tudo o que já está marcado para hoje e ajuste
+                        sua rotina com mais leveza.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => openModalForDate(selectedDate)}
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] md:text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_4px_12px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
+                    >
+                      <AppIcon name="plus" className="w-3.5 h-3.5" />
+                      Novo
+                    </button>
+                  </div>
+
+                  <div className="mt-2 space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {sortedAppointments.length === 0 && (
+                      <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                        Você ainda não adicionou nenhum compromisso para
+                        hoje. Toque em <strong>Novo</strong> ou use o
+                        atalho "Agenda &amp; compromissos" para começar.
+                      </p>
+                    )}
+
+                    {sortedAppointments.map(appointment => (
+                      <div
+                        key={appointment.id}
+                        className="flex items-start gap-3 rounded-2xl border border-[#F1E4EC] bg-white px-3 py-2.5 md:px-3.5 md:py-3 shadow-[0_4px_14px_rgba(0,0,0,0.02)]"
+                      >
+                        <div className="flex flex-col items-center mt-0.5">
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)] text-[11px] font-semibold text-[var(--color-brand)]">
+                            {appointment.time
+                              ? appointment.time.slice(0, 5)
+                              : '—'}
+                          </span>
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm md:text-[15px] font-medium text-[var(--color-text-main)]">
+                            {appointment.title}
+                          </p>
+                          {appointment.tag && (
+                            <span className="inline-flex items-center rounded-full bg-[#FFE8F2] border border-[#FFB3D3] px-2 py-0.5 text-[10px] font-medium text-[#C2285F]">
+                              {appointment.tag}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SoftCard>
               </section>
             </div>
           )}
