@@ -25,6 +25,7 @@ import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
+  dateKey: string
   time: string
   title: string
   tag?: string
@@ -90,7 +91,6 @@ export default function WeeklyPlannerShell() {
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
 
-    // Telemetria: planner aberto
     try {
       track('planner.opened', {
         tab: 'meu-dia',
@@ -104,7 +104,6 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
-      // Telemetria: data do planner mudou
       try {
         track('planner.date_changed', {
           tab: 'meu-dia',
@@ -122,32 +121,38 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
-    const loadedData: PlannerData = {
-      appointments:
-        load(`planner/appointments/${selectedDateKey}`, []) ?? [],
-      tasks: load(`planner/tasks/${selectedDateKey}`, []) ?? [],
-      notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
-    }
+    const loadedAppointments: Appointment[] =
+      load('planner/appointments/all', []) ?? []
 
-    setPlannerData(loadedData)
+    const loadedTasks: TaskItem[] =
+      load(`planner/tasks/${selectedDateKey}`, []) ?? []
+
+    const loadedNotes: string =
+      load(`planner/notes/${selectedDateKey}`, '') ?? ''
+
+    setPlannerData({
+      appointments: loadedAppointments,
+      tasks: loadedTasks,
+      notes: loadedNotes,
+    })
   }, [selectedDateKey, isHydrated])
 
   // ===========================
   // SAVE DATA
   // ===========================
+  // Compromissos: persistência global
   useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
-    save(
-      `planner/appointments/${selectedDateKey}`,
-      plannerData.appointments,
-    )
-  }, [plannerData.appointments, selectedDateKey, isHydrated])
+    if (!isHydrated) return
+    save('planner/appointments/all', plannerData.appointments)
+  }, [plannerData.appointments, isHydrated])
 
+  // Tarefas: por dia
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
   }, [plannerData.tasks, selectedDateKey, isHydrated])
 
+  // Notas: por dia (futuro)
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
@@ -176,12 +181,12 @@ export default function WeeklyPlannerShell() {
         ...appointment,
         id: Math.random().toString(36).slice(2, 9),
       }
+
       setPlannerData(prev => ({
         ...prev,
         appointments: [...prev.appointments, newAppointment],
       }))
 
-      // Telemetria + XP
       try {
         track('planner.appointment_added', {
           tab: 'meu-dia',
@@ -201,7 +206,6 @@ export default function WeeklyPlannerShell() {
   )
 
   const openModalForDate = (date: Date) => {
-    // garante que a data selecionada acompanhe o dia escolhido
     handleDateSelect(date)
     setModalDate(date)
     setIsModalOpen(true)
@@ -229,7 +233,6 @@ export default function WeeklyPlannerShell() {
       tasks: [...prev.tasks, newTask],
     }))
 
-    // Telemetria + XP
     try {
       track('planner.task_added', {
         tab: 'meu-dia',
@@ -417,15 +420,21 @@ export default function WeeklyPlannerShell() {
     [selectedDate],
   )
 
+  // Agora a agenda filtra por dateKey = selectedDateKey
   const todaysAppointments = useMemo(() => {
     if (
       !plannerData.appointments ||
-      plannerData.appointments.length === 0
+      plannerData.appointments.length === 0 ||
+      !selectedDateKey
     ) {
       return []
     }
 
-    const clone = [...plannerData.appointments]
+    const filtered = plannerData.appointments.filter(
+      appt => appt.dateKey === selectedDateKey,
+    )
+
+    const clone = [...filtered]
 
     clone.sort((a, b) => {
       if (!a.time && !b.time) return 0
@@ -443,7 +452,7 @@ export default function WeeklyPlannerShell() {
     })
 
     return clone
-  }, [plannerData.appointments])
+  }, [plannerData.appointments, selectedDateKey])
 
   if (!isHydrated) return null
 
@@ -667,7 +676,7 @@ export default function WeeklyPlannerShell() {
                         <h2 className="text-lg md:text-xl font-semibold text-white">
                           Comece pelo que faz mais sentido hoje
                         </h2>
-                        <p className="mt-1 text-sm text-white/85">
+                        <p className="mt-1 text-sm text:white/85 text-white/85">
                           Use esses atalhos para criar lembretes rápidos
                           de prioridades, compromissos e cuidados.
                         </p>
@@ -678,7 +687,7 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('top3')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -697,14 +706,14 @@ export default function WeeklyPlannerShell() {
                           onClick={() => {
                             openModalForDate(selectedDate)
                           }}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg:white/80 bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                          <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Agenda &amp; compromissos
                             </span>
                           </div>
@@ -714,7 +723,7 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('selfcare')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg:white/80 bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -731,7 +740,7 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('family')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg:white/80 bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -884,7 +893,7 @@ export default function WeeklyPlannerShell() {
                         onClick={() => handleDayIntentionSelect(option)}
                         className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                           dayIntention === option
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                            ? 'bg-[var(--color-brand)] text:white text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
                             : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
                         }`}
                       >
@@ -1018,8 +1027,9 @@ export default function WeeklyPlannerShell() {
                 const appointmentDateKey = getBrazilDateKey(modalDate)
                 const todayKey = getBrazilDateKey(new Date())
 
-                // 1) Salva compromisso na agenda (sempre, para o dia selecionado)
+                // 1) Salva compromisso na agenda (sempre, com dateKey correto)
                 handleAddAppointment({
+                  dateKey: appointmentDateKey,
                   time: data.time,
                   title: data.title,
                   tag: undefined,
@@ -1053,7 +1063,7 @@ export default function WeeklyPlannerShell() {
                   })
                 } catch {
                   // ignora
-                }
+                  }
               }}
             />
           </div>
@@ -1099,7 +1109,6 @@ export default function WeeklyPlannerShell() {
               {selectedSavedContent.title}
             </h3>
 
-            {/* DESCRIÇÃO DO CONTEÚDO SALVO */}
             {(() => {
               const anyItem = selectedSavedContent as any
               const payload = anyItem.payload ?? {}
