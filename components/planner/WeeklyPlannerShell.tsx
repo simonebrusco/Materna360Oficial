@@ -748,10 +748,10 @@ export default function WeeklyPlannerShell() {
                   <div className="mt-2 space-y-2 max-h-60 overflow-y-auto pr-1">
                     {sortedAppointments.length === 0 && (
                       <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Você ainda não adicionou nenhum compromisso para
-                        hoje. Toque em <strong>Novo</strong> ou use o
-                        atalho "Agenda &amp; compromissos" para começar.
-                      </p>
+  Você ainda não adicionou nenhum compromisso para
+  hoje. Toque em <strong>Novo</strong> ou use o
+  atalho Agenda &amp; compromissos para começar.
+</p>
                     )}
 
                     {sortedAppointments.map(appointment => (
