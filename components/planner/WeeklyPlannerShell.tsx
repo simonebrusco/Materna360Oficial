@@ -90,6 +90,7 @@ export default function WeeklyPlannerShell() {
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
 
+    // Telemetria: planner aberto
     try {
       track('planner.opened', {
         tab: 'meu-dia',
@@ -103,6 +104,7 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
+      // Telemetria: data do planner mudou
       try {
         track('planner.date_changed', {
           tab: 'meu-dia',
@@ -179,6 +181,7 @@ export default function WeeklyPlannerShell() {
         appointments: [...prev.appointments, newAppointment],
       }))
 
+      // Telemetria + XP
       try {
         track('planner.appointment_added', {
           tab: 'meu-dia',
@@ -226,6 +229,7 @@ export default function WeeklyPlannerShell() {
       tasks: [...prev.tasks, newTask],
     }))
 
+    // Telemetria + XP
     try {
       track('planner.task_added', {
         tab: 'meu-dia',
@@ -403,11 +407,6 @@ export default function WeeklyPlannerShell() {
       .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
-
-  const todayKey = useMemo(
-    () => getBrazilDateKey(new Date()),
-    [],
-  )
 
   const formattedSelectedDate = useMemo(
     () =>
@@ -750,7 +749,7 @@ export default function WeeklyPlannerShell() {
                 </div>
               </section>
 
-              {/* COMPROMISSOS DO DIA (PARA O DIA SELECIONADO) */}
+              {/* COMPROMISSOS DO DIA */}
               <section>
                 <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -828,8 +827,7 @@ export default function WeeklyPlannerShell() {
                   Como você está hoje?
                 </h2>
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                  Escolha como você se sente agora e o estilo de dia que
-                  você gostaria de ter.
+                  Escolha como você se sente agora e o estilo de dia que você gostaria de ter.
                 </p>
               </div>
 
@@ -1011,20 +1009,27 @@ export default function WeeklyPlannerShell() {
                 ✕
               </button>
             </div>
+
             <ModalAppointmentForm
+              dateLabel={modalDate.toLocaleDateString('pt-BR')}
               onSubmit={data => {
-                // salva o compromisso para o dia atualmente selecionado
+                if (!modalDate) return
+
+                const appointmentDateKey = getBrazilDateKey(modalDate)
+                const todayKey = getBrazilDateKey(new Date())
+
+                // 1) Salva compromisso na agenda (sempre, para o dia selecionado)
                 handleAddAppointment({
                   time: data.time,
                   title: data.title,
                   tag: undefined,
                 })
 
-                // se for compromisso de HOJE, também entra como lembrete rápido
-                const currentKey =
-                  selectedDateKey || getBrazilDateKey(new Date())
-
-                if (currentKey === todayKey && data.title?.trim()) {
+                // 2) Se for compromisso de HOJE, cria também lembrete rápido
+                if (
+                  appointmentDateKey === todayKey &&
+                  data.title?.trim()
+                ) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
@@ -1094,9 +1099,11 @@ export default function WeeklyPlannerShell() {
               {selectedSavedContent.title}
             </h3>
 
+            {/* DESCRIÇÃO DO CONTEÚDO SALVO */}
             {(() => {
               const anyItem = selectedSavedContent as any
               const payload = anyItem.payload ?? {}
+
               const description =
                 anyItem.description ??
                 payload.preview ??
@@ -1107,8 +1114,7 @@ export default function WeeklyPlannerShell() {
 
               return (
                 <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
-                  {description ||
-                    'Esse conteúdo foi salvo no planner. Em breve, você verá mais detalhes aqui.'}
+                  {description || 'Conteúdo salvo no planner.'}
                 </p>
               )
             })()}
@@ -1239,9 +1245,11 @@ function generateWeekData(base: Date) {
 
 // FORM DO MODAL (COMPROMISSO)
 function ModalAppointmentForm({
+  dateLabel,
   onSubmit,
   onCancel,
 }: {
+  dateLabel: string
   onSubmit: (data: { title: string; time: string }) => void
   onCancel: () => void
 }) {
@@ -1260,6 +1268,17 @@ function ModalAppointmentForm({
       }}
       className="space-y-4"
     >
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Data do compromisso
+        </label>
+        <input
+          className="w-full rounded-lg border px-3 py-2 text-sm bg-gray-50 text-[var(--color-text-muted)]"
+          value={dateLabel}
+          readOnly
+        />
+      </div>
+
       <div className="space-y-1">
         <label className="text-sm font-medium text-[var(--color-text-main)]">
           Título
