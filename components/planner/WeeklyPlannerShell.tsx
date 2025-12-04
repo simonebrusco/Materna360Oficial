@@ -872,36 +872,59 @@ export default function WeeklyPlannerShell() {
         </div>
       </Reveal>
 
-      {/* MODAL NOVO COMPROMISSO */}
-     <ModalAppointmentForm
- onSubmit={data => {
-  // Descobre para qual dia esse compromisso está sendo criado
-  const appointmentDateKey = modalDate
-    ? getBrazilDateKey(modalDate)
-    : selectedDateKey
-  const todayKey = getBrazilDateKey(new Date())
+    {/* MODAL NOVO COMPROMISSO */}
+{isModalOpen && modalDate && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
 
-  // 1) Salva compromisso na agenda (sempre)
-  handleAddAppointment({
-    dateKey: appointmentDateKey, // <-- obrigatório agora
-    time: data.time,
-    title: data.title,
-    tag: undefined,
-  })
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-[var(--color-text-main)]">
+          Novo compromisso – {modalDate.toLocaleDateString('pt-BR')}
+        </h3>
+        <button
+          type="button"
+          onClick={() => {
+            setIsModalOpen(false)
+            track('planner.appointment_modal_closed', { tab: 'meu-dia' })
+          }}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+        >
+          ✕
+        </button>
+      </div>
 
-  // 2) Só cria lembrete rápido SE for compromisso de hoje
-  if (appointmentDateKey === todayKey && data.title?.trim()) {
-    const label = data.time
-      ? `${data.time} · ${data.title.trim()}`
-      : data.title.trim()
-    addTask(label, 'agenda')
-  }
+      <ModalAppointmentForm
+        onSubmit={data => {
+          const appointmentDateKey = modalDate
+            ? getBrazilDateKey(modalDate)
+            : selectedDateKey
+          const todayKey = getBrazilDateKey(new Date())
 
-  setIsModalOpen(false)
-  try {
-    track('planner.appointment_modal_saved', { tab: 'meu-dia' })
-  } catch {}
-}}
+          handleAddAppointment({
+            dateKey: appointmentDateKey,
+            time: data.time,
+            title: data.title,
+            tag: undefined,
+          })
+
+          if (appointmentDateKey === todayKey && data.title?.trim()) {
+            const label = data.time
+              ? `${data.time} · ${data.title.trim()}`
+              : data.title.trim()
+            addTask(label, 'agenda')
+          }
+
+          setIsModalOpen(false)
+          track('planner.appointment_modal_saved', { tab: 'meu-dia' })
+        }}
+        onCancel={() => {
+          setIsModalOpen(false)
+          track('planner.appointment_modal_cancelled', { tab: 'meu-dia' })
+        }}
+      />
+    </div>
+  </div>
+)}
 
       {/* MODAL DETALHE CONTEÚDO */}
       {selectedSavedContent && (
