@@ -936,9 +936,25 @@ export default function WeeklyPlannerShell() {
               {selectedSavedContent.title}
             </h3>
 
-            <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
-              {selectedSavedContent?.description ?? 'Conteúdo salvo no planner.'}
-            </p>
+           {/* DESCRIÇÃO DO CONTEÚDO SALVO */}
+{(() => {
+  const anyItem = selectedSavedContent as any;
+  const payload = anyItem?.payload ?? {};
+
+  const description =
+    anyItem?.description ??
+    payload.preview ??
+    payload.description ??
+    payload.text ??
+    payload.excerpt ??
+    '';
+
+  return (
+    <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
+      {description || 'Conteúdo salvo no planner.'}
+    </p>
+  );
+})()}
 
             <button
               type="button"
