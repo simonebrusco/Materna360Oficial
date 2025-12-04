@@ -874,48 +874,34 @@ export default function WeeklyPlannerShell() {
 
       {/* MODAL NOVO COMPROMISSO */}
      <ModalAppointmentForm
-  onSubmit={data => {
-    // Descobre para qual dia esse compromisso está sendo criado
-    const appointmentDateKey = modalDate
-      ? getBrazilDateKey(modalDate)
-      : selectedDateKey
-    const todayKey = getBrazilDateKey(new Date())
+ onSubmit={data => {
+  // Descobre para qual dia esse compromisso está sendo criado
+  const appointmentDateKey = modalDate
+    ? getBrazilDateKey(modalDate)
+    : selectedDateKey
+  const todayKey = getBrazilDateKey(new Date())
 
-    // 1) Salva compromisso na agenda (sempre)
-    handleAddAppointment({
-      time: data.time,
-      title: data.title,
-      tag: undefined,
-    })
+  // 1) Salva compromisso na agenda (sempre)
+  handleAddAppointment({
+    dateKey: appointmentDateKey, // <-- obrigatório agora
+    time: data.time,
+    title: data.title,
+    tag: undefined,
+  })
 
-    // 2) Só cria lembrete rápido SE for compromisso de hoje
-    if (appointmentDateKey === todayKey && data.title?.trim()) {
-      const label = data.time
-        ? `${data.time} · ${data.title.trim()}`
-        : data.title.trim()
-      addTask(label, 'agenda')
-    }
+  // 2) Só cria lembrete rápido SE for compromisso de hoje
+  if (appointmentDateKey === todayKey && data.title?.trim()) {
+    const label = data.time
+      ? `${data.time} · ${data.title.trim()}`
+      : data.title.trim()
+    addTask(label, 'agenda')
+  }
 
-    setIsModalOpen(false)
-    try {
-      track('planner.appointment_modal_saved', {
-        tab: 'meu-dia',
-      })
-    } catch {
-      // ignora
-    }
-  }}
-  onCancel={() => {
-    setIsModalOpen(false)
-    try {
-      track('planner.appointment_modal_cancelled', {
-        tab: 'meu-dia',
-      })
-    } catch {
-      // ignora
-    }
-  }}
-/>
+  setIsModalOpen(false)
+  try {
+    track('planner.appointment_modal_saved', { tab: 'meu-dia' })
+  } catch {}
+}}
 
       {/* MODAL DETALHE CONTEÚDO */}
       {selectedSavedContent && (
