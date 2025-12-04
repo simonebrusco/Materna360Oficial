@@ -25,9 +25,9 @@ import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
+  dateKey: string
   time: string
   title: string
-  dateKey: string   // ← NOVO: garante data real sempre disponível
   tag?: string
 }
 
@@ -91,25 +91,27 @@ export default function WeeklyPlannerShell() {
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
 
-    // Telemetria: planner aberto
     try {
       track('planner.opened', {
         tab: 'meu-dia',
         dateKey,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
   }, [plannerHook])
 
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
-
       try {
         track('planner.date_changed', {
           tab: 'meu-dia',
           dateKey: selectedDateKey,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
@@ -120,8 +122,9 @@ export default function WeeklyPlannerShell() {
     if (!isHydrated || !selectedDateKey) return
 
     const loadedData: PlannerData = {
-      appointments:
-        load(`planner/appointments/${selectedDateKey}`, []) ?? [],
+      // Compromissos agora são globais (todos em um só lugar)
+      appointments: load('planner/appointments', []) ?? [],
+      // Tarefas e notas continuam por dia
       tasks: load(`planner/tasks/${selectedDateKey}`, []) ?? [],
       notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
     }
@@ -132,19 +135,19 @@ export default function WeeklyPlannerShell() {
   // ===========================
   // SAVE DATA
   // ===========================
+  // Compromissos: salvo em um único bucket global
   useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
-    save(
-      `planner/appointments/${selectedDateKey}`,
-      plannerData.appointments,
-    )
-  }, [plannerData.appointments, selectedDateKey, isHydrated])
+    if (!isHydrated) return
+    save('planner/appointments', plannerData.appointments)
+  }, [plannerData.appointments, isHydrated])
 
+  // Tarefas por dia
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
   }, [plannerData.tasks, selectedDateKey, isHydrated])
 
+  // Notas por dia
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
@@ -162,7 +165,9 @@ export default function WeeklyPlannerShell() {
         tab: 'meu-dia',
         dateKey,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
   }, [])
 
   const handleAddAppointment = useCallback(
@@ -183,16 +188,24 @@ export default function WeeklyPlannerShell() {
           time: appointment.time ?? null,
           dateKey: appointment.dateKey,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       try {
         void updateXP(6)
-      } catch {}
+      } catch (e) {
+        console.error(
+          '[Planner] Erro ao atualizar XP por compromisso:',
+          e,
+        )
+      }
     },
     [],
   )
 
   const openModalForDate = (date: Date) => {
+    // garante que a data selecionada acompanhe o dia escolhido
     handleDateSelect(date)
     setModalDate(date)
     setIsModalOpen(true)
@@ -202,10 +215,12 @@ export default function WeeklyPlannerShell() {
         tab: 'meu-dia',
         dateKey: getBrazilDateKey(date),
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
   }
 
-  // Tarefas
+  // TAREFAS – helpers
   const addTask = (title: string, origin: TaskOrigin) => {
     const newTask: TaskItem = {
       id: Math.random().toString(36).slice(2, 9),
@@ -213,20 +228,26 @@ export default function WeeklyPlannerShell() {
       done: false,
       origin,
     }
-
     setPlannerData(prev => ({
       ...prev,
       tasks: [...prev.tasks, newTask],
     }))
 
     try {
-      track('planner.task_added', { tab: 'meu-dia', origin })
-    } catch {}
+      track('planner.task_added', {
+        tab: 'meu-dia',
+        origin,
+      })
+    } catch {
+      // ignora
+    }
 
     try {
       const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
       void updateXP(base)
-    } catch {}
+    } catch (e) {
+      console.error('[Planner] Erro ao atualizar XP por tarefa:', e)
+    }
   }
 
   const toggleTask = (id: string) => {
@@ -246,12 +267,19 @@ export default function WeeklyPlannerShell() {
             origin: task.origin,
             done: willBeDone,
           })
-        } catch {}
+        } catch {
+          // ignora
+        }
 
         if (willBeDone) {
           try {
             void updateXP(4)
-          } catch {}
+          } catch (e) {
+            console.error(
+              '[Planner] Erro ao atualizar XP por concluir tarefa:',
+              e,
+            )
+          }
         }
       }
 
@@ -261,6 +289,7 @@ export default function WeeklyPlannerShell() {
       }
     })
   }
+
   const handleViewModeChange = (mode: 'day' | 'week') => {
     setViewMode(mode)
     try {
@@ -268,7 +297,9 @@ export default function WeeklyPlannerShell() {
         tab: 'meu-dia',
         mode,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
   }
 
   const handleMoodSelect = (key: string) => {
@@ -280,12 +311,19 @@ export default function WeeklyPlannerShell() {
           tab: 'meu-dia',
           mood: next,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       if (next) {
         try {
           void updateXP(3)
-        } catch {}
+        } catch (e) {
+          console.error(
+            '[Planner] Erro ao atualizar XP por registro de humor:',
+            e,
+          )
+        }
       }
 
       return next
@@ -301,12 +339,19 @@ export default function WeeklyPlannerShell() {
           tab: 'meu-dia',
           intention: next,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       if (next) {
         try {
           void updateXP(3)
-        } catch {}
+        } catch (e) {
+          console.error(
+            '[Planner] Erro ao atualizar XP por intenção do dia:',
+            e,
+          )
+        }
       }
 
       return next
@@ -322,26 +367,37 @@ export default function WeeklyPlannerShell() {
           tab: 'meu-dia',
           enabled: next,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       if (next) {
         try {
           void updateXP(5)
-        } catch {}
+        } catch (e) {
+          console.error(
+            '[Planner] Erro ao atualizar XP por abrir sugestões:',
+            e,
+          )
+        }
       }
 
       return next
     })
   }
 
-  const handleOpenQuickAction = (mode: 'top3' | 'selfcare' | 'family') => {
+  const handleOpenQuickAction = (
+    mode: 'top3' | 'selfcare' | 'family',
+  ) => {
     setQuickAction(mode)
     try {
       track('planner.quick_action.opened', {
         tab: 'meu-dia',
         mode,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
   }
 
   // ===========================
@@ -349,7 +405,9 @@ export default function WeeklyPlannerShell() {
   // ===========================
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
-    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    const [year, month, day] = selectedDateKey
+      .split('-')
+      .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
@@ -362,19 +420,20 @@ export default function WeeklyPlannerShell() {
     [selectedDate],
   )
 
-  // Agora, filtrar compromissos pelo dateKey real deles
   const todaysAppointments = useMemo(() => {
-    if (!plannerData.appointments || plannerData.appointments.length === 0) {
+    if (
+      !plannerData.appointments ||
+      plannerData.appointments.length === 0 ||
+      !selectedDateKey
+    ) {
       return []
     }
 
     const filtered = plannerData.appointments.filter(
-      ap => ap.dateKey === selectedDateKey,
+      appointment => appointment.dateKey === selectedDateKey,
     )
 
-    const clone = [...filtered]
-
-    clone.sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       if (!a.time && !b.time) return 0
       if (!a.time) return 1
       if (!b.time) return -1
@@ -389,7 +448,7 @@ export default function WeeklyPlannerShell() {
       return am - bm
     })
 
-    return clone
+    return sorted
   }, [plannerData.appointments, selectedDateKey])
 
   if (!isHydrated) return null
@@ -424,7 +483,9 @@ export default function WeeklyPlannerShell() {
       ? `Hoje você está ${
           moodLabel[mood as keyof typeof moodLabel]
         } e escolheu um dia ${
-          intentionLabel[dayIntention as keyof typeof intentionLabel]
+          intentionLabel[
+            dayIntention as keyof typeof intentionLabel
+          ]
         }. Que tal começar definindo suas prioridades?`
       : 'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.'
 
@@ -438,7 +499,6 @@ export default function WeeklyPlannerShell() {
     <>
       <Reveal delay={150}>
         <div className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-
           {/* CALENDÁRIO PREMIUM */}
           <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -449,7 +509,6 @@ export default function WeeklyPlannerShell() {
                     className="w-4 h-4 text-[var(--color-brand)]"
                   />
                 </span>
-
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -462,14 +521,12 @@ export default function WeeklyPlannerShell() {
                   >
                     ‹
                   </button>
-
                   <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
                     {selectedDate.toLocaleDateString('pt-BR', {
                       month: 'long',
                       year: 'numeric',
                     })}
                   </h2>
-
                   <button
                     type="button"
                     className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
@@ -484,7 +541,6 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
 
-              {/* Dias/semana selector */}
               <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
                 <button
                   className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
@@ -496,7 +552,6 @@ export default function WeeklyPlannerShell() {
                 >
                   Dia
                 </button>
-
                 <button
                   className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
                     viewMode === 'week'
@@ -510,7 +565,7 @@ export default function WeeklyPlannerShell() {
               </div>
             </div>
 
-            {/* Cabeçalho dos dias da semana */}
+            {/* Cabeçalho dos dias */}
             <div className="space-y-2 md:space-y-3">
               <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
                 <span>Seg</span>
@@ -522,25 +577,26 @@ export default function WeeklyPlannerShell() {
                 <span>Dom</span>
               </div>
 
-              {/* Grade do calendário */}
+              {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                      }`}
-                    >
-                      {day.getDate()}
-                    </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
+                {generateMonthMatrix(selectedDate).map(
+                  (day, i) =>
+                    day ? (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => openModalForDate(day)}
+                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                          getBrazilDateKey(day) === selectedDateKey
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                        }`}
+                      >
+                        {day.getDate()}
+                      </button>
+                    ) : (
+                      <div key={i} className="h-8 md:h-9" />
+                    ),
                 )}
               </div>
             </div>
@@ -551,24 +607,23 @@ export default function WeeklyPlannerShell() {
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
               {/* LEMBRETES + ATALHOS */}
               <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
-
-                {/* LEMBRETES RÁPIDOS */}
+                {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
-                  <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)]
-                    shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
+                  <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
                       Lembretes rápidos
                     </h2>
-
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui como lista do seu dia.
+                      Tudo que você salvar nos atalhos aparece aqui como
+                      uma lista simples para o seu dia.
                     </p>
 
-                    {/* LISTA DE TAREFAS */}
+                    {/* Lista de tarefas */}
                     <div className="flex-1 min-h-[120px] max-h-48 overflow-y-auto pr-1 space-y-2">
                       {plannerData.tasks.length === 0 && (
                         <p className="text-xs text-[var(--color-text-muted)]">
-                          Ainda não há lembretes. Use os atalhos ou adicione abaixo.
+                          Ainda não há lembretes para hoje. Use os atalhos
+                          ao lado ou adicione algo rápido abaixo.
                         </p>
                       )}
 
@@ -579,174 +634,182 @@ export default function WeeklyPlannerShell() {
                           onClick={() => toggleTask(task.id)}
                           className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
                             task.done
-                              ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-[var(--color-text-muted)]'
+                              ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
                               : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
-                          <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                            task.done
-                              ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                              : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                          }`}>
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                              task.done
+                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                            }`}
+                          >
                             {task.done ? '✓' : ''}
                           </span>
-
                           <span>{task.title}</span>
                         </button>
                       ))}
                     </div>
 
-                    {/* INPUT RÁPIDO */}
-                    <QuickAddTaskInput onAdd={title => addTask(title, 'manual')} />
+                    {/* Campo rápido para novo lembrete */}
+                    <QuickAddTaskInput
+                      onAdd={title => addTask(title, 'manual')}
+                    />
                   </SoftCard>
                 </div>
 
                 {/* ATALHOS DO DIA */}
                 <div className="flex h-full">
-                  <div className="flex-1 relative overflow-hidden rounded-3xl border border-[var(--color-soft-strong)]
-                    bg-white/10 shadow-[0_22px_55px_rgba(255,20,117,0.12)] px-3 py-3 md:px-4 md:py-4 backdrop-blur-2xl">
-
-                    {/* GLOWS */}
+                  <div className="flex-1 relative overflow-hidden rounded-3xl border border-[var(--color-soft-strong)] bg-white/10 shadow-[0_22px_55px_rgba(255,20,117,0.12)] px-3 py-3 md:px-4 md:py-4 backdrop-blur-2xl">
+                    {/* Glows de fundo */}
                     <div className="pointer-events-none absolute inset-0 opacity-80">
-                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full
-                        bg-[rgba(255,20,117,0.22)] blur-3xl" />
-                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full
-                        bg-[rgba(155,77,150,0.2)] blur-3xl" />
+                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
+                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
                     </div>
 
                     <div className="relative z-10 h-full flex flex-col">
-                      <h2 className="text-lg md:text-xl font-semibold text-white">Comece pelo que faz mais sentido hoje</h2>
-                      <p className="mt-1 text-sm text-white/85">
-                        Use esses atalhos para criar lembretes rápidos.
-                      </p>
+                      <div className="mb-3">
+                        <h2 className="text-lg md:text-xl font-semibold text-white">
+                          Comece pelo que faz mais sentido hoje
+                        </h2>
+                        <p className="mt-1 text-sm text-white/85">
+                          Use esses atalhos para criar lembretes rápidos
+                          de prioridades, compromissos e cuidados.
+                        </p>
+                      </div>
 
                       <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
-
-                        {/* TOP3 */}
+                        {/* Prioridades do dia */}
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('top3')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80
-                            border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] hover:-translate-y-[2px]
-                            hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] transition-all">
-                          <div className="flex flex-col items-center gap-1 text-center">
-                            <AppIcon name="target" className="w-6 h-6 text-[#E6005F] group-hover:scale-110" />
-                            <span className="text-[11px] font-medium text-[#CF285F] group-hover:text-[#E6005F]">
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <AppIcon
+                              name="target"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                            />
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Prioridades do dia
                             </span>
                           </div>
                         </button>
 
-                        {/* AGENDA */}
+                        {/* Agenda & compromissos */}
                         <button
                           type="button"
-                          onClick={() => openModalForDate(selectedDate)}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80
-                            border border-white/80 shadow transition-all hover:-translate-y-[2px]">
-                          <div className="flex flex-col items-center gap-1">
-                            <AppIcon name="calendar" className="w-6 h-6 text-[#E6005F] group-hover:scale-110" />
-                            <span className="text-[11px] font-medium text-[#CF285F]">Agenda & compromissos</span>
+                          onClick={() => {
+                            openModalForDate(selectedDate)
+                          }}
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <AppIcon
+                              name="calendar"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                            />
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Agenda &amp; compromissos
+                            </span>
                           </div>
                         </button>
 
-                        {/* SELFCARE */}
+                        {/* Cuidar de mim */}
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('selfcare')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border shadow transition-all">
-                          <div className="flex flex-col items-center gap-1">
-                            <AppIcon name="heart" className="w-6 h-6 text-[#E6005F]" />
-                            <span className="text-[11px] font-medium">Cuidar de mim</span>
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <AppIcon
+                              name="heart"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                            />
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Cuidar de mim
+                            </span>
                           </div>
                         </button>
 
-                        {/* FAMILY */}
+                        {/* Cuidar do meu filho */}
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('family')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border shadow transition-all">
-                          <div className="flex flex-col items-center gap-1">
-                            <AppIcon name="smile" className="w-6 h-6 text-[#E6005F]" />
-                            <span className="text-[11px] font-medium">Cuidar do meu filho</span>
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
+                            <AppIcon
+                              name="smile"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                            />
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                              Cuidar do meu filho
+                            </span>
                           </div>
                         </button>
-
                       </div>
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* ===================================== */}
-              {/* COMPROMISSOS DO DIA (A2 COMPLETA)     */}
-              {/* ===================================== */}
-
+              {/* COMPROMISSOS DO DIA */}
               <section>
-                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)]
-                  shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
-
+                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="space-y-1">
-                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase
-                        text-[var(--color-brand)]">
+                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                         Agenda
                       </p>
-
-                      {/* SE HOJE → "Sua agenda de hoje"
-                          SE OUTRO DIA → "Agenda de dd/mm/aaaa" */}
                       <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                        {selectedDateKey === getBrazilDateKey(new Date())
-                          ? 'Sua agenda de hoje'
-                          : `Agenda de ${formattedSelectedDate}`}
+                        Compromissos do dia
                       </h2>
-
                       <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Veja rapidamente tudo que você marcou.
+                        Veja rapidamente o que você marcou para{' '}
+                        <span className="font-semibold text-[var(--color-text-main)]">
+                          {formattedSelectedDate}
+                        </span>
+                        .
                       </p>
                     </div>
 
-                    {/* BOTÃO +NOVO */}
+                    {/* Botão redondo +Novo */}
                     <button
                       type="button"
                       onClick={() => openModalForDate(selectedDate)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)]
-                        text-white shadow-[0_10px_26px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)]
-                        transition-all"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/60 focus-visible:ring-offset-2"
                       aria-label="Adicionar novo compromisso"
                     >
                       <span className="text-lg leading-none">+</span>
                     </button>
                   </div>
 
-                  {/* LISTA DE COMPROMISSOS */}
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {todaysAppointments.length === 0 && (
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Você ainda não marcou compromissos para este dia.
+                        Você ainda não marcou compromissos para este dia. Use o botão de mais ou o
+                        atalho de Agenda para adicionar o primeiro.
                       </p>
                     )}
 
-                    {todaysAppointments.map(ap => (
+                    {todaysAppointments.map(appointment => (
                       <div
-                        key={ap.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC]
-                        bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)]"
+                        key={appointment.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)]"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full
-                            bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
-                            {ap.time || '--:--'}
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
+                            {appointment.time || '--:--'}
                           </span>
-
                           <div className="flex flex-col">
-                            <span className="font-medium">{ap.title}</span>
-
-                            {/* Mostra a data real do compromisso */}
+                            <span className="font-medium">
+                              {appointment.title || 'Compromisso'}
+                            </span>
                             <span className="text-[11px] text-[var(--color-text-muted)]">
-                              {ap.time || 'Sem horário'} ·{' '}
-                              {ap.dateKey
-                                ? ap.dateKey.split('-').reverse().join('/')
-                                : formattedSelectedDate}
+                              {appointment.time || 'Sem horário definido'} ·{' '}
+                              {formattedSelectedDate}
                             </span>
                           </div>
                         </div>
@@ -758,28 +821,31 @@ export default function WeeklyPlannerShell() {
             </div>
           )}
 
-          {/* HOJE POR AQUI + SUGESTÕES */}
+          {/* HOJE POR AQUI + SUGESTÕES INTELIGENTES */}
           <section className="space-y-4 md:space-y-5">
-            <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)]
-              shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
+            <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                  Hoje por aqui
+                </p>
+                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                  Como você está hoje?
+                </h2>
+                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                  Escolha como você se sente agora e o estilo de dia que você gostaria de ter.
+                </p>
+              </div>
 
-              <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.18em]
-                text-[var(--color-brand)]">
-                Hoje por aqui
-              </p>
-
-              <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                Como você está hoje?
-              </h2>
-
-              <div className="space-y-4">
-                {/* HUMOR */}
-                <div>
-                  <p className="text-[11px] md:text-xs font-semibold uppercase text-[var(--color-text-main)]">
+              <div className="space-y-3 md:space-y-4">
+                {/* COMO VOCÊ ESTÁ */}
+                <div className="space-y-1.5">
+                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
                     Como você está?
                   </p>
-
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
+                    Escolha como você se sente agora.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
                     {[
                       { key: 'happy', label: 'Feliz' },
                       { key: 'normal', label: 'Normal' },
@@ -789,10 +855,10 @@ export default function WeeklyPlannerShell() {
                         key={option.key}
                         type="button"
                         onClick={() => handleMoodSelect(option.key)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold border ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                           mood === option.key
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)]'
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
                         }`}
                       >
                         {option.label}
@@ -801,67 +867,117 @@ export default function WeeklyPlannerShell() {
                   </div>
                 </div>
 
-                {/* INTENÇÃO DO DIA */}
-                <div>
-                  <p className="text-[11px] md:text-xs font-semibold uppercase text-[var(--color-text-main)]">
+                {/* HOJE EU QUERO UM DIA... */}
+                <div className="space-y-1.5">
+                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
                     Hoje eu quero um dia...
                   </p>
-
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(key => (
+                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
+                    Selecione o estilo do seu dia.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {[
+                      'leve',
+                      'focado',
+                      'produtivo',
+                      'slow',
+                      'automático',
+                    ].map(option => (
                       <button
-                        key={key}
+                        key={option}
                         type="button"
-                        onClick={() => handleDayIntentionSelect(key)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold border ${
-                          dayIntention === key
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)]'
+                        onClick={() => handleDayIntentionSelect(option)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
+                          dayIntention === option
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
                         }`}
                       >
-                        {key}
+                        {option}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
+              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-2">
                 {moodSummary}
               </p>
 
-              <button
-                type="button"
-                onClick={handleToggleSuggestions}
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold
-                bg-[var(--color-brand)] text-white shadow hover:bg-[var(--color-brand-deep)] transition-all">
-                {showSuggestions ? 'Esconder sugestões' : 'Ver sugestões'}
-                <AppIcon name="lightbulb" className="w-4 h-4" />
-              </button>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={handleToggleSuggestions}
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
+                >
+                  {showSuggestions
+                    ? 'Esconder sugestões para o seu dia'
+                    : 'Ver sugestões para o seu dia'}
+                  <AppIcon
+                    name="lightbulb"
+                    className="w-4 h-4"
+                  />
+                </button>
+              </div>
             </SoftCard>
 
             {showSuggestions && (
-              <IntelligentSuggestionsSection mood={mood} intention={dayIntention} />
+              <IntelligentSuggestionsSection
+                mood={mood}
+                intention={dayIntention}
+              />
             )}
           </section>
 
-          {/* KANBAN */}
-          <SavedContentsSection
-            contents={[]}
-            plannerContents={plannerHook.items}
-            onItemClick={item => {
-              setSelectedSavedContent(item)
-              track('planner.saved_content.opened', {
-                tab: 'meu-dia', origin: item.origin, type: item.type,
-              })
-            }}
-            onItemDone={({ id, source }) => {
-              if (source === 'planner') {
-                plannerHook.removeItem(id)
-                updateXP(6)
-              }
-            }}
-          />
+          {/* KANBAN DE CONTEÚDOS SALVOS */}
+          <section>
+            <SavedContentsSection
+              contents={[]}
+              plannerContents={plannerHook.items}
+              onItemClick={item => {
+                setSelectedSavedContent(item)
+                try {
+                  track('planner.saved_content.opened', {
+                    tab: 'meu-dia',
+                    origin: item.origin,
+                    type: item.type,
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
+              onItemDone={({ id, source }) => {
+                if (source === 'planner') {
+                  plannerHook.removeItem(id)
+                  try {
+                    track('planner.saved_content.completed', {
+                      tab: 'meu-dia',
+                      source,
+                    })
+                  } catch {
+                    // ignora
+                  }
+                  try {
+                    void updateXP(6)
+                  } catch (e) {
+                    console.error(
+                      '[Planner] Erro ao atualizar XP por conteúdo concluído:',
+                      e,
+                    )
+                  }
+                } else {
+                  try {
+                    track('planner.saved_content.dismissed', {
+                      tab: 'meu-dia',
+                      source,
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }
+              }}
+            />
+          </section>
 
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
@@ -872,116 +988,195 @@ export default function WeeklyPlannerShell() {
         </div>
       </Reveal>
 
-    {/* MODAL NOVO COMPROMISSO */}
-{isModalOpen && modalDate && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
-    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      {/* MODAL NOVO COMPROMISSO */}
+      {isModalOpen && modalDate && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-[var(--color-text-main)]">
+                Novo compromisso –{' '}
+                {modalDate.toLocaleDateString('pt-BR')}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  try {
+                    track('planner.appointment_modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }}
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+              >
+                ✕
+              </button>
+            </div>
+            <ModalAppointmentForm
+              onSubmit={data => {
+                const appointmentDateKey = modalDate
+                  ? getBrazilDateKey(modalDate)
+                  : selectedDateKey
 
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-[var(--color-text-main)]">
-          Novo compromisso – {modalDate.toLocaleDateString('pt-BR')}
-        </h3>
-        <button
-          type="button"
-          onClick={() => {
-            setIsModalOpen(false)
-            track('planner.appointment_modal_closed', { tab: 'meu-dia' })
-          }}
-          className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
-        >
-          ✕
-        </button>
-      </div>
+                const todayKey = getBrazilDateKey(new Date())
 
-      <ModalAppointmentForm
-        onSubmit={data => {
-          const appointmentDateKey = modalDate
-            ? getBrazilDateKey(modalDate)
-            : selectedDateKey
-          const todayKey = getBrazilDateKey(new Date())
+                // 1) Salva compromisso na agenda (sempre)
+                handleAddAppointment({
+                  dateKey: appointmentDateKey,
+                  time: data.time,
+                  title: data.title,
+                  tag: undefined,
+                })
 
-          handleAddAppointment({
-            dateKey: appointmentDateKey,
-            time: data.time,
-            title: data.title,
-            tag: undefined,
-          })
+                // 2) Só cria lembrete rápido se for compromisso de hoje
+                if (
+                  appointmentDateKey === todayKey &&
+                  data.title?.trim()
+                ) {
+                  const label = data.time
+                    ? `${data.time} · ${data.title.trim()}`
+                    : data.title.trim()
+                  addTask(label, 'agenda')
+                }
 
-          if (appointmentDateKey === todayKey && data.title?.trim()) {
-            const label = data.time
-              ? `${data.time} · ${data.title.trim()}`
-              : data.title.trim()
-            addTask(label, 'agenda')
-          }
+                setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_saved', {
+                    tab: 'meu-dia',
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
+              onCancel={() => {
+                setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_cancelled', {
+                    tab: 'meu-dia',
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
 
-          setIsModalOpen(false)
-          track('planner.appointment_modal_saved', { tab: 'meu-dia' })
-        }}
-        onCancel={() => {
-          setIsModalOpen(false)
-          track('planner.appointment_modal_cancelled', { tab: 'meu-dia' })
-        }}
-      />
-    </div>
-  </div>
-)}
-
-      {/* MODAL DETALHE CONTEÚDO */}
+      {/* MODAL DETALHE CONTEÚDO SALVO */}
       {selectedSavedContent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-
             <div className="flex justify-between items-center mb-3">
-              <AppIcon name="target" className="w-6 h-6 text-[var(--color-brand)]" />
-
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
+                  <AppIcon
+                    name="target"
+                    className="w-4 h-4 text-[var(--color-brand)]"
+                  />
+                </span>
+                <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2 py-0.5 text-[10px] font-medium text-[#C2285F]">
+                  {plannerTypeLabels[selectedSavedContent.type] ??
+                    'CONTEÚDO'}
+                </span>
+              </div>
               <button
-                onClick={() => setSelectedSavedContent(null)}
+                type="button"
+                onClick={() => {
+                  setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
               >
                 ✕
               </button>
             </div>
 
-            <h3 className="text-base md:text-lg font-semibold mb-2">
+            <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] mb-2">
               {selectedSavedContent.title}
             </h3>
 
-           {/* DESCRIÇÃO DO CONTEÚDO SALVO */}
-{(() => {
-  const anyItem = selectedSavedContent as any;
-  const payload = anyItem?.payload ?? {};
+            {(() => {
+              const anyItem = selectedSavedContent as any
+              const payload = anyItem.payload ?? {}
+              const description =
+                anyItem.description ??
+                payload.preview ??
+                payload.description ??
+                payload.text ??
+                payload.excerpt ??
+                ''
 
-  const description =
-    anyItem?.description ??
-    payload.preview ??
-    payload.description ??
-    payload.text ??
-    payload.excerpt ??
-    '';
+              return (
+                <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
+                  {description || 'Conteúdo salvo no planner.'}
+                </p>
+              )
+            })()}
 
-  return (
-    <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
-      {description || 'Conteúdo salvo no planner.'}
-    </p>
-  );
-})()}
+            <p className="text-[11px] text-[var(--color-text-muted)]/80 mb-4">
+              Salvo em: {selectedSavedContent.origin.replace('-', ' ')}
+            </p>
 
-            <button
-              type="button"
-              onClick={() => {
-                plannerHook.removeItem(selectedSavedContent.id)
-                setSelectedSavedContent(null)
-                updateXP(6)
-              }}
-              className="px-4 py-2 rounded-lg bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
-            >
-              Marcar como feito
-            </button>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {
+                    // ignora
+                  }
+                }}
+                className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  plannerHook.removeItem(selectedSavedContent.id)
+                  setSelectedSavedContent(null)
+                  try {
+                    track(
+                      'planner.saved_content.completed_from_modal',
+                      {
+                        tab: 'meu-dia',
+                      },
+                    )
+                  } catch {
+                    // ignora
+                  }
+                  try {
+                    void updateXP(6)
+                  } catch (e) {
+                    console.error(
+                      '[Planner] Erro ao atualizar XP por conteúdo concluído (modal):',
+                      e,
+                    )
+                  }
+                }}
+                className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+              >
+                Marcar como feito
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* MODAL LISTA RÁPIDA */}
+      {/* MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR) */}
       {quickAction && (
         <QuickListModal
           mode={quickAction}
@@ -993,47 +1188,59 @@ export default function WeeklyPlannerShell() {
               : tasksByOrigin('family')
           }
           onAdd={title => {
-            addTask(title, quickAction)
+            if (quickAction === 'top3') addTask(title, 'top3')
+            else if (quickAction === 'selfcare')
+              addTask(title, 'selfcare')
+            else addTask(title, 'family')
           }}
-          onToggle={toggleTask}
-          onClose={() => setQuickAction(null)}
+          onToggle={id => toggleTask(id)}
+          onClose={() => {
+            setQuickAction(null)
+            try {
+              track('planner.quick_action.closed', {
+                tab: 'meu-dia',
+              })
+            } catch {
+              // ignora
+            }
+          }}
         />
       )}
     </>
   )
 }
 
-/* ======================================================
-   UTIL: GERAÇÃO DO MÊS
-   ====================================================== */
-
+// GERADOR DO CALENDÁRIO
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
-  const y = currentDate.getFullYear()
-  const m = currentDate.getMonth()
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
 
-  const first = new Date(y, m, 1)
-  const last = new Date(y, m + 1, 0)
-
-  const offset = (first.getDay() + 6) % 7
   const matrix: (Date | null)[] = []
+  const offset = (firstDay.getDay() + 6) % 7
 
   for (let i = 0; i < offset; i++) matrix.push(null)
-  for (let d = 1; d <= last.getDate(); d++) matrix.push(new Date(y, m, d))
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    matrix.push(new Date(year, month, d))
+  }
 
   return matrix
 }
 
 function generateWeekData(base: Date) {
   const monday = new Date(base)
-  const wd = monday.getDay()
-  monday.setDate(base.getDate() - (wd === 0 ? 6 : wd - 1))
+  const day = monday.getDay()
+  monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
 
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
     return {
       dayNumber: d.getDate(),
-      dayName: d.toLocaleDateString('pt-BR', { weekday: 'long' }),
+      dayName: d.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+      }),
       agendaCount: 0,
       top3Count: 0,
       careCount: 0,
@@ -1042,10 +1249,7 @@ function generateWeekData(base: Date) {
   })
 }
 
-/* ======================================================
-   FORM COMPROMISSO
-   ====================================================== */
-
+// FORM DO MODAL (COMPROMISSO)
 function ModalAppointmentForm({
   onSubmit,
   onCancel,
@@ -1061,22 +1265,29 @@ function ModalAppointmentForm({
       onSubmit={e => {
         e.preventDefault()
         if (!title.trim()) return
-        onSubmit({ title, time })
+        onSubmit({
+          title,
+          time,
+        })
       }}
       className="space-y-4"
     >
-      <div>
-        <label className="text-sm font-medium">Título</label>
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Título
+        </label>
         <input
           className="w-full rounded-lg border px-3 py-2 text-sm"
-          placeholder="Ex: Consulta médica"
+          placeholder="Ex: Consulta médica..."
           value={title}
           onChange={e => setTitle(e.target.value)}
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium">Horário</label>
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Horário
+        </label>
         <input
           type="time"
           className="w-full rounded-lg border px-3 py-2 text-sm"
@@ -1085,22 +1296,26 @@ function ModalAppointmentForm({
         />
       </div>
 
-      <div className="flex justify-end gap-3">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded bg-gray-100">
+      <div className="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+        >
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 rounded bg-[var(--color-brand)] text-white">
-          Salvar
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+        >
+          Salvar compromisso
         </button>
       </div>
     </form>
   )
 }
 
-/* ======================================================
-   INPUT RÁPIDO
-   ====================================================== */
-
+// INPUT RÁPIDO DE TAREFA
 function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   const [value, setValue] = useState('')
 
@@ -1114,11 +1329,12 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
       }}
       className="mt-3 space-y-1"
     >
-      <label className="text-[11px] font-medium">Adicionar lembrete rápido</label>
-
+      <label className="text-[11px] font-medium text-[var(--color-text-main)]">
+        Adicionar lembrete rápido
+      </label>
       <input
-        className="w-full rounded-xl border px-3 py-2 text-sm"
-        placeholder="Ex: Levar exame no pediatra..."
+        className="w-full rounded-xl border px-3 py-2 text-sm bg-[var(--color-soft-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/40 focus:border-[var(--color-brand)]/60"
+        placeholder="Ex: Levar exame no pediatra, separar uniforme..."
         value={value}
         onChange={e => setValue(e.target.value)}
       />
@@ -1126,19 +1342,22 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   )
 }
 
-/* ======================================================
-   MODAL LISTA RÁPIDA
-   ====================================================== */
-
+// MODAL LISTA RÁPIDA (TOP3 / CUIDAR)
 type QuickListModalProps = {
   mode: 'top3' | 'selfcare' | 'family'
-  items: { id: string; title: string; done: boolean }[]
+  items: TaskItem[]
   onAdd: (title: string) => void
   onToggle: (id: string) => void
   onClose: () => void
 }
 
-function QuickListModal({ mode, items, onAdd, onToggle, onClose }: QuickListModalProps) {
+function QuickListModal({
+  mode,
+  items,
+  onAdd,
+  onToggle,
+  onClose,
+}: QuickListModalProps) {
   const [input, setInput] = useState('')
 
   const title =
@@ -1148,44 +1367,71 @@ function QuickListModal({ mode, items, onAdd, onToggle, onClose }: QuickListModa
       ? 'Cuidar de mim'
       : 'Cuidar do meu filho'
 
+  const helper =
+    mode === 'top3'
+      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos lembretes rápidos.'
+      : mode === 'selfcare'
+      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos lembretes rápidos.'
+      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos lembretes rápidos.'
+
+  const placeholder =
+    mode === 'top3'
+      ? 'Ex: Resolver algo importante do trabalho'
+      : mode === 'selfcare'
+      ? 'Ex: Tomar um café em silêncio por 5 minutos'
+      : 'Ex: Ler uma história antes de dormir'
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-[var(--color-brand)]">✕</button>
+          <h3 className="font-semibold text-[var(--color-text-main)]">
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* LISTA */}
-        <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
-          {items.length === 0 && (
-            <p className="text-sm text-gray-500">Ainda não há itens.</p>
-          )}
+        <p className="text-sm text-[var(--color-text-muted)] mb-4">
+          {helper}
+        </p>
 
+        <div className="space-y-2 max-h-56 overflow-y-auto mb-4 pr-1">
+          {items.length === 0 && (
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Ainda não há nada aqui. Comece adicionando o primeiro item.
+            </p>
+          )}
           {items.map(item => (
             <button
               key={item.id}
+              type="button"
               onClick={() => onToggle(item.id)}
-              className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${
+              className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-left ${
                 item.done
-                  ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-gray-500'
-                  : 'bg-white border-gray-200 hover:border-[var(--color-brand)]'
+                  ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-[var(--color-text-muted)]'
+                  : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
               }`}
             >
-              <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                item.done
-                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
-              }`}>
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                  item.done
+                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                }`}
+              >
                 {item.done ? '✓' : ''}
               </span>
-
-              {item.title}
+              <span>{item.title}</span>
             </button>
           ))}
         </div>
 
-        {/* INPUT */}
         <form
           onSubmit={e => {
             e.preventDefault()
@@ -1195,18 +1441,30 @@ function QuickListModal({ mode, items, onAdd, onToggle, onClose }: QuickListModa
           }}
           className="space-y-3"
         >
-          <input
-            className="w-full rounded-lg border px-3 py-2 text-sm"
-            placeholder="Adicionar novo item"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-          />
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--color-text-main)]">
+              Adicionar novo item
+            </label>
+            <input
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              placeholder={placeholder}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+            />
+          </div>
 
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-100">
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+            >
               Fechar
             </button>
-            <button type="submit" className="px-4 py-2 rounded bg-[var(--color-brand)] text-white">
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+            >
               Adicionar
             </button>
           </div>
