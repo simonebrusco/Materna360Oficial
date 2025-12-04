@@ -421,24 +421,49 @@ export default function WeeklyPlannerShell() {
   )
 
  const todaysAppointments = useMemo(() => {
-  if (
-    !plannerData.appointments ||
-    plannerData.appointments.length === 0
-  ) {
-    return []
-  }
+    if (
+      !plannerData.appointments ||
+      plannerData.appointments.length === 0
+    ) {
+      return []
+    }
 
-  // opcional: filtrar só hoje em diante
-  const todayKey = getBrazilDateKey(new Date())
+    // opcional: filtrar só hoje em diante
+    const todayKey = getBrazilDateKey(new Date())
 
-  const filtered = plannerData.appointments.filter(app => {
-    // compromissos antigos sem dateKey continuam aparecendo
-    if (!('dateKey' in app) || !app.dateKey) return true
-    // mantém hoje e futuro
-    return app.dateKey >= todayKey
-  })
+    const filtered = plannerData.appointments.filter(app => {
+      // compromissos antigos sem dateKey continuam aparecendo
+      if (!('dateKey' in app) || !app.dateKey) return true
+      // mantém hoje e futuro
+      return app.dateKey >= todayKey
+    })
 
-  const clone = [...filtered]
+    const clone = [...filtered]
+
+    // Ordena por data (dateKey) e depois por horário
+    clone.sort((a, b) => {
+      if (a.dateKey && b.dateKey && a.dateKey !== b.dateKey) {
+        return a.dateKey.localeCompare(b.dateKey)
+      }
+
+      if (!a.time && !b.time) return 0
+      if (!a.time) return 1
+      if (!b.time) return -1
+
+      const [ah, am] = a.time.split(':').map(Number)
+      const [bh, bm] = b.time.split(':').map(Number)
+
+      if (Number.isNaN(ah) || Number.isNaN(am)) return 1
+      if (Number.isNaN(bh) || Number.isNaN(bm)) return -1
+
+      if (ah !== bh) return ah - bh
+      return am - bm
+    })
+
+    return clone
+  }, [plannerData.appointments])
+
+  if (!isHydrated) return null
 
   // Ordena por data (dateKey) e depois por horário
   clone.sort((a, b) => {
