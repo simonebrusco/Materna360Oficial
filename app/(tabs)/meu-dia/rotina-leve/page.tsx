@@ -203,6 +203,14 @@ async function generateRecipesWithAI(
 
 async function generateInspirationWithAI(focus: string | null): Promise<Inspiration> {
   try {
+    try {
+      track('rotina_leve.inspiration.requested_backend', {
+        focus: focus || null,
+      })
+    } catch {
+      // ignora
+    }
+
     const res = await fetch('/api/ai/emocional', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -224,6 +232,14 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
       throw new Error('Inspiração vazia')
     }
 
+    try {
+      track('rotina_leve.inspiration.generated_backend', {
+        hasInspiration: true,
+      })
+    } catch {
+      // ignora
+    }
+
     return {
       phrase: inspiration.phrase ?? 'Você não precisa dar conta de tudo hoje.',
       care:
@@ -235,6 +251,15 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
     }
   } catch (error) {
     console.error('[Rotina Leve] Erro ao buscar inspiração, usando fallback:', error)
+
+    try {
+      track('rotina_leve.inspiration.fallback_used', {
+        focus: focus || null,
+      })
+    } catch {
+      // ignora
+    }
+
     toast.info('Preparei uma inspiração especial pra hoje ✨')
     return await mockGenerateInspiration()
   }
@@ -262,6 +287,14 @@ export default function RotinaLevePage() {
   // Limite diário para Receitas Inteligentes
   const DAILY_RECIPE_LIMIT = 3
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
+
+  // Limite diário para Ideias Rápidas
+  const DAILY_IDEAS_LIMIT = 5
+  const [usedIdeasToday, setUsedIdeasToday] = useState(0)
+
+  // Limite diário para Inspirações
+  const DAILY_INSPIRATION_LIMIT = 3
+  const [usedInspirationsToday, setUsedInspirationsToday] = useState(0)
 
   // Ideias Rápidas
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
@@ -299,6 +332,18 @@ export default function RotinaLevePage() {
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
 
+  // Telemetria de abertura da página
+  useEffect(() => {
+    try {
+      track('rotina_leve.page_opened', {
+        dateKey: currentDateKey,
+        abrir: abrir ?? null,
+      })
+    } catch {
+      // ignora
+    }
+  }, [currentDateKey, abrir])
+
   // carregar limite diário persistente de receitas
   useEffect(() => {
     const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
@@ -310,6 +355,36 @@ export default function RotinaLevePage() {
       const parsed = Number(stored)
       if (!Number.isNaN(parsed)) {
         setUsedRecipesToday(parsed)
+      }
+    }
+  }, [currentDateKey])
+
+  // carregar limite diário persistente de ideias
+  useEffect(() => {
+    const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
+    const stored = load(storageKey)
+
+    if (typeof stored === 'number') {
+      setUsedIdeasToday(stored)
+    } else if (typeof stored === 'string') {
+      const parsed = Number(stored)
+      if (!Number.isNaN(parsed)) {
+        setUsedIdeasToday(parsed)
+      }
+    }
+  }, [currentDateKey])
+
+  // carregar limite diário persistente de inspirações
+  useEffect(() => {
+    const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
+    const stored = load(storageKey)
+
+    if (typeof stored === 'number') {
+      setUsedInspirationsToday(stored)
+    } else if (typeof stored === 'string') {
+      const parsed = Number(stored)
+      if (!Number.isNaN(parsed)) {
+        setUsedInspirationsToday(parsed)
       }
     }
   }, [currentDateKey])
@@ -327,6 +402,14 @@ export default function RotinaLevePage() {
 
     if (quickIdeas.length > 0) {
       setIdeas(quickIdeas)
+
+      try {
+        track('rotina_leve.ideas.generated', {
+          ideasCount: quickIdeas.length,
+        })
+      } catch {
+        // ignora
+      }
     }
   }, [aiSuggestions])
 
@@ -378,6 +461,15 @@ export default function RotinaLevePage() {
           ideas: ideasToSave,
         },
       })
+
+      try {
+        track('rotina_leve.ideas.saved', {
+          origin: 'rotina-leve',
+          ideasCount: ideasToSave.length,
+        })
+      } catch {
+        // ignora
+      }
 
       try {
         void updateXP(5)
@@ -444,6 +536,15 @@ export default function RotinaLevePage() {
             'Envie uma mensagem carinhosa para alguém que te apoia.',
         },
       })
+
+      try {
+        track('rotina_leve.inspiration.saved', {
+          origin: 'rotina-leve',
+          hasCustomInspiration: Boolean(inspiration),
+        })
+      } catch {
+        // ignora
+      }
 
       try {
         void updateXP(5)
@@ -594,36 +695,110 @@ export default function RotinaLevePage() {
   }
 
   const handleGenerateIdeas = async () => {
-    await requestSuggestions({
-      mood: 'cansada',
-      energy: 'baixa',
-      timeOfDay: 'hoje',
-      hasKidsAround:
-        comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
-          ? true
-          : comQuem === 'so-eu'
-          ? false
-          : undefined,
-      availableMinutes:
-        tempoDisponivel === '5'
-          ? 5
-          : tempoDisponivel === '10'
-          ? 10
-          : tempoDisponivel === '20'
-          ? 20
-          : tempoDisponivel === '30+'
-          ? 30
-          : undefined,
-      comQuem: comQuem as any,
-      tipoIdeia: tipoIdeia as any,
-    })
+    if (usedIdeasToday >= DAILY_IDEAS_LIMIT) {
+      toast.info(
+        'Você já usou as ideias rápidas do dia por aqui. Guarda um pouquinho de energia pra amanhã, combinado? 💕',
+      )
+      try {
+        track('rotina_leve.ideas.limit_reached', {
+          dateKey: currentDateKey,
+        })
+      } catch {
+        // ignora
+      }
+      return
+    }
+
+    const availableMinutes =
+      tempoDisponivel === '5'
+        ? 5
+        : tempoDisponivel === '10'
+        ? 10
+        : tempoDisponivel === '20'
+        ? 20
+        : tempoDisponivel === '30+'
+        ? 30
+        : undefined
+
+    const hasKidsAround =
+      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
+        ? true
+        : comQuem === 'so-eu'
+        ? false
+        : undefined
+
+    try {
+      try {
+        track('rotina_leve.ideas.requested', {
+          dateKey: currentDateKey,
+          availableMinutes: availableMinutes ?? null,
+          comQuem: comQuem ?? null,
+          tipoIdeia: tipoIdeia ?? null,
+        })
+      } catch {
+        // ignora
+      }
+
+      await requestSuggestions({
+        mood: 'cansada',
+        energy: 'baixa',
+        timeOfDay: 'hoje',
+        hasKidsAround,
+        availableMinutes,
+        comQuem: comQuem as any,
+        tipoIdeia: tipoIdeia as any,
+      })
+
+      const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
+      setUsedIdeasToday((prev) => {
+        const next = prev + 1
+        save(storageKey, next)
+        return next
+      })
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar ideias:', error)
+      toast.danger('Não consegui gerar ideias agora. Tenta de novo mais tarde?')
+    }
   }
 
   const handleGenerateInspiration = async () => {
+    if (usedInspirationsToday >= DAILY_INSPIRATION_LIMIT) {
+      toast.info(
+        'Você já recebeu inspirações suficientes por hoje. O resto do dia pode ser só vivido, do seu jeitinho 💗',
+      )
+      try {
+        track('rotina_leve.inspiration.limit_reached', {
+          dateKey: currentDateKey,
+        })
+      } catch {
+        // ignora
+      }
+      return
+    }
+
     setInspirationLoading(true)
     try {
+      try {
+        track('rotina_leve.inspiration.requested', {
+          dateKey: currentDateKey,
+          focus: focusOfDay || null,
+        })
+      } catch {
+        // ignora
+      }
+
       const result = await generateInspirationWithAI(focusOfDay)
       setInspiration(result)
+
+      const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
+      setUsedInspirationsToday((prev) => {
+        const next = prev + 1
+        save(storageKey, next)
+        return next
+      })
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar inspiração:', error)
+      toast.danger('Não consegui gerar uma inspiração agora. Tenta de novo mais tarde?')
     } finally {
       setInspirationLoading(false)
     }
@@ -631,6 +806,8 @@ export default function RotinaLevePage() {
 
   const hasRecipes = recipes && recipes.length > 0
   const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
+  const isIdeasOverLimit = usedIdeasToday >= DAILY_IDEAS_LIMIT
+  const isInspirationOverLimit = usedInspirationsToday >= DAILY_INSPIRATION_LIMIT
 
   const idadeLabel =
     ageMonths === null
@@ -1096,6 +1273,21 @@ export default function RotinaLevePage() {
                         {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
                       </Button>
 
+                      <p className="text-[11px] text-[#545454]">
+                        Hoje você já usou{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
+                        </span>{' '}
+                        gerações de ideias.
+                      </p>
+
+                      {isIdeasOverLimit && (
+                        <p className="text-[11px] text-[#ff005e] font-medium">
+                          Você chegou ao limite de ideias rápidas por hoje. O resto do dia pode ser
+                          só vivido, sem pressão 💗
+                        </p>
+                      )}
+
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                         <p className="text-xs font-medium text-[#2f3a56] mb-2">
                           Sugestões para agora
@@ -1190,6 +1382,21 @@ export default function RotinaLevePage() {
                         {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
                       </Button>
 
+                      <p className="text-[11px] text-[#545454]">
+                        Hoje você já usou{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {usedInspirationsToday} de {DAILY_INSPIRATION_LIMIT}
+                        </span>{' '}
+                        inspirações do dia.
+                      </p>
+
+                      {isInspirationOverLimit && (
+                        <p className="text-[11px] text-[#ff005e] font-medium">
+                          Você chegou ao limite de inspirações do dia. Respira, o que você já está
+                          fazendo pela sua família hoje já é muito 💗
+                        </p>
+                      )}
+
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
                         {inspirationLoading && (
                           <p className="text-[11px]">
@@ -1263,13 +1470,13 @@ export default function RotinaLevePage() {
                 ) : (
                   <p className="text-sm text-[#545454]">
                     Você já salvou{' '}
-                    <span className="font-semibold text-[#2f3a56]">
-                      {savedRecipesCount} receita(s)
-                    </span>{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {savedRecipesCount} receita(s)
+                      </span>{' '}
                     e{' '}
-                    <span className="font-semibold text-[#2f3a56]">
-                      {savedInspirationCount} inspiração(ões)
-                    </span>{' '}
+                      <span className="font-semibold text-[#2f3a56]">
+                        {savedInspirationCount} inspiração(ões)
+                      </span>{' '}
                     deste mini-hub no seu planner.
                   </p>
                 )}
