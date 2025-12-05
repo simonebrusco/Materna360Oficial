@@ -205,20 +205,25 @@ export default function WeeklyPlannerShell() {
     [],
   )
 
-  const openModalForDate = (day: Date) => {
+ const openModalForDate = (day: Date) => {
+  const key = getBrazilDateKey(day);
+
+  // Atualiza o dia selecionado no planner
+  setSelectedDateKey(key);
+
+  // Mantém a data do modal correta
   setModalDate(day);
-  setSelectedDateKey(getBrazilDateKey(day)); // <-- ESSENCIAL
+
+  // Abre o modal
   setIsModalOpen(true);
 
-    try {
-      track('planner.appointment_modal_opened', {
-        tab: 'meu-dia',
-        dateKey: getBrazilDateKey(date),
-      })
-    } catch {
-      // ignora
-    }
-  }
+  try {
+    track('planner.appointment_modal_opened', {
+      tab: 'meu-dia',
+      dateKey: key,
+    });
+  } catch {}
+};
 
   // TAREFAS – helpers
   const addTask = (title: string, origin: TaskOrigin) => {
