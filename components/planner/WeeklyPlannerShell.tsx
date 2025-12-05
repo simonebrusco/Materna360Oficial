@@ -452,7 +452,7 @@ export default function WeeklyPlannerShell() {
         try {
           void updateXP(5)
         } catch (e) {
-            console.error(
+          console.error(
             '[Planner] Erro ao atualizar XP por abrir sugestões:',
             e,
           )
@@ -644,25 +644,35 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
+                {generateMonthMatrix(selectedDate).map((day, i) => {
+                  if (!day) {
+                    return <div key={i} className="h-8 md:h-9" />
+                  }
+
+                  const dayKey = getBrazilDateKey(day)
+                  const isSelected = dayKey === selectedDateKey
+                  const hasAppointments = plannerData.appointments.some(
+                    app => app.dateKey === dayKey,
+                  )
+
+                  return (
                     <button
                       key={i}
                       type="button"
-                      // ✅ OPÇÃO A: clique só seleciona o dia
-                      onClick={() => handleDateSelect(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
+                      onClick={() => openModalForDate(day)}
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex flex-col items-center justify-center transition-all border ${
+                        isSelected
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      {day.getDate()}
+                      <span>{day.getDate()}</span>
+                      {hasAppointments && (
+                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                      )}
                     </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
-                )}
+                  )
+                })}
               </div>
             </div>
           </SoftCard>
@@ -679,8 +689,8 @@ export default function WeeklyPlannerShell() {
                       Lembretes rápidos
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui como
-                      uma lista simples para o seu dia.
+                      Tudo que você salvar nos atalhos aparece aqui
+                      como uma lista simples para o seu dia.
                     </p>
 
                     {/* Lista de tarefas */}
@@ -1111,12 +1121,8 @@ export default function WeeklyPlannerShell() {
                 // 2) Garante que a página esteja olhando para o dia do compromisso
                 setSelectedDateKey(appointmentDateKey)
 
-                // 3) Se for hoje, também vira lembrete rápido
-                const todayKey = getBrazilDateKey(new Date())
-                if (
-                  appointmentDateKey === todayKey &&
-                  data.title.trim()
-                ) {
+                // 3) Também vira lembrete rápido (para o próprio dia)
+                if (data.title.trim()) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
