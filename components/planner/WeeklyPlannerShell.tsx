@@ -74,8 +74,6 @@ export default function WeeklyPlannerShell() {
   // ESTADO PRINCIPAL
   // ===========================
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
-  const [agendaDateKey, setAgendaDateKey] = useState<string>('') // dia focado na AGENDA
-
   const [isHydrated, setIsHydrated] = useState(false)
 
   const [plannerData, setPlannerData] = useState<PlannerData>({
@@ -117,7 +115,6 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
-    setAgendaDateKey(dateKey)
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
 
@@ -148,32 +145,21 @@ export default function WeeklyPlannerShell() {
   // ===========================
   // LOAD DATA (localStorage)
   // ===========================
-  // 1) Compromissos: carregamos UMA VEZ só depois da hidratação
-  useEffect(() => {
-    if (!isHydrated) return
-    const loadedAppointments: Appointment[] =
-      load('planner/appointments/all', []) ?? []
-
-    setPlannerData(prev => ({
-      ...prev,
-      appointments: loadedAppointments,
-    }))
-  }, [isHydrated])
-
-  // 2) Tarefas + notas: por dia selecionado
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
+    const loadedAppointments: Appointment[] =
+      load('planner/appointments/all', []) ?? []
     const loadedTasks: TaskItem[] =
       load(`planner/tasks/${selectedDateKey}`, []) ?? []
     const loadedNotes: string =
       load(`planner/notes/${selectedDateKey}`, '') ?? ''
 
-    setPlannerData(prev => ({
-      ...prev,
+    setPlannerData({
+      appointments: loadedAppointments,
       tasks: loadedTasks,
       notes: loadedNotes,
-    }))
+    })
   }, [selectedDateKey, isHydrated])
 
   // ===========================
@@ -203,7 +189,6 @@ export default function WeeklyPlannerShell() {
   const handleDateSelect = useCallback((date: Date) => {
     const dateKey = getBrazilDateKey(date)
     setSelectedDateKey(dateKey)
-    setAgendaDateKey(dateKey)
 
     try {
       track('planner.date_clicked', {
@@ -284,7 +269,6 @@ export default function WeeklyPlannerShell() {
   const openModalForDate = (day: Date) => {
     const key = getBrazilDateKey(day)
     setSelectedDateKey(key)
-    setAgendaDateKey(key)
     setModalDate(day)
     setIsModalOpen(true)
 
@@ -501,31 +485,25 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
-  const formattedAgendaDate = useMemo(() => {
-    if (!agendaDateKey) return ''
-    const [year, month, day] = agendaDateKey.split('-').map(Number)
-    const d = new Date(year, month - 1, day)
-    return d.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
+  // NOVO: agenda geral ordenada (data + horário)
+  const sortedAppointments = useMemo(() => {
+    const list = [...plannerData.appointments]
+
+    return list.sort((a, b) => {
+      if (a.dateKey !== b.dateKey) {
+        return a.dateKey.localeCompare(b.dateKey)
+      }
+
+      if (!a.time && !b.time) return 0
+      if (!a.time) return 1
+      if (!b.time) return -1
+
+      const [ah, am] = a.time.split(':').map(Number)
+      const [bh, bm] = b.time.split(':').map(Number)
+
+      return ah !== bh ? ah - bh : am - bm
     })
-  }, [agendaDateKey])
-
-  const todaysAppointments = useMemo(() => {
-    if (!agendaDateKey) return []
-    return plannerData.appointments
-      .filter(app => app.dateKey === agendaDateKey)
-      .sort((a, b) => {
-        if (!a.time && !b.time) return 0
-        if (!a.time) return 1
-        if (!b.time) return -1
-
-        const [ah, am] = a.time.split(':').map(Number)
-        const [bh, bm] = b.time.split(':').map(Number)
-
-        return ah !== bh ? ah - bh : am - bm
-      })
-  }, [plannerData.appointments, agendaDateKey])
+  }, [plannerData.appointments])
 
   if (!isHydrated) return null
 
@@ -663,11 +641,13 @@ export default function WeeklyPlannerShell() {
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
                 {generateMonthMatrix(selectedDate).map((day, i) => {
-                  if (!day) return <div key={i} className="h-8 md:h-9" />
+                  if (!day) {
+                    return <div key={i} className="h-8 md:h-9" />
+                  }
 
                   const dayKey = getBrazilDateKey(day)
-                  const isSelected = dayKey === agendaDateKey
-                  const hasAppointment = plannerData.appointments.some(
+                  const isSelected = dayKey === selectedDateKey
+                  const hasAppointments = plannerData.appointments.some(
                     app => app.dateKey === dayKey,
                   )
 
@@ -676,15 +656,15 @@ export default function WeeklyPlannerShell() {
                       key={i}
                       type="button"
                       onClick={() => openModalForDate(day)}
-                      className={`relative h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex flex-col items-center justify-center transition-all border ${
                         isSelected
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      {day.getDate()}
-                      {hasAppointment && (
-                        <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                      <span>{day.getDate()}</span>
+                      {hasAppointments && (
+                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
                       )}
                     </button>
                   )
@@ -705,8 +685,8 @@ export default function WeeklyPlannerShell() {
                       Lembretes rápidos
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui como
-                      uma lista simples para o seu dia.
+                      Tudo que você salvar nos atalhos aparece aqui
+                      como uma lista simples para o seu dia.
                     </p>
 
                     {/* Lista de tarefas */}
@@ -850,7 +830,7 @@ export default function WeeklyPlannerShell() {
                 </div>
               </section>
 
-              {/* COMPROMISSOS DO DIA */}
+              {/* NOVO CARD — AGENDA & COMPROMISSOS */}
               <section>
                 <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -859,14 +839,11 @@ export default function WeeklyPlannerShell() {
                         Agenda
                       </p>
                       <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                        Compromissos do dia
+                        Agenda & compromissos
                       </h2>
                       <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Veja rapidamente o que você marcou para{' '}
-                        <span className="font-semibold text-[var(--color-text-main)]">
-                          {formattedAgendaDate}
-                        </span>
-                        .
+                        Veja todos os compromissos que você já marcou no
+                        Materna360, em ordem de data e horário.
                       </p>
                     </div>
 
@@ -881,56 +858,53 @@ export default function WeeklyPlannerShell() {
                     </button>
                   </div>
 
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {todaysAppointments.length === 0 && (
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {sortedAppointments.length === 0 && (
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Você ainda não marcou compromissos para este dia.
-                        Use o botão de mais ou o atalho de Agenda para
-                        adicionar o primeiro.
+                        Você ainda não marcou nenhum compromisso. Use o
+                        botão de mais ou o atalho de Agenda para adicionar
+                        o primeiro.
                       </p>
                     )}
 
-                    {todaysAppointments.map(appointment => (
-                      <button
-                        key={appointment.id}
-                        type="button"
-                        onClick={() =>
-                          openEditModalForAppointment(appointment)
-                        }
-                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
-                            {appointment.time || '--:--'}
-                          </span>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {appointment.title || 'Compromisso'}
+                    {sortedAppointments.map(appointment => {
+                      const [y, m, d] = appointment.dateKey
+                        .split('-')
+                        .map(Number)
+                      const dateLabel =
+                        y && m && d
+                          ? new Date(y, m - 1, d).toLocaleDateString(
+                              'pt-BR',
+                            )
+                          : appointment.dateKey
+
+                      return (
+                        <button
+                          key={appointment.id}
+                          type="button"
+                          onClick={() =>
+                            openEditModalForAppointment(appointment)
+                          }
+                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
+                              {appointment.time || '--:--'}
                             </span>
-                            <span className="text-[11px] text-[var(--color-text-muted)]">
-                              {appointment.time ||
-                                'Sem horário definido'}{' '}
-                              ·{' '}
-                              {agendaDateKey
-                                ? (() => {
-                                    const [y, m, d] =
-                                      agendaDateKey
-                                        .split('-')
-                                        .map(Number)
-                                    return new Date(
-                                      y,
-                                      m - 1,
-                                      d,
-                                    ).toLocaleDateString(
-                                      'pt-BR',
-                                    )
-                                  })()
-                                : ''}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {appointment.title || 'Compromisso'}
+                              </span>
+                              <span className="text-[11px] text-[var(--color-text-muted)]">
+                                {appointment.time ||
+                                  'Sem horário definido'}{' '}
+                                · {dateLabel}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      )
+                    })}
                   </div>
                 </SoftCard>
               </section>
@@ -1098,12 +1072,7 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4 pb-10">
-              <WeekView
-                weekData={generateWeekData(
-                  selectedDate,
-                  plannerData.appointments,
-                )}
-              />
+              <WeekView weekData={generateWeekData(selectedDate)} />
             </div>
           )}
         </div>
@@ -1153,16 +1122,11 @@ export default function WeeklyPlannerShell() {
                   tag: undefined,
                 })
 
-                // 2) Garante que a página esteja olhando para o dia do compromisso
+                // 2) Ajusta o dia selecionado para o dia do compromisso
                 setSelectedDateKey(appointmentDateKey)
-                setAgendaDateKey(appointmentDateKey)
 
-                // 3) Se for hoje, também vira lembrete rápido
-                const todayKey = getBrazilDateKey(new Date())
-                if (
-                  appointmentDateKey === todayKey &&
-                  data.title.trim()
-                ) {
+                // 3) Cria lembrete rápido vinculado à agenda
+                if (data.title.trim()) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
@@ -1228,7 +1192,6 @@ export default function WeeklyPlannerShell() {
 
                 handleUpdateAppointment(updated)
                 setSelectedDateKey(updated.dateKey)
-                setAgendaDateKey(updated.dateKey)
                 setEditingAppointment(null)
               }}
               onCancel={() => setEditingAppointment(null)}
@@ -1669,18 +1632,8 @@ function QuickListModal({
 }
 
 // =======================================================
-// TIPO / HELPERS: CALENDÁRIO / SEMANA
+// HELPERS: CALENDÁRIO / SEMANA
 // =======================================================
-type WeekDayData = {
-  dateKey: string
-  dayNumber: number
-  dayName: string
-  agendaCount: number
-  top3Count: number
-  careCount: number
-  familyCount: number
-}
-
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -1698,10 +1651,7 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-function generateWeekData(
-  base: Date,
-  appointments: Appointment[],
-): WeekDayData[] {
+function generateWeekData(base: Date) {
   const monday = new Date(base)
   const day = monday.getDay()
   monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
@@ -1710,31 +1660,15 @@ function generateWeekData(
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
 
-    const dateKey = getBrazilDateKey(d)
-
-    // Compromissos daquele dia
-    const dayAppointments = appointments.filter(
-      app => app.dateKey === dateKey,
-    )
-
-    // Tasks daquele dia (carrega direto do storage)
-    const dayTasks: TaskItem[] =
-      load(`planner/tasks/${dateKey}`, []) ?? []
-
-    const top3Count = dayTasks.filter(t => t.origin === 'top3').length
-    const careCount = dayTasks.filter(t => t.origin === 'selfcare').length
-    const familyCount = dayTasks.filter(t => t.origin === 'family').length
-
     return {
-      dateKey,
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
-        weekday: 'short',
+        weekday: 'long',
       }),
-      agendaCount: dayAppointments.length,
-      top3Count,
-      careCount,
-      familyCount,
+      agendaCount: 0,
+      top3Count: 0,
+      careCount: 0,
+      familyCount: 0,
     }
   })
 }
