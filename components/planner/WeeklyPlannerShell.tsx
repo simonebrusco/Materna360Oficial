@@ -540,8 +540,11 @@ export default function WeeklyPlannerShell() {
   )
 
   const todaysAppointments = useMemo(() => {
+    // Garante que sempre usamos a mesma chave de data que o calendário enxerga
+    const currentDayKey = getBrazilDateKey(selectedDate)
+
     return plannerData.appointments
-      .filter(app => app.dateKey === selectedDateKey)
+      .filter(app => app.dateKey === currentDayKey)
       .sort((a, b) => {
         if (!a.time && !b.time) return 0
         if (!a.time) return 1
@@ -552,7 +555,7 @@ export default function WeeklyPlannerShell() {
 
         return ah !== bh ? ah - bh : am - bm
       })
-  }, [plannerData.appointments, selectedDateKey])
+  }, [plannerData.appointments, selectedDate])
 
   if (!isHydrated) return null
 
