@@ -1074,16 +1074,14 @@ export default function WeeklyPlannerShell() {
                   tag: undefined,
                 })
 
-                // 2) Se for hoje → também aparece nos LEMBRETES RÁPIDOS
-                if (
-                  appointmentDateKey === todayKey &&
-                  data.title.trim()
-                ) {
-                  const label = data.time
-                    ? `${data.time} · ${data.title.trim()}`
-                    : data.title.trim()
-                  addTask(label, 'agenda')
-                }
+                // 2) Todo compromisso vira um lembrete rápido (para aparecer sempre na lista)
+if (data.title.trim()) {
+  const label = data.time
+    ? `${data.time} · ${data.title.trim()}`
+    : data.title.trim()
+
+  addTask(label, 'agenda')
+}
 
                 setIsModalOpen(false)
                 try {
