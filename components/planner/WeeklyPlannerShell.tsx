@@ -366,6 +366,61 @@ export default function WeeklyPlannerShell() {
     })
   }
 
+  // NOVO: editar texto de um lembrete
+  const editTaskTitle = (id: string) => {
+    setPlannerData(prev => {
+      const task = prev.tasks.find(t => t.id === id)
+      if (!task) return prev
+
+      const nextTitle = window.prompt(
+        'Editar lembrete',
+        task.title,
+      )
+
+      if (!nextTitle || !nextTitle.trim()) return prev
+
+      const updatedTasks = prev.tasks.map(t =>
+        t.id === id ? { ...t, title: nextTitle.trim() } : t,
+      )
+
+      try {
+        track('planner.task_edited', {
+          tab: 'meu-dia',
+          id,
+        })
+      } catch {
+        // ignora
+      }
+
+      return {
+        ...prev,
+        tasks: updatedTasks,
+      }
+    })
+  }
+
+  // NOVO: excluir lembrete individual
+  const deleteTask = (id: string) => {
+    const confirmDelete = window.confirm(
+      'Tem certeza que deseja excluir este lembrete?',
+    )
+    if (!confirmDelete) return
+
+    setPlannerData(prev => ({
+      ...prev,
+      tasks: prev.tasks.filter(t => t.id !== id),
+    }))
+
+    try {
+      track('planner.task_deleted', {
+        tab: 'meu-dia',
+        id,
+      })
+    } catch {
+      // ignora
+    }
+  }
+
   const handleViewModeChange = (mode: 'day' | 'week') => {
     setViewMode(mode)
 
@@ -709,16 +764,42 @@ export default function WeeklyPlannerShell() {
                               : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
-                          <span
-                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                              task.done
-                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                            }`}
-                          >
-                            {task.done ? '✓' : ''}
-                          </span>
-                          <span>{task.title}</span>
+                          <div className="flex items-center gap-2 flex-1">
+                            <span
+                              className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                                task.done
+                                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                              }`}
+                            >
+                              {task.done ? '✓' : ''}
+                            </span>
+                            <span>{task.title}</span>
+                          </div>
+
+                          {/* Ações de edição / exclusão */}
+                          <div className="flex items-center gap-2 ml-2">
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                editTaskTitle(task.id)
+                              }}
+                              className="text-[10px] md:text-[11px] font-medium text-[var(--color-brand)] hover:underline"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                deleteTask(task.id)
+                              }}
+                              className="text-[10px] md:text-[11px] font-medium text-red-500 hover:underline"
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         </button>
                       ))}
                     </div>
