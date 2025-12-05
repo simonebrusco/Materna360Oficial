@@ -1096,11 +1096,19 @@ export default function WeeklyPlannerShell() {
 
             <ModalAppointmentForm
               mode="create"
-              initialDateKey={getBrazilDateKey(modalDate)}
+              // 👉 sempre tenta usar primeiro o dia que o planner está olhando
+              initialDateKey={
+                selectedDateKey || getBrazilDateKey(modalDate)
+              }
               onSubmit={data => {
-                const appointmentDateKey = data.dateKey
+                // 1) fonte da verdade: dia selecionado no planner
+                const baseDateKey =
+                  selectedDateKey || getBrazilDateKey(modalDate)
 
-                // 1) Salva compromisso na AGENDA (sempre)
+                // 2) se a mãe mudou a data no campo, respeita o que ela escolheu
+                const appointmentDateKey = data.dateKey || baseDateKey
+
+                // 3) salva o compromisso para esse dia
                 handleAddAppointment({
                   dateKey: appointmentDateKey,
                   time: data.time,
@@ -1108,10 +1116,10 @@ export default function WeeklyPlannerShell() {
                   tag: undefined,
                 })
 
-                // 2) Garante que a página esteja olhando para o dia do compromisso
+                // 4) faz a agenda olhar para o dia do compromisso
                 setSelectedDateKey(appointmentDateKey)
 
-                // 3) (Opcional) se for hoje, também vira lembrete rápido
+                // 5) se for hoje, também vira lembrete rápido
                 const todayKey = getBrazilDateKey(new Date())
                 if (
                   appointmentDateKey === todayKey &&
@@ -1128,6 +1136,7 @@ export default function WeeklyPlannerShell() {
                 try {
                   track('planner.appointment_modal_saved', {
                     tab: 'meu-dia',
+                    dateKey: appointmentDateKey,
                   })
                 } catch {
                   // ignora
