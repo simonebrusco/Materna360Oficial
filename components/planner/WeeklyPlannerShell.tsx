@@ -25,7 +25,7 @@ import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
-  dateKey: string        // <-- ESSENCIAL
+  dateKey: string
   time: string
   title: string
   tag?: string
@@ -69,9 +69,13 @@ export default function WeeklyPlannerShell() {
   const [dayIntention, setDayIntention] = useState<string | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  // Modal de compromisso (calendário)
+  // Modal de compromisso (novo, via calendário / atalhos)
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Modal de edição de compromisso
+  const [editingAppointment, setEditingAppointment] =
+    useState<Appointment | null>(null)
 
   // Modal de conteúdo salvo (kanban)
   const [selectedSavedContent, setSelectedSavedContent] =
@@ -176,51 +180,102 @@ export default function WeeklyPlannerShell() {
   }, [])
 
   const handleAddAppointment = useCallback(
-  (appointment: Omit<Appointment, 'id'>) => {
-    const newAppointment: Appointment = {
-      ...appointment,
-      id: Math.random().toString(36).slice(2, 9),
-    }
+    (appointment: Omit<Appointment, 'id'>) => {
+      const newAppointment: Appointment = {
+        ...appointment,
+        id: Math.random().toString(36).slice(2, 9),
+      }
 
+      setPlannerData(prev => ({
+        ...prev,
+        appointments: [...prev.appointments, newAppointment],
+      }))
+
+      try {
+        track('planner.appointment_added', {
+          tab: 'meu-dia',
+          time: appointment.time ?? null,
+          dateKey: appointment.dateKey,
+        })
+      } catch {
+        // ignora
+      }
+
+      try {
+        void updateXP(6)
+      } catch {
+        // ignora
+      }
+    },
+    [],
+  )
+
+  const handleUpdateAppointment = useCallback(
+    (updated: Appointment) => {
+      setPlannerData(prev => ({
+        ...prev,
+        appointments: prev.appointments.map(app =>
+          app.id === updated.id ? updated : app,
+        ),
+      }))
+
+      try {
+        track('planner.appointment_updated', {
+          tab: 'meu-dia',
+          id: updated.id,
+          dateKey: updated.dateKey,
+        })
+      } catch {
+        // ignora
+      }
+    },
+    [],
+  )
+
+  const handleDeleteAppointment = useCallback((id: string) => {
     setPlannerData(prev => ({
       ...prev,
-      appointments: [...prev.appointments, newAppointment],
+      appointments: prev.appointments.filter(app => app.id !== id),
     }))
 
     try {
-      track('planner.appointment_added', {
+      track('planner.appointment_deleted', {
         tab: 'meu-dia',
-        time: appointment.time ?? null,
-        dateKey: appointment.dateKey,
+        id,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
+  }, [])
+
+  const openModalForDate = (day: Date) => {
+    const key = getBrazilDateKey(day)
+
+    setSelectedDateKey(key)
+    setModalDate(day)
+    setIsModalOpen(true)
 
     try {
-      void updateXP(6)
-    } catch {}
+      track('planner.appointment_modal_opened', {
+        tab: 'meu-dia',
+        dateKey: key,
+      })
+    } catch {
+      // ignora
+    }
+  }
 
-  },
-  [],
-)
- const openModalForDate = (day: Date) => {
-  const key = getBrazilDateKey(day);
-
-  // Atualiza o dia selecionado no planner
-  setSelectedDateKey(key);
-
-  // Mantém a data do modal correta
-  setModalDate(day);
-
-  // Abre o modal
-  setIsModalOpen(true);
-
-  try {
-    track('planner.appointment_modal_opened', {
-      tab: 'meu-dia',
-      dateKey: key,
-    });
-  } catch {}
-};
+  const openEditModalForAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment)
+    try {
+      track('planner.appointment_edit_opened', {
+        tab: 'meu-dia',
+        id: appointment.id,
+      })
+    } catch {
+      // ignora
+    }
+  }
 
   // TAREFAS – helpers
   const addTask = (title: string, origin: TaskOrigin) => {
@@ -422,38 +477,19 @@ export default function WeeklyPlannerShell() {
     [selectedDate],
   )
 
-  // Agora a agenda filtra por dateKey = selectedDateKey
-const todaysAppointments = useMemo(() => {
-  return plannerData.appointments
-    .filter(app => app.dateKey === selectedDateKey)
-    .sort((a, b) => {
-      if (!a.time && !b.time) return 0
-      if (!a.time) return 1
-      if (!b.time) return -1
+  const todaysAppointments = useMemo(() => {
+    return plannerData.appointments
+      .filter(app => app.dateKey === selectedDateKey)
+      .sort((a, b) => {
+        if (!a.time && !b.time) return 0
+        if (!a.time) return 1
+        if (!b.time) return -1
 
-      const [ah, am] = a.time.split(':').map(Number)
-      const [bh, bm] = b.time.split(':').map(Number)
+        const [ah, am] = a.time.split(':').map(Number)
+        const [bh, bm] = b.time.split(':').map(Number)
 
-      return ah !== bh ? ah - bh : am - bm
-    })
-}, [plannerData.appointments, selectedDateKey])
-
-    clone.sort((a, b) => {
-      if (!a.time && !b.time) return 0
-      if (!a.time) return 1
-      if (!b.time) return -1
-
-      const [ah, am] = a.time.split(':').map(Number)
-      const [bh, bm] = b.time.split(':').map(Number)
-
-      if (Number.isNaN(ah) || Number.isNaN(am)) return 1
-      if (Number.isNaN(bh) || Number.isNaN(bm)) return -1
-
-      if (ah !== bh) return ah - bh
-      return am - bm
-    })
-
-    return clone
+        return ah !== bh ? ah - bh : am - bm
+      })
   }, [plannerData.appointments, selectedDateKey])
 
   if (!isHydrated) return null
@@ -678,7 +714,7 @@ const todaysAppointments = useMemo(() => {
                         <h2 className="text-lg md:text-xl font-semibold text-white">
                           Comece pelo que faz mais sentido hoje
                         </h2>
-                        <p className="mt-1 text-sm text:white/85 text-white/85">
+                        <p className="mt-1 text-sm text-white/85">
                           Use esses atalhos para criar lembretes rápidos
                           de prioridades, compromissos e cuidados.
                         </p>
@@ -689,7 +725,7 @@ const todaysAppointments = useMemo(() => {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('top3')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -708,14 +744,14 @@ const todaysAppointments = useMemo(() => {
                           onClick={() => {
                             openModalForDate(selectedDate)
                           }}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg:white/80 bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
                               className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
-                          <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Agenda &amp; compromissos
                             </span>
                           </div>
@@ -725,7 +761,7 @@ const todaysAppointments = useMemo(() => {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('selfcare')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg:white/80 bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -742,7 +778,7 @@ const todaysAppointments = useMemo(() => {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('family')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg:white/80 bg-white/80 border border:white/80 border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -801,9 +837,13 @@ const todaysAppointments = useMemo(() => {
                     )}
 
                     {todaysAppointments.map(appointment => (
-                      <div
+                      <button
                         key={appointment.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)]"
+                        type="button"
+                        onClick={() =>
+                          openEditModalForAppointment(appointment)
+                        }
+                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
                       >
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
@@ -814,12 +854,14 @@ const todaysAppointments = useMemo(() => {
                               {appointment.title || 'Compromisso'}
                             </span>
                             <span className="text-[11px] text-[var(--color-text-muted)]">
-                              {appointment.time || 'Sem horário definido'} ·{' '}
-                              {formattedSelectedDate}
+                              {appointment.time ||
+                                'Sem horário definido'}{' '}
+                              ·{' '}
+                              {selectedDate.toLocaleDateString('pt-BR')}
                             </span>
                           </div>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </SoftCard>
@@ -838,7 +880,8 @@ const todaysAppointments = useMemo(() => {
                   Como você está hoje?
                 </h2>
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                  Escolha como você se sente agora e o estilo de dia que você gostaria de ter.
+                  Escolha como você se sente agora e o estilo de dia que
+                  você gostaria de ter.
                 </p>
               </div>
 
@@ -882,26 +925,24 @@ const todaysAppointments = useMemo(() => {
                     Selecione o estilo do seu dia.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      'leve',
-                      'focado',
-                      'produtivo',
-                      'slow',
-                      'automático',
-                    ].map(option => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => handleDayIntentionSelect(option)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          dayIntention === option
-                            ? 'bg-[var(--color-brand)] text:white text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
+                    {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(
+                      option => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() =>
+                            handleDayIntentionSelect(option)
+                          }
+                          className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
+                            dayIntention === option
+                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                              : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
               </div>
@@ -919,10 +960,7 @@ const todaysAppointments = useMemo(() => {
                   {showSuggestions
                     ? 'Esconder sugestões para o seu dia'
                     : 'Ver sugestões para o seu dia'}
-                  <AppIcon
-                    name="lightbulb"
-                    className="w-4 h-4"
-                  />
+                  <AppIcon name="lightbulb" className="w-4 h-4" />
                 </button>
               </div>
             </SoftCard>
@@ -1021,37 +1059,108 @@ const todaysAppointments = useMemo(() => {
               </button>
             </div>
 
-           <ModalAppointmentForm
-  onSubmit={data => {
-    const appointmentDateKey = modalDate
-      ? getBrazilDateKey(modalDate)
-      : selectedDateKey
+            <ModalAppointmentForm
+              mode="create"
+              initialDateKey={getBrazilDateKey(modalDate)}
+              onSubmit={data => {
+                const appointmentDateKey = data.dateKey
+                const todayKey = getBrazilDateKey(new Date())
 
-    const todayKey = getBrazilDateKey(new Date())
+                // 1) Salva compromisso na AGENDA (sempre)
+                handleAddAppointment({
+                  dateKey: appointmentDateKey,
+                  time: data.time,
+                  title: data.title,
+                  tag: undefined,
+                })
 
-    // 1) Salva compromisso na AGENDA (sempre)
-    handleAddAppointment({
-      dateKey: appointmentDateKey,
-      time: data.time,
-      title: data.title,
-      tag: undefined,
-    })
+                // 2) Se for hoje → também aparece nos LEMBRETES RÁPIDOS
+                if (
+                  appointmentDateKey === todayKey &&
+                  data.title.trim()
+                ) {
+                  const label = data.time
+                    ? `${data.time} · ${data.title.trim()}`
+                    : data.title.trim()
+                  addTask(label, 'agenda')
+                }
 
-    // 2) Se for hoje → aparece também nos LEMBRETES RÁPIDOS
-    if (appointmentDateKey === todayKey && data.title?.trim()) {
-      const label = data.time
-        ? `${data.time} · ${data.title.trim()}`
-        : data.title.trim()
-      addTask(label, 'agenda')
-    }
+                setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_saved', {
+                    tab: 'meu-dia',
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
+              onCancel={() => {
+                setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_cancelled', {
+                    tab: 'meu-dia',
+                  })
+                } catch {
+                  // ignora
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
 
-    setIsModalOpen(false)
-    try {
-      track('planner.appointment_modal_saved', { tab: 'meu-dia' })
-    } catch {}
-  }}
-  onCancel={() => setIsModalOpen(false)}
-/>
+      {/* MODAL EDIÇÃO COMPROMISSO */}
+      {editingAppointment && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-[var(--color-text-main)]">
+                Editar compromisso
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingAppointment(null)}
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <ModalAppointmentForm
+              mode="edit"
+              initialDateKey={editingAppointment.dateKey}
+              initialTitle={editingAppointment.title}
+              initialTime={editingAppointment.time}
+              onSubmit={data => {
+                const updated: Appointment = {
+                  ...editingAppointment,
+                  dateKey: data.dateKey,
+                  time: data.time,
+                  title: data.title,
+                }
+
+                handleUpdateAppointment(updated)
+
+                // Se a data editada for o dia atual, garantimos que a mãe
+                // veja o compromisso na agenda do dia correspondente.
+                setSelectedDateKey(updated.dateKey)
+
+                setEditingAppointment(null)
+              }}
+              onCancel={() => setEditingAppointment(null)}
+              onDelete={() => {
+                const confirmed = window.confirm(
+                  'Tem certeza que deseja excluir este compromisso? Essa ação não pode ser desfeita.',
+                )
+                if (!confirmed) return
+
+                handleDeleteAppointment(editingAppointment.id)
+                setEditingAppointment(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* MODAL DETALHE CONTEÚDO SALVO */}
       {selectedSavedContent && (
@@ -1235,18 +1344,35 @@ function generateWeekData(base: Date) {
   })
 }
 
-// FORM DO MODAL (COMPROMISSO)
+// FORM DO MODAL (COMPROMISSO – CRIAR / EDITAR)
+type ModalAppointmentFormProps = {
+  mode: 'create' | 'edit'
+  initialDateKey: string
+  initialTitle?: string
+  initialTime?: string
+  onSubmit: (data: { dateKey: string; title: string; time: string }) => void
+  onCancel: () => void
+  onDelete?: () => void
+}
+
 function ModalAppointmentForm({
-  dateLabel,
+  mode,
+  initialDateKey,
+  initialTitle,
+  initialTime,
   onSubmit,
   onCancel,
-}: {
-  dateLabel: string
-  onSubmit: (data: { title: string; time: string }) => void
-  onCancel: () => void
-}) {
-  const [title, setTitle] = useState('')
-  const [time, setTime] = useState('')
+  onDelete,
+}: ModalAppointmentFormProps) {
+  const [dateKey, setDateKey] = useState(initialDateKey)
+  const [title, setTitle] = useState(initialTitle ?? '')
+  const [time, setTime] = useState(initialTime ?? '')
+
+  const formattedLabelDate = useMemo(() => {
+    const [y, m, d] = dateKey.split('-').map(Number)
+    if (!y || !m || !d) return ''
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
+  }, [dateKey])
 
   return (
     <form
@@ -1254,23 +1380,32 @@ function ModalAppointmentForm({
         e.preventDefault()
         if (!title.trim()) return
         onSubmit({
-          title,
+          dateKey,
+          title: title.trim(),
           time,
         })
       }}
       className="space-y-4"
     >
+      {/* Data do compromisso */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-[var(--color-text-main)]">
           Data do compromisso
         </label>
         <input
-          className="w-full rounded-lg border px-3 py-2 text-sm bg-gray-50 text-[var(--color-text-muted)]"
-          value={dateLabel}
-          readOnly
+          type="date"
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          value={dateKey}
+          onChange={e => setDateKey(e.target.value)}
         />
+        {formattedLabelDate && (
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            {formattedLabelDate}
+          </p>
+        )}
       </div>
 
+      {/* Título */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-[var(--color-text-main)]">
           Título
@@ -1283,6 +1418,7 @@ function ModalAppointmentForm({
         />
       </div>
 
+      {/* Horário */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-[var(--color-text-main)]">
           Horário
@@ -1295,20 +1431,35 @@ function ModalAppointmentForm({
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
-        >
-          Salvar compromisso
-        </button>
+      <div className="flex justify-between items-center pt-2 gap-3">
+        {/* Botão de excluir (apenas no modo edição) */}
+        {mode === 'edit' && onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-xs text-[var(--color-text-muted)] hover:text-red-500 underline"
+          >
+            Excluir compromisso
+          </button>
+        )}
+
+        <div className="flex justify-end gap-3 flex-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+          >
+            {mode === 'create'
+              ? 'Salvar compromisso'
+              : 'Atualizar compromisso'}
+          </button>
+        </div>
       </div>
     </form>
   )
