@@ -435,10 +435,11 @@ export default function WeeklyPlannerShell() {
 
   // Agora a agenda filtra por dateKey = selectedDateKey
   const todaysAppointments = useMemo(() => {
-    if (
-      !plannerData.appointments ||
-      plannerData.appointments.length === 0 ||
-      !selectedDateKey
+  return plannerData.appointments
+    .filter(app => app.dateKey === selectedDateKey)
+    .sort(...)
+}, [plannerData.appointments, selectedDateKey])
+
     ) {
       return []
     }
