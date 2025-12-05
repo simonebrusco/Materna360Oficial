@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 
-import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 
@@ -18,13 +17,11 @@ type Appointment = {
   time: string
 }
 
-type TaskOrigin = 'agenda' | 'manual'
-
 type TaskItem = {
   id: string
   title: string
   done: boolean
-  origin: TaskOrigin
+  origin: 'agenda' | 'manual'
 }
 
 type PlannerData = {
@@ -46,20 +43,19 @@ export default function WeeklyPlannerShell() {
 
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
+
+  const [editingAppointment, setEditingAppointment] =
+    useState<Appointment | null>(null)
 
   // ======================================================
-  // HYDRATAR INICIALMENTE
+  // HIDRATAÇÃO INICIAL — sempre roda primeiro
   // ======================================================
   useEffect(() => {
     const todayKey = getBrazilDateKey(new Date())
     setSelectedDateKey(todayKey)
 
-    const loadedAppointments =
-      load('planner/appointments/all', []) ?? []
-
-    const loadedTasks =
-      load(`planner/tasks/${todayKey}`, []) ?? []
+    const loadedAppointments = load('planner/appointments/all', []) ?? []
+    const loadedTasks = load(`planner/tasks/${todayKey}`, []) ?? []
 
     setPlannerData({
       appointments: loadedAppointments,
@@ -70,7 +66,7 @@ export default function WeeklyPlannerShell() {
   }, [])
 
   // ======================================================
-  // PERSISTIR COMPROMISSOS (GLOBAL)
+  // PERSISTIR COMPROMISSOS
   // ======================================================
   useEffect(() => {
     if (!isHydrated) return
@@ -78,7 +74,7 @@ export default function WeeklyPlannerShell() {
   }, [plannerData.appointments, isHydrated])
 
   // ======================================================
-  // PERSISTIR TAREFAS POR DIA
+  // PERSISTIR TAREFAS DO DIA
   // ======================================================
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
@@ -86,15 +82,31 @@ export default function WeeklyPlannerShell() {
   }, [plannerData.tasks, selectedDateKey, isHydrated])
 
   // ======================================================
-  // HANDLERS
+  // DERIVADOS — sempre declarados ANTES do return
   // ======================================================
+  const selectedDate = useMemo(() => {
+    if (!selectedDateKey) return new Date()
+    const [y, m, d] = selectedDateKey.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }, [selectedDateKey])
 
+  const todaysAppointments = useMemo(() => {
+    return plannerData.appointments
+      .filter(a => a.dateKey === selectedDateKey)
+      .sort((a, b) => {
+        if (!a.time) return 1
+        if (!b.time) return -1
+        return a.time.localeCompare(b.time)
+      })
+  }, [plannerData.appointments, selectedDateKey])
+  // ======================================================
+  // HANDLERS PRINCIPAIS
+  // ======================================================
   const handleDateSelect = (day: Date) => {
     const key = getBrazilDateKey(day)
     setSelectedDateKey(key)
 
-    const loadedTasks =
-      load(`planner/tasks/${key}`, []) ?? []
+    const loadedTasks = load(`planner/tasks/${key}`, []) ?? []
 
     setPlannerData(prev => ({
       ...prev,
@@ -107,7 +119,6 @@ export default function WeeklyPlannerShell() {
     setIsModalOpen(true)
   }
 
-  // CRIAR COMPROMISSO
   const handleAddAppointment = (data: {
     dateKey: string
     title: string
@@ -125,8 +136,8 @@ export default function WeeklyPlannerShell() {
       appointments: [...prev.appointments, newItem],
     }))
 
-    // Se for hoje → vira lembrete
     const todayKey = getBrazilDateKey(new Date())
+
     if (data.dateKey === todayKey) {
       setPlannerData(prev => ({
         ...prev,
@@ -145,7 +156,6 @@ export default function WeeklyPlannerShell() {
     setIsModalOpen(false)
   }
 
-  // EDITAR
   const handleUpdateAppointment = (updated: Appointment) => {
     setPlannerData(prev => ({
       ...prev,
@@ -153,44 +163,34 @@ export default function WeeklyPlannerShell() {
         a.id === updated.id ? updated : a,
       ),
     }))
+
     setEditingAppointment(null)
   }
 
-  // EXCLUIR
   const handleDeleteAppointment = (id: string) => {
     setPlannerData(prev => ({
       ...prev,
       appointments: prev.appointments.filter(a => a.id !== id),
     }))
+
     setEditingAppointment(null)
   }
 
-  const todaysAppointments = useMemo(() => {
-    return plannerData.appointments
-      .filter(a => a.dateKey === selectedDateKey)
-      .sort((a, b) => {
-        if (!a.time) return 1
-        if (!b.time) return -1
-        return a.time.localeCompare(b.time)
-      })
-  }, [plannerData.appointments, selectedDateKey])
-
+  // ======================================================
+  // BLOCO DE RENDERIZAÇÃO
+  // ======================================================
   if (!isHydrated) return null
 
-  const selectedDate = useMemo(() => {
-    const [y, m, d] = selectedDateKey.split('-').map(Number)
-    return new Date(y, m - 1, d)
-  }, [selectedDateKey])
   return (
     <>
       <Reveal delay={120}>
         <div className="space-y-6 mt-4">
 
-          {/* =============================== */}
+          {/* ================================================= */}
           {/* CALENDÁRIO */}
-          {/* =============================== */}
+          {/* ================================================= */}
           <SoftCard className="p-4 rounded-3xl border bg-white shadow">
-            <h2 className="font-semibold mb-3 text-[var(--color-text-main)]">
+            <h2 className="font-semibold text-[var(--color-text-main)] mb-3">
               Calendário
             </h2>
 
@@ -215,17 +215,17 @@ export default function WeeklyPlannerShell() {
             </div>
           </SoftCard>
 
-          {/* =============================== */}
+          {/* ================================================= */}
           {/* AGENDA DO DIA */}
-          {/* =============================== */}
+          {/* ================================================= */}
           <SoftCard className="p-4 rounded-3xl border bg-white shadow">
-            <h2 className="font-semibold mb-3 text-[var(--color-text-main)]">
+            <h2 className="font-semibold text-[var(--color-text-main)] mb-3">
               Compromissos do dia
             </h2>
 
             {todaysAppointments.length === 0 && (
               <p className="text-sm text-[var(--color-text-muted)]">
-                Você não tem compromissos neste dia.
+                Você não tem compromissos para este dia.
               </p>
             )}
 
@@ -238,18 +238,18 @@ export default function WeeklyPlannerShell() {
                 >
                   <p className="font-medium">{app.title}</p>
                   <p className="text-xs text-[var(--color-text-muted)]">
-                    {app.time || 'Sem horário'}
+                    {app.time || 'Sem horário definido'}
                   </p>
                 </button>
               ))}
             </div>
           </SoftCard>
 
-          {/* =============================== */}
+          {/* ================================================= */}
           {/* LEMBRETES RÁPIDOS */}
-          {/* =============================== */}
+          {/* ================================================= */}
           <SoftCard className="p-4 rounded-3xl border bg-white shadow">
-            <h2 className="font-semibold mb-3 text-[var(--color-text-main)]">
+            <h2 className="font-semibold text-[var(--color-text-main)] mb-3">
               Lembretes rápidos
             </h2>
 
@@ -300,10 +300,9 @@ export default function WeeklyPlannerShell() {
           </SoftCard>
         </div>
       </Reveal>
-
-      {/* =============================== */}
-      {/* MODAL — NOVO COMPROMISSO */}
-      {/* =============================== */}
+      {/* ================================================= */}
+      {/* MODAL — CRIAR */}
+      {/* ================================================= */}
       {isModalOpen && modalDate && (
         <ModalAppointmentForm
           mode="create"
@@ -313,9 +312,9 @@ export default function WeeklyPlannerShell() {
         />
       )}
 
-      {/* =============================== */}
-      {/* MODAL — EDITAR COMPROMISSO */}
-      {/* =============================== */}
+      {/* ================================================= */}
+      {/* MODAL — EDITAR */}
+      {/* ================================================= */}
       {editingAppointment && (
         <ModalAppointmentForm
           mode="edit"
@@ -336,8 +335,9 @@ export default function WeeklyPlannerShell() {
     </>
   )
 }
+
 // ======================================================
-// COMPONENTE — INPUT DE TAREFA
+// COMPONENTE — INPUT DE NOVA TAREFA
 // ======================================================
 function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   const [value, setValue] = useState('')
@@ -352,12 +352,10 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
       }}
       className="mt-3 space-y-1"
     >
-      <label className="text-xs font-medium">
-        Adicionar lembrete
-      </label>
+      <label className="text-xs font-medium">Adicionar lembrete</label>
       <input
         className="w-full border p-2 rounded-xl bg-white"
-        placeholder="Ex: Levar exame no pediatra"
+        placeholder="Ex: Levar material da escola"
         value={value}
         onChange={e => setValue(e.target.value)}
       />
@@ -366,7 +364,7 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
 }
 
 // ======================================================
-// MODAL — CREATE / EDIT
+// COMPONENTE — MODAL DE COMPROMISSO
 // ======================================================
 function ModalAppointmentForm({
   mode,
@@ -379,11 +377,7 @@ function ModalAppointmentForm({
   mode: 'create' | 'edit'
   initialDate: Date
   initialData?: Appointment
-  onSave: (data: {
-    dateKey: string
-    title: string
-    time: string
-  }) => void
+  onSave: (data: { dateKey: string; title: string; time: string }) => void
   onDelete?: () => void
   onCancel: () => void
 }) {
@@ -400,45 +394,42 @@ function ModalAppointmentForm({
 
         <input
           type="date"
-          className="w-full p-2 border rounded-xl"
           value={dateKey}
           onChange={e => setDateKey(e.target.value)}
+          className="w-full border p-2 rounded-xl"
         />
 
         <input
-          className="w-full p-2 border rounded-xl"
-          placeholder="Título"
           value={title}
           onChange={e => setTitle(e.target.value)}
+          className="w-full border p-2 rounded-xl"
+          placeholder="Título"
         />
 
         <input
           type="time"
-          className="w-full p-2 border rounded-xl"
           value={time}
           onChange={e => setTime(e.target.value)}
+          className="w-full border p-2 rounded-xl"
         />
 
         <div className="flex justify-between">
           {mode === 'edit' && onDelete && (
-            <button
-              className="text-red-500 text-sm"
-              onClick={() => onDelete()}
-            >
+            <button className="text-red-500" onClick={onDelete}>
               Excluir
             </button>
           )}
 
-          <div className="ml-auto space-x-2">
+          <div className="ml-auto flex gap-2">
             <button
-              className="px-4 py-2 bg-gray-200 rounded-xl"
+              className="px-4 py-2 rounded-xl bg-gray-200"
               onClick={onCancel}
             >
               Cancelar
             </button>
 
             <button
-              className="px-4 py-2 bg-[var(--color-brand)] text-white rounded-xl"
+              className="px-4 py-2 rounded-xl bg-[var(--color-brand)] text-white"
               onClick={() =>
                 onSave({
                   dateKey,
@@ -451,7 +442,6 @@ function ModalAppointmentForm({
             </button>
           </div>
         </div>
-
       </div>
     </div>
   )
@@ -464,18 +454,14 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
+  const first = new Date(year, month, 1)
+  const last = new Date(year, month + 1, 0)
 
   const matrix: (Date | null)[] = []
-
-  const offset = (firstDay.getDay() + 6) % 7
+  const offset = (first.getDay() + 6) % 7
 
   for (let i = 0; i < offset; i++) matrix.push(null)
-
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    matrix.push(new Date(year, month, d))
-  }
+  for (let d = 1; d <= last.getDate(); d++) matrix.push(new Date(year, month, d))
 
   return matrix
 }
