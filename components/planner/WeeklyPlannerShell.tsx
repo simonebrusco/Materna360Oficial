@@ -38,6 +38,7 @@ type TaskItem = {
   title: string
   done: boolean
   origin: TaskOrigin
+  dateKey: string
 }
 
 type PlannerData = {
@@ -279,16 +280,18 @@ export default function WeeklyPlannerShell() {
 
   // TAREFAS – helpers
   const addTask = (title: string, origin: TaskOrigin) => {
-    const newTask: TaskItem = {
-      id: Math.random().toString(36).slice(2, 9),
-      title,
-      done: false,
-      origin,
-    }
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: [...prev.tasks, newTask],
-    }))
+  const newTask: TaskItem = {
+    id: Math.random().toString(36).slice(2, 9),
+    title,
+    done: false,
+    origin,
+    dateKey: selectedDateKey, // ← ESSENCIAL
+  }
+  setPlannerData(prev => ({
+    ...prev,
+    tasks: [...prev.tasks, newTask],
+  }))
+}
 
     try {
       track('planner.task_added', {
@@ -668,7 +671,9 @@ export default function WeeklyPlannerShell() {
                         </p>
                       )}
 
-                      {plannerData.tasks.map(task => (
+                      plannerData.tasks
+  .filter(task => task.dateKey === selectedDateKey)
+  .map(task => ...)
                         <button
                           key={task.id}
                           type="button"
@@ -1062,17 +1067,22 @@ export default function WeeklyPlannerShell() {
             <ModalAppointmentForm
               mode="create"
               initialDateKey={getBrazilDateKey(modalDate)}
-              onSubmit={data => {
-                const appointmentDateKey = data.dateKey
-                const todayKey = getBrazilDateKey(new Date())
+             onSubmit={data => {
+  const appointmentDateKey = data.dateKey || selectedDateKey
+  handleAddAppointment({
+    dateKey: appointmentDateKey,
+    time: data.time,
+    title: data.title,
+  })
 
-                // 1) Salva compromisso na AGENDA (sempre)
-                handleAddAppointment({
-                  dateKey: appointmentDateKey,
-                  time: data.time,
-                  title: data.title,
-                  tag: undefined,
-                })
+  addTask(
+    data.time ? `${data.time} · ${data.title}` : data.title,
+    'agenda'
+  )
+
+  setIsModalOpen(false)
+}}
+
 
                 // 2) Todo compromisso vira um lembrete rápido (para aparecer sempre na lista)
 if (data.title.trim()) {
