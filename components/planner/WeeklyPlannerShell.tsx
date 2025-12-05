@@ -205,10 +205,10 @@ export default function WeeklyPlannerShell() {
     [],
   )
 
-  const openModalForDate = (date: Date) => {
-    handleDateSelect(date)
-    setModalDate(date)
-    setIsModalOpen(true)
+  const openModalForDate = (day: Date) => {
+  setModalDate(day);
+  setSelectedDate(day); // <-- ESSENCIAL
+  setIsModalOpen(true);
 
     try {
       track('planner.appointment_modal_opened', {
