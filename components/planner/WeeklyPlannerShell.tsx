@@ -650,7 +650,7 @@ export default function WeeklyPlannerShell() {
                     <button
                       key={i}
                       type="button"
-                      onClick={() => openModalForDate(day)}
+                      onClick={() => handleDateSelect(day)}
                       className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
                         getBrazilDateKey(day) === selectedDateKey
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
