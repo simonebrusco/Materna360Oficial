@@ -437,7 +437,100 @@ export default function WeeklyPlannerShell() {
                         </button>
                       ))}
                     </div>
+/* ============================================================
+   MODAL — CONTEÚDO SALVO
+   ============================================================ */
 
+type SavedContentModalProps = {
+  item: PlannerSavedContent
+  onClose: () => void
+  onDone: (id: string) => void
+}
+
+function SavedContentModal({ item, onClose, onDone }: SavedContentModalProps) {
+  const plannerTypeLabels: Record<string, string> = {
+    recipe: "RECEITA",
+    checklist: "CHECKLIST",
+    insight: "INSPIRAÇÃO",
+    note: "NOTA",
+    task: "TAREFA",
+    goal: "META",
+    event: "EVENTO",
+  }
+
+  const payload = (item as any).payload ?? {}
+  const description =
+    (item as any).description ??
+    payload.preview ??
+    payload.description ??
+    payload.text ??
+    payload.excerpt ??
+    ""
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
+              <AppIcon
+                name="target"
+                className="w-4 h-4 text-[var(--color-brand)]"
+              />
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2 py-0.5 text-[10px] font-medium text-[#C2285F]">
+              {plannerTypeLabels[item.type] ?? "CONTEÚDO"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* TITLE */}
+        <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] mb-2">
+          {item.title}
+        </h3>
+
+        {/* DESCRIPTION */}
+        <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
+          {description || "Conteúdo salvo no planner."}
+        </p>
+
+        {/* ORIGIN */}
+        <p className="text-[11px] text-[var(--color-text-muted)]/80 mb-4">
+          Salvo em: {item.origin.replace("-", " ")}
+        </p>
+
+        {/* BUTTONS */}
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+          >
+            Fechar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onDone(item.id)}
+            className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+          >
+            Marcar como feito
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
                     {/* INPUT RÁPIDO */}
                     <QuickAddTaskInput onAdd={title => addTask(title, 'manual')} />
                   </SoftCard>
