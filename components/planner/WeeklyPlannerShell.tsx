@@ -645,27 +645,25 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleDateSelect(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                      }`}
-                    >
-                      {day.getDate()}
-                    </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
-                )}
-              </div>
-            </div>
-          </SoftCard>
+  {generateMonthMatrix(selectedDate).map((day, i) =>
+    day ? (
+      <button
+        key={i}
+        type="button"
+        onClick={() => openModalForDate(day)} // ← VOLTA A SER ASSIM
+        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+          getBrazilDateKey(day) === selectedDateKey
+            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+        }`}
+      >
+        {day.getDate()}
+      </button>
+    ) : (
+      <div key={i} className="h-8 md:h-9" />
+    ),
+  )}
+</div>
 
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
