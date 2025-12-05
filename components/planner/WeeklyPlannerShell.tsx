@@ -366,6 +366,65 @@ export default function WeeklyPlannerShell() {
     })
   }
 
+  const editTask = (id: string) => {
+    setPlannerData(prev => {
+      const current = prev.tasks.find(t => t.id === id)
+      if (!current) return prev
+
+      const nextTitle = window.prompt(
+        'Editar lembrete',
+        current.title,
+      )
+
+      if (!nextTitle || !nextTitle.trim()) return prev
+
+      const trimmed = nextTitle.trim()
+
+      const updatedTasks = prev.tasks.map(t =>
+        t.id === id ? { ...t, title: trimmed } : t,
+      )
+
+      try {
+        track('planner.task_edited', {
+          tab: 'meu-dia',
+          id,
+        })
+      } catch {
+        // ignora
+      }
+
+      return {
+        ...prev,
+        tasks: updatedTasks,
+      }
+    })
+  }
+
+  const deleteTask = (id: string) => {
+    const confirmed = window.confirm(
+      'Tem certeza que deseja excluir este lembrete?',
+    )
+    if (!confirmed) return
+
+    setPlannerData(prev => {
+      const updatedTasks = prev.tasks.filter(t => t.id !== id)
+
+      try {
+        track('planner.task_deleted', {
+          tab: 'meu-dia',
+          id,
+        })
+      } catch {
+        // ignora
+      }
+
+      return {
+        ...prev,
+        tasks: updatedTasks,
+      }
+    })
+  }
+
   const handleViewModeChange = (mode: 'day' | 'week') => {
     setViewMode(mode)
 
@@ -731,7 +790,29 @@ export default function WeeklyPlannerShell() {
                           >
                             {task.done ? '✓' : ''}
                           </span>
-                          <span>{task.title}</span>
+
+                          <span className="flex-1">{task.title}</span>
+
+                          <span className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)]">
+                            <span
+                              onClick={e => {
+                                e.stopPropagation()
+                                editTask(task.id)
+                              }}
+                              className="underline hover:text-[var(--color-brand)]"
+                            >
+                              ✎
+                            </span>
+                            <span
+                              onClick={e => {
+                                e.stopPropagation()
+                                deleteTask(task.id)
+                              }}
+                              className="underline hover:text-red-500"
+                            >
+                              🗑
+                            </span>
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -811,7 +892,7 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar de mim
@@ -825,12 +906,12 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             handleOpenQuickAction('family')
                           }
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
