@@ -433,15 +433,10 @@ const todaysAppointments = useMemo(() => {
 
       const [ah, am] = a.time.split(':').map(Number)
       const [bh, bm] = b.time.split(':').map(Number)
+
       return ah !== bh ? ah - bh : am - bm
     })
 }, [plannerData.appointments, selectedDateKey])
-
-    const filtered = plannerData.appointments.filter(
-      appt => appt.dateKey === selectedDateKey,
-    )
-
-    const clone = [...filtered]
 
     clone.sort((a, b) => {
       if (!a.time && !b.time) return 0
