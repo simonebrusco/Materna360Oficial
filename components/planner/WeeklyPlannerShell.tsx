@@ -176,11 +176,19 @@ export default function WeeklyPlannerShell() {
   }, [])
 
   const handleAddAppointment = useCallback(
-    (appointment: Omit<Appointment, 'id'>) => {
-      const newAppointment: Appointment = {
-        ...appointment,
-        id: Math.random().toString(36).slice(2, 9),
-      }
+  (appointment: Omit<Appointment, 'id'>) => {
+    const newAppointment: Appointment = {
+      id: Math.random().toString(36).slice(2, 9),
+      dateKey: appointment.dateKey,   // <-- AGORA SALVA A DATA CERTA
+      time: appointment.time,
+      title: appointment.title,
+      tag: appointment.tag,
+    }
+
+    setPlannerData(prev => ({
+      ...prev,
+      appointments: [...prev.appointments, newAppointment],
+    }))
 
       setPlannerData(prev => ({
         ...prev,
