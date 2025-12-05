@@ -574,17 +574,18 @@ export default function WeeklyPlannerShell() {
                 </span>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
-                    onClick={() => {
-                      const d = new Date(selectedDate)
-                      d.setMonth(d.getMonth() - 1)
-                      handleDateSelect(d)
-                    }}
-                  >
-                    ‹
-                  </button>
+                <button
+ <button
+  type="button"
+  className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+  onClick={() => {
+    const d = new Date(selectedDate)
+    d.setMonth(d.getMonth() + 1)
+    handleDateSelect(d)
+  }}
+>
+  ›
+</button>
 
                   <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
                     {selectedDate.toLocaleDateString('pt-BR', {
