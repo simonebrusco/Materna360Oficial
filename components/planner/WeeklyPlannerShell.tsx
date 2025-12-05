@@ -66,17 +66,6 @@ type QuickListModalProps = {
   onClose: () => void
 }
 
-// Tipo auxiliar da visão semanal
-type WeekDayData = {
-  dateKey: string
-  dayNumber: number
-  dayName: string
-  agendaCount: number
-  top3Count: number
-  careCount: number
-  familyCount: number
-}
-
 // =======================================================
 // COMPONENTE PRINCIPAL
 // =======================================================
@@ -85,6 +74,9 @@ export default function WeeklyPlannerShell() {
   // ESTADO PRINCIPAL
   // ===========================
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
+  // dia que a AGENDA está mostrando (podem ser iguais, mas mantemos separado)
+  const [agendaDateKey, setAgendaDateKey] = useState<string>('')
+
   const [isHydrated, setIsHydrated] = useState(false)
 
   const [plannerData, setPlannerData] = useState<PlannerData>({
@@ -126,6 +118,7 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
+    setAgendaDateKey(dateKey)
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
 
@@ -156,34 +149,21 @@ export default function WeeklyPlannerShell() {
   // ===========================
   // LOAD DATA (localStorage)
   // ===========================
-
-  // 1) Compromissos: carregados uma vez (todos os dias)
-  useEffect(() => {
-    if (!isHydrated) return
-
-    const loadedAppointments: Appointment[] =
-      load('planner/appointments/all', []) ?? []
-
-    setPlannerData(prev => ({
-      ...prev,
-      appointments: loadedAppointments,
-    }))
-  }, [isHydrated])
-
-  // 2) Tarefas + notas: dependem do dia selecionado
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
+    const loadedAppointments: Appointment[] =
+      load('planner/appointments/all', []) ?? []
     const loadedTasks: TaskItem[] =
       load(`planner/tasks/${selectedDateKey}`, []) ?? []
     const loadedNotes: string =
       load(`planner/notes/${selectedDateKey}`, '') ?? ''
 
-    setPlannerData(prev => ({
-      ...prev,
+    setPlannerData({
+      appointments: loadedAppointments,
       tasks: loadedTasks,
       notes: loadedNotes,
-    }))
+    })
   }, [selectedDateKey, isHydrated])
 
   // ===========================
@@ -213,6 +193,7 @@ export default function WeeklyPlannerShell() {
   const handleDateSelect = useCallback((date: Date) => {
     const dateKey = getBrazilDateKey(date)
     setSelectedDateKey(dateKey)
+    setAgendaDateKey(dateKey)
 
     try {
       track('planner.date_clicked', {
@@ -293,6 +274,7 @@ export default function WeeklyPlannerShell() {
   const openModalForDate = (day: Date) => {
     const key = getBrazilDateKey(day)
     setSelectedDateKey(key)
+    setAgendaDateKey(key)
     setModalDate(day)
     setIsModalOpen(true)
 
@@ -388,27 +370,6 @@ export default function WeeklyPlannerShell() {
         tasks: updatedTasks,
       }
     })
-  }
-
-  // NOVO: editar tarefa
-  const editTask = (id: string, newTitle: string) => {
-    const title = newTitle.trim()
-    if (!title) return
-
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(task =>
-        task.id === id ? { ...task, title } : task,
-      ),
-    }))
-  }
-
-  // NOVO: deletar tarefa
-  const deleteTask = (id: string) => {
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.filter(task => task.id !== id),
-    }))
   }
 
   const handleViewModeChange = (mode: 'day' | 'week') => {
@@ -530,21 +491,21 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
-  const formattedSelectedDate = useMemo(
-    () =>
-      selectedDate.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-      }),
-    [selectedDate],
-  )
+  // Data que a AGENDA mostra (texto "Compromissos do dia")
+  const formattedAgendaDate = useMemo(() => {
+    if (!agendaDateKey) return ''
+    const [year, month, day] = agendaDateKey.split('-').map(Number)
+    const d = new Date(year, month - 1, day)
+    return d.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+    })
+  }, [agendaDateKey])
 
   const todaysAppointments = useMemo(() => {
-    // Garante que sempre usamos a mesma chave de data que o calendário enxerga
-    const currentDayKey = getBrazilDateKey(selectedDate)
-
+    if (!agendaDateKey) return []
     return plannerData.appointments
-      .filter(app => app.dateKey === currentDayKey)
+      .filter(app => app.dateKey === agendaDateKey)
       .sort((a, b) => {
         if (!a.time && !b.time) return 0
         if (!a.time) return 1
@@ -555,7 +516,7 @@ export default function WeeklyPlannerShell() {
 
         return ah !== bh ? ah - bh : am - bm
       })
-  }, [plannerData.appointments, selectedDate])
+  }, [plannerData.appointments, agendaDateKey])
 
   if (!isHydrated) return null
 
@@ -693,13 +654,11 @@ export default function WeeklyPlannerShell() {
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
                 {generateMonthMatrix(selectedDate).map((day, i) => {
-                  if (!day) {
-                    return <div key={i} className="h-8 md:h-9" />
-                  }
+                  if (!day) return <div key={i} className="h-8 md:h-9" />
 
                   const dayKey = getBrazilDateKey(day)
-                  const isSelected = dayKey === selectedDateKey
-                  const hasAppointmentsForDay = plannerData.appointments.some(
+                  const isSelected = dayKey === agendaDateKey
+                  const hasAppointment = plannerData.appointments.some(
                     app => app.dateKey === dayKey,
                   )
 
@@ -708,16 +667,15 @@ export default function WeeklyPlannerShell() {
                       key={i}
                       type="button"
                       onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border relative ${
+                      className={`relative h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
                         isSelected
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      <span>{day.getDate()}</span>
-
-                      {hasAppointmentsForDay && (
-                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                      {day.getDate()}
+                      {hasAppointment && (
+                        <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
                       )}
                     </button>
                   )
@@ -756,53 +714,22 @@ export default function WeeklyPlannerShell() {
                           key={task.id}
                           type="button"
                           onClick={() => toggleTask(task.id)}
-                          className={`w-full flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
                             task.done
                               ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
                               : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
-                          <div className="flex items-center gap-3 flex-1">
-                            <span
-                              className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                                task.done
-                                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                              }`}
-                            >
-                              {task.done ? '✓' : ''}
-                            </span>
-                            <span>{task.title}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                const next = window.prompt(
-                                  'Editar lembrete:',
-                                  task.title,
-                                )
-                                if (next !== null) {
-                                  editTask(task.id, next)
-                                }
-                              }}
-                              className="text-[10px] md:text-xs text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                deleteTask(task.id)
-                              }}
-                              className="text-[10px] md:text-xs text-[var(--color-text-muted)] hover:text-red-500"
-                            >
-                              Excluir
-                            </button>
-                          </div>
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                              task.done
+                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                            }`}
+                          >
+                            {task.done ? '✓' : ''}
+                          </span>
+                          <span>{task.title}</span>
                         </button>
                       ))}
                     </div>
@@ -839,12 +766,12 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => handleOpenQuickAction('top3')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="target"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Prioridades do dia
@@ -858,12 +785,12 @@ export default function WeeklyPlannerShell() {
                           onClick={() => {
                             openModalForDate(selectedDate)
                           }}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Agenda &amp; compromissos
@@ -877,12 +804,12 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             handleOpenQuickAction('selfcare')
                           }
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar de mim
@@ -896,12 +823,12 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             handleOpenQuickAction('family')
                           }
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
@@ -928,7 +855,7 @@ export default function WeeklyPlannerShell() {
                       <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
                         Veja rapidamente o que você marcou para{' '}
                         <span className="font-semibold text-[var(--color-text-main)]">
-                          {formattedSelectedDate}
+                          {formattedAgendaDate}
                         </span>
                         .
                       </p>
@@ -975,7 +902,21 @@ export default function WeeklyPlannerShell() {
                               {appointment.time ||
                                 'Sem horário definido'}{' '}
                               ·{' '}
-                              {selectedDate.toLocaleDateString('pt-BR')}
+                              {agendaDateKey
+                                ? (() => {
+                                    const [y, m, d] =
+                                      agendaDateKey
+                                        .split('-')
+                                        .map(Number)
+                                    return new Date(
+                                      y,
+                                      m - 1,
+                                      d,
+                                    ).toLocaleDateString(
+                                      'pt-BR',
+                                    )
+                                  })()
+                                : ''}
                             </span>
                           </div>
                         </div>
@@ -1205,6 +1146,7 @@ export default function WeeklyPlannerShell() {
 
                 // 2) Garante que a página esteja olhando para o dia do compromisso
                 setSelectedDateKey(appointmentDateKey)
+                setAgendaDateKey(appointmentDateKey)
 
                 // 3) Se for hoje, também vira lembrete rápido
                 const todayKey = getBrazilDateKey(new Date())
@@ -1277,6 +1219,7 @@ export default function WeeklyPlannerShell() {
 
                 handleUpdateAppointment(updated)
                 setSelectedDateKey(updated.dateKey)
+                setAgendaDateKey(updated.dateKey)
                 setEditingAppointment(null)
               }}
               onCancel={() => setEditingAppointment(null)}
@@ -1717,8 +1660,18 @@ function QuickListModal({
 }
 
 // =======================================================
-// HELPERS: CALENDÁRIO / SEMANA
+// TIPO / HELPERS: CALENDÁRIO / SEMANA
 // =======================================================
+type WeekDayData = {
+  dateKey: string
+  dayNumber: number
+  dayName: string
+  agendaCount: number
+  top3Count: number
+  careCount: number
+  familyCount: number
+}
+
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
