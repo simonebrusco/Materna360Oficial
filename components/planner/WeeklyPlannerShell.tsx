@@ -366,63 +366,20 @@ export default function WeeklyPlannerShell() {
     })
   }
 
-  const editTask = (id: string) => {
-    setPlannerData(prev => {
-      const current = prev.tasks.find(t => t.id === id)
-      if (!current) return prev
-
-      const nextTitle = window.prompt(
-        'Editar lembrete',
-        current.title,
-      )
-
-      if (!nextTitle || !nextTitle.trim()) return prev
-
-      const trimmed = nextTitle.trim()
-
-      const updatedTasks = prev.tasks.map(t =>
-        t.id === id ? { ...t, title: trimmed } : t,
-      )
-
-      try {
-        track('planner.task_edited', {
-          tab: 'meu-dia',
-          id,
-        })
-      } catch {
-        // ignora
-      }
-
-      return {
-        ...prev,
-        tasks: updatedTasks,
-      }
-    })
-  }
-
   const deleteTask = (id: string) => {
-    const confirmed = window.confirm(
-      'Tem certeza que deseja excluir este lembrete?',
-    )
-    if (!confirmed) return
+    setPlannerData(prev => ({
+      ...prev,
+      tasks: prev.tasks.filter(task => task.id !== id),
+    }))
 
-    setPlannerData(prev => {
-      const updatedTasks = prev.tasks.filter(t => t.id !== id)
-
-      try {
-        track('planner.task_deleted', {
-          tab: 'meu-dia',
-          id,
-        })
-      } catch {
-        // ignora
-      }
-
-      return {
-        ...prev,
-        tasks: updatedTasks,
-      }
-    })
+    try {
+      track('planner.task_deleted', {
+        tab: 'meu-dia',
+        id,
+      })
+    } catch {
+      // ignora
+    }
   }
 
   const handleViewModeChange = (mode: 'day' | 'week') => {
@@ -568,15 +525,6 @@ export default function WeeklyPlannerShell() {
       })
   }, [plannerData.appointments, selectedDateKey])
 
-  // Mapa de compromissos por dia (para pontinhos no calendário)
-  const appointmentsByDateKey = useMemo<Record<string, number>>(() => {
-    const map: Record<string, number> = {}
-    for (const app of plannerData.appointments) {
-      map[app.dateKey] = (map[app.dateKey] || 0) + 1
-    }
-    return map
-  }, [plannerData.appointments])
-
   if (!isHydrated) return null
 
   const moodLabel: Record<string, string> = {
@@ -712,35 +660,24 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) => {
-                  if (!day) {
-                    return <div key={i} className="h-8 md:h-9" />
-                  }
-
-                  const dayKey = getBrazilDateKey(day)
-                  const isSelected = dayKey === selectedDateKey
-                  const appointmentCount = appointmentsByDateKey[dayKey] ?? 0
-                  const hasAppointments = appointmentCount > 0
-
-                  return (
+                {generateMonthMatrix(selectedDate).map((day, i) =>
+                  day ? (
                     <button
                       key={i}
                       type="button"
                       onClick={() => openModalForDate(day)}
-                      className={`relative h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        isSelected
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                        getBrazilDateKey(day) === selectedDateKey
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      <span>{day.getDate()}</span>
-
-                      {hasAppointments && (
-                        <span className="absolute bottom-[2px] left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[var(--color-brand)]" />
-                      )}
+                      {day.getDate()}
                     </button>
-                  )
-                })}
+                  ) : (
+                    <div key={i} className="h-8 md:h-9" />
+                  ),
+                )}
               </div>
             </div>
           </SoftCard>
@@ -771,49 +708,43 @@ export default function WeeklyPlannerShell() {
                       )}
 
                       {plannerData.tasks.map(task => (
-                        <button
+                        <div
                           key={task.id}
-                          type="button"
-                          onClick={() => toggleTask(task.id)}
-                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                          className={`w-full flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all ${
                             task.done
                               ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
                               : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
-                          <span
-                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                              task.done
-                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                            }`}
+                          <button
+                            type="button"
+                            onClick={() => toggleTask(task.id)}
+                            className="flex items-center gap-3 flex-1 text-left"
                           >
-                            {task.done ? '✓' : ''}
-                          </span>
-
-                          <span className="flex-1">{task.title}</span>
-
-                          <span className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)]">
                             <span
-                              onClick={e => {
-                                e.stopPropagation()
-                                editTask(task.id)
-                              }}
-                              className="underline hover:text-[var(--color-brand)]"
+                              className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                                task.done
+                                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                              }`}
                             >
-                              ✎
+                              {task.done ? '✓' : ''}
                             </span>
-                            <span
-                              onClick={e => {
-                                e.stopPropagation()
-                                deleteTask(task.id)
-                              }}
-                              className="underline hover:text-red-500"
-                            >
-                              🗑
-                            </span>
-                          </span>
-                        </button>
+                            <span>{task.title}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation()
+                              deleteTask(task.id)
+                            }}
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#F1E4EC] text-[12px] text-[var(--color-text-muted)] hover:border-[var(--color-brand)]/60 hover:text-[var(--color-brand)]"
+                            aria-label="Excluir lembrete"
+                          >
+                            ×
+                          </button>
+                        </div>
                       ))}
                     </div>
 
@@ -1158,12 +1089,7 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4 pb-10">
-              <WeekView
-                weekData={generateWeekData(
-                  selectedDate,
-                  plannerData.appointments,
-                )}
-              />
+              <WeekView weekData={generateWeekData(selectedDate)} />
             </div>
           )}
         </div>
@@ -1746,7 +1672,7 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-function generateWeekData(base: Date, appointments: Appointment[]) {
+function generateWeekData(base: Date) {
   const monday = new Date(base)
   const day = monday.getDay()
   monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
@@ -1755,17 +1681,12 @@ function generateWeekData(base: Date, appointments: Appointment[]) {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
 
-    const dateKey = getBrazilDateKey(d)
-    const agendaCount = appointments.filter(
-      app => app.dateKey === dateKey,
-    ).length
-
     return {
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
         weekday: 'long',
       }),
-      agendaCount,
+      agendaCount: 0,
       top3Count: 0,
       careCount: 0,
       familyCount: 0,
