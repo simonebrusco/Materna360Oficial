@@ -207,7 +207,7 @@ export default function WeeklyPlannerShell() {
 
   const openModalForDate = (day: Date) => {
   setModalDate(day);
-  setSelectedDate(day); // <-- ESSENCIAL
+  setSelectedDateKey(getBrazilDateKey(day)); // <-- ESSENCIAL
   setIsModalOpen(true);
 
     try {
