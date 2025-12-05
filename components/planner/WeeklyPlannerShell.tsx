@@ -297,18 +297,22 @@ export default function WeeklyPlannerShell() {
       {/* MODAL — EDITAR COMPROMISSO */}
       {/* =============================== */}
       {editingAppointment && (
-        <ModalAppointmentForm
-          mode="edit"
-          initialDate={new Date(editingAppointment.dateKey)}
-          initialData={editingAppointment}
-          onSave={handleUpdateAppointment}
-          onDelete={handleDeleteAppointment}
-          onCancel={() => setEditingAppointment(null)}
-        />
-      )}
-    </>
-  )
-}
+  <ModalAppointmentForm
+    mode="edit"
+    initialDate={new Date(editingAppointment.dateKey)}
+    initialData={editingAppointment}
+    onSave={data =>
+      handleUpdateAppointment({
+        ...editingAppointment,
+        dateKey: data.dateKey,
+        title: data.title,
+        time: data.time,
+      })
+    }
+    onDelete={() => handleDeleteAppointment(editingAppointment.id)}
+    onCancel={() => setEditingAppointment(null)}
+  />
+)}
 
 // ======================================================
 // COMPONENTE: QuickAddTaskInput
