@@ -562,111 +562,120 @@ export default function WeeklyPlannerShell() {
     <>
       <Reveal delay={150}>
         <div className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-          {/* CALENDÁRIO PREMIUM */}
-          <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
-                  <AppIcon
-                    name="calendar"
-                    className="w-4 h-4 text-[var(--color-brand)]"
-                  />
-                </span>
+      {/* CALENDÁRIO PREMIUM */}
+<SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
 
-                <div className="flex items-center gap-2">
-                <button
- <button
-  type="button"
-  className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
-  onClick={() => {
-    const d = new Date(selectedDate)
-    d.setMonth(d.getMonth() + 1)
-    handleDateSelect(d)
-  }}
->
-  ›
-</button>
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
-                    {selectedDate.toLocaleDateString('pt-BR', {
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </h2>
+    {/* Ícone + Navegação mês */}
+    <div className="flex items-center gap-2">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
+        <AppIcon name="calendar" className="w-4 h-4 text-[var(--color-brand)]" />
+      </span>
 
-                  <button
-                    type="button"
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
-                    onClick={() => {
-                      const d = new Date(selectedDate)
-                      d.setMonth(d.getMonth() + 1)
-                      handleDateSelect(d)
-                    }}
-                  >
-                    ›
-                  </button>
-                </div>
-              </div>
+      <div className="flex items-center gap-2">
 
-              <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
-                <button
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                    viewMode === 'day'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                  onClick={() => handleViewModeChange('day')}
-                >
-                  Dia
-                </button>
-                <button
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                    viewMode === 'week'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                  onClick={() => handleViewModeChange('week')}
-                >
-                  Semana
-                </button>
-              </div>
-            </div>
+        {/* Voltar mês */}
+        <button
+          type="button"
+          className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+          onClick={() => {
+            const d = new Date(selectedDate)
+            d.setMonth(d.getMonth() - 1)
+            handleDateSelect(d)
+          }}
+        >
+          ‹
+        </button>
 
-            {/* Cabeçalho dos dias */}
-            <div className="space-y-2 md:space-y-3">
-              <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
-                <span>Seg</span>
-                <span>Ter</span>
-                <span>Qua</span>
-                <span>Qui</span>
-                <span>Sex</span>
-                <span>Sáb</span>
-                <span>Dom</span>
-              </div>
+        {/* Mês + Ano */}
+        <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
+          {selectedDate.toLocaleDateString('pt-BR', {
+            month: 'long',
+            year: 'numeric',
+          })}
+        </h2>
 
-              {/* Grade do mês */}
-              <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                      }`}
-                    >
-                      {day.getDate()}
-                    </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
-                )}
-              </div>
-            </div>
-          </SoftCard>
+        {/* Avançar mês */}
+        <button
+          type="button"
+          className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+          onClick={() => {
+            const d = new Date(selectedDate)
+            d.setMonth(d.getMonth() + 1)
+            handleDateSelect(d)
+          }}
+        >
+          ›
+        </button>
+
+      </div>
+    </div>
+
+    {/* Alternância de modo Dia / Semana */}
+    <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
+      <button
+        className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+          viewMode === 'day'
+            ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgrgba(253,37,151,0.2)]'
+            : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+        }`}
+        onClick={() => handleViewModeChange('day')}
+      >
+        Dia
+      </button>
+
+      <button
+        className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+          viewMode === 'week'
+            ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+            : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+        }`}
+        onClick={() => handleViewModeChange('week')}
+      >
+        Semana
+      </button>
+    </div>
+
+  </div>
+
+  {/* Cabeçalho dos dias */}
+  <div className="space-y-2 md:space-y-3">
+    <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
+      <span>Seg</span>
+      <span>Ter</span>
+      <span>Qua</span>
+      <span>Qui</span>
+      <span>Sex</span>
+      <span>Sáb</span>
+      <span>Dom</span>
+    </div>
+
+    {/* Grade do mês */}
+    <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+      {generateMonthMatrix(selectedDate).map((day, i) =>
+        day ? (
+          <button
+            key={i}
+            type="button"
+            onClick={() => openModalForDate(day)}
+            className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+              getBrazilDateKey(day) === selectedDateKey
+                ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+            }`}
+          >
+            {day.getDate()}
+          </button>
+        ) : (
+          <div key={i} className="h-8 md:h-9" />
+        )
+      )}
+    </div>
+  </div>
+
+</SoftCard>
+
 
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
