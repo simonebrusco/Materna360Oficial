@@ -366,6 +366,39 @@ export default function WeeklyPlannerShell() {
     })
   }
 
+  // NOVO: editar tarefa
+  const editTask = (id: string) => {
+    setPlannerData(prev => {
+      const task = prev.tasks.find(t => t.id === id)
+      if (!task) return prev
+
+      const novoTitulo = window.prompt(
+        'Editar lembrete:',
+        task.title,
+      )
+      if (!novoTitulo || !novoTitulo.trim()) return prev
+
+      const updatedTasks = prev.tasks.map(t =>
+        t.id === id ? { ...t, title: novoTitulo.trim() } : t,
+      )
+
+      return { ...prev, tasks: updatedTasks }
+    })
+  }
+
+  // NOVO: excluir tarefa
+  const deleteTask = (id: string) => {
+    const confirmar = window.confirm(
+      'Tem certeza que deseja excluir este lembrete?',
+    )
+    if (!confirmar) return
+
+    setPlannerData(prev => ({
+      ...prev,
+      tasks: prev.tasks.filter(t => t.id !== id),
+    }))
+  }
+
   const handleViewModeChange = (mode: 'day' | 'week') => {
     setViewMode(mode)
 
@@ -718,7 +751,31 @@ export default function WeeklyPlannerShell() {
                           >
                             {task.done ? '✓' : ''}
                           </span>
-                          <span>{task.title}</span>
+                          <span className="flex-1">{task.title}</span>
+
+                          {/* AÇÕES: EDITAR / EXCLUIR */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                editTask(task.id)
+                              }}
+                              className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-brand)] underline"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                deleteTask(task.id)
+                              }}
+                              className="text-[10px] text-[var(--color-text-muted)] hover:text-red-500 underline"
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -885,7 +942,7 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             openEditModalForAppointment(appointment)
                           }
-                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
+                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg:white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
                         >
                           <div className="flex items-center gap-2">
                             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
@@ -979,8 +1036,8 @@ export default function WeeklyPlannerShell() {
                           }
                           className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                             dayIntention === option
-                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                              : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                              ? 'bg-[var(--color-brand)] text:white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                              : 'bg:white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
                           {option}
