@@ -463,9 +463,7 @@ export default function WeeklyPlannerShell() {
     })
   }
 
-  const handleOpenQuickAction = (
-    mode: 'top3' | 'selfcare' | 'family',
-  ) => {
+  const handleOpenQuickAction = (mode: 'top3' | 'selfcare' | 'family') => {
     setQuickAction(mode)
 
     try {
@@ -560,6 +558,7 @@ export default function WeeklyPlannerShell() {
           {/* CALENDÁRIO PREMIUM */}
           <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              {/* Ícone + Navegação mês */}
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
                   <AppIcon
@@ -645,25 +644,27 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-  {generateMonthMatrix(selectedDate).map((day, i) =>
-    day ? (
-      <button
-        key={i}
-        type="button"
-        onClick={() => openModalForDate(day)} // ← VOLTA A SER ASSIM
-        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-          getBrazilDateKey(day) === selectedDateKey
-            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-        }`}
-      >
-        {day.getDate()}
-      </button>
-    ) : (
-      <div key={i} className="h-8 md:h-9" />
-    ),
-  )}
-</div>
+                {generateMonthMatrix(selectedDate).map((day, i) =>
+                  day ? (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => openModalForDate(day)}
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                        getBrazilDateKey(day) === selectedDateKey
+                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                      }`}
+                    >
+                      {day.getDate()}
+                    </button>
+                  ) : (
+                    <div key={i} className="h-8 md:h-9" />
+                  ),
+                )}
+              </div>
+            </div>
+          </SoftCard>
 
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
@@ -1060,7 +1061,7 @@ export default function WeeklyPlannerShell() {
             </div>
           )}
         </div>
-          </Reveal>
+      </Reveal>
 
       {/* ======================================================= */}
       {/* MODAL — NOVO COMPROMISSO */}
@@ -1094,16 +1095,11 @@ export default function WeeklyPlannerShell() {
 
             <ModalAppointmentForm
               mode="create"
-              // 🔑 AQUI: a data inicial vem SEMPRE do dia clicado no calendário
               initialDateKey={getBrazilDateKey(modalDate)}
               onSubmit={data => {
-                // 1) se a mãe trocou a data no campo, respeita o que ela escolheu
-                const appointmentDateKey =
-                  data.dateKey && data.dateKey.trim()
-                    ? data.dateKey
-                    : getBrazilDateKey(modalDate)
+                const appointmentDateKey = data.dateKey
 
-                // 2) salva o compromisso para esse dia
+                // 1) Salva compromisso na AGENDA (sempre)
                 handleAddAppointment({
                   dateKey: appointmentDateKey,
                   time: data.time,
@@ -1111,10 +1107,10 @@ export default function WeeklyPlannerShell() {
                   tag: undefined,
                 })
 
-                // 3) faz o planner olhar para o dia do compromisso
+                // 2) Garante que a página esteja olhando para o dia do compromisso
                 setSelectedDateKey(appointmentDateKey)
 
-                // 4) se for hoje, também vira lembrete rápido
+                // 3) Se for hoje, também vira lembrete rápido
                 const todayKey = getBrazilDateKey(new Date())
                 if (
                   appointmentDateKey === todayKey &&
@@ -1131,7 +1127,6 @@ export default function WeeklyPlannerShell() {
                 try {
                   track('planner.appointment_modal_saved', {
                     tab: 'meu-dia',
-                    dateKey: appointmentDateKey,
                   })
                 } catch {
                   // ignora
@@ -1354,6 +1349,7 @@ export default function WeeklyPlannerShell() {
     </>
   )
 }
+
 // =======================================================
 // MODAL FORM DE COMPROMISSO (CRIAR / EDITAR)
 // =======================================================
@@ -1665,4 +1661,3 @@ function generateWeekData(base: Date) {
     }
   })
 }
-
