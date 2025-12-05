@@ -66,6 +66,17 @@ type QuickListModalProps = {
   onClose: () => void
 }
 
+// Tipo auxiliar da visão semanal
+type WeekDayData = {
+  dateKey: string
+  dayNumber: number
+  dayName: string
+  agendaCount: number
+  top3Count: number
+  careCount: number
+  familyCount: number
+}
+
 // =======================================================
 // COMPONENTE PRINCIPAL
 // =======================================================
@@ -145,21 +156,34 @@ export default function WeeklyPlannerShell() {
   // ===========================
   // LOAD DATA (localStorage)
   // ===========================
+
+  // 1) Compromissos: carregados uma vez (todos os dias)
   useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
+    if (!isHydrated) return
 
     const loadedAppointments: Appointment[] =
       load('planner/appointments/all', []) ?? []
+
+    setPlannerData(prev => ({
+      ...prev,
+      appointments: loadedAppointments,
+    }))
+  }, [isHydrated])
+
+  // 2) Tarefas + notas: dependem do dia selecionado
+  useEffect(() => {
+    if (!isHydrated || !selectedDateKey) return
+
     const loadedTasks: TaskItem[] =
       load(`planner/tasks/${selectedDateKey}`, []) ?? []
     const loadedNotes: string =
       load(`planner/notes/${selectedDateKey}`, '') ?? ''
 
-    setPlannerData({
-      appointments: loadedAppointments,
+    setPlannerData(prev => ({
+      ...prev,
       tasks: loadedTasks,
       notes: loadedNotes,
-    })
+    }))
   }, [selectedDateKey, isHydrated])
 
   // ===========================
@@ -364,56 +388,6 @@ export default function WeeklyPlannerShell() {
         tasks: updatedTasks,
       }
     })
-  }
-
-  // NOVOS HELPERS: editar / excluir tarefa
-  const handleEditTask = (id: string) => {
-    setPlannerData(prev => {
-      const task = prev.tasks.find(t => t.id === id)
-      if (!task) return prev
-
-      const nextTitle = window.prompt('Editar lembrete', task.title)
-      if (!nextTitle || !nextTitle.trim()) return prev
-
-      const updatedTasks = prev.tasks.map(t =>
-        t.id === id ? { ...t, title: nextTitle.trim() } : t,
-      )
-
-      try {
-        track('planner.task_edited', {
-          tab: 'meu-dia',
-          id,
-        })
-      } catch {
-        // ignora
-      }
-
-      return {
-        ...prev,
-        tasks: updatedTasks,
-      }
-    })
-  }
-
-  const handleDeleteTask = (id: string) => {
-    const confirmed = window.confirm(
-      'Tem certeza que deseja excluir este lembrete?',
-    )
-    if (!confirmed) return
-
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.filter(t => t.id !== id),
-    }))
-
-    try {
-      track('planner.task_deleted', {
-        tab: 'meu-dia',
-        id,
-      })
-    } catch {
-      // ignora
-    }
   }
 
   const handleViewModeChange = (mode: 'day' | 'week') => {
@@ -694,44 +668,36 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (() => {
-                    const dayKey = getBrazilDateKey(day)
-                    const hasAppointments = plannerData.appointments.some(
-                      app => app.dateKey === dayKey,
-                    )
-                    const isSelected = dayKey === selectedDateKey
+                {generateMonthMatrix(selectedDate).map((day, i) => {
+                  if (!day) {
+                    return <div key={i} className="h-8 md:h-9" />
+                  }
 
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => openModalForDate(day)}
-                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border relative ${
-                          isSelected
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                        }`}
-                      >
-                        <span>{day.getDate()}</span>
+                  const dayKey = getBrazilDateKey(day)
+                  const isSelected = dayKey === selectedDateKey
+                  const hasAppointmentsForDay = plannerData.appointments.some(
+                    app => app.dateKey === dayKey,
+                  )
 
-                        {hasAppointments && (
-                          <span className="absolute inset-x-0 bottom-1 flex justify-center">
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${
-                                isSelected
-                                  ? 'bg-white'
-                                  : 'bg-[var(--color-brand)]'
-                              }`}
-                            />
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })() : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
-                )}
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => openModalForDate(day)}
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border relative ${
+                        isSelected
+                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                      }`}
+                    >
+                      <span>{day.getDate()}</span>
+
+                      {hasAppointmentsForDay && (
+                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </SoftCard>
@@ -762,53 +728,27 @@ export default function WeeklyPlannerShell() {
                       )}
 
                       {plannerData.tasks.map(task => (
-                        <div
+                        <button
                           key={task.id}
+                          type="button"
+                          onClick={() => toggleTask(task.id)}
                           className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
                             task.done
                               ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
                               : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
-                          {/* checkbox */}
-                          <button
-                            type="button"
-                            onClick={() => toggleTask(task.id)}
-                            className="flex h-4 w-4 items-center justify-center rounded-full border text-[10px]"
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                              task.done
+                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                            }`}
                           >
-                            <span
-                              className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                                task.done
-                                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                              }`}
-                            >
-                              {task.done ? '✓' : ''}
-                            </span>
-                          </button>
-
-                          <span className="flex-1 truncate">
-                            {task.title}
+                            {task.done ? '✓' : ''}
                           </span>
-
-                          {/* ações: editar / excluir */}
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleEditTask(task.id)}
-                              className="text-[10px] px-2 py-1 rounded-full bg-[var(--color-soft-bg)] text-[var(--color-text-main)] hover:bg-[var(--color-soft-strong)]"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="text-[10px] px-2 py-1 rounded-full bg-[#FFF0F5] text-[#C2285F] hover:bg-[#FFD9E7]"
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        </div>
+                          <span>{task.title}</span>
+                        </button>
                       ))}
                     </div>
 
@@ -1722,18 +1662,8 @@ function QuickListModal({
 }
 
 // =======================================================
-// TIPO / HELPERS: CALENDÁRIO / SEMANA
+// HELPERS: CALENDÁRIO / SEMANA
 // =======================================================
-type WeekDayData = {
-  dateKey: string
-  dayNumber: number
-  dayName: string
-  agendaCount: number
-  top3Count: number
-  careCount: number
-  familyCount: number
-}
-
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
