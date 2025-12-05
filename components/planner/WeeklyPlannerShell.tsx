@@ -3,13 +3,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry'
-import { updateXP } from '@/app/lib/xp'
 
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
-import WeekView from './WeekView'
 
 // ======================================================
 // TIPAGENS
@@ -22,6 +19,7 @@ type Appointment = {
 }
 
 type TaskOrigin = 'agenda' | 'manual'
+
 type TaskItem = {
   id: string
   title: string
@@ -50,17 +48,18 @@ export default function WeeklyPlannerShell() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
-
-  // ===============================
-  // HYDRATE
-  // ===============================
+  // ======================================================
+  // HYDRATAR INICIALMENTE
+  // ======================================================
   useEffect(() => {
     const todayKey = getBrazilDateKey(new Date())
     setSelectedDateKey(todayKey)
 
-    const loadedAppointments = load('planner/appointments/all', []) ?? []
-    const loadedTasks = load(`planner/tasks/${todayKey}`, []) ?? []
+    const loadedAppointments =
+      load('planner/appointments/all', []) ?? []
+
+    const loadedTasks =
+      load(`planner/tasks/${todayKey}`, []) ?? []
 
     setPlannerData({
       appointments: loadedAppointments,
@@ -70,17 +69,17 @@ export default function WeeklyPlannerShell() {
     setIsHydrated(true)
   }, [])
 
-  // ===============================
-  // SAVE APPOINTMENTS (global)
-  // ===============================
+  // ======================================================
+  // PERSISTIR COMPROMISSOS (GLOBAL)
+  // ======================================================
   useEffect(() => {
     if (!isHydrated) return
     save('planner/appointments/all', plannerData.appointments)
   }, [plannerData.appointments, isHydrated])
 
-  // ===============================
-  // SAVE TASKS (por dia)
-  // ===============================
+  // ======================================================
+  // PERSISTIR TAREFAS POR DIA
+  // ======================================================
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
@@ -94,7 +93,9 @@ export default function WeeklyPlannerShell() {
     const key = getBrazilDateKey(day)
     setSelectedDateKey(key)
 
-    const loadedTasks = load(`planner/tasks/${key}`, []) ?? []
+    const loadedTasks =
+      load(`planner/tasks/${key}`, []) ?? []
+
     setPlannerData(prev => ({
       ...prev,
       tasks: loadedTasks,
@@ -106,7 +107,12 @@ export default function WeeklyPlannerShell() {
     setIsModalOpen(true)
   }
 
-  const handleAddAppointment = (data: { dateKey: string; title: string; time: string }) => {
+  // CRIAR COMPROMISSO
+  const handleAddAppointment = (data: {
+    dateKey: string
+    title: string
+    time: string
+  }) => {
     const newItem: Appointment = {
       id: Math.random().toString(36).slice(2, 9),
       dateKey: data.dateKey,
@@ -119,6 +125,7 @@ export default function WeeklyPlannerShell() {
       appointments: [...prev.appointments, newItem],
     }))
 
+    // Se for hoje → vira lembrete
     const todayKey = getBrazilDateKey(new Date())
     if (data.dateKey === todayKey) {
       setPlannerData(prev => ({
@@ -138,21 +145,23 @@ export default function WeeklyPlannerShell() {
     setIsModalOpen(false)
   }
 
+  // EDITAR
   const handleUpdateAppointment = (updated: Appointment) => {
     setPlannerData(prev => ({
       ...prev,
-      appointments: prev.appointments.map(a => (a.id === updated.id ? updated : a)),
+      appointments: prev.appointments.map(a =>
+        a.id === updated.id ? updated : a,
+      ),
     }))
-
     setEditingAppointment(null)
   }
 
+  // EXCLUIR
   const handleDeleteAppointment = (id: string) => {
     setPlannerData(prev => ({
       ...prev,
       appointments: prev.appointments.filter(a => a.id !== id),
     }))
-
     setEditingAppointment(null)
   }
 
@@ -167,11 +176,11 @@ export default function WeeklyPlannerShell() {
   }, [plannerData.appointments, selectedDateKey])
 
   if (!isHydrated) return null
+
   const selectedDate = useMemo(() => {
     const [y, m, d] = selectedDateKey.split('-').map(Number)
     return new Date(y, m - 1, d)
   }, [selectedDateKey])
-
   return (
     <>
       <Reveal delay={120}>
@@ -181,7 +190,7 @@ export default function WeeklyPlannerShell() {
           {/* CALENDÁRIO */}
           {/* =============================== */}
           <SoftCard className="p-4 rounded-3xl border bg-white shadow">
-            <h2 className="font-semibold text-[var(--color-text-main)] mb-3">
+            <h2 className="font-semibold mb-3 text-[var(--color-text-main)]">
               Calendário
             </h2>
 
@@ -210,7 +219,7 @@ export default function WeeklyPlannerShell() {
           {/* AGENDA DO DIA */}
           {/* =============================== */}
           <SoftCard className="p-4 rounded-3xl border bg-white shadow">
-            <h2 className="font-semibold text-[var(--color-text-main)] mb-3">
+            <h2 className="font-semibold mb-3 text-[var(--color-text-main)]">
               Compromissos do dia
             </h2>
 
@@ -240,7 +249,7 @@ export default function WeeklyPlannerShell() {
           {/* LEMBRETES RÁPIDOS */}
           {/* =============================== */}
           <SoftCard className="p-4 rounded-3xl border bg-white shadow">
-            <h2 className="font-semibold text-[var(--color-text-main)] mb-3">
+            <h2 className="font-semibold mb-3 text-[var(--color-text-main)]">
               Lembretes rápidos
             </h2>
 
@@ -252,7 +261,9 @@ export default function WeeklyPlannerShell() {
                     setPlannerData(prev => ({
                       ...prev,
                       tasks: prev.tasks.map(t =>
-                        t.id === task.id ? { ...t, done: !t.done } : t,
+                        t.id === task.id
+                          ? { ...t, done: !t.done }
+                          : t,
                       ),
                     }))
                   }
@@ -274,13 +285,22 @@ export default function WeeklyPlannerShell() {
               onAdd={title =>
                 setPlannerData(prev => ({
                   ...prev,
-                  tasks: [...prev.tasks, { id: Math.random().toString(36).slice(2, 9), done: false, origin: 'manual', title }],
+                  tasks: [
+                    ...prev.tasks,
+                    {
+                      id: Math.random().toString(36).slice(2, 9),
+                      done: false,
+                      origin: 'manual',
+                      title,
+                    },
+                  ],
                 }))
               }
             />
           </SoftCard>
         </div>
       </Reveal>
+
       {/* =============================== */}
       {/* MODAL — NOVO COMPROMISSO */}
       {/* =============================== */}
@@ -297,28 +317,31 @@ export default function WeeklyPlannerShell() {
       {/* MODAL — EDITAR COMPROMISSO */}
       {/* =============================== */}
       {editingAppointment && (
-  <ModalAppointmentForm
-    mode="edit"
-    initialDate={new Date(editingAppointment.dateKey)}
-    initialData={editingAppointment}
-    onSave={data =>
-      handleUpdateAppointment({
-        ...editingAppointment,
-        dateKey: data.dateKey,
-        title: data.title,
-        time: data.time,
-      })
-    }
-    onDelete={() => handleDeleteAppointment(editingAppointment.id)}
-    onCancel={() => setEditingAppointment(null)}
-  />
-)}
-
+        <ModalAppointmentForm
+          mode="edit"
+          initialDate={new Date(editingAppointment.dateKey)}
+          initialData={editingAppointment}
+          onSave={data =>
+            handleUpdateAppointment({
+              ...editingAppointment,
+              dateKey: data.dateKey,
+              title: data.title,
+              time: data.time,
+            })
+          }
+          onDelete={() => handleDeleteAppointment(editingAppointment.id)}
+          onCancel={() => setEditingAppointment(null)}
+        />
+      )}
+    </>
+  )
+}
 // ======================================================
-// COMPONENTE: QuickAddTaskInput
+// COMPONENTE — INPUT DE TAREFA
 // ======================================================
 function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   const [value, setValue] = useState('')
+
   return (
     <form
       onSubmit={e => {
@@ -329,7 +352,9 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
       }}
       className="mt-3 space-y-1"
     >
-      <label className="text-xs font-medium">Adicionar lembrete</label>
+      <label className="text-xs font-medium">
+        Adicionar lembrete
+      </label>
       <input
         className="w-full border p-2 rounded-xl bg-white"
         placeholder="Ex: Levar exame no pediatra"
@@ -341,7 +366,7 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
 }
 
 // ======================================================
-// COMPONENTE: ModalAppointmentForm
+// MODAL — CREATE / EDIT
 // ======================================================
 function ModalAppointmentForm({
   mode,
@@ -354,8 +379,12 @@ function ModalAppointmentForm({
   mode: 'create' | 'edit'
   initialDate: Date
   initialData?: Appointment
-  onSave: (data: { dateKey: string; title: string; time: string }) => void
-  onDelete?: (id: string) => void
+  onSave: (data: {
+    dateKey: string
+    title: string
+    time: string
+  }) => void
+  onDelete?: () => void
   onCancel: () => void
 }) {
   const [title, setTitle] = useState(initialData?.title ?? '')
@@ -365,12 +394,16 @@ function ModalAppointmentForm({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[900]">
       <div className="bg-white p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
-
         <h3 className="text-lg font-semibold">
           {mode === 'create' ? 'Novo compromisso' : 'Editar compromisso'}
         </h3>
 
-        <input type="date" value={dateKey} onChange={e => setDateKey(e.target.value)} className="w-full p-2 border rounded-xl" />
+        <input
+          type="date"
+          className="w-full p-2 border rounded-xl"
+          value={dateKey}
+          onChange={e => setDateKey(e.target.value)}
+        />
 
         <input
           className="w-full p-2 border rounded-xl"
@@ -390,14 +423,20 @@ function ModalAppointmentForm({
           {mode === 'edit' && onDelete && (
             <button
               className="text-red-500 text-sm"
-              onClick={() => onDelete(initialData!.id)}
+              onClick={() => onDelete()}
             >
               Excluir
             </button>
           )}
 
           <div className="ml-auto space-x-2">
-            <button className="px-4 py-2 bg-gray-200 rounded-xl" onClick={onCancel}>Cancelar</button>
+            <button
+              className="px-4 py-2 bg-gray-200 rounded-xl"
+              onClick={onCancel}
+            >
+              Cancelar
+            </button>
+
             <button
               className="px-4 py-2 bg-[var(--color-brand)] text-white rounded-xl"
               onClick={() =>
@@ -412,24 +451,28 @@ function ModalAppointmentForm({
             </button>
           </div>
         </div>
+
       </div>
     </div>
   )
 }
 
 // ======================================================
-// FUNÇÃO: gerar matriz mês
+// FUNÇÃO — GERAR MATRIZ DO MÊS
 // ======================================================
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
+
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
 
   const matrix: (Date | null)[] = []
+
   const offset = (firstDay.getDay() + 6) % 7
 
   for (let i = 0; i < offset; i++) matrix.push(null)
+
   for (let d = 1; d <= lastDay.getDate(); d++) {
     matrix.push(new Date(year, month, d))
   }
