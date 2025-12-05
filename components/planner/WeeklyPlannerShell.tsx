@@ -25,7 +25,7 @@ import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
-  dateKey: string     // <- ESSENCIAL para salvar no dia correto
+  dateKey: string        // <-- ESSENCIAL
   time: string
   title: string
   tag?: string
@@ -178,11 +178,8 @@ export default function WeeklyPlannerShell() {
   const handleAddAppointment = useCallback(
   (appointment: Omit<Appointment, 'id'>) => {
     const newAppointment: Appointment = {
+      ...appointment,
       id: Math.random().toString(36).slice(2, 9),
-      dateKey: appointment.dateKey,   // <-- AGORA SALVA A DATA CERTA
-      time: appointment.time,
-      title: appointment.title,
-      tag: appointment.tag,
     }
 
     setPlannerData(prev => ({
@@ -190,29 +187,21 @@ export default function WeeklyPlannerShell() {
       appointments: [...prev.appointments, newAppointment],
     }))
 
-      setPlannerData(prev => ({
-        ...prev,
-        appointments: [...prev.appointments, newAppointment],
-      }))
+    try {
+      track('planner.appointment_added', {
+        tab: 'meu-dia',
+        time: appointment.time ?? null,
+        dateKey: appointment.dateKey,
+      })
+    } catch {}
 
-      try {
-        track('planner.appointment_added', {
-          tab: 'meu-dia',
-          time: appointment.time ?? null,
-        })
-      } catch {
-        // ignora
-      }
+    try {
+      void updateXP(6)
+    } catch {}
 
-      try {
-        void updateXP(6)
-      } catch (e) {
-        console.error('[Planner] Erro ao atualizar XP por compromisso:', e)
-      }
-    },
-    [],
-  )
-
+  },
+  [],
+)
  const openModalForDate = (day: Date) => {
   const key = getBrazilDateKey(day);
 
@@ -435,22 +424,19 @@ export default function WeeklyPlannerShell() {
 
   // Agora a agenda filtra por dateKey = selectedDateKey
  const todaysAppointments = useMemo(() => {
-  if (!plannerData.appointments || !selectedDateKey) return [];
-
   return plannerData.appointments
     .filter(app => app.dateKey === selectedDateKey)
     .sort((a, b) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
+      if (!a.time && !b.time) return 0
+      if (!a.time) return 1
+      if (!b.time) return -1
 
-      const [ah, am] = a.time.split(':').map(Number);
-      const [bh, bm] = b.time.split(':').map(Number);
+      const [ah, am] = a.time.split(':').map(Number)
+      const [bh, bm] = b.time.split(':').map(Number)
 
-      if (ah !== bh) return ah - bh;
-      return am - bm;
-    });
-}, [plannerData.appointments, selectedDateKey]);
+      return ah !== bh ? ah - bh : am - bm
+    })
+}, [plannerData.appointments, selectedDateKey])
     ) {
       return []
     }
@@ -1044,56 +1030,37 @@ export default function WeeklyPlannerShell() {
               </button>
             </div>
 
-            <ModalAppointmentForm
-              dateLabel={modalDate.toLocaleDateString('pt-BR')}
-              onSubmit={data => {
-                if (!modalDate) return
+           <ModalAppointmentForm
+  onSubmit={data => {
+    const appointmentDateKey = modalDate
+      ? getBrazilDateKey(modalDate)
+      : selectedDateKey
 
-                const appointmentDateKey = getBrazilDateKey(modalDate)
-                const todayKey = getBrazilDateKey(new Date())
+    const todayKey = getBrazilDateKey(new Date())
 
-                // 1) Salva compromisso na agenda (sempre, com dateKey correto)
-                handleAddAppointment({
-                  dateKey: appointmentDateKey,
-                  time: data.time,
-                  title: data.title,
-                  tag: undefined,
-                })
+    // 1) Salva compromisso na AGENDA (sempre)
+    handleAddAppointment({
+      dateKey: appointmentDateKey,
+      time: data.time,
+      title: data.title,
+      tag: undefined,
+    })
 
-                // 2) Se for compromisso de HOJE, cria também lembrete rápido
-                if (
-                  appointmentDateKey === todayKey &&
-                  data.title?.trim()
-                ) {
-                  const label = data.time
-                    ? `${data.time} · ${data.title.trim()}`
-                    : data.title.trim()
-                  addTask(label, 'agenda')
-                }
+    // 2) Se for hoje → aparece também nos LEMBRETES RÁPIDOS
+    if (appointmentDateKey === todayKey && data.title?.trim()) {
+      const label = data.time
+        ? `${data.time} · ${data.title.trim()}`
+        : data.title.trim()
+      addTask(label, 'agenda')
+    }
 
-                setIsModalOpen(false)
-                try {
-                  track('planner.appointment_modal_saved', {
-                    tab: 'meu-dia',
-                  })
-                } catch {
-                  // ignora
-                }
-              }}
-              onCancel={() => {
-                setIsModalOpen(false)
-                try {
-                  track('planner.appointment_modal_cancelled', {
-                    tab: 'meu-dia',
-                  })
-                } catch {
-                  // ignora
-                  }
-              }}
-            />
-          </div>
-        </div>
-      )}
+    setIsModalOpen(false)
+    try {
+      track('planner.appointment_modal_saved', { tab: 'meu-dia' })
+    } catch {}
+  }}
+  onCancel={() => setIsModalOpen(false)}
+/>
 
       {/* MODAL DETALHE CONTEÚDO SALVO */}
       {selectedSavedContent && (
