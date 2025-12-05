@@ -509,6 +509,15 @@ export default function WeeklyPlannerShell() {
       })
   }, [plannerData.appointments, selectedDateKey])
 
+  // Mapa de compromissos por dia (para pontinhos no calendário)
+  const appointmentsByDateKey = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {}
+    for (const app of plannerData.appointments) {
+      map[app.dateKey] = (map[app.dateKey] || 0) + 1
+    }
+    return map
+  }, [plannerData.appointments])
+
   if (!isHydrated) return null
 
   const moodLabel: Record<string, string> = {
@@ -644,24 +653,35 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) =>
-                  day ? (
+                {generateMonthMatrix(selectedDate).map((day, i) => {
+                  if (!day) {
+                    return <div key={i} className="h-8 md:h-9" />
+                  }
+
+                  const dayKey = getBrazilDateKey(day)
+                  const isSelected = dayKey === selectedDateKey
+                  const appointmentCount = appointmentsByDateKey[dayKey] ?? 0
+                  const hasAppointments = appointmentCount > 0
+
+                  return (
                     <button
                       key={i}
                       type="button"
                       onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        getBrazilDateKey(day) === selectedDateKey
+                      className={`relative h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                        isSelected
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      {day.getDate()}
+                      <span>{day.getDate()}</span>
+
+                      {hasAppointments && (
+                        <span className="absolute bottom-[2px] left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[var(--color-brand)]" />
+                      )}
                     </button>
-                  ) : (
-                    <div key={i} className="h-8 md:h-9" />
-                  ),
-                )}
+                  )
+                })}
               </div>
             </div>
           </SoftCard>
@@ -791,7 +811,7 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar de mim
@@ -805,12 +825,12 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             handleOpenQuickAction('family')
                           }
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duração-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
                               Cuidar do meu filho
@@ -1057,7 +1077,12 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4 pb-10">
-              <WeekView weekData={generateWeekData(selectedDate)} />
+              <WeekView
+                weekData={generateWeekData(
+                  selectedDate,
+                  plannerData.appointments,
+                )}
+              />
             </div>
           )}
         </div>
@@ -1640,7 +1665,7 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-function generateWeekData(base: Date) {
+function generateWeekData(base: Date, appointments: Appointment[]) {
   const monday = new Date(base)
   const day = monday.getDay()
   monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
@@ -1649,12 +1674,17 @@ function generateWeekData(base: Date) {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
 
+    const dateKey = getBrazilDateKey(d)
+    const agendaCount = appointments.filter(
+      app => app.dateKey === dateKey,
+    ).length
+
     return {
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
         weekday: 'long',
       }),
-      agendaCount: 0,
+      agendaCount,
       top3Count: 0,
       careCount: 0,
       familyCount: 0,
