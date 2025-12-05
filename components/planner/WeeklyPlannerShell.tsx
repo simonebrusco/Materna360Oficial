@@ -1094,56 +1094,56 @@ export default function WeeklyPlannerShell() {
               </button>
             </div>
 
-            <ModalAppointmentForm
-              mode="create"
-              initialDateKey={getBrazilDateKey(modalDate)}
-              onSubmit={data => {
-                const appointmentDateKey = data.dateKey
-                const todayKey = getBrazilDateKey(new Date())
+           <ModalAppointmentForm
+        mode="create"
+        initialDateKey={getBrazilDateKey(modalDate)}
+        onSubmit={data => {
+          const appointmentDateKey = data.dateKey
 
-                // 1) Salva compromisso na AGENDA (sempre)
-                handleAddAppointment({
-                  dateKey: appointmentDateKey,
-                  time: data.time,
-                  title: data.title,
-                  tag: undefined,
-                })
+          // 1) Salva compromisso na AGENDA (sempre)
+          handleAddAppointment({
+            dateKey: appointmentDateKey,
+            time: data.time,
+            title: data.title,
+            tag: undefined,
+          })
 
-                // 2) Se for HOJE (data real), também aparece nos lembretes rápidos
-                if (
-                  appointmentDateKey === todayKey &&
-                  data.title.trim()
-                ) {
-                  const label = data.time
-                    ? `${data.time} · ${data.title.trim()}`
-                    : data.title.trim()
-                  addTask(label, 'agenda')
-                }
+          // 2) Garante que a página esteja olhando para o dia do compromisso
+          setSelectedDateKey(appointmentDateKey)
 
-                setIsModalOpen(false)
+          // 3) (Opcional) se for hoje, também vira lembrete rápido
+          const todayKey = getBrazilDateKey(new Date())
+          if (
+            appointmentDateKey === todayKey &&
+            data.title.trim()
+          ) {
+            const label = data.time
+              ? `${data.time} · ${data.title.trim()}`
+              : data.title.trim()
+            addTask(label, 'agenda')
+          }
 
-                try {
-                  track('planner.appointment_modal_saved', {
-                    tab: 'meu-dia',
-                  })
-                } catch {
-                  // ignora
-                }
-              }}
-              onCancel={() => {
-                setIsModalOpen(false)
-                try {
-                  track('planner.appointment_modal_cancelled', {
-                    tab: 'meu-dia',
-                  })
-                } catch {
-                  // ignora
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
+          setIsModalOpen(false)
+
+          try {
+            track('planner.appointment_modal_saved', {
+              tab: 'meu-dia',
+            })
+          } catch {
+            // ignora
+          }
+        }}
+        onCancel={() => {
+          setIsModalOpen(false)
+          try {
+            track('planner.appointment_modal_cancelled', {
+              tab: 'meu-dia',
+            })
+          } catch {
+            // ignora
+          }
+        }}
+      />
 
       {/* ======================================================= */}
       {/* MODAL — EDITAR COMPROMISSO */}
