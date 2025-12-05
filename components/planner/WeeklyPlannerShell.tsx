@@ -916,6 +916,128 @@ function QuickListModal({
     </div>
   )
 }
+/* ============================================================
+   FORM DO MODAL DE COMPROMISSO (CRIAR / EDITAR)
+   ============================================================ */
+type ModalAppointmentFormProps = {
+  mode: 'create' | 'edit'
+  initialDateKey: string
+  initialTitle?: string
+  initialTime?: string
+  onSubmit: (data: { dateKey: string; title: string; time: string }) => void
+  onCancel: () => void
+  onDelete?: () => void
+}
+
+function ModalAppointmentForm({
+  mode,
+  initialDateKey,
+  initialTitle,
+  initialTime,
+  onSubmit,
+  onCancel,
+  onDelete,
+}: ModalAppointmentFormProps) {
+  const [dateKey, setDateKey] = useState(initialDateKey)
+  const [title, setTitle] = useState(initialTitle ?? '')
+  const [time, setTime] = useState(initialTime ?? '')
+
+  const formattedLabelDate = useMemo(() => {
+    const [y, m, d] = dateKey.split('-').map(Number)
+    if (!y || !m || !d) return ''
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
+  }, [dateKey])
+
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault()
+        if (!title.trim()) return
+        onSubmit({
+          dateKey,
+          title: title.trim(),
+          time,
+        })
+      }}
+      className="space-y-4"
+    >
+      {/* Data */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Data do compromisso
+        </label>
+        <input
+          type="date"
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          value={dateKey}
+          onChange={e => setDateKey(e.target.value)}
+        />
+        {formattedLabelDate && (
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            {formattedLabelDate}
+          </p>
+        )}
+      </div>
+
+      {/* Título */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Título
+        </label>
+        <input
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          placeholder="Ex: Consulta médica..."
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+        />
+      </div>
+
+      {/* Horário */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Horário
+        </label>
+        <input
+          type="time"
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          value={time}
+          onChange={e => setTime(e.target.value)}
+        />
+      </div>
+
+      <div className="flex justify-between items-center pt-2 gap-3">
+        {/* Botão excluir */}
+        {mode === 'edit' && onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-xs text-[var(--color-text-muted)] hover:text-red-500 underline"
+          >
+            Excluir compromisso
+          </button>
+        )}
+
+        <div className="flex justify-end gap-3 flex-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+          >
+            {mode === 'create'
+              ? 'Salvar compromisso'
+              : 'Atualizar compromisso'}
+          </button>
+        </div>
+      </div>
+    </form>
+  )
+}
 
 /* ============================
    INPUT RÁPIDO (LEMBRETES)
