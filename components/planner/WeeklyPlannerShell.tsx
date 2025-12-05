@@ -366,61 +366,6 @@ export default function WeeklyPlannerShell() {
     })
   }
 
-  // NOVO: editar texto de um lembrete
-  const editTaskTitle = (id: string) => {
-    setPlannerData(prev => {
-      const task = prev.tasks.find(t => t.id === id)
-      if (!task) return prev
-
-      const nextTitle = window.prompt(
-        'Editar lembrete',
-        task.title,
-      )
-
-      if (!nextTitle || !nextTitle.trim()) return prev
-
-      const updatedTasks = prev.tasks.map(t =>
-        t.id === id ? { ...t, title: nextTitle.trim() } : t,
-      )
-
-      try {
-        track('planner.task_edited', {
-          tab: 'meu-dia',
-          id,
-        })
-      } catch {
-        // ignora
-      }
-
-      return {
-        ...prev,
-        tasks: updatedTasks,
-      }
-    })
-  }
-
-  // NOVO: excluir lembrete individual
-  const deleteTask = (id: string) => {
-    const confirmDelete = window.confirm(
-      'Tem certeza que deseja excluir este lembrete?',
-    )
-    if (!confirmDelete) return
-
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.filter(t => t.id !== id),
-    }))
-
-    try {
-      track('planner.task_deleted', {
-        tab: 'meu-dia',
-        id,
-      })
-    } catch {
-      // ignora
-    }
-  }
-
   const handleViewModeChange = (mode: 'day' | 'week') => {
     setViewMode(mode)
 
@@ -540,25 +485,29 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
-  // NOVO: agenda geral ordenada (data + horário)
-  const sortedAppointments = useMemo(() => {
-    const list = [...plannerData.appointments]
+  const formattedSelectedDate = useMemo(
+    () =>
+      selectedDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+      }),
+    [selectedDate],
+  )
 
-    return list.sort((a, b) => {
-      if (a.dateKey !== b.dateKey) {
-        return a.dateKey.localeCompare(b.dateKey)
-      }
+  const todaysAppointments = useMemo(() => {
+    return plannerData.appointments
+      .filter(app => app.dateKey === selectedDateKey)
+      .sort((a, b) => {
+        if (!a.time && !b.time) return 0
+        if (!a.time) return 1
+        if (!b.time) return -1
 
-      if (!a.time && !b.time) return 0
-      if (!a.time) return 1
-      if (!b.time) return -1
+        const [ah, am] = a.time.split(':').map(Number)
+        const [bh, bm] = b.time.split(':').map(Number)
 
-      const [ah, am] = a.time.split(':').map(Number)
-      const [bh, bm] = b.time.split(':').map(Number)
-
-      return ah !== bh ? ah - bh : am - bm
-    })
-  }, [plannerData.appointments])
+        return ah !== bh ? ah - bh : am - bm
+      })
+  }, [plannerData.appointments, selectedDateKey])
 
   if (!isHydrated) return null
 
@@ -695,35 +644,24 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) => {
-                  if (!day) {
-                    return <div key={i} className="h-8 md:h-9" />
-                  }
-
-                  const dayKey = getBrazilDateKey(day)
-                  const isSelected = dayKey === selectedDateKey
-                  const hasAppointments = plannerData.appointments.some(
-                    app => app.dateKey === dayKey,
-                  )
-
-                  return (
+                {generateMonthMatrix(selectedDate).map((day, i) =>
+                  day ? (
                     <button
                       key={i}
                       type="button"
                       onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex flex-col items-center justify-center transition-all border ${
-                        isSelected
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border relative ${
+                        getBrazilDateKey(day) === selectedDateKey
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      <span>{day.getDate()}</span>
-                      {hasAppointments && (
-                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
-                      )}
+                      {day.getDate()}
                     </button>
-                  )
-                })}
+                  ) : (
+                    <div key={i} className="h-8 md:h-9" />
+                  ),
+                )}
               </div>
             </div>
           </SoftCard>
@@ -740,8 +678,8 @@ export default function WeeklyPlannerShell() {
                       Lembretes rápidos
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui
-                      como uma lista simples para o seu dia.
+                      Tudo que você salvar nos atalhos aparece aqui como
+                      uma lista simples para o seu dia.
                     </p>
 
                     {/* Lista de tarefas */}
@@ -764,42 +702,16 @@ export default function WeeklyPlannerShell() {
                               : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
-                          <div className="flex items-center gap-2 flex-1">
-                            <span
-                              className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                                task.done
-                                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                              }`}
-                            >
-                              {task.done ? '✓' : ''}
-                            </span>
-                            <span>{task.title}</span>
-                          </div>
-
-                          {/* Ações de edição / exclusão */}
-                          <div className="flex items-center gap-2 ml-2">
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                editTaskTitle(task.id)
-                              }}
-                              className="text-[10px] md:text-[11px] font-medium text-[var(--color-brand)] hover:underline"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                deleteTask(task.id)
-                              }}
-                              className="text-[10px] md:text-[11px] font-medium text-red-500 hover:underline"
-                            >
-                              Excluir
-                            </button>
-                          </div>
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                              task.done
+                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                            }`}
+                          >
+                            {task.done ? '✓' : ''}
+                          </span>
+                          <span>{task.title}</span>
                         </button>
                       ))}
                     </div>
@@ -911,7 +823,7 @@ export default function WeeklyPlannerShell() {
                 </div>
               </section>
 
-              {/* NOVO CARD — AGENDA & COMPROMISSOS */}
+              {/* COMPROMISSOS DO DIA */}
               <section>
                 <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -920,11 +832,14 @@ export default function WeeklyPlannerShell() {
                         Agenda
                       </p>
                       <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                        Agenda & compromissos
+                        Compromissos do dia
                       </h2>
                       <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Veja todos os compromissos que você já marcou no
-                        Materna360, em ordem de data e horário.
+                        Veja rapidamente o que você marcou para{' '}
+                        <span className="font-semibold text-[var(--color-text-main)]">
+                          {formattedSelectedDate}
+                        </span>
+                        .
                       </p>
                     </div>
 
@@ -939,53 +854,42 @@ export default function WeeklyPlannerShell() {
                     </button>
                   </div>
 
-                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                    {sortedAppointments.length === 0 && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {todaysAppointments.length === 0 && (
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Você ainda não marcou nenhum compromisso. Use o
-                        botão de mais ou o atalho de Agenda para adicionar
-                        o primeiro.
+                        Você ainda não marcou compromissos para este dia.
+                        Use o botão de mais ou o atalho de Agenda para
+                        adicionar o primeiro.
                       </p>
                     )}
 
-                    {sortedAppointments.map(appointment => {
-                      const [y, m, d] = appointment.dateKey
-                        .split('-')
-                        .map(Number)
-                      const dateLabel =
-                        y && m && d
-                          ? new Date(y, m - 1, d).toLocaleDateString(
-                              'pt-BR',
-                            )
-                          : appointment.dateKey
-
-                      return (
-                        <button
-                          key={appointment.id}
-                          type="button"
-                          onClick={() =>
-                            openEditModalForAppointment(appointment)
-                          }
-                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
-                              {appointment.time || '--:--'}
+                    {todaysAppointments.map(appointment => (
+                      <button
+                        key={appointment.id}
+                        type="button"
+                        onClick={() =>
+                          openEditModalForAppointment(appointment)
+                        }
+                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
+                            {appointment.time || '--:--'}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {appointment.title || 'Compromisso'}
                             </span>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {appointment.title || 'Compromisso'}
-                              </span>
-                              <span className="text-[11px] text-[var(--color-text-muted)]">
-                                {appointment.time ||
-                                  'Sem horário definido'}{' '}
-                                · {dateLabel}
-                              </span>
-                            </div>
+                            <span className="text-[11px] text-[var(--color-text-muted)]">
+                              {appointment.time ||
+                                'Sem horário definido'}{' '}
+                              ·{' '}
+                              {selectedDate.toLocaleDateString('pt-BR')}
+                            </span>
                           </div>
-                        </button>
-                      )
-                    })}
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </SoftCard>
               </section>
@@ -1153,7 +1057,12 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4 pb-10">
-              <WeekView weekData={generateWeekData(selectedDate)} />
+              <WeekView
+                weekData={generateWeekData(
+                  selectedDate,
+                  plannerData.appointments,
+                )}
+              />
             </div>
           )}
         </div>
@@ -1203,11 +1112,15 @@ export default function WeeklyPlannerShell() {
                   tag: undefined,
                 })
 
-                // 2) Ajusta o dia selecionado para o dia do compromisso
+                // 2) Garante que a página esteja olhando para o dia do compromisso
                 setSelectedDateKey(appointmentDateKey)
 
-                // 3) Cria lembrete rápido vinculado à agenda
-                if (data.title.trim()) {
+                // 3) Se for hoje, também vira lembrete rápido
+                const todayKey = getBrazilDateKey(new Date())
+                if (
+                  appointmentDateKey === todayKey &&
+                  data.title.trim()
+                ) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
@@ -1713,8 +1626,18 @@ function QuickListModal({
 }
 
 // =======================================================
-// HELPERS: CALENDÁRIO / SEMANA
+// TIPO / HELPERS: CALENDÁRIO / SEMANA
 // =======================================================
+type WeekDayData = {
+  dateKey: string
+  dayNumber: number
+  dayName: string
+  agendaCount: number
+  top3Count: number
+  careCount: number
+  familyCount: number
+}
+
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -1732,7 +1655,10 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-function generateWeekData(base: Date) {
+function generateWeekData(
+  base: Date,
+  appointments: Appointment[],
+): WeekDayData[] {
   const monday = new Date(base)
   const day = monday.getDay()
   monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
@@ -1741,15 +1667,31 @@ function generateWeekData(base: Date) {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
 
+    const dateKey = getBrazilDateKey(d)
+
+    // Compromissos daquele dia
+    const dayAppointments = appointments.filter(
+      app => app.dateKey === dateKey,
+    )
+
+    // Tasks daquele dia (carrega direto do storage)
+    const dayTasks: TaskItem[] =
+      load(`planner/tasks/${dateKey}`, []) ?? []
+
+    const top3Count = dayTasks.filter(t => t.origin === 'top3').length
+    const careCount = dayTasks.filter(t => t.origin === 'selfcare').length
+    const familyCount = dayTasks.filter(t => t.origin === 'family').length
+
     return {
+      dateKey,
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
-        weekday: 'long',
+        weekday: 'short',
       }),
-      agendaCount: 0,
-      top3Count: 0,
-      careCount: 0,
-      familyCount: 0,
+      agendaCount: dayAppointments.length,
+      top3Count,
+      careCount,
+      familyCount,
     }
   })
 }
