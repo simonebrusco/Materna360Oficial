@@ -74,8 +74,7 @@ export default function WeeklyPlannerShell() {
   // ESTADO PRINCIPAL
   // ===========================
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
-  // dia que a AGENDA está mostrando (podem ser iguais, mas mantemos separado)
-  const [agendaDateKey, setAgendaDateKey] = useState<string>('')
+  const [agendaDateKey, setAgendaDateKey] = useState<string>('') // dia focado na AGENDA
 
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -149,21 +148,32 @@ export default function WeeklyPlannerShell() {
   // ===========================
   // LOAD DATA (localStorage)
   // ===========================
+  // 1) Compromissos: carregamos UMA VEZ só depois da hidratação
+  useEffect(() => {
+    if (!isHydrated) return
+    const loadedAppointments: Appointment[] =
+      load('planner/appointments/all', []) ?? []
+
+    setPlannerData(prev => ({
+      ...prev,
+      appointments: loadedAppointments,
+    }))
+  }, [isHydrated])
+
+  // 2) Tarefas + notas: por dia selecionado
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
-    const loadedAppointments: Appointment[] =
-      load('planner/appointments/all', []) ?? []
     const loadedTasks: TaskItem[] =
       load(`planner/tasks/${selectedDateKey}`, []) ?? []
     const loadedNotes: string =
       load(`planner/notes/${selectedDateKey}`, '') ?? ''
 
-    setPlannerData({
-      appointments: loadedAppointments,
+    setPlannerData(prev => ({
+      ...prev,
       tasks: loadedTasks,
       notes: loadedNotes,
-    })
+    }))
   }, [selectedDateKey, isHydrated])
 
   // ===========================
@@ -491,7 +501,6 @@ export default function WeeklyPlannerShell() {
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
 
-  // Data que a AGENDA mostra (texto "Compromissos do dia")
   const formattedAgendaDate = useMemo(() => {
     if (!agendaDateKey) return ''
     const [year, month, day] = agendaDateKey.split('-').map(Number)
