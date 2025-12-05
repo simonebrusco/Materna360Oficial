@@ -25,7 +25,7 @@ import { updateXP } from '@/app/lib/xp'
 
 type Appointment = {
   id: string
-  dateKey: string         // <-- ESSENCIAL
+  dateKey: string     // <- ESSENCIAL para salvar no dia correto
   time: string
   title: string
   tag?: string
