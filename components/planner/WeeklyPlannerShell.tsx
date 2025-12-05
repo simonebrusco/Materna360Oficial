@@ -660,26 +660,86 @@ export default function WeeklyPlannerShell() {
         </div>
       </Reveal>
 
-      {/* MODAL NOVO COMPROMISSO */}
-      {isModalOpen && modalDate && (
-        <ModalAppointmentFormWrapper
-          mode="create"
-          initialDate={modalDate}
-          onSave={handleAddAppointment}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
+    {/* MODAL NOVO COMPROMISSO */}
+{isModalOpen && modalDate && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-[var(--color-text-main)]">
+          Novo compromisso – {modalDate.toLocaleDateString('pt-BR')}
+        </h3>
 
-      {/* MODAL EDITAR COMPROMISSO */}
-      {editingAppointment && (
-        <ModalAppointmentFormWrapper
-          mode="edit"
-          appointment={editingAppointment}
-          onSave={handleUpdateAppointment}
-          onDelete={handleDeleteAppointment}
-          onClose={() => setEditingAppointment(null)}
-        />
-      )}
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(false)}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+        >
+          ✕
+        </button>
+      </div>
+
+      <ModalAppointmentForm
+        mode="create"
+        initialDateKey={getBrazilDateKey(modalDate)}
+        onSubmit={data => {
+          handleAddAppointment({
+            dateKey: data.dateKey,
+            time: data.time,
+            title: data.title,
+          })
+          setIsModalOpen(false)
+        }}
+        onCancel={() => setIsModalOpen(false)}
+      />
+    </div>
+  </div>
+)}
+
+     {/* MODAL EDIÇÃO COMPROMISSO */}
+{editingAppointment && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-[var(--color-text-main)]">
+          Editar compromisso
+        </h3>
+
+        <button
+          type="button"
+          onClick={() => setEditingAppointment(null)}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+        >
+          ✕
+        </button>
+      </div>
+
+      <ModalAppointmentForm
+        mode="edit"
+        initialDateKey={editingAppointment.dateKey}
+        initialTitle={editingAppointment.title}
+        initialTime={editingAppointment.time}
+        onSubmit={data => {
+          const updated = {
+            ...editingAppointment,
+            dateKey: data.dateKey,
+            time: data.time,
+            title: data.title,
+          }
+
+          handleUpdateAppointment(updated)
+          setEditingAppointment(null)
+        }}
+        onCancel={() => setEditingAppointment(null)}
+        onDelete={() => {
+          const ok = window.confirm('Tem certeza que deseja excluir?')
+          if (!ok) return
+          handleDeleteAppointment(editingAppointment.id)
+          setEditingAppointment(null)
+        }}
+      />
+    </div>
+  </div>
+)}
 
       {/* MODAL CONTEÚDO SALVO */}
       {selectedSavedContent && (
