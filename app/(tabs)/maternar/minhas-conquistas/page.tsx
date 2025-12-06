@@ -50,7 +50,6 @@ const SEALS = [
 
 type SealId = (typeof SEALS)[number]['id']
 
-// Presença / intensidade visual do progresso mensal
 type DayIntensity = 'none' | 'low' | 'medium' | 'high'
 
 type WeekSummary = {
@@ -77,7 +76,7 @@ function getMaxDayXp(history: XpHistory): number {
   return Math.max(...values)
 }
 
-// Regras de desbloqueio dos selos – 1ª versão simples
+// Regras de desbloqueio dos selos
 function computeUnlockedSeals(xp: XpSnapshot | null, history: XpHistory): Set<SealId> {
   const unlocked = new Set<SealId>()
   if (!xp) return unlocked
@@ -110,8 +109,8 @@ function computeUnlockedSeals(xp: XpSnapshot | null, history: XpHistory): Set<Se
     unlocked.add('rotina')
   }
 
-  // 6. Presença real – sequência longa OU muitos dias presentes
-  if (xp.streak >= 10 || daysWithPresence >= 20) {
+  // 6. Presença real – sequência longa E muitos dias presentes (mais especial)
+  if (xp.streak >= 10 && daysWithPresence >= 20) {
     unlocked.add('presenca')
   }
 
@@ -165,7 +164,7 @@ export default function MinhasConquistasPage() {
   useEffect(() => {
     const today = new Date()
     const year = today.getFullYear()
-    const month = today.getMonth() // 0–11
+    const month = today.getMonth()
 
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const maxDays = Math.min(28, daysInMonth)
@@ -209,17 +208,14 @@ export default function MinhasConquistasPage() {
     const wasDone = !!mission.done
     const delta = wasDone ? -mission.xp : mission.xp
 
-    // Atualiza missões visualmente
     setMissions((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, done: !item.done } : item
       )
     )
 
-    // Limpa sugestão automática se a mãe mexer nas missões
     setAutoSuggestion(null)
 
-    // Atualiza XP com fallback seguro (sempre mexe nos números)
     setXp((prev) => {
       const base: XpSnapshot = prev ?? { today: 0, total: 0, streak: 0 }
 
@@ -287,7 +283,7 @@ export default function MinhasConquistasPage() {
   const streak = xp?.streak ?? 0
 
   const xpProgressPercent =
-    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100) // meta diária aproximada
+    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100)
 
   const hasAnyMissionDone = completedMissions > 0 || todayXp > 0
 
@@ -322,7 +318,8 @@ export default function MinhasConquistasPage() {
               </div>
 
               <div className="relative z-10 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* HEADER alinhado à esquerda com o badge logo abaixo */}
+                <div className="space-y-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                       Painel da sua jornada
@@ -336,10 +333,9 @@ export default function MinhasConquistasPage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-start gap-1.5">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
                       <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" decorative />
-                      {/* Nível simples em função do total de XP */}
                       Nível {Math.max(1, Math.floor(totalXp / 400) + 1)} · Jornada em andamento
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
@@ -706,7 +702,6 @@ export default function MinhasConquistasPage() {
             </SoftCard>
           </RevealSection>
 
-          {/* Rodapé motivacional geral */}
           <MotivationalFooter routeKey="maternar-minhas-conquistas" />
         </div>
       </ClientOnly>
