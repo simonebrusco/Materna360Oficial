@@ -67,7 +67,7 @@ const moodOptions: MoodOption[] = [
     id: 'sobrecarregada',
     label: 'Sobrecarregada',
     description: 'Muita coisa ao mesmo tempo. Você não está sozinha nisso.',
-    icon: 'alert',
+    icon: 'filters', // <- trocado de 'alert' para 'filters'
   },
   {
     id: 'grata',
@@ -673,7 +673,7 @@ export default function ComoEstouHojePage() {
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {/* Minha semana emocional */}
-                <div className="space-y-3 rounded-2xl border border-[#ffd8e6]/70 bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                <div className="space-y-3 rounded-2xl border border-[#ffd8e6]/70 bg.white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff005e]/90">
                     Minha semana emocional
                   </p>
@@ -758,7 +758,7 @@ export default function ComoEstouHojePage() {
           </SoftCard>
 
           {/* BLOCO 3 — EXPLICAÇÃO SUAVE (mantido) */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border.white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
