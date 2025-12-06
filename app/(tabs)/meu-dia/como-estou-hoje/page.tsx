@@ -14,6 +14,7 @@ import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 import { updateXP } from '@/app/lib/xp'
+import { useDayEmotion } from '@/app/store/useDayEmotion'
 
 type WeeklyInsight = {
   title: string
@@ -219,7 +220,11 @@ export default function ComoEstouHojePage(props: {
   searchParams?: Promise<Record<string, string | string[]>>
 }) {
   const [isHydrated, setIsHydrated] = useState(false)
-  const [selectedHumor, setSelectedHumor] = useState<string | null>(null)
+
+  // Agora o humor vem do estado global
+  const { mood, setMood } = useDayEmotion()
+
+  // Energia e notas continuam locais
   const [selectedEnergy, setSelectedEnergy] = useState<string | null>(null)
   const [dayNotes, setDayNotes] = useState('')
 
@@ -293,21 +298,18 @@ export default function ComoEstouHojePage(props: {
     return () => clearTimeout(t)
   }, [sectionToOpen, refsReady])
 
-  // Load persisted data (humor/energia/notas + limite diário de insight)
+  // Load persisted data (energia/notas + limite diário de insight)
   useEffect(() => {
     if (!isHydrated) return
 
-    const humorKey = `como-estou-hoje:${currentDateKey}:humor`
     const energyKey = `como-estou-hoje:${currentDateKey}:energy`
     const notesKey = `como-estou-hoje:${currentDateKey}:notes`
     const dailyInsightCountKey = `como-estou-hoje:${currentDateKey}:daily_insight_count`
 
-    const savedHumor = load(humorKey)
     const savedEnergy = load(energyKey)
     const savedNotes = load(notesKey)
     const savedDailyInsightCountRaw = load(dailyInsightCountKey)
 
-    if (typeof savedHumor === 'string') setSelectedHumor(savedHumor)
     if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
     if (typeof savedNotes === 'string') setDayNotes(savedNotes)
 
@@ -325,13 +327,13 @@ export default function ComoEstouHojePage(props: {
 
   const emotionalContext: EmotionalContext = useMemo(
     () => ({
-      mood: selectedHumor,
+      mood,
       energy: selectedEnergy,
       hasNotes: !!dayNotes.trim(),
       notesPreview: dayNotes.trim() ? dayNotes.trim().slice(0, 160) : undefined,
       dateKey: currentDateKey,
     }),
-    [selectedHumor, selectedEnergy, dayNotes, currentDateKey],
+    [mood, selectedEnergy, dayNotes, currentDateKey],
   )
 
   // Insight semanal (já usando contexto)
@@ -358,10 +360,8 @@ export default function ComoEstouHojePage(props: {
     return () => {
       isMounted = false
     }
-    // não dependemos de dayNotes change o tempo todo — apenas do estado
-    // carregado para o dia atual (refsReady + humor/energia)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refsReady, selectedHumor, selectedEnergy, currentDateKey])
+  }, [refsReady, mood, selectedEnergy, currentDateKey])
 
   // Insight diário (também contextual) + limite diário persistente
   useEffect(() => {
@@ -381,7 +381,7 @@ export default function ComoEstouHojePage(props: {
         const result = await fetchDailyEmotionalInsight(emotionalContext)
         if (isMounted) {
           setDailyInsight(result)
-          setUsedDailyInsightToday((prev) => {
+          setUsedDailyInsightToday(prev => {
             const next = prev + 1
             save(dailyInsightCountKey, next)
             return next
@@ -399,48 +399,54 @@ export default function ComoEstouHojePage(props: {
     return () => {
       isMounted = false
     }
-    // mesma lógica: roda quando contexto base do dia está pronto
-    // e respeita o limite diário
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refsReady, selectedHumor, selectedEnergy, currentDateKey, usedDailyInsightToday])
+  }, [refsReady, mood, selectedEnergy, currentDateKey, usedDailyInsightToday])
 
   const handleHumorSelect = (humor: string) => {
-    setSelectedHumor(selectedHumor === humor ? null : humor)
-    if (selectedHumor !== humor) {
-      const humorKey = `como-estou-hoje:${currentDateKey}:humor`
-      save(humorKey, humor)
-      try {
-        track('mood.registered', {
-          tab: 'como-estou-hoje',
-          mood: humor,
-        })
-      } catch {
-        // ignora
+    setMood(prev => {
+      const next = prev === humor ? null : humor
+
+      if (next && next !== prev) {
+        const humorKey = `como-estou-hoje:${currentDateKey}:humor`
+        save(humorKey, next)
+
+        try {
+          track('mood.registered', {
+            tab: 'como-estou-hoje',
+            mood: next,
+          })
+        } catch {
+          // ignora
+        }
+
+        // Pontos por registrar humor
+        try {
+          void updateXP(10)
+        } catch (e) {
+          console.error(
+            '[Como Estou Hoje] Erro ao atualizar XP de humor:',
+            e,
+          )
+        }
+
+        toast.success('Humor registrado!')
       }
 
-      // Pontos por registrar humor
-      try {
-        void updateXP(10)
-      } catch (e) {
-        console.error(
-          '[Como Estou Hoje] Erro ao atualizar XP de humor:',
-          e,
-        )
-      }
-
-      toast.success('Humor registrado!')
-    }
+      return next
+    })
   }
 
   const handleEnergySelect = (energy: string) => {
-    setSelectedEnergy(selectedEnergy === energy ? null : energy)
-    if (selectedEnergy !== energy) {
+    const next = selectedEnergy === energy ? null : energy
+    setSelectedEnergy(next)
+
+    if (next !== selectedEnergy && next) {
       const energyKey = `como-estou-hoje:${currentDateKey}:energy`
-      save(energyKey, energy)
+      save(energyKey, next)
       try {
         track('energy.registered', {
           tab: 'como-estou-hoje',
-          energy,
+          energy: next,
         })
       } catch {
         // ignora
@@ -456,7 +462,7 @@ export default function ComoEstouHojePage(props: {
         )
       }
 
-      toast.success('Energia registrada!')
+      toast.success('Energia registrado!')
     }
   }
 
@@ -513,7 +519,7 @@ export default function ComoEstouHojePage(props: {
         text: insightToSave.body,
         gentleReminder: insightToSave.gentleReminder,
         dateKey: currentDateKey,
-        mood: selectedHumor,
+        mood,
         energy: selectedEnergy,
       },
     })
@@ -589,7 +595,7 @@ export default function ComoEstouHojePage(props: {
             aria-label="Como você está hoje"
           >
             <Reveal>
-              <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg.white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8">
+              <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8">
                 {/* Glows */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
                   <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
@@ -640,21 +646,25 @@ export default function ComoEstouHojePage(props: {
                           Meu humor
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {['Muito bem', 'Bem', 'Neutro', 'Cansada', 'Exausta'].map(
-                            (humor) => (
-                              <button
-                                key={humor}
-                                onClick={() => handleHumorSelect(humor)}
-                                className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
-                                  selectedHumor === humor
-                                    ? 'bg-[#ff005e] text-white shadow-md'
-                                    : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
-                                }`}
-                              >
-                                {humor}
-                              </button>
-                            ),
-                          )}
+                          {[
+                            'Muito bem',
+                            'Bem',
+                            'Neutro',
+                            'Cansada',
+                            'Exausta',
+                          ].map(option => (
+                            <button
+                              key={option}
+                              onClick={() => handleHumorSelect(option)}
+                              className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                                mood === option
+                                  ? 'bg-[#ff005e] text-white shadow-md'
+                                  : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
@@ -664,7 +674,7 @@ export default function ComoEstouHojePage(props: {
                           Minha energia
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {['Alta', 'Média', 'Baixa'].map((energy) => (
+                          {['Alta', 'Média', 'Baixa'].map(energy => (
                             <button
                               key={energy}
                               onClick={() => handleEnergySelect(energy)}
@@ -716,7 +726,7 @@ export default function ComoEstouHojePage(props: {
                             </label>
                             <textarea
                               value={dayNotes}
-                              onChange={(e) => setDayNotes(e.target.value)}
+                              onChange={e => setDayNotes(e.target.value)}
                               onFocus={() => {
                                 try {
                                   track('day_notes.focused', {
@@ -743,7 +753,7 @@ export default function ComoEstouHojePage(props: {
 
                           {/* Histórico de notas (origin: como-estou-hoje) */}
                           {getByOrigin('como-estou-hoje').filter(
-                            (item) => item.type === 'note',
+                            item => item.type === 'note',
                           ).length > 0 && (
                             <div className="pt-3 border-t border-[#ffd8e6] space-y-2">
                               <p className="text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide">
@@ -751,8 +761,8 @@ export default function ComoEstouHojePage(props: {
                               </p>
                               <ul className="space-y-2">
                                 {getByOrigin('como-estou-hoje')
-                                  .filter((item) => item.type === 'note')
-                                  .map((item) => (
+                                  .filter(item => item.type === 'note')
+                                  .map(item => (
                                     <li
                                       key={item.id}
                                       className="rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/50 px-3 py-2 text-xs md:text-sm text-[#545454]"
