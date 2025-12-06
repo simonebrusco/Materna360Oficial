@@ -298,17 +298,23 @@ export default function ComoEstouHojePage(props: {
     return () => clearTimeout(t)
   }, [sectionToOpen, refsReady])
 
-  // Load persisted data (energia/notas + limite diário de insight)
+  // Load persisted data (humor/energia/notas + limite diário de insight)
   useEffect(() => {
     if (!isHydrated) return
 
+    const humorKey = `como-estou-hoje:${currentDateKey}:humor`
     const energyKey = `como-estou-hoje:${currentDateKey}:energy`
     const notesKey = `como-estou-hoje:${currentDateKey}:notes`
     const dailyInsightCountKey = `como-estou-hoje:${currentDateKey}:daily_insight_count`
 
+    const savedHumor = load(humorKey)
     const savedEnergy = load(energyKey)
     const savedNotes = load(notesKey)
     const savedDailyInsightCountRaw = load(dailyInsightCountKey)
+
+    if (typeof savedHumor === 'string') {
+      setMood(savedHumor)
+    }
 
     if (typeof savedEnergy === 'string') setSelectedEnergy(savedEnergy)
     if (typeof savedNotes === 'string') setDayNotes(savedNotes)
@@ -323,7 +329,7 @@ export default function ComoEstouHojePage(props: {
     }
 
     setRefsReady(true)
-  }, [isHydrated, currentDateKey])
+  }, [isHydrated, currentDateKey, setMood])
 
   const emotionalContext: EmotionalContext = useMemo(
     () => ({
@@ -462,7 +468,7 @@ export default function ComoEstouHojePage(props: {
         )
       }
 
-      toast.success('Energia registrado!')
+      toast.success('Energia registrada!')
     }
   }
 
@@ -537,7 +543,7 @@ export default function ComoEstouHojePage(props: {
     try {
       void updateXP(15)
     } catch (e) {
-      console.error(
+        console.error(
         '[Como Estou Hoje] Erro ao atualizar XP do insight do dia:',
         e,
       )
@@ -588,7 +594,8 @@ export default function ComoEstouHojePage(props: {
       subtitle="Entenda seu dia com clareza, leveza e acolhimento."
     >
       <ClientOnly>
-        <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-12 md:space-y-16">
+        {/* PageTemplate já cuida de largura e centralização */}
+        <div className="pt-6 pb-10 space-y-12 md:space-y-16">
           {/* ============= BLOCO HOJE ============= */}
           <section
             className="space-y-6 md:space-y-8"
@@ -737,7 +744,7 @@ export default function ComoEstouHojePage(props: {
                                 }
                               }}
                               placeholder="Conte para você mesma como foi o seu dia…"
-                              className="w-full min-h-[90px] rounded-2xl border border-[#ffd8e6] bg-white p-3 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
+                              className="w-full min-h-[90px] rounded-2xl border border-[#ffd8e6] bg:white p-3 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:border-[#ff005e] focus:outline-none focus:ring-2 focus:ring-[#ff005e]/30 resize-none"
                             />
                             <div className="flex justify-end mt-3">
                               <Button
@@ -779,14 +786,14 @@ export default function ComoEstouHojePage(props: {
                       {/* CARD 3: Insight do Dia */}
                       <SoftCard
                         id={resumoSectionId}
-                        className="rounded-3xl p-5 md:p-6 bg-white border border-[#9B4D96]/20 shadow-[0_4px_12px_rgba(155,77,150,0.08)]"
+                        className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                       >
                         <div className="mb-3">
                           <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                             <AppIcon
                               name="sparkles"
                               size={18}
-                              className="text-[#9B4D96]"
+                              className="text-[#ff005e]"
                               decorative
                             />
                             Insight Do Dia
@@ -821,7 +828,7 @@ export default function ComoEstouHojePage(props: {
                             <button
                               type="button"
                               onClick={handleSaveDailyInsightToPlanner}
-                              className="mt-1 text-xs md:text-sm font-semibold text-[#9B4D96] hover:text-[#9B4D96]/80 transition-colors flex items-center gap-1"
+                              className="mt-1 text-xs md:text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors flex items-center gap-1"
                             >
                               Levar este insight para o planner
                               <AppIcon name="arrow-right" size={14} decorative />
@@ -844,7 +851,7 @@ export default function ComoEstouHojePage(props: {
             <Reveal>
               <div
                 id={semanaSectionId}
-                className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
+                className="relative overflow-hidden rounded-[32px] border border:white/70 bg:white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
               >
                 {/* Glows */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
