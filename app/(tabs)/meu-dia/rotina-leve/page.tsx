@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
-import PageTemplate from '@/components/common/PageTemplate'
+import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -1470,13 +1470,13 @@ export default function RotinaLevePage() {
                 ) : (
                   <p className="text-sm text-[#545454]">
                     Você já salvou{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedRecipesCount} receita(s)
-                      </span>{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedRecipesCount} receita(s)
+                    </span>{' '}
                     e{' '}
-                      <span className="font-semibold text-[#2f3a56]">
-                        {savedInspirationCount} inspiração(ões)
-                      </span>{' '}
+                    <span className="font-semibold text-[#2f3a56]">
+                      {savedInspirationCount} inspiração(ões)
+                    </span>{' '}
                     deste mini-hub no seu planner.
                   </p>
                 )}
