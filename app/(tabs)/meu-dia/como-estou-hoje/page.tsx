@@ -454,7 +454,7 @@ export default function ComoEstouHojePage() {
                     <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                       Se você pudesse escolher uma palavra para o dia…
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {moodOptions.map((mood) => {
                         const isActive = selectedMood === mood.id
                         return (
@@ -759,7 +759,7 @@ export default function ComoEstouHojePage() {
           </SoftCard>
 
           {/* BLOCO 3 — EXPLICAÇÃO SUAVE (mantido) */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg.white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
