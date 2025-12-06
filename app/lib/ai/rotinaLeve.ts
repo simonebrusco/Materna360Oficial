@@ -255,7 +255,6 @@ Lembre-se:
       return buildMockSuggestions(request)
     }
 
-    // Mapeia e saneia para o tipo RotinaLeveSuggestion
     const mapped: RotinaLeveSuggestion[] = suggestions
       .map((item, idx) => {
         const category = item.category as RotinaLeveSuggestionCategory
@@ -324,9 +323,8 @@ Lembre-se:
 /**
  * Serviço base de IA da Rotina Leve.
  *
- * Agora:
  * - Usa IA real (OpenAI) quando:
- *   - options.mock === false
+ *   - options.mock !== true
  *   - isRotinaLeveAIEnabled() === true
  *   - OPENAI_API_KEY está configurada
  * - Caso contrário, cai SEMPRE no mock local seguro.
@@ -346,10 +344,12 @@ export async function generateRotinaLeveSuggestions(
   const hasApiKey = !!process.env.OPENAI_API_KEY
 
   // Se a flag não está ligada ou não há API key, sempre mock
-  if (!aiEnabled || !hasApiKey || explicitMock === undefined) {
+  if (!aiEnabled || !hasApiKey) {
     return buildMockSuggestions(request)
   }
 
-  // Aqui: explicitMock === false, flag ligada e API key presente
+  // Aqui: IA ligada, API key presente
+  // - Se explicitMock === false → IA real
+  // - Se explicitMock === undefined → IA real também
   return callRotinaLeveAI(request)
 }
