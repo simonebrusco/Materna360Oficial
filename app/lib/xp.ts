@@ -18,8 +18,10 @@ export type XpSnapshot = {
   streak: number
 }
 
-// Histórico simples: chave YYYY-MM-DD -> XP do dia
-export type XpHistory = Record<string, number>
+export type XpHistoryEntry = {
+  dateKey: string
+  xp: number
+}
 
 /**
  * Calcula a data de ontem a partir de uma chave YYYY-MM-DD.
@@ -28,6 +30,26 @@ function getYesterdayKey(currentKey: string): string {
   const d = new Date(currentKey + 'T00:00:00')
   d.setDate(d.getDate() - 1)
   return d.toISOString().slice(0, 10)
+}
+
+/**
+ * Atualiza / registra histórico diário de XP.
+ */
+function upsertXpHistory(dateKey: string, xpForDay: number) {
+  const history = load<XpHistoryEntry[]>(XP_HISTORY_KEY) ?? []
+
+  const idx = history.findIndex((entry) => entry.dateKey === dateKey)
+  if (idx >= 0) {
+    history[idx] = { dateKey, xp: xpForDay }
+  } else {
+    history.push({ dateKey, xp: xpForDay })
+  }
+
+  // Mantém no máximo 120 dias de histórico
+  const trimmed =
+    history.length > 120 ? history.slice(history.length - 120) : history
+
+  save(XP_HISTORY_KEY, trimmed)
 }
 
 /**
@@ -50,15 +72,6 @@ export function getXpSnapshot(): XpSnapshot {
     total: stored.total ?? 0,
     streak: stored.streak ?? 0,
   }
-}
-
-/**
- * Lê o histórico de XP por dia.
- * Presença = dia com XP > 0
- * Intensidade = quanto de XP aquele dia acumulou.
- */
-export function getXpHistory(): XpHistory {
-  return load<XpHistory>(XP_HISTORY_KEY) ?? {}
 }
 
 /**
@@ -106,14 +119,19 @@ export function updateXP(delta: number): XpSnapshot {
   const newToday = Math.max(0, currentToday + delta)
   save(todayKey, newToday)
 
-  // >>> Atualiza histórico de presença / intensidade
-  const history = (load<XpHistory>(XP_HISTORY_KEY) ?? {}) as XpHistory
-  history[dateKey] = newToday
-  save(XP_HISTORY_KEY, history)
+  // Atualiza histórico diário
+  upsertXpHistory(dateKey, newToday)
 
   return {
     today: newToday,
     total: newTotal,
     streak: newStreak,
   }
+}
+
+/**
+ * Histórico simples de presença: lista (dataKey, xp) dos últimos dias.
+ */
+export function getXpHistory(): XpHistoryEntry[] {
+  return load<XpHistoryEntry[]>(XP_HISTORY_KEY) ?? []
 }
