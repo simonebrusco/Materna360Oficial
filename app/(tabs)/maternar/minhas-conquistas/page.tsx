@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
@@ -78,6 +78,7 @@ const SEALS: Seal[] = [
 const LEVEL_XP = 300
 const MISSIONS_STATE_PREFIX = 'missions:minhas-conquistas:'
 
+
 // ======================================================
 // HELPERS
 // ======================================================
@@ -104,7 +105,10 @@ function computeLevel(totalXp: number) {
   const levelBaseXp = (level - 1) * LEVEL_XP
   const currentInLevel = Math.max(0, totalXp - levelBaseXp)
   const missingToNext = Math.max(0, level * LEVEL_XP - totalXp)
-  const inLevelProgressPercent = Math.min(100, (currentInLevel / LEVEL_XP) * 100)
+  const inLevelProgressPercent = Math.min(
+    100,
+    (currentInLevel / LEVEL_XP) * 100,
+  )
 
   return {
     level,
@@ -182,12 +186,14 @@ function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
   return weeks.slice(0, 4)
 }
 
+
 // ======================================================
 // PAGE COMPONENT
 // ======================================================
 
 export default function MinhasConquistasPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const highlightFromQuery = useMemo(() => {
     const abrir = searchParams.get('abrir')
@@ -240,8 +246,9 @@ export default function MinhasConquistasPage() {
     // Missões do dia
     try {
       const stored =
-        load<Record<string, boolean>>(`${MISSIONS_STATE_PREFIX}${todayDateKey}`) ??
-        {}
+        load<Record<string, boolean>>(
+          `${MISSIONS_STATE_PREFIX}${todayDateKey}`,
+        ) ?? {}
 
       setMissions(
         INITIAL_MISSIONS.map(m => ({
@@ -249,7 +256,9 @@ export default function MinhasConquistasPage() {
           done: !!stored[m.id],
         })),
       )
-    } catch {}
+    } catch {
+      // silencioso
+    }
   }, [todayDateKey])
 
   const weeks = useMemo(() => buildMonthWeeks(xpHistory), [xpHistory])
@@ -355,7 +364,10 @@ export default function MinhasConquistasPage() {
                   {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)] leading-none">
-                      <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" />
+                      <AppIcon
+                        name="crown"
+                        className="h-4 w-4 text-[#ff005e]"
+                      />
                       {levelBadgeLabel}
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
@@ -486,11 +498,28 @@ export default function MinhasConquistasPage() {
                     })}
                   </div>
 
-                  <footer className="flex justify-between text-xs text-[#545454]/85">
+                  <footer className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-[#545454]/85">
                     <span>
                       {completedMissions} de {missions.length} concluídas
                     </span>
                     <span>Se nenhuma couber, tudo bem também.</span>
+
+                    {/* CTA de ida para Como Estou Hoje */}
+                    <div className="flex justify-end md:justify-start">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-[#ff005e] hover:text-[#ff005e]/80"
+                        onClick={() =>
+                          router.push(
+                            '/meu-dia/como-estou-hoje?abrir=humor',
+                          )
+                        }
+                      >
+                        Registrar meu dia no Como Estou Hoje
+                      </Button>
+                    </div>
                   </footer>
                 </div>
               </SoftCard>
@@ -525,7 +554,8 @@ export default function MinhasConquistasPage() {
                       />
                       <span>
                         Combine com o <strong>Meu Dia</strong> e{' '}
-                        <strong>Cuidar</strong> para ver sua evolução emocional.
+                        <strong>Cuidar</strong> para ver sua evolução
+                        emocional.
                       </span>
                     </li>
 
@@ -535,12 +565,13 @@ export default function MinhasConquistasPage() {
                         className="mt-0.5 h-4 w-4 text-[#ff005e]"
                       />
                       <span>
-                        No final da semana, você verá sua constância — mesmo nos
-                        dias mais difíceis.
+                        No final da semana, você verá sua constância — mesmo
+                        nos dias mais difíceis.
                       </span>
                     </li>
                   </ul>
 
+                  {/* Botão placeholder para o futuro */}
                   <Button
                     type="button"
                     size="sm"
@@ -577,17 +608,22 @@ export default function MinhasConquistasPage() {
                       Suas pequenas grandes vitórias.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-2xl">
-                      Cada selo celebra presença, constância e autocuidado real.
+                      Cada selo celebra presença, constância e autocuidado
+                      real.
                     </p>
                   </div>
 
+                  {/* Correção de alinhamento */}
                   <div className="text-xs text-right text-[#545454]/90 leading-tight">
                     <p>
-                      <span className="font-semibold">{SEALS.length}</span> selos
-                      disponíveis
+                      <span className="font-semibold">
+                        {SEALS.length}
+                      </span>{' '}
+                      selos disponíveis
                     </p>
                     <p>
-                      Novas conquistas serão desbloqueadas ao longo da jornada.
+                      Novas conquistas serão desbloqueadas ao longo da
+                      jornada.
                     </p>
                   </div>
                 </header>
@@ -617,7 +653,9 @@ export default function MinhasConquistasPage() {
                             name={seal.icon}
                             className={clsx(
                               'h-5 w-5',
-                              unlocked ? 'text-[#ff005e]' : 'text-[#b26b7c]',
+                              unlocked
+                                ? 'text-[#ff005e]'
+                                : 'text-[#b26b7c]',
                             )}
                           />
                         </div>
@@ -663,8 +701,8 @@ export default function MinhasConquistasPage() {
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
-                    As barrinhas mostram presença e intensidade — cada cor tem um
-                    significado.
+                    As barrinhas mostram presença e intensidade — cada cor tem
+                    um significado.
                   </p>
                 </header>
 
@@ -674,6 +712,7 @@ export default function MinhasConquistasPage() {
                     <span>Intensidade baseada no XP diário</span>
                   </div>
 
+                  {/* Corrigido: semanas renderizam normalmente */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {weeks.map(week => (
                       <div
@@ -726,6 +765,7 @@ export default function MinhasConquistasPage() {
     </PageTemplate>
   )
 }
+
 
 // ======================================================
 // SMALL HELPERS
