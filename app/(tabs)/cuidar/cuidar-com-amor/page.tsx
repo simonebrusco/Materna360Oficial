@@ -19,7 +19,7 @@ import {
   type CuidarComAmorFeature,
   type CuidarComAmorSuggestion,
 } from '@/app/lib/ai/cuidarComAmorClient'
-import { updateXP } from '@/app/lib/xp' // 👈 ajuste aqui
+import { updateXP } from '@/app/lib/xp'
 
 type SignalsDayData = {
   selectedSignals: string[]
@@ -36,7 +36,14 @@ type BondData = {
 
 type HighlightTarget = 'alimentacao' | 'sono' | 'conexao' | 'rituais' | null
 
-const SIGNALS_OPTIONS = ['Alegria', 'Agitação', 'Carinho', 'Muito sono', 'Carência', 'Irritação']
+const SIGNALS_OPTIONS = [
+  'Alegria',
+  'Agitação',
+  'Carinho',
+  'Muito sono',
+  'Carência',
+  'Irritação',
+]
 
 const CARE_ITEMS = [
   'Sono respeitado',
@@ -101,7 +108,8 @@ export default function CuidarComAmorPage() {
   // estado das sugestões
   const [suggestionLoading, setSuggestionLoading] = useState(false)
   const [currentFeature, setCurrentFeature] = useState<CuidarComAmorFeature | null>(null)
-  const [currentSuggestion, setCurrentSuggestion] = useState<CuidarComAmorSuggestion | null>(null)
+  const [currentSuggestion, setCurrentSuggestion] =
+    useState<CuidarComAmorSuggestion | null>(null)
 
   useEffect(() => {
     setIsHydrated(true)
@@ -132,21 +140,22 @@ export default function CuidarComAmorPage() {
     }
   }, [isHydrated, currentDateKey])
 
-  // ler ?abrir=
+  // ler ?abrir= e fazer scroll
   useEffect(() => {
     const abrir = (searchParams.get('abrir') as HighlightTarget) ?? null
     if (!abrir) return
 
     setHighlightTarget(abrir)
 
-    let targetRef: React.RefObject<HTMLDivElement> | null = null
-    if (abrir === 'alimentacao') targetRef = cuidadosBlockRef
-    if (abrir === 'sono') targetRef = sonoBlockRef
-    if (abrir === 'conexao') targetRef = conexaoBlockRef
-    if (abrir === 'rituais') targetRef = rituaisBlockRef
+    let targetEl: HTMLDivElement | null = null
 
-    if (targetRef?.current) {
-      targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (abrir === 'alimentacao') targetEl = cuidadosBlockRef.current
+    if (abrir === 'sono') targetEl = sonoBlockRef.current
+    if (abrir === 'conexao') targetEl = conexaoBlockRef.current
+    if (abrir === 'rituais') targetEl = rituaisBlockRef.current
+
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     const timeout = setTimeout(() => setHighlightTarget(null), 1400)
@@ -172,7 +181,7 @@ export default function CuidarComAmorPage() {
 
   const handleSignalToggle = (signal: string) => {
     const updated = signalsData.selectedSignals.includes(signal)
-      ? signalsData.selectedSignals.filter((s) => s !== signal)
+      ? signalsData.selectedSignals.filter(s => s !== signal)
       : [...signalsData.selectedSignals, signal]
 
     setSignalsData({
@@ -190,7 +199,9 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
         signalsCount: signalsData.selectedSignals.length,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
 
     // XP por registrar sinais do dia
     try {
@@ -206,7 +217,7 @@ export default function CuidarComAmorPage() {
 
   const handleCareToggle = (item: string) => {
     const updated = careData.checkedItems.includes(item)
-      ? careData.checkedItems.filter((i) => i !== item)
+      ? careData.checkedItems.filter(i => i !== item)
       : [...careData.checkedItems, item]
 
     setCareData({
@@ -224,7 +235,9 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
         checkedCount: careData.checkedItems.length,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
 
     // XP por registrar cuidados do dia
     try {
@@ -275,7 +288,9 @@ export default function CuidarComAmorPage() {
           origin: 'cuidar-com-amor',
           type: bondData.selectedOption,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       // XP por salvar gesto/ritual de vínculo
       try {
@@ -304,7 +319,9 @@ export default function CuidarComAmorPage() {
       setCurrentSuggestion(data)
     } catch (error) {
       console.error('[Cuidar com Amor] Erro ao buscar sugestão:', error)
-      toast.danger('Não conseguimos trazer as ideias agora. Tente novamente em alguns instantes.')
+      toast.danger(
+        'Não conseguimos trazer as ideias agora. Tente novamente em alguns instantes.',
+      )
       setCurrentSuggestion(null)
     } finally {
       setSuggestionLoading(false)
@@ -362,7 +379,9 @@ export default function CuidarComAmorPage() {
           origin: 'cuidar-com-amor',
           feature: currentFeature,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       // XP por salvar ideias de cuidado no planner
       try {
@@ -370,7 +389,7 @@ export default function CuidarComAmorPage() {
       } catch (e) {
         console.error(
           '[Cuidar com Amor] Erro ao atualizar XP ao salvar ideias de cuidado:',
-          e
+          e,
         )
       }
 
@@ -429,7 +448,7 @@ export default function CuidarComAmorPage() {
                           Quais desses sinais você percebe hoje?
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {SIGNALS_OPTIONS.map((signal) => (
+                          {SIGNALS_OPTIONS.map(signal => (
                             <button
                               key={signal}
                               onClick={() => handleSignalToggle(signal)}
@@ -451,7 +470,7 @@ export default function CuidarComAmorPage() {
                         </label>
                         <textarea
                           value={signalsData.observation}
-                          onChange={(e) =>
+                          onChange={e =>
                             setSignalsData({
                               ...signalsData,
                               observation: e.target.value,
@@ -553,7 +572,7 @@ export default function CuidarComAmorPage() {
                           </div>
 
                           <div className="space-y-3">
-                            {SLEEP_AUDIO_PLACEHOLDERS.map((audio) => (
+                            {SLEEP_AUDIO_PLACEHOLDERS.map(audio => (
                               <div
                                 key={audio.id}
                                 className="flex items-center gap-4 rounded-2xl border border-[#ffd8e6]/80 bg-white/80 px-4 py-3"
@@ -572,7 +591,9 @@ export default function CuidarComAmorPage() {
                                   <p className="text-sm font-semibold text-[#2f3a56]">
                                     {audio.title}
                                   </p>
-                                  <p className="text-xs text-[#545454]">{audio.description}</p>
+                                  <p className="text-xs text-[#545454]">
+                                    {audio.description}
+                                  </p>
                                 </div>
                                 <span className="text-[11px] text-[#545454]/70">Em breve</span>
                               </div>
@@ -657,7 +678,7 @@ export default function CuidarComAmorPage() {
                             Marque o que você já conseguiu cuidar hoje:
                           </p>
                           <div className="space-y-2.5">
-                            {CARE_ITEMS.map((item) => (
+                            {CARE_ITEMS.map(item => (
                               <label
                                 key={item}
                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
@@ -892,8 +913,8 @@ export default function CuidarComAmorPage() {
 
                           {!suggestionLoading && !currentSuggestion && (
                             <p className="text-xs text-[#545454]">
-                              Se quiser, escolha um foco acima para receber ideias simples que
-                              podem deixar o dia de vocês um pouco mais leve.
+                              Se quiser, escolha um foco acima para receber ideias simples que podem
+                              deixar o dia de vocês um pouco mais leve.
                             </p>
                           )}
                         </div>
