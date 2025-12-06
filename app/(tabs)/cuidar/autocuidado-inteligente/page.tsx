@@ -29,6 +29,7 @@ type AutocuidadoDia = {
     hidratacao?: number | null
     sono?: string | null
     alimentacao?: 'leve' | 'ok' | 'pesada' | null
+    humorEmoji?: string | null
   }
   sugestao?: {
     escolhida?: string | null
@@ -67,7 +68,7 @@ export default function AutocuidadoInteligentePage() {
   const [ritmoNota, setRitmoNota] = useState<string>('')
 
   // Mini rotina state
-  const [selectedRotinaItems, setSelectedRotinaItems] = useState<Set<string>>(
+  const [selectedRotinItems, setSelectedRotinaItems] = useState<Set<string>>(
     new Set(),
   )
 
@@ -165,7 +166,7 @@ export default function AutocuidadoInteligentePage() {
   }
 
   const handleSalvarRotina = () => {
-    if (selectedRotinaItems.size === 0) {
+    if (selectedRotinItems.size === 0) {
       toast.danger('Selecione pelo menos um gesto de cuidado.')
       return
     }
@@ -173,7 +174,7 @@ export default function AutocuidadoInteligentePage() {
     const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].rotina = {
-      itensSelecionados: Array.from(selectedRotinaItems),
+      itensSelecionados: Array.from(selectedRotinItems),
     }
 
     save(AUTOCUIDADO_KEY, storage)
@@ -181,7 +182,7 @@ export default function AutocuidadoInteligentePage() {
     try {
       track('autocuidado_rotina_salva', {
         dateKey: currentDateKey,
-        totalItens: selectedRotinaItems.size,
+        totalItens: selectedRotinItems.size,
       })
     } catch (e) {
       console.error('[Autocuidado] Erro ao rastrear rotina:', e)
@@ -220,8 +221,8 @@ export default function AutocuidadoInteligentePage() {
       track('autocuidado_saude_salva', {
         dateKey: currentDateKey,
         temHidratacao: hidratacao !== null,
-        temSono: !!sono,
-        temAlimentacao: !!alimentacao,
+        temSono: sono !== null,
+        temAlimentacao: alimentacao !== null,
       })
     } catch (e) {
       console.error('[Autocuidado] Erro ao rastrear saúde:', e)
@@ -290,20 +291,20 @@ export default function AutocuidadoInteligentePage() {
       subtitle="Cuidados que cabem na rotina, feitos na sua medida."
     >
       <ClientOnly>
-        <div className="pt-6 pb-12 md:pb-16 space-y-6 md:space-y-8">
+        <div className="pt-6 pb-10 space-y-8">
           {/* BLOCO 1 — Hoje / Cuidados Que Cabem No Seu Agora */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:p-7 lg:p-8 bg-white/5 border border-white/40 shadow-[0_18px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
               <div className="space-y-6 md:space-y-7">
                 {/* Header do bloco */}
                 <div className="space-y-2 md:space-y-3">
-                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-white/80">
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]/80">
                     Hoje
                   </p>
-                  <h2 className="text-lg md:text-2xl font-semibold text-white leading-snug">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
                     Cuidados que combinam com o seu ritmo de agora.
                   </h2>
-                  <p className="text-xs md:text-sm text-white/80 max-w-2xl">
+                  <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
                     Escolha como você está e organize pequenos gestos de cuidado
                     que caibam no seu momento — um passo de cada vez, sem
                     perfeição e sem culpa.
@@ -342,7 +343,6 @@ export default function AutocuidadoInteligentePage() {
                             {RITMO_OPTIONS.map(ritmo => (
                               <button
                                 key={ritmo}
-                                type="button"
                                 onClick={() =>
                                   setSelectedRitmo(
                                     selectedRitmo === ritmo ? null : ritmo,
@@ -420,7 +420,7 @@ export default function AutocuidadoInteligentePage() {
                           >
                             <input
                               type="checkbox"
-                              checked={selectedRotinaItems.has(item)}
+                              checked={selectedRotinItems.has(item)}
                               onChange={() => handleToggleRotinaItem(item)}
                               className="w-5 h-5 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer accent-[#ff005e]"
                             />
@@ -454,17 +454,17 @@ export default function AutocuidadoInteligentePage() {
 
           {/* BLOCO 2 — Corpo & Bem-Estar */}
           <Reveal delay={80}>
-            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:pb-7 md:px-7 lg:p-8 bg-white/5 border border-white/40 shadow-[0_18px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
               <div className="space-y-6 md:space-y-7">
                 {/* Header do bloco */}
                 <div className="space-y-2 md:space-y-3">
-                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-white/80">
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]/80">
                     Corpo & bem-estar
                   </p>
-                  <h2 className="text-lg md:text-2xl font-semibold text-white leading-snug">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
                     Cuide do seu corpo e receba um carinho só para você.
                   </h2>
-                  <p className="text-xs md:text-sm text-white/80 max-w-2xl">
+                  <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
                     Registre como você está hoje e deixe o Materna360 sugerir um
                     cuidado especial para o seu momento.
                   </p>
@@ -495,7 +495,7 @@ export default function AutocuidadoInteligentePage() {
                         {/* Hidratação */}
                         <div className="space-y-3">
                           <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
-                            Hidratação
+                            💧 Hidratação
                           </label>
                           <div className="flex flex-wrap gap-2">
                             {[
@@ -504,7 +504,6 @@ export default function AutocuidadoInteligentePage() {
                             ].map(({ idx, label }) => (
                               <button
                                 key={label}
-                                type="button"
                                 onClick={() =>
                                   setHidratacao(
                                     hidratacao === idx ? null : idx,
@@ -525,7 +524,7 @@ export default function AutocuidadoInteligentePage() {
                         {/* Sono */}
                         <div className="space-y-3">
                           <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
-                            Sono
+                            😴 Sono
                           </label>
                           <div className="flex flex-wrap gap-2">
                             {[
@@ -535,7 +534,6 @@ export default function AutocuidadoInteligentePage() {
                             ].map(label => (
                               <button
                                 key={label}
-                                type="button"
                                 onClick={() =>
                                   setSono(sono === label ? null : label)
                                 }
@@ -554,7 +552,7 @@ export default function AutocuidadoInteligentePage() {
                         {/* Alimentação */}
                         <div className="space-y-3">
                           <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
-                            Alimentação
+                            🍽️ Alimentação
                           </label>
                           <div className="flex flex-wrap gap-2">
                             {[
@@ -564,7 +562,6 @@ export default function AutocuidadoInteligentePage() {
                             ].map(({ key, label }) => (
                               <button
                                 key={key}
-                                type="button"
                                 onClick={() =>
                                   setAlimentacao(
                                     alimentacao ===
@@ -611,7 +608,7 @@ export default function AutocuidadoInteligentePage() {
                           <AppIcon
                             name="lightbulb"
                             size={18}
-                            className="text-[#6A2C70]"
+                            className="text-[#ff005e]"
                             decorative
                           />
                           Para Você Hoje
@@ -629,7 +626,6 @@ export default function AutocuidadoInteligentePage() {
                               {sugestaoAtual}
                             </p>
                             <button
-                              type="button"
                               onClick={handleGerarSugestao}
                               className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
                             >
