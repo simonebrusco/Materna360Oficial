@@ -435,29 +435,28 @@ export default function CuidarComAmorPage() {
       subtitle="Pequenos gestos que fortalecem o vínculo com seu filho."
     >
       <ClientOnly>
-        <div className="max-w-6xl mx-auto px-4 md:px-6 pb-16 md:pb-20 space-y-8 md:space-y-10">
-          {/* SEÇÃO 1 — HOJE COM SEU FILHO */}
+        {/* mesmo padrão de coluna central das outras páginas */}
+        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
+          {/* BLOCO 1 — Hoje com seu filho */}
           <Reveal>
-            <section className="rounded-[40px] md:rounded-[44px] border border-white/40 bg-white/10 shadow-[0_22px_60px_rgba(0,0,0,0.25)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
-              <div className="space-y-6 md:space-y-7">
-                <div className="space-y-2">
-                  <span className="inline-flex items-center rounded-full bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/80">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
+              <div className="space-y-6">
+                <header className="space-y-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     Hoje com seu filho
-                  </span>
-                  <div className="space-y-1">
-                    <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
-                      Entenda o momento do seu filho com carinho.
-                    </h2>
-                    <p className="text-xs md:text-sm text-white/85 max-w-2xl">
-                      Observe os sinais do dia e escolha formas suaves de acolher
-                      o que ele está vivendo — sem pressa, sem perfeição.
-                    </p>
-                  </div>
-                </div>
+                  </p>
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    Entenda o momento do seu filho com carinho.
+                  </h2>
+                  <p className="text-sm text-[#545454] max-w-2xl">
+                    Observe os sinais do dia e escolha formas suaves de acolher
+                    o que ele está vivendo — sem pressa, sem perfeição.
+                  </p>
+                </header>
 
-                <div className="grid gap-5 md:gap-6 lg:gap-7 md:grid-cols-2">
+                <div className="grid gap-6 lg:gap-7 md:grid-cols-2">
                   {/* SINAIS DO DIA */}
-                  <SoftCard className="rounded-[28px] p-5 md:p-6 lg:p-7 bg-white border border-[#ffd8e6] shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
+                  <SoftCard className="rounded-3xl p-5 md:p-6 lg:p-7 bg-white border border-[#ffd8e6] shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
                     <div className="space-y-5">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
@@ -526,11 +525,12 @@ export default function CuidarComAmorPage() {
                     </div>
                   </SoftCard>
 
+                  {/* Coluna direita: Cuidado emocional + Sono & rotina */}
                   <div className="space-y-4 md:space-y-5">
                     {/* CUIDADO EMOCIONAL POR IDADE */}
                     <div ref={conexaoBlockRef}>
                       <SoftCard
-                        className={`rounded-[28px] p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-3xl p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
                           highlightTarget === 'conexao'
                             ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                             : 'border-[#ffd8e6]'
@@ -576,7 +576,7 @@ export default function CuidarComAmorPage() {
                           <button
                             type="button"
                             onClick={handleScrollToMoreIdeas}
-                            className="text-xs md:text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
+                            className="text-xs md:text-sm font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors inline-flex items-center gap-1"
                           >
                             Ver mais ideias de cuidado →
                           </button>
@@ -587,7 +587,7 @@ export default function CuidarComAmorPage() {
                     {/* SONO & ROTINA — ÁUDIOS */}
                     <div ref={sonoBlockRef}>
                       <SoftCard
-                        className={`rounded-[28px] p-5 md:p-6 bg-[#fff7fb] border shadow-[0_10px_34px_rgba(0,0,0,0.10)] transition-all ${
+                        className={`rounded-3xl p-5 md:p-6 bg-[#fff7fb] border shadow-[0_10px_34px_rgba(0,0,0,0.10)] transition-all ${
                           highlightTarget === 'sono'
                             ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                             : 'border-[#ffd8e6]'
@@ -654,32 +654,30 @@ export default function CuidarComAmorPage() {
                   </div>
                 </div>
               </div>
-            </section>
+            </SoftCard>
           </Reveal>
 
-          {/* SEÇÃO 2 — CUIDADOS & VÍNCULO */}
+          {/* BLOCO 2 — Cuidados & vínculo */}
           <Reveal>
-            <section className="rounded-[40px] md:rounded-[44px] border border-white/35 bg-white/8 shadow-[0_22px_60px_rgba(0,0,0,0.22)] px-4 py-6 md:px-7 md:py-8 lg:px-10 lg:py-9 backdrop-blur-2xl">
-              <div className="space-y-6 md:space-y-7">
-                <div className="space-y-2">
-                  <span className="inline-flex items-center rounded-full bg-white/16 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/80">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+              <div className="space-y-6">
+                <header className="space-y-2">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     Cuidados & vínculo
-                  </span>
-                  <div className="space-y-1">
-                    <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
-                      Acompanhe os cuidados do dia e escolha um gesto especial.
-                    </h2>
-                    <p className="text-xs md:text-sm text-white/85 max-w-2xl">
-                      Marque o que já conseguiu cuidar hoje e defina um gesto ou
-                      ritual simples para fortalecer o vínculo com seu filho.
-                    </p>
-                  </div>
+                  </p>
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    Acompanhe os cuidados do dia e escolha um gesto especial.
+                  </h2>
+                  <p className="text-sm text-[#545454] max-w-2xl">
+                    Marque o que já conseguiu cuidar hoje e defina um gesto ou
+                    ritual simples para fortalecer o vínculo com seu filho.
+                  </p>
 
                   {highlightTarget && (
-                    <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[11px] text-white/95">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[#fff7fb] border border-[#ffd8e6]/80 px-3 py-1 text-[11px] text-[#2f3a56] mt-1.5">
                       <AppIcon
                         name="sparkles"
-                        className="w-3.5 h-3.5 text-white"
+                        className="w-3.5 h-3.5 text-[#ff005e]"
                         decorative
                       />
                       <span>
@@ -691,13 +689,13 @@ export default function CuidarComAmorPage() {
                       </span>
                     </div>
                   )}
-                </div>
+                </header>
 
-                <div className="grid gap-5 md:gap-6 lg:gap-8 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)]">
+                <div className="grid gap-6 lg:gap-8 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1.05fr)]">
                   {/* CUIDADOS DO DIA */}
                   <div ref={cuidadosBlockRef}>
                     <SoftCard
-                      className={`rounded-[28px] p-5 md:p-6 lg:p-7 bg-white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
+                      className={`rounded-3xl p-5 md:p-6 lg:p-7 bg-white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
                         highlightTarget === 'alimentacao'
                           ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                           : 'border-[#ffd8e6]'
@@ -762,7 +760,7 @@ export default function CuidarComAmorPage() {
                     {/* PARA FORTALECER O VÍNCULO */}
                     <div ref={rituaisBlockRef}>
                       <SoftCard
-                        className={`rounded-[28px] p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-3xl p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
                           highlightTarget === 'rituais'
                             ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
                             : 'border-[#ffd8e6]'
@@ -870,7 +868,7 @@ export default function CuidarComAmorPage() {
 
                     {/* IDEIAS DE CUIDADO PARA HOJE */}
                     <div ref={ideiasBlockRef}>
-                      <SoftCard className="rounded-[28px] p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
+                      <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
                         <div className="space-y-4">
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
@@ -994,7 +992,7 @@ export default function CuidarComAmorPage() {
                   </div>
                 </div>
               </div>
-            </section>
+            </SoftCard>
           </Reveal>
 
           <MotivationalFooter routeKey="cuidar-cuidar-com-amor" />
