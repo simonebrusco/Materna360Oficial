@@ -21,6 +21,7 @@ import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSu
 import SavedContentsSection from '@/components/blocks/SavedContentsSection'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
+import { useDayEmotion } from '@/app/store/useDayEmotion' // << NOVO
 
 // =======================================================
 // TIPAGENS
@@ -87,9 +88,9 @@ export default function WeeklyPlannerShell() {
   // Planner (sincronizar data com mini-hubs)
   const plannerHook = usePlannerSavedContents()
 
-  // Estado local para IA (humor + intenção do dia)
-  const [mood, setMood] = useState<string | null>(null)
-  const [dayIntention, setDayIntention] = useState<string | null>(null)
+  // Estado global para IA (humor + intenção do dia)
+  const { mood, dayIntention, setMood, setDayIntention } = useDayEmotion()
+
   const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Modal de compromisso (novo, via calendário / atalhos)
@@ -366,39 +367,6 @@ export default function WeeklyPlannerShell() {
     })
   }
 
-  // NOVO: editar tarefa
-  const editTask = (id: string) => {
-    setPlannerData(prev => {
-      const task = prev.tasks.find(t => t.id === id)
-      if (!task) return prev
-
-      const novoTitulo = window.prompt(
-        'Editar lembrete:',
-        task.title,
-      )
-      if (!novoTitulo || !novoTitulo.trim()) return prev
-
-      const updatedTasks = prev.tasks.map(t =>
-        t.id === id ? { ...t, title: novoTitulo.trim() } : t,
-      )
-
-      return { ...prev, tasks: updatedTasks }
-    })
-  }
-
-  // NOVO: excluir tarefa
-  const deleteTask = (id: string) => {
-    const confirmar = window.confirm(
-      'Tem certeza que deseja excluir este lembrete?',
-    )
-    if (!confirmar) return
-
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.filter(t => t.id !== id),
-    }))
-  }
-
   const handleViewModeChange = (mode: 'day' | 'week') => {
     setViewMode(mode)
 
@@ -565,8 +533,10 @@ export default function WeeklyPlannerShell() {
   }
 
   const moodSummary =
-    (mood ? moodLabel[mood] : null) &&
-    (dayIntention ? intentionLabel[dayIntention] : null)
+    (mood ? moodLabel[mood as keyof typeof moodLabel] : null) &&
+    (dayIntention
+      ? intentionLabel[dayIntention as keyof typeof intentionLabel]
+      : null)
       ? `Hoje você está ${
           moodLabel[mood as keyof typeof moodLabel]
         } e escolheu um dia ${
@@ -751,31 +721,7 @@ export default function WeeklyPlannerShell() {
                           >
                             {task.done ? '✓' : ''}
                           </span>
-                          <span className="flex-1">{task.title}</span>
-
-                          {/* AÇÕES: EDITAR / EXCLUIR */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                editTask(task.id)
-                              }}
-                              className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-brand)] underline"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                deleteTask(task.id)
-                              }}
-                              className="text-[10px] text-[var(--color-text-muted)] hover:text-red-500 underline"
-                            >
-                              Excluir
-                            </button>
-                          </div>
+                          <span>{task.title}</span>
                         </button>
                       ))}
                     </div>
@@ -869,7 +815,7 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             handleOpenQuickAction('family')
                           }
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -942,7 +888,7 @@ export default function WeeklyPlannerShell() {
                           onClick={() =>
                             openEditModalForAppointment(appointment)
                           }
-                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg:white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
+                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
                         >
                           <div className="flex items-center gap-2">
                             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
@@ -1036,8 +982,8 @@ export default function WeeklyPlannerShell() {
                           }
                           className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                             dayIntention === option
-                              ? 'bg-[var(--color-brand)] text:white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                              : 'bg:white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                              : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
                           }`}
                         >
                           {option}
