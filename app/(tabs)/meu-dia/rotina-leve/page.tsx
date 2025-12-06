@@ -180,10 +180,7 @@ async function generateRecipesWithAI(
 
     return recipes
   } catch (error) {
-    console.error(
-      '[Rotina Leve] Erro ao buscar receitas, usando fallback:',
-      error,
-    )
+    console.error('[Rotina Leve] Erro ao buscar receitas, usando fallback:', error)
 
     try {
       track('rotina_leve.recipes.fallback_used', {
@@ -510,10 +507,7 @@ export default function RotinaLevePage() {
       try {
         void updateXP(8)
       } catch (e) {
-        console.error(
-          '[Rotina Leve] Erro ao atualizar XP (receita):',
-          e,
-        )
+        console.error('[Rotina Leve] Erro ao atualizar XP (receita):', e)
       }
 
       toast.success('Receita salva no planner ✨')
@@ -552,10 +546,7 @@ export default function RotinaLevePage() {
       try {
         void updateXP(5)
       } catch (e) {
-        console.error(
-          '[Rotina Leve] Erro ao atualizar XP (inspiração):',
-          e,
-        )
+        console.error('[Rotina Leve] Erro ao atualizar XP (inspiração):', e)
       }
 
       toast.success('Inspiração salva no planner 💗')
@@ -587,7 +578,6 @@ export default function RotinaLevePage() {
       return
     }
 
-    // Deriva minutos disponíveis a partir do TEMPO DE PREPARO da receita
     const recipeAvailableMinutes =
       recipeTime === '10'
         ? 10
@@ -599,7 +589,6 @@ export default function RotinaLevePage() {
         ? 40
         : undefined
 
-    // Define se a criança está por perto com base em "comQuem" (quando já tiver sido usado)
     const hasKidsAround =
       comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
         ? true
@@ -615,7 +604,6 @@ export default function RotinaLevePage() {
       availableMinutes: recipeAvailableMinutes,
     }
 
-    // Prompt contextual baseado nos campos do formulário + idade
     const promptParts: string[] = []
 
     if (recipeIngredient.trim().length > 0) {
@@ -688,7 +676,6 @@ export default function RotinaLevePage() {
         // ignora
       }
 
-      // XP por gerar receitas (gesto de presença)
       try {
         void updateXP(4)
       } catch (e) {
@@ -764,14 +751,10 @@ export default function RotinaLevePage() {
         tipoIdeia: tipoIdeia as any,
       })
 
-      // XP por gerar ideias (mesmo que não salve ainda)
       try {
         void updateXP(3)
       } catch (e) {
-        console.error(
-          '[Rotina Leve] Erro ao atualizar XP (gerar ideias):',
-          e,
-        )
+        console.error('[Rotina Leve] Erro ao atualizar XP (gerar ideias):', e)
       }
 
       const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
@@ -815,7 +798,6 @@ export default function RotinaLevePage() {
       const result = await generateInspirationWithAI(focusOfDay)
       setInspiration(result)
 
-      // XP por gerar inspiração (gesto emocional importante)
       try {
         void updateXP(3)
       } catch (e) {
@@ -855,41 +837,46 @@ export default function RotinaLevePage() {
     <PageTemplate
       label="MEU DIA"
       title="Rotina Leve"
-      subtitle="Organize o seu dia com leveza e clareza."
+      subtitle="Depois de sentir como você está, aqui é o espaço para planejar o que cabe no seu dia real — sem perfeição."
     >
       <ClientOnly>
-        {/* IMPORTANTE: sem mx-auto / max-w aqui, o PageTemplate já cuida disso */}
         <div className="pt-6 pb-10 space-y-8">
-          {/* Texto de abertura da Rotina Leve */}
+          {/* TEXTO DE ABERTURA */}
           <div className="space-y-2">
             <p className="text-sm md:text-base text-white">
               <span className="font-semibold">
-                Comece por onde fizer mais sentido hoje:
+                Comece pela próxima coisa que faz sentido agora.
               </span>{' '}
-              uma receitinha que caiba no seu tempo, uma ideia rápida ou uma inspiração para
-              respirar com mais calma.
+              Pode ser uma receitinha rápida, uma ideia simples ou apenas uma inspiração
+              para respirar com mais calma.
             </p>
             <p className="text-xs md:text-sm text-white/80">
-              Tudo aqui foi pensado para caber na sua rotina real, sem perfeição e sem cobrança.
+              Tudo aqui foi pensado para caber na sua rotina real, com filhos, trabalho,
+              cansaço e também momentos bons.
             </p>
           </div>
 
           <div className="space-y-6">
-            {/* HERO CARD: Receitas Inteligentes */}
+            {/* BLOCO 1 — RECEITAS INTELIGENTES */}
             <SoftCard
               id="rotina-leve-receitas"
-              className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
             >
               <div className="space-y-6 flex flex-col">
-                <div className="space-y-1 pb-2">
-                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                    Receitas Inteligentes
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                    Você diz o ingrediente, o Materna360 te ajuda com o resto.
+                <header className="space-y-1 pb-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    Dia · Receitas inteligentes
                   </p>
-                </div>
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Receitinhas que cabem no tempo que você tem
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
+                    Você diz o ingrediente e quanto tempo consegue dedicar. O Materna360
+                    sugere opções simples, acolhedoras e alinhadas à fase do seu filho.
+                  </p>
+                </header>
 
+                {/* FORM RECEITAS */}
                 <div className="space-y-3 text-xs">
                   <div className="space-y-1">
                     <p className="font-medium text-[#2f3a56]">Ingrediente principal</p>
@@ -902,7 +889,7 @@ export default function RotinaLevePage() {
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 md:flex-row">
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
                       <select
@@ -944,19 +931,20 @@ export default function RotinaLevePage() {
                 </div>
 
                 <p className="text-[11px] text-[#545454]">
-                  Para bebês menores de 6 meses, o ideal é manter o aleitamento materno e seguir
-                  sempre a orientação do pediatra.
+                  Para bebês menores de 6 meses, o foco principal ainda é o aleitamento
+                  materno. Sempre siga a orientação do pediatra da sua família.
                 </p>
 
+                {/* AÇÕES RECEITAS */}
                 <div className="space-y-2">
                   <Button
                     variant="primary"
                     size="sm"
                     onClick={handleGenerateRecipes}
                     disabled={recipesLoading || isBabyUnderSixMonths || isOverLimit}
-                    className="w-full"
+                    className="w-full md:w-auto"
                   >
-                    {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
+                    {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas para hoje'}
                   </Button>
 
                   <p className="text-[11px] text-[#545454]">
@@ -964,30 +952,31 @@ export default function RotinaLevePage() {
                     <span className="font-semibold text-[#2f3a56]">
                       {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
                     </span>{' '}
-                    sugestões do seu plano.
+                    gerações de receitas inteligentes.
                   </p>
 
                   {isOverLimit && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
-                      mais 💗
+                      Você chegou ao limite de receitas inteligentes do plano hoje. Amanhã
+                      a gente pensa em novas possibilidades com calma 💗
                     </p>
                   )}
 
                   {isBabyUnderSixMonths && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Como o seu bebê tem menos de 6 meses, o foco agora é o aleitamento materno
-                      exclusivo. As receitinhas serão liberadas mais pra frente, sempre respeitando
-                      a orientação do pediatra.
+                      Como o seu bebê tem menos de 6 meses, as receitinhas sólidas ainda
+                      vão esperar um pouquinho. O Materna360 segue ao seu lado quando
+                      essa fase chegar.
                     </p>
                   )}
                 </div>
 
+                {/* LISTA DE RECEITAS */}
                 <div className="space-y-3">
                   {recipesLoading && (
                     <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                       <p className="text-[11px] text-[#545454]">
-                        Estou pensando nas melhores opções pra hoje…
+                        Estou pensando nas melhores opções que cabem no seu dia…
                       </p>
                     </div>
                   )}
@@ -998,84 +987,79 @@ export default function RotinaLevePage() {
                         Sugestões de hoje (até 3)
                       </p>
                       <div className="space-y-3">
-                        {recipes!.slice(0, 3).map((recipe) => {
-                          const canSave = hasRecipes && !isOverLimit
-
-                          return (
+                        {recipes!.slice(0, 3).map((recipe) => (
+                          <div
+                            key={recipe.id}
+                            className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                          >
                             <div
-                              key={recipe.id}
-                              className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                              className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
+                              onClick={() =>
+                                setExpandedRecipeId(
+                                  expandedRecipeId === recipe.id ? null : recipe.id,
+                                )
+                              }
                             >
-                              <div
-                                className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
-                                onClick={() =>
-                                  setExpandedRecipeId(
-                                    expandedRecipeId === recipe.id ? null : recipe.id,
-                                  )
-                                }
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1">
-                                    <h4 className="text-sm font-semibold text-[#2f3a56]">
-                                      {recipe.title}
-                                    </h4>
-                                    <p className="text-xs text-[#545454] mt-1 line-clamp-2">
-                                      {recipe.description}
-                                    </p>
-                                    <p className="text-[10px] text-[#545454] mt-1.5">
-                                      {recipe.timeLabel} · {recipe.ageLabel}
-                                    </p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setExpandedRecipeId(
-                                        expandedRecipeId === recipe.id ? null : recipe.id,
-                                      )
-                                    }}
-                                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
-                                  >
-                                    {expandedRecipeId === recipe.id
-                                      ? 'Ver menos ↑'
-                                      : 'Ver detalhes →'}
-                                  </button>
-                                </div>
-                              </div>
-
-                              {expandedRecipeId === recipe.id && (
-                                <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
-                                  <div>
-                                    <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
-                                      Modo de preparo
-                                    </h5>
-                                    <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
-                                      {recipe.preparation}
-                                    </p>
-                                  </div>
-
-                                  <p className="text-[10px] text-[#545454] italic">
-                                    Lembre-se: adapte sempre às orientações do pediatra.
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1">
+                                  <h4 className="text-sm font-semibold text-[#2f3a56]">
+                                    {recipe.title}
+                                  </h4>
+                                  <p className="text-xs text-[#545454] mt-1 line-clamp-2">
+                                    {recipe.description}
                                   </p>
-
-                                  <Button
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={() => handleSaveRecipe(recipe)}
-                                    disabled={!canSave}
-                                    className="w-full"
-                                  >
-                                    Salvar receita no planner
-                                  </Button>
+                                  <p className="text-[10px] text-[#545454] mt-1.5">
+                                    {recipe.timeLabel} · {recipe.ageLabel}
+                                  </p>
                                 </div>
-                              )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setExpandedRecipeId(
+                                      expandedRecipeId === recipe.id ? null : recipe.id,
+                                    )
+                                  }}
+                                  className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
+                                >
+                                  {expandedRecipeId === recipe.id
+                                    ? 'Ver menos ↑'
+                                    : 'Ver detalhes →'}
+                                </button>
+                              </div>
                             </div>
-                          )
-                        })}
+
+                            {expandedRecipeId === recipe.id && (
+                              <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
+                                <div>
+                                  <h5 className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2">
+                                    Modo de preparo
+                                  </h5>
+                                  <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
+                                    {recipe.preparation}
+                                  </p>
+                                </div>
+
+                                <p className="text-[10px] text-[#545454] italic">
+                                  Lembre-se: adapte sempre às orientações do pediatra.
+                                </p>
+
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => handleSaveRecipe(recipe)}
+                                  className="w-full"
+                                >
+                                  Salvar receita no planner
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                       <p className="text-[11px] text-[#545454] mt-2">
-                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar no
-                        planner.
+                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar
+                        no planner.
                       </p>
                     </>
                   )}
@@ -1085,8 +1069,8 @@ export default function RotinaLevePage() {
                     !isBabyUnderSixMonths && (
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                         <p className="text-[11px] text-[#545454]">
-                          Clique em &quot;Gerar receitas&quot; para receber sugestões adaptadas à
-                          idade do seu filho.
+                          Clique em &quot;Gerar receitas para hoje&quot; para receber
+                          sugestões adaptadas à idade do seu filho.
                         </p>
                       </div>
                     )}
@@ -1094,221 +1078,132 @@ export default function RotinaLevePage() {
               </div>
             </SoftCard>
 
-            {/* 2-Column Grid: Ideias Rápidas + Inspirações do Dia */}
+            {/* BLOCO 2 — IDEIAS RÁPIDAS + INSPIRAÇÕES */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Ideias Rápidas */}
+              {/* IDEIAS RÁPIDAS */}
               <SoftCard
                 id="rotina-leve-ideias"
-                className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+                className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
               >
                 <div className="space-y-6 flex flex-col h-full">
-                  <div className="space-y-1 pb-2">
+                  <div className="space-y-1 pb-1">
+                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                      Dia · Ideias rápidas
+                    </p>
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                      Ideias Rápidas
+                      Pequenas ideias para encaixar entre um compromisso e outro
                     </h3>
                     <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                      Inspirações simples para deixar o dia mais leve.
+                      Brincadeiras, organização, autocuidado ou uma coisinha rápida na
+                      cozinha — tudo pensado para caber em minutos.
                     </p>
                   </div>
+
                   <button
                     type="button"
                     onClick={() => setOpenIdeas((prev) => !prev)}
-                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
                   >
-                    {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
+                    {openIdeas ? 'Recolher filtros ↑' : 'Escolher filtros →'}
                   </button>
 
                   {openIdeas && (
-                    <div className="space-y-3 text-xs flex-1">
+                    <div className="space-y-4 text-xs flex-1">
+                      {/* TEMPO DISPONÍVEL */}
                       <div>
-                        <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
+                        <p className="mb-1 font-medium text-[#2f3a56]">
+                          Quanto tempo você tem agora?
+                        </p>
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTempoDisponivel((current) => (current === '5' ? null : '5'))
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tempoDisponivel === '5'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            5 min
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTempoDisponivel((current) => (current === '10' ? null : '10'))
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tempoDisponivel === '10'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            10 min
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTempoDisponivel((current) => (current === '20' ? null : '20'))
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tempoDisponivel === '20'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            20 min
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTempoDisponivel((current) => (current === '30+' ? null : '30+'))
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tempoDisponivel === '30+'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            30+
-                          </button>
+                          {[
+                            { id: '5', label: '5 min' },
+                            { id: '10', label: '10 min' },
+                            { id: '20', label: '20 min' },
+                            { id: '30+', label: '30+' },
+                          ].map((option) => (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setTempoDisponivel((current) =>
+                                  current === option.id ? null : option.id,
+                                )
+                              }
+                              className={clsx(
+                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                                tempoDisponivel === option.id
+                                  ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                  : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
+                      {/* COM QUEM */}
                       <div>
-                        <p className="mb-1 font-medium text-[#2f3a56]">Com quem</p>
+                        <p className="mb-1 font-medium text-[#2f3a56]">
+                          Quem está com você nesse momento?
+                        </p>
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setComQuem((current) => (current === 'so-eu' ? null : 'so-eu'))
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              comQuem === 'so-eu'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Só eu
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setComQuem((current) =>
-                                current === 'eu-e-meu-filho' ? null : 'eu-e-meu-filho',
-                              )
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              comQuem === 'eu-e-meu-filho'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Eu e meu filho
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setComQuem((current) =>
-                                current === 'familia-toda' ? null : 'familia-toda',
-                              )
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              comQuem === 'familia-toda'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Família toda
-                          </button>
+                          {[
+                            { id: 'so-eu', label: 'Só eu' },
+                            { id: 'eu-e-meu-filho', label: 'Eu e meu filho' },
+                            { id: 'familia-toda', label: 'Família toda' },
+                          ].map((option) => (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setComQuem((current) =>
+                                  current === option.id ? null : option.id,
+                                )
+                              }
+                              className={clsx(
+                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                                comQuem === option.id
+                                  ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                  : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
+                      {/* TIPO DE IDEIA */}
                       <div>
-                        <p className="mb-1 font-medium text-[#2f3a56]">Tipo de ideia</p>
+                        <p className="mb-1 font-medium text-[#2f3a56]">
+                          Você prefere uma ideia de…
+                        </p>
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTipoIdeia((current) =>
-                                current === 'brincadeira' ? null : 'brincadeira',
-                              )
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tipoIdeia === 'brincadeira'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Brincadeira
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTipoIdeia((current) =>
-                                current === 'organizacao' ? null : 'organizacao',
-                              )
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tipoIdeia === 'organizacao'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Organização da casa
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTipoIdeia((current) =>
-                                current === 'autocuidado' ? null : 'autocuidado',
-                              )
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tipoIdeia === 'autocuidado'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Autocuidado
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTipoIdeia((current) =>
-                                current === 'receita-rapida' ? null : 'receita-rapida',
-                              )
-                            }
-                            className={clsx(
-                              'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
-                              tipoIdeia === 'receita-rapida'
-                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
-                            )}
-                          >
-                            Receita rápida
-                          </button>
+                          {[
+                            { id: 'brincadeira', label: 'Brincadeira' },
+                            { id: 'organizacao', label: 'Organização da casa' },
+                            { id: 'autocuidado', label: 'Autocuidado' },
+                            { id: 'receita-rapida', label: 'Receita rápida' },
+                          ].map((option) => (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setTipoIdeia((current) =>
+                                  current === option.id ? null : option.id,
+                                )
+                              }
+                              className={clsx(
+                                'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20',
+                                tipoIdeia === option.id
+                                  ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                  : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15',
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
@@ -1317,9 +1212,9 @@ export default function RotinaLevePage() {
                         size="sm"
                         onClick={handleGenerateIdeas}
                         disabled={ideasLoading || isIdeasOverLimit}
-                        className="w-full"
+                        className="w-full md:w-auto"
                       >
-                        {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
+                        {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias para agora'}
                       </Button>
 
                       <p className="text-[11px] text-[#545454]">
@@ -1332,11 +1227,12 @@ export default function RotinaLevePage() {
 
                       {isIdeasOverLimit && (
                         <p className="text-[11px] text-[#ff005e] font-medium">
-                          Você chegou ao limite de ideias rápidas por hoje. O resto do dia pode ser
-                          só vivido, sem pressão 💗
+                          Você chegou ao limite de ideias rápidas por hoje. O resto do dia
+                          pode ser só vivido, sem pressão 💗
                         </p>
                       )}
 
+                      {/* LISTA IDEIAS */}
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                         <p className="text-xs font-medium text-[#2f3a56] mb-2">
                           Sugestões para agora
@@ -1360,10 +1256,12 @@ export default function RotinaLevePage() {
                           <ul className="space-y-2 text-xs text-[#545454]">
                             <li>• Mini brincadeira sensorial com objetos da sala.</li>
                             <li>
-                              • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
+                              • Conexão de 5 minutos: conte algo bom do seu dia para o seu
+                              filho.
                             </li>
                             <li>
-                              • Ritual rápido: uma pausa tranquila juntas antes de recomeçar.
+                              • Ritual rápido: uma pausa tranquila juntas antes de
+                              recomeçar.
                             </li>
                           </ul>
                         )}
@@ -1382,31 +1280,35 @@ export default function RotinaLevePage() {
                 </div>
               </SoftCard>
 
-              {/* Inspirações do Dia */}
+              {/* INSPIRAÇÕES DO DIA */}
               <SoftCard
                 id="rotina-leve-inspiracoes"
-                className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+                className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
               >
                 <div className="space-y-6 flex flex-col h-full">
-                  <div className="space-y-1 pb-2">
+                  <div className="space-y-1 pb-1">
+                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                      Dia · Inspirações
+                    </p>
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                      Inspirações do Dia
+                      Uma frase, um cuidado e um mini ritual para hoje
                     </h3>
                     <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                      Uma frase e um pequeno cuidado para hoje.
+                      Pequenas âncoras emocionais para lembrar que você não precisa dar
+                      conta de tudo ao mesmo tempo.
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setOpenInspiration((prev) => !prev)}
-                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
+                    className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
                   >
-                    {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
+                    {openInspiration ? 'Recolher inspiração ↑' : 'Ver inspiração de hoje →'}
                   </button>
 
                   {openInspiration && (
-                    <div className="text-xs space-y-3 flex-1">
+                    <div className="text-xs space-y-4 flex-1">
                       <div className="space-y-1">
                         <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
                         <select
@@ -1426,9 +1328,11 @@ export default function RotinaLevePage() {
                         size="sm"
                         onClick={handleGenerateInspiration}
                         disabled={inspirationLoading || isInspirationOverLimit}
-                        className="w-full"
+                        className="w-full md:w-auto"
                       >
-                        {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
+                        {inspirationLoading
+                          ? 'Gerando inspiração…'
+                          : 'Gerar inspiração para hoje'}
                       </Button>
 
                       <p className="text-[11px] text-[#545454]">
@@ -1441,8 +1345,8 @@ export default function RotinaLevePage() {
 
                       {isInspirationOverLimit && (
                         <p className="text-[11px] text-[#ff005e] font-medium">
-                          Você chegou ao limite de inspirações do dia. Respira, o que você já está
-                          fazendo pela sua família hoje já é muito 💗
+                          Você chegou ao limite de inspirações do dia. O que você já está
+                          fazendo hoje pela sua família já é muita coisa 💗
                         </p>
                       )}
 
@@ -1501,10 +1405,10 @@ export default function RotinaLevePage() {
             </div>
           </div>
 
-          {/* Resumo rápido do que já foi salvo no Planner */}
+          {/* BLOCO 3 — RESUMO NO PLANNER */}
           <SoftCard
             id="rotina-leve-planner"
-            className="rounded-3xl p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_4px_10px_rgba(0,0,0,0.04)]"
+            className="rounded-3xl p-5 md:p-6 bg-white/90 border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
@@ -1513,8 +1417,9 @@ export default function RotinaLevePage() {
                 </p>
                 {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
                   <p className="text-sm text-[#545454]">
-                    Conforme você salvar receitas e inspirações por aqui, este espaço mostra um
-                    resumo rápido do que já está no seu planner.
+                    Conforme você salvar receitas, ideias e inspirações por aqui, este
+                    espaço mostra um retrato rápido do que já está no seu planner. É como
+                    um painel de tudo que você tem construído aos poucos.
                   </p>
                 ) : (
                   <p className="text-sm text-[#545454]">
@@ -1526,7 +1431,8 @@ export default function RotinaLevePage() {
                     <span className="font-semibold text-[#2f3a56]">
                       {savedInspirationCount} inspiração(ões)
                     </span>{' '}
-                    deste mini-hub no seu planner.
+                    deste mini-hub no seu planner. Cada gesto conta como presença no seu
+                    dia.
                   </p>
                 )}
               </div>
