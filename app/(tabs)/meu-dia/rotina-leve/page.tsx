@@ -827,14 +827,14 @@ export default function RotinaLevePage() {
         <div className="pt-6 pb-10 space-y-8">
           {/* Texto de abertura da Rotina Leve */}
           <div className="space-y-2">
-            <p className="text-sm md:text-base text-[#2f3a56]">
+            <p className="text-sm md:text-base text-white">
               <span className="font-semibold">
                 Comece por onde fizer mais sentido hoje:
               </span>{' '}
               uma receitinha que caiba no seu tempo, uma ideia rápida ou uma inspiração para
               respirar com mais calma.
             </p>
-            <p className="text-xs md:text-sm text-[#545454]">
+            <p className="text-xs md:text-sm text-white/80">
               Tudo aqui foi pensado para caber na sua rotina real, sem perfeição e sem cobrança.
             </p>
           </div>
