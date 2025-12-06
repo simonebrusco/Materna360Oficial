@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { clsx } from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
@@ -203,7 +204,6 @@ function buildInsightFallback(
 ): ConquistasInsight {
   const { todayXp, totalXp, streak, completedMissions, totalMissions } = context
 
-  // Alguns cenários principais para deixar o texto bem humano
   if (totalXp === 0) {
     return {
       title: 'Todo começo merece ser celebrado',
@@ -417,7 +417,6 @@ export default function MinhasConquistasPage() {
     const isDone = !mission.done
     const delta = isDone ? mission.xp : -mission.xp
 
-    // Atualiza missões e salva estado
     setMissions(prev => {
       const updated = prev.map(m =>
         m.id === id ? { ...m, done: isDone } : m,
@@ -430,7 +429,6 @@ export default function MinhasConquistasPage() {
       return updated
     })
 
-    // XP + selos
     setXp(prev => {
       const base = prev ?? { today: 0, total: 0, streak: 0 }
       const fallback: XpSnapshot = {
@@ -487,7 +485,6 @@ export default function MinhasConquistasPage() {
                 highlightRing('painel'),
               )}
             >
-              {/* Fundo */}
               <div className="pointer-events-none absolute inset-0 opacity-80">
                 <div className="absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[rgba(255,0,94,0.28)] blur-3xl" />
                 <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-[rgba(255,216,230,0.9)] blur-3xl" />
@@ -508,7 +505,6 @@ export default function MinhasConquistasPage() {
                     </p>
                   </div>
 
-                  {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)] leading-none">
                       <AppIcon
@@ -523,7 +519,6 @@ export default function MinhasConquistasPage() {
                   </div>
                 </div>
 
-                {/* Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                   <StatCard
                     label="Pontuação de hoje"
@@ -545,7 +540,6 @@ export default function MinhasConquistasPage() {
                   />
                 </div>
 
-                {/* Barra */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
@@ -572,7 +566,6 @@ export default function MinhasConquistasPage() {
           ====================================================== */}
           <RevealSection delay={60}>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* MISSÕES */}
               <SoftCard
                 className={clsx(
                   'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
@@ -654,7 +647,6 @@ export default function MinhasConquistasPage() {
                 </div>
               </SoftCard>
 
-              {/* RESUMO DO DIA */}
               <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-6 bg-[#ffeef6]/70 border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
                 <div className="space-y-4">
                   <header>
@@ -717,7 +709,7 @@ export default function MinhasConquistasPage() {
 
             {/* CARD NOVO — INSIGHT ESTRATÉGICO */}
             <SoftCard className="mt-4 rounded-[28px] md:rounded-[32px] p-6 bg-white/90 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.14)]">
-              <div className="space-y-3 md:space-y-4">
+              <div className="space-y-4 md:space-y-5">
                 <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#ff005e]/80">
@@ -744,6 +736,19 @@ export default function MinhasConquistasPage() {
                   {insight?.helper ??
                     'Use este insight como um lembrete de que a sua jornada não precisa ser perfeita para ser valiosa — ela só precisa ser verdadeira para você.'}
                 </p>
+
+                <div className="pt-2 flex justify-end">
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
+                  >
+                    <Link href="/meu-dia/como-estou-hoje?abrir=semana">
+                      Ver minha semana emocional
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </SoftCard>
           </RevealSection>
@@ -783,7 +788,6 @@ export default function MinhasConquistasPage() {
                   </div>
                 </header>
 
-                {/* Grid de selos */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                   {SEALS.map(seal => {
                     const unlocked = unlockedSeals[seal.id]
