@@ -14,7 +14,7 @@ import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { updateXP } from '@/app/lib/xp'
 
-const AUTOCUIDADO_KEY = 'cuidar/autocuidado-inteligente'
+const AUTOCUIDADO_KEY = 'eu360/autocuidado-inteligente'
 
 type AutocuidadoDia = {
   ritmo?: {
@@ -142,7 +142,6 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao rastrear ritmo:', e)
     }
 
-    // XP por registrar o ritmo do dia
     try {
       void updateXP(10)
     } catch (e) {
@@ -188,7 +187,6 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao rastrear rotina:', e)
     }
 
-    // XP por montar a mini rotina
     try {
       void updateXP(15)
     } catch (e) {
@@ -228,7 +226,6 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao rastrear saúde:', e)
     }
 
-    // XP por registrar cuidado com o corpo
     try {
       void updateXP(15)
     } catch (e) {
@@ -274,7 +271,6 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao rastrear salvamento da sugestão:', e)
     }
 
-    // XP por salvar um carinho para si mesma
     try {
       void updateXP(10)
     } catch (e) {
@@ -291,17 +287,17 @@ export default function AutocuidadoInteligentePage() {
       subtitle="Cuidados que cabem na rotina, feitos na sua medida."
     >
       <ClientOnly>
-        <div className="pt-6 pb-10 space-y-8">
-          {/* BLOCO 1 — Hoje / Cuidados Que Cabem No Seu Agora */}
+        <div className="pt-6 pb-10 space-y-8 md:space-y-10">
+          {/* BLOCO 1 — Hoje / Cuidados que combinam com o seu ritmo */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:p-7 lg:p-8 bg-white/95 border border-[#ffd8e6]/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
               <div className="space-y-6 md:space-y-7">
                 {/* Header do bloco */}
                 <div className="space-y-2 md:space-y-3">
-                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]/80">
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]">
                     Hoje
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
+                  <h2 className="text-lg md:text-2xl font-semibold text-[#2f3a56] leading-snug">
                     Cuidados que combinam com o seu ritmo de agora.
                   </h2>
                   <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
@@ -320,7 +316,7 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
-                            name="sparkles"
+                            name="heart"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
@@ -336,7 +332,7 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-5 flex-1">
                         {/* Ritmo buttons */}
                         <div>
-                          <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3 block">
+                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3 block">
                             Como você está?
                           </label>
                           <div className="flex flex-wrap gap-2">
@@ -362,7 +358,7 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Nota textarea */}
                         <div>
-                          <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5 block">
+                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5 block">
                             Deixe uma nota (opcional)
                           </label>
                           <textarea
@@ -399,7 +395,7 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
-                            name="heart"
+                            name="idea"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
@@ -454,14 +450,14 @@ export default function AutocuidadoInteligentePage() {
 
           {/* BLOCO 2 — Corpo & Bem-Estar */}
           <Reveal delay={80}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:pb-7 md:px-7 lg:p-8 bg-white/95 border border-[#ffd8e6]/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
               <div className="space-y-6 md:space-y-7">
                 {/* Header do bloco */}
                 <div className="space-y-2 md:space-y-3">
-                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]/80">
+                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]">
                     Corpo & bem-estar
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
+                  <h2 className="text-lg md:text-2xl font-semibold text-[#2f3a56] leading-snug">
                     Cuide do seu corpo e receba um carinho só para você.
                   </h2>
                   <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
@@ -479,7 +475,7 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
-                            name="zap"
+                            name="time"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
@@ -494,7 +490,7 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-5 flex-1">
                         {/* Hidratação */}
                         <div className="space-y-3">
-                          <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
                             💧 Hidratação
                           </label>
                           <div className="flex flex-wrap gap-2">
@@ -523,7 +519,7 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Sono */}
                         <div className="space-y-3">
-                          <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
                             😴 Sono
                           </label>
                           <div className="flex flex-wrap gap-2">
@@ -551,7 +547,7 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Alimentação */}
                         <div className="space-y-3">
-                          <label className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
                             🍽️ Alimentação
                           </label>
                           <div className="flex flex-wrap gap-2">
