@@ -510,7 +510,10 @@ export default function RotinaLevePage() {
       try {
         void updateXP(8)
       } catch (e) {
-        console.error('[Rotina Leve] Erro ao atualizar XP (receita):', e)
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (receita):',
+          e,
+        )
       }
 
       toast.success('Receita salva no planner ✨')
@@ -549,7 +552,10 @@ export default function RotinaLevePage() {
       try {
         void updateXP(5)
       } catch (e) {
-        console.error('[Rotina Leve] Erro ao atualizar XP (inspiração):', e)
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (inspiração):',
+          e,
+        )
       }
 
       toast.success('Inspiração salva no planner 💗')
@@ -682,13 +688,22 @@ export default function RotinaLevePage() {
         // ignora
       }
 
+      // XP por gerar receitas (gesto de presença)
+      try {
+        void updateXP(4)
+      } catch (e) {
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (gerar receitas):',
+          e,
+        )
+      }
+
       const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
       setUsedRecipesToday((prev) => {
         const next = prev + 1
         save(storageKey, next)
         return next
       })
-      // Futuro: aqui é um ótimo ponto pra telemetria *.generated detalhada por receita
     } finally {
       setRecipesLoading(false)
     }
@@ -749,6 +764,16 @@ export default function RotinaLevePage() {
         tipoIdeia: tipoIdeia as any,
       })
 
+      // XP por gerar ideias (mesmo que não salve ainda)
+      try {
+        void updateXP(3)
+      } catch (e) {
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (gerar ideias):',
+          e,
+        )
+      }
+
       const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
       setUsedIdeasToday((prev) => {
         const next = prev + 1
@@ -789,6 +814,16 @@ export default function RotinaLevePage() {
 
       const result = await generateInspirationWithAI(focusOfDay)
       setInspiration(result)
+
+      // XP por gerar inspiração (gesto emocional importante)
+      try {
+        void updateXP(3)
+      } catch (e) {
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (gerar inspiração):',
+          e,
+        )
+      }
 
       const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
       setUsedInspirationsToday((prev) => {
@@ -918,7 +953,7 @@ export default function RotinaLevePage() {
                     variant="primary"
                     size="sm"
                     onClick={handleGenerateRecipes}
-                    disabled={recipesLoading || isBabyUnderSixMonths}
+                    disabled={recipesLoading || isBabyUnderSixMonths || isOverLimit}
                     className="w-full"
                   >
                     {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
@@ -1281,7 +1316,7 @@ export default function RotinaLevePage() {
                         variant="primary"
                         size="sm"
                         onClick={handleGenerateIdeas}
-                        disabled={ideasLoading}
+                        disabled={ideasLoading || isIdeasOverLimit}
                         className="w-full"
                       >
                         {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
@@ -1390,7 +1425,7 @@ export default function RotinaLevePage() {
                         variant="primary"
                         size="sm"
                         onClick={handleGenerateInspiration}
-                        disabled={inspirationLoading}
+                        disabled={inspirationLoading || isInspirationOverLimit}
                         className="w-full"
                       >
                         {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
