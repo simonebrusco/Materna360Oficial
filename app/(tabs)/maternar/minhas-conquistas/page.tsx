@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import clsx from 'clsx'
+import { clsx } from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -41,43 +41,7 @@ const SEALS = [
   { id: 'presenca', label: 'Presença real', icon: 'star' as AppIconName },
 ]
 
-// ===== LÓGICA DE NÍVEL =====
-
 const LEVEL_XP_STEP = 400
-
-type LevelInfo = {
-  level: number
-  currentLevelMinXp: number
-  nextLevelXp: number
-  progressPercent: number
-  remainingToNext: number
-}
-
-function getLevelInfo(totalXp: number): LevelInfo {
-  const safeTotal = Math.max(0, totalXp)
-
-  // Ex.: 0–399 = nível 1, 400–799 = nível 2, etc.
-  const level = Math.floor(safeTotal / LEVEL_XP_STEP) + 1
-
-  const currentLevelMinXp = (level - 1) * LEVEL_XP_STEP
-  const nextLevelXp = level * LEVEL_XP_STEP
-
-  const gainedOnLevel = safeTotal - currentLevelMinXp
-  const progressPercent = Math.min(
-    100,
-    Math.max(0, (gainedOnLevel / LEVEL_XP_STEP) * 100),
-  )
-
-  const remainingToNext = Math.max(0, nextLevelXp - safeTotal)
-
-  return {
-    level,
-    currentLevelMinXp,
-    nextLevelXp,
-    progressPercent,
-    remainingToNext,
-  }
-}
 
 // ===== COMPONENT =====
 
@@ -94,7 +58,7 @@ export default function MinhasConquistasPage() {
   }, [searchParams])
 
   const [missions, setMissions] = useState(
-    INITIAL_MISSIONS.map((m) => ({ ...m, done: false })),
+    INITIAL_MISSIONS.map(m => ({ ...m, done: false })),
   )
 
   const [xp, setXp] = useState<XpSnapshot | null>(null)
@@ -110,41 +74,40 @@ export default function MinhasConquistasPage() {
     }
   }, [])
 
-  const completedMissions = missions.filter((m) => m.done).length
+  const completedMissions = missions.filter(m => m.done).length
 
   const handleMissionToggle = (id: string) => {
-    const mission = missions.find((m) => m.id === id)
+    const mission = missions.find(m => m.id === id)
     if (!mission) return
 
     const wasDone = !!mission.done
     const delta = wasDone ? -mission.xp : mission.xp
 
     // Atualiza missões visualmente
-    setMissions((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item)),
+    setMissions(prev =>
+      prev.map(item => (item.id === id ? { ...item, done: !item.done } : item)),
     )
 
-    // Atualiza XP local + envia delta para o módulo central (sem depender do retorno)
-    setXp((prev) => {
+    // Atualiza XP com fallback seguro
+    setXp(prev => {
       const base: XpSnapshot = prev ?? { today: 0, total: 0, streak: 0 }
 
-      const next: XpSnapshot = {
+      const fallback: XpSnapshot = {
         today: Math.max(0, base.today + delta),
         total: Math.max(0, base.total + delta),
-        // streak simples por enquanto – pode ser refinado depois com lógica de datas
         streak: base.streak || (delta > 0 ? 1 : 0),
       }
 
       try {
-        void updateXP(delta)
+        const fromStore = updateXP(delta)
+        return fromStore
       } catch (error) {
         console.error(
-          '[MinhasConquistas] Erro ao atualizar XP global, mantendo apenas estado local:',
+          '[MinhasConquistas] Erro ao atualizar XP global, usando fallback local:',
           error,
         )
+        return fallback
       }
-
-      return next
     })
   }
 
@@ -157,8 +120,20 @@ export default function MinhasConquistasPage() {
   const totalXp = xp?.total ?? 0
   const streak = xp?.streak ?? 0
 
-  const levelInfo = getLevelInfo(totalXp)
-  const xpProgressPercent = levelInfo.progressPercent
+  // Lógica de nível / progresso
+  const level = totalXp <= 0 ? 1 : Math.floor(totalXp / LEVEL_XP_STEP) + 1
+  const xpInCurrentLevel = totalXp <= 0 ? 0 : totalXp % LEVEL_XP_STEP
+  const xpToNextLevel = LEVEL_XP_STEP - xpInCurrentLevel
+  const xpProgressPercent =
+    xpInCurrentLevel === 0 ? 0 : Math.min(100, (xpInCurrentLevel / LEVEL_XP_STEP) * 100)
+
+  // Texto dinâmico para o resumo
+  const resumoTitle =
+    completedMissions === 0
+      ? 'Se hoje nada coube na agenda, você ainda merece gentileza.'
+      : completedMissions < missions.length
+        ? 'Você já fez algo por você hoje — e isso já conta muito.'
+        : 'Olha quanta coisa você conseguiu cuidar hoje.'
 
   return (
     <PageTemplate
@@ -192,21 +167,22 @@ export default function MinhasConquistasPage() {
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
-                      Este espaço mostra um resumo leve do que você já fez hoje e ao longo dos
-                      dias – sem cobrança, só reconhecimento.
+                      Este espaço mostra um resumo leve do que você já fez hoje e ao longo dos dias – sem
+                      cobrança, só reconhecimento.
                     </p>
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
                       <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" decorative />
-                      Nível {levelInfo.level} · Jornada em andamento
-                    </span>
-                    <span className="text-[11px] text-[#545454]/80">
-                      Os números abaixo acompanham o que você já fez na plataforma.
+                      Nível {level} · Jornada em andamento
                     </span>
                   </div>
                 </div>
+
+                <p className="text-[11px] text-[#545454]/80">
+                  Os números abaixo acompanham o que você já fez na plataforma.
+                </p>
 
                 {/* Cards de números */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
@@ -230,7 +206,7 @@ export default function MinhasConquistasPage() {
                   />
                 </div>
 
-                {/* Barra de progresso geral – progresso até o próximo nível */}
+                {/* Barra de progresso geral */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
@@ -244,16 +220,10 @@ export default function MinhasConquistasPage() {
                   </div>
                   <p className="text-xs text-[#545454]/80">
                     Você não precisa fazer tudo. Só continuar aparecendo um pouquinho por dia.
-                    {levelInfo.remainingToNext > 0 && (
-                      <>
-                        {' '}
-                        Faltam aproximadamente{' '}
-                        <span className="font-semibold">
-                          {levelInfo.remainingToNext} XP
-                        </span>{' '}
-                        para o próximo nível.
-                      </>
-                    )}
+                    {' '}
+                    {totalXp <= 0
+                      ? 'Você começa no Nível 1 — cada cuidado vai somando.'
+                      : `Faltam aproximadamente ${xpToNextLevel} XP para o próximo nível.`}
                   </p>
                 </div>
               </div>
@@ -279,13 +249,13 @@ export default function MinhasConquistasPage() {
                       Pequenas ações que somam pontos (e leveza).
                     </h2>
                     <p className="text-sm text-[#545454]">
-                      Use este espaço como um lembrete gentil, não como obrigação. Marque só o que
-                      fizer sentido hoje.
+                      Use este espaço como um lembrete gentil, não como obrigação. Marque só o que fizer
+                      sentido hoje.
                     </p>
                   </header>
 
                   <div className="space-y-2.5">
-                    {missions.map((mission) => {
+                    {missions.map(mission => {
                       const isDone = mission.done
                       return (
                         <button
@@ -350,7 +320,7 @@ export default function MinhasConquistasPage() {
                       Seu resumo de hoje
                     </p>
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                      Quando você cuida de si, a jornada toda ganha brilho.
+                      {resumoTitle}
                     </h3>
                   </header>
 
@@ -362,8 +332,9 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Cada missão marcada aqui já mostra que você está olhando para você – mesmo
-                        que o dia esteja corrido.
+                        {completedMissions === 0
+                          ? 'Mesmo quando nenhuma missão cabe no dia, o fato de você estar aqui já mostra cuidado com você.'
+                          : `Cada missão marcada aqui (${completedMissions} de ${missions.length}) já mostra que você está olhando para você – mesmo que o dia esteja corrido.`}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -373,8 +344,8 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Use este painel junto com o <strong>Meu Dia</strong> e o <strong>Cuidar</strong> para acompanhar
-                        sua energia, cuidados e vínculos.
+                        Use este painel junto com o <strong>Meu Dia</strong> e o <strong>Cuidar</strong> para
+                        acompanhar sua energia, cuidados e vínculos.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -384,8 +355,8 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Ao final da semana, você poderá olhar para trás e enxergar não só tarefas,
-                        mas todos os gestos de presença que fez por você e pela sua família.
+                        Ao final da semana, você poderá olhar para trás e enxergar não só tarefas, mas todos
+                        os gestos de presença que fez por você e pela sua família.
                       </span>
                     </li>
                   </ul>
@@ -422,8 +393,8 @@ export default function MinhasConquistasPage() {
                       Uma coleção das suas pequenas grandes vitórias.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-2xl">
-                      Cada selo representa um momento em que você escolheu cuidar, insistir ou
-                      recomeçar. Não é sobre perfeição, é sobre presença.
+                      Cada selo representa um momento em que você escolheu cuidar, insistir ou recomeçar. Não
+                      é sobre perfeição, é sobre presença.
                     </p>
                   </div>
 
@@ -436,7 +407,7 @@ export default function MinhasConquistasPage() {
                 </header>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-                  {SEALS.map((seal) => (
+                  {SEALS.map(seal => (
                     <div
                       key={seal.id}
                       className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-[#ffd8e6] bg-white/80 px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)]"
@@ -478,9 +449,9 @@ export default function MinhasConquistasPage() {
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
-                    Aqui você terá um resumo dos dias em que conseguiu se cuidar, registrar a
-                    rotina ou criar momentos especiais. Mesmo quando os quadrinhos ficarem em
-                    branco, isso também conta a história da sua fase.
+                    Aqui você terá um resumo dos dias em que conseguiu se cuidar, registrar a rotina ou criar
+                    momentos especiais. Mesmo quando os quadrinhos ficarem em branco, isso também conta a
+                    história da sua fase.
                   </p>
                 </header>
 
@@ -507,7 +478,7 @@ export default function MinhasConquistasPage() {
                         </div>
 
                         <div className="flex gap-1.5">
-                          {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                          {[0, 1, 2, 3, 4, 5, 6].map(day => (
                             <div
                               key={day}
                               className={clsx(
@@ -527,9 +498,9 @@ export default function MinhasConquistasPage() {
                 </div>
 
                 <p className="text-xs md:text-sm text-[#545454]/85">
-                  Quando essa área estiver conectada aos seus registros, você poderá enxergar o mês
-                  inteiro com mais gentileza: não só o que faltou, mas tudo o que você já conseguiu
-                  fazer por você e pela sua família.
+                  Quando essa área estiver conectada aos seus registros, você poderá enxergar o mês inteiro com
+                  mais gentileza: não só o que faltou, mas tudo o que você já conseguiu fazer por você e pela
+                  sua família.
                 </p>
               </div>
             </SoftCard>
