@@ -477,7 +477,7 @@ export default function RotinaLevePage() {
         console.error('[Rotina Leve] Erro ao atualizar XP (ideias):', e)
       }
 
-      toast.success('Ideias salvas no planner 💗')
+      toast.success('Ideias salvas no planner do Materna360 💗')
     } catch (error) {
       console.error('[Rotina Leve] Error saving ideas:', error)
       toast.danger('Não foi possível salvar as ideias agora.')
@@ -513,7 +513,7 @@ export default function RotinaLevePage() {
         console.error('[Rotina Leve] Erro ao atualizar XP (receita):', e)
       }
 
-      toast.success('Receita salva no planner ✨')
+      toast.success('Receita salva no planner do Materna360 ✨')
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
       toast.danger('Não foi possível salvar a receita agora.')
@@ -552,7 +552,7 @@ export default function RotinaLevePage() {
         console.error('[Rotina Leve] Erro ao atualizar XP (inspiração):', e)
       }
 
-      toast.success('Inspiração salva no planner 💗')
+      toast.success('Inspiração salva no planner do Materna360 💗')
     } catch (error) {
       console.error('[Rotina Leve] Error saving inspiration:', error)
       toast.danger('Não foi possível salvar a inspiração agora.')
@@ -569,7 +569,7 @@ export default function RotinaLevePage() {
 
     if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
       toast.info(
-        'Você já usou as receitinhas inteligentes do seu plano hoje. Amanhã a gente pensa em novas ideias com calma, combinado? 💕',
+        'Você já pediu bastante inspiração de receitinhas por hoje. Amanhã a gente pensa em novas ideias com calma, combinado? 💕',
       )
       try {
         track('rotina_leve.recipes.limit_reached', {
@@ -826,6 +826,18 @@ export default function RotinaLevePage() {
         {/* IMPORTANTE: sem mx-auto / max-w aqui, o PageTemplate já cuida disso */}
         <div className="pt-6 pb-10 space-y-8">
           <div className="space-y-6">
+            {/* Contexto emocional da página */}
+            <div className="space-y-1">
+              <p className="text-sm md:text-base text-[#545454]">
+                Escolha por onde quer começar hoje: uma receitinha que caiba no seu tempo, uma ideia
+                rápida ou uma inspiração para respirar com mais calma.
+              </p>
+              <p className="text-xs md:text-sm text-[#545454]/80">
+                Tudo aqui foi pensado para encaixar na sua rotina real, sem perfeição e sem
+                cobrança.
+              </p>
+            </div>
+
             {/* HERO CARD: Receitas Inteligentes */}
             <SoftCard
               id="rotina-leve-receitas"
@@ -915,13 +927,13 @@ export default function RotinaLevePage() {
                     <span className="font-semibold text-[#2f3a56]">
                       {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
                     </span>{' '}
-                    sugestões do seu plano.
+                    sugestões do dia.
                   </p>
 
                   {isOverLimit && (
                     <p className="text-[11px] text-[#ff005e] font-medium">
-                      Você chegou ao limite de receitas inteligentes do seu plano hoje. Amanhã tem
-                      mais 💗
+                      Você já recebeu bastante inspiração de receitas por hoje. Amanhã a gente pensa
+                      em novas ideias com calma, combinado? 💗
                     </p>
                   )}
 
@@ -1016,7 +1028,7 @@ export default function RotinaLevePage() {
                                     disabled={!canSave}
                                     className="w-full"
                                   >
-                                    Salvar esta receita no planner
+                                    Salvar esta receita no planner do Materna360
                                   </Button>
                                 </div>
                               )}
@@ -1066,11 +1078,13 @@ export default function RotinaLevePage() {
                     onClick={() => setOpenIdeas((prev) => !prev)}
                     className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
                   >
-                    {openIdeas ? 'Ver menos ↑' : 'Ver ideias →'}
+                    {openIdeas
+                      ? 'Recolher filtros ↑'
+                      : 'Personalizar por tempo e companhia →'}
                   </button>
 
                   {openIdeas && (
-                    <div className="space-y-3 text-xs flex-1">
+                    <div className="space-y-3 text-xs">
                       <div>
                         <p className="mb-1 font-medium text-[#2f3a56]">Tempo disponível</p>
                         <div className="flex flex-wrap gap-2">
@@ -1278,7 +1292,7 @@ export default function RotinaLevePage() {
                         <span className="font-semibold text-[#2f3a56]">
                           {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
                         </span>{' '}
-                        gerações de ideias.
+                        vezes que pediu ideias por aqui.
                       </p>
 
                       {isIdeasOverLimit && (
@@ -1287,49 +1301,49 @@ export default function RotinaLevePage() {
                           só vivido, sem pressão 💗
                         </p>
                       )}
-
-                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                        <p className="text-xs font-medium text-[#2f3a56] mb-2">
-                          Sugestões para agora
-                        </p>
-
-                        {ideasLoading && (
-                          <p className="text-[11px] text-[#545454]">
-                            Pensando em pequenas ações que cabem no seu momento…
-                          </p>
-                        )}
-
-                        {!ideasLoading && ideas && (
-                          <ul className="space-y-2 text-xs text-[#545454]">
-                            {ideas.map((idea) => (
-                              <li key={idea.id}>• {idea.text}</li>
-                            ))}
-                          </ul>
-                        )}
-
-                        {!ideasLoading && !ideas && (
-                          <ul className="space-y-2 text-xs text-[#545454]">
-                            <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                            <li>
-                              • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
-                            </li>
-                            <li>
-                              • Ritual rápido: uma pausa tranquila juntas antes de recomeçar.
-                            </li>
-                          </ul>
-                        )}
-
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleSaveIdeia}
-                          className="w-full mt-3"
-                        >
-                          Salvar no planner
-                        </Button>
-                      </div>
                     </div>
                   )}
+
+                  <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 mt-2">
+                    <p className="text-xs font-medium text-[#2f3a56] mb-2">
+                      Sugestões para agora
+                    </p>
+
+                    {ideasLoading && (
+                      <p className="text-[11px] text-[#545454]">
+                        Pensando em pequenas ações que cabem no seu momento…
+                      </p>
+                    )}
+
+                    {!ideasLoading && ideas && (
+                      <ul className="space-y-2 text-xs text-[#545454]">
+                        {ideas.map((idea) => (
+                          <li key={idea.id}>• {idea.text}</li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {!ideasLoading && !ideas && (
+                      <ul className="space-y-2 text-xs text-[#545454]">
+                        <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                        <li>
+                          • Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.
+                        </li>
+                        <li>
+                          • Ritual rápido: uma pausa tranquila juntas antes de recomeçar.
+                        </li>
+                      </ul>
+                    )}
+
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveIdeia}
+                      className="w-full mt-3"
+                    >
+                      Salvar no planner do Materna360
+                    </Button>
+                  </div>
                 </div>
               </SoftCard>
 
@@ -1353,11 +1367,13 @@ export default function RotinaLevePage() {
                     onClick={() => setOpenInspiration((prev) => !prev)}
                     className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ff005e]/60"
                   >
-                    {openInspiration ? 'Ver menos ↑' : 'Ver inspiração →'}
+                    {openInspiration
+                      ? 'Recolher filtros ↑'
+                      : 'Personalizar foco de hoje →'}
                   </button>
 
                   {openInspiration && (
-                    <div className="text-xs space-y-3 flex-1">
+                    <div className="text-xs space-y-3">
                       <div className="space-y-1">
                         <p className="font-medium text-[#2f3a56]">Foco de hoje</p>
                         <select
@@ -1396,57 +1412,57 @@ export default function RotinaLevePage() {
                           fazendo pela sua família hoje já é muito 💗
                         </p>
                       )}
-
-                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
-                        {inspirationLoading && (
-                          <p className="text-[11px]">
-                            Pensando em uma frase e um cuidado especial para hoje…
-                          </p>
-                        )}
-
-                        {!inspirationLoading && (
-                          <>
-                            <div>
-                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
-                                Frase de hoje
-                              </p>
-                              <p>
-                                {(inspiration && inspiration.phrase) ||
-                                  'Você não precisa dar conta de tudo hoje.'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
-                                Pequeno cuidado
-                              </p>
-                              <p>
-                                {(inspiration && inspiration.care) ||
-                                  '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
-                                Mini ritual
-                              </p>
-                              <p>
-                                {(inspiration && inspiration.ritual) ||
-                                  'Envie uma mensagem carinhosa para alguém que te apoia.'}
-                              </p>
-                            </div>
-                          </>
-                        )}
-
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleSaveInspiracao}
-                          className="w-full mt-2"
-                        >
-                          Salvar inspiração no planner
-                        </Button>
-                      </div>
                     </div>
                   )}
+
+                  <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3 mt-2">
+                    {inspirationLoading && (
+                      <p className="text-[11px]">
+                        Pensando em uma frase e um cuidado especial para hoje…
+                      </p>
+                    )}
+
+                    {!inspirationLoading && (
+                      <>
+                        <div>
+                          <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                            Frase de hoje
+                          </p>
+                          <p>
+                            {(inspiration && inspiration.phrase) ||
+                              'Você não precisa dar conta de tudo hoje.'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                            Pequeno cuidado
+                          </p>
+                          <p>
+                            {(inspiration && inspiration.care) ||
+                              '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-[11px] font-medium text-[#2f3a56]">
+                            Mini ritual
+                          </p>
+                          <p>
+                            {(inspiration && inspiration.ritual) ||
+                              'Envie uma mensagem carinhosa para alguém que te apoia.'}
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveInspiracao}
+                      className="w-full mt-2"
+                    >
+                      Salvar inspiração no planner do Materna360
+                    </Button>
+                  </div>
                 </div>
               </SoftCard>
             </div>
@@ -1480,6 +1496,11 @@ export default function RotinaLevePage() {
                     deste mini-hub no seu planner.
                   </p>
                 )}
+                <p className="text-[11px] text-[#545454]">
+                  Para ver tudo isso organizado em um só lugar, abra a aba{' '}
+                  <span className="font-semibold text-[#2f3a56]">Meu Dia</span> no planner do
+                  Materna360.
+                </p>
               </div>
 
               {lastInspiration && (
