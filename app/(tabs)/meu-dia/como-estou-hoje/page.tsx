@@ -23,22 +23,34 @@ import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 // ======================================================
 
 type MoodId = 'calma' | 'cansada' | 'sobrecarregada' | 'grata'
-
 type EnergyLevel = 'baixa' | 'variando' | 'ok' | 'alta'
 
 const DAILY_CHECKIN_LIMIT = 3
 const CHECKIN_STORAGE_PREFIX = 'como-estou-hoje:checkin:'
 
-// ======================================================
-// HELPERS
-// ======================================================
-
-const moodOptions: {
+type MoodOption = {
   id: MoodId
   label: string
   description: string
   icon: AppIconName
-}[] = [
+}
+
+type EnergyOption = {
+  id: EnergyLevel
+  label: string
+  helper: string
+}
+
+type DailyInsight = {
+  phrase: string
+  reminder: string
+}
+
+// ======================================================
+// HELPERS
+// ======================================================
+
+const moodOptions: MoodOption[] = [
   {
     id: 'calma',
     label: 'Mais tranquila',
@@ -49,27 +61,23 @@ const moodOptions: {
     id: 'cansada',
     label: 'Cansada',
     description: 'Você está fazendo o que pode com a energia que tem.',
-    icon: 'heart',
+    icon: 'cloud',
   },
   {
     id: 'sobrecarregada',
     label: 'Sobrecarregada',
     description: 'Muita coisa ao mesmo tempo. Você não está sozinha nisso.',
-    icon: 'star',
+    icon: 'alert',
   },
   {
     id: 'grata',
     label: 'Grata',
     description: 'Mesmo com tudo, existe um carinho pelo caminho até aqui.',
-    icon: 'smile',
+    icon: 'heart',
   },
 ]
 
-const energyOptions: {
-  id: EnergyLevel
-  label: string
-  helper: string
-}[] = [
+const energyOptions: EnergyOption[] = [
   { id: 'baixa', label: 'Baixa', helper: 'Só o básico hoje já é muita coisa.' },
   { id: 'variando', label: 'Oscilando', helper: 'Tem horas boas e horas desafiadoras.' },
   { id: 'ok', label: 'Ok', helper: 'Dá pra seguir o dia, com pausas.' },
@@ -78,6 +86,14 @@ const energyOptions: {
 
 function getCheckinStorageKey(dateKey: string) {
   return `${CHECKIN_STORAGE_PREFIX}${dateKey}:count`
+}
+
+// Insight padrão caso a IA falhe
+const DEFAULT_INSIGHT: DailyInsight = {
+  phrase:
+    'Hoje é seu dia, e tudo bem se não estiver perfeito. Entre riscos e bagunças, você faz o melhor que pode — e isso já é muito.',
+  reminder:
+    'Cinco minutos de respiração profunda ou um abraço apertado em quem está por perto também são cuidado.',
 }
 
 // ======================================================
@@ -101,7 +117,11 @@ export default function ComoEstouHojePage() {
 
   const isOverLimit = usedCheckinsToday >= DAILY_CHECKIN_LIMIT
 
-  // Carrega o número de check-ins do dia
+  // Insight do dia (IA)
+  const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null)
+  const [insightLoading, setInsightLoading] = useState(false)
+
+  // Carrega número de check-ins do dia + telemetria de abertura
   useEffect(() => {
     const storageKey = getCheckinStorageKey(currentDateKey)
     const stored = load(storageKey)
@@ -125,8 +145,82 @@ export default function ComoEstouHojePage() {
     }
   }, [currentDateKey, abrir])
 
+  // Carrega insight do dia da IA (com fallback suave)
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchInsight = async () => {
+      setInsightLoading(true)
+      try {
+        try {
+          track('como_estou_hoje.insight.requested_backend', {
+            dateKey: currentDateKey,
+          })
+        } catch {
+          // ignora
+        }
+
+        const res = await fetch('/api/ai/emocional', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            feature: 'insight_do_dia',
+            origin: 'como-estou-hoje',
+          }),
+        })
+
+        if (!res.ok) {
+          throw new Error('Resposta inválida do backend de IA')
+        }
+
+        const data = await res.json()
+        const insight = data?.insight
+
+        const normalized: DailyInsight = {
+          phrase: insight?.phrase || DEFAULT_INSIGHT.phrase,
+          reminder: insight?.reminder || DEFAULT_INSIGHT.reminder,
+        }
+
+        if (!cancelled) {
+          setDailyInsight(normalized)
+        }
+
+        try {
+          track('como_estou_hoje.insight.generated_backend', {
+            dateKey: currentDateKey,
+            hasInsight: Boolean(insight),
+          })
+        } catch {
+          // ignora
+        }
+      } catch (error) {
+        console.error('[Como Estou Hoje] Erro ao buscar insight do dia, usando fallback:', error)
+        if (!cancelled) {
+          setDailyInsight(DEFAULT_INSIGHT)
+        }
+        try {
+          track('como_estou_hoje.insight.fallback_used', {
+            dateKey: currentDateKey,
+          })
+        } catch {
+          // ignora
+        }
+      } finally {
+        if (!cancelled) {
+          setInsightLoading(false)
+        }
+      }
+    }
+
+    void fetchInsight()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentDateKey])
+
   // ======================================================
-  // ACTIONS
+  // ACTIONS – CHECK-IN
   // ======================================================
 
   const handleCheckin = async () => {
@@ -158,7 +252,7 @@ export default function ComoEstouHojePage() {
       : null
 
     try {
-      // Salva no Planner
+      // Salva no planner
       addItem({
         origin: 'como-estou-hoje',
         type: 'insight',
@@ -200,9 +294,7 @@ export default function ComoEstouHojePage() {
       }
 
       toast.success('Seu momento foi registrado com carinho 💗')
-
-      // Opcional: limpa apenas a nota, mantém mood/energy
-      setNote('')
+      setNote('') // limpa só o texto, mantendo humor/energia
     } catch (error) {
       console.error('[Como Estou Hoje] Erro ao registrar check-in:', error)
       toast.danger('Não consegui registrar seu momento agora. Tenta de novo em instantes?')
@@ -219,6 +311,95 @@ export default function ComoEstouHojePage() {
     }
 
     router.push('/maternar/minhas-conquistas?abrir=painel')
+  }
+
+  // ======================================================
+  // ACTIONS – SUGESTÕES DA SEMANA (leva pro planner)
+  // ======================================================
+
+  const handleSaveWeeklySuggestion = (id: string) => {
+    try {
+      let title = ''
+      let description = ''
+      let tag = ''
+
+      if (id === 'pausa') {
+        title = 'Respire fundo nos momentos difíceis'
+        description =
+          'Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.'
+        tag = 'Pausa'
+      } else if (id === 'conexao') {
+        title = 'Momento com seu filho'
+        description =
+          'Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma ambos.'
+        tag = 'Conexão'
+      } else if (id === 'rotina') {
+        title = 'Mantenha um pequeno ritual'
+        description =
+          'Café da manhã tranquilo ou alongamento leve ajudam a criar estabilidade ao longo da semana.'
+        tag = 'Rotina'
+      }
+
+      addItem({
+        origin: 'como-estou-hoje',
+        type: 'insight',
+        title,
+        payload: {
+          tag,
+          description,
+          dateKey: currentDateKey,
+          source: 'sugestoes-semana',
+        },
+      })
+
+      try {
+        void updateXP(4)
+      } catch (e) {
+        console.error('[Como Estou Hoje] Erro ao atualizar XP (sugestão semanal):', e)
+      }
+
+      toast.success('Sugestão levada para o planner ✨')
+    } catch (error) {
+      console.error('[Como Estou Hoje] Erro ao salvar sugestão semanal:', error)
+      toast.danger('Não consegui levar essa sugestão pro planner agora.')
+    }
+  }
+
+  const handleSaveInsight = () => {
+    try {
+      const insight = dailyInsight ?? DEFAULT_INSIGHT
+
+      addItem({
+        origin: 'como-estou-hoje',
+        type: 'insight',
+        title: 'Insight do dia',
+        payload: {
+          description: insight.phrase,
+          reminder: insight.reminder,
+          dateKey: currentDateKey,
+          source: 'insight-diario',
+        },
+      })
+
+      try {
+        void updateXP(4)
+      } catch (e) {
+        console.error('[Como Estou Hoje] Erro ao atualizar XP (insight do dia):', e)
+      }
+
+      try {
+        track('como_estou_hoje.insight.saved', {
+          dateKey: currentDateKey,
+        })
+      } catch {
+        // ignora
+      }
+
+      toast.success('Insight levado para o planner ✨')
+    } catch (error) {
+      console.error('[Como Estou Hoje] Erro ao salvar insight do dia:', error)
+      toast.danger('Não consegui levar esse insight pro planner agora.')
+    }
   }
 
   // ======================================================
@@ -245,8 +426,10 @@ export default function ComoEstouHojePage() {
             </p>
           </div>
 
-          {/* BLOCO 1 — COMO VOCÊ SE SENTE HOJE */}
-          <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+          {/* ===========================
+              BLOCO 1 — COMO VOCÊ ESTÁ AGORA
+          ============================ */}
+          <SoftCard className="rounded-3xl p-6 md:p-8 bg:white bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
             <div className="space-y-6">
               <header className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -261,124 +444,163 @@ export default function ComoEstouHojePage() {
                 </p>
               </header>
 
-              {/* HUMORES (chips) */}
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
-                  Se você pudesse escolher uma palavra para o dia…
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {moodOptions.map((mood) => {
-                    const isActive = selectedMood === mood.id
-                    return (
-                      <button
-                        key={mood.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedMood((current) =>
-                            current === mood.id ? null : mood.id,
-                          )
-                        }
-                        className={clsx(
-                          'group flex flex-col items-start gap-2 rounded-2xl border px-3 py-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/40',
-                          isActive
-                            ? 'border-[#ff005e] bg-[#ffd8e6]/50 shadow-[0_10px_26px_rgba(0,0,0,0.08)]'
-                            : 'border-[#ffd8e6] bg-white hover:border-[#ff005e]/70 hover:bg-[#ffd8e6]/20',
-                        )}
-                      >
-                        <div
-                          className={clsx(
-                            'flex h-8 w-8 items-center justify-center rounded-xl border transition-colors',
-                            isActive
-                              ? 'border-[#ff005e] bg-[#ffd8e6]'
-                              : 'border-[#ffd8e6] bg-white',
-                          )}
-                        >
-                          <AppIcon
-                            name={mood.icon}
-                            className={clsx(
-                              'h-4 w-4',
-                              isActive ? 'text-[#ff005e]' : 'text-[#b26b7c]',
-                            )}
-                          />
-                        </div>
-
-                        <span
-                          className={clsx(
-                            'text-[13px] font-semibold',
-                            isActive ? 'text-[#ff005e]' : 'text-[#2f3a56]',
-                          )}
-                        >
-                          {mood.label}
-                        </span>
-                        <span className="text-[11px] text-[#545454] leading-snug">
-                          {mood.description}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* ENERGIA DO DIA */}
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
-                  E a sua energia hoje?
-                </p>
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap gap-2">
-                    {energyOptions.map((option) => {
-                      const isActive = selectedEnergy === option.id
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() =>
-                            setSelectedEnergy((current) =>
-                              current === option.id ? null : option.id,
-                            )
-                          }
-                          className={clsx(
-                            'rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30',
-                            isActive
-                              ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
-                              : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/20',
-                          )}
-                        >
-                          {option.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {selectedEnergy && (
-                    <p className="text-[11px] text-[#545454]">
-                      {
-                        energyOptions.find((e) => e.id === selectedEnergy)
-                          ?.helper
-                      }
+              {/* HUMOR + ENERGIA EM GRID (melhor no desktop) */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Coluna A – humor + nota */}
+                <div className="space-y-6">
+                  {/* HUMOR */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      Se você pudesse escolher uma palavra para o dia…
                     </p>
-                  )}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {moodOptions.map((mood) => {
+                        const isActive = selectedMood === mood.id
+                        return (
+                          <button
+                            key={mood.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedMood((current) =>
+                                current === mood.id ? null : mood.id,
+                              )
+                            }
+                            className={clsx(
+                              'group flex flex-col items-start gap-1.5 rounded-2xl border px-3 py-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/40',
+                              isActive
+                                ? 'border-[#ff005e] bg-[#ffd8e6]/50 shadow-[0_10px_26px_rgba(0,0,0,0.08)]'
+                                : 'border-[#ffd8e6] bg-white hover:border-[#ff005e]/70 hover:bg-[#ffd8e6]/20',
+                            )}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <AppIcon
+                                name={mood.icon}
+                                className={clsx(
+                                  'h-4 w-4',
+                                  isActive ? 'text-[#ff005e]' : 'text-[#cf285f]',
+                                )}
+                              />
+                              <span
+                                className={clsx(
+                                  'text-[13px] font-semibold',
+                                  isActive ? 'text-[#ff005e]' : 'text-[#2f3a56]',
+                                )}
+                              >
+                                {mood.label}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-[#545454] leading-snug">
+                              {mood.description}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* NOTA DO DIA */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      Quer desabafar um pouquinho?
+                    </p>
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Se quiser, escreva em poucas linhas algo que marcou o seu dia até agora. Ninguém aqui vai te julgar."
+                      rows={4}
+                      className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                    />
+                    <p className="text-[11px] text-[#545454]/80">
+                      Esse registro fica guardado com carinho no seu planner, como parte da sua
+                      jornada.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Coluna B – energia + insight do dia (IA) */}
+                <div className="space-y-5">
+                  {/* ENERGIA */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                      E a sua energia hoje?
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {energyOptions.map((option) => {
+                        const isActive = selectedEnergy === option.id
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedEnergy((current) =>
+                                current === option.id ? null : option.id,
+                              )
+                            }
+                            className={clsx(
+                              'rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30',
+                              isActive
+                                ? 'border-[#ff005e] bg-[#ffd8e6] text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/20',
+                            )}
+                          >
+                            {option.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {selectedEnergy && (
+                      <p className="text-[11px] text-[#545454]">
+                        {
+                          energyOptions.find((e) => e.id === selectedEnergy)
+                            ?.helper
+                        }
+                      </p>
+                    )}
+                  </div>
+
+                  {/* INSIGHT DO DIA – IA + fallback */}
+                  <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-4 py-3 space-y-2 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff005e]/90">
+                      Insight do dia
+                    </p>
+
+                    {insightLoading && (
+                      <p className="text-[11px] text-[#545454]">
+                        Pensando em um insight carinhoso pra hoje…
+                      </p>
+                    )}
+
+                    {!insightLoading && (
+                      <>
+                        <p className="text-xs text-[#545454]">
+                          {(dailyInsight || DEFAULT_INSIGHT).phrase}
+                        </p>
+                        <p className="text-[11px] text-[#545454]">
+                          Lembrete suave:{' '}
+                          <span className="font-medium text-[#2f3a56]">
+                            {(dailyInsight || DEFAULT_INSIGHT).reminder}
+                          </span>
+                        </p>
+                      </>
+                    )}
+
+                    <div className="pt-1 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="border border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40 px-3 py-1 text-[11px] rounded-full"
+                        onClick={handleSaveInsight}
+                        disabled={insightLoading}
+                      >
+                        Levar para o planner
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* NOTA OPCIONAL */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
-                  Quer desabafar um pouquinho?
-                </p>
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Se quiser, escreva em poucas linhas algo que marcou o seu dia até agora. Ninguém aqui vai te julgar."
-                  rows={4}
-                  className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
-                />
-                <p className="text-[11px] text-[#545454]/80">
-                  Esse registro fica guardado com carinho no seu planner, como parte da sua
-                  jornada.
-                </p>
-              </div>
-
-              {/* AÇÕES PRINCIPAIS */}
+              {/* AÇÕES PRINCIPAIS + LINK CONQUISTAS */}
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1 text-[11px] text-[#545454]/90">
                   <p>
@@ -431,8 +653,112 @@ export default function ComoEstouHojePage() {
             </div>
           </SoftCard>
 
-          {/* BLOCO 2 — EXPLICAÇÃO SUAVE */}
+          {/* ===========================
+              BLOCO 2 — COMO SUA SEMANA TEM SE DESENHADO
+          ============================ */}
           <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+            <div className="space-y-5">
+              <header className="space-y-1">
+                <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                  Semana
+                </p>
+                <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  Como sua semana tem se desenhado
+                </h2>
+                <p className="text-sm text-[#545454] max-w-2xl">
+                  Um olhar mais amplo para os seus dias: padrões emocionais e pequenas ideias para
+                  deixar a semana mais leve.
+                </p>
+              </header>
+
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {/* Minha semana emocional */}
+                <div className="space-y-3 rounded-2xl border border-[#ffd8e6]/70 bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff005e]/90">
+                    Minha semana emocional
+                  </p>
+                  <p className="text-xs text-[#545454] leading-relaxed">
+                    Nem todo dia será leve, e tudo bem. A maternidade traz momentos de cansaço que
+                    não precisam virar culpa. Reconhecer o que pesa é um passo pra se cuidar melhor.
+                    Permita-se pausas e cuide de você com a mesma delicadeza que cuida dos outros.
+                  </p>
+                  <p className="text-xs text-[#545454] leading-relaxed">
+                    Quando os dias fluem com menos pressa, aproveite esses momentos para recarregar.
+                    Quando o dia pesa um pouco mais, lembre-se de que é normal precisar de um tempo —
+                    e que isso não diminui seu valor como mãe.
+                  </p>
+                </div>
+
+                {/* Sugestões pensadas para esta semana */}
+                <div className="space-y-3 rounded-2xl border border-[#ffd8e6]/70 bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff005e]/90">
+                    Sugestões pensadas para você esta semana
+                  </p>
+
+                  <div className="space-y-3 text-xs text-[#545454]">
+                    <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-3 py-3 space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
+                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">Pausa</span>
+                      </span>
+                      <p className="font-semibold text-[#2f3a56]">
+                        Respire fundo nos momentos difíceis
+                      </p>
+                      <p>
+                        Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveWeeklySuggestion('pausa')}
+                        className="mt-1 text-[11px] font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors"
+                      >
+                        Levar para o planner →
+                      </button>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-3 py-3 space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
+                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">Conexão</span>
+                      </span>
+                      <p className="font-semibold text-[#2f3a56]">Momento com seu filho</p>
+                      <p>
+                        Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma os dois.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveWeeklySuggestion('conexao')}
+                        className="mt-1 text-[11px] font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors"
+                      >
+                        Levar para o planner →
+                      </button>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-3 py-3 space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
+                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">Rotina</span>
+                      </span>
+                      <p className="font-semibold text-[#2f3a56]">
+                        Mantenha um pequeno ritual
+                      </p>
+                      <p>
+                        Café da manhã tranquilo, alongamento leve ou um chá à noite ajudam a trazer
+                        um pouco de estabilidade.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveWeeklySuggestion('rotina')}
+                        className="mt-1 text-[11px] font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors"
+                      >
+                        Levar para o planner →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SoftCard>
+
+          {/* BLOCO 3 — EXPLICAÇÃO SUAVE (mantido) */}
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border:white border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
