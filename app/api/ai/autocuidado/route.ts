@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import {
   generateAutocuidadoSuggestion,
   type AutocuidadoRequest,
-  isAutocuidadeAIEnabled as isAutocuidadoAIEnabled,
+  isAutocuidadoAIEnabled,
 } from '@/app/lib/ai/autocuidado'
 
 export const dynamic = 'force-dynamic'
@@ -12,14 +12,15 @@ export const dynamic = 'force-dynamic'
 /**
  * Endpoint oficial de IA do Autocuidado Inteligente.
  *
+ * Regras:
  * - Usa IA real quando:
- *   - NEXT_PUBLIC_FF_COACH_V1 === '1'
- *   - OPENAI_API_KEY configurada
- * - Caso contrário, cai sempre no mock seguro.
+ *   - Feature flag NEXT_PUBLIC_FF_COACH_V1 === '1'
+ *   - OPENAI_API_KEY está configurada
+ * - Caso contrário, usa SEMPRE o modo mock interno (seguro).
  */
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as AutocuidadoRequest
+    const body = (await req.json()) as AutocuidadoRequest | null
 
     if (!body || typeof body !== 'object' || !body.context) {
       return NextResponse.json(
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
 
     const aiEnabled = isAutocuidadoAIEnabled()
     const hasApiKey = !!process.env.OPENAI_API_KEY
+
     const shouldUseMock = !(aiEnabled && hasApiKey)
 
     const suggestion = await generateAutocuidadoSuggestion(body, {
