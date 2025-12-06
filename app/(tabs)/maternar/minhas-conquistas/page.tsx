@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { clsx } from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
@@ -57,20 +56,6 @@ type WeekDayIntensity = 'none' | 'low' | 'medium' | 'high'
 type WeekSummary = {
   label: string
   days: { xp: number; intensity: WeekDayIntensity }[]
-}
-
-type ConquistasInsight = {
-  title: string
-  body: string
-  helper: string
-}
-
-type ConquistasInsightContext = {
-  todayXp: number
-  totalXp: number
-  streak: number
-  completedMissions: number
-  totalMissions: number
 }
 
 const INITIAL_MISSIONS: Mission[] = [
@@ -197,103 +182,6 @@ function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
   return weeks.slice(0, 4)
 }
 
-// ===== Insight estratégico (IA + fallback) ========================
-
-function buildInsightFallback(
-  context: ConquistasInsightContext,
-): ConquistasInsight {
-  const { todayXp, totalXp, streak, completedMissions, totalMissions } = context
-
-  if (totalXp === 0) {
-    return {
-      title: 'Todo começo merece ser celebrado',
-      body:
-        'Você está dando os primeiros passos na sua jornada de conquistas. Mesmo que ainda pareça pouco, o simples fato de olhar para isso com carinho já é um gesto enorme de cuidado com você.',
-      helper:
-        'Não tenha pressa. Comece com uma pequena ação hoje e deixe que o restante venha no seu ritmo.',
-    }
-  }
-
-  if (todayXp <= 0 && completedMissions === 0) {
-    return {
-      title: 'Mesmo nos dias em que nada cabe, você continua aqui',
-      body:
-        'Hoje pode ter sido um dia pesado, confuso ou simplesmente cheio demais. Ainda assim, você voltou para olhar a sua jornada — isso mostra presença e responsabilidade emocional.',
-      helper:
-        'Em dias assim, a conquista é simplesmente terminar o dia com gentileza consigo mesma.',
-    }
-  }
-
-  if (completedMissions === totalMissions && totalMissions > 0) {
-    return {
-      title: 'Você honrou tudo o que se propôs hoje',
-      body:
-        'Olhar para as missões do dia e ver tudo concluído não fala de perfeição, e sim de intenção. Você se priorizou, se organizou e veio aqui registrar isso.',
-      helper:
-        'Use essa sensação de conquista como combustível para manter o ritmo leve nos próximos dias.',
-    }
-  }
-
-  if (streak >= 5) {
-    return {
-      title: 'Sua constância está contando uma história muito bonita',
-      body:
-        'Os seus dias de sequência mostram que, mesmo entre altos e baixos, você tem voltado para cuidar de você e da sua rotina. Isso vale muito mais do que um dia “perfeito”.',
-      helper:
-        'Se puder, escolha uma pequena recompensa simbólica para celebrar essa presença contínua.',
-    }
-  }
-
-  return {
-    title: 'Sua jornada está em movimento, mesmo quando parece parada',
-    body:
-      'Pelos seus registros de hoje, dá para sentir que você está tentando equilibrar muitas coisas ao mesmo tempo. Ainda assim, você segue aparecendo por aqui e registrando um passo de cada vez.',
-    helper:
-      'Lembre-se: conquistas não são só grandes marcos. Elas também moram nos gestos pequenos que ninguém vê, mas você sabe que fez.',
-  }
-}
-
-async function fetchConquistasInsight(
-  context: ConquistasInsightContext,
-): Promise<ConquistasInsight> {
-  const fallback = buildInsightFallback(context)
-
-  try {
-    const res = await fetch('/api/ai/conquistas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        feature: 'conquistas_overview',
-        origin: 'minhas-conquistas',
-        context,
-      }),
-    })
-
-    if (!res.ok) {
-      throw new Error('Resposta inválida da IA de conquistas')
-    }
-
-    const data = await res.json()
-    const insight = data?.insight
-
-    if (!insight || typeof insight !== 'object') {
-      throw new Error('Insight de conquistas vazio')
-    }
-
-    return {
-      title: insight.title ?? fallback.title,
-      body: insight.body ?? fallback.body,
-      helper: insight.helper ?? fallback.helper,
-    }
-  } catch (error) {
-    console.error(
-      '[Minhas Conquistas] Erro ao buscar insight estratégico, usando fallback:',
-      error,
-    )
-    return fallback
-  }
-}
-
 // ======================================================
 // PAGE COMPONENT
 // ======================================================
@@ -326,26 +214,12 @@ export default function MinhasConquistasPage() {
     presenca: false,
   })
 
-  const [insight, setInsight] = useState<ConquistasInsight | null>(null)
-  const [loadingInsight, setLoadingInsight] = useState(false)
-
   const completedMissions = missions.filter(m => m.done).length
   const todayXp = xp?.today ?? 0
   const totalXp = xp?.total ?? 0
   const streak = xp?.streak ?? 0
   const todaySummaryTitle = buildTodaySummaryText(todayXp, completedMissions)
   const levelInfo = computeLevel(totalXp)
-
-  const insightContext: ConquistasInsightContext = useMemo(
-    () => ({
-      todayXp,
-      totalXp,
-      streak,
-      completedMissions,
-      totalMissions: missions.length,
-    }),
-    [todayXp, totalXp, streak, completedMissions, missions.length],
-  )
 
   // Carregamento inicial
   useEffect(() => {
@@ -366,9 +240,8 @@ export default function MinhasConquistasPage() {
     // Missões do dia
     try {
       const stored =
-        load<Record<string, boolean>>(
-          `${MISSIONS_STATE_PREFIX}${todayDateKey}`,
-        ) ?? {}
+        load<Record<string, boolean>>(`${MISSIONS_STATE_PREFIX}${todayDateKey}`) ??
+        {}
 
       setMissions(
         INITIAL_MISSIONS.map(m => ({
@@ -376,39 +249,10 @@ export default function MinhasConquistasPage() {
           done: !!stored[m.id],
         })),
       )
-    } catch {
-      // silencioso
-    }
+    } catch {}
   }, [todayDateKey])
 
   const weeks = useMemo(() => buildMonthWeeks(xpHistory), [xpHistory])
-
-  // Insight estratégico baseado no estado real
-  useEffect(() => {
-    if (!xp) return
-
-    let cancelled = false
-
-    const loadInsight = async () => {
-      setLoadingInsight(true)
-      try {
-        const result = await fetchConquistasInsight(insightContext)
-        if (!cancelled) {
-          setInsight(result)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingInsight(false)
-        }
-      }
-    }
-
-    void loadInsight()
-
-    return () => {
-      cancelled = true
-    }
-  }, [xp, insightContext])
 
   function handleMissionToggle(id: string) {
     const mission = missions.find(m => m.id === id)
@@ -417,6 +261,7 @@ export default function MinhasConquistasPage() {
     const isDone = !mission.done
     const delta = isDone ? mission.xp : -mission.xp
 
+    // Atualiza missões e salva estado
     setMissions(prev => {
       const updated = prev.map(m =>
         m.id === id ? { ...m, done: isDone } : m,
@@ -429,6 +274,7 @@ export default function MinhasConquistasPage() {
       return updated
     })
 
+    // XP + selos
     setXp(prev => {
       const base = prev ?? { today: 0, total: 0, streak: 0 }
       const fallback: XpSnapshot = {
@@ -485,6 +331,7 @@ export default function MinhasConquistasPage() {
                 highlightRing('painel'),
               )}
             >
+              {/* Fundo */}
               <div className="pointer-events-none absolute inset-0 opacity-80">
                 <div className="absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[rgba(255,0,94,0.28)] blur-3xl" />
                 <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-[rgba(255,216,230,0.9)] blur-3xl" />
@@ -505,12 +352,10 @@ export default function MinhasConquistasPage() {
                     </p>
                   </div>
 
+                  {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)] leading-none">
-                      <AppIcon
-                        name="crown"
-                        className="h-4 w-4 text-[#ff005e]"
-                      />
+                      <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" />
                       {levelBadgeLabel}
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
@@ -519,6 +364,7 @@ export default function MinhasConquistasPage() {
                   </div>
                 </div>
 
+                {/* Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                   <StatCard
                     label="Pontuação de hoje"
@@ -540,6 +386,7 @@ export default function MinhasConquistasPage() {
                   />
                 </div>
 
+                {/* Barra */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
@@ -566,6 +413,7 @@ export default function MinhasConquistasPage() {
           ====================================================== */}
           <RevealSection delay={60}>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* MISSÕES */}
               <SoftCard
                 className={clsx(
                   'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
@@ -647,6 +495,7 @@ export default function MinhasConquistasPage() {
                 </div>
               </SoftCard>
 
+              {/* RESUMO DO DIA */}
               <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-6 bg-[#ffeef6]/70 border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
                 <div className="space-y-4">
                   <header>
@@ -706,51 +555,7 @@ export default function MinhasConquistasPage() {
                 </div>
               </SoftCard>
             </div>
-
-            {/* CARD NOVO — INSIGHT ESTRATÉGICO */}
-            <SoftCard className="mt-4 rounded-[28px] md:rounded-[32px] p-6 bg-white/90 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.14)]">
-              <div className="space-y-4 md:space-y-5">
-                <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#ff005e]/80">
-                      Insight estratégico da sua jornada
-                    </p>
-                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                      {insight?.title ??
-                        'Um olhar carinhoso sobre as suas conquistas'}
-                    </h3>
-                  </div>
-                  <span className="text-[11px] text-[#545454]/80">
-                    Gerado a partir do seu XP, presença e pequenas ações do dia.
-                  </span>
-                </header>
-
-                <p className="text-sm md:text-[15px] leading-relaxed text-[#545454]">
-                  {loadingInsight
-                    ? 'Estou analisando seus registros para trazer um insight feito sob medida para você…'
-                    : insight?.body ??
-                      'Conforme você registra as suas ações e cuidados, este espaço te ajuda a enxergar a jornada com mais gentileza e menos cobrança.'}
-                </p>
-
-                <p className="text-[11px] md:text-xs text-[#545454]/90">
-                  {insight?.helper ??
-                    'Use este insight como um lembrete de que a sua jornada não precisa ser perfeita para ser valiosa — ela só precisa ser verdadeira para você.'}
-                </p>
-
-               <div className="pt-2 flex justify-end">
-  <Link
-    href="/meu-dia/como-estou-hoje?abrir=resumo"
-    className="inline-flex"
-  >
-    <Button
-      size="sm"
-      variant="outline"
-      className="border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
-    >
-      Ver detalhes no Como Estou Hoje
-    </Button>
-  </Link>
-</div>
+          </RevealSection>
 
           {/* ======================================================
               BLOCO 3 — SELOS
@@ -787,6 +592,7 @@ export default function MinhasConquistasPage() {
                   </div>
                 </header>
 
+                {/* Grid de selos */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                   {SEALS.map(seal => {
                     const unlocked = unlockedSeals[seal.id]
@@ -811,9 +617,7 @@ export default function MinhasConquistasPage() {
                             name={seal.icon}
                             className={clsx(
                               'h-5 w-5',
-                              unlocked
-                                ? 'text-[#ff005e]'
-                                : 'text-[#b26b7c]',
+                              unlocked ? 'text-[#ff005e]' : 'text-[#b26b7c]',
                             )}
                           />
                         </div>
@@ -859,8 +663,8 @@ export default function MinhasConquistasPage() {
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
-                    As barrinhas mostram presença e intensidade — cada cor tem
-                    um significado.
+                    As barrinhas mostram presença e intensidade — cada cor tem um
+                    significado.
                   </p>
                 </header>
 
