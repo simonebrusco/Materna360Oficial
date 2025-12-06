@@ -4,6 +4,7 @@ import { save, load } from './persist'
 
 const XP_TOTALS_KEY = 'xp:totals'
 const XP_DAILY_PREFIX = 'xp:daily:'
+const XP_HISTORY_KEY = 'xp:history'
 
 type XpStoredTotals = {
   total: number
@@ -16,6 +17,9 @@ export type XpSnapshot = {
   total: number
   streak: number
 }
+
+// Histórico simples: chave YYYY-MM-DD -> XP do dia
+export type XpHistory = Record<string, number>
 
 /**
  * Calcula a data de ontem a partir de uma chave YYYY-MM-DD.
@@ -46,6 +50,15 @@ export function getXpSnapshot(): XpSnapshot {
     total: stored.total ?? 0,
     streak: stored.streak ?? 0,
   }
+}
+
+/**
+ * Lê o histórico de XP por dia.
+ * Presença = dia com XP > 0
+ * Intensidade = quanto de XP aquele dia acumulou.
+ */
+export function getXpHistory(): XpHistory {
+  return load<XpHistory>(XP_HISTORY_KEY) ?? {}
 }
 
 /**
@@ -92,6 +105,11 @@ export function updateXP(delta: number): XpSnapshot {
   const currentToday = load<number>(todayKey) ?? 0
   const newToday = Math.max(0, currentToday + delta)
   save(todayKey, newToday)
+
+  // >>> Atualiza histórico de presença / intensidade
+  const history = (load<XpHistory>(XP_HISTORY_KEY) ?? {}) as XpHistory
+  history[dateKey] = newToday
+  save(XP_HISTORY_KEY, history)
 
   return {
     today: newToday,
