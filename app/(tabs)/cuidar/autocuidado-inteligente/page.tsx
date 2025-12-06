@@ -205,7 +205,7 @@ export default function AutocuidadoInteligentePage() {
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    const storage = load<AutococuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].saude = {
       hidratacao: hidratacao,
@@ -280,6 +280,7 @@ export default function AutocuidadoInteligentePage() {
     toast.success('Sugestão salva para você revisitar quando quiser.')
   }
 
+  // RENDER
   return (
     <PageTemplate
       label="CUIDAR"
@@ -287,36 +288,36 @@ export default function AutocuidadoInteligentePage() {
       subtitle="Cuidados que cabem na rotina, feitos na sua medida."
     >
       <ClientOnly>
-        <div className="pt-6 pb-10 space-y-8 md:space-y-10">
+        {/* MESMO PADRÃO DE LAYOUT DO "COMO ESTOU HOJE" */}
+        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
           {/* BLOCO 1 — Hoje / Cuidados que combinam com o seu ritmo */}
           <Reveal delay={0}>
-            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:p-7 lg:p-8 bg-white/95 border border-[#ffd8e6]/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
-              <div className="space-y-6 md:space-y-7">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
+              <div className="space-y-6">
                 {/* Header do bloco */}
-                <div className="space-y-2 md:space-y-3">
-                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]">
+                <header className="space-y-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     Hoje
                   </p>
-                  <h2 className="text-lg md:text-2xl font-semibold text-[#2f3a56] leading-snug">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                     Cuidados que combinam com o seu ritmo de agora.
                   </h2>
-                  <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
+                  <p className="text-sm text-[#545454] max-w-2xl">
                     Escolha como você está e organize pequenos gestos de cuidado
                     que caibam no seu momento — um passo de cada vez, sem
                     perfeição e sem culpa.
                   </p>
-                </div>
+                </header>
 
                 {/* Grid com dois cards: Meu Ritmo Hoje + Mini Rotina de Cuidado */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-7">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {/* CARD 1 — Meu Ritmo Hoje */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      {/* Card Header */}
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
-                            name="heart"
+                            name="sparkles"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
@@ -332,9 +333,9 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-5 flex-1">
                         {/* Ritmo buttons */}
                         <div>
-                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3 block">
+                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-3">
                             Como você está?
-                          </label>
+                          </p>
                           <div className="flex flex-wrap gap-2">
                             {RITMO_OPTIONS.map(ritmo => (
                               <button
@@ -358,9 +359,9 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Nota textarea */}
                         <div>
-                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5 block">
+                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5">
                             Deixe uma nota (opcional)
-                          </label>
+                          </p>
                           <textarea
                             value={ritmoNota}
                             onChange={e => setRitmoNota(e.target.value)}
@@ -389,13 +390,12 @@ export default function AutocuidadoInteligentePage() {
                   </SoftCard>
 
                   {/* CARD 2 — Mini Rotina de Cuidado */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      {/* Card Header */}
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
-                            name="idea"
+                            name="heart"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
@@ -450,32 +450,31 @@ export default function AutocuidadoInteligentePage() {
 
           {/* BLOCO 2 — Corpo & Bem-Estar */}
           <Reveal delay={80}>
-            <SoftCard className="rounded-[32px] md:rounded-[36px] p-5 md:pb-7 md:px-7 lg:p-8 bg-white/95 border border-[#ffd8e6]/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
-              <div className="space-y-6 md:space-y-7">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+              <div className="space-y-6">
                 {/* Header do bloco */}
-                <div className="space-y-2 md:space-y-3">
-                  <p className="text-[11px] md:text-xs font-semibold tracking-[0.16em] uppercase text-[#ff005e]">
+                <header className="space-y-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     Corpo & bem-estar
                   </p>
-                  <h2 className="text-lg md:text-2xl font-semibold text-[#2f3a56] leading-snug">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                     Cuide do seu corpo e receba um carinho só para você.
                   </h2>
-                  <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
+                  <p className="text-sm text-[#545454] max-w-2xl">
                     Registre como você está hoje e deixe o Materna360 sugerir um
                     cuidado especial para o seu momento.
                   </p>
-                </div>
+                </header>
 
                 {/* Grid com dois cards: Saúde & Bem-Estar + Para Você Hoje */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-7">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {/* CARD 3 — Saúde & Bem-Estar */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      {/* Card Header */}
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
-                            name="time"
+                            name="zap"
                             size={18}
                             className="text-[#ff005e]"
                             decorative
@@ -490,9 +489,9 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-5 flex-1">
                         {/* Hidratação */}
                         <div className="space-y-3">
-                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                             💧 Hidratação
-                          </label>
+                          </p>
                           <div className="flex flex-wrap gap-2">
                             {[
                               { idx: 0, label: 'Preciso beber mais' },
@@ -519,9 +518,9 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Sono */}
                         <div className="space-y-3">
-                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                             😴 Sono
-                          </label>
+                          </p>
                           <div className="flex flex-wrap gap-2">
                             {[
                               'Pouco (≤6h)',
@@ -547,9 +546,9 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Alimentação */}
                         <div className="space-y-3">
-                          <label className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide block">
+                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                             🍽️ Alimentação
-                          </label>
+                          </p>
                           <div className="flex flex-wrap gap-2">
                             {[
                               { key: 'leve', label: 'Leve' },
@@ -596,9 +595,8 @@ export default function AutocuidadoInteligentePage() {
                   </SoftCard>
 
                   {/* CARD 4 — Para Você Hoje */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-6 flex flex-col h-full">
-                      {/* Card Header */}
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
                           <AppIcon
@@ -617,13 +615,13 @@ export default function AutocuidadoInteligentePage() {
 
                       <div className="flex-1 space-y-4">
                         {sugestaoAtual ? (
-                          <div className="p-4 rounded-2xl bg-[#ffd8e6]/15 border border-[#ffd8e6]/50 space-y-3">
+                          <div className="p-4 rounded-2xl bg-[#fff7fb]/80 border border-[#ffd8e6]/70 space-y-3 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
                             <p className="text-sm md:text-base leading-relaxed text-[#2f3a56] font-medium">
                               {sugestaoAtual}
                             </p>
                             <button
                               onClick={handleGerarSugestao}
-                              className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
+                              className="text-sm font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors inline-flex items-center gap-1"
                             >
                               Ver outra sugestão
                               <AppIcon
@@ -634,7 +632,7 @@ export default function AutocuidadoInteligentePage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="p-4 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/30 text-center">
+                          <div className="p-4 rounded-2xl bg-[#fff7fb]/60 border border-[#ffd8e6]/70 text-center">
                             <p className="text-sm text-[#545454]">
                               Clique abaixo para descobrir um cuidado especial
                               feito só para você hoje.
@@ -674,6 +672,33 @@ export default function AutocuidadoInteligentePage() {
               </div>
             </SoftCard>
           </Reveal>
+
+          {/* BLOCO 3 — FAIXA EXPLICATIVA, NO MESMO ESPÍRITO DAS OUTRAS PÁGINAS */}
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
+                  Por que esse cuidado importa
+                </p>
+                <p className="text-sm text-[#545454] max-w-xl">
+                  Quando você registra seu ritmo, pequenos gestos e como o
+                  corpo está, o Materna360 te ajuda a enxergar padrões de
+                  cansaço, energia e pausas possíveis. Isso vira base para um
+                  dia mais leve, sem precisar se encaixar em uma rotina
+                  perfeita.
+                </p>
+              </div>
+              <div className="mt-1 flex items-start gap-2 text-xs text-[#545454]/90 max-w-xs">
+                <div className="mt-0.5">
+                  <AppIcon name="sparkles" className="h-4 w-4 text-[#ff005e]" />
+                </div>
+                <p>
+                  Cuidar de você também é maternar. Cada gesto aqui conta como
+                  presença com você mesma — e isso reflete em todo o resto.
+                </p>
+              </div>
+            </div>
+          </SoftCard>
 
           <MotivationalFooter routeKey="cuidar-autocuidado-inteligente" />
         </div>
