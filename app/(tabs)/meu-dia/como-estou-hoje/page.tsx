@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
@@ -219,6 +220,7 @@ async function fetchDailyEmotionalInsight(
 export default function ComoEstouHojePage(props: {
   searchParams?: Promise<Record<string, string | string[]>>
 }) {
+  const router = useRouter()
   const [isHydrated, setIsHydrated] = useState(false)
 
   // Agora o humor vem do estado global
@@ -543,7 +545,7 @@ export default function ComoEstouHojePage(props: {
     try {
       void updateXP(15)
     } catch (e) {
-        console.error(
+      console.error(
         '[Como Estou Hoje] Erro ao atualizar XP do insight do dia:',
         e,
       )
@@ -685,7 +687,7 @@ export default function ComoEstouHojePage(props: {
                             <button
                               key={energy}
                               onClick={() => handleEnergySelect(energy)}
-                              className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                              className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duração-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
                                 selectedEnergy === energy
                                   ? 'bg-[#ff005e] text-white shadow-md'
                                   : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
@@ -929,6 +931,21 @@ export default function ComoEstouHojePage(props: {
                               'Os dias mais desafiadores costumam vir acompanhados de muita cobrança interna. Lembre-se: pedir ajuda ou fazer menos também é cuidado.'}
                           </p>
                         </div>
+                      </div>
+
+                      {/* CTA para Minhas Conquistas */}
+                      <div className="pt-4 flex justify-end">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="border border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
+                          onClick={() =>
+                            router.push('/maternar/minhas-conquistas?abrir=painel')
+                          }
+                        >
+                          Ver minhas conquistas
+                        </Button>
                       </div>
                     </SoftCard>
 
