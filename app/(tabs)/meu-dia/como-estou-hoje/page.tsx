@@ -9,7 +9,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import AppIcon from '@/components/ui/AppIcon'
+import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 
 import { toast } from '@/app/lib/toast'
 import { updateXP } from '@/app/lib/xp'
@@ -37,31 +37,31 @@ const moodOptions: {
   id: MoodId
   label: string
   description: string
-  icon: string
+  icon: AppIconName
 }[] = [
   {
     id: 'calma',
     label: 'Mais tranquila',
     description: 'O dia pode estar cheio, mas o coração está um pouco mais sereno.',
-    icon: '🌿',
+    icon: 'sparkles',
   },
   {
     id: 'cansada',
     label: 'Cansada',
     description: 'Você está fazendo o que pode com a energia que tem.',
-    icon: '😮‍💨',
+    icon: 'heart',
   },
   {
     id: 'sobrecarregada',
     label: 'Sobrecarregada',
     description: 'Muita coisa ao mesmo tempo. Você não está sozinha nisso.',
-    icon: '💥',
+    icon: 'star',
   },
   {
     id: 'grata',
     label: 'Grata',
     description: 'Mesmo com tudo, existe um carinho pelo caminho até aqui.',
-    icon: '💗',
+    icon: 'smile',
   },
 ]
 
@@ -261,7 +261,7 @@ export default function ComoEstouHojePage() {
                 </p>
               </header>
 
-              {/* MUDOS (chips) */}
+              {/* HUMORES (chips) */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
                   Se você pudesse escolher uma palavra para o dia…
@@ -279,13 +279,29 @@ export default function ComoEstouHojePage() {
                           )
                         }
                         className={clsx(
-                          'group flex flex-col items-start gap-1.5 rounded-2xl border px-3 py-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/40',
+                          'group flex flex-col items-start gap-2 rounded-2xl border px-3 py-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/40',
                           isActive
                             ? 'border-[#ff005e] bg-[#ffd8e6]/50 shadow-[0_10px_26px_rgba(0,0,0,0.08)]'
                             : 'border-[#ffd8e6] bg-white hover:border-[#ff005e]/70 hover:bg-[#ffd8e6]/20',
                         )}
                       >
-                        <span className="text-lg leading-none">{mood.icon}</span>
+                        <div
+                          className={clsx(
+                            'flex h-8 w-8 items-center justify-center rounded-xl border transition-colors',
+                            isActive
+                              ? 'border-[#ff005e] bg-[#ffd8e6]'
+                              : 'border-[#ffd8e6] bg-white',
+                          )}
+                        >
+                          <AppIcon
+                            name={mood.icon}
+                            className={clsx(
+                              'h-4 w-4',
+                              isActive ? 'text-[#ff005e]' : 'text-[#b26b7c]',
+                            )}
+                          />
+                        </div>
+
                         <span
                           className={clsx(
                             'text-[13px] font-semibold',
