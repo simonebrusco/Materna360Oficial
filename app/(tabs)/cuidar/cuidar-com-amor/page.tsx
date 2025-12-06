@@ -75,7 +75,8 @@ const SLEEP_AUDIO_PLACEHOLDERS = [
   {
     id: 'sons-de-ninar',
     title: 'Sons de ninar',
-    description: 'Som contínuo e tranquilo, perfeito para embalar o sono do seu filho.',
+    description:
+      'Som contínuo e tranquilo, perfeito para embalar o sono do seu filho.',
   },
 ]
 
@@ -104,10 +105,12 @@ export default function CuidarComAmorPage() {
   const sonoBlockRef = useRef<HTMLDivElement | null>(null)
   const conexaoBlockRef = useRef<HTMLDivElement | null>(null)
   const rituaisBlockRef = useRef<HTMLDivElement | null>(null)
+  const ideiasBlockRef = useRef<HTMLDivElement | null>(null)
 
   // estado das sugestões
   const [suggestionLoading, setSuggestionLoading] = useState(false)
-  const [currentFeature, setCurrentFeature] = useState<CuidarComAmorFeature | null>(null)
+  const [currentFeature, setCurrentFeature] =
+    useState<CuidarComAmorFeature | null>(null)
   const [currentSuggestion, setCurrentSuggestion] =
     useState<CuidarComAmorSuggestion | null>(null)
 
@@ -140,22 +143,21 @@ export default function CuidarComAmorPage() {
     }
   }, [isHydrated, currentDateKey])
 
-  // ler ?abrir= e fazer scroll
+  // ler ?abrir=
   useEffect(() => {
     const abrir = (searchParams.get('abrir') as HighlightTarget) ?? null
     if (!abrir) return
 
     setHighlightTarget(abrir)
 
-    let targetEl: HTMLDivElement | null = null
+    let targetRef: React.RefObject<HTMLDivElement> | null = null
+    if (abrir === 'alimentacao') targetRef = cuidadosBlockRef
+    if (abrir === 'sono') targetRef = sonoBlockRef
+    if (abrir === 'conexao') targetRef = conexaoBlockRef
+    if (abrir === 'rituais') targetRef = rituaisBlockRef
 
-    if (abrir === 'alimentacao') targetEl = cuidadosBlockRef.current
-    if (abrir === 'sono') targetEl = sonoBlockRef.current
-    if (abrir === 'conexao') targetEl = conexaoBlockRef.current
-    if (abrir === 'rituais') targetEl = rituaisBlockRef.current
-
-    if (targetEl) {
-      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (targetRef?.current) {
+      targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     const timeout = setTimeout(() => setHighlightTarget(null), 1400)
@@ -174,6 +176,24 @@ export default function CuidarComAmorPage() {
         return 'Pequenos rituais de vínculo'
       default:
         return null
+    }
+  }
+
+  // --- ações auxiliares ---
+
+  const handleScrollToMoreIdeas = () => {
+    if (ideiasBlockRef.current) {
+      ideiasBlockRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+      try {
+        track('care_more_ideas_clicked', {
+          origin: 'cuidar-com-amor',
+        })
+      } catch {
+        // telemetria nunca deve quebrar a experiência
+      }
     }
   }
 
@@ -199,15 +219,16 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
         signalsCount: signalsData.selectedSignals.length,
       })
-    } catch {
-      // ignora
-    }
+    } catch {}
 
     // XP por registrar sinais do dia
     try {
       void updateXP(10)
     } catch (e) {
-      console.error('[Cuidar com Amor] Erro ao atualizar XP de sinais do dia:', e)
+      console.error(
+        '[Cuidar com Amor] Erro ao atualizar XP de sinais do dia:',
+        e,
+      )
     }
 
     toast.success('Sinais do dia salvos com carinho.')
@@ -235,15 +256,16 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
         checkedCount: careData.checkedItems.length,
       })
-    } catch {
-      // ignora
-    }
+    } catch {}
 
     // XP por registrar cuidados do dia
     try {
       void updateXP(15)
     } catch (e) {
-      console.error('[Cuidar com Amor] Erro ao atualizar XP de cuidados do dia:', e)
+      console.error(
+        '[Cuidar com Amor] Erro ao atualizar XP de cuidados do dia:',
+        e,
+      )
     }
 
     toast.success('Cuidados de hoje registrados com carinho.')
@@ -288,25 +310,28 @@ export default function CuidarComAmorPage() {
           origin: 'cuidar-com-amor',
           type: bondData.selectedOption,
         })
-      } catch {
-        // ignora
-      }
+      } catch {}
 
       // XP por salvar gesto/ritual de vínculo
       try {
         void updateXP(20)
       } catch (e) {
-        console.error('[Cuidar com Amor] Erro ao atualizar XP de vínculo:', e)
+        console.error(
+          '[Cuidar com Amor] Erro ao atualizar XP de vínculo:',
+          e,
+        )
       }
 
       toast.success('Combinado de hoje salvo no seu planner.')
     } catch (error) {
       console.error('[Cuidar com Amor] Erro ao salvar no planner:', error)
-      toast.danger('Não foi possível salvar agora. Tente novamente em alguns instantes.')
+      toast.danger(
+        'Não foi possível salvar agora. Tente novamente em alguns instantes.',
+      )
     }
   }
 
-  // --- sugestões de cuidado ---
+  // --- sugestões de cuidado (IA) ---
 
   const handleAskSuggestion = async (feature: CuidarComAmorFeature) => {
     setSuggestionLoading(true)
@@ -379,9 +404,7 @@ export default function CuidarComAmorPage() {
           origin: 'cuidar-com-amor',
           feature: currentFeature,
         })
-      } catch {
-        // ignora
-      }
+      } catch {}
 
       // XP por salvar ideias de cuidado no planner
       try {
@@ -395,8 +418,13 @@ export default function CuidarComAmorPage() {
 
       toast.success('Essas ideias foram salvas no seu planner.')
     } catch (error) {
-      console.error('[Cuidar com Amor] Erro ao salvar sugestão no planner:', error)
-      toast.danger('Não foi possível salvar agora. Tente novamente em alguns instantes.')
+      console.error(
+        '[Cuidar com Amor] Erro ao salvar sugestão no planner:',
+        error,
+      )
+      toast.danger(
+        'Não foi possível salvar agora. Tente novamente em alguns instantes.',
+      )
     }
   }
 
@@ -421,8 +449,8 @@ export default function CuidarComAmorPage() {
                       Entenda o momento do seu filho com carinho.
                     </h2>
                     <p className="text-xs md:text-sm text-white/85 max-w-2xl">
-                      Observe os sinais do dia e escolha formas suaves de acolher o que ele está
-                      vivendo — sem pressa, sem perfeição.
+                      Observe os sinais do dia e escolha formas suaves de acolher
+                      o que ele está vivendo — sem pressa, sem perfeição.
                     </p>
                   </div>
                 </div>
@@ -433,13 +461,18 @@ export default function CuidarComAmorPage() {
                     <div className="space-y-5">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <AppIcon name="idea" className="w-4 h-4 text-[#ff005e]" decorative />
+                          <AppIcon
+                            name="idea"
+                            className="w-4 h-4 text-[#ff005e]"
+                            decorative
+                          />
                           <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                             Sinais do dia
                           </h3>
                         </div>
                         <p className="text-xs md:text-sm text-[#545454]">
-                          Observe pequenos sinais que podem mostrar como seu filho está hoje.
+                          Observe pequenos sinais que podem mostrar como seu
+                          filho está hoje.
                         </p>
                       </div>
 
@@ -516,14 +549,16 @@ export default function CuidarComAmorPage() {
                               </h3>
                             </div>
                             <p className="text-xs md:text-sm text-[#545454]">
-                              Sugestões suaves para acolher o momento do seu filho.
+                              Sugestões suaves para acolher o momento do seu
+                              filho.
                             </p>
                           </div>
 
                           <div className="p-3.5 rounded-2xl bg-[#ffe5ef]/60 border border-[#ffd8e6]/70">
                             <p className="text-xs md:text-sm text-[#545454]">
-                              Cadastre a idade do seu filho no Eu360 para receber ideias ainda mais
-                              próximas da rotina de vocês.
+                              Cadastre a idade do seu filho no Eu360 para
+                              receber ideias ainda mais próximas da rotina de
+                              vocês.
                             </p>
                           </div>
 
@@ -540,6 +575,7 @@ export default function CuidarComAmorPage() {
 
                           <button
                             type="button"
+                            onClick={handleScrollToMoreIdeas}
                             className="text-xs md:text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
                           >
                             Ver mais ideias de cuidado →
@@ -560,14 +596,18 @@ export default function CuidarComAmorPage() {
                         <div className="space-y-4">
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
-                              <AppIcon name="time" className="w-4 h-4 text-[#ff005e]" decorative />
+                              <AppIcon
+                                name="time"
+                                className="w-4 h-4 text-[#ff005e]"
+                                decorative
+                              />
                               <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                                 Sono & rotina
                               </h3>
                             </div>
                             <p className="text-xs md:text-sm text-[#545454]">
-                              Quando o sono está puxado, pequenos áudios podem deixar a noite um
-                              pouco mais leve.
+                              Quando o sono está puxado, pequenos áudios podem
+                              deixar a noite um pouco mais leve.
                             </p>
                           </div>
 
@@ -595,14 +635,17 @@ export default function CuidarComAmorPage() {
                                     {audio.description}
                                   </p>
                                 </div>
-                                <span className="text-[11px] text-[#545454]/70">Em breve</span>
+                                <span className="text-[11px] text-[#545454]/70">
+                                  Em breve
+                                </span>
                               </div>
                             ))}
                           </div>
 
                           <p className="text-[11px] md:text-xs text-[#545454]/80 leading-relaxed">
-                            Para questões de sono mais específicas ou persistentes, vale sempre
-                            conversar com o pediatra de confiança. Aqui, o foco é só rotina e
+                            Para questões de sono mais específicas ou
+                            persistentes, vale sempre conversar com o pediatra
+                            de confiança. Aqui, o foco é só rotina e
                             acolhimento.
                           </p>
                         </div>
@@ -627,14 +670,18 @@ export default function CuidarComAmorPage() {
                       Acompanhe os cuidados do dia e escolha um gesto especial.
                     </h2>
                     <p className="text-xs md:text-sm text-white/85 max-w-2xl">
-                      Marque o que já conseguiu cuidar hoje e defina um gesto ou ritual simples
-                      para fortalecer o vínculo com seu filho.
+                      Marque o que já conseguiu cuidar hoje e defina um gesto ou
+                      ritual simples para fortalecer o vínculo com seu filho.
                     </p>
                   </div>
 
                   {highlightTarget && (
                     <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[11px] text-white/95">
-                      <AppIcon name="sparkles" className="w-3.5 h-3.5 text-white" decorative />
+                      <AppIcon
+                        name="sparkles"
+                        className="w-3.5 h-3.5 text-white"
+                        decorative
+                      />
                       <span>
                         Você veio de um atalho focado em{' '}
                         <span className="font-semibold">
@@ -685,7 +732,9 @@ export default function CuidarComAmorPage() {
                               >
                                 <input
                                   type="checkbox"
-                                  checked={careData.checkedItems.includes(item)}
+                                  checked={careData.checkedItems.includes(
+                                    item,
+                                  )}
                                   onChange={() => handleCareToggle(item)}
                                   className="w-5 h-5 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer accent-[#ff005e]"
                                 />
@@ -741,7 +790,9 @@ export default function CuidarComAmorPage() {
                               className="flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
                               style={{
                                 borderColor:
-                                  bondData.selectedOption === 'gesto' ? '#ff005e' : '#ffd8e6',
+                                  bondData.selectedOption === 'gesto'
+                                    ? '#ff005e'
+                                    : '#ffd8e6',
                                 backgroundColor:
                                   bondData.selectedOption === 'gesto'
                                     ? 'rgba(255,216,230,0.35)'
@@ -753,7 +804,9 @@ export default function CuidarComAmorPage() {
                                 name="bond-option"
                                 value="gesto"
                                 checked={bondData.selectedOption === 'gesto'}
-                                onChange={() => handleBondOptionChange('gesto')}
+                                onChange={() =>
+                                  handleBondOptionChange('gesto')
+                                }
                                 className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
                               />
                               <div className="flex-1">
@@ -761,8 +814,9 @@ export default function CuidarComAmorPage() {
                                   Gesto de hoje
                                 </h4>
                                 <p className="text-xs text-[#545454] leading-relaxed">
-                                  Escolha um pequeno gesto para deixar o dia do seu filho mais leve
-                                  (ex.: bilhete, elogio, tempo de colo).
+                                  Escolha um pequeno gesto para deixar o dia do
+                                  seu filho mais leve (ex.: bilhete, elogio,
+                                  tempo de colo).
                                 </p>
                               </div>
                             </label>
@@ -771,7 +825,9 @@ export default function CuidarComAmorPage() {
                               className="flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
                               style={{
                                 borderColor:
-                                  bondData.selectedOption === 'ritual' ? '#ff005e' : '#ffd8e6',
+                                  bondData.selectedOption === 'ritual'
+                                    ? '#ff005e'
+                                    : '#ffd8e6',
                                 backgroundColor:
                                   bondData.selectedOption === 'ritual'
                                     ? 'rgba(255,216,230,0.35)'
@@ -783,7 +839,9 @@ export default function CuidarComAmorPage() {
                                 name="bond-option"
                                 value="ritual"
                                 checked={bondData.selectedOption === 'ritual'}
-                                onChange={() => handleBondOptionChange('ritual')}
+                                onChange={() =>
+                                  handleBondOptionChange('ritual')
+                                }
                                 className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
                               />
                               <div className="flex-1">
@@ -791,8 +849,8 @@ export default function CuidarComAmorPage() {
                                   Ritual rápido
                                 </h4>
                                 <p className="text-xs text-[#545454] leading-relaxed">
-                                  Defina um mini-ritual de conexão para antes de dormir ou depois da
-                                  escola.
+                                  Defina um mini-ritual de conexão para antes de
+                                  dormir ou depois da escola.
                                 </p>
                               </div>
                             </label>
@@ -811,115 +869,128 @@ export default function CuidarComAmorPage() {
                     </div>
 
                     {/* IDEIAS DE CUIDADO PARA HOJE */}
-                    <SoftCard className="rounded-[28px] p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
-                      <div className="space-y-4">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <AppIcon
-                              name="sparkles"
-                              className="w-4 h-4 text-[#ff005e]"
-                              decorative
-                            />
-                            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                              Ideias de cuidado para hoje
-                            </h3>
+                    <div ref={ideiasBlockRef}>
+                      <SoftCard className="rounded-[28px] p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <AppIcon
+                                name="sparkles"
+                                className="w-4 h-4 text-[#ff005e]"
+                                decorative
+                              />
+                              <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                                Ideias de cuidado para hoje
+                              </h3>
+                            </div>
+                            <p className="text-xs md:text-sm text-[#545454]">
+                              Escolha um foco e deixe o Materna360 sugerir
+                              caminhos suaves que cabem na sua rotina real.
+                            </p>
                           </div>
-                          <p className="text-xs md:text-sm text-[#545454]">
-                            Escolha um foco e deixe o Materna360 sugerir caminhos suaves que cabem
-                            na sua rotina real.
-                          </p>
-                        </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            variant={currentFeature === 'alimentacao' ? 'primary' : 'ghost'}
-                            size="sm"
-                            onClick={() => handleAskSuggestion('alimentacao')}
-                            className="px-3 py-1.5 text-xs"
-                            disabled={suggestionLoading}
-                          >
-                            Alimentação
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={currentFeature === 'sono' ? 'primary' : 'ghost'}
-                            size="sm"
-                            onClick={() => handleAskSuggestion('sono')}
-                            className="px-3 py-1.5 text-xs"
-                            disabled={suggestionLoading}
-                          >
-                            Sono & rotina
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={currentFeature === 'conexao' ? 'primary' : 'ghost'}
-                            size="sm"
-                            onClick={() => handleAskSuggestion('conexao')}
-                            className="px-3 py-1.5 text-xs"
-                            disabled={suggestionLoading}
-                          >
-                            Conexão
-                          </Button>
-                        </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant={
+                                currentFeature === 'alimentacao'
+                                  ? 'primary'
+                                  : 'ghost'
+                              }
+                              size="sm"
+                              onClick={() => handleAskSuggestion('alimentacao')}
+                              className="px-3 py-1.5 text-xs"
+                              disabled={suggestionLoading}
+                            >
+                              Alimentação
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={
+                                currentFeature === 'sono' ? 'primary' : 'ghost'
+                              }
+                              size="sm"
+                              onClick={() => handleAskSuggestion('sono')}
+                              className="px-3 py-1.5 text-xs"
+                              disabled={suggestionLoading}
+                            >
+                              Sono & rotina
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={
+                                currentFeature === 'conexao'
+                                  ? 'primary'
+                                  : 'ghost'
+                              }
+                              size="sm"
+                              onClick={() => handleAskSuggestion('conexao')}
+                              className="px-3 py-1.5 text-xs"
+                              disabled={suggestionLoading}
+                            >
+                              Conexão
+                            </Button>
+                          </div>
 
-                        <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-3">
-                          {suggestionLoading && (
-                            <p className="text-xs text-[#545454]">
-                              Estamos preparando algumas ideias para você…
-                            </p>
-                          )}
+                          <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-3">
+                            {suggestionLoading && (
+                              <p className="text-xs text-[#545454]">
+                                Estamos preparando algumas ideias para você…
+                              </p>
+                            )}
 
-                          {!suggestionLoading && currentSuggestion && (
-                            <>
-                              <div className="space-y-1">
-                                <p className="text-sm font-semibold text-[#2f3a56]">
-                                  {suggestionTitle(currentFeature)}
-                                </p>
-                                <p className="text-xs text-[#545454]">
-                                  {currentSuggestion.description}
-                                </p>
-                              </div>
-                              <ul className="space-y-1.5">
-                                {currentSuggestion.tips.map((tip, idx) => (
-                                  <li
-                                    key={`${idx}-${tip.slice(0, 10)}`}
-                                    className="flex gap-2 text-xs text-[#545454]"
+                            {!suggestionLoading && currentSuggestion && (
+                              <>
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold text-[#2f3a56]">
+                                    {suggestionTitle(currentFeature)}
+                                  </p>
+                                  <p className="text-xs text-[#545454]">
+                                    {currentSuggestion.description}
+                                  </p>
+                                </div>
+                                <ul className="space-y-1.5">
+                                  {currentSuggestion.tips.map((tip, idx) => (
+                                    <li
+                                      key={`${idx}-${tip.slice(0, 10)}`}
+                                      className="flex gap-2 text-xs text-[#545454]"
+                                    >
+                                      <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
+                                      <span>{tip}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                {currentSuggestion.disclaimer && (
+                                  <p className="text-[11px] text-[#545454]/80">
+                                    {currentSuggestion.disclaimer}
+                                  </p>
+                                )}
+
+                                <div className="pt-1">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleSaveSuggestionToPlanner}
+                                    className="w-full text-xs"
                                   >
-                                    <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
-                                    <span>{tip}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                              {currentSuggestion.disclaimer && (
-                                <p className="text-[11px] text-[#545454]/80">
-                                  {currentSuggestion.disclaimer}
-                                </p>
-                              )}
+                                    Salvar essas ideias no planner
+                                  </Button>
+                                </div>
+                              </>
+                            )}
 
-                              <div className="pt-1">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={handleSaveSuggestionToPlanner}
-                                  className="w-full text-xs"
-                                >
-                                  Salvar essas ideias no planner
-                                </Button>
-                              </div>
-                            </>
-                          )}
-
-                          {!suggestionLoading && !currentSuggestion && (
-                            <p className="text-xs text-[#545454]">
-                              Se quiser, escolha um foco acima para receber ideias simples que podem
-                              deixar o dia de vocês um pouco mais leve.
-                            </p>
-                          )}
+                            {!suggestionLoading && !currentSuggestion && (
+                              <p className="text-xs text-[#545454]">
+                                Se quiser, escolha um foco acima para receber
+                                ideias simples que podem deixar o dia de vocês
+                                um pouco mais leve.
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </SoftCard>
+                      </SoftCard>
+                    </div>
                   </div>
                 </div>
               </div>
