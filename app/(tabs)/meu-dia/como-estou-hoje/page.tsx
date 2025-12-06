@@ -67,7 +67,7 @@ const moodOptions: MoodOption[] = [
     id: 'sobrecarregada',
     label: 'Sobrecarregada',
     description: 'Muita coisa ao mesmo tempo. Você não está sozinha nisso.',
-    icon: 'filters', // <- trocado de 'alert' para 'filters'
+    icon: 'filters',
   },
   {
     id: 'grata',
@@ -336,7 +336,7 @@ export default function ComoEstouHojePage() {
       } else if (id === 'rotina') {
         title = 'Mantenha um pequeno ritual'
         description =
-          'Café da manhã tranquilo ou alongamento leve ajudam a criar estabilidade ao longo da semana.'
+          'Café da manhã tranquilo, alongamento leve ou um chá à noite ajudam a trazer um pouco de estabilidade.'
         tag = 'Rotina'
       }
 
@@ -413,7 +413,8 @@ export default function ComoEstouHojePage() {
       subtitle="Um espaço seguro para você nomear o que sente, sem julgamentos."
     >
       <ClientOnly>
-        <div className="pt-6 pb-10 space-y-8">
+        {/* coluna central mais estreita + mais respiro entre blocos */}
+        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
           {/* TEXTO DE ABERTURA */}
           <div className="space-y-2">
             <p className="text-sm md:text-base text-white">
@@ -429,7 +430,7 @@ export default function ComoEstouHojePage() {
           {/* ===========================
               BLOCO 1 — COMO VOCÊ ESTÁ AGORA
           ============================ */}
-          <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+          <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
             <div className="space-y-6">
               <header className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -444,7 +445,7 @@ export default function ComoEstouHojePage() {
                 </p>
               </header>
 
-              {/* HUMOR + ENERGIA EM GRID (melhor no desktop) */}
+              {/* HUMOR + ENERGIA EM GRID */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Coluna A – humor + nota */}
                 <div className="space-y-6">
@@ -656,7 +657,7 @@ export default function ComoEstouHojePage() {
           {/* ===========================
               BLOCO 2 — COMO SUA SEMANA TEM SE DESENHADO
           ============================ */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
             <div className="space-y-5">
               <header className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -673,7 +674,7 @@ export default function ComoEstouHojePage() {
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {/* Minha semana emocional */}
-                <div className="space-y-3 rounded-2xl border border-[#ffd8e6]/70 bg.white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                <div className="space-y-3 rounded-2xl border border-[#ffd8e6]/70 bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff005e]/90">
                     Minha semana emocional
                   </p>
@@ -758,7 +759,7 @@ export default function ComoEstouHojePage() {
           </SoftCard>
 
           {/* BLOCO 3 — EXPLICAÇÃO SUAVE (mantido) */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border.white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg.white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
