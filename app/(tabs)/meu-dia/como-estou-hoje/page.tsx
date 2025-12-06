@@ -61,7 +61,7 @@ const moodOptions: MoodOption[] = [
     id: 'cansada',
     label: 'Cansada',
     description: 'Você está fazendo o que pode com a energia que tem.',
-    icon: 'cloud',
+    icon: 'time',
   },
   {
     id: 'sobrecarregada',
@@ -429,7 +429,7 @@ export default function ComoEstouHojePage() {
           {/* ===========================
               BLOCO 1 — COMO VOCÊ ESTÁ AGORA
           ============================ */}
-          <SoftCard className="rounded-3xl p-6 md:p-8 bg:white bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+          <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
             <div className="space-y-6">
               <header className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -758,7 +758,7 @@ export default function ComoEstouHojePage() {
           </SoftCard>
 
           {/* BLOCO 3 — EXPLICAÇÃO SUAVE (mantido) */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border:white border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
