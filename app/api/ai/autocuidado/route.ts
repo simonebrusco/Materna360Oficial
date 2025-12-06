@@ -1,22 +1,47 @@
 // app/api/ai/autocuidado/route.ts
-import { NextRequest } from 'next/server'
-import { createStubAIResponse } from '@/app/lib/ai/handlers'
 
-export async function POST(req: NextRequest) {
-  let body: unknown = null
+import { NextResponse } from 'next/server'
+import {
+  generateAutocuidadoSuggestion,
+  type AutocuidadoRequest,
+  isAutocuidadeAIEnabled as isAutocuidadoAIEnabled,
+} from '@/app/lib/ai/autocuidado'
 
+export const dynamic = 'force-dynamic'
+
+/**
+ * Endpoint oficial de IA do Autocuidado Inteligente.
+ *
+ * - Usa IA real quando:
+ *   - NEXT_PUBLIC_FF_COACH_V1 === '1'
+ *   - OPENAI_API_KEY configurada
+ * - Caso contrário, cai sempre no mock seguro.
+ */
+export async function POST(req: Request) {
   try {
-    body = await req.json()
-  } catch {
-    body = null
+    const body = (await req.json()) as AutocuidadoRequest
+
+    if (!body || typeof body !== 'object' || !body.context) {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 },
+      )
+    }
+
+    const aiEnabled = isAutocuidadoAIEnabled()
+    const hasApiKey = !!process.env.OPENAI_API_KEY
+    const shouldUseMock = !(aiEnabled && hasApiKey)
+
+    const suggestion = await generateAutocuidadoSuggestion(body, {
+      mock: shouldUseMock,
+    })
+
+    return NextResponse.json({ suggestion })
+  } catch (err) {
+    console.error('[AutocuidadoAI] Error:', err)
+    return NextResponse.json(
+      { error: 'Internal error while generating suggestion.' },
+      { status: 500 },
+    )
   }
-
-  const response = createStubAIResponse('autocuidado')
-
-  return Response.json({
-    ...response,
-    debug: {
-      received: body,
-    },
-  })
 }
