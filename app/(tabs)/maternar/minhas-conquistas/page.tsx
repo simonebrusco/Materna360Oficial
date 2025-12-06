@@ -58,6 +58,20 @@ type WeekSummary = {
   days: { xp: number; intensity: WeekDayIntensity }[]
 }
 
+type ConquistasInsight = {
+  title: string
+  body: string
+  helper: string
+}
+
+type ConquistasInsightContext = {
+  todayXp: number
+  totalXp: number
+  streak: number
+  completedMissions: number
+  totalMissions: number
+}
+
 const INITIAL_MISSIONS: Mission[] = [
   { id: 'humor', label: 'Registrar como estou hoje', xp: 15 },
   { id: 'planner', label: 'Preencher meu planner', xp: 25 },
@@ -78,12 +92,14 @@ const SEALS: Seal[] = [
 const LEVEL_XP = 300
 const MISSIONS_STATE_PREFIX = 'missions:minhas-conquistas:'
 
-
 // ======================================================
 // HELPERS
 // ======================================================
 
-function highlightRingClass(highlightFromQuery: HighlightTarget, target: HighlightTarget) {
+function highlightRingClass(
+  highlightFromQuery: HighlightTarget,
+  target: HighlightTarget,
+) {
   return highlightFromQuery === target
     ? 'ring-2 ring-[#ff005e] ring-offset-2 ring-offset-pink-100/60'
     : ''
@@ -115,7 +131,7 @@ function computeUnlockedSeals(
   snapshot: XpSnapshot,
   history: XpHistoryEntry[],
 ): UnlockedSealsMap {
-  const daysWithPresence = history.filter((d) => d.xp > 0).length
+  const daysWithPresence = history.filter(d => d.xp > 0).length
 
   return {
     'primeiro-passo': daysWithPresence > 0,
@@ -157,7 +173,7 @@ function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
   const month = Number(monthStr)
   const daysInMonth = new Date(year, month, 0).getDate()
 
-  const byDate = new Map(history.map((h) => [h.dateKey, h.xp]))
+  const byDate = new Map(history.map(h => [h.dateKey, h.xp]))
 
   const weeks: WeekSummary[] = []
   let current: WeekSummary = { label: 'Semana 1', days: [] }
@@ -180,6 +196,103 @@ function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
   return weeks.slice(0, 4)
 }
 
+// ===== Insight estratégico (IA + fallback) ========================
+
+function buildInsightFallback(
+  context: ConquistasInsightContext,
+): ConquistasInsight {
+  const { todayXp, totalXp, streak, completedMissions, totalMissions } = context
+
+  // Alguns cenários principais para deixar o texto bem humano
+  if (totalXp === 0) {
+    return {
+      title: 'Todo começo merece ser celebrado',
+      body:
+        'Você está dando os primeiros passos na sua jornada de conquistas. Mesmo que ainda pareça pouco, o simples fato de olhar para isso com carinho já é um gesto enorme de cuidado com você.',
+      helper:
+        'Não tenha pressa. Comece com uma pequena ação hoje e deixe que o restante venha no seu ritmo.',
+    }
+  }
+
+  if (todayXp <= 0 && completedMissions === 0) {
+    return {
+      title: 'Mesmo nos dias em que nada cabe, você continua aqui',
+      body:
+        'Hoje pode ter sido um dia pesado, confuso ou simplesmente cheio demais. Ainda assim, você voltou para olhar a sua jornada — isso mostra presença e responsabilidade emocional.',
+      helper:
+        'Em dias assim, a conquista é simplesmente terminar o dia com gentileza consigo mesma.',
+    }
+  }
+
+  if (completedMissions === totalMissions && totalMissions > 0) {
+    return {
+      title: 'Você honrou tudo o que se propôs hoje',
+      body:
+        'Olhar para as missões do dia e ver tudo concluído não fala de perfeição, e sim de intenção. Você se priorizou, se organizou e veio aqui registrar isso.',
+      helper:
+        'Use essa sensação de conquista como combustível para manter o ritmo leve nos próximos dias.',
+    }
+  }
+
+  if (streak >= 5) {
+    return {
+      title: 'Sua constância está contando uma história muito bonita',
+      body:
+        'Os seus dias de sequência mostram que, mesmo entre altos e baixos, você tem voltado para cuidar de você e da sua rotina. Isso vale muito mais do que um dia “perfeito”.',
+      helper:
+        'Se puder, escolha uma pequena recompensa simbólica para celebrar essa presença contínua.',
+    }
+  }
+
+  return {
+    title: 'Sua jornada está em movimento, mesmo quando parece parada',
+    body:
+      'Pelos seus registros de hoje, dá para sentir que você está tentando equilibrar muitas coisas ao mesmo tempo. Ainda assim, você segue aparecendo por aqui e registrando um passo de cada vez.',
+    helper:
+      'Lembre-se: conquistas não são só grandes marcos. Elas também moram nos gestos pequenos que ninguém vê, mas você sabe que fez.',
+  }
+}
+
+async function fetchConquistasInsight(
+  context: ConquistasInsightContext,
+): Promise<ConquistasInsight> {
+  const fallback = buildInsightFallback(context)
+
+  try {
+    const res = await fetch('/api/ai/conquistas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feature: 'conquistas_overview',
+        origin: 'minhas-conquistas',
+        context,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error('Resposta inválida da IA de conquistas')
+    }
+
+    const data = await res.json()
+    const insight = data?.insight
+
+    if (!insight || typeof insight !== 'object') {
+      throw new Error('Insight de conquistas vazio')
+    }
+
+    return {
+      title: insight.title ?? fallback.title,
+      body: insight.body ?? fallback.body,
+      helper: insight.helper ?? fallback.helper,
+    }
+  } catch (error) {
+    console.error(
+      '[Minhas Conquistas] Erro ao buscar insight estratégico, usando fallback:',
+      error,
+    )
+    return fallback
+  }
+}
 
 // ======================================================
 // PAGE COMPONENT
@@ -191,14 +304,15 @@ export default function MinhasConquistasPage() {
   const highlightFromQuery = useMemo(() => {
     const abrir = searchParams.get('abrir')
     if (!abrir) return null
-    if (['painel', 'missoes', 'selos', 'mensal'].includes(abrir)) return abrir as HighlightTarget
+    if (['painel', 'missoes', 'selos', 'mensal'].includes(abrir))
+      return abrir as HighlightTarget
     return null
   }, [searchParams])
 
   const todayDateKey = useMemo(() => getBrazilDateKey(), [])
 
   const [missions, setMissions] = useState<Mission[]>(
-    INITIAL_MISSIONS.map((m) => ({ ...m, done: false })),
+    INITIAL_MISSIONS.map(m => ({ ...m, done: false })),
   )
 
   const [xp, setXp] = useState<XpSnapshot | null>(null)
@@ -212,12 +326,26 @@ export default function MinhasConquistasPage() {
     presenca: false,
   })
 
-  const completedMissions = missions.filter((m) => m.done).length
+  const [insight, setInsight] = useState<ConquistasInsight | null>(null)
+  const [loadingInsight, setLoadingInsight] = useState(false)
+
+  const completedMissions = missions.filter(m => m.done).length
   const todayXp = xp?.today ?? 0
   const totalXp = xp?.total ?? 0
   const streak = xp?.streak ?? 0
   const todaySummaryTitle = buildTodaySummaryText(todayXp, completedMissions)
   const levelInfo = computeLevel(totalXp)
+
+  const insightContext: ConquistasInsightContext = useMemo(
+    () => ({
+      todayXp,
+      totalXp,
+      streak,
+      completedMissions,
+      totalMissions: missions.length,
+    }),
+    [todayXp, totalXp, streak, completedMissions, missions.length],
+  )
 
   // Carregamento inicial
   useEffect(() => {
@@ -238,42 +366,72 @@ export default function MinhasConquistasPage() {
     // Missões do dia
     try {
       const stored =
-        load<Record<string, boolean>>(`${MISSIONS_STATE_PREFIX}${todayDateKey}`) ??
-        {}
+        load<Record<string, boolean>>(
+          `${MISSIONS_STATE_PREFIX}${todayDateKey}`,
+        ) ?? {}
 
       setMissions(
-        INITIAL_MISSIONS.map((m) => ({
+        INITIAL_MISSIONS.map(m => ({
           ...m,
           done: !!stored[m.id],
         })),
       )
-    } catch {}
+    } catch {
+      // silencioso
+    }
   }, [todayDateKey])
 
   const weeks = useMemo(() => buildMonthWeeks(xpHistory), [xpHistory])
 
+  // Insight estratégico baseado no estado real
+  useEffect(() => {
+    if (!xp) return
+
+    let cancelled = false
+
+    const loadInsight = async () => {
+      setLoadingInsight(true)
+      try {
+        const result = await fetchConquistasInsight(insightContext)
+        if (!cancelled) {
+          setInsight(result)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingInsight(false)
+        }
+      }
+    }
+
+    void loadInsight()
+
+    return () => {
+      cancelled = true
+    }
+  }, [xp, insightContext])
+
   function handleMissionToggle(id: string) {
-    const mission = missions.find((m) => m.id === id)
+    const mission = missions.find(m => m.id === id)
     if (!mission) return
 
     const isDone = !mission.done
     const delta = isDone ? mission.xp : -mission.xp
 
     // Atualiza missões e salva estado
-    setMissions((prev) => {
-      const updated = prev.map((m) =>
+    setMissions(prev => {
+      const updated = prev.map(m =>
         m.id === id ? { ...m, done: isDone } : m,
       )
 
       const stored: Record<string, boolean> = {}
-      updated.forEach((m) => m.done && (stored[m.id] = true))
+      updated.forEach(m => m.done && (stored[m.id] = true))
       save(`${MISSIONS_STATE_PREFIX}${todayDateKey}`, stored)
 
       return updated
     })
 
     // XP + selos
-    setXp((prev) => {
+    setXp(prev => {
       const base = prev ?? { today: 0, total: 0, streak: 0 }
       const fallback: XpSnapshot = {
         today: Math.max(0, base.today + delta),
@@ -319,7 +477,6 @@ export default function MinhasConquistasPage() {
     >
       <ClientOnly>
         <div className="max-w-6xl mx-auto px-4 pb-16 md:pb-20 space-y-10 md:space-y-12">
-
           {/* ======================================================
               BLOCO 1 — PAINEL DA SUA JORNADA
           ====================================================== */}
@@ -338,7 +495,6 @@ export default function MinhasConquistasPage() {
 
               <div className="relative z-10 space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                       Painel da sua jornada
@@ -347,25 +503,46 @@ export default function MinhasConquistasPage() {
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
-                      Este espaço mostra um resumo do que você já fez — sem cobranças, só reconhecimento.
+                      Este espaço mostra um resumo do que você já fez — sem
+                      cobranças, só reconhecimento.
                     </p>
                   </div>
 
                   {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)] leading-none">
-                      <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" />
+                      <AppIcon
+                        name="crown"
+                        className="h-4 w-4 text-[#ff005e]"
+                      />
                       {levelBadgeLabel}
                     </span>
-                    <span className="text-[11px] text-[#545454]/80">Seu progresso atualizado diariamente</span>
+                    <span className="text-[11px] text-[#545454]/80">
+                      Seu progresso atualizado diariamente
+                    </span>
                   </div>
                 </div>
 
                 {/* Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-                  <StatCard label="Pontuação de hoje" value={String(todayXp)} helper="+XP de hoje" icon="sparkles" />
-                  <StatCard label="Pontuação total" value={String(totalXp)} helper="Acumulado da jornada" icon="star" />
-                  <StatCard label="Dias de sequência" value={String(streak)} helper="Presença contínua" icon="calendar" />
+                  <StatCard
+                    label="Pontuação de hoje"
+                    value={String(todayXp)}
+                    helper="+XP de hoje"
+                    icon="sparkles"
+                  />
+                  <StatCard
+                    label="Pontuação total"
+                    value={String(totalXp)}
+                    helper="Acumulado da jornada"
+                    icon="star"
+                  />
+                  <StatCard
+                    label="Dias de sequência"
+                    value={String(streak)}
+                    helper="Presença contínua"
+                    icon="calendar"
+                  />
                 </div>
 
                 {/* Barra */}
@@ -382,7 +559,9 @@ export default function MinhasConquistasPage() {
                     />
                   </div>
 
-                  <p className="text-xs text-[#545454]/80">{progressHelperText}</p>
+                  <p className="text-xs text-[#545454]/80">
+                    {progressHelperText}
+                  </p>
                 </div>
               </div>
             </SoftCard>
@@ -393,7 +572,6 @@ export default function MinhasConquistasPage() {
           ====================================================== */}
           <RevealSection delay={60}>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
               {/* MISSÕES */}
               <SoftCard
                 className={clsx(
@@ -415,7 +593,7 @@ export default function MinhasConquistasPage() {
                   </header>
 
                   <div className="space-y-2.5">
-                    {missions.map((mission) => {
+                    {missions.map(mission => {
                       const isDone = mission.done
 
                       return (
@@ -434,16 +612,25 @@ export default function MinhasConquistasPage() {
                             <div
                               className={clsx(
                                 'h-5 w-5 rounded-full border flex items-center justify-center transition-colors',
-                                isDone ? 'border-[#ff005e] bg-[#ff005e]' : 'border-[#ffd8e6] bg-white',
+                                isDone
+                                  ? 'border-[#ff005e] bg-[#ff005e]'
+                                  : 'border-[#ffd8e6] bg-white',
                               )}
                             >
-                              {isDone && <AppIcon name="check" className="h-3.5 w-3.5 text-white" />}
+                              {isDone && (
+                                <AppIcon
+                                  name="check"
+                                  className="h-3.5 w-3.5 text-white"
+                                />
+                              )}
                             </div>
 
                             <span
                               className={clsx(
                                 'text-sm md:text-[15px]',
-                                isDone ? 'text-[#545454] line-through' : 'text-[#2f3a56]',
+                                isDone
+                                  ? 'text-[#545454] line-through'
+                                  : 'text-[#2f3a56]',
                               )}
                             >
                               {mission.label}
@@ -459,7 +646,9 @@ export default function MinhasConquistasPage() {
                   </div>
 
                   <footer className="flex justify-between text-xs text-[#545454]/85">
-                    <span>{completedMissions} de {missions.length} concluídas</span>
+                    <span>
+                      {completedMissions} de {missions.length} concluídas
+                    </span>
                     <span>Se nenhuma couber, tudo bem também.</span>
                   </footer>
                 </div>
@@ -468,7 +657,6 @@ export default function MinhasConquistasPage() {
               {/* RESUMO DO DIA */}
               <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-6 bg-[#ffeef6]/70 border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
                 <div className="space-y-4">
-
                   <header>
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#cf285f]">
                       Seu resumo de hoje
@@ -480,38 +668,84 @@ export default function MinhasConquistasPage() {
 
                   <ul className="space-y-2.5 text-sm text-[#545454]">
                     <li className="flex items-start gap-2">
-                      <AppIcon name="heart" className="mt-0.5 h-4 w-4 text-[#ff005e]" />
-                      <span>Você apareceu por você — mesmo num dia corrido.</span>
-                    </li>
-
-                    <li className="flex items-start gap-2">
-                      <AppIcon name="idea" className="mt-0.5 h-4 w-4 text-[#ff005e]" />
+                      <AppIcon
+                        name="heart"
+                        className="mt-0.5 h-4 w-4 text-[#ff005e]"
+                      />
                       <span>
-                        Combine com o <strong>Meu Dia</strong> e <strong>Cuidar</strong> para ver sua evolução emocional.
+                        Você apareceu por você — mesmo num dia corrido.
                       </span>
                     </li>
 
                     <li className="flex items-start gap-2">
-                      <AppIcon name="smile" className="mt-0.5 h-4 w-4 text-[#ff005e]" />
+                      <AppIcon
+                        name="idea"
+                        className="mt-0.5 h-4 w-4 text-[#ff005e]"
+                      />
                       <span>
-                        No final da semana, você verá sua constância — mesmo nos dias mais difíceis.
+                        Combine com o <strong>Meu Dia</strong> e{' '}
+                        <strong>Cuidar</strong> para ver sua evolução emocional.
+                      </span>
+                    </li>
+
+                    <li className="flex items-start gap-2">
+                      <AppIcon
+                        name="smile"
+                        className="mt-0.5 h-4 w-4 text-[#ff005e]"
+                      />
+                      <span>
+                        No final da semana, você verá sua constância — mesmo nos
+                        dias mais difíceis.
                       </span>
                     </li>
                   </ul>
 
-                  {/* Botão agora ativado */}
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
                     className="w-full justify-center border border-[#ff005e]/20 text-[#ff005e]"
-                    onClick={() => alert('Sugestões automáticas virão aqui')}
+                    onClick={() =>
+                      alert('Sugestões automáticas virão aqui em breve.')
+                    }
                   >
                     Sugestões automáticas chegam em breve
                   </Button>
                 </div>
               </SoftCard>
             </div>
+
+            {/* CARD NOVO — INSIGHT ESTRATÉGICO */}
+            <SoftCard className="mt-4 rounded-[28px] md:rounded-[32px] p-6 bg-white/90 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.14)]">
+              <div className="space-y-3 md:space-y-4">
+                <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#ff005e]/80">
+                      Insight estratégico da sua jornada
+                    </p>
+                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                      {insight?.title ??
+                        'Um olhar carinhoso sobre as suas conquistas'}
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-[#545454]/80">
+                    Gerado a partir do seu XP, presença e pequenas ações do dia.
+                  </span>
+                </header>
+
+                <p className="text-sm md:text-[15px] leading-relaxed text-[#545454]">
+                  {loadingInsight
+                    ? 'Estou analisando seus registros para trazer um insight feito sob medida para você…'
+                    : insight?.body ??
+                      'Conforme você registra as suas ações e cuidados, este espaço te ajuda a enxergar a jornada com mais gentileza e menos cobrança.'}
+                </p>
+
+                <p className="text-[11px] md:text-xs text-[#545454]/90">
+                  {insight?.helper ??
+                    'Use este insight como um lembrete de que a sua jornada não precisa ser perfeita para ser valiosa — ela só precisa ser verdadeira para você.'}
+                </p>
+              </div>
+            </SoftCard>
           </RevealSection>
 
           {/* ======================================================
@@ -526,7 +760,6 @@ export default function MinhasConquistasPage() {
             >
               <div className="space-y-6">
                 <header className="flex items-baseline justify-between gap-3">
-
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                       Selos & medalhas
@@ -539,16 +772,20 @@ export default function MinhasConquistasPage() {
                     </p>
                   </div>
 
-                  {/* Correção de alinhamento */}
                   <div className="text-xs text-right text-[#545454]/90 leading-tight">
-                    <p><span className="font-semibold">{SEALS.length}</span> selos disponíveis</p>
-                    <p>Novas conquistas serão desbloqueadas ao longo da jornada.</p>
+                    <p>
+                      <span className="font-semibold">{SEALS.length}</span> selos
+                      disponíveis
+                    </p>
+                    <p>
+                      Novas conquistas serão desbloqueadas ao longo da jornada.
+                    </p>
                   </div>
                 </header>
 
                 {/* Grid de selos */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-                  {SEALS.map((seal) => {
+                  {SEALS.map(seal => {
                     const unlocked = unlockedSeals[seal.id]
 
                     return (
@@ -569,7 +806,12 @@ export default function MinhasConquistasPage() {
                         >
                           <AppIcon
                             name={seal.icon}
-                            className={clsx('h-5 w-5', unlocked ? 'text-[#ff005e]' : 'text-[#b26b7c]')}
+                            className={clsx(
+                              'h-5 w-5',
+                              unlocked
+                                ? 'text-[#ff005e]'
+                                : 'text-[#b26b7c]',
+                            )}
                           />
                         </div>
 
@@ -606,7 +848,6 @@ export default function MinhasConquistasPage() {
               )}
             >
               <div className="space-y-6">
-
                 <header className="space-y-1">
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     Progresso mensal
@@ -615,7 +856,8 @@ export default function MinhasConquistasPage() {
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
-                    As barrinhas mostram presença e intensidade — cada cor tem um significado.
+                    As barrinhas mostram presença e intensidade — cada cor tem
+                    um significado.
                   </p>
                 </header>
 
@@ -625,9 +867,8 @@ export default function MinhasConquistasPage() {
                     <span>Intensidade baseada no XP diário</span>
                   </div>
 
-                  {/* Corrigido: semanas renderizam normalmente */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {weeks.map((week) => (
+                    {weeks.map(week => (
                       <div
                         key={week.label}
                         className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] px-3 py-3"
@@ -642,17 +883,22 @@ export default function MinhasConquistasPage() {
                               key={idx}
                               className={clsx(
                                 'h-6 w-2.5 rounded-full transition-all',
-                                day.intensity === 'none' && 'bg-[#ffd8e6]/30',
-                                day.intensity === 'low' && 'bg-[#ffd8e6]/80',
-                                day.intensity === 'medium' && 'bg-[#ff6fa3]/80',
-                                day.intensity === 'high' && 'bg-[#ff005e]/80',
+                                day.intensity === 'none' &&
+                                  'bg-[#ffd8e6]/30',
+                                day.intensity === 'low' &&
+                                  'bg-[#ffd8e6]/80',
+                                day.intensity === 'medium' &&
+                                  'bg-[#ff6fa3]/80',
+                                day.intensity === 'high' &&
+                                  'bg-[#ff005e]/80',
                               )}
                             />
                           ))}
                         </div>
 
                         <p className="mt-2 text-[10px] text-[#545454]/90">
-                          Tons mais fortes indicam dias com mais gestos de presença.
+                          Tons mais fortes indicam dias com mais gestos de
+                          presença.
                         </p>
                       </div>
                     ))}
@@ -660,7 +906,8 @@ export default function MinhasConquistasPage() {
                 </div>
 
                 <p className="text-xs text-[#545454]/85">
-                  Conforme você for registrando mais dias, o mês vai ganhando forma e cor — a sua jornada registrada com carinho.
+                  Conforme você for registrando mais dias, o mês vai ganhando
+                  forma e cor — a sua jornada registrada com carinho.
                 </p>
               </div>
             </SoftCard>
@@ -672,7 +919,6 @@ export default function MinhasConquistasPage() {
     </PageTemplate>
   )
 }
-
 
 // ======================================================
 // SMALL HELPERS
@@ -715,7 +961,9 @@ function StatCard({ label, value, helper, icon }: StatCardProps) {
           </div>
         </div>
 
-        <p className="text-2xl md:text-[26px] font-semibold text-[#2f3a56]">{value}</p>
+        <p className="text-2xl md:text-[26px] font-semibold text-[#2f3a56]">
+          {value}
+        </p>
 
         {helper && (
           <p className="text-[11px] text-[#545454]/80 leading-snug">
