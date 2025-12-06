@@ -470,8 +470,7 @@ export default function ComoEstouHojePage(props: {
         )
       }
 
-      toast.success('Energia registrado
-a!')
+      toast.success('Energia registrada!')
     }
   }
 
