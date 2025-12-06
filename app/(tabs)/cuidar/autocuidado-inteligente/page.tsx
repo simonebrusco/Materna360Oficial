@@ -205,7 +205,7 @@ export default function AutocuidadoInteligentePage() {
       return
     }
 
-    const storage = load<AutococuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
+    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].saude = {
       hidratacao: hidratacao,
@@ -280,7 +280,6 @@ export default function AutocuidadoInteligentePage() {
     toast.success('Sugestão salva para você revisitar quando quiser.')
   }
 
-  // RENDER
   return (
     <PageTemplate
       label="CUIDAR"
@@ -469,7 +468,7 @@ export default function AutocuidadoInteligentePage() {
                 {/* Grid com dois cards: Saúde & Bem-Estar + Para Você Hoje */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {/* CARD 3 — Saúde & Bem-Estar */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg:white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-6 flex flex-col h-full">
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
@@ -673,7 +672,7 @@ export default function AutocuidadoInteligentePage() {
             </SoftCard>
           </Reveal>
 
-          {/* BLOCO 3 — FAIXA EXPLICATIVA, NO MESMO ESPÍRITO DAS OUTRAS PÁGINAS */}
+          {/* BLOCO 3 — FAIXA EXPLICATIVA */}
           <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
