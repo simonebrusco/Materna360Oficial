@@ -737,21 +737,20 @@ export default function MinhasConquistasPage() {
                     'Use este insight como um lembrete de que a sua jornada não precisa ser perfeita para ser valiosa — ela só precisa ser verdadeira para você.'}
                 </p>
 
-                <div className="pt-2 flex justify-end">
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
-                  >
-                    <Link href="/meu-dia/como-estou-hoje?abrir=semana">
-                      Ver minha semana emocional
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </SoftCard>
-          </RevealSection>
+               <div className="pt-2 flex justify-end">
+  <Link
+    href="/meu-dia/como-estou-hoje?abrir=resumo"
+    className="inline-flex"
+  >
+    <Button
+      size="sm"
+      variant="outline"
+      className="border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
+    >
+      Ver detalhes no Como Estou Hoje
+    </Button>
+  </Link>
+</div>
 
           {/* ======================================================
               BLOCO 3 — SELOS
