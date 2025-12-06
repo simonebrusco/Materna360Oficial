@@ -41,6 +41,44 @@ const SEALS = [
   { id: 'presenca', label: 'Presença real', icon: 'star' as AppIconName },
 ]
 
+// ===== LÓGICA DE NÍVEL =====
+
+const LEVEL_XP_STEP = 400
+
+type LevelInfo = {
+  level: number
+  currentLevelMinXp: number
+  nextLevelXp: number
+  progressPercent: number
+  remainingToNext: number
+}
+
+function getLevelInfo(totalXp: number): LevelInfo {
+  const safeTotal = Math.max(0, totalXp)
+
+  // Ex.: 0–399 = nível 1, 400–799 = nível 2, etc.
+  const level = Math.floor(safeTotal / LEVEL_XP_STEP) + 1
+
+  const currentLevelMinXp = (level - 1) * LEVEL_XP_STEP
+  const nextLevelXp = level * LEVEL_XP_STEP
+
+  const gainedOnLevel = safeTotal - currentLevelMinXp
+  const progressPercent = Math.min(
+    100,
+    Math.max(0, (gainedOnLevel / LEVEL_XP_STEP) * 100),
+  )
+
+  const remainingToNext = Math.max(0, nextLevelXp - safeTotal)
+
+  return {
+    level,
+    currentLevelMinXp,
+    nextLevelXp,
+    progressPercent,
+    remainingToNext,
+  }
+}
+
 // ===== COMPONENT =====
 
 export default function MinhasConquistasPage() {
@@ -119,9 +157,8 @@ export default function MinhasConquistasPage() {
   const totalXp = xp?.total ?? 0
   const streak = xp?.streak ?? 0
 
-  // 400 XP como meta diária de exemplo (ajustável depois)
-  const xpProgressPercent =
-    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100)
+  const levelInfo = getLevelInfo(totalXp)
+  const xpProgressPercent = levelInfo.progressPercent
 
   return (
     <PageTemplate
@@ -163,7 +200,7 @@ export default function MinhasConquistasPage() {
                   <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
                       <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" decorative />
-                      Nível 3 · Jornada em andamento
+                      Nível {levelInfo.level} · Jornada em andamento
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
                       Os números abaixo acompanham o que você já fez na plataforma.
@@ -193,7 +230,7 @@ export default function MinhasConquistasPage() {
                   />
                 </div>
 
-                {/* Barra de progresso geral (mock simples usando XP de hoje) */}
+                {/* Barra de progresso geral – progresso até o próximo nível */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
@@ -207,6 +244,16 @@ export default function MinhasConquistasPage() {
                   </div>
                   <p className="text-xs text-[#545454]/80">
                     Você não precisa fazer tudo. Só continuar aparecendo um pouquinho por dia.
+                    {levelInfo.remainingToNext > 0 && (
+                      <>
+                        {' '}
+                        Faltam aproximadamente{' '}
+                        <span className="font-semibold">
+                          {levelInfo.remainingToNext} XP
+                        </span>{' '}
+                        para o próximo nível.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
