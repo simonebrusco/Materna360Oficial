@@ -3,6 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+import { Button } from '@/components/ui/Button'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import { track } from '@/app/lib/telemetry'
+import { updateXP } from '@/app/lib/xp'
+import { toast } from '@/app/lib/toast'
 
 export interface Suggestion {
   id: string
@@ -198,6 +203,16 @@ async function fetchAISuggestions(
   intention: string | null,
 ): Promise<Suggestion[]> {
   try {
+    try {
+      track('meu_dia.intelligent_suggestions.requested', {
+        origin: 'meu-dia',
+        mood: mood ?? null,
+        intention: intention ?? null,
+      })
+    } catch {
+      // telemetria nunca quebra a experiência
+    }
+
     const res = await fetch('/api/ai/meu-dia', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -243,12 +258,34 @@ async function fetchAISuggestions(
       throw new Error('Sugestões da IA inválidas')
     }
 
+    try {
+      track('meu_dia.intelligent_suggestions.generated', {
+        origin: 'meu-dia',
+        mood: mood ?? null,
+        intention: intention ?? null,
+        count: mapped.length,
+      })
+    } catch {
+      // ignora
+    }
+
     return mapped
   } catch (error) {
     console.error(
       '[Meu Dia] Erro ao buscar sugestões inteligentes de IA, usando fallback local:',
       error,
     )
+
+    try {
+      track('meu_dia.intelligent_suggestions.fallback_used', {
+        origin: 'meu-dia',
+        mood: mood ?? null,
+        intention: intention ?? null,
+      })
+    } catch {
+      // ignora
+    }
+
     return []
   }
 }
@@ -263,6 +300,8 @@ export function IntelligentSuggestionsSection({
   const [isLoading, setIsLoading] = useState(false)
 
   const hasSelection = Boolean(mood || intention)
+
+  const { addItem } = usePlannerSavedContents()
 
   useEffect(() => {
     if (!hasSelection) {
@@ -303,6 +342,46 @@ export function IntelligentSuggestionsSection({
     }
   }, [mood, intention, hasSelection])
 
+  const handleSaveSuggestionToPlanner = (suggestion: Suggestion) => {
+    try {
+      addItem({
+        origin: 'meu-dia', // origin já aceito pelo Planner
+        type: 'insight',
+        title: suggestion.title,
+        payload: {
+          text: suggestion.description ?? suggestion.title,
+          tag: 'intelligent_suggestion',
+        },
+      })
+
+      try {
+        track('meu_dia.intelligent_suggestions.saved_to_planner', {
+          origin: 'meu-dia',
+          title: suggestion.title,
+        })
+      } catch {
+        // ignora
+      }
+
+      try {
+        void updateXP(8)
+      } catch (e) {
+        console.error(
+          '[Meu Dia] Erro ao atualizar XP por sugestão inteligente:',
+          e,
+        )
+      }
+
+      toast.success('Sugestão salva no planner!')
+    } catch (error) {
+      console.error(
+        '[Meu Dia] Erro ao salvar sugestão inteligente no planner:',
+        error,
+      )
+      toast.danger('Não consegui salvar essa sugestão agora. Tente novamente.')
+    }
+  }
+
   return (
     <div className="w-full h-full">
       <SoftCard className="h-full flex flex-col rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6">
@@ -318,19 +397,18 @@ export function IntelligentSuggestionsSection({
         <div className="mt-3 md:mt-4 flex-1 flex">
           {!hasSelection ? (
             <div className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
-              Comece contando como você está e que tipo de dia você quer
-              ter. Assim eu consigo sugerir algo que faça sentido pra você.
+              Comece contando como você está e que tipo de dia você quer ter.
+              Assim eu consigo sugerir algo que faça sentido pra você.
             </div>
           ) : isLoading ? (
             <div className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
-              Estou pensando em algumas sugestões que combinam com o seu
-              momento de hoje…
+              Estou pensando em algumas sugestões que combinam com o seu momento
+              de hoje…
             </div>
           ) : suggestions.length === 0 ? (
             <div className="text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
-              Hoje, talvez o mais importante seja apenas respeitar o seu
-              ritmo. Se quiser, defina uma única prioridade e deixe o resto
-              mais leve.
+              Hoje, talvez o mais importante seja apenas respeitar o seu ritmo.
+              Se quiser, defina uma única prioridade e deixe o resto mais leve.
             </div>
           ) : (
             <div className="space-y-3">
@@ -351,6 +429,19 @@ export function IntelligentSuggestionsSection({
                         {suggestion.description}
                       </p>
                     )}
+
+                    <div className="mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleSaveSuggestionToPlanner(suggestion)
+                        }
+                        className="text-[11px] md:text-xs px-3 py-1 rounded-full border-[var(--color-brand)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white transition-colors"
+                      >
+                        Levar para o planner
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

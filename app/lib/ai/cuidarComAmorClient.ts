@@ -1,4 +1,3 @@
-// app/lib/ai/cuidarComAmorClient.ts
 // Cliente da IA para o hub "Cuidar com Amor"
 // Mantém respostas seguras, leves e focadas em apoio à rotina.
 

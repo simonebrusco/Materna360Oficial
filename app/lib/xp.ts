@@ -4,6 +4,7 @@ import { save, load } from './persist'
 
 const XP_TOTALS_KEY = 'xp:totals'
 const XP_DAILY_PREFIX = 'xp:daily:'
+const XP_HISTORY_KEY = 'xp:history'
 
 type XpStoredTotals = {
   total: number
@@ -17,6 +18,11 @@ export type XpSnapshot = {
   streak: number
 }
 
+export type XpHistoryEntry = {
+  dateKey: string
+  xp: number
+}
+
 /**
  * Calcula a data de ontem a partir de uma chave YYYY-MM-DD.
  */
@@ -24,6 +30,26 @@ function getYesterdayKey(currentKey: string): string {
   const d = new Date(currentKey + 'T00:00:00')
   d.setDate(d.getDate() - 1)
   return d.toISOString().slice(0, 10)
+}
+
+/**
+ * Atualiza / registra histórico diário de XP.
+ */
+function upsertXpHistory(dateKey: string, xpForDay: number) {
+  const history = load<XpHistoryEntry[]>(XP_HISTORY_KEY) ?? []
+
+  const idx = history.findIndex((entry) => entry.dateKey === dateKey)
+  if (idx >= 0) {
+    history[idx] = { dateKey, xp: xpForDay }
+  } else {
+    history.push({ dateKey, xp: xpForDay })
+  }
+
+  // Mantém no máximo 120 dias de histórico
+  const trimmed =
+    history.length > 120 ? history.slice(history.length - 120) : history
+
+  save(XP_HISTORY_KEY, trimmed)
 }
 
 /**
@@ -93,9 +119,19 @@ export function updateXP(delta: number): XpSnapshot {
   const newToday = Math.max(0, currentToday + delta)
   save(todayKey, newToday)
 
+  // Atualiza histórico diário
+  upsertXpHistory(dateKey, newToday)
+
   return {
     today: newToday,
     total: newTotal,
     streak: newStreak,
   }
+}
+
+/**
+ * Histórico simples de presença: lista (dataKey, xp) dos últimos dias.
+ */
+export function getXpHistory(): XpHistoryEntry[] {
+  return load<XpHistoryEntry[]>(XP_HISTORY_KEY) ?? []
 }

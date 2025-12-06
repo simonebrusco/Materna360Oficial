@@ -4,7 +4,7 @@ import React from 'react'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 
-type WeekViewData = {
+export type WeekViewData = {
   dayNumber: number
   dayName: string
   agendaCount: number

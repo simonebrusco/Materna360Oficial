@@ -4,6 +4,8 @@ import React, { useMemo, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import type { PlannerSavedContent } from '@/app/hooks/usePlannerSavedContents'
+import { track } from '@/app/lib/telemetry'
+import { updateXP } from '@/app/lib/xp'
 
 type SavedContent = {
   id: string
@@ -29,7 +31,7 @@ type SavedContentsSectionProps = {
 const typeLabels: Record<string, string> = {
   artigo: 'ARTIGO',
   receita: 'RECEITA',
-  ideia: 'IDEIA',
+  ideia: 'IDÉIA',
   frase: 'FRASE',
 }
 
@@ -118,6 +120,28 @@ export default function SavedContentsSection({
       prev.includes(item.id) ? prev : [...prev, item.id],
     )
 
+    // Telemetria: marcar como feito
+    try {
+      track('saved_content.done', {
+        id: item.id,
+        source: item.source,
+        tag: item.tag,
+        title: item.title,
+      })
+    } catch {
+      // telemetria nunca deve quebrar a experiência
+    }
+
+    // XP por concluir um conteúdo salvo
+    try {
+      void updateXP(5)
+    } catch (e) {
+      console.error(
+        '[SavedContentsSection] Erro ao atualizar XP ao marcar conteúdo como feito:',
+        e,
+      )
+    }
+
     if (onItemDone) {
       onItemDone({
         id: item.id,
@@ -128,6 +152,18 @@ export default function SavedContentsSection({
   }
 
   const handleClick = (item: CombinedItem) => {
+    // Telemetria: abrir conteúdo
+    try {
+      track('saved_content.open', {
+        id: item.id,
+        source: item.source,
+        tag: item.tag,
+        title: item.title,
+      })
+    } catch {
+      // ignora
+    }
+
     if (item.source === 'planner' && item.raw && onItemClick) {
       onItemClick(item.raw)
       return
@@ -197,8 +233,8 @@ export default function SavedContentsSection({
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold text-white md:text-xl">
             <AppIcon
-              name="bookmark"
-              className="h-4 w-4 text-[var(--color-brand)]"
+              name='bookmark'
+              className='h-4 w-4 text-[var(--color-brand)]'
             />
             Inspirações &amp; conteúdos salvos
           </h3>

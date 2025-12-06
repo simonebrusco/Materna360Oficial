@@ -13,7 +13,6 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
-import LegalFooter from '@/components/common/LegalFooter'
 
 type WeeklyInsight = {
   title: string
@@ -21,15 +20,36 @@ type WeeklyInsight = {
   suggestions: string[]
 }
 
-// Busca insight semanal emocional com fallback carinhoso
-async function fetchWeeklyInsight(): Promise<WeeklyInsight> {
+type WeeklyInsightContext = {
+  firstName?: string
+  stats?: {
+    daysWithPlanner?: number
+    moodCheckins?: number
+    unlockedAchievements?: number
+  }
+}
+
+// Busca insight semanal emocional com fallback carinhoso e contexto opcional
+async function fetchWeeklyInsight(
+  context: WeeklyInsightContext,
+): Promise<WeeklyInsight> {
   try {
+    // Telemetria simples de requisição de IA
+    track('ai.request', {
+      feature: 'weekly_overview',
+      origin: 'eu360',
+      daysWithPlanner: context.stats?.daysWithPlanner ?? null,
+      moodCheckins: context.stats?.moodCheckins ?? null,
+      unlockedAchievements: context.stats?.unlockedAchievements ?? null,
+    })
+
     const res = await fetch('/api/ai/emocional', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         feature: 'weekly_overview',
         origin: 'eu360',
+        context,
       }),
     })
 
@@ -58,7 +78,10 @@ async function fetchWeeklyInsight(): Promise<WeeklyInsight> {
             ],
     }
   } catch (error) {
-    console.error('[Eu360] Erro ao buscar insight semanal, usando fallback:', error)
+    console.error(
+      '[Eu360] Erro ao buscar insight semanal, usando fallback:',
+      error,
+    )
     return {
       title: 'Seu resumo emocional da semana',
       summary:
@@ -95,7 +118,10 @@ export default function Eu360Client() {
     const loadInsight = async () => {
       setLoadingInsight(true)
       try {
-        const result = await fetchWeeklyInsight()
+        const result = await fetchWeeklyInsight({
+          firstName,
+          stats: mockStats,
+        })
         if (isMounted) {
           setWeeklyInsight(result)
         }
@@ -111,7 +137,7 @@ export default function Eu360Client() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [firstName, mockStats.daysWithPlanner, mockStats.moodCheckins, mockStats.unlockedAchievements])
 
   const content = (
     <main
@@ -206,12 +232,13 @@ export default function Eu360Client() {
                           Olhar carinhoso sobre a sua semana
                         </p>
                         <h3 className="text-base md:text-lg font-semibold text-[var(--color-ink)] leading-snug">
-                          {weeklyInsight?.title || 'Seu resumo emocional da semana'}
+                          {weeklyInsight?.title ||
+                            'Seu resumo emocional da semana'}
                         </h3>
                         <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
-                          {firstName}, este espaço é para te ajudar a enxergar seus
-                          últimos dias com mais gentileza, não para te cobrar mais
-                          nada.
+                          {firstName}, este espaço é para te ajudar a enxergar
+                          seus últimos dias com mais gentileza, não para te
+                          cobrar mais nada.
                         </p>
                       </div>
                     </div>
@@ -219,8 +246,8 @@ export default function Eu360Client() {
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
                         <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
-                          Estou olhando com carinho para a sua semana para trazer
-                          uma reflexão pra você…
+                          Estou olhando com carinho para a sua semana para
+                          trazer uma reflexão pra você…
                         </p>
                       ) : (
                         <>
@@ -244,9 +271,9 @@ export default function Eu360Client() {
                             )}
 
                           <p className="text-[11px] text-[var(--color-ink-muted)] mt-2 leading-relaxed">
-                            Isso não é um diagnóstico, e sim um convite para você se
-                            observar com mais leveza e cuidado. Um passo de cada vez
-                            já é muito.
+                            Isso não é um diagnóstico, e sim um convite para
+                            você se observar com mais leveza e cuidado. Um passo
+                            de cada vez já é muito.
                           </p>
                         </>
                       )}
@@ -272,8 +299,8 @@ export default function Eu360Client() {
                     </h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
                       Desbloqueie conteúdos exclusivos, acompanhamento mais
-                      próximo e ferramentas avançadas para cuidar de você, da sua
-                      rotina e da sua família.
+                      próximo e ferramentas avançadas para cuidar de você, da
+                      sua rotina e da sua família.
                     </p>
                   </div>
 
@@ -296,11 +323,6 @@ export default function Eu360Client() {
               </SoftCard>
             </Reveal>
           </SectionWrapper>
-        </div>
-
-        {/* Rodapé legal global */}
-        <div className="mt-4 md:mt-6 pb-4">
-          <LegalFooter />
         </div>
       </div>
     </main>

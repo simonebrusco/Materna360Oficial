@@ -41,6 +41,7 @@ type AutocuidadoStorage = {
 }
 
 const RITMO_OPTIONS = ['leve', 'cansada', 'animada', 'exausta', 'focada']
+
 const MINI_ROTINA_ITEMS = [
   'Respirar por 1 minuto',
   'Tomar um copo de água',
@@ -67,21 +68,25 @@ export default function AutocuidadoInteligentePage() {
   const [ritmoNota, setRitmoNota] = useState<string>('')
 
   // Mini rotina state
-  const [selectedRotinItems, setSelectedRotinaItems] = useState<Set<string>>(new Set())
+  const [selectedRotinItems, setSelectedRotinaItems] = useState<Set<string>>(
+    new Set(),
+  )
 
   // Saúde state
   const [hidratacao, setHidratacao] = useState<number | null>(null)
   const [sono, setSono] = useState<string | null>(null)
-  const [alimentacao, setAlimentacao] = useState<'leve' | 'ok' | 'pesada' | null>(null)
+  const [alimentacao, setAlimentacao] = useState<
+    'leve' | 'ok' | 'pesada' | null
+  >(null)
 
   // Sugestão state
   const [sugestaoAtual, setSugestaoAtual] = useState<string | null>(null)
 
-  // Load persisted data on hydration
   useEffect(() => {
     setIsHydrated(true)
   }, [])
 
+  // Carrega dados salvos do dia
   useEffect(() => {
     if (!isHydrated) return
 
@@ -149,7 +154,7 @@ export default function AutocuidadoInteligentePage() {
 
   // CARD 2: Mini Rotina de Cuidado
   const handleToggleRotinaItem = (item: string) => {
-    setSelectedRotinaItems((prev) => {
+    setSelectedRotinaItems(prev => {
       const next = new Set(prev)
       if (next.has(item)) {
         next.delete(item)
@@ -162,7 +167,7 @@ export default function AutocuidadoInteligentePage() {
 
   const handleSalvarRotina = () => {
     if (selectedRotinItems.size === 0) {
-      toast.danger('Selecione pelo menos um item para continuar.')
+      toast.danger('Selecione pelo menos um gesto de cuidado.')
       return
     }
 
@@ -190,7 +195,9 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao atualizar XP (rotina):', e)
     }
 
-    toast.success('Sua mini rotina de cuidado foi salva. Você merece esse cuidado.')
+    toast.success(
+      'Sua mini rotina de cuidado foi salva. Um passo de cada vez já é muito.',
+    )
   }
 
   // CARD 3: Saúde & Bem-Estar
@@ -298,8 +305,9 @@ export default function AutocuidadoInteligentePage() {
                     Cuidados que combinam com o seu ritmo de agora.
                   </h2>
                   <p className="text-xs md:text-sm text-white/80 max-w-2xl">
-                    Escolha como você está e organize pequenos gestos de cuidado que caibam no seu
-                    momento — um passo de cada vez.
+                    Escolha como você está e organize pequenos gestos de cuidado
+                    que caibam no seu momento — um passo de cada vez, sem
+                    perfeição e sem culpa.
                   </p>
                 </div>
 
@@ -311,11 +319,17 @@ export default function AutocuidadoInteligentePage() {
                       {/* Card Header */}
                       <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon name="sparkles" size={18} className="text-[#ff005e]" decorative />
+                          <AppIcon
+                            name="sparkles"
+                            size={18}
+                            className="text-[#ff005e]"
+                            decorative
+                          />
                           Meu Ritmo Hoje
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Conte pra gente que tipo de dia você está vivendo.
+                          Conte para o Materna360 que tipo de dia você está
+                          vivendo — leve, corrido, cansado ou cheio de energia.
                         </p>
                       </div>
 
@@ -326,11 +340,13 @@ export default function AutocuidadoInteligentePage() {
                             Como você está?
                           </label>
                           <div className="flex flex-wrap gap-2">
-                            {RITMO_OPTIONS.map((ritmo) => (
+                            {RITMO_OPTIONS.map(ritmo => (
                               <button
                                 key={ritmo}
                                 onClick={() =>
-                                  setSelectedRitmo(selectedRitmo === ritmo ? null : ritmo)
+                                  setSelectedRitmo(
+                                    selectedRitmo === ritmo ? null : ritmo,
+                                  )
                                 }
                                 className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                                   selectedRitmo === ritmo
@@ -351,22 +367,28 @@ export default function AutocuidadoInteligentePage() {
                           </label>
                           <textarea
                             value={ritmoNota}
-                            onChange={(e) => setRitmoNota(e.target.value)}
-                            placeholder="Se quiser, escreva um pouco…"
+                            onChange={e => setRitmoNota(e.target.value)}
+                            placeholder="Se quiser, escreva um pouco sobre como o dia está aí…"
                             className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/20 resize-none"
                             rows={3}
                           />
                         </div>
                       </div>
 
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSalvarRitmo}
-                        className="w-full mt-auto"
-                      >
-                        Salvar meu ritmo
-                      </Button>
+                      <div>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSalvarRitmo}
+                          className="w-full"
+                        >
+                          Salvar meu ritmo de hoje
+                        </Button>
+                        <p className="mt-3 text-[11px] md:text-xs text-[#545454] text-center">
+                          Cada registro é um jeito de se escutar com mais
+                          carinho.
+                        </p>
+                      </div>
                     </div>
                   </SoftCard>
 
@@ -376,16 +398,22 @@ export default function AutocuidadoInteligentePage() {
                       {/* Card Header */}
                       <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon name="heart" size={18} className="text-[#ff005e]" decorative />
+                          <AppIcon
+                            name="heart"
+                            size={18}
+                            className="text-[#ff005e]"
+                            decorative
+                          />
                           Mini Rotina de Cuidado
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Escolha pequenos gestos que caibam no seu momento.
+                          Escolha pequenos gestos que caibam na sua realidade de
+                          hoje — sem listas impossíveis.
                         </p>
                       </div>
 
                       <div className="space-y-2.5 flex-1">
-                        {MINI_ROTINA_ITEMS.map((item) => (
+                        {MINI_ROTINA_ITEMS.map(item => (
                           <label
                             key={item}
                             className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
@@ -403,14 +431,20 @@ export default function AutocuidadoInteligentePage() {
                         ))}
                       </div>
 
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSalvarRotina}
-                        className="w-full mt-auto"
-                      >
-                        Salvar rotina
-                      </Button>
+                      <div>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSalvarRotina}
+                          className="w-full"
+                        >
+                          Guardar minha mini rotina
+                        </Button>
+                        <p className="mt-3 text-[11px] md:text-xs text-[#545454] text-center">
+                          Você não precisa fazer tudo: alguns poucos gestos já
+                          contam como cuidado.
+                        </p>
+                      </div>
                     </div>
                   </SoftCard>
                 </div>
@@ -431,8 +465,8 @@ export default function AutocuidadoInteligentePage() {
                     Cuide do seu corpo e receba um carinho só para você.
                   </h2>
                   <p className="text-xs md:text-sm text-white/80 max-w-2xl">
-                    Registre como você está hoje e deixe o Materna360 sugerir um cuidado especial
-                    para o seu momento.
+                    Registre como você está hoje e deixe o Materna360 sugerir um
+                    cuidado especial para o seu momento.
                   </p>
                 </div>
 
@@ -444,11 +478,16 @@ export default function AutocuidadoInteligentePage() {
                       {/* Card Header */}
                       <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon name="zap" size={18} className="text-[#ff005e]" decorative />
+                          <AppIcon
+                            name="zap"
+                            size={18}
+                            className="text-[#ff005e]"
+                            decorative
+                          />
                           Saúde & Bem-Estar
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Registre como seu corpo está hoje.
+                          Registre como seu corpo está hoje, sem julgamentos.
                         </p>
                       </div>
 
@@ -466,7 +505,9 @@ export default function AutocuidadoInteligentePage() {
                               <button
                                 key={label}
                                 onClick={() =>
-                                  setHidratacao(hidratacao === idx ? null : idx)
+                                  setHidratacao(
+                                    hidratacao === idx ? null : idx,
+                                  )
                                 }
                                 className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                                   hidratacao === idx
@@ -486,10 +527,16 @@ export default function AutocuidadoInteligentePage() {
                             😴 Sono
                           </label>
                           <div className="flex flex-wrap gap-2">
-                            {['Pouco (≤6h)', 'Adequado (7-8h)', 'Restaurador (9+h)'].map((label) => (
+                            {[
+                              'Pouco (≤6h)',
+                              'Adequado (7-8h)',
+                              'Restaurador (9+h)',
+                            ].map(label => (
                               <button
                                 key={label}
-                                onClick={() => setSono(sono === label ? null : label)}
+                                onClick={() =>
+                                  setSono(sono === label ? null : label)
+                                }
                                 className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
                                   sono === label
                                     ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
@@ -517,7 +564,8 @@ export default function AutocuidadoInteligentePage() {
                                 key={key}
                                 onClick={() =>
                                   setAlimentacao(
-                                    alimentacao === (key as typeof alimentacao)
+                                    alimentacao ===
+                                      (key as typeof alimentacao)
                                       ? null
                                       : (key as typeof alimentacao),
                                   )
@@ -535,14 +583,19 @@ export default function AutocuidadoInteligentePage() {
                         </div>
                       </div>
 
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSalvarSaude}
-                        className="w-full mt-auto"
-                      >
-                        Salvar saúde
-                      </Button>
+                      <div>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSalvarSaude}
+                          className="w-full"
+                        >
+                          Salvar cuidados de hoje
+                        </Button>
+                        <p className="mt-3 text-[11px] md:text-xs text-[#545454] text-center">
+                          Seu corpo também merece esse olhar gentil.
+                        </p>
+                      </div>
                     </div>
                   </SoftCard>
 
@@ -552,11 +605,17 @@ export default function AutocuidadoInteligentePage() {
                       {/* Card Header */}
                       <div className="space-y-3 border-b-2 border-[#6A2C70] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
-                          <AppIcon name="lightbulb" size={18} className="text-[#6A2C70]" decorative />
+                          <AppIcon
+                            name="lightbulb"
+                            size={18}
+                            className="text-[#6A2C70]"
+                            decorative
+                          />
                           Para Você Hoje
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Sugestões carinhosas só para você.
+                          Sugestões carinhosas só para você — sem cobrança, só
+                          acolhimento.
                         </p>
                       </div>
 
@@ -570,13 +629,19 @@ export default function AutocuidadoInteligentePage() {
                               onClick={handleGerarSugestao}
                               className="text-sm font-semibold text-[#ff005e] hover:text-[#ff005e]/80 transition-colors inline-flex items-center gap-1"
                             >
-                              Outra sugestão <AppIcon name="refresh-cw" size={14} decorative />
+                              Ver outra sugestão
+                              <AppIcon
+                                name="refresh-cw"
+                                size={14}
+                                decorative
+                              />
                             </button>
                           </div>
                         ) : (
                           <div className="p-4 rounded-2xl bg-[#ffd8e6]/10 border border-[#ffd8e6]/30 text-center">
                             <p className="text-sm text-[#545454]">
-                              Clique abaixo para descobrir um cuidado especial feito só para você.
+                              Clique abaixo para descobrir um cuidado especial
+                              feito só para você hoje.
                             </p>
                           </div>
                         )}
@@ -590,7 +655,7 @@ export default function AutocuidadoInteligentePage() {
                             onClick={handleGerarSugestao}
                             className="w-full"
                           >
-                            Gerar sugestão
+                            Gerar um carinho para hoje
                           </Button>
                         ) : (
                           <Button
@@ -599,9 +664,13 @@ export default function AutocuidadoInteligentePage() {
                             onClick={handleSalvarSugestao}
                             className="w-full"
                           >
-                            Salvar essa sugestão
+                            Guardar esse carinho para você
                           </Button>
                         )}
+                        <p className="text-[11px] md:text-xs text-[#545454] text-center">
+                          Você pode voltar aqui a qualquer momento para lembrar
+                          desse cuidado.
+                        </p>
                       </div>
                     </div>
                   </SoftCard>

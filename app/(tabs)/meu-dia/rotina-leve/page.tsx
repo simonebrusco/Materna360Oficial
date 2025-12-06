@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
-import PageTemplate from '@/components/common/PageTemplate'
+import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -13,6 +13,10 @@ import { toast } from '@/app/lib/toast'
 import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
 import { usePrimaryChildAge } from '@/app/hooks/usePrimaryChildAge'
 import { updateXP } from '@/app/lib/xp'
+import type { RotinaLeveContext } from '@/app/lib/ai/rotinaLeve'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { save, load } from '@/app/lib/persist'
+import { track } from '@/app/lib/telemetry'
 
 type QuickIdea = {
   id: string
@@ -106,17 +110,32 @@ function mockGenerateInspiration(): Promise<Inspiration> {
   })
 }
 
-// ---------- motor de receitas com fallback suave ----------
+// ---------- motor de receitas com fallback suave (via /api/ai/rotina-leve) ----------
 
-async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
+async function generateRecipesWithAI(
+  context: RotinaLeveContext,
+  prompt?: string,
+): Promise<GeneratedRecipe[]> {
   try {
-    const res = await fetch('/api/ai/rotina', {
+    try {
+      track('rotina_leve.recipes.requested_backend', {
+        hasKidsAround: context.hasKidsAround ?? null,
+        availableMinutes: context.availableMinutes ?? null,
+        timeOfDay: context.timeOfDay,
+      })
+    } catch {
+      // telemetria nunca quebra a experiência
+    }
+
+    const body: any = { context }
+    if (prompt && prompt.trim().length > 0) {
+      body.prompt = prompt
+    }
+
+    const res = await fetch('/api/ai/rotina-leve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        feature: 'recipes',
-        origin: 'rotina-leve',
-      }),
+      body: JSON.stringify(body),
     })
 
     if (!res.ok) {
@@ -124,15 +143,57 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
     }
 
     const data = await res.json()
-    const recipes = data?.recipes
+    const suggestions = data?.suggestions
 
-    if (!Array.isArray(recipes) || recipes.length === 0) {
-      throw new Error('Nenhuma receita recebida')
+    if (!Array.isArray(suggestions) || suggestions.length === 0) {
+      throw new Error('Nenhuma sugestão recebida')
     }
 
-    return recipes as GeneratedRecipe[]
+    const recipes: GeneratedRecipe[] = suggestions
+      .filter((s: any) => s.category === 'receita-inteligente')
+      .map((s: any, index: number) => ({
+        id: s.id || `recipe-${index}`,
+        title: s.title || 'Sugestão de receita rápida',
+        description:
+          s.description ||
+          'Uma sugestão simples para um lanche rápido que cabe no seu dia.',
+        timeLabel: s.timeLabel || 'Tempo flexível',
+        ageLabel:
+          s.ageLabel ||
+          'Idade a partir de 6 meses (sempre respeitando orientação do pediatra).',
+        preparation:
+          s.preparation ||
+          'Adapte esta sugestão aos ingredientes que você tem em casa e à fase do seu filho, sempre seguindo as orientações do pediatra.',
+      }))
+
+    if (recipes.length === 0) {
+      throw new Error('Nenhuma receita categorizada recebida')
+    }
+
+    try {
+      track('rotina_leve.recipes.generated_backend', {
+        suggestionsCount: recipes.length,
+      })
+    } catch {
+      // ignora
+    }
+
+    return recipes
   } catch (error) {
-    console.error('[Rotina Leve] Erro ao buscar receitas, usando fallback:', error)
+    console.error(
+      '[Rotina Leve] Erro ao buscar receitas, usando fallback:',
+      error,
+    )
+
+    try {
+      track('rotina_leve.recipes.fallback_used', {
+        hasKidsAround: context.hasKidsAround ?? null,
+        availableMinutes: context.availableMinutes ?? null,
+      })
+    } catch {
+      // ignora
+    }
+
     toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
     return await mockGenerateRecipes()
   }
@@ -142,6 +203,14 @@ async function generateRecipesWithAI(): Promise<GeneratedRecipe[]> {
 
 async function generateInspirationWithAI(focus: string | null): Promise<Inspiration> {
   try {
+    try {
+      track('rotina_leve.inspiration.requested_backend', {
+        focus: focus || null,
+      })
+    } catch {
+      // ignora
+    }
+
     const res = await fetch('/api/ai/emocional', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -163,6 +232,14 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
       throw new Error('Inspiração vazia')
     }
 
+    try {
+      track('rotina_leve.inspiration.generated_backend', {
+        hasInspiration: true,
+      })
+    } catch {
+      // ignora
+    }
+
     return {
       phrase: inspiration.phrase ?? 'Você não precisa dar conta de tudo hoje.',
       care:
@@ -174,6 +251,15 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
     }
   } catch (error) {
     console.error('[Rotina Leve] Erro ao buscar inspiração, usando fallback:', error)
+
+    try {
+      track('rotina_leve.inspiration.fallback_used', {
+        focus: focus || null,
+      })
+    } catch {
+      // ignora
+    }
+
     toast.info('Preparei uma inspiração especial pra hoje ✨')
     return await mockGenerateInspiration()
   }
@@ -183,6 +269,8 @@ export default function RotinaLevePage() {
   const searchParams = useSearchParams()
   const abrir = searchParams?.get('abrir') ?? undefined
 
+  const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+
   const [openIdeas, setOpenIdeas] = useState(false)
   const [openInspiration, setOpenInspiration] = useState(false)
 
@@ -191,9 +279,22 @@ export default function RotinaLevePage() {
   const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
 
-  // Plan limits para Receitas Inteligentes
+  // Controles de formulário de Receitas Inteligentes
+  const [recipeIngredient, setRecipeIngredient] = useState('')
+  const [recipeMealType, setRecipeMealType] = useState<string | null>(null)
+  const [recipeTime, setRecipeTime] = useState<string | null>(null)
+
+  // Limite diário para Receitas Inteligentes
   const DAILY_RECIPE_LIMIT = 3
   const [usedRecipesToday, setUsedRecipesToday] = useState(0)
+
+  // Limite diário para Ideias Rápidas
+  const DAILY_IDEAS_LIMIT = 5
+  const [usedIdeasToday, setUsedIdeasToday] = useState(0)
+
+  // Limite diário para Inspirações
+  const DAILY_INSPIRATION_LIMIT = 3
+  const [usedInspirationsToday, setUsedInspirationsToday] = useState(0)
 
   // Ideias Rápidas
   const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
@@ -231,6 +332,63 @@ export default function RotinaLevePage() {
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
 
+  // Telemetria de abertura da página
+  useEffect(() => {
+    try {
+      track('rotina_leve.page_opened', {
+        dateKey: currentDateKey,
+        abrir: abrir ?? null,
+      })
+    } catch {
+      // ignora
+    }
+  }, [currentDateKey, abrir])
+
+  // carregar limite diário persistente de receitas
+  useEffect(() => {
+    const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
+    const stored = load(storageKey)
+
+    if (typeof stored === 'number') {
+      setUsedRecipesToday(stored)
+    } else if (typeof stored === 'string') {
+      const parsed = Number(stored)
+      if (!Number.isNaN(parsed)) {
+        setUsedRecipesToday(parsed)
+      }
+    }
+  }, [currentDateKey])
+
+  // carregar limite diário persistente de ideias
+  useEffect(() => {
+    const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
+    const stored = load(storageKey)
+
+    if (typeof stored === 'number') {
+      setUsedIdeasToday(stored)
+    } else if (typeof stored === 'string') {
+      const parsed = Number(stored)
+      if (!Number.isNaN(parsed)) {
+        setUsedIdeasToday(parsed)
+      }
+    }
+  }, [currentDateKey])
+
+  // carregar limite diário persistente de inspirações
+  useEffect(() => {
+    const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
+    const stored = load(storageKey)
+
+    if (typeof stored === 'number') {
+      setUsedInspirationsToday(stored)
+    } else if (typeof stored === 'string') {
+      const parsed = Number(stored)
+      if (!Number.isNaN(parsed)) {
+        setUsedInspirationsToday(parsed)
+      }
+    }
+  }, [currentDateKey])
+
   // Quando o motor de Rotina retornar sugestões, convertemos para QuickIdea
   useEffect(() => {
     if (!aiSuggestions || aiSuggestions.length === 0) return
@@ -244,6 +402,14 @@ export default function RotinaLevePage() {
 
     if (quickIdeas.length > 0) {
       setIdeas(quickIdeas)
+
+      try {
+        track('rotina_leve.ideas.generated', {
+          ideasCount: quickIdeas.length,
+        })
+      } catch {
+        // ignora
+      }
     }
   }, [aiSuggestions])
 
@@ -297,6 +463,15 @@ export default function RotinaLevePage() {
       })
 
       try {
+        track('rotina_leve.ideas.saved', {
+          origin: 'rotina-leve',
+          ideasCount: ideasToSave.length,
+        })
+      } catch {
+        // ignora
+      }
+
+      try {
         void updateXP(5)
       } catch (e) {
         console.error('[Rotina Leve] Erro ao atualizar XP (ideias):', e)
@@ -322,12 +497,23 @@ export default function RotinaLevePage() {
           preparation: recipe.preparation,
         },
       })
-      setUsedRecipesToday((prev) => prev + 1)
+
+      try {
+        track('rotina_leve.recipe.saved', {
+          origin: 'rotina-leve',
+          title: recipe.title,
+        })
+      } catch {
+        // ignora
+      }
 
       try {
         void updateXP(8)
       } catch (e) {
-        console.error('[Rotina Leve] Erro ao atualizar XP (receita):', e)
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (receita):',
+          e,
+        )
       }
 
       toast.success('Receita salva no planner ✨')
@@ -355,9 +541,21 @@ export default function RotinaLevePage() {
       })
 
       try {
+        track('rotina_leve.inspiration.saved', {
+          origin: 'rotina-leve',
+          hasCustomInspiration: Boolean(inspiration),
+        })
+      } catch {
+        // ignora
+      }
+
+      try {
         void updateXP(5)
       } catch (e) {
-        console.error('[Rotina Leve] Erro ao atualizar XP (inspiração):', e)
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (inspiração):',
+          e,
+        )
       }
 
       toast.success('Inspiração salva no planner 💗')
@@ -375,39 +573,267 @@ export default function RotinaLevePage() {
       return
     }
 
+    if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
+      toast.info(
+        'Você já usou as receitinhas inteligentes do seu plano hoje. Amanhã a gente pensa em novas ideias com calma, combinado? 💕',
+      )
+      try {
+        track('rotina_leve.recipes.limit_reached', {
+          dateKey: currentDateKey,
+        })
+      } catch {
+        // ignora
+      }
+      return
+    }
+
+    // Deriva minutos disponíveis a partir do TEMPO DE PREPARO da receita
+    const recipeAvailableMinutes =
+      recipeTime === '10'
+        ? 10
+        : recipeTime === '20'
+        ? 20
+        : recipeTime === '30'
+        ? 30
+        : recipeTime === '40+'
+        ? 40
+        : undefined
+
+    // Define se a criança está por perto com base em "comQuem" (quando já tiver sido usado)
+    const hasKidsAround =
+      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
+        ? true
+        : comQuem === 'so-eu'
+        ? false
+        : undefined
+
+    const context: RotinaLeveContext = {
+      mood: 'cansada',
+      energy: 'baixa',
+      timeOfDay: 'hoje',
+      hasKidsAround,
+      availableMinutes: recipeAvailableMinutes,
+    }
+
+    // Prompt contextual baseado nos campos do formulário + idade
+    const promptParts: string[] = []
+
+    if (recipeIngredient.trim().length > 0) {
+      promptParts.push(`Ingrediente principal: ${recipeIngredient.trim()}.`)
+    }
+
+    if (recipeMealType) {
+      const tipo =
+        recipeMealType === 'lanche'
+          ? 'lanche rápido'
+          : recipeMealType === 'almoco-jantar'
+          ? 'refeição principal (almoço ou jantar)'
+          : recipeMealType === 'cafe-manha'
+          ? 'café da manhã prático'
+          : 'sobremesa leve'
+
+      promptParts.push(`Tipo de refeição desejado: ${tipo}.`)
+    }
+
+    if (recipeTime) {
+      promptParts.push(`Tempo de preparo preferido: cerca de ${recipeTime} minutos.`)
+    }
+
+    if (ageMonths !== null) {
+      const idadeDescricao =
+        ageMonths < 12
+          ? `${ageMonths} meses`
+          : `${Math.floor(ageMonths / 12)} ano(s) aproximadamente`
+
+      promptParts.push(`Idade aproximada do filho: ${idadeDescricao}.`)
+    }
+
+    if (comQuem === 'familia-toda') {
+      promptParts.push('A ideia é algo que funcione bem para a família toda.')
+    } else if (comQuem === 'eu-e-meu-filho') {
+      promptParts.push('A ideia é algo para mãe e filho fazerem juntos.')
+    } else if (comQuem === 'so-eu') {
+      promptParts.push(
+        'Se fizer sentido, as sugestões podem ser simples para a mãe preparar sozinha.',
+      )
+    }
+
+    const prompt =
+      promptParts.length > 0
+        ? promptParts.join(' ') +
+          ' Gere até 3 sugestões de receitas simples, práticas e acolhedoras, sempre respeitando as orientações pediátricas para a idade.'
+        : undefined
+
     setRecipesLoading(true)
     try {
-      const result = await generateRecipesWithAI()
+      try {
+        track('rotina_leve.recipes.requested', {
+          dateKey: currentDateKey,
+          hasKidsAround,
+          availableMinutes: recipeAvailableMinutes ?? null,
+        })
+      } catch {
+        // ignora
+      }
+
+      const result = await generateRecipesWithAI(context, prompt)
       setRecipes(result)
+
+      try {
+        track('rotina_leve.recipes.generated', {
+          dateKey: currentDateKey,
+          suggestionsCount: result.length,
+        })
+      } catch {
+        // ignora
+      }
+
+      // XP por gerar receitas (gesto de presença)
+      try {
+        void updateXP(4)
+      } catch (e) {
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (gerar receitas):',
+          e,
+        )
+      }
+
+      const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
+      setUsedRecipesToday((prev) => {
+        const next = prev + 1
+        save(storageKey, next)
+        return next
+      })
     } finally {
       setRecipesLoading(false)
     }
   }
 
   const handleGenerateIdeas = async () => {
-    await requestSuggestions({
-      mood: 'cansada',
-      energy: 'baixa',
-      timeOfDay: 'hoje',
-      hasKidsAround: comQuem !== 'so-eu',
-      availableMinutes:
-        tempoDisponivel === '5'
-          ? 5
-          : tempoDisponivel === '10'
-          ? 10
-          : tempoDisponivel === '20'
-          ? 20
-          : tempoDisponivel === '30+'
-          ? 30
-          : undefined,
-    })
+    if (usedIdeasToday >= DAILY_IDEAS_LIMIT) {
+      toast.info(
+        'Você já usou as ideias rápidas do dia por aqui. Guarda um pouquinho de energia pra amanhã, combinado? 💕',
+      )
+      try {
+        track('rotina_leve.ideas.limit_reached', {
+          dateKey: currentDateKey,
+        })
+      } catch {
+        // ignora
+      }
+      return
+    }
+
+    const availableMinutes =
+      tempoDisponivel === '5'
+        ? 5
+        : tempoDisponivel === '10'
+        ? 10
+        : tempoDisponivel === '20'
+        ? 20
+        : tempoDisponivel === '30+'
+        ? 30
+        : undefined
+
+    const hasKidsAround =
+      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
+        ? true
+        : comQuem === 'so-eu'
+        ? false
+        : undefined
+
+    try {
+      try {
+        track('rotina_leve.ideas.requested', {
+          dateKey: currentDateKey,
+          availableMinutes: availableMinutes ?? null,
+          comQuem: comQuem ?? null,
+          tipoIdeia: tipoIdeia ?? null,
+        })
+      } catch {
+        // ignora
+      }
+
+      await requestSuggestions({
+        mood: 'cansada',
+        energy: 'baixa',
+        timeOfDay: 'hoje',
+        hasKidsAround,
+        availableMinutes,
+        comQuem: comQuem as any,
+        tipoIdeia: tipoIdeia as any,
+      })
+
+      // XP por gerar ideias (mesmo que não salve ainda)
+      try {
+        void updateXP(3)
+      } catch (e) {
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (gerar ideias):',
+          e,
+        )
+      }
+
+      const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
+      setUsedIdeasToday((prev) => {
+        const next = prev + 1
+        save(storageKey, next)
+        return next
+      })
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar ideias:', error)
+      toast.danger('Não consegui gerar ideias agora. Tenta de novo mais tarde?')
+    }
   }
 
   const handleGenerateInspiration = async () => {
+    if (usedInspirationsToday >= DAILY_INSPIRATION_LIMIT) {
+      toast.info(
+        'Você já recebeu inspirações suficientes por hoje. O resto do dia pode ser só vivido, do seu jeitinho 💗',
+      )
+      try {
+        track('rotina_leve.inspiration.limit_reached', {
+          dateKey: currentDateKey,
+        })
+      } catch {
+        // ignora
+      }
+      return
+    }
+
     setInspirationLoading(true)
     try {
+      try {
+        track('rotina_leve.inspiration.requested', {
+          dateKey: currentDateKey,
+          focus: focusOfDay || null,
+        })
+      } catch {
+        // ignora
+      }
+
       const result = await generateInspirationWithAI(focusOfDay)
       setInspiration(result)
+
+      // XP por gerar inspiração (gesto emocional importante)
+      try {
+        void updateXP(3)
+      } catch (e) {
+        console.error(
+          '[Rotina Leve] Erro ao atualizar XP (gerar inspiração):',
+          e,
+        )
+      }
+
+      const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
+      setUsedInspirationsToday((prev) => {
+        const next = prev + 1
+        save(storageKey, next)
+        return next
+      })
+    } catch (error) {
+      console.error('[Rotina Leve] Erro ao gerar inspiração:', error)
+      toast.danger('Não consegui gerar uma inspiração agora. Tenta de novo mais tarde?')
     } finally {
       setInspirationLoading(false)
     }
@@ -415,6 +841,8 @@ export default function RotinaLevePage() {
 
   const hasRecipes = recipes && recipes.length > 0
   const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
+  const isIdeasOverLimit = usedIdeasToday >= DAILY_IDEAS_LIMIT
+  const isInspirationOverLimit = usedInspirationsToday >= DAILY_INSPIRATION_LIMIT
 
   const idadeLabel =
     ageMonths === null
@@ -432,6 +860,20 @@ export default function RotinaLevePage() {
       <ClientOnly>
         {/* IMPORTANTE: sem mx-auto / max-w aqui, o PageTemplate já cuida disso */}
         <div className="pt-6 pb-10 space-y-8">
+          {/* Texto de abertura da Rotina Leve */}
+          <div className="space-y-2">
+            <p className="text-sm md:text-base text-white">
+              <span className="font-semibold">
+                Comece por onde fizer mais sentido hoje:
+              </span>{' '}
+              uma receitinha que caiba no seu tempo, uma ideia rápida ou uma inspiração para
+              respirar com mais calma.
+            </p>
+            <p className="text-xs md:text-sm text-white/80">
+              Tudo aqui foi pensado para caber na sua rotina real, sem perfeição e sem cobrança.
+            </p>
+          </div>
+
           <div className="space-y-6">
             {/* HERO CARD: Receitas Inteligentes */}
             <SoftCard
@@ -454,6 +896,8 @@ export default function RotinaLevePage() {
                     <input
                       type="text"
                       placeholder="Ex.: banana, aveia, frango..."
+                      value={recipeIngredient}
+                      onChange={(e) => setRecipeIngredient(e.target.value)}
                       className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
                     />
                   </div>
@@ -461,21 +905,35 @@ export default function RotinaLevePage() {
                   <div className="flex gap-2">
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tipo de refeição</p>
-                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
-                        <option>Lanche</option>
-                        <option>Almoço / Jantar</option>
-                        <option>Café da manhã</option>
-                        <option>Sobremesa leve</option>
+                      <select
+                        value={recipeMealType ?? ''}
+                        onChange={(e) =>
+                          setRecipeMealType(e.target.value === '' ? null : e.target.value)
+                        }
+                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                      >
+                        <option value="">Selecione</option>
+                        <option value="lanche">Lanche</option>
+                        <option value="almoco-jantar">Almoço / Jantar</option>
+                        <option value="cafe-manha">Café da manhã</option>
+                        <option value="sobremesa">Sobremesa leve</option>
                       </select>
                     </div>
 
                     <div className="flex-1 space-y-1">
                       <p className="font-medium text-[#2f3a56]">Tempo de preparo</p>
-                      <select className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]">
-                        <option>10 min</option>
-                        <option>20 min</option>
-                        <option>30 min</option>
-                        <option>40+ min</option>
+                      <select
+                        value={recipeTime ?? ''}
+                        onChange={(e) =>
+                          setRecipeTime(e.target.value === '' ? null : e.target.value)
+                        }
+                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#2f3a56] focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                      >
+                        <option value="">Selecione</option>
+                        <option value="10">10 min</option>
+                        <option value="20">20 min</option>
+                        <option value="30">30 min</option>
+                        <option value="40+">40+ min</option>
                       </select>
                     </div>
                   </div>
@@ -495,7 +953,7 @@ export default function RotinaLevePage() {
                     variant="primary"
                     size="sm"
                     onClick={handleGenerateRecipes}
-                    disabled={recipesLoading || isBabyUnderSixMonths}
+                    disabled={recipesLoading || isBabyUnderSixMonths || isOverLimit}
                     className="w-full"
                   >
                     {recipesLoading ? 'Gerando receitas…' : 'Gerar receitas'}
@@ -607,7 +1065,7 @@ export default function RotinaLevePage() {
                                     disabled={!canSave}
                                     className="w-full"
                                   >
-                                    Salvar esta receita no planner
+                                    Salvar receita no planner
                                   </Button>
                                 </div>
                               )}
@@ -858,11 +1316,26 @@ export default function RotinaLevePage() {
                         variant="primary"
                         size="sm"
                         onClick={handleGenerateIdeas}
-                        disabled={ideasLoading}
+                        disabled={ideasLoading || isIdeasOverLimit}
                         className="w-full"
                       >
                         {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias'}
                       </Button>
+
+                      <p className="text-[11px] text-[#545454]">
+                        Hoje você já usou{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
+                        </span>{' '}
+                        gerações de ideias.
+                      </p>
+
+                      {isIdeasOverLimit && (
+                        <p className="text-[11px] text-[#ff005e] font-medium">
+                          Você chegou ao limite de ideias rápidas por hoje. O resto do dia pode ser
+                          só vivido, sem pressão 💗
+                        </p>
+                      )}
 
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                         <p className="text-xs font-medium text-[#2f3a56] mb-2">
@@ -901,7 +1374,7 @@ export default function RotinaLevePage() {
                           onClick={handleSaveIdeia}
                           className="w-full mt-3"
                         >
-                          Salvar no planner
+                          Salvar ideias no planner
                         </Button>
                       </div>
                     </div>
@@ -952,11 +1425,26 @@ export default function RotinaLevePage() {
                         variant="primary"
                         size="sm"
                         onClick={handleGenerateInspiration}
-                        disabled={inspirationLoading}
+                        disabled={inspirationLoading || isInspirationOverLimit}
                         className="w-full"
                       >
                         {inspirationLoading ? 'Gerando inspiração…' : 'Gerar inspiração'}
                       </Button>
+
+                      <p className="text-[11px] text-[#545454]">
+                        Hoje você já usou{' '}
+                        <span className="font-semibold text-[#2f3a56]">
+                          {usedInspirationsToday} de {DAILY_INSPIRATION_LIMIT}
+                        </span>{' '}
+                        inspirações do dia.
+                      </p>
+
+                      {isInspirationOverLimit && (
+                        <p className="text-[11px] text-[#ff005e] font-medium">
+                          Você chegou ao limite de inspirações do dia. Respira, o que você já está
+                          fazendo pela sua família hoje já é muito 💗
+                        </p>
+                      )}
 
                       <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
                         {inspirationLoading && (
