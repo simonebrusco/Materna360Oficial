@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { clsx } from 'clsx'
+import clsx from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -56,7 +56,7 @@ export default function MinhasConquistasPage() {
   }, [searchParams])
 
   const [missions, setMissions] = useState(
-    INITIAL_MISSIONS.map((m) => ({ ...m, done: false }))
+    INITIAL_MISSIONS.map((m) => ({ ...m, done: false })),
   )
 
   const [xp, setXp] = useState<XpSnapshot | null>(null)
@@ -83,30 +83,30 @@ export default function MinhasConquistasPage() {
 
     // Atualiza missões visualmente
     setMissions((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, done: !item.done } : item
-      )
+      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item)),
     )
 
-    // Atualiza XP com fallback seguro (sempre mexe nos números)
+    // Atualiza XP local + envia delta para o módulo central (sem depender do retorno)
     setXp((prev) => {
       const base: XpSnapshot = prev ?? { today: 0, total: 0, streak: 0 }
 
-      // Fallback calculado no estado local
-      const fallback: XpSnapshot = {
+      const next: XpSnapshot = {
         today: Math.max(0, base.today + delta),
         total: Math.max(0, base.total + delta),
-        // streak: mantém o que já existe; uma lógica mais fina pode ser feita depois
+        // streak simples por enquanto – pode ser refinado depois com lógica de datas
         streak: base.streak || (delta > 0 ? 1 : 0),
       }
 
       try {
-        const fromStore = updateXP(delta)
-        return fromStore
+        void updateXP(delta)
       } catch (error) {
-        console.error('[MinhasConquistas] Erro ao atualizar XP global, usando fallback local:', error)
-        return fallback
+        console.error(
+          '[MinhasConquistas] Erro ao atualizar XP global, mantendo apenas estado local:',
+          error,
+        )
       }
+
+      return next
     })
   }
 
@@ -119,8 +119,9 @@ export default function MinhasConquistasPage() {
   const totalXp = xp?.total ?? 0
   const streak = xp?.streak ?? 0
 
+  // 400 XP como meta diária de exemplo (ajustável depois)
   const xpProgressPercent =
-    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100) // 400 é só um exemplo de meta diária
+    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100)
 
   return (
     <PageTemplate
@@ -135,7 +136,7 @@ export default function MinhasConquistasPage() {
             <SoftCard
               className={clsx(
                 'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 lg:p-9 border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.20)]',
-                highlightRing('painel')
+                highlightRing('painel'),
               )}
             >
               {/* Fundo com glow */}
@@ -154,8 +155,8 @@ export default function MinhasConquistasPage() {
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
-                      Este espaço mostra um resumo leve do que você já fez hoje
-                      e ao longo dos dias – sem cobrança, só reconhecimento.
+                      Este espaço mostra um resumo leve do que você já fez hoje e ao longo dos
+                      dias – sem cobrança, só reconhecimento.
                     </p>
                   </div>
 
@@ -219,7 +220,7 @@ export default function MinhasConquistasPage() {
               <SoftCard
                 className={clsx(
                   'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-5 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
-                  highlightRing('missoes')
+                  highlightRing('missoes'),
                 )}
               >
                 <div className="space-y-5">
@@ -231,8 +232,8 @@ export default function MinhasConquistasPage() {
                       Pequenas ações que somam pontos (e leveza).
                     </h2>
                     <p className="text-sm text-[#545454]">
-                      Use este espaço como um lembrete gentil, não como obrigação.
-                      Marque só o que fizer sentido hoje.
+                      Use este espaço como um lembrete gentil, não como obrigação. Marque só o que
+                      fizer sentido hoje.
                     </p>
                   </header>
 
@@ -248,7 +249,7 @@ export default function MinhasConquistasPage() {
                             'w-full flex items-center justify-between rounded-2xl border px-3.5 py-3 text-left transition-all duration-150',
                             isDone
                               ? 'border-[#ff005e]/40 bg-[#ffd8e6]/40 shadow-[0_10px_26px_rgba(0,0,0,0.10)]'
-                              : 'border-[#ffd8e6] bg-white hover:bg-[#ffd8e6]/20 hover:border-[#ff005e]/60'
+                              : 'border-[#ffd8e6] bg-white hover:bg-[#ffd8e6]/20 hover:border-[#ff005e]/60',
                           )}
                         >
                           <div className="flex items-center gap-3.5">
@@ -257,7 +258,7 @@ export default function MinhasConquistasPage() {
                                 'h-5 w-5 rounded-full border flex items-center justify-center transition-colors',
                                 isDone
                                   ? 'border-[#ff005e] bg-[#ff005e]'
-                                  : 'border-[#ffd8e6] bg-white'
+                                  : 'border-[#ffd8e6] bg-white',
                               )}
                             >
                               {isDone && (
@@ -271,9 +272,7 @@ export default function MinhasConquistasPage() {
                             <span
                               className={clsx(
                                 'text-sm md:text-[15px]',
-                                isDone
-                                  ? 'text-[#545454] line-through'
-                                  : 'text-[#2f3a56]'
+                                isDone ? 'text-[#545454] line-through' : 'text-[#2f3a56]',
                               )}
                             >
                               {mission.label}
@@ -316,7 +315,8 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Cada missão marcada aqui já mostra que você está olhando para você – mesmo que o dia esteja corrido.
+                        Cada missão marcada aqui já mostra que você está olhando para você – mesmo
+                        que o dia esteja corrido.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -326,7 +326,8 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Use este painel junto com o <strong>Meu Dia</strong> e o <strong>Cuidar</strong> para acompanhar sua energia, cuidados e vínculos.
+                        Use este painel junto com o <strong>Meu Dia</strong> e o <strong>Cuidar</strong> para acompanhar
+                        sua energia, cuidados e vínculos.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -336,7 +337,8 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Ao final da semana, você poderá olhar para trás e enxergar não só tarefas, mas todos os gestos de presença que fez por você e pela sua família.
+                        Ao final da semana, você poderá olhar para trás e enxergar não só tarefas,
+                        mas todos os gestos de presença que fez por você e pela sua família.
                       </span>
                     </li>
                   </ul>
@@ -359,8 +361,8 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg:white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)] bg-white',
-                highlightRing('selos')
+                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
+                highlightRing('selos'),
               )}
             >
               <div className="space-y-6">
@@ -390,7 +392,7 @@ export default function MinhasConquistasPage() {
                   {SEALS.map((seal) => (
                     <div
                       key={seal.id}
-                      className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-[#ffd8e6] bg:white/80 px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)] bg-white/80"
+                      className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-[#ffd8e6] bg-white/80 px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)]"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ffe5ef]">
                         <AppIcon
@@ -416,8 +418,8 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={160}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white/80 border border:white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)] border-white/70',
-                highlightRing('mensal')
+                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white/80 border border-white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)]',
+                highlightRing('mensal'),
               )}
             >
               <div className="space-y-6">
@@ -463,7 +465,7 @@ export default function MinhasConquistasPage() {
                               key={day}
                               className={clsx(
                                 'h-6 w-2.5 rounded-full bg-[#ffd8e6]/70',
-                                index === 0 && day < 4 && 'bg-[#ff005e]/70'
+                                index === 0 && day < 4 && 'bg-[#ff005e]/70',
                               )}
                             />
                           ))}
@@ -478,9 +480,9 @@ export default function MinhasConquistasPage() {
                 </div>
 
                 <p className="text-xs md:text-sm text-[#545454]/85">
-                  Quando essa área estiver conectada aos seus registros, você poderá enxergar o
-                  mês inteiro com mais gentileza: não só o que faltou, mas tudo o que você já
-                  conseguiu fazer por você e pela sua família.
+                  Quando essa área estiver conectada aos seus registros, você poderá enxergar o mês
+                  inteiro com mais gentileza: não só o que faltou, mas tudo o que você já conseguiu
+                  fazer por você e pela sua família.
                 </p>
               </div>
             </SoftCard>
