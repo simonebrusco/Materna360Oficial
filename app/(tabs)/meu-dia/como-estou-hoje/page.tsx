@@ -362,7 +362,7 @@ export default function ComoEstouHojePage() {
                 </p>
               </div>
 
-              {/* AÇÕES */}
+              {/* AÇÕES PRINCIPAIS */}
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1 text-[11px] text-[#545454]/90">
                   <p>
@@ -380,27 +380,37 @@ export default function ComoEstouHojePage() {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    type="button"
-                    onClick={handleGoToConquistas}
-                    className="w-full md:w-auto border-[#ff005e]/30 text-[#ff005e]"
-                  >
-                    Ver minhas conquistas
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    type="button"
-                    onClick={handleCheckin}
-                    disabled={isOverLimit}
-                    className="w-full md:w-auto"
-                  >
-                    Registrar como estou hoje
-                  </Button>
-                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  onClick={handleCheckin}
+                  disabled={isOverLimit}
+                  className="w-full md:w-auto"
+                >
+                  Registrar como estou hoje
+                </Button>
+              </div>
+
+              {/* FAIXA — VER MINHAS CONQUISTAS */}
+              <div className="mt-1 rounded-2xl bg-[#fff7fb] border border-[#ffd8e6]/90 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <p className="text-[11px] md:text-xs text-[#545454] max-w-md">
+                  Se quiser ver tudo isso traduzido em{' '}
+                  <span className="font-semibold text-[#2f3a56]">
+                    XP, selos e presença ao longo dos dias
+                  </span>
+                  , você pode abrir seu painel completo de conquistas.
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={handleGoToConquistas}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#ff005e]/40 bg-white px-4 py-2 text-[11px] font-semibold text-[#ff005e] shadow-[0_8px_18px_rgba(0,0,0,0.10)] hover:bg-[#ffd8e6]/40 hover:border-[#ff005e]"
+                >
+                  <span>Ver minhas conquistas</span>
+                  <AppIcon name="arrow-right" className="h-3 w-3" />
+                </Button>
               </div>
             </div>
           </SoftCard>
