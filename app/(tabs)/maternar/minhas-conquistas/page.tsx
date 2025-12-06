@@ -7,19 +7,20 @@ import { clsx } from 'clsx'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
+
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { save, load } from '@/app/lib/persist'
 import {
   getXpSnapshot,
   updateXP,
-  type XpSnapshot,
-  type XpHistory,
   getXpHistory,
+  type XpSnapshot,
+  type XpHistoryEntry,
 } from '@/app/lib/xp'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
 
 // ===== TYPES & CONSTANTS =====
 
@@ -32,89 +33,186 @@ type Mission = {
   done?: boolean
 }
 
-const INITIAL_MISSIONS: Mission[] = [
-  { id: 'humor', label: 'Registrar como estou hoje', xp: 10 },
-  { id: 'planner', label: 'Preencher meu planner', xp: 20 },
-  { id: 'pausa', label: 'Fazer uma pausa de 5 minutos sem culpa', xp: 15 },
-  { id: 'conquista', label: 'Registrar uma conquista', xp: 25 },
-]
+type SealId =
+  | 'primeiro-passo'
+  | 'semana-leve'
+  | 'cuidar-de-mim'
+  | 'conexao'
+  | 'rotina'
+  | 'presenca'
 
-const SEALS = [
-  { id: 'primeiro-passo', label: 'Primeiro passo', icon: 'sparkles' as AppIconName },
-  { id: 'semana-leve', label: 'Semana leve', icon: 'sun' as AppIconName },
-  { id: 'cuidar-de-mim', label: 'Cuidando de mim', icon: 'heart' as AppIconName },
-  { id: 'conexao', label: 'Conectando com meu filho', icon: 'smile' as AppIconName },
-  { id: 'rotina', label: 'Rotina em dia', icon: 'calendar' as AppIconName },
-  { id: 'presenca', label: 'Presença real', icon: 'star' as AppIconName },
-] as const
+type Seal = {
+  id: SealId
+  label: string
+  icon: AppIconName
+}
 
-type SealId = (typeof SEALS)[number]['id']
+type UnlockedSealsMap = Record<SealId, boolean>
 
-type DayIntensity = 'none' | 'low' | 'medium' | 'high'
+type WeekDayIntensity = 'none' | 'low' | 'medium' | 'high'
 
 type WeekSummary = {
   label: string
-  days: { xp: number }[]
+  days: { xp: number; intensity: WeekDayIntensity }[]
 }
 
-// ===== HELPERS =====
+const INITIAL_MISSIONS: Mission[] = [
+  { id: 'humor', label: 'Registrar como estou hoje', xp: 15 },
+  { id: 'planner', label: 'Preencher meu planner', xp: 25 },
+  { id: 'pausa', label: 'Fazer uma pausa de 5 minutos sem culpa', xp: 20 },
+  { id: 'conquista', label: 'Registrar uma conquista', xp: 30 },
+]
 
-function getDayIntensity(xp: number): DayIntensity {
+const SEALS: Seal[] = [
+  { id: 'primeiro-passo', label: 'Primeiro passo', icon: 'sparkles' },
+  { id: 'semana-leve', label: 'Semana leve', icon: 'sun' },
+  { id: 'cuidar-de-mim', label: 'Cuidando de mim', icon: 'heart' },
+  { id: 'conexao', label: 'Conectando com meu filho', icon: 'smile' },
+  { id: 'rotina', label: 'Rotina em dia', icon: 'calendar' },
+  { id: 'presenca', label: 'Presença real', icon: 'star' },
+]
+
+// XP alvo por nível (aprox. 5–7 dias de uso leve)
+const LEVEL_XP = 300
+
+// storage das missões por dia
+const MISSIONS_STATE_PREFIX = 'missions:minhas-conquistas:'
+
+// ===== SMALL PURE HELPERS =====
+
+function highlightRingClass(highlightFromQuery: HighlightTarget, target: HighlightTarget) {
+  return highlightFromQuery === target
+    ? 'ring-2 ring-[#ff005e] ring-offset-2 ring-offset-pink-100/60'
+    : ''
+}
+
+function computeLevel(totalXp: number) {
+  if (totalXp <= 0) {
+    return {
+      level: 1,
+      inLevelProgressPercent: 0,
+      missingToNext: LEVEL_XP,
+    }
+  }
+
+  const level = Math.floor(totalXp / LEVEL_XP) + 1
+  const levelBaseXp = (level - 1) * LEVEL_XP
+  const currentInLevel = Math.max(0, totalXp - levelBaseXp)
+  const missingToNext = Math.max(0, level * LEVEL_XP - totalXp)
+  const inLevelProgressPercent = Math.min(100, (currentInLevel / LEVEL_XP) * 100)
+
+  return {
+    level,
+    inLevelProgressPercent,
+    missingToNext,
+  }
+}
+
+/**
+ * Regras de desbloqueio dos selos.
+ *
+ * PRIMEIRO PASSO: teve pelo menos 1 dia com XP > 0.
+ * SEMANA LEVE: streak atual >= 5.
+ * CUIDAR DE MIM: total XP >= 300.
+ * CONEXÃO: pelo menos 10 dias diferentes com XP > 0.
+ * ROTINA EM DIA: streak atual >= 10.
+ * PRESENÇA REAL: pelo menos 20 dias com XP > 0 e streak atual >= 14.
+ */
+function computeUnlockedSeals(
+  snapshot: XpSnapshot,
+  history: XpHistoryEntry[],
+): UnlockedSealsMap {
+  const daysWithPresence = history.filter((d) => d.xp > 0).length
+  const anyDay = daysWithPresence > 0
+  const manyDays = daysWithPresence >= 10
+  const longPresence = daysWithPresence >= 20
+
+  const streak = snapshot.streak ?? 0
+  const total = snapshot.total ?? 0
+
+  const map: UnlockedSealsMap = {
+    'primeiro-passo': anyDay,
+    'semana-leve': streak >= 5,
+    'cuidar-de-mim': total >= LEVEL_XP,
+    conexao: manyDays,
+    rotina: streak >= 10,
+    presenca: longPresence && streak >= 14,
+  }
+
+  return map
+}
+
+/**
+ * Constrói um texto carinhoso de resumo para o card "Seu resumo de hoje".
+ */
+function buildTodaySummaryText(todayXp: number, completedMissions: number): string {
+  if (todayXp <= 0 && completedMissions === 0) {
+    return 'Se hoje nada coube na agenda, você ainda merece gentileza.'
+  }
+
+  if (completedMissions === 0 && todayXp > 0) {
+    return 'Só de aparecer por aqui, você já está cuidando de você.'
+  }
+
+  if (completedMissions > 0 && todayXp < 50) {
+    return 'Você deu pequenos passos hoje, e isso já conta muito.'
+  }
+
+  if (completedMissions >= 2 && todayXp >= 50 && todayXp < 120) {
+    return 'Você marcou cuidados importantes hoje. Celebre esse movimento.'
+  }
+
+  return 'Hoje você se fez presente de um jeito muito bonito. Não precisa ser perfeito para ser valioso.'
+}
+
+/**
+ * Intensidade de presença por XP do dia.
+ */
+function xpToIntensity(xp: number): WeekDayIntensity {
   if (xp <= 0) return 'none'
-  if (xp <= 20) return 'low'
-  if (xp <= 60) return 'medium'
+  if (xp < 30) return 'low'
+  if (xp < 80) return 'medium'
   return 'high'
 }
 
-function countDaysWithPresence(history: XpHistory): number {
-  return Object.values(history).filter((v) => v > 0).length
-}
+/**
+ * Quebra o histórico do mês corrente em até 4 semanas.
+ */
+function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
+  const todayKey = getBrazilDateKey()
+  const [yearStr, monthStr] = todayKey.split('-')
+  const year = Number(yearStr)
+  const month = Number(monthStr) // 1-12
+  const daysInMonth = new Date(year, month, 0).getDate()
 
-function getMaxDayXp(history: XpHistory): number {
-  const values = Object.values(history)
-  if (!values.length) return 0
-  return Math.max(...values)
-}
+  const byDate = new Map<string, number>()
+  history.forEach((h) => {
+    byDate.set(h.dateKey, h.xp)
+  })
 
-// Regras de desbloqueio dos selos
-function computeUnlockedSeals(xp: XpSnapshot | null, history: XpHistory): Set<SealId> {
-  const unlocked = new Set<SealId>()
-  if (!xp) return unlocked
+  const weeks: WeekSummary[] = []
+  let current: WeekSummary = { label: 'Semana 1', days: [] }
 
-  const daysWithPresence = countDaysWithPresence(history)
-  const maxXpInADay = getMaxDayXp(history)
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const d = String(day).padStart(2, '0')
+    const key = `${yearStr}-${monthStr}-${d}`
+    const xp = byDate.get(key) ?? 0
 
-  // 1. Primeiro passo – qualquer dia com XP > 0
-  if (daysWithPresence >= 1) {
-    unlocked.add('primeiro-passo')
+    current.days.push({ xp, intensity: xpToIntensity(xp) })
+
+    if (current.days.length === 7 || day === daysInMonth) {
+      weeks.push(current)
+      if (day !== daysInMonth) {
+        current = {
+          label: `Semana ${weeks.length + 1}`,
+          days: [],
+        }
+      }
+    }
   }
 
-  // 2. Semana leve – pelo menos 5 dias de sequência
-  if (xp.streak >= 5) {
-    unlocked.add('semana-leve')
-  }
-
-  // 3. Cuidando de mim – algum dia com bastante XP
-  if (maxXpInADay >= 40) {
-    unlocked.add('cuidar-de-mim')
-  }
-
-  // 4. Conectando com meu filho – bastante XP acumulado
-  if (xp.total >= 200) {
-    unlocked.add('conexao')
-  }
-
-  // 5. Rotina em dia – vários dias em que ela apareceu
-  if (daysWithPresence >= 10) {
-    unlocked.add('rotina')
-  }
-
-  // 6. Presença real – sequência longa E muitos dias presentes (mais especial)
-  if (xp.streak >= 10 && daysWithPresence >= 20) {
-    unlocked.add('presenca')
-  }
-
-  return unlocked
+  // Garante no máximo 4 semanas na UI
+  return weeks.slice(0, 4)
 }
 
 // ===== COMPONENT =====
@@ -131,91 +229,91 @@ export default function MinhasConquistasPage() {
     return null
   }, [searchParams])
 
-  const [missions, setMissions] = useState(
-    INITIAL_MISSIONS.map((m) => ({ ...m, done: false }))
+  const todayDateKey = useMemo(() => getBrazilDateKey(), [])
+
+  const [missions, setMissions] = useState<Mission[]>(() =>
+    INITIAL_MISSIONS.map((m) => ({ ...m, done: false })),
   )
-
   const [xp, setXp] = useState<XpSnapshot | null>(null)
-  const [xpHistory, setXpHistory] = useState<XpHistory>({})
-  const [weeks, setWeeks] = useState<WeekSummary[]>([])
-  const [unlockedSeals, setUnlockedSeals] = useState<Set<SealId>>(new Set())
-  const [autoSuggestion, setAutoSuggestion] = useState<string | null>(null)
+  const [xpHistory, setXpHistory] = useState<XpHistoryEntry[]>([])
+  const [unlockedSeals, setUnlockedSeals] = useState<UnlockedSealsMap>({
+    'primeiro-passo': false,
+    'semana-leve': false,
+    'cuidar-de-mim': false,
+    conexao: false,
+    rotina: false,
+    presenca: false,
+  })
 
-  // Carrega XP e histórico ao abrir a página
+  // Sugestão automática textual (placeholder simples, pode evoluir com IA depois)
+  const completedMissions = missions.filter((m) => m.done).length
+  const todayXp = xp?.today ?? 0
+  const totalXp = xp?.total ?? 0
+  const streak = xp?.streak ?? 0
+
+  const todaySummaryTitle = buildTodaySummaryText(todayXp, completedMissions)
+
+  const levelInfo = computeLevel(totalXp)
+
+  // Carrega XP / histórico / estado de missões
   useEffect(() => {
     try {
       const snapshot = getXpSnapshot()
       setXp(snapshot)
-    } catch (error) {
-      console.error('[MinhasConquistas] Erro ao carregar XP inicial:', error)
-      setXp({ today: 0, total: 0, streak: 0 })
-    }
-
-    try {
       const history = getXpHistory()
       setXpHistory(history)
+
+      const seals = computeUnlockedSeals(snapshot, history)
+      setUnlockedSeals(seals)
     } catch (error) {
-      console.error('[MinhasConquistas] Erro ao carregar histórico de XP:', error)
-      setXpHistory({})
-    }
-  }, [])
-
-  // Monta as semanas do mês atual a partir do xpHistory
-  useEffect(() => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = today.getMonth()
-
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const maxDays = Math.min(28, daysInMonth)
-
-    const allDays: { xp: number }[] = []
-
-    for (let day = 1; day <= maxDays; day++) {
-      const date = new Date(year, month, day)
-      const key = getBrazilDateKey(date)
-      const dayXp = xpHistory[key] ?? 0
-      allDays.push({ xp: dayXp })
+      console.error('[MinhasConquistas] Erro ao carregar XP inicial:', error)
+      const snapshot: XpSnapshot = { today: 0, total: 0, streak: 0 }
+      setXp(snapshot)
+      setXpHistory([])
+      setUnlockedSeals(computeUnlockedSeals(snapshot, []))
     }
 
-    const builtWeeks: WeekSummary[] = []
-
-    for (let w = 0; w < 4; w++) {
-      const slice = allDays.slice(w * 7, w * 7 + 7)
-      if (slice.length === 0) break
-
-      builtWeeks.push({
-        label: `Semana ${w + 1}`,
-        days: slice,
-      })
+    // Estado de missões do dia
+    try {
+      const stored =
+        load<Record<string, boolean>>(`${MISSIONS_STATE_PREFIX}${todayDateKey}`) ?? {}
+      setMissions(
+        INITIAL_MISSIONS.map((m) => ({
+          ...m,
+          done: !!stored[m.id],
+        })),
+      )
+    } catch (error) {
+      console.error('[MinhasConquistas] Erro ao carregar missões do dia:', error)
     }
+  }, [todayDateKey])
 
-    setWeeks(builtWeeks)
-  }, [xpHistory])
-
-  // Atualiza selos desbloqueados sempre que XP ou histórico mudar
-  useEffect(() => {
-    const seals = computeUnlockedSeals(xp, xpHistory)
-    setUnlockedSeals(seals)
-  }, [xp, xpHistory])
-
-  const completedMissions = missions.filter((m) => m.done).length
+  const weeks = useMemo(() => buildMonthWeeks(xpHistory), [xpHistory])
 
   const handleMissionToggle = (id: string) => {
     const mission = missions.find((m) => m.id === id)
     if (!mission) return
 
     const wasDone = !!mission.done
-    const delta = wasDone ? -mission.xp : mission.xp
+    const newDone = !wasDone
+    const delta = newDone ? mission.xp : -mission.xp
 
-    setMissions((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, done: !item.done } : item
+    // Atualiza missões visualmente + persiste estado do dia
+    setMissions((prev) => {
+      const updated = prev.map((item) =>
+        item.id === id ? { ...item, done: newDone } : item,
       )
-    )
 
-    setAutoSuggestion(null)
+      const stored: Record<string, boolean> = {}
+      updated.forEach((m) => {
+        if (m.done) stored[m.id] = true
+      })
+      save(`${MISSIONS_STATE_PREFIX}${todayDateKey}`, stored)
 
+      return updated
+    })
+
+    // Atualiza XP com fallback seguro
     setXp((prev) => {
       const base: XpSnapshot = prev ?? { today: 0, total: 0, streak: 0 }
 
@@ -227,73 +325,34 @@ export default function MinhasConquistasPage() {
 
       try {
         const fromStore = updateXP(delta)
-        try {
-          const history = getXpHistory()
-          setXpHistory(history)
-        } catch (error) {
-          console.error('[MinhasConquistas] Erro ao recarregar histórico após updateXP:', error)
-        }
+        // Recalcula selos e histórico depois de atualizar XP
+        const history = getXpHistory()
+        setXpHistory(history)
+        setUnlockedSeals(computeUnlockedSeals(fromStore, history))
+
         return fromStore
       } catch (error) {
-        console.error('[MinhasConquistas] Erro ao atualizar XP global, usando fallback local:', error)
+        console.error(
+          '[MinhasConquistas] Erro ao atualizar XP global, usando fallback local:',
+          error,
+        )
         return fallback
       }
     })
   }
 
-  // Sugestões automáticas do card "Seu resumo de hoje"
-  const handleAutoSuggestionsClick = () => {
-    const todayXp = xp?.today ?? 0
-    const hasAnyMissionDone = completedMissions > 0 || todayXp > 0
-
-    if (!hasAnyMissionDone) {
-      setAutoSuggestion(
-        'Talvez hoje nada tenha cabido na agenda — e tudo bem. Se deu conta apenas de entrar aqui, isso já é um gesto de cuidado com você.'
-      )
-      return
-    }
-
-    if (completedMissions === missions.length) {
-      setAutoSuggestion(
-        'Você já concluiu todas as missões de hoje. Que tal, agora, só respirar fundo e aproveitar um momento leve com você ou com seu filho?'
-      )
-      return
-    }
-
-    const nextMission = missions.find((m) => !m.done)
-
-    if (nextMission) {
-      setAutoSuggestion(
-        `Você já fez bastante coisa hoje. Se quiser dar só mais um passinho, a próxima missão leve pode ser: “${nextMission.label}”.`
-      )
-    } else {
-      setAutoSuggestion(
-        'Hoje você já deu vários passos importantes. O resto do dia pode ser só presença, sem cobrança.'
-      )
-    }
-  }
-
   const highlightRing = (target: HighlightTarget) =>
-    highlightFromQuery === target
-      ? 'ring-2 ring-[#ff005e] ring-offset-2 ring-offset-pink-100/60'
-      : ''
+    highlightRingClass(highlightFromQuery, target)
 
-  const todayXp = xp?.today ?? 0
-  const totalXp = xp?.total ?? 0
-  const streak = xp?.streak ?? 0
+  const levelBadgeLabel =
+    totalXp > 0
+      ? `Nível ${levelInfo.level} · Jornada em andamento`
+      : 'Nível 1 · Jornada começando com calma'
 
-  const xpProgressPercent =
-    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100)
-
-  const hasAnyMissionDone = completedMissions > 0 || todayXp > 0
-
-  const summaryTitle = hasAnyMissionDone
-    ? 'Quando você cuida de si, a jornada toda ganha brilho.'
-    : 'Se hoje nada coube na agenda, você ainda merece gentileza.'
-
-  const summaryFirstBullet = hasAnyMissionDone
-    ? 'Cada missão marcada aqui já mostra que você está olhando para você – mesmo que o dia esteja corrido.'
-    : 'Mesmo quando nenhuma missão cabe no dia, o fato de você estar aqui já mostra cuidado com você.'
+  const progressHelperText =
+    totalXp > 0
+      ? `Faltam aproximadamente ${levelInfo.missingToNext} XP para o próximo nível.`
+      : `Seu próximo nível chega a cada ${LEVEL_XP} XP somados, sem pressa.`
 
   return (
     <PageTemplate
@@ -308,7 +367,7 @@ export default function MinhasConquistasPage() {
             <SoftCard
               className={clsx(
                 'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 lg:p-9 border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.20)]',
-                highlightRing('painel')
+                highlightRing('painel'),
               )}
             >
               {/* Fundo com glow */}
@@ -318,8 +377,7 @@ export default function MinhasConquistasPage() {
               </div>
 
               <div className="relative z-10 space-y-6">
-                {/* HEADER alinhado à esquerda com o badge logo abaixo */}
-                <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                       Painel da sua jornada
@@ -328,15 +386,15 @@ export default function MinhasConquistasPage() {
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
-                      Este espaço mostra um resumo leve do que você já fez hoje
-                      e ao longo dos dias – sem cobrança, só reconhecimento.
+                      Este espaço mostra um resumo leve do que você já fez hoje e ao longo dos dias
+                      – sem cobrança, só reconhecimento.
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-start gap-1.5">
+                  <div className="flex flex-col items-end gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
                       <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" decorative />
-                      Nível {Math.max(1, Math.floor(totalXp / 400) + 1)} · Jornada em andamento
+                      {levelBadgeLabel}
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
                       Os números abaixo acompanham o que você já fez na plataforma.
@@ -366,7 +424,7 @@ export default function MinhasConquistasPage() {
                   />
                 </div>
 
-                {/* Barra de progresso geral */}
+                {/* Barra de progresso geral por nível */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
@@ -375,25 +433,23 @@ export default function MinhasConquistasPage() {
                   <div className="w-full h-2.5 rounded-full bg-[#ffd8e6]/60 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-[#ff005e] to-[#ff8fb4]"
-                      style={{ width: `${xpProgressPercent}%` }}
+                      style={{ width: `${levelInfo.inLevelProgressPercent}%` }}
                     />
                   </div>
-                  <p className="text-xs text-[#545454]/80">
-                    Você não precisa fazer tudo. Só continuar aparecendo um pouquinho por dia.
-                  </p>
+                  <p className="text-xs text-[#545454]/80">{progressHelperText}</p>
                 </div>
               </div>
             </SoftCard>
           </RevealSection>
 
-          {/* BLOCO 2 – Missões & cuidados do dia */}
+          {/* BLOCO 2 – Missões & resumo do dia */}
           <RevealSection delay={60}>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6">
               {/* Missões do dia – ocupa 3/5 no desktop */}
               <SoftCard
                 className={clsx(
                   'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-5 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
-                  highlightRing('missoes')
+                  highlightRing('missoes'),
                 )}
               >
                 <div className="space-y-5">
@@ -405,8 +461,8 @@ export default function MinhasConquistasPage() {
                       Pequenas ações que somam pontos (e leveza).
                     </h2>
                     <p className="text-sm text-[#545454]">
-                      Use este espaço como um lembrete gentil, não como obrigação.
-                      Marque só o que fizer sentido hoje.
+                      Use este espaço como um lembrete gentil, não como obrigação. Marque só o que
+                      fizer sentido hoje.
                     </p>
                   </header>
 
@@ -422,7 +478,7 @@ export default function MinhasConquistasPage() {
                             'w-full flex items-center justify-between rounded-2xl border px-3.5 py-3 text-left transition-all duration-150',
                             isDone
                               ? 'border-[#ff005e]/40 bg-[#ffd8e6]/40 shadow-[0_10px_26px_rgba(0,0,0,0.10)]'
-                              : 'border-[#ffd8e6] bg-white hover:bg-[#ffd8e6]/20 hover:border-[#ff005e]/60'
+                              : 'border-[#ffd8e6] bg-white hover:bg-[#ffd8e6]/20 hover:border-[#ff005e]/60',
                           )}
                         >
                           <div className="flex items-center gap-3.5">
@@ -431,7 +487,7 @@ export default function MinhasConquistasPage() {
                                 'h-5 w-5 rounded-full border flex items-center justify-center transition-colors',
                                 isDone
                                   ? 'border-[#ff005e] bg-[#ff005e]'
-                                  : 'border-[#ffd8e6] bg-white'
+                                  : 'border-[#ffd8e6] bg-white',
                               )}
                             >
                               {isDone && (
@@ -445,9 +501,7 @@ export default function MinhasConquistasPage() {
                             <span
                               className={clsx(
                                 'text-sm md:text-[15px]',
-                                isDone
-                                  ? 'text-[#545454] line-through'
-                                  : 'text-[#2f3a56]'
+                                isDone ? 'text-[#545454] line-through' : 'text-[#2f3a56]',
                               )}
                             >
                               {mission.label}
@@ -470,7 +524,7 @@ export default function MinhasConquistasPage() {
                 </div>
               </SoftCard>
 
-              {/* Resumo rápido do dia – 2/5 no desktop */}
+              {/* Resumo rápido do dia */}
               <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-[#ffeef6]/70 border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
                 <div className="space-y-4">
                   <header className="space-y-1">
@@ -478,7 +532,7 @@ export default function MinhasConquistasPage() {
                       Seu resumo de hoje
                     </p>
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                      {summaryTitle}
+                      {todaySummaryTitle}
                     </h3>
                   </header>
 
@@ -489,7 +543,10 @@ export default function MinhasConquistasPage() {
                         className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#ff005e]"
                         decorative
                       />
-                      <span>{summaryFirstBullet}</span>
+                      <span>
+                        Mesmo quando nenhuma missão cabe no dia, o fato de você estar aqui já mostra
+                        cuidado com você.
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <AppIcon
@@ -498,8 +555,8 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                       <span>
-                        Use este painel junto com o <strong>Meu Dia</strong> e o{' '}
-                        <strong>Cuidar</strong> para acompanhar sua energia, cuidados e vínculos.
+                        Use este painel junto com o <strong>Meu Dia</strong> e o <strong>Cuidar</strong>{' '}
+                        para acompanhar sua energia, cuidados e vínculos.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -515,23 +572,15 @@ export default function MinhasConquistasPage() {
                     </li>
                   </ul>
 
-                  <div className="space-y-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="w-full justify-center border border-[#ff005e]/20 text-[#ff005e]"
-                      onClick={handleAutoSuggestionsClick}
-                    >
-                      Sugestões automáticas para hoje
-                    </Button>
-
-                    {autoSuggestion && (
-                      <p className="text-xs text-[#545454]/90 text-center px-1">
-                        {autoSuggestion}
-                      </p>
-                    )}
-                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="w-full justify-center border border-[#ff005e]/20 text-[#ff005e]"
+                    disabled
+                  >
+                    Sugestões automáticas chegam em breve
+                  </Button>
                 </div>
               </SoftCard>
             </div>
@@ -541,8 +590,8 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
-                highlightRing('selos')
+                'rounded-[32px] md:rounded-[36px] p-6 md:8 bg-white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
+                highlightRing('selos'),
               )}
             >
               <div className="space-y-6">
@@ -570,38 +619,33 @@ export default function MinhasConquistasPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                   {SEALS.map((seal) => {
-                    const unlocked = unlockedSeals.has(seal.id)
+                    const unlocked = unlockedSeals[seal.id]
                     return (
                       <div
                         key={seal.id}
                         className={clsx(
-                          'flex flex-col items-center justify-between gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)] transition-all',
+                          'flex flex-col items-center justify-between gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)]',
                           unlocked
-                            ? 'border-[#ffd8e6] bg-white/80'
-                            : 'border-[#f3c5d8] bg-[#fff4fa]'
+                            ? 'border-[#ffd8e6] bg-white/90'
+                            : 'border-[#ffd8e6]/70 bg-white/60 opacity-65',
                         )}
                       >
                         <div
                           className={clsx(
                             'flex h-10 w-10 items-center justify-center rounded-2xl',
-                            unlocked ? 'bg-[#ffe5ef]' : 'bg-[#ffe5ef]/50'
+                            unlocked ? 'bg-[#ffe5ef]' : 'bg-[#f9e9f1]',
                           )}
                         >
                           <AppIcon
                             name={seal.icon}
                             className={clsx(
                               'h-5 w-5',
-                              unlocked ? 'text-[#ff005e]' : 'text-[#ff005e]/45'
+                              unlocked ? 'text-[#ff005e]' : 'text-[#cf285f]/60',
                             )}
                             decorative
                           />
                         </div>
-                        <p
-                          className={clsx(
-                            'text-[11px] font-semibold leading-snug',
-                            unlocked ? 'text-[#2f3a56]' : 'text-[#9a9a9a]'
-                          )}
-                        >
+                        <p className="text-[11px] font-semibold leading-snug text-[#2f3a56]">
                           {seal.label}
                         </p>
                         <span
@@ -609,7 +653,7 @@ export default function MinhasConquistasPage() {
                             'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
                             unlocked
                               ? 'bg-[#ffd8e6]/90 text-[#cf285f]'
-                              : 'bg-[#f1d3e0] text-[#9a5675]'
+                              : 'bg-[#f3d7e2] text-[#a35a7a]',
                           )}
                         >
                           {unlocked ? 'Conquistado' : 'Bloqueado'}
@@ -627,7 +671,7 @@ export default function MinhasConquistasPage() {
             <SoftCard
               className={clsx(
                 'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white/80 border border-white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)]',
-                highlightRing('mensal')
+                highlightRing('mensal'),
               )}
             >
               <div className="space-y-6">
@@ -639,20 +683,20 @@ export default function MinhasConquistasPage() {
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
-                    Aqui você terá um resumo dos dias em que conseguiu se cuidar, registrar a
-                    rotina ou criar momentos especiais. Mesmo quando os quadrinhos ficarem em
-                    branco, isso também conta a história da sua fase.
+                    Aqui você vê um resumo dos dias em que conseguiu se cuidar, registrar a rotina
+                    ou criar momentos especiais. Mesmo quando os quadrinhos ficarem em branco, isso
+                    também conta a história da sua fase.
                   </p>
                 </header>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs text-[#545454]/95">
                     <span>Visão do mês atual</span>
-                    <span>Já usando seus registros reais.</span>
+                    <span>As barrinhas mostram a intensidade dos seus dias.</span>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-3">
-                    {weeks.map((week, index) => (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    {weeks.map((week) => (
                       <div
                         key={week.label}
                         className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] px-3 py-3 flex flex-col gap-2"
@@ -661,32 +705,26 @@ export default function MinhasConquistasPage() {
                           <span className="text-[11px] font-semibold text-[#cf285f]">
                             {week.label}
                           </span>
-                          <span className="text-[10px] text-[#545454]/90">
-                            {index === 0 ? 'Semana atual' : 'Em construção'}
-                          </span>
                         </div>
 
                         <div className="flex gap-1.5">
-                          {week.days.map((day, dayIndex) => {
-                            const intensity = getDayIntensity(day.xp)
-                            return (
-                              <div
-                                key={dayIndex}
-                                className={clsx(
-                                  'h-6 w-2.5 rounded-full transition-colors',
-                                  intensity === 'none' && 'bg-[#ffd8e6]/40',
-                                  intensity === 'low' && 'bg-[#ffd8e6]',
-                                  intensity === 'medium' && 'bg-[#ff8fb4]',
-                                  intensity === 'high' && 'bg-[#ff005e]'
-                                )}
-                              />
-                            )
-                          })}
+                          {week.days.map((day, idx) => (
+                            <div
+                              key={`${week.label}-${idx}`}
+                              className={clsx(
+                                'h-6 w-2.5 rounded-full bg-[#ffd8e6]/50',
+                                day.intensity === 'none' && 'bg-[#ffd8e6]/30',
+                                day.intensity === 'low' && 'bg-[#ffd8e6]/80',
+                                day.intensity === 'medium' && 'bg-[#ff6fa3]/80',
+                                day.intensity === 'high' && 'bg-[#ff005e]/80',
+                              )}
+                            />
+                          ))}
                         </div>
 
                         <p className="mt-1 text-[11px] text-[#545454]/90">
-                          Dias marcados mostram momentos em que você conseguiu aparecer por aqui
-                          — quanto mais forte a cor, mais ações aquele dia teve.
+                          Barrinhas mais fortes mostram dias com mais gestos de presença; as mais
+                          clarinhas mostram dias em que a vida pediu pausa.
                         </p>
                       </div>
                     ))}
@@ -694,7 +732,7 @@ export default function MinhasConquistasPage() {
                 </div>
 
                 <p className="text-xs md:text-sm text-[#545454]/85">
-                  Quando essa área estiver conectada a todos os seus registros, você poderá enxergar o
+                  Quando essa área estiver conectada a mais registros seus, você poderá enxergar o
                   mês inteiro com mais gentileza: não só o que faltou, mas tudo o que você já
                   conseguiu fazer por você e pela sua família.
                 </p>
