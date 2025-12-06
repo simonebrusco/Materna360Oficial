@@ -687,7 +687,7 @@ export default function ComoEstouHojePage(props: {
                             <button
                               key={energy}
                               onClick={() => handleEnergySelect(energy)}
-                              className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duração-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
+                              className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/30 ${
                                 selectedEnergy === energy
                                   ? 'bg-[#ff005e] text-white shadow-md'
                                   : 'bg-white border border-[#ffd8e6] text-[#2f3a56] hover:border-[#ff005e] hover:bg-[#ffd8e6]/30'
@@ -853,7 +853,7 @@ export default function ComoEstouHojePage(props: {
             <Reveal>
               <div
                 id={semanaSectionId}
-                className="relative overflow-hidden rounded-[32px] border border:white/70 bg:white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
+                className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 py-6 md:px-8 md:py-8"
               >
                 {/* Glows */}
                 <div className="pointer-events-none absolute inset-0 opacity-80">
@@ -934,12 +934,15 @@ export default function ComoEstouHojePage(props: {
                       </div>
 
                       {/* CTA para Minhas Conquistas */}
-                      <div className="pt-4 flex justify-end">
+                      <div className="mt-5 pt-4 border-t border-[#ffd8e6] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <p className="text-[11px] md:text-xs text-[#545454]">
+                          Se quiser ver tudo isso traduzido em XP, selos e presença ao longo dos dias, você pode abrir seu painel completo.
+                        </p>
                         <Button
                           type="button"
                           size="sm"
-                          variant="ghost"
-                          className="border border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
+                          variant="outline"
+                          className="border-[#ff005e]/40 text-[#ff005e] hover:bg-[#ffd8e6]/40"
                           onClick={() =>
                             router.push('/maternar/minhas-conquistas?abrir=painel')
                           }
