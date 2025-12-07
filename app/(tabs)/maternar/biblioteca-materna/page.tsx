@@ -35,10 +35,8 @@ const THEMES = [
   'Parentalidade Sem Culpa',
 ]
 
-// Inclui “Trilha educativa” no sistema de formatos
 const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Trilha educativa']
 
-// Versão inicial – placeholders. Depois é só trocar title/description/href pelos materiais reais.
 const MATERIALS: MaterialCard[] = [
   {
     id: 'checklist-rotina-manha',
@@ -48,7 +46,7 @@ const MATERIALS: MaterialCard[] = [
     theme: 'Rotinas',
     format: 'Checklist',
     icon: 'book-open',
-    href: '#', // futuro: link para download / admin
+    href: '#',
   },
   {
     id: 'guia-leve-birras',
@@ -113,12 +111,11 @@ export default function BibliotecaMaternaPage() {
 
   const materialsRef = useRef<HTMLDivElement | null>(null)
 
-  // Lê o ?filtro= vindo do hub Maternar (Biblioteca Materna)
+  // Lê o ?filtro= vindo do hub Maternar
   useEffect(() => {
     const filtro = searchParams.get('filtro')
     if (!filtro) return
 
-    // sempre que vier um novo filtro via URL, limpamos seleções manuais
     setSelectedTheme(null)
     setSelectedFormat(null)
 
@@ -129,7 +126,6 @@ export default function BibliotecaMaternaPage() {
     } else if (filtro === 'trilhas') {
       setPresetFilter('trilhas')
     } else if (filtro === 'tema-fase' || filtro === 'idade-tema') {
-      // aceita os dois jeitos de escrever
       setPresetFilter('tema-fase')
     }
   }, [searchParams])
@@ -142,21 +138,19 @@ export default function BibliotecaMaternaPage() {
   }, [presetFilter])
 
   const handleThemeSelect = (theme: string) => {
-    setSelectedTheme((prev) => (prev === theme ? null : theme))
+    setSelectedTheme(prev => (prev === theme ? null : theme))
   }
 
   const handleFormatSelect = (format: string) => {
-    // ao escolher um formato manualmente, saímos do preset vindo do hub
     setPresetFilter(null)
-    setSelectedFormat((prev) => (prev === format ? null : format))
+    setSelectedFormat(prev => (prev === format ? null : format))
   }
 
   const filteredMaterials = useMemo(
     () =>
-      MATERIALS.filter((material) => {
+      MATERIALS.filter(material => {
         if (selectedTheme && material.theme !== selectedTheme) return false
 
-        // Se veio de um atalho do hub (presetFilter), ele tem prioridade
         if (presetFilter) {
           if (presetFilter === 'guias') {
             if (
@@ -176,7 +170,6 @@ export default function BibliotecaMaternaPage() {
               return false
             }
           }
-          // preset 'tema-fase' por enquanto não restringe nada
         } else if (selectedFormat && material.format !== selectedFormat) {
           return false
         }
@@ -210,7 +203,6 @@ export default function BibliotecaMaternaPage() {
     if (presetFilter === 'trilhas') {
       return format === 'Trilha educativa'
     }
-    // sem preset: utiliza seleção manual
     return !presetFilter && selectedFormat === format
   }
 
@@ -221,60 +213,60 @@ export default function BibliotecaMaternaPage() {
       subtitle="Guias, trilhas e materiais que apoiam sua jornada, no seu tempo."
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 pb-24 pt-4 md:px-6 space-y-10 md:space-y-12">
-          {/* Intro */}
+        <div className="max-w-5xl mx-auto pt-6 pb-16 space-y-10 px-4 md:px-6">
+          {/* INTRO */}
           <Reveal delay={0}>
             <div className="max-w-3xl">
-              <p className="text-sm md:text-base leading-relaxed text-white/90">
-                Encontre materiais selecionados — PDFs, eBooks, guias práticos e
-                conteúdos personalizados — filtrados por tema e formato para
-                facilitar sua jornada.
+              <p className="text-sm md:text-base text-white">
+                <span className="font-semibold">
+                  Encontre materiais que conversam com o seu momento.
+                </span>{' '}
+                PDFs, eBooks, guias práticos e trilhas educativas selecionadas
+                com carinho para facilitar sua jornada — sem pressão, no seu tempo.
               </p>
             </div>
           </Reveal>
 
-          {/* FILTROS */}
+          {/* BLOCO 1 — FILTROS */}
           <Reveal delay={40}>
-            <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/10 px-4 py-6 shadow-[0_22px_55px_rgba(0,0,0,0.22)] backdrop-blur-2xl md:px-8 md:py-8">
-              {/* glow de fundo */}
-              <div className="pointer-events-none absolute inset-0 opacity-70">
-                <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-                <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
-              </div>
-
-              <div className="relative z-10 space-y-6 md:space-y-8">
-                <div className="space-y-2">
-                  <h2 className="text-base md:text-lg font-semibold text-white">
-                    Filtrar por
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
+              <div className="space-y-6 md:space-y-7">
+                <header className="space-y-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    Explorar conteúdos
+                  </p>
+                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    Filtre a Biblioteca para o que faz sentido hoje.
                   </h2>
-                  <p className="text-xs md:text-sm text-white/90 max-w-2xl">
-                    Escolha um tema e um formato para encontrar conteúdos que
-                    conversem com o seu momento.
+                  <p className="text-sm text-[#545454] max-w-2xl">
+                    Escolha um tema e um formato para encontrar materiais que
+                    acompanham a fase da sua família. Você pode usar tudo, ou
+                    apenas o que encaixar na rotina real — sem metas impossíveis.
                   </p>
 
                   {!hasActiveFilter && (
-                    <p className="text-[11px] md:text-xs text-white/75">
-                      Nenhum filtro ativo no momento — você está vendo uma
-                      amostra geral da biblioteca.
+                    <p className="text-[11px] text-[#545454]/80 mt-1">
+                      Nenhum filtro ativo no momento — você está vendo uma amostra
+                      geral da Biblioteca Materna.
                     </p>
                   )}
 
                   {presetLabel && (
-                    <p className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white/85 mt-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#FFD8E6]" />
+                    <p className="inline-flex items-center gap-1 rounded-full bg-[#fff7fb] px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-[#cf285f] mt-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
                       {presetLabel}
                     </p>
                   )}
-                </div>
+                </header>
 
                 <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-                  {/* Tema */}
-                  <SoftCard className="rounded-2xl bg-white/90 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
-                    <label className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
+                  {/* TEMA */}
+                  <div className="rounded-2xl border border-[#ffd8e6] bg-white px-4 py-4 md:px-5 md:py-5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+                    <label className="mb-3 block text-[11px] md:text-xs font-semibold uppercase tracking-wide text-[#2f3a56]">
                       Tema
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {THEMES.map((theme) => (
+                      {THEMES.map(theme => (
                         <FilterPill
                           key={theme}
                           active={selectedTheme === theme}
@@ -284,15 +276,15 @@ export default function BibliotecaMaternaPage() {
                         </FilterPill>
                       ))}
                     </div>
-                  </SoftCard>
+                  </div>
 
-                  {/* Formato */}
-                  <SoftCard className="rounded-2xl bg-white/90 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
-                    <label className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
+                  {/* FORMATO */}
+                  <div className="rounded-2xl border border-[#ffd8e6] bg-white px-4 py-4 md:px-5 md:py-5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+                    <label className="mb-3 block text-[11px] md:text-xs font-semibold uppercase tracking-wide text-[#2f3a56]">
                       Formato
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {FORMATS.map((format) => (
+                      {FORMATS.map(format => (
                         <FilterPill
                           key={format}
                           active={formatIsActive(format)}
@@ -302,162 +294,170 @@ export default function BibliotecaMaternaPage() {
                         </FilterPill>
                       ))}
                     </div>
-                  </SoftCard>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </Reveal>
-
-          {/* MATERIAIS DISPONÍVEIS */}
-          <Reveal delay={80}>
-            <div ref={materialsRef} className="space-y-4">
-              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <h2 className="text-base md:text-lg font-semibold text-white">
-                    Materiais disponíveis
-                  </h2>
-                  <p className="text-xs md:text-sm text-white/90 max-w-xl">
-                    {presetLabel
-                      ? `Você está vendo uma seleção de materiais baseada no atalho “${presetLabel.replace(
-                          'Atalho: ',
-                          '',
-                        )}”.`
-                      : 'Uma prévia de como os materiais da Biblioteca Materna vão aparecer por aqui.'}
-                  </p>
-                </div>
-              </div>
-
-              {filteredMaterials.length === 0 ? (
-                <SoftCard className="mt-2 rounded-3xl bg-white p-6 text-sm text-[var(--color-text-muted)] shadow-md">
-                  Nenhum material encontrado para esse filtro. Você pode ajustar
-                  os filtros ou limpar as seleções para ver a lista completa
-                  novamente.
-                </SoftCard>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
-                  {filteredMaterials.map((material, index) => (
-                    <Reveal key={material.id} delay={100 + index * 30}>
-                      <SoftCard className="flex h-full flex-col rounded-3xl bg-white p-5 shadow-md border border-[var(--color-border-soft)] transition-all duration-200 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
-                        <div className="mb-4 flex items-start justify-between">
-                          <div className="h-10 w-10 rounded-2xl bg-[var(--color-soft-strong)]/60 flex items-center justify-center">
-                            <AppIcon
-                              name={material.icon as any}
-                              size={24}
-                              className="text-[var(--color-brand)]"
-                              decorative
-                            />
-                          </div>
-                        </div>
-
-                        <h3 className="mb-1 text-sm font-semibold text-[var(--color-text-main)] md:text-base">
-                          {material.title}
-                        </h3>
-                        <p className="mb-4 text-xs text-[var(--color-text-muted)] md:text-sm">
-                          {material.description}
-                        </p>
-
-                        <div className="mb-4 flex flex-wrap gap-2 text-[11px]">
-                          <span className="inline-flex items-center rounded-full bg-[var(--color-brand)]/10 px-2.5 py-1 font-medium text-[var(--color-brand)]">
-                            {material.theme}
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-[var(--color-soft-bg)] px-2.5 py-1 font-medium text-[var(--color-text-muted)]">
-                            {material.format}
-                          </span>
-                        </div>
-
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="mt-auto w-full"
-                          onClick={() => {
-                            if (!material.href) return
-                            if (material.external) {
-                              window.open(
-                                material.href,
-                                '_blank',
-                                'noopener,noreferrer',
-                              )
-                            } else {
-                              window.location.href = material.href
-                            }
-                          }}
-                        >
-                          Acessar
-                        </Button>
-                      </SoftCard>
-                    </Reveal>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Reveal>
-
-          {/* INSIGHT PERSONALIZADO */}
-          <Reveal delay={120}>
-            <SoftCard className="rounded-3xl bg-white p-6 md:p-8 shadow-md border border-[var(--color-border-soft)]">
-              <h2 className="mb-2 text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                Insight personalizado
-              </h2>
-              <p className="mb-4 text-xs md:text-sm text-[var(--color-text-muted)]">
-                Em breve, a Biblioteca vai conversar com o Eu360 para sugerir
-                materiais sob medida para a fase do seu filho.
-              </p>
-
-              <div className="mt-2 flex items-start gap-3 md:gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-soft-strong)]/60">
-                  <AppIcon
-                    name="idea"
-                    size={20}
-                    className="text-[var(--color-brand)]"
-                    decorative
-                  />
-                </div>
-                <p className="text-xs md:text-sm text-[var(--color-text-muted)] leading-relaxed">
-                  Quando essa área estiver ativa, você vai receber aqui
-                  recomendações explicadas com carinho: por que aquele material
-                  foi sugerido e como ele pode deixar o seu dia um pouco mais
-                  leve.
-                </p>
               </div>
             </SoftCard>
           </Reveal>
 
-          {/* CTA PREMIUM COM DEGRADÊ */}
+          {/* BLOCO 2 — MATERIAIS DISPONÍVEIS */}
+          <Reveal delay={80}>
+            <div ref={materialsRef}>
+              <SoftCard className="rounded-3xl p-6 md:p-7 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
+                <div className="space-y-5">
+                  <header className="space-y-1">
+                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                      Materiais disponíveis
+                    </p>
+                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                      Uma prateleira de conteúdos para consultar quando precisar.
+                    </h2>
+                    <p className="text-sm text-[#545454] max-w-xl">
+                      {presetLabel
+                        ? `Você está vendo uma seleção de materiais baseada no atalho “${presetLabel.replace(
+                            'Atalho: ',
+                            '',
+                          )}”.`
+                        : 'Essa é uma prévia de como os materiais da Biblioteca Materna vão aparecer por aqui.'}
+                    </p>
+                  </header>
+
+                  {filteredMaterials.length === 0 ? (
+                    <SoftCard className="mt-2 rounded-3xl bg-[#fff7fb] p-6 text-sm text-[#545454] border border-[#ffd8e6] shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+                      Nenhum material encontrado para esse filtro. Você pode
+                      ajustar as opções ou limpar as seleções para ver a lista
+                      completa novamente.
+                    </SoftCard>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+                      {filteredMaterials.map((material, index) => (
+                        <Reveal key={material.id} delay={100 + index * 30}>
+                          <SoftCard className="flex h-full flex-col rounded-2xl bg-white p-5 border border-[#ffd8e6] shadow-[0_8px_22px_rgba(0,0,0,0.10)] transition-all duration-200 hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
+                            <div className="mb-4 flex items-start justify-between">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ffe5ef]">
+                                <AppIcon
+                                  name={material.icon as any}
+                                  size={22}
+                                  className="text-[#ff005e]"
+                                  decorative
+                                />
+                              </div>
+                            </div>
+
+                            <h3 className="mb-1 text-sm md:text-base font-semibold text-[#2f3a56]">
+                              {material.title}
+                            </h3>
+                            <p className="mb-4 text-xs md:text-sm text-[#545454]">
+                              {material.description}
+                            </p>
+
+                            <div className="mb-4 flex flex-wrap gap-2 text-[11px]">
+                              <span className="inline-flex items-center rounded-full bg-[#ffd8e6]/60 px-2.5 py-1 font-medium text-[#cf285f]">
+                                {material.theme}
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-[#fff2f8] px-2.5 py-1 font-medium text-[#545454]">
+                                {material.format}
+                              </span>
+                            </div>
+
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="mt-auto w-full"
+                              onClick={() => {
+                                if (!material.href) return
+                                if (material.external) {
+                                  window.open(
+                                    material.href,
+                                    '_blank',
+                                    'noopener,noreferrer',
+                                  )
+                                } else {
+                                  window.location.href = material.href
+                                }
+                              }}
+                            >
+                              Acessar
+                            </Button>
+                          </SoftCard>
+                        </Reveal>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </SoftCard>
+            </div>
+          </Reveal>
+
+          {/* BLOCO 3 — INSIGHT PERSONALIZADO */}
+          <Reveal delay={120}>
+            <SoftCard className="rounded-3xl bg-white/95 p-6 md:p-8 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#545454]">
+                    Em breve
+                  </p>
+                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Insight personalizado para a fase do seu filho.
+                  </h2>
+                  <p className="text-xs md:text-sm text-[#545454]">
+                    A Biblioteca vai conversar com o Eu360 para sugerir materiais
+                    sob medida para a idade e o momento da sua família.
+                  </p>
+                </div>
+
+                <div className="mt-1 flex items-start gap-3 md:gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffe5ef]">
+                    <AppIcon
+                      name="idea"
+                      size={20}
+                      className="text-[#ff005e]"
+                      decorative
+                    />
+                  </div>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                    Quando essa área estiver ativa, você vai receber aqui
+                    recomendações explicadas com carinho: por que aquele material
+                    foi sugerido, em qual contexto ele ajuda mais e como pode
+                    deixar o seu dia um pouco mais leve.
+                  </p>
+                </div>
+              </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* BLOCO 4 — CTA PREMIUM */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.25)] border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_40%,#9B4D96_100%)] text-white">
+            <SoftCard className="rounded-3xl p-6 md:p-8 shadow-[0_14px_38px_rgba(0,0,0,0.22)] border border-white/60 bg-[radial-gradient(circle_at_top_left,#FF7BB1_0,#FF1475_40%,#9B4D96_100%)] text-white">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex-1">
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/18 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
                     <AppIcon name="sparkles" size={12} decorative />
                     <span>Premium</span>
                   </div>
-                  <h3 className="mb-1 text-lg font-semibold md:text-xl">
+                  <h3 className="mb-1 text-lg md:text-xl font-semibold">
                     Desbloqueie conteúdos completos
                   </h3>
                   <p className="text-xs md:text-sm text-white/90 max-w-xl">
-                    PDFs avançados, eBooks exclusivos, trilhas educativas e
-                    guias profissionais em um só lugar — tudo pensado para a sua
-                    rotina real.
+                    PDFs avançados, eBooks exclusivos, trilhas educativas e guias
+                    profissionais em um só lugar — tudo pensado para caber na sua
+                    rotina real, sem exigir perfeição.
                   </p>
                 </div>
 
                 <Button
-  variant="primary"
-  size="sm"
-  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto
-             bg-white/95 hover:bg-white
-             shadow-[0_10px_26px_rgba(0,0,0,0.25)]
-             rounded-full px-5
-             !text-[var(--color-brand)]"
->
-  <AppIcon
-    name="crown"
-    size={14}
-    decorative
-    className="mr-2 !text-[var(--color-brand)]"
-  />
-  Conhecer Materna+
-</Button>
+                  variant="primary"
+                  size="sm"
+                  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto bg-white/95 hover:bg-white shadow-[0_10px_26px_rgba(0,0,0,0.25)] rounded-full px-5 !text-[#ff005e]"
+                >
+                  <AppIcon
+                    name="crown"
+                    size={14}
+                    decorative
+                    className="mr-2 !text-[#ff005e]"
+                  />
+                  Conhecer Materna+
+                </Button>
               </div>
             </SoftCard>
           </Reveal>
