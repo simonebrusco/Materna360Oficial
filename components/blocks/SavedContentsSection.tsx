@@ -63,21 +63,22 @@ function getPlannerOrigin(item: PlannerSavedContent): string | undefined {
 }
 
 function getPlannerExtra(item: PlannerSavedContent): string | undefined {
-  // Prioriza metaLabel se já existir
   const anyItem = item as any
   if (anyItem.metaLabel) return anyItem.metaLabel as string
 
-  // Caso contrário, usa createdAt para um rótulo simples
   if (item.createdAt) {
     try {
       const date = new Date(item.createdAt)
       const today = new Date()
-      const diffMs = today.setHours(0, 0, 0, 0) - date.setHours(0, 0, 0, 0)
+      const diffMs =
+        today.setHours(0, 0, 0, 0) - date.setHours(0, 0, 0, 0)
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
       if (diffDays === 0) return 'Salvo hoje'
       if (diffDays === 1) return 'Salvo ontem'
-      return `Salvo em ${new Date(item.createdAt).toLocaleDateString('pt-BR')}`
+      return `Salvo em ${new Date(
+        item.createdAt,
+      ).toLocaleDateString('pt-BR')}`
     } catch {
       return undefined
     }
@@ -100,7 +101,6 @@ type KanbanColumn = {
   eyebrow: string
   title: string
   description: string
-  // Filtros de tipo para plannerContents
   types?: string[]
 }
 
@@ -167,9 +167,8 @@ export default function SavedContentsSection({
     return null
   }
 
-  // Separa plannerContents por coluna de tipos
   const plannerByColumn: Record<KanbanColumnId, PlannerSavedContent[]> = {
-    legacy: [], // não usamos planner aqui, apenas contents
+    legacy: [],
     inspirations: [],
     recipes: [],
     checklists: [],
@@ -200,25 +199,22 @@ export default function SavedContentsSection({
       {!hideTitle && (
         <div>
           <h3 className="text-lg md:text-base font-semibold text-white flex items-center gap-2">
-  <AppIcon
-    name="bookmark"
-    className="w-4 h-4 text-white"
-  />
-  Inspirações & conteúdos salvos
-</h3>
-
-<p className="text-xs md:text-sm text-white/80 mt-0.5">
-  Aqui ficam as ideias, receitas, frases e lembretes que você decidiu
-  guardar com carinho para revisar quando precisar.
-</p>
+            <AppIcon
+              name="bookmark"
+              className="w-4 h-4 text-white"
+            />
+            Inspirações & conteúdos salvos
+          </h3>
+          <p className="text-xs md:text-sm text-white/80 mt-0.5">
+            Aqui ficam as ideias, receitas, frases e lembretes que você
+            decidiu guardar com carinho para revisar quando precisar.
+          </p>
         </div>
       )}
 
-      {/* Kanban horizontal */}
       <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
         <div className="flex gap-4 md:gap-5 min-w-max pb-1">
           {KANBAN_COLUMNS.map(column => {
-            // Coluna de conteúdos legacy (useSavedInspirations)
             if (column.id === 'legacy') {
               if (!showLegacyColumn) return null
 
@@ -295,16 +291,11 @@ export default function SavedContentsSection({
               )
             }
 
-            // Colunas baseadas em plannerContents
             const items = plannerByColumn[column.id]
-
-            // Se nenhuma coluna planner tem conteúdo e essa coluna está vazia, podemos esconder todas
             if (!showAnyPlannerColumn && items.length === 0) {
               return null
             }
 
-            // Se houver plannerContents no geral, mostramos todas as colunas principais,
-            // mesmo vazias, com texto de estado, para a mãe entender a organização.
             const showEmptyState = items.length === 0
 
             return (
@@ -398,17 +389,18 @@ export default function SavedContentsSection({
           {/* Coluna final – “Ver tudo” */}
           <Link
             href="/descobrir/salvos"
-            className="flex-shrink-0 w-[220px] md:w-[240px] rounded-3xl border-2 border-dashed border-[var(--color-border-soft)] bg-[var(--color-page-bg)]/90 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] hover:border-[var(--color-brand)] hover:-translate-y-[1px] transition-all flex flex-col items-center justify-center text-center px-4 py-6"
+            className="flex-shrink-0 w-[220px] md:w-[240px] rounded-3xl border-2 border-dashed border-white/70 bg-[var(--color-page-bg)]/0 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_14px_32px_rgba(0,0,0,0.12)] hover:border-white hover:-translate-y-[1px] transition-all flex flex-col items-center justify-center text-center px-4 py-6"
           >
             <AppIcon
-              name='folder'
-              className="w-6 h-6 text-[var(--color-text-muted)]/50 mb-1.5"
+              name="folder"
+              className="w-6 h-6 text-white/80 mb-1.5"
             />
-            <p className="text-xs font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-[0.16em]">
+            <p className="text-xs font-semibold text-white/90 uppercase tracking-[0.16em]">
               Ver tudo
             </p>
-            <p className="text-[11px] text-[var(--color-text-muted)]/70 mt-1.5">
-              Acesse a visão completa de tudo que você já salvou no Materna360.
+            <p className="text-[11px] text-white/80 mt-1.5">
+              Acesse a visão completa de tudo que você já salvou no
+              Materna360.
             </p>
           </Link>
         </div>
