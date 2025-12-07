@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
@@ -15,8 +16,9 @@ export default function MaternaBoxPage() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
-          {/* HERO · TEXTO + “O QUE TEM NA CAIXA” */}
-          <SoftCard className="grid gap-6 rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] md:grid-cols-[1.2fr,1fr] md:p-6">
+          {/* HERO · TEXTO + IMAGEM */}
+          <SoftCard className="grid gap-6 rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] md:grid-cols-[1.18fr,1fr] md:p-6">
+            {/* TEXTO */}
             <div className="flex flex-col justify-center space-y-4">
               <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                 UM CARINHO MENSAL ENTREGUE NA SUA PORTA
@@ -26,8 +28,13 @@ export default function MaternaBoxPage() {
                 Mais conexão, menos culpa. Uma caixa pensada para caber na sua rotina real.
               </h2>
 
+              {/* Selinho de autoridade */}
+              <div className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[10px] font-medium text-[#2f3a56]">
+                Criada por mãe pedagoga com mais de 20 anos na educação infantil
+              </div>
+
               <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                Sabe aquela sensação de que o dia acabou e vocês quase não brincaram?
+                Sabe aquela sensação de que o dia acaba e vocês quase não brincaram?
                 A MaternaBox nasce justamente para isso: te ajudar a viver momentos simples,
                 mas cheios de presença, mesmo na correria.
               </p>
@@ -52,29 +59,37 @@ export default function MaternaBoxPage() {
               </div>
             </div>
 
-            {/* Bloco visual com resumo da caixa */}
+            {/* IMAGEM + CARD RESUMO */}
             <div className="relative flex items-center justify-center">
-              <div className="relative h-48 w-full max-w-sm rounded-3xl bg-gradient-to-br from-[#ffd8e6] to-[#ffe8f2] shadow-[0_18px_40px_rgba(0,0,0,0.18)] overflow-hidden flex items-center justify-center">
-                <div className="space-y-2 px-5">
-                  <p className="text-xs font-semibold text-[#2f3a56]">
+              <div className="relative h-52 w-full max-w-sm md:h-64">
+                <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
+                  <Image
+                    src="/images/maternabox2.png"
+                    alt="Mãe brincando com o filho enquanto abre a MaternaBox"
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 360px, 100vw"
+                    className="object-cover"
+                  />
+                </div>
+
+                {/* Card-resumo por cima da foto */}
+                <div className="absolute -bottom-4 left-3 right-4 rounded-2xl border border-white/80 bg-white/98 px-3 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.20)]">
+                  <p className="text-[11px] font-semibold text-[#2f3a56] mb-1">
                     Dentro da caixa, todo mês:
                   </p>
-                  <ul className="text-[11px] text-[#545454] space-y-1">
+                  <ul className="text-[10px] text-[#545454] space-y-0.5">
                     <li>• 1 brinquedo educativo alinhado à fase do seu filho.</li>
                     <li>• 1 atividade guiada para viver um momento especial.</li>
                     <li>• 1 mini-guia impresso com passo a passo simples.</li>
                     <li>• Surpresinhas pensadas para fortalecer a conexão.</li>
                   </ul>
-                  <p className="mt-2 text-[10px] text-[#9b4d96]">
-                    Tudo pensado para caber em poucos minutos, sem cobrança de perfeição —
-                    só presença possível naquele dia.
-                  </p>
                 </div>
               </div>
             </div>
           </SoftCard>
 
-          {/* BLOCO 2 · O QUE VEM NA CAIXA (DETALHES) */}
+          {/* BLOCO 2 · O QUE VEM NA CAIXA */}
           <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)] md:p-6">
             <div className="space-y-3">
               <div className="space-y-1">
@@ -130,6 +145,41 @@ export default function MaternaBoxPage() {
                     tornar a experiência ainda mais gostosa e afetiva.
                   </p>
                 </div>
+              </div>
+            </div>
+          </SoftCard>
+
+          {/* BLOCO 2.5 · PARA QUEM É / NÃO É */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_10px_22px_rgba(0,0,0,0.10)] md:p-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/80">
+                  PARA QUEM É A MATERNABOX?
+                </p>
+                <h3 className="text-sm md:text-base font-semibold text-[#2f3a56]">
+                  Para mães que querem presença possível, não perfeição.
+                </h3>
+                <ul className="mt-1 space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                  <li>• Você sente culpa por não ter tempo (ou energia) para planejar brincadeiras.</li>
+                  <li>• Quer momentos de qualidade com seu filho, mesmo em dias corridos.</li>
+                  <li>• Gosta de coisas simples, práticas e que já vêm prontas para usar.</li>
+                  <li>• Valoriza brinquedos com intenção, não só mais um “monte de coisas” em casa.</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2 rounded-2xl bg-[#fff7fb] p-3 md:p-4">
+                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#9b4d96]">
+                  PARA QUEM AINDA NÃO É
+                </p>
+                <p className="text-sm md:text-base font-semibold text-[#2f3a56]">
+                  Talvez não seja o momento se…
+                </p>
+                <ul className="mt-1 space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                  <li>• Você busca apenas muitos brinquedos pelo menor preço possível.</li>
+                  <li>• Prefere atividades complexas, cheias de materiais e produções longas.</li>
+                  <li>• Não deseja receber orientações de uso ou conteúdos guiados.</li>
+                  <li>• Não se sente confortável em reservar pequenos momentos só para vocês.</li>
+                </ul>
               </div>
             </div>
           </SoftCard>
@@ -223,16 +273,20 @@ export default function MaternaBoxPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-[#ff005e]/5 p-3">
+                {/* Card destacado – cor oficial + texto branco */}
+                <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-[#ff005e] p-3 text-white">
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
+                    <p className="text-[11px] font-semibold uppercase">
                       Experiência completa
                     </p>
-                    <p className="text-sm font-semibold text-[#2f3a56]">Plano anual</p>
-                    <p className="text-xs text-[#545454]">
-                      12 meses com temas variados, registros afetivos e memórias distribuídas ao longo do ano.
+                    <p className="text-sm font-semibold">Plano anual</p>
+                    <p className="text-xs text-white/90">
+                      12 meses com temas variados, registros afetivos e memórias espalhadas ao longo do ano.
                     </p>
                   </div>
+                  <p className="mt-2 text-[10px] font-medium text-white/90">
+                    Melhor custo-benefício para quem já decidiu caminhar com a MaternaBox.
+                  </p>
                 </div>
               </div>
 
@@ -244,7 +298,7 @@ export default function MaternaBoxPage() {
             </div>
           </SoftCard>
 
-          {/* BLOCO 5 · LISTA DE ESPERA / CTA FINAL */}
+          {/* BLOCO 5 · LISTA DE ESPERA */}
           <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#ff005e] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.28)] md:px-6 md:py-6">
             <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-6">
               <div className="space-y-1 max-w-xl">
