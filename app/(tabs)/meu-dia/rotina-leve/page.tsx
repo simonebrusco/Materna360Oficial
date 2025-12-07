@@ -1148,7 +1148,7 @@ export default function RotinaLevePage() {
 
         const nextMeals = meals.filter((m) => m !== meal);
 
-        const nextWeek = {};
+       const nextWeek: Record<string, Record<string, string>> = {};
         for (const day of weekdays) {
           nextWeek[day] = { ...weekPlan[day] };
           delete nextWeek[day][meal];
