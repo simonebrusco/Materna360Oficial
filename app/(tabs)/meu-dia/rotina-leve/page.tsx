@@ -1111,7 +1111,7 @@ export default function RotinaLevePage() {
         return Array.isArray(stored) && stored.length > 0 ? stored : defaultMeals;
       });
 
-      const [weekPlan, setWeekPlan] = useState(() => {
+      const [weekPlan, setWeekPlan] = useState<Record<string, Record<string, string>>>({});
         const stored = load('rotina-leve:cardapio:week');
         return stored && typeof stored === 'object' ? stored : {};
       });
