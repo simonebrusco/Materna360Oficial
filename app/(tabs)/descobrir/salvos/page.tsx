@@ -1,83 +1,44 @@
-'use client'
-
-import * as React from 'react'
 import Link from 'next/link'
-import { useSavedSuggestions } from '../hooks/useSavedSuggestions'
-import { track } from '@/app/lib/telemetry'
-import { BookmarkMinus, ArrowLeft } from 'lucide-react'
 
-export default function DiscoverSavedPage() {
-  const { saved, remove, isSaved } = useSavedSuggestions()
-
-  React.useEffect(() => {
-    track('discover.suggestion_saved', {
-      action: 'view',
-      view: 'saved_page_open',
-      count: saved.length,
-    })
-    // NOTE: include saved.length to satisfy react-hooks/exhaustive-deps
-  }, [saved.length])
-
-  const onRemove = (id: string) => {
-    if (!isSaved(id)) return
-    remove(id)
-    track('discover.suggestion_saved', {
-      action: 'remove',
-      id,
-    })
-  }
-
-  const hasItems = saved.length > 0
-
+export default function SalvosPage() {
   return (
-    <div data-layout="page-template-v1" className="min-h-[100dvh] bg-[var(--color-page-bg)] pb-24">
-      <div className="mx-auto max-w-[1040px] px-4 md:px-6 py-4">
-        <div className="mb-6 flex items-center gap-3">
-          <Link
-            href="/descobrir"
-            className="inline-flex items-center gap-1 rounded-lg border border-white/60 bg-white/80 px-3 py-2 text-sm font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
-            aria-label="Voltar para Descobrir"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Voltar
-          </Link>
-          <h1 className="text-2xl md:text-3xl font-semibold text-ink-1">Salvos</h1>
-        </div>
+    <main className="min-h-screen bg-[#fff5f9]">
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-24 space-y-4">
+        <Link
+          href="/meu-dia"
+          className="inline-flex items-center gap-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+        >
+          <span>←</span>
+          <span>Voltar</span>
+        </Link>
 
-        {!hasItems ? (
-          <div className="rounded-2xl border border-white/60 bg-white/95 backdrop-blur-[1px] shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-6">
-            <p className="text-base text-support-2">
-              Você ainda não salvou ideias. Explore o{' '}
-              <Link href="/descobrir" className="font-semibold text-ink-1 underline hover:text-primary transition-colors">
-                Descobrir
-              </Link>{' '}
-              e toque em &quot;Salvar para depois&quot;.
-            </p>
-          </div>
-        ) : (
-          <ul className="grid gap-3">
-            {saved.map((id) => (
-              <li
-                key={id}
-                className="rounded-2xl border border-white/60 bg-white/95 backdrop-blur-[1px] shadow-[0_4px_24px_rgba(47,58,86,0.08)] hover:shadow-[0_8px_32px_rgba(47,58,86,0.12)] transition-shadow p-4 flex items-center justify-between"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-ink-1 text-sm">Ideia #{id}</div>
-                  <div className="text-xs text-support-3 line-clamp-1">Salvo para depois</div>
-                </div>
-                <button
-                  className="ml-3 inline-flex items-center gap-1 rounded-lg border border-white/60 bg-white/80 px-3 py-2 text-sm font-medium text-support-2 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/30"
-                  onClick={() => onRemove(id)}
-                  aria-label={`Remover ideia ${id}`}
-                >
-                  <BookmarkMinus className="h-4 w-4" aria-hidden="true" />
-                  Remover
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h1 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+          Salvos
+        </h1>
+
+        <div className="mt-2 rounded-2xl bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)] px-4 py-3 md:px-5 md:py-4">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Você ainda não salvou ideias no planner. Use os hubs do Materna360,
+            como{' '}
+            <span className="font-medium">Como Estou Hoje</span>,{' '}
+            <span className="font-medium">Rotina Leve</span> e{' '}
+            <span className="font-medium">Cuidar com Amor</span> e toque em
+            <span className="font-medium"> "Salvar no planner"</span> sempre que
+            quiser guardar algo.
+          </p>
+
+          <p className="text-sm text-[var(--color-text-muted)] mt-2">
+            Para começar, acesse o seu dia em{' '}
+            <Link
+              href="/meu-dia"
+              className="font-semibold text-[var(--color-brand)] underline-offset-2 hover:underline"
+            >
+              Meu Dia
+            </Link>
+            .
+          </p>
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
