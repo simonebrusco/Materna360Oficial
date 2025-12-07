@@ -1,3 +1,5 @@
+'use client'
+
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
@@ -145,91 +147,84 @@ export default function MaternaPlusPage({
       subtitle="Profissionais, comunidade e serviços selecionados com carinho para caminhar com você."
     >
       <div className="mx-auto max-w-5xl px-4 pt-6 pb-12 space-y-8 md:px-6 md:space-y-10">
-        {/* INTRO PREMIUM */}
-        <SoftCard className="relative overflow-hidden rounded-3xl border border-white/80 bg-white/10 px-4 py-5 shadow-[0_20px_50px_rgba(0,0,0,0.26)] backdrop-blur-2xl md:px-7 md:py-6 space-y-4">
-          {/* Glows */}
-          <div className="pointer-events-none absolute inset-0 opacity-80">
-            <div className="absolute -top-12 -left-16 h-28 w-28 rounded-full bg-[rgba(255,20,117,0.32)] blur-3xl" />
-            <div className="absolute -bottom-14 -right-10 h-32 w-32 rounded-full bg-[rgba(155,77,150,0.3)] blur-3xl" />
+        {/* HERO / INTRO PREMIUM */}
+        <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/95 px-4 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.16)] md:px-8 md:py-7 space-y-4">
+          {/* Linha de atalho */}
+          {shortcutLabel && (
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#ffd8e6] bg-[#fff7fb] px-4 py-2 text-[11px] text-[#545454] shadow-[0_6px_16px_rgba(0,0,0,0.06)] md:text-xs">
+              <AppIcon
+                name="location"
+                className="h-4 w-4 text-[#ff005e]"
+                decorative
+              />
+              <span className="truncate">
+                Você chegou aqui pelo atalho{' '}
+                <span className="font-semibold">{shortcutLabel}</span>. Se
+                quiser, pode começar por essa área.
+              </span>
+            </div>
+          )}
+
+          {/* Texto principal */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+              Espaço premium de apoio
+            </p>
+            <p className="max-w-2xl text-sm text-[#545454] md:text-base">
+              Aqui você encontra profissionais com selo Materna, um lugar seguro
+              para conversar com outras mães e serviços pensados para caminhar
+              ao seu lado — sem pressa, no seu ritmo.
+            </p>
           </div>
 
-          <div className="relative z-10 space-y-3">
-            {/* Mensagem de atalho */}
-            {shortcutLabel && (
-              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border-soft)] bg-white/96 px-4 py-2 text-[11px] text-[#545454] shadow-[0_6px_20px_rgba(0,0,0,0.10)] md:text-sm">
-                <AppIcon
-                  name="idea"
-                  className="h-4 w-4 text-[#FF005E]"
-                  decorative
-                />
-                <span className="truncate">
-                  Você chegou aqui pelo atalho{' '}
-                  <strong>{shortcutLabel}</strong>. Que tal começar por essa
-                  área?
-                </span>
-              </div>
-            )}
+          {/* Chips descritivos */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              'Profissionais Materna360',
+              'Comunidade oficial',
+              'Serviços Materna',
+            ].map(tag => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 rounded-full border border-[#ffd8e6] bg-[#fff7fb] px-3 py-1 text-[11px] font-medium text-[#545454]"
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
+                {tag}
+              </span>
+            ))}
+          </div>
 
-            {/* Texto principal */}
-            <div className="space-y-1 pt-1">
-              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-white/90">
-                MATERNA+
-              </p>
-              <p className="max-w-2xl text-sm text-white md:text-base">
-                Especialistas com selo Materna, um espaço seguro para conversar
-                com outras mães e serviços pensados para apoiar a sua jornada —
-                tudo em um só lugar.
-              </p>
-            </div>
-
-            {/* Chips descritivos */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {[
-                'Profissionais Materna360',
-                'Comunidade oficial',
-                'Serviços Materna',
-              ].map(tag => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/96 px-3 py-1 text-[11px] font-medium text-[#545454]"
-                >
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#FF005E]" />
-                  {tag}
-                </span>
-              ))}
+          {/* Navegação principal das áreas */}
+          <div className="pt-1 border-t border-[#ffe2ef] mt-2">
+            <p className="mt-3 mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#545454]/80">
+              Por onde você quer começar hoje?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SECTION_LINKS.map(section => {
+                const isActive = activeSection === section.id
+                const href = `?abrir=${section.id}#${section.id}`
+                return (
+                  <Link
+                    key={section.id}
+                    href={href}
+                    scroll={false}
+                    replace
+                    className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold transition-all md:text-sm ${
+                      isActive
+                        ? 'bg-[#ff005e] text-white shadow-[0_8px_22px_rgba(255,0,94,0.45)]'
+                        : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e]/80 hover:bg-[#fff0f6]'
+                    }`}
+                  >
+                    {section.label}
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </SoftCard>
 
-        {/* NAV DAS SEÇÕES */}
-        <nav
-          aria-label="Navegação das áreas do Materna+"
-          className="flex flex-wrap gap-2 md:gap-3"
-        >
-          {SECTION_LINKS.map(section => {
-            const isActive = activeSection === section.id
-            const href = `?abrir=${section.id}#${section.id}`
-
-            return (
-              <Link
-                key={section.id}
-                href={href}
-                scroll={false}
-                replace
-                className={`inline-flex items-center rounded-full border px-4 py-1.5 text-xs font-medium transition-all md:text-sm ${
-                  isActive
-                    ? 'border-[#FF005E] bg-[#FF005E] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
-                    : 'border-white/80 bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                {section.label}
-              </Link>
-            )
-          })}
-        </nav>
-
         {/* GRID PRINCIPAL */}
-        <div className="space-y-6 md:grid md:grid-cols-12 md:items-start md:gap-5 md:space-y-0 lg:gap-6">
+        <div className="space-y-6 md:grid md:grid-cols-12 md:gap-5 md:space-y-0 lg:gap-6 md:items-start">
           {/* COLUNA ESQUERDA – PROFISSIONAIS */}
           <section
             id="profissionais"
@@ -237,15 +232,15 @@ export default function MaternaPlusPage({
             className="space-y-4 md:col-span-7 lg:col-span-7"
           >
             <header className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#FFE8F2]/90">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff005e]/80">
                 PROFISSIONAIS
               </p>
-              <h2 className="text-base font-semibold text-[#2F3A56] md:text-lg">
+              <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Profissionais Materna360
               </h2>
               <p className="text-sm text-[#545454]">
-                Um espaço com especialistas selecionados, todos com selo
-                Materna, para apoiar você em diferentes fases da maternidade.
+                Especialistas selecionados com carinho, prontos para apoiar você
+                em diferentes fases da maternidade.
               </p>
             </header>
 
@@ -257,8 +252,8 @@ export default function MaternaPlusPage({
                 replace
                 className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                   selectedSpecialty === 'todas'
-                    ? 'border-[#FF005E] bg-[#FF005E] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
-                    : 'border-[var(--color-border-soft)] bg-white/95 text-[#545454] hover:border-[#FF005E]/70'
+                    ? 'border-[#ff005e] bg-[#ff005e] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
+                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#ff005e]/70'
                 }`}
               >
                 Todas
@@ -276,8 +271,8 @@ export default function MaternaPlusPage({
                     replace
                     className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                       isActive
-                        ? 'border-[#FF005E] bg-[#FF005E] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
-                        : 'border-[var(--color-border-soft)] bg-white/95 text-[#545454] hover:border-[#FF005E]/70'
+                        ? 'border-[#ff005e] bg-[#ff005e] text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)]'
+                        : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#ff005e]/70'
                     }`}
                   >
                     {filter.label}
@@ -289,7 +284,7 @@ export default function MaternaPlusPage({
             {/* Lista de profissionais */}
             <div className="mt-3 space-y-3">
               {filteredProfessionals.length === 0 ? (
-                <SoftCard className="rounded-3xl border border-dashed border-[var(--color-border-soft)] bg-white/95 px-4 py-4 md:px-5 md:py-5">
+                <SoftCard className="rounded-3xl border border-dashed border-[#ffd8e6] bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)] md:px-5 md:py-5">
                   <p className="text-sm text-[#545454]">
                     Em breve, teremos profissionais cadastrados nesta área.
                   </p>
@@ -298,23 +293,23 @@ export default function MaternaPlusPage({
                 filteredProfessionals.map(prof => (
                   <div
                     key={prof.id}
-                    className="relative flex flex-col gap-3 rounded-3xl border border-[#FFD3E6] bg-white px-4 py-4 shadow-[0_16px_30px_rgba(0,0,0,0.14)] md:px-5 md:py-5"
+                    className="relative flex flex-col gap-3 rounded-3xl border border-[#ffd8e6] bg-white px-4 py-4 shadow-[0_12px_28px_rgba(0,0,0,0.10)] md:px-5 md:py-5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#FF005E]/85">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#ff005e]/85">
                           Profissional Materna360
                         </p>
-                        <p className="text-sm font-semibold text-[#2F3A56]">
+                        <p className="text-sm font-semibold text-[#2f3a56]">
                           {prof.name}
                         </p>
-                        <p className="text-xs font-medium text-[#9B4D96]">
+                        <p className="text-xs font-medium text-[#9b4d96]">
                           {prof.specialtyLabel}
                         </p>
                       </div>
                       <AppIcon
                         name="care"
-                        className="h-6 w-6 text-[#FF005E]"
+                        className="h-6 w-6 text-[#ff005e]"
                         decorative
                       />
                     </div>
@@ -328,12 +323,12 @@ export default function MaternaPlusPage({
                         rel={
                           prof.whatsappLink ? 'noopener noreferrer' : undefined
                         }
-                        className="inline-flex w-fit items-center justify-center rounded-full bg-[#FF005E] px-4 py-2 text-xs font-medium text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)] md:text-sm"
+                        className="inline-flex w-fit items-center justify-center rounded-full bg-[#ff005e] px-4 py-2 text-xs font-medium text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)] md:text-sm"
                       >
                         Falar pelo WhatsApp
                       </a>
                       {!prof.whatsappLink || prof.whatsappLink === '#' ? (
-                        <p className="text-[11px] text-[#6A6A6A]">
+                        <p className="text-[11px] text-[#6a6a6a]">
                           Em breve, este botão vai levar direto para o WhatsApp
                           deste profissional.
                         </p>
@@ -343,7 +338,7 @@ export default function MaternaPlusPage({
                     <button
                       type="button"
                       aria-label="Favoritar profissional"
-                      className="absolute right-3.5 top-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#FFD3E6] bg-white text-[#FF005E] shadow-[0_4px_12px_rgba(0,0,0,0.10)]"
+                      className="absolute right-3.5 top-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#ffd8e6] bg-white text-[#ff005e] shadow-[0_4px_12px_rgba(0,0,0,0.10)]"
                     >
                       <AppIcon
                         name="heart"
@@ -366,18 +361,18 @@ export default function MaternaPlusPage({
               className="space-y-3"
             >
               <header className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#FFE8F2]/90">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff005e]/80">
                   COMUNIDADE
                 </p>
-                <h2 className="text-sm font-semibold text-[#2F3A56] md:text-base">
+                <h2 className="text-sm font-semibold text-[#2f3a56] md:text-base">
                   Comunidade Materna360
                 </h2>
               </header>
 
-              <SoftCard className="flex flex-col gap-3 bg-white/97 p-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)] md:p-5">
+              <SoftCard className="flex flex-col gap-3 rounded-3xl border border-[#ffd8e6] bg-white px-4 py-4 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-[#2F3A56]">
+                    <p className="text-sm font-semibold text-[#2f3a56]">
                       Um lugar para você não se sentir sozinha
                     </p>
                     <p className="text-sm text-[#545454]">
@@ -387,7 +382,7 @@ export default function MaternaPlusPage({
                   </div>
                   <AppIcon
                     name="heart"
-                    className="h-5 w-5 text-[#FF005E]"
+                    className="h-5 w-5 text-[#ff005e]"
                     decorative
                   />
                 </div>
@@ -395,11 +390,11 @@ export default function MaternaPlusPage({
                 <div className="pt-1">
                   <a
                     href="#"
-                    className="inline-flex items-center justify-center rounded-full bg-[#FF005E] px-4 py-2 text-xs font-medium text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)] md:text-sm"
+                    className="inline-flex items-center justify-center rounded-full bg-[#ff005e] px-4 py-2 text-xs font-medium text-white shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)] md:text-sm"
                   >
                     Entrar na comunidade
                   </a>
-                  <p className="mt-2 text-[11px] text-[#6A6A6A]">
+                  <p className="mt-2 text-[11px] text-[#6a6a6a]">
                     Em breve, este botão vai levar direto para o espaço oficial
                     da Comunidade Materna360.
                   </p>
@@ -414,15 +409,15 @@ export default function MaternaPlusPage({
               className="space-y-3"
             >
               <header className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#FFE8F2]/90">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ff005e]/80">
                   SERVIÇOS
                 </p>
-                <h2 className="text-sm font-semibold text-[#2F3A56] md:text-base">
+                <h2 className="text-sm font-semibold text-[#2f3a56] md:text-base">
                   Serviços Materna
                 </h2>
               </header>
 
-              <SoftCard className="space-y-3 bg-white/97 p-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)] md:p-5">
+              <SoftCard className="space-y-3 rounded-3xl border border-[#ffd8e6] bg-white px-4 py-4 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:p-5">
                 <p className="text-sm text-[#545454]">
                   Encontros, consultorias e conteúdos especiais para aprofundar
                   o cuidado com você e com a sua família.
@@ -434,26 +429,26 @@ export default function MaternaPlusPage({
                       key={service.id}
                       className={`flex gap-3 ${
                         index !== 0
-                          ? 'border-t border-[var(--color-border-soft)] pt-3'
+                          ? 'border-t border-[#ffe2ef] pt-3'
                           : ''
                       }`}
                     >
                       <div className="mt-0.5">
                         <AppIcon
                           name="star"
-                          className="h-4 w-4 text-[#FF005E]"
+                          className="h-4 w-4 text-[#ff005e]"
                           decorative
                         />
                       </div>
                       <div className="flex-1 space-y-1">
-                        <p className="text-xs font-semibold text-[#2F3A56]">
+                        <p className="text-xs font-semibold text-[#2f3a56]">
                           {service.name}
                         </p>
                         <p className="text-xs text-[#545454]">
                           {service.description}
                         </p>
                         {service.highlight && (
-                          <p className="text-[11px] font-medium text-[#9B4D96]">
+                          <p className="text-[11px] font-medium text-[#9b4d96]">
                             {service.highlight}
                           </p>
                         )}
@@ -465,7 +460,7 @@ export default function MaternaPlusPage({
                 <div className="pt-2">
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-soft)] bg-white px-4 py-2 text-xs font-medium text-[#FF005E] shadow-[0_4px_14px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:text-sm"
+                    className="inline-flex items-center justify-center rounded-full border border-[#ffd8e6] bg-white px-4 py-2 text-xs font-medium text-[#ff005e] shadow-[0_4px_14px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:text-sm"
                   >
                     Receber novidades do Materna+
                   </button>
