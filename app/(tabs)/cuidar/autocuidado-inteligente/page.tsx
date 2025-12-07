@@ -13,12 +13,30 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { updateXP } from '@/app/lib/xp'
+import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
 
 const AUTOCUIDADO_KEY = 'eu360/autocuidado-inteligente'
 
+// ======================
+// TYPES
+// ======================
+
+type Ritmo = 'leve' | 'cansada' | 'animada' | 'exausta' | 'focada'
+
+type SonoLabel = 'Pouco (≤6h)' | 'Adequado (7-8h)' | 'Restaurador (9+h)'
+
+type HidratacaoLevel = 0 | 1 | null
+
+type SelfCareAISuggestion = {
+  headline: string
+  description: string
+  tips: string[]
+  reminder: string
+}
+
 type AutocuidadoDia = {
   ritmo?: {
-    estiloDia: string | null
+    estiloDia: Ritmo | null
     tags?: string[]
     nota?: string | null
   }
@@ -26,13 +44,13 @@ type AutocuidadoDia = {
     itensSelecionados: string[]
   }
   saude?: {
-    hidratacao?: number | null
-    sono?: string | null
+    hidratacao?: HidratacaoLevel
+    sono?: SonoLabel | null
     alimentacao?: 'leve' | 'ok' | 'pesada' | null
-    humorEmoji?: string | null
   }
   sugestao?: {
     escolhida?: string | null
+    ai?: SelfCareAISuggestion | null
   }
 }
 
@@ -40,7 +58,17 @@ type AutocuidadoStorage = {
   [dateKey: string]: AutocuidadoDia
 }
 
-const RITMO_OPTIONS = ['leve', 'cansada', 'animada', 'exausta', 'focada']
+// ======================
+// CONSTANTES
+// ======================
+
+const RITMO_OPTIONS: Ritmo[] = [
+  'leve',
+  'cansada',
+  'animada',
+  'exausta',
+  'focada',
+]
 
 const MINI_ROTINA_ITEMS = [
   'Respirar por 1 minuto',
@@ -48,6 +76,12 @@ const MINI_ROTINA_ITEMS = [
   'Fazer um alongamento rápido',
   'Mover o corpo por 3 minutos',
   'Pausa sem culpa por 5 minutos',
+]
+
+const SONO_OPTIONS: SonoLabel[] = [
+  'Pouco (≤6h)',
+  'Adequado (7-8h)',
+  'Restaurador (9+h)',
 ]
 
 const SUGESTOES_FIXAS = [
@@ -59,19 +93,13 @@ const SUGESTOES_FIXAS = [
   'Anote uma coisa que você fez bem hoje.',
 ]
 
-type SelfCareAISuggestion = {
-  headline: string
-  description: string
-  tips: string[]
-  reminder: string
-}
-
 export default function AutocuidadoInteligentePage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+  const { addItem } = usePlannerSavedContents()
 
   // Ritmo state
-  const [selectedRitmo, setSelectedRitmo] = useState<string | null>(null)
+  const [selectedRitmo, setSelectedRitmo] = useState<Ritmo | null>(null)
   const [ritmoNota, setRitmoNota] = useState<string>('')
 
   // Mini rotina state
@@ -80,8 +108,8 @@ export default function AutocuidadoInteligentePage() {
   )
 
   // Saúde state
-  const [hidratacao, setHidratacao] = useState<number | null>(null)
-  const [sono, setSono] = useState<string | null>(null)
+  const [hidratacao, setHidratacao] = useState<HidratacaoLevel>(null)
+  const [sono, setSono] = useState<SonoLabel | null>(null)
   const [alimentacao, setAlimentacao] = useState<
     'leve' | 'ok' | 'pesada' | null
   >(null)
@@ -95,6 +123,17 @@ export default function AutocuidadoInteligentePage() {
   useEffect(() => {
     setIsHydrated(true)
   }, [])
+
+  // Telemetria de abertura de página
+  useEffect(() => {
+    try {
+      track('autocuidado.page_opened', {
+        dateKey: currentDateKey,
+      })
+    } catch {
+      // nunca quebra UX
+    }
+  }, [currentDateKey])
 
   // Carrega dados salvos do dia
   useEffect(() => {
@@ -112,17 +151,31 @@ export default function AutocuidadoInteligentePage() {
     if (diaData.rotina?.itensSelecionados) {
       setSelectedRotinaItems(new Set(diaData.rotina.itensSelecionados))
     }
-    if (diaData.saude?.hidratacao !== undefined) {
-      setHidratacao(diaData.saude.hidratacao ?? null)
+
+    if (diaData.saude) {
+      const h = diaData.saude.hidratacao
+      if (h === 0 || h === 1) {
+        setHidratacao(h)
+      } else {
+        setHidratacao(null)
+      }
+
+      if (diaData.saude.sono && SONO_OPTIONS.includes(diaData.saude.sono)) {
+        setSono(diaData.saude.sono)
+      } else {
+        setSono(null)
+      }
+
+      if (diaData.saude.alimentacao) {
+        setAlimentacao(diaData.saude.alimentacao)
+      }
     }
-    if (diaData.saude?.sono) {
-      setSono(diaData.saude.sono)
-    }
-    if (diaData.saude?.alimentacao) {
-      setAlimentacao(diaData.saude.alimentacao)
-    }
+
     if (diaData.sugestao?.escolhida) {
       setSugestaoAtual(diaData.sugestao.escolhida)
+    }
+    if (diaData.sugestao?.ai) {
+      setAiSuggestion(diaData.sugestao.ai)
     }
   }, [isHydrated, currentDateKey])
 
@@ -203,6 +256,24 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro ao atualizar XP (rotina):', e)
     }
 
+    // levar também pro planner como checklist simples
+    try {
+      addItem({
+        origin: 'cuidar-com-amor', // mesmo hub Cuidar
+        type: 'checklist',
+        title: 'Mini rotina de autocuidado de hoje',
+        payload: {
+          dateKey: currentDateKey,
+          itensSelecionados: Array.from(selectedRotinItems),
+        },
+      })
+    } catch (e) {
+      console.error(
+        '[Autocuidado] Erro ao salvar mini rotina no planner:',
+        e,
+      )
+    }
+
     toast.success(
       'Sua mini rotina de cuidado foi salva. Um passo de cada vez já é muito.',
     )
@@ -218,7 +289,7 @@ export default function AutocuidadoInteligentePage() {
     const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].saude = {
-      hidratacao: hidratacao,
+      hidratacao,
       sono: sono ?? null,
       alimentacao: alimentacao ?? null,
     }
@@ -258,7 +329,6 @@ export default function AutocuidadoInteligentePage() {
     setIsLoadingSugestao(true)
 
     try {
-      // Chama IA no backend com contexto do dia
       const res = await fetch('/api/ai/autocuidado-inteligente', {
         method: 'POST',
         headers: {
@@ -310,7 +380,6 @@ export default function AutocuidadoInteligentePage() {
 
       setAiSuggestion(suggestion)
 
-      // texto-resumo para salvar no storage simples
       const resumo =
         suggestion.reminder ||
         suggestion.tips?.[0] ||
@@ -352,7 +421,7 @@ export default function AutocuidadoInteligentePage() {
     }
   }
 
-  const handleSalvarSugestao = () => {
+  const handleSalvarSugestao = async () => {
     if (!sugestaoAtual) {
       toast.danger('Gere uma sugestão primeiro.')
       return
@@ -362,6 +431,7 @@ export default function AutocuidadoInteligentePage() {
     storage[currentDateKey] = storage[currentDateKey] || {}
     storage[currentDateKey].sugestao = {
       escolhida: sugestaoAtual,
+      ai: aiSuggestion ?? null,
     }
 
     save(AUTOCUIDADO_KEY, storage)
@@ -379,6 +449,26 @@ export default function AutocuidadoInteligentePage() {
       void updateXP(10)
     } catch (e) {
       console.error('[Autocuidado] Erro ao atualizar XP (sugestão):', e)
+    }
+
+    // salvar carinho também no planner
+    try {
+      await addItem({
+        origin: 'cuidar-com-amor', // mesmo hub Cuidar
+        type: 'insight',
+        title: 'Carinho de autocuidado para hoje',
+        payload: {
+          dateKey: currentDateKey,
+          resumo: sugestaoAtual,
+          via: aiSuggestion ? 'ia' : 'fixa',
+          suggestion: aiSuggestion ?? null,
+        },
+      })
+    } catch (e) {
+      console.error(
+        '[Autocuidado] Erro ao salvar carinho no planner:',
+        e,
+      )
     }
 
     toast.success('Sugestão salva para você revisitar quando quiser.')
@@ -454,7 +544,8 @@ export default function AutocuidadoInteligentePage() {
                                     : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
                                 }`}
                               >
-                                {ritmo.charAt(0).toUpperCase() + ritmo.slice(1)}
+                                {ritmo.charAt(0).toUpperCase() +
+                                  ritmo.slice(1)}
                               </button>
                             ))}
                           </div>
@@ -601,8 +692,8 @@ export default function AutocuidadoInteligentePage() {
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {[
-                              { idx: 0, label: 'Preciso beber mais' },
-                              { idx: 1, label: 'Estou me cuidando bem' },
+                              { idx: 0 as 0, label: 'Preciso beber mais' },
+                              { idx: 1 as 1, label: 'Estou me cuidando bem' },
                             ].map(({ idx, label }) => (
                               <button
                                 key={label}
@@ -633,11 +724,7 @@ export default function AutocuidadoInteligentePage() {
                             <span>Sono</span>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {[
-                              'Pouco (≤6h)',
-                              'Adequado (7-8h)',
-                              'Restaurador (9+h)',
-                            ].map(label => (
+                            {SONO_OPTIONS.map(label => (
                               <button
                                 key={label}
                                 onClick={() =>
@@ -834,7 +921,7 @@ export default function AutocuidadoInteligentePage() {
           </Reveal>
 
           {/* BLOCO 3 — FAIXA EXPLICATIVA */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <SoftCard className="rounded-3xl p-5 md:p-6 bg:white/90 bg-white/90 border border-white/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
