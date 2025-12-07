@@ -199,17 +199,18 @@ export default function SavedContentsSection({
     <div className="space-y-4">
       {!hideTitle && (
         <div>
-          <h3 className="text-lg md:text-base font-semibold text-[var(--color-text-main)] flex items-center gap-2">
-            <AppIcon
-              name="bookmark"
-              className="w-4 h-4 text-[var(--color-brand)]"
-            />
-            Inspirações & conteúdos salvos
-          </h3>
-          <p className="text-xs md:text-sm text-[var(--color-text-muted)]/70 mt-0.5">
-            Aqui ficam as ideias, receitas, frases e lembretes que você decidiu
-            guardar com carinho para revisar quando precisar.
-          </p>
+          <h3 className="text-lg md:text-base font-semibold text-white flex items-center gap-2">
+  <AppIcon
+    name="bookmark"
+    className="w-4 h-4 text-white"
+  />
+  Inspirações & conteúdos salvos
+</h3>
+
+<p className="text-xs md:text-sm text-white/80 mt-0.5">
+  Aqui ficam as ideias, receitas, frases e lembretes que você decidiu
+  guardar com carinho para revisar quando precisar.
+</p>
         </div>
       )}
 
