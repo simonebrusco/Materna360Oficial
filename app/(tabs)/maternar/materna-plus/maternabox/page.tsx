@@ -66,14 +66,18 @@ export default function MaternaBoxPage() {
               </div>
             </div>
 
-            {/* “Imagem” editorial da box – placeholder com vibe premium */}
+            {/* Bloco visual editorial da box */}
             <div className="relative flex items-center justify-center">
               <div className="absolute -top-6 -right-4 h-24 w-24 rounded-full bg-[rgba(255,216,230,0.9)] blur-3xl" />
               <div className="absolute -bottom-10 -left-8 h-28 w-28 rounded-full bg-[rgba(255,0,94,0.18)] blur-3xl" />
               <div className="relative z-10 w-full rounded-3xl bg-[#fff5fa] border border-[#ffd8e6] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
-                    <AppIcon name="box" className="h-6 w-6 text-[#ff005e]" decorative />
+                    <AppIcon
+                      name="sparkles"
+                      className="h-6 w-6 text-[#ff005e]"
+                      decorative
+                    />
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-semibold text-[#2f3a56]">
@@ -167,13 +171,7 @@ export default function MaternaBoxPage() {
             </header>
 
             <div className="flex flex-wrap gap-2 text-[11px] md:text-xs">
-              {[
-                '0–1 ano',
-                '1–3 anos',
-                '3–6 anos',
-                '6–8 anos',
-                '8+ anos',
-              ].map(label => (
+              {['0–1 ano', '1–3 anos', '3–6 anos', '6–8 anos', '8+ anos'].map(label => (
                 <button
                   key={label}
                   type="button"
@@ -414,7 +412,7 @@ export default function MaternaBoxPage() {
                 <div className="flex items-end">
                   <Button
                     type="submit"
-                    variant="secondary"
+                    variant="primary"
                     size="sm"
                     className="w-full rounded-full bg-white text-[#ff005e] hover:bg-white/95"
                   >
