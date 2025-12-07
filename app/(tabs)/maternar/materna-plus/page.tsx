@@ -147,16 +147,16 @@ export default function MaternaPlusPage({
       <ClientOnly>
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
           {/* HERO PREMIUM + ATALHO */}
-          <SoftCard className="relative overflow-hidden rounded-[28px] border border-white/75 bg-white/10 px-4 py-5 md:px-7 md:py-6 shadow-[0_20px_55px_rgba(0,0,0,0.26)] backdrop-blur-2xl">
-            {/* Glows de fundo */}
-            <div className="pointer-events-none absolute inset-0 opacity-80">
-              <div className="absolute -top-16 -left-20 h-32 w-32 rounded-full bg-[rgba(255,0,94,0.35)] blur-3xl" />
-              <div className="absolute -bottom-16 -right-16 h-40 w-40 rounded-full bg-[rgba(155,77,150,0.35)] blur-3xl" />
+          <SoftCard className="relative overflow-hidden rounded-[28px] border border-[#ffd8e6] bg-white px-4 py-6 md:px-7 md:py-7 shadow-[0_18px_45px_rgba(255,0,94,0.18)]">
+            {/* Glows suaves de fundo */}
+            <div className="pointer-events-none absolute inset-0 opacity-70">
+              <div className="absolute -top-20 -left-24 h-32 w-32 rounded-full bg-[rgba(255,216,230,0.85)] blur-3xl" />
+              <div className="absolute -bottom-20 -right-20 h-40 w-40 rounded-full bg-[rgba(255,0,94,0.18)] blur-3xl" />
             </div>
 
             <div className="relative z-10 space-y-4">
               {shortcutLabel && (
-                <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-white/96 px-4 py-2 text-[11px] md:text-xs text-[#545454] shadow-[0_6px_22px_rgba(0,0,0,0.16)] border border-[var(--color-border-soft)]">
+                <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-white/98 px-4 py-2 text-[11px] md:text-xs text-[#545454] shadow-[0_6px_22px_rgba(0,0,0,0.12)] border border-[#ffe1f0]">
                   <AppIcon name="pin" className="h-4 w-4 text-[#ff005e]" decorative />
                   <span className="truncate">
                     Você chegou aqui pelo atalho{' '}
@@ -167,11 +167,10 @@ export default function MaternaPlusPage({
               )}
 
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-white/90">
+                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/90">
                   ESPAÇO PREMIUM DE APOIO
                 </p>
-                {/* aqui ajustei a cor para branco, como no layout */}
-                <p className="text-sm md:text-base text-white/95 max-w-2xl">
+                <p className="text-sm md:text-base text-[#2f3a56] max-w-2xl">
                   Aqui você encontra profissionais com selo Materna, um lugar seguro
                   para conversar com outras mães e serviços pensados para apoiar a sua
                   jornada ao seu lado — sem pressa, no seu ritmo.
@@ -185,7 +184,7 @@ export default function MaternaPlusPage({
                   ].map(tag => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 rounded-full bg-white/96 px-3 py-1 text-[11px] font-medium text-[#545454] border border-white/80"
+                      className="inline-flex items-center gap-1 rounded-full bg-white/98 px-3 py-1 text-[11px] font-medium text-[#545454] border border-[#ffe1f0]"
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
                       {tag}
@@ -196,14 +195,14 @@ export default function MaternaPlusPage({
 
               {/* NAVEGAÇÃO ENTRE ESPAÇOS */}
               <div className="pt-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <p className="text-[11px] md:text-xs text-white/85 max-w-sm">
+                <p className="text-[11px] md:text-xs text-[#545454] max-w-sm">
                   Escolha por onde quer começar hoje. Você pode navegar entre os espaços
                   sempre que quiser — o Materna+ caminha junto com você.
                 </p>
 
                 <nav
                   aria-label="Navegação entre espaços Materna+"
-                  className="inline-flex rounded-full bg-white/15 p-1 shadow-[0_10px_28px_rgba(0,0,0,0.22)] backdrop-blur"
+                  className="inline-flex rounded-full bg-[#ffd8e6]/60 p-1 shadow-[0_10px_28px_rgba(0,0,0,0.16)] backdrop-blur-sm"
                 >
                   {(
                     [
@@ -227,7 +226,7 @@ export default function MaternaPlusPage({
                         className={`px-4 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold rounded-full transition-all whitespace-nowrap ${
                           isActive
                             ? 'bg-white text-[#ff005e] shadow-[0_10px_24px_rgba(255,0,94,0.45)]'
-                            : 'text-white/85 hover:bg-white/10'
+                            : 'text-[#2f3a56] hover:bg-white/60 hover:text-[#ff005e]'
                         }`}
                       >
                         {label}
@@ -427,7 +426,7 @@ export default function MaternaPlusPage({
                   </h2>
                 </header>
 
-                <SoftCard className="rounded-3xl border border-[#ffd3e6] bg:white/98 p-4 md:p-5 shadow-[0_10px_24px_rgba(0,0,0,0.14)] space-y-3">
+                <SoftCard className="rounded-3xl border border-[#ffd3e6] bg-white/98 p-4 md:p-5 shadow-[0_10px_24px_rgba(0,0,0,0.14)] space-y-3">
                   <p className="text-xs md:text-sm text-[#545454]">
                     Encontros, consultorias e conteúdos especiais para aprofundar o
                     cuidado com você e com a sua família.
@@ -473,7 +472,7 @@ export default function MaternaPlusPage({
           </div>
 
           {/* ENCERRAMENTO EMOCIONAL */}
-          <SoftCard className="rounded-3xl border border:white/75 bg-white/10 px-4 py-5 md:px-6 md:py-6 shadow-[0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
+          <SoftCard className="rounded-3xl border border-white/75 bg-white/10 px-4 py-5 md:px-6 md:py-6 shadow-[0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1 max-w-xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90">
