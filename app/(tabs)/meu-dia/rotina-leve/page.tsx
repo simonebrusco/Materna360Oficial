@@ -1113,9 +1113,14 @@ export default function RotinaLevePage() {
       });
 
       const [weekPlan, setWeekPlan] = useState<Record<string, Record<string, string>>>(() => {
-        const stored = load('rotina-leve:cardapio:week');
-        return stored && typeof stored === 'object' ? stored : {};
-      });
+  const stored = load('rotina-leve:cardapio:week');
+
+  if (stored && typeof stored === 'object') {
+    return stored as Record<string, Record<string, string>>;
+  }
+
+  return {} as Record<string, Record<string, string>>;
+});
 
       const weekdays = [
         'Segunda',
