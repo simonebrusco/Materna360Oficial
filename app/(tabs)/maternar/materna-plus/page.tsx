@@ -1,6 +1,5 @@
 'use client'
 
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { SoftCard } from '@/components/ui/card'
@@ -33,10 +32,6 @@ type Service = {
   description: string
   highlight?: string
   href?: string
-}
-
-export const metadata: Metadata = {
-  title: 'Materna+ | Materna360',
 }
 
 const SPECIALTY_FILTERS: { key: Professional['specialtyKey']; label: string }[] =
@@ -428,9 +423,7 @@ export default function MaternaPlusPage({
                     <div
                       key={service.id}
                       className={`flex gap-3 ${
-                        index !== 0
-                          ? 'border-t border-[#ffe2ef] pt-3'
-                          : ''
+                        index !== 0 ? 'border-t border-[#ffe2ef] pt-3' : ''
                       }`}
                     >
                       <div className="mt-0.5">
