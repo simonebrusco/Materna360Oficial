@@ -1126,10 +1126,13 @@ export default function RotinaLevePage() {
         'Domingo',
       ];
 
-      const saveAll = (nextWeek, nextMeals) => {
-        save('rotina-leve:cardapio:meals', nextMeals);
-        save('rotina-leve:cardapio:week', nextWeek);
-      };
+     const saveAll = (
+  nextWeek: Record<string, Record<string, string>>,
+  nextMeals: string[]
+) => {
+  save('rotina-leve:cardapio:meals', nextMeals);
+  save('rotina-leve:cardapio:week', nextWeek);
+};
 
       const addMeal = () => {
         const name = prompt('Nome da refeição:');
