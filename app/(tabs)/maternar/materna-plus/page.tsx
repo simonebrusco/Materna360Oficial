@@ -39,15 +39,14 @@ export const metadata: Metadata = {
   title: 'Materna+ | Materna360',
 }
 
-const SPECIALTY_FILTERS: { key: Professional['specialtyKey']; label: string }[] =
-  [
-    { key: 'pediatria', label: 'Pediatria' },
-    { key: 'nutricao', label: 'Nutrição' },
-    { key: 'psicologia', label: 'Psicologia' },
-    { key: 'psicopedagogia', label: 'Psicopedagogia' },
-    { key: 'fonoaudiologia', label: 'Fonoaudiologia' },
-    { key: 'parentalidade', label: 'Parentalidade' },
-  ]
+const SPECIALTY_FILTERS: { key: Professional['specialtyKey']; label: string }[] = [
+  { key: 'pediatria', label: 'Pediatria' },
+  { key: 'nutricao', label: 'Nutrição' },
+  { key: 'psicologia', label: 'Psicologia' },
+  { key: 'psicopedagogia', label: 'Psicopedagogia' },
+  { key: 'fonoaudiologia', label: 'Fonoaudiologia' },
+  { key: 'parentalidade', label: 'Parentalidade' },
+]
 
 const PROFESSIONALS: Professional[] = [
   {
@@ -106,12 +105,11 @@ const SERVICES: Service[] = [
   },
 ]
 
-const SHORTCUT_LABEL: Record<'profissionais' | 'comunidade' | 'servicos', string> =
-  {
-    profissionais: 'Profissionais Materna360',
-    comunidade: 'Comunidade Materna360',
-    servicos: 'Serviços Materna',
-  }
+const SHORTCUT_LABEL: Record<'profissionais' | 'comunidade' | 'servicos', string> = {
+  profissionais: 'Profissionais Materna360',
+  comunidade: 'Comunidade Materna360',
+  servicos: 'Serviços Materna',
+}
 
 type ActiveTab = 'profissionais' | 'comunidade' | 'servicos'
 type SpecialtyKeyWithAll = Professional['specialtyKey'] | 'todas'
@@ -122,6 +120,7 @@ export default function MaternaPlusPage({
   searchParams?: MaternaPlusSearchParams
 }) {
   const abrirParam = (searchParams?.abrir as ActiveTab | undefined) ?? 'profissionais'
+
   const activeTab: ActiveTab = ['profissionais', 'comunidade', 'servicos'].includes(
     abrirParam,
   )
@@ -158,15 +157,11 @@ export default function MaternaPlusPage({
             <div className="relative z-10 space-y-4">
               {shortcutLabel && (
                 <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-white/96 px-4 py-2 text-[11px] md:text-xs text-[#545454] shadow-[0_6px_22px_rgba(0,0,0,0.16)] border border-[var(--color-border-soft)]">
-                  <AppIcon
-                    name="pin"
-                    className="h-4 w-4 text-[#ff005e]"
-                    decorative
-                  />
+                  <AppIcon name="pin" className="h-4 w-4 text-[#ff005e]" decorative />
                   <span className="truncate">
                     Você chegou aqui pelo atalho{' '}
-                    <span className="font-semibold">{shortcutLabel}</span>. Se
-                    quiser, pode começar por essa área.
+                    <span className="font-semibold">{shortcutLabel}</span>. Se quiser,
+                    pode começar por essa área.
                   </span>
                 </div>
               )}
@@ -175,10 +170,11 @@ export default function MaternaPlusPage({
                 <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-white/90">
                   ESPAÇO PREMIUM DE APOIO
                 </p>
-                <p className="text-sm md:text-base text-[#2f3a56] max-w-2xl">
-                  Aqui você encontra profissionais com selo Materna, um lugar
-                  seguro para conversar com outras mães e serviços pensados para
-                  apoiar a sua jornada ao seu lado — sem pressa, no seu ritmo.
+                {/* aqui ajustei a cor para branco, como no layout */}
+                <p className="text-sm md:text-base text-white/95 max-w-2xl">
+                  Aqui você encontra profissionais com selo Materna, um lugar seguro
+                  para conversar com outras mães e serviços pensados para apoiar a sua
+                  jornada ao seu lado — sem pressa, no seu ritmo.
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-1">
@@ -201,8 +197,8 @@ export default function MaternaPlusPage({
               {/* NAVEGAÇÃO ENTRE ESPAÇOS */}
               <div className="pt-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <p className="text-[11px] md:text-xs text-white/85 max-w-sm">
-                  Escolha por onde quer começar hoje. Você pode navegar entre os
-                  espaços sempre que quiser — o Materna+ caminha junto com você.
+                  Escolha por onde quer começar hoje. Você pode navegar entre os espaços
+                  sempre que quiser — o Materna+ caminha junto com você.
                 </p>
 
                 <nav
@@ -221,8 +217,8 @@ export default function MaternaPlusPage({
                       tabKey === 'profissionais'
                         ? '?abrir=profissionais#profissionais'
                         : tabKey === 'comunidade'
-                          ? '?abrir=comunidade#comunidade'
-                          : '?abrir=servicos#servicos'
+                        ? '?abrir=comunidade#comunidade'
+                        : '?abrir=servicos#servicos'
 
                     return (
                       <Link
@@ -261,8 +257,8 @@ export default function MaternaPlusPage({
                   Profissionais Materna360
                 </h2>
                 <p className="text-xs md:text-sm text-[#545454]">
-                  Especialistas selecionados com carinho para cuidar de você e
-                  da sua família em diferentes fases da maternidade.
+                  Especialistas selecionados com carinho para cuidar de você e da sua
+                  família em diferentes fases da maternidade.
                 </p>
               </header>
 
@@ -298,7 +294,7 @@ export default function MaternaPlusPage({
                 })}
               </div>
 
-              {/* LISTA DE PROFISSIONAIS – layout mais compacto */}
+              {/* LISTA DE PROFISSIONAIS */}
               <div className="space-y-3">
                 {filteredProfessionals.length === 0 ? (
                   <SoftCard className="rounded-3xl border border-dashed border-[var(--color-border-soft)] bg-white/95 px-4 py-4 md:px-5 md:py-5">
@@ -315,11 +311,7 @@ export default function MaternaPlusPage({
                       {/* Avatar / Ícone */}
                       <div className="flex-shrink-0 mt-1">
                         <div className="h-11 w-11 rounded-full bg-[#ffd8e6] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
-                          <AppIcon
-                            name="care"
-                            className="h-5 w-5 text-[#ff005e]"
-                            decorative
-                          />
+                          <AppIcon name="care" className="h-5 w-5 text-[#ff005e]" decorative />
                         </div>
                       </div>
 
@@ -344,19 +336,15 @@ export default function MaternaPlusPage({
                           <a
                             href={prof.whatsappLink ?? '#'}
                             target={prof.whatsappLink ? '_blank' : undefined}
-                            rel={
-                              prof.whatsappLink
-                                ? 'noopener noreferrer'
-                                : undefined
-                            }
+                            rel={prof.whatsappLink ? 'noopener noreferrer' : undefined}
                             className="inline-flex w-fit items-center justify-center rounded-full px-4 py-1.5 text-xs md:text-sm font-medium text-white bg-[#ff005e] shadow-[0_6px_18px_rgba(255,0,94,0.35)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_10px_24px_rgba(255,0,94,0.45)]"
                           >
                             Falar pelo WhatsApp
                           </a>
                           {(!prof.whatsappLink || prof.whatsappLink === '#') && (
                             <p className="text-[11px] text-[#6a6a6a]">
-                              Em breve, este botão vai levar direto para o
-                              WhatsApp deste profissional.
+                              Em breve, este botão vai levar direto para o WhatsApp deste
+                              profissional.
                             </p>
                           )}
                         </div>
@@ -368,11 +356,7 @@ export default function MaternaPlusPage({
                         aria-label="Favoritar profissional"
                         className="absolute top-3.5 right-3.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#ffd3e6] bg-white text-[#ff005e] shadow-[0_4px_12px_rgba(0,0,0,0.10)]"
                       >
-                        <AppIcon
-                          name="heart"
-                          className="h-3.5 w-3.5"
-                          decorative
-                        />
+                        <AppIcon name="heart" className="h-3.5 w-3.5" decorative />
                       </button>
                     </SoftCard>
                   ))
@@ -406,17 +390,13 @@ export default function MaternaPlusPage({
                         Um lugar para você não se sentir sozinha
                       </p>
                       <p className="text-xs md:text-sm text-[#545454]">
-                        Aqui você pode desabafar, pedir ideias e se sentir
-                        acolhida por quem está vivendo algo parecido com você.
+                        Aqui você pode desabafar, pedir ideias e se sentir acolhida por
+                        quem está vivendo algo parecido com você.
                       </p>
                     </div>
                     <div className="flex-shrink-0">
                       <div className="h-9 w-9 rounded-full bg-[#ffd8e6] flex items-center justify-center">
-                        <AppIcon
-                          name="heart"
-                          className="h-4 w-4 text-[#ff005e]"
-                          decorative
-                        />
+                        <AppIcon name="heart" className="h-4 w-4 text-[#ff005e]" decorative />
                       </div>
                     </div>
                   </div>
@@ -429,19 +409,15 @@ export default function MaternaPlusPage({
                       Entrar na comunidade
                     </a>
                     <p className="mt-2 text-[11px] text-[#6a6a6a]">
-                      Em breve, este botão vai levar direto para o espaço
-                      oficial da Comunidade Materna360.
+                      Em breve, este botão vai levar direto para o espaço oficial da
+                      Comunidade Materna360.
                     </p>
                   </div>
                 </SoftCard>
               </section>
 
               {/* Serviços */}
-              <section
-                id="servicos"
-                aria-label="Serviços Materna"
-                className="space-y-2"
-              >
+              <section id="servicos" aria-label="Serviços Materna" className="space-y-2">
                 <header className="space-y-1">
                   <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ffe8f2]/90">
                     SERVIÇOS
@@ -451,10 +427,10 @@ export default function MaternaPlusPage({
                   </h2>
                 </header>
 
-                <SoftCard className="rounded-3xl border border-[#ffd3e6] bg-white/98 p-4 md:p-5 shadow-[0_10px_24px_rgba(0,0,0,0.14)] space-y-3">
+                <SoftCard className="rounded-3xl border border-[#ffd3e6] bg:white/98 p-4 md:p-5 shadow-[0_10px_24px_rgba(0,0,0,0.14)] space-y-3">
                   <p className="text-xs md:text-sm text-[#545454]">
-                    Encontros, consultorias e conteúdos especiais para
-                    aprofundar o cuidado com você e com a sua família.
+                    Encontros, consultorias e conteúdos especiais para aprofundar o
+                    cuidado com você e com a sua família.
                   </p>
 
                   <div className="mt-1 space-y-3">
@@ -462,25 +438,17 @@ export default function MaternaPlusPage({
                       <div
                         key={service.id}
                         className={`flex gap-3 ${
-                          index !== 0
-                            ? 'pt-3 border-t border-[var(--color-border-soft)]'
-                            : ''
+                          index !== 0 ? 'pt-3 border-t border-[var(--color-border-soft)]' : ''
                         }`}
                       >
                         <div className="mt-0.5 flex-shrink-0">
-                          <AppIcon
-                            name="star"
-                            className="h-4 w-4 text-[#ff005e]"
-                            decorative
-                          />
+                          <AppIcon name="star" className="h-4 w-4 text-[#ff005e]" decorative />
                         </div>
                         <div className="flex-1 space-y-1">
                           <p className="text-xs font-semibold text-[#2f3a56] md:text-sm">
                             {service.name}
                           </p>
-                          <p className="text-xs text-[#545454]">
-                            {service.description}
-                          </p>
+                          <p className="text-xs text-[#545454]">{service.description}</p>
                           {service.highlight && (
                             <p className="text-[11px] font-medium text-[#9b4d96]">
                               {service.highlight}
@@ -505,24 +473,23 @@ export default function MaternaPlusPage({
           </div>
 
           {/* ENCERRAMENTO EMOCIONAL */}
-          <SoftCard className="rounded-3xl border border-white/75 bg-white/10 px-4 py-5 md:px-6 md:py-6 shadow-[0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
+          <SoftCard className="rounded-3xl border border:white/75 bg-white/10 px-4 py-5 md:px-6 md:py-6 shadow-[0_12px_32px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1 max-w-xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90">
                   O MATERNA+ CRESCE COM VOCÊ
                 </p>
                 <p className="text-sm md:text-base text-white">
-                  Aos poucos, novos profissionais, encontros e materiais vão
-                  chegando por aqui. A sua jornada importa — e o Materna+ está
-                  sendo construído para caminhar ao seu lado, um passo de cada
-                  vez.
+                  Aos poucos, novos profissionais, encontros e materiais vão chegando por
+                  aqui. A sua jornada importa — e o Materna+ está sendo construído para
+                  caminhar ao seu lado, um passo de cada vez.
                 </p>
               </div>
               <div className="mt-1 flex items-center gap-2 text-white/90 text-xs md:text-sm">
                 <AppIcon name="sparkles" className="h-4 w-4" decorative />
                 <span>
-                  Você não precisa dar conta de tudo sozinha. A gente te ajuda a
-                  cuidar de quem cuida.
+                  Você não precisa dar conta de tudo sozinha. A gente te ajuda a cuidar de
+                  quem cuida.
                 </span>
               </div>
             </div>
