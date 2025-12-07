@@ -19,12 +19,11 @@ export default function SalvosPage() {
         <div className="mt-2 rounded-2xl bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)] px-4 py-3 md:px-5 md:py-4">
           <p className="text-sm text-[var(--color-text-muted)]">
             Você ainda não salvou ideias no planner. Use os hubs do Materna360,
-            como{' '}
-            <span className="font-medium">Como Estou Hoje</span>,{' '}
+            como <span className="font-medium">Como Estou Hoje</span>,{' '}
             <span className="font-medium">Rotina Leve</span> e{' '}
-            <span className="font-medium">Cuidar com Amor</span> e toque em
-            <span className="font-medium"> "Salvar no planner"</span> sempre que
-            quiser guardar algo.
+            <span className="font-medium">Cuidar com Amor</span> e toque em{' '}
+            <span className="font-medium">&quot;Salvar no planner&quot;</span>{' '}
+            sempre que quiser guardar algo.
           </p>
 
           <p className="text-sm text-[var(--color-text-muted)] mt-2">
