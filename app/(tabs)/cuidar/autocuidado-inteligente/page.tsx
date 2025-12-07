@@ -276,7 +276,7 @@ export default function AutocuidadoInteligentePage() {
 
       if (!res.ok) {
         console.error('[Autocuidado] IA retornou status', res.status)
-        const texto = buildFallbackSuggestion()
+        buildFallbackSuggestion()
         toast.info(
           'Não consegui falar com a IA agora, então te trouxe um carinho simples para hoje.',
         )
@@ -296,7 +296,7 @@ export default function AutocuidadoInteligentePage() {
 
       if (!suggestion || !suggestion.headline) {
         console.warn('[Autocuidado] Sugestão de IA vazia, usando fallback.')
-        const texto = buildFallbackSuggestion()
+        buildFallbackSuggestion()
         try {
           track('autocuidado_sugestao_gerada', {
             dateKey: currentDateKey,
@@ -335,7 +335,7 @@ export default function AutocuidadoInteligentePage() {
       }
     } catch (e) {
       console.error('[Autocuidado] Erro geral ao gerar sugestão:', e)
-      const texto = buildFallbackSuggestion()
+      buildFallbackSuggestion()
       toast.info(
         'A conexão com a IA falhou agora, mas preparei um carinho simples para você.',
       )
@@ -592,9 +592,13 @@ export default function AutocuidadoInteligentePage() {
                       <div className="space-y-5 flex-1">
                         {/* Hidratação */}
                         <div className="space-y-3">
-                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
-                            💧 Hidratação
-                          </p>
+                          <div className="flex items-center gap-2 text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                            <AppIcon
+                              name="droplets"
+                              className="w-4 h-4 text-[#ff005e]"
+                            />
+                            <span>Hidratação</span>
+                          </div>
                           <div className="flex flex-wrap gap-2">
                             {[
                               { idx: 0, label: 'Preciso beber mais' },
@@ -621,9 +625,13 @@ export default function AutocuidadoInteligentePage() {
 
                         {/* Sono */}
                         <div className="space-y-3">
-                          <p className="text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
-                            😴 Sono
-                          </p>
+                          <div className="flex items-center gap-2 text-[11px] md:text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                            <AppIcon
+                              name="moon"
+                              className="w-4 h-4 text-[#ff005e]"
+                            />
+                            <span>Sono</span>
+                          </div>
                           <div className="flex flex-wrap gap-2">
                             {[
                               'Pouco (≤6h)',
