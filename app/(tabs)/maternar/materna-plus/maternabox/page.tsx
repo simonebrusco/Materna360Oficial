@@ -15,24 +15,27 @@ export default function MaternaBoxPage() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
-
-          {/* HERO · TEXTO + IMAGEM */}
+          {/* HERO · TEXTO + “O QUE TEM NA CAIXA” */}
           <SoftCard className="grid gap-6 rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] md:grid-cols-[1.2fr,1fr] md:p-6">
             <div className="flex flex-col justify-center space-y-4">
               <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                 UM CARINHO MENSAL ENTREGUE NA SUA PORTA
               </p>
+
               <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                 Mais conexão, menos culpa. Uma caixa pensada para caber na sua rotina real.
               </h2>
+
               <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                A MaternaBox nasce para mães que querem estar presentes, mas vivem a correria real do dia a dia.
-                Todo mês, você recebe uma caixa com atividades simples, brinquedos educativos e momentos prontos
-                para viver com seu filho — sem precisar planejar nada do zero.
+                Sabe aquela sensação de que o dia acabou e vocês quase não brincaram?
+                A MaternaBox nasce justamente para isso: te ajudar a viver momentos simples,
+                mas cheios de presença, mesmo na correria.
               </p>
+
               <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                É sobre transformar pequenos momentos em memórias, reduzir a culpa e sentir que você está
-                construindo uma infância leve, do seu jeito.
+                Todo mês, você recebe uma caixa com atividades prontas, brinquedos educativos
+                e ideias rápidas para se conectar com seu filho — sem precisar pesquisar,
+                planejar ou inventar tudo do zero.
               </p>
 
               <div className="pt-2 flex flex-col gap-2 md:flex-row md:items-center">
@@ -41,15 +44,15 @@ export default function MaternaBoxPage() {
                   size="md"
                   className="w-full md:w-auto"
                 >
-                  Quero escolher meu plano
+                  Quero viver esses momentos com meu filho
                 </Button>
                 <p className="text-[11px] text-[#6a6a6a]">
-                  Um passo de cada vez. Seu plano pode ser ajustado no seu tempo.
+                  Um passo de cada vez. Você escolhe o plano quando se sentir pronta.
                 </p>
               </div>
             </div>
 
-            {/* Bloco visual (sem depender de imagem externa) */}
+            {/* Bloco visual com resumo da caixa */}
             <div className="relative flex items-center justify-center">
               <div className="relative h-48 w-full max-w-sm rounded-3xl bg-gradient-to-br from-[#ffd8e6] to-[#ffe8f2] shadow-[0_18px_40px_rgba(0,0,0,0.18)] overflow-hidden flex items-center justify-center">
                 <div className="space-y-2 px-5">
@@ -57,20 +60,21 @@ export default function MaternaBoxPage() {
                     Dentro da caixa, todo mês:
                   </p>
                   <ul className="text-[11px] text-[#545454] space-y-1">
-                    <li>• 1 brinquedo educativo adequado à faixa etária.</li>
+                    <li>• 1 brinquedo educativo alinhado à fase do seu filho.</li>
                     <li>• 1 atividade guiada para viver um momento especial.</li>
                     <li>• 1 mini-guia impresso com passo a passo simples.</li>
                     <li>• Surpresinhas pensadas para fortalecer a conexão.</li>
                   </ul>
                   <p className="mt-2 text-[10px] text-[#9b4d96]">
-                    Tudo pensado para caber em poucos minutos, sem precisar “dar conta de tudo”.
+                    Tudo pensado para caber em poucos minutos, sem cobrança de perfeição —
+                    só presença possível naquele dia.
                   </p>
                 </div>
               </div>
             </div>
           </SoftCard>
 
-          {/* BLOCO 2 · O QUE VEM NA CAIXA */}
+          {/* BLOCO 2 · O QUE VEM NA CAIXA (DETALHES) */}
           <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)] md:p-6">
             <div className="space-y-3">
               <div className="space-y-1">
@@ -81,49 +85,56 @@ export default function MaternaBoxPage() {
                   Uma combinação leve de carinho, estímulo e presença.
                 </h3>
                 <p className="text-xs md:text-sm text-[#545454]">
-                  Cada edição é criada para trazer pequenas experiências prontas, sem exigir que você tenha tempo,
-                  criatividade ou energia sobrando.
+                  A ideia não é encher sua casa de coisas, e sim te dar oportunidades
+                  prontas de se conectar com seu filho, com o que você consegue hoje.
                 </p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3">
                   <p className="text-xs font-semibold text-[#2f3a56]">
-                    1 brinquedo educativo principal
+                    Brinquedo educativo principal
                   </p>
                   <p className="text-[11px] text-[#545454]">
-                    Sempre alinhado à fase do seu filho: coordenação motora, criatividade, linguagem ou vínculo.
+                    Pensado para a fase de desenvolvimento do seu filho: coordenação,
+                    criatividade, linguagem, vínculo — sempre com olhar pedagógico.
                   </p>
                 </div>
+
                 <div className="space-y-1 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3">
                   <p className="text-xs font-semibold text-[#2f3a56]">
                     Atividades guiadas prontas
                   </p>
                   <p className="text-[11px] text-[#545454]">
-                    Ideias simples com roteiro em 3 passos para você só chegar, sentar e viver o momento.
+                    Ideias simples com um roteiro em poucos passos para você só chegar,
+                    sentar e aproveitar o momento — sem precisar preparar um “evento”.
                   </p>
                 </div>
+
                 <div className="space-y-1 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3">
                   <p className="text-xs font-semibold text-[#2f3a56]">
                     Mini-guia de conexão
                   </p>
                   <p className="text-[11px] text-[#545454]">
-                    Um folheto impresso com sugestões de frases, jeitos de conduzir a brincadeira e adaptar ao seu dia.
+                    Um folheto impresso com sugestões de fala, ajustes para diferentes idades
+                    e ideias de como repetir a atividade em outros dias.
                   </p>
                 </div>
+
                 <div className="space-y-1 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3">
                   <p className="text-xs font-semibold text-[#2f3a56]">
                     Surpresa mensal
                   </p>
                   <p className="text-[11px] text-[#545454]">
-                    Pode ser um item sensorial, algo para você, ou um detalhe extra para deixar o momento ainda mais especial.
+                    Pode ser um item sensorial, algo para você ou um detalhe extra para
+                    tornar a experiência ainda mais gostosa e afetiva.
                   </p>
                 </div>
               </div>
             </div>
           </SoftCard>
 
-          {/* BLOCO 3 · FAIXA ETÁRIA SIMPLIFICADA */}
+          {/* BLOCO 3 · FAIXA ETÁRIA */}
           <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
             <div className="space-y-3">
               <div className="space-y-1">
@@ -134,7 +145,8 @@ export default function MaternaBoxPage() {
                   A caixa acompanha o ritmo do seu filho — e o seu também.
                 </h3>
                 <p className="text-xs md:text-sm text-[#545454]">
-                  Você seleciona a faixa etária ao assinar e pode ajustar depois, conforme seu filho cresce.
+                  Você seleciona a faixa etária ao assinar e pode ajustar depois,
+                  conforme seu filho cresce ou muda de fase.
                 </p>
               </div>
 
@@ -151,7 +163,8 @@ export default function MaternaBoxPage() {
               </div>
 
               <p className="text-[11px] text-[#6a6a6a]">
-                Você pode ajustar a faixa etária sempre que sentir que seu filho mudou de fase.
+                Se você mudar de ideia ou seu filho “disparar” no desenvolvimento,
+                é só atualizar a faixa etária antes da próxima caixa.
               </p>
             </div>
           </SoftCard>
@@ -167,8 +180,9 @@ export default function MaternaBoxPage() {
                   Comece leve, experimente e depois decide se quer seguir.
                 </h3>
                 <p className="text-xs md:text-sm text-[#545454]">
-                  Você pode começar com um plano mensal para testar a experiência ou já garantir um plano mais longo
-                  com um valor mais em conta.
+                  Você pode começar testando por pouco tempo ou já garantir um período maior
+                  com mais economia. Todos os planos têm a mesma experiência dentro da caixa
+                  — o que muda é o tempo de companhia.
                 </p>
               </div>
 
@@ -180,7 +194,7 @@ export default function MaternaBoxPage() {
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">Plano mensal</p>
                     <p className="text-xs text-[#545454]">
-                      Experimente por 1 mês e veja como a MaternaBox se encaixa na sua rotina.
+                      1 mês para experimentar a MaternaBox e sentir como ela encaixa nos seus dias.
                     </p>
                   </div>
                 </div>
@@ -204,7 +218,7 @@ export default function MaternaBoxPage() {
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">Plano semestral</p>
                     <p className="text-xs text-[#545454]">
-                      Meio ano com uma ajudinha mensal para manter a conexão viva mesmo nos dias corridos.
+                      Meio ano com uma ajudinha mensal para manter momentos bons mesmo nos dias corridos.
                     </p>
                   </div>
                 </div>
@@ -216,7 +230,7 @@ export default function MaternaBoxPage() {
                     </p>
                     <p className="text-sm font-semibold text-[#2f3a56]">Plano anual</p>
                     <p className="text-xs text-[#545454]">
-                      12 meses com temas variados, memórias e registros afetivos ao longo do ano.
+                      12 meses com temas variados, registros afetivos e memórias distribuídas ao longo do ano.
                     </p>
                   </div>
                 </div>
@@ -241,7 +255,8 @@ export default function MaternaBoxPage() {
                   Quer ser avisada quando a MaternaBox abrir as primeiras assinaturas?
                 </p>
                 <p className="text-[11px] md:text-xs text-white/90">
-                  Deixe seu e-mail e nós te avisamos em primeira mão — sem spam, só notícias boas.
+                  Deixe seu e-mail e nós te avisamos em primeira mão — sem spam, só novidades
+                  sobre a abertura e os presentes de boas-vindas.
                 </p>
               </div>
 
