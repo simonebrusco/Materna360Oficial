@@ -59,6 +59,13 @@ const SUGESTOES_FIXAS = [
   'Anote uma coisa que você fez bem hoje.',
 ]
 
+type SelfCareAISuggestion = {
+  headline: string
+  description: string
+  tips: string[]
+  reminder: string
+}
+
 export default function AutocuidadoInteligentePage() {
   const [isHydrated, setIsHydrated] = useState(false)
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
@@ -81,6 +88,9 @@ export default function AutocuidadoInteligentePage() {
 
   // Sugestão state
   const [sugestaoAtual, setSugestaoAtual] = useState<string | null>(null)
+  const [aiSuggestion, setAiSuggestion] =
+    useState<SelfCareAISuggestion | null>(null)
+  const [isLoadingSugestao, setIsLoadingSugestao] = useState(false)
 
   useEffect(() => {
     setIsHydrated(true)
@@ -235,17 +245,110 @@ export default function AutocuidadoInteligentePage() {
     toast.success('Seus cuidados de saúde de hoje foram salvos.')
   }
 
-  // CARD 4: Para Você Hoje
-  const handleGerarSugestao = () => {
+  // CARD 4: Para Você Hoje — IA + fallback
+  const buildFallbackSuggestion = () => {
     const indexAleatorio = Math.floor(Math.random() * SUGESTOES_FIXAS.length)
-    setSugestaoAtual(SUGESTOES_FIXAS[indexAleatorio])
+    const texto = SUGESTOES_FIXAS[indexAleatorio]
+    setAiSuggestion(null)
+    setSugestaoAtual(texto)
+    return texto
+  }
+
+  const handleGerarSugestao = async () => {
+    setIsLoadingSugestao(true)
 
     try {
-      track('autocuidado_sugestao_gerada', {
-        dateKey: currentDateKey,
+      // Chama IA no backend com contexto do dia
+      const res = await fetch('/api/ai/autocuidado-inteligente', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dateKey: currentDateKey,
+          ritmo: selectedRitmo,
+          nota: ritmoNota || null,
+          hidratacao,
+          sono,
+          alimentacao,
+        }),
       })
+
+      if (!res.ok) {
+        console.error('[Autocuidado] IA retornou status', res.status)
+        const texto = buildFallbackSuggestion()
+        toast.info(
+          'Não consegui falar com a IA agora, então te trouxe um carinho simples para hoje.',
+        )
+        try {
+          track('autocuidado_sugestao_gerada', {
+            dateKey: currentDateKey,
+            via: 'fallback',
+          })
+        } catch {
+          // ignora
+        }
+        return
+      }
+
+      const data = await res.json()
+      const suggestion: SelfCareAISuggestion | undefined = data?.suggestion
+
+      if (!suggestion || !suggestion.headline) {
+        console.warn('[Autocuidado] Sugestão de IA vazia, usando fallback.')
+        const texto = buildFallbackSuggestion()
+        try {
+          track('autocuidado_sugestao_gerada', {
+            dateKey: currentDateKey,
+            via: 'fallback',
+          })
+        } catch {
+          // ignora
+        }
+        return
+      }
+
+      setAiSuggestion(suggestion)
+
+      // texto-resumo para salvar no storage simples
+      const resumo =
+        suggestion.reminder ||
+        suggestion.tips?.[0] ||
+        suggestion.description ||
+        suggestion.headline
+
+      setSugestaoAtual(resumo)
+
+      try {
+        track('autocuidado_sugestao_gerada', {
+          dateKey: currentDateKey,
+          via: 'ia',
+        })
+      } catch (e) {
+        console.error('[Autocuidado] Erro ao rastrear sugestão IA:', e)
+      }
+
+      try {
+        void updateXP(12)
+      } catch (e) {
+        console.error('[Autocuidado] Erro ao atualizar XP (IA sugestão):', e)
+      }
     } catch (e) {
-      console.error('[Autocuidado] Erro ao rastrear sugestão:', e)
+      console.error('[Autocuidado] Erro geral ao gerar sugestão:', e)
+      const texto = buildFallbackSuggestion()
+      toast.info(
+        'A conexão com a IA falhou agora, mas preparei um carinho simples para você.',
+      )
+      try {
+        track('autocuidado_sugestao_gerada', {
+          dateKey: currentDateKey,
+          via: 'error-fallback',
+        })
+      } catch {
+        // ignora
+      }
+    } finally {
+      setIsLoadingSugestao(false)
     }
   }
 
@@ -266,6 +369,7 @@ export default function AutocuidadoInteligentePage() {
     try {
       track('autocuidado_sugestao_salva', {
         dateKey: currentDateKey,
+        via: aiSuggestion ? 'ia' : 'fixa',
       })
     } catch (e) {
       console.error('[Autocuidado] Erro ao rastrear salvamento da sugestão:', e)
@@ -468,7 +572,7 @@ export default function AutocuidadoInteligentePage() {
                 {/* Grid com dois cards: Saúde & Bem-Estar + Para Você Hoje */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {/* CARD 3 — Saúde & Bem-Estar */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg:white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-6 flex flex-col h-full">
                       <div className="space-y-3 border-b border-[#ffd8e6] pb-4">
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] flex items-center gap-2">
@@ -615,20 +719,66 @@ export default function AutocuidadoInteligentePage() {
                       <div className="flex-1 space-y-4">
                         {sugestaoAtual ? (
                           <div className="p-4 rounded-2xl bg-[#fff7fb]/80 border border-[#ffd8e6]/70 space-y-3 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
-                            <p className="text-sm md:text-base leading-relaxed text-[#2f3a56] font-medium">
-                              {sugestaoAtual}
-                            </p>
-                            <button
-                              onClick={handleGerarSugestao}
-                              className="text-sm font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors inline-flex items-center gap-1"
-                            >
-                              Ver outra sugestão
-                              <AppIcon
-                                name="refresh-cw"
-                                size={14}
-                                decorative
-                              />
-                            </button>
+                            {aiSuggestion ? (
+                              <>
+                                <p className="text-sm md:text-base leading-relaxed text-[#2f3a56] font-semibold">
+                                  {aiSuggestion.headline}
+                                </p>
+                                <p className="text-sm text-[#545454]">
+                                  {aiSuggestion.description}
+                                </p>
+                                {aiSuggestion.tips?.length > 0 && (
+                                  <ul className="mt-2 space-y-1.5 text-sm text-[#2f3a56] list-disc list-inside">
+                                    {aiSuggestion.tips.map(tip => (
+                                      <li key={tip}>{tip}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                                {aiSuggestion.reminder && (
+                                  <p className="mt-2 text-xs text-[#545454]">
+                                    {aiSuggestion.reminder}
+                                  </p>
+                                )}
+                                <button
+                                  onClick={handleGerarSugestao}
+                                  disabled={isLoadingSugestao}
+                                  className="mt-3 text-sm font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors inline-flex items-center gap-1 disabled:opacity-60"
+                                >
+                                  {isLoadingSugestao
+                                    ? 'Gerando outro carinho...'
+                                    : 'Ver outra sugestão'}
+                                  {!isLoadingSugestao && (
+                                    <AppIcon
+                                      name="refresh-cw"
+                                      size={14}
+                                      decorative
+                                    />
+                                  )}
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-sm md:text-base leading-relaxed text-[#2f3a56] font-medium">
+                                  {sugestaoAtual}
+                                </p>
+                                <button
+                                  onClick={handleGerarSugestao}
+                                  disabled={isLoadingSugestao}
+                                  className="mt-3 text-sm font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors inline-flex items-center gap-1 disabled:opacity-60"
+                                >
+                                  {isLoadingSugestao
+                                    ? 'Gerando outro carinho...'
+                                    : 'Ver outra sugestão'}
+                                  {!isLoadingSugestao && (
+                                    <AppIcon
+                                      name="refresh-cw"
+                                      size={14}
+                                      decorative
+                                    />
+                                  )}
+                                </button>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <div className="p-4 rounded-2xl bg-[#fff7fb]/60 border border-[#ffd8e6]/70 text-center">
@@ -646,9 +796,12 @@ export default function AutocuidadoInteligentePage() {
                             variant="primary"
                             size="sm"
                             onClick={handleGerarSugestao}
-                            className="w-full"
+                            disabled={isLoadingSugestao}
+                            className="w-full disabled:opacity-60"
                           >
-                            Gerar um carinho para hoje
+                            {isLoadingSugestao
+                              ? 'Gerando um carinho para você...'
+                              : 'Gerar um carinho para hoje'}
                           </Button>
                         ) : (
                           <Button
