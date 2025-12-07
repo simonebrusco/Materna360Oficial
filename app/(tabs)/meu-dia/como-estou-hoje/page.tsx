@@ -27,6 +27,8 @@ type EnergyLevel = 'baixa' | 'variando' | 'ok' | 'alta'
 
 const DAILY_CHECKIN_LIMIT = 3
 const CHECKIN_STORAGE_PREFIX = 'como-estou-hoje:checkin:'
+const LAST_CHECKIN_SNAPSHOT_KEY = 'como-estou-hoje:last'
+const PARTIAL_STATE_KEY = 'como-estou-hoje:partial'
 
 type MoodOption = {
   id: MoodId
@@ -54,7 +56,8 @@ const moodOptions: MoodOption[] = [
   {
     id: 'calma',
     label: 'Mais tranquila',
-    description: 'O dia pode estar cheio, mas o coração está um pouco mais sereno.',
+    description:
+      'O dia pode estar cheio, mas o coração está um pouco mais sereno.',
     icon: 'sparkles',
   },
   {
@@ -78,10 +81,22 @@ const moodOptions: MoodOption[] = [
 ]
 
 const energyOptions: EnergyOption[] = [
-  { id: 'baixa', label: 'Baixa', helper: 'Só o básico hoje já é muita coisa.' },
-  { id: 'variando', label: 'Oscilando', helper: 'Tem horas boas e horas desafiadoras.' },
+  {
+    id: 'baixa',
+    label: 'Baixa',
+    helper: 'Só o básico hoje já é muita coisa.',
+  },
+  {
+    id: 'variando',
+    label: 'Oscilando',
+    helper: 'Tem horas boas e horas desafiadoras.',
+  },
   { id: 'ok', label: 'Ok', helper: 'Dá pra seguir o dia, com pausas.' },
-  { id: 'alta', label: 'Alta', helper: 'Hoje a energia ajuda a dar uns passinhos a mais.' },
+  {
+    id: 'alta',
+    label: 'Alta',
+    helper: 'Hoje a energia ajuda a dar uns passinhos a mais.',
+  },
 ]
 
 function getCheckinStorageKey(dateKey: string) {
@@ -121,6 +136,10 @@ export default function ComoEstouHojePage() {
   const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null)
   const [insightLoading, setInsightLoading] = useState(false)
 
+  // ======================================================
+  // EFFECTS – CONTAGEM, ESTADO SALVO E NAVEGAÇÃO
+  // ======================================================
+
   // Carrega número de check-ins do dia + telemetria de abertura
   useEffect(() => {
     const storageKey = getCheckinStorageKey(currentDateKey)
@@ -144,6 +163,58 @@ export default function ComoEstouHojePage() {
       // telemetria nunca quebra UX
     }
   }, [currentDateKey, abrir])
+
+  // Carrega snapshot do último check-in do dia (confirmado)
+  useEffect(() => {
+    const snapshot = load(LAST_CHECKIN_SNAPSHOT_KEY)
+
+    if (!snapshot || snapshot.dateKey !== currentDateKey) return
+
+    if (snapshot.moodId) setSelectedMood(snapshot.moodId)
+    if (snapshot.energyId) setSelectedEnergy(snapshot.energyId)
+    if (snapshot.note) setNote(snapshot.note)
+  }, [currentDateKey])
+
+  // Carrega estado parcial (rascunho) se existir para o dia atual
+  useEffect(() => {
+    const partial = load(PARTIAL_STATE_KEY)
+    if (!partial || partial.dateKey !== currentDateKey) return
+
+    if (partial.moodId) setSelectedMood(partial.moodId)
+    if (partial.energyId) setSelectedEnergy(partial.energyId)
+    if (partial.note) setNote(partial.note)
+  }, [currentDateKey])
+
+  // Salva estado parcial sempre que humor, energia ou nota mudarem
+  useEffect(() => {
+    save(PARTIAL_STATE_KEY, {
+      moodId: selectedMood,
+      energyId: selectedEnergy,
+      note,
+      dateKey: currentDateKey,
+    })
+  }, [selectedMood, selectedEnergy, note, currentDateKey])
+
+  // Navegação interna com ?abrir=checkin | semana
+  useEffect(() => {
+    if (!abrir) return
+
+    const id =
+      abrir === 'checkin'
+        ? 'bloco-checkin'
+        : abrir === 'semana'
+        ? 'bloco-semana'
+        : null
+
+    if (id) {
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 200)
+    }
+  }, [abrir])
 
   // Carrega insight do dia da IA (com fallback suave)
   useEffect(() => {
@@ -194,7 +265,10 @@ export default function ComoEstouHojePage() {
           // ignora
         }
       } catch (error) {
-        console.error('[Como Estou Hoje] Erro ao buscar insight do dia, usando fallback:', error)
+        console.error(
+          '[Como Estou Hoje] Erro ao buscar insight do dia, usando fallback:',
+          error,
+        )
         if (!cancelled) {
           setDailyInsight(DEFAULT_INSIGHT)
         }
@@ -239,16 +313,19 @@ export default function ComoEstouHojePage() {
     }
 
     if (!selectedMood && !selectedEnergy && !note.trim()) {
-      toast.info('Escolha pelo menos um sentimento ou escreva uma frase sobre o seu dia.')
+      toast.info(
+        'Escolha pelo menos um sentimento ou escreva uma frase sobre o seu dia.',
+      )
       return
     }
 
     const moodLabel = selectedMood
-      ? moodOptions.find((m) => m.id === selectedMood)?.label ?? selectedMood
+      ? moodOptions.find(m => m.id === selectedMood)?.label ?? selectedMood
       : null
 
     const energyLabel = selectedEnergy
-      ? energyOptions.find((e) => e.id === selectedEnergy)?.label ?? selectedEnergy
+      ? energyOptions.find(e => e.id === selectedEnergy)?.label ??
+        selectedEnergy
       : null
 
     try {
@@ -267,6 +344,14 @@ export default function ComoEstouHojePage() {
         },
       })
 
+      // Snapshot do último check-in do dia
+      save(LAST_CHECKIN_SNAPSHOT_KEY, {
+        moodId: selectedMood,
+        energyId: selectedEnergy,
+        note: note.trim() || null,
+        dateKey: currentDateKey,
+      })
+
       // XP – gesto emocional importante
       try {
         await updateXP(10)
@@ -276,7 +361,7 @@ export default function ComoEstouHojePage() {
 
       // Atualiza contador diário
       const storageKey = getCheckinStorageKey(currentDateKey)
-      setUsedCheckinsToday((prev) => {
+      setUsedCheckinsToday(prev => {
         const next = prev + 1
         save(storageKey, next)
         return next
@@ -297,7 +382,9 @@ export default function ComoEstouHojePage() {
       setNote('') // limpa só o texto, mantendo humor/energia
     } catch (error) {
       console.error('[Como Estou Hoje] Erro ao registrar check-in:', error)
-      toast.danger('Não consegui registrar seu momento agora. Tenta de novo em instantes?')
+      toast.danger(
+        'Não consegui registrar seu momento agora. Tenta de novo em instantes?',
+      )
     }
   }
 
@@ -355,12 +442,18 @@ export default function ComoEstouHojePage() {
       try {
         void updateXP(4)
       } catch (e) {
-        console.error('[Como Estou Hoje] Erro ao atualizar XP (sugestão semanal):', e)
+        console.error(
+          '[Como Estou Hoje] Erro ao atualizar XP (sugestão semanal):',
+          e,
+        )
       }
 
       toast.success('Sugestão levada para o planner ✨')
     } catch (error) {
-      console.error('[Como Estou Hoje] Erro ao salvar sugestão semanal:', error)
+      console.error(
+        '[Como Estou Hoje] Erro ao salvar sugestão semanal:',
+        error,
+      )
       toast.danger('Não consegui levar essa sugestão pro planner agora.')
     }
   }
@@ -384,7 +477,10 @@ export default function ComoEstouHojePage() {
       try {
         void updateXP(4)
       } catch (e) {
-        console.error('[Como Estou Hoje] Erro ao atualizar XP (insight do dia):', e)
+        console.error(
+          '[Como Estou Hoje] Erro ao atualizar XP (insight do dia):',
+          e,
+        )
       }
 
       try {
@@ -418,12 +514,15 @@ export default function ComoEstouHojePage() {
           {/* TEXTO DE ABERTURA */}
           <div className="space-y-2">
             <p className="text-sm md:text-base text-white">
-              <span className="font-semibold">Antes da lista de tarefas, vem você.</span>{' '}
-              Aqui você registra como está hoje, sem precisar estar bem o tempo todo.
+              <span className="font-semibold">
+                Antes da lista de tarefas, vem você.
+              </span>{' '}
+              Aqui você registra como está hoje, sem precisar estar bem o tempo
+              todo.
             </p>
             <p className="text-xs md:text-sm text-white/80">
-              Nomear o que você sente é um gesto de cuidado. O Materna360 transforma isso em
-              pequenas conquistas ao longo da semana.
+              Nomear o que você sente é um gesto de cuidado. O Materna360
+              transforma isso em pequenas conquistas ao longo da semana.
             </p>
           </div>
 
@@ -431,7 +530,7 @@ export default function ComoEstouHojePage() {
               BLOCO 1 — COMO VOCÊ ESTÁ AGORA
           ============================ */}
           <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
-            <div className="space-y-6">
+            <div id="bloco-checkin" className="space-y-6">
               <header className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                   Check-in emocional
@@ -440,8 +539,8 @@ export default function ComoEstouHojePage() {
                   Como seu coração chega até aqui hoje?
                 </h2>
                 <p className="text-sm text-[#545454] max-w-2xl">
-                  Não existe resposta certa. Use este espaço como se fosse uma conversa sincera com
-                  você mesma.
+                  Não existe resposta certa. Use este espaço como se fosse uma
+                  conversa sincera com você mesma.
                 </p>
               </header>
 
@@ -455,14 +554,14 @@ export default function ComoEstouHojePage() {
                       Se você pudesse escolher uma palavra para o dia…
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {moodOptions.map((mood) => {
+                      {moodOptions.map(mood => {
                         const isActive = selectedMood === mood.id
                         return (
                           <button
                             key={mood.id}
                             type="button"
                             onClick={() =>
-                              setSelectedMood((current) =>
+                              setSelectedMood(current =>
                                 current === mood.id ? null : mood.id,
                               )
                             }
@@ -478,13 +577,17 @@ export default function ComoEstouHojePage() {
                                 name={mood.icon}
                                 className={clsx(
                                   'h-4 w-4',
-                                  isActive ? 'text-[#ff005e]' : 'text-[#cf285f]',
+                                  isActive
+                                    ? 'text-[#ff005e]'
+                                    : 'text-[#cf285f]',
                                 )}
                               />
                               <span
                                 className={clsx(
                                   'text-[13px] font-semibold',
-                                  isActive ? 'text-[#ff005e]' : 'text-[#2f3a56]',
+                                  isActive
+                                    ? 'text-[#ff005e]'
+                                    : 'text-[#2f3a56]',
                                 )}
                               >
                                 {mood.label}
@@ -506,14 +609,14 @@ export default function ComoEstouHojePage() {
                     </p>
                     <textarea
                       value={note}
-                      onChange={(e) => setNote(e.target.value)}
+                      onChange={e => setNote(e.target.value)}
                       placeholder="Se quiser, escreva em poucas linhas algo que marcou o seu dia até agora. Ninguém aqui vai te julgar."
                       rows={4}
                       className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs md:text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
                     />
                     <p className="text-[11px] text-[#545454]/80">
-                      Esse registro fica guardado com carinho no seu planner, como parte da sua
-                      jornada.
+                      Esse registro fica guardado com carinho no seu planner,
+                      como parte da sua jornada.
                     </p>
                   </div>
                 </div>
@@ -526,14 +629,14 @@ export default function ComoEstouHojePage() {
                       E a sua energia hoje?
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {energyOptions.map((option) => {
+                      {energyOptions.map(option => {
                         const isActive = selectedEnergy === option.id
                         return (
                           <button
                             key={option.id}
                             type="button"
                             onClick={() =>
-                              setSelectedEnergy((current) =>
+                              setSelectedEnergy(current =>
                                 current === option.id ? null : option.id,
                               )
                             }
@@ -552,7 +655,7 @@ export default function ComoEstouHojePage() {
                     {selectedEnergy && (
                       <p className="text-[11px] text-[#545454]">
                         {
-                          energyOptions.find((e) => e.id === selectedEnergy)
+                          energyOptions.find(e => e.id === selectedEnergy)
                             ?.helper
                         }
                       </p>
@@ -613,8 +716,8 @@ export default function ComoEstouHojePage() {
                   </p>
                   {isOverLimit && (
                     <p className="text-[#ff005e] font-medium">
-                      Você chegou ao limite de registros por hoje. O que você já fez até aqui já
-                      conta muito 💗
+                      Você chegou ao limite de registros por hoje. O que você já
+                      fez até aqui já conta muito 💗
                     </p>
                   )}
                 </div>
@@ -658,7 +761,7 @@ export default function ComoEstouHojePage() {
               BLOCO 2 — COMO SUA SEMANA TEM SE DESENHADO
           ============================ */}
           <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-            <div className="space-y-5">
+            <div id="bloco-semana" className="space-y-5">
               <header className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                   Semana
@@ -667,8 +770,8 @@ export default function ComoEstouHojePage() {
                   Como sua semana tem se desenhado
                 </h2>
                 <p className="text-sm text-[#545454] max-w-2xl">
-                  Um olhar mais amplo para os seus dias: padrões emocionais e pequenas ideias para
-                  deixar a semana mais leve.
+                  Um olhar mais amplo para os seus dias: padrões emocionais e
+                  pequenas ideias para deixar a semana mais leve.
                 </p>
               </header>
 
@@ -679,14 +782,17 @@ export default function ComoEstouHojePage() {
                     Minha semana emocional
                   </p>
                   <p className="text-xs text-[#545454] leading-relaxed">
-                    Nem todo dia será leve, e tudo bem. A maternidade traz momentos de cansaço que
-                    não precisam virar culpa. Reconhecer o que pesa é um passo pra se cuidar melhor.
-                    Permita-se pausas e cuide de você com a mesma delicadeza que cuida dos outros.
+                    Nem todo dia será leve, e tudo bem. A maternidade traz
+                    momentos de cansaço que não precisam virar culpa.
+                    Reconhecer o que pesa é um passo pra se cuidar melhor.
+                    Permita-se pausas e cuide de você com a mesma delicadeza que
+                    cuida dos outros.
                   </p>
                   <p className="text-xs text-[#545454] leading-relaxed">
-                    Quando os dias fluem com menos pressa, aproveite esses momentos para recarregar.
-                    Quando o dia pesa um pouco mais, lembre-se de que é normal precisar de um tempo —
-                    e que isso não diminui seu valor como mãe.
+                    Quando os dias fluem com menos pressa, aproveite esses
+                    momentos para recarregar. Quando o dia pesa um pouco mais,
+                    lembre-se de que é normal precisar de um tempo — e que isso
+                    não diminui seu valor como mãe.
                   </p>
                 </div>
 
@@ -699,13 +805,16 @@ export default function ComoEstouHojePage() {
                   <div className="space-y-3 text-xs text-[#545454]">
                     <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-3 py-3 space-y-1">
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
-                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">Pausa</span>
+                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">
+                          Pausa
+                        </span>
                       </span>
                       <p className="font-semibold text-[#2f3a56]">
                         Respire fundo nos momentos difíceis
                       </p>
                       <p>
-                        Uma pausa de 5 minutos pode recarregar sua energia quando o dia apertar.
+                        Uma pausa de 5 minutos pode recarregar sua energia
+                        quando o dia apertar.
                       </p>
                       <button
                         type="button"
@@ -718,11 +827,16 @@ export default function ComoEstouHojePage() {
 
                     <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-3 py-3 space-y-1">
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
-                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">Conexão</span>
+                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">
+                          Conexão
+                        </span>
                       </span>
-                      <p className="font-semibold text-[#2f3a56]">Momento com seu filho</p>
+                      <p className="font-semibold text-[#2f3a56]">
+                        Momento com seu filho
+                      </p>
                       <p>
-                        Um abraço ou conversa de 10 minutos fortalece o vínculo e acalma os dois.
+                        Um abraço ou conversa de 10 minutos fortalece o vínculo
+                        e acalma os dois.
                       </p>
                       <button
                         type="button"
@@ -735,14 +849,16 @@ export default function ComoEstouHojePage() {
 
                     <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb]/80 px-3 py-3 space-y-1">
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
-                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">Rotina</span>
+                        <span className="rounded-full bg-[#ffd8e6] px-2 py-0.5">
+                          Rotina
+                        </span>
                       </span>
                       <p className="font-semibold text-[#2f3a56]">
                         Mantenha um pequeno ritual
                       </p>
                       <p>
-                        Café da manhã tranquilo, alongamento leve ou um chá à noite ajudam a trazer
-                        um pouco de estabilidade.
+                        Café da manhã tranquilo, alongamento leve ou um chá à
+                        noite ajudam a trazer um pouco de estabilidade.
                       </p>
                       <button
                         type="button"
@@ -766,18 +882,23 @@ export default function ComoEstouHojePage() {
                   Por que isso importa
                 </p>
                 <p className="text-sm text-[#545454] max-w-xl">
-                  Cada vez que você registra como está, o Materna360 te ajuda a enxergar padrões:
-                  dias mais leves, dias mais pesados, momentos em que você precisa de mais apoio.
-                  Isso vira base para o seu planner e para as suas conquistas.
+                  Cada vez que você registra como está, o Materna360 te ajuda a
+                  enxergar padrões: dias mais leves, dias mais pesados, momentos
+                  em que você precisa de mais apoio. Isso vira base para o seu
+                  planner e para as suas conquistas.
                 </p>
               </div>
               <div className="mt-1 flex items-start gap-2 text-xs text-[#545454]/90 max-w-xs">
                 <div className="mt-0.5">
-                  <AppIcon name="sparkles" className="h-4 w-4 text-[#ff005e]" />
+                  <AppIcon
+                    name="sparkles"
+                    className="h-4 w-4 text-[#ff005e]"
+                  />
                 </div>
                 <p>
-                  Você não precisa se encaixar em nenhuma versão de mãe perfeita. Aqui, cada
-                  registro é um gesto de presença com você mesma.
+                  Você não precisa se encaixar em nenhuma versão de mãe
+                  perfeita. Aqui, cada registro é um gesto de presença com você
+                  mesma.
                 </p>
               </div>
             </div>
