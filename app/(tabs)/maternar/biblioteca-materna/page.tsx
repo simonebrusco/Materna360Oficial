@@ -265,18 +265,17 @@ export default function BibliotecaMaternaPage() {
                     <label className="mb-3 block text-[11px] md:text-xs font-semibold uppercase tracking-wide text-[#2f3a56]">
                       Tema
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {THEMES.map(theme => (
-                        <FilterPill
-                          key={theme}
-                          active={selectedTheme === theme}
-                          onClick={() => handleThemeSelect(theme)}
-                        >
-                          {theme}
-                        </FilterPill>
-                      ))}
-                    </div>
-                  </div>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  {THEMES.map(theme => (
+    <FilterPill
+      key={theme}
+      active={selectedTheme === theme}
+      onClick={() => handleThemeSelect(theme)}
+    >
+      {theme}
+    </FilterPill>
+  ))}
+</div>
 
                   {/* FORMATO */}
                   <div className="rounded-2xl border border-[#ffd8e6] bg-white px-4 py-4 md:px-5 md:py-5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
