@@ -197,14 +197,13 @@ export default function SavedContentsSection({
   )
 
   // Lista consolidada para o modal “Ver tudo”
-  const allItems: Array<
+ const allItems: Array<
     | { kind: 'planner'; item: PlannerSavedContent }
     | { kind: 'legacy'; item: SavedContent }
   > = [
-    ...plannerContents.map(item => ({ kind: 'planner', item })),
-    ...contents.map(item => ({ kind: 'legacy', item })),
+    ...plannerContents.map(item => ({ kind: 'planner' as const, item })),
+    ...contents.map(item => ({ kind: 'legacy' as const, item })),
   ]
-
   return (
     <>
       <div className="space-y-4">
