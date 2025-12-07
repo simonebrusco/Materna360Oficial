@@ -315,7 +315,7 @@ export default function MinhasConquistasPage() {
       subtitle="Um espaço para celebrar o que você já fez — um passo de cada vez."
     >
       <ClientOnly>
-        <div className="max-w-6xl mx-auto px-4 pb-16 md:pb-20 space-y-10 md:space-y-12">
+        <div className="max-w-6xl mx-auto px-4 pb-16 md:pb-20 space-y-8 md:space-y-10">
           {/* ======================================================
               BLOCO 1 — PAINEL DA SUA JORNADA
           ====================================================== */}
@@ -688,40 +688,47 @@ export default function MinhasConquistasPage() {
           {/* ======================================================
               BLOCO 5 — POR QUE ISSO IMPORTA
           ====================================================== */}
-       <RevealSection delay={200}>
-  <div className="rounded-[28px] md:rounded-[32px] border border-[#ffd8e6]/80 bg-[#ffe8f2]/70 px-5 py-5 md:px-6 md:py-6">
-    <div className="grid gap-4 md:gap-6 md:grid-cols-2 items-start">
-      <div className="space-y-2">
-        <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
-          Por que isso importa
-        </p>
-        <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-          Cada registro aqui é um gesto de presença.
-        </h2>
-        <p className="text-sm text-[#545454]">
-          As conquistas não existem para te cobrar resultados. Elas existem para mostrar,
-          com carinho, tudo o que você já está fazendo — mesmo nos dias em que parece pouco.
-        </p>
-      </div>
+          <RevealSection delay={200}>
+            <SoftCard className="rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-white border border-[#ffd8e6] shadow-[0_12px_36px_rgba(0,0,0,0.16)]">
+              <div className="grid gap-4 md:gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] items-start">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    Por que isso importa
+                  </p>
+                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cada registro aqui é um gesto de presença.
+                  </h2>
+                  <p className="text-sm text-[#545454]">
+                    As conquistas não existem para te cobrar resultados. Elas existem para mostrar,
+                    com carinho, tudo o que você já está fazendo — mesmo nos dias em que parece
+                    pouco.
+                  </p>
+                </div>
 
-      <div className="space-y-2 text-sm text-[#545454]">
-        <p>
-          Quando você marca uma missão, registra seu humor ou salva um cuidado, o
-          Materna360 transforma isso em XP, selos e presença contínua. É um jeito visual
-          de enxergar a sua dedicação ao longo do tempo.
-        </p>
-        <p>
-          Você não precisa cumprir todas as missões nem desbloquear todos os selos para
-          “ir bem”. Um único gesto já conta muito.{' '}
-          <span className="font-semibold">
-            A jornada é sua, no seu ritmo — nós só ajudamos a iluminar o caminho.
-          </span>
-        </p>
-      </div>
-    </div>
-  </div>
-</RevealSection>
-          
+                <div className="space-y-2 text-sm text-[#545454]">
+                  <div className="flex items-start gap-2">
+                    <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe5ef]">
+                      <AppIcon name="sparkles" className="h-3.5 w-3.5 text-[#ff005e]" />
+                    </div>
+                    <p>
+                      Quando você marca uma missão, registra seu humor ou salva um cuidado, o
+                      Materna360 transforma isso em XP, selos e presença contínua. É um jeito
+                      visual de enxergar a sua dedicação ao longo do tempo.
+                    </p>
+                  </div>
+
+                  <p>
+                    Você não precisa cumprir todas as missões nem desbloquear todos os selos para
+                    “ir bem”. Um único gesto já conta muito.{' '}
+                    <span className="font-semibold">
+                      A jornada é sua, no seu ritmo — nós só ajudamos a iluminar o caminho.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </SoftCard>
+          </RevealSection>
+
           <MotivationalFooter routeKey="maternar-minhas-conquistas" />
         </div>
       </ClientOnly>
