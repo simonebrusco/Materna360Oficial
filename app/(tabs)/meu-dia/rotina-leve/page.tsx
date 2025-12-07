@@ -1098,20 +1098,21 @@ export default function RotinaLevePage() {
       </p>
     </header>
 
-    {/* HOOKS E ESTADOS */}
+    {/* BLOCO INTERNO AUTOMÁTICO */}
     {(() => {
+
       const savedRecipes = plannerItemsFromRotinaLeve.filter(
         (item) => item.type === 'recipe'
       );
 
       const defaultMeals = ['Café da manhã', 'Almoço', 'Lanche', 'Jantar'];
 
-      const [meals, setMeals] = useState(() => {
+      const [meals, setMeals] = useState<string[]>(() => {
         const stored = load('rotina-leve:cardapio:meals');
         return Array.isArray(stored) && stored.length > 0 ? stored : defaultMeals;
       });
 
-      const [weekPlan, setWeekPlan] = useState<Record<string, Record<string, string>>>({});
+      const [weekPlan, setWeekPlan] = useState<Record<string, Record<string, string>>>(() => {
         const stored = load('rotina-leve:cardapio:week');
         return stored && typeof stored === 'object' ? stored : {};
       });
@@ -1126,13 +1127,13 @@ export default function RotinaLevePage() {
         'Domingo',
       ];
 
-     const saveAll = (
-  nextWeek: Record<string, Record<string, string>>,
-  nextMeals: string[]
-) => {
-  save('rotina-leve:cardapio:meals', nextMeals);
-  save('rotina-leve:cardapio:week', nextWeek);
-};
+      const saveAll = (
+        nextWeek: Record<string, Record<string, string>>,
+        nextMeals: string[]
+      ) => {
+        save('rotina-leve:cardapio:meals', nextMeals);
+        save('rotina-leve:cardapio:week', nextWeek);
+      };
 
       const addMeal = () => {
         const name = prompt('Nome da refeição:');
@@ -1143,14 +1144,14 @@ export default function RotinaLevePage() {
         save('rotina-leve:cardapio:meals', nextMeals);
       };
 
-     const removeMeal = (meal: string) => {
+      const removeMeal = (meal: string) => {
         if (!confirm('Remover esta refeição?')) return;
 
         const nextMeals = meals.filter((m) => m !== meal);
 
-       const nextWeek: Record<string, Record<string, string>> = {};
+        const nextWeek: Record<string, Record<string, string>> = {};
         for (const day of weekdays) {
-          nextWeek[day] = { ...weekPlan[day] };
+          nextWeek[day] = { ...(weekPlan[day] || {}) };
           delete nextWeek[day][meal];
         }
 
@@ -1159,7 +1160,7 @@ export default function RotinaLevePage() {
         saveAll(nextWeek, nextMeals);
       };
 
-      const assignRecipe = (day, meal, recipe) => {
+      const assignRecipe = (day: string, meal: string, recipe: any) => {
         const nextWeek = {
           ...weekPlan,
           [day]: {
@@ -1209,7 +1210,6 @@ export default function RotinaLevePage() {
             )}
           </div>
 
-          {/* BOTÃO PARA ADICIONAR REFEIÇÃO */}
           <Button
             variant="secondary"
             size="sm"
@@ -1247,10 +1247,7 @@ export default function RotinaLevePage() {
                     <td className="p-2 font-medium text-[#2f3a56]">{day}</td>
 
                     {meals.map((meal) => (
-                      <td
-                        key={meal}
-                        className="p-2 align-top"
-                      >
+                      <td key={meal} className="p-2 align-top">
                         <div
                           className="min-h-[60px] rounded-xl border border-[#ffd8e6] bg-[#fff7fb] p-2 text-[11px] text-[#2f3a56] flex items-center justify-center text-center cursor-pointer hover:bg-[#ffd8e6]/20 transition"
                           onDragOver={(e) => e.preventDefault()}
@@ -1280,6 +1277,7 @@ export default function RotinaLevePage() {
     })()}
   </div>
 </SoftCard>
+
             
             {/* BLOCO 2 — IDEIAS RÁPIDAS + INSPIRAÇÕES */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
