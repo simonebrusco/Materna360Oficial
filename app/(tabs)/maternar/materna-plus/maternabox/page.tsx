@@ -15,9 +15,9 @@ export default function MaternaBoxPage() {
       subtitle="Todo mês, uma caixa criada para aproximar você do seu filho com leveza, carinho e criatividade."
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
+        <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-12 md:space-y-14">
           {/* HERO · TEXTO + IMAGEM */}
-          <SoftCard className="grid gap-6 rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] md:grid-cols-[1.18fr,1fr] md:p-6">
+          <SoftCard className="grid gap-6 rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.16)] md:grid-cols-[1.18fr,1fr] md:p-6">
             {/* TEXTO */}
             <div className="flex flex-col justify-center space-y-4">
               <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -59,39 +59,24 @@ export default function MaternaBoxPage() {
               </div>
             </div>
 
-            {/* IMAGEM + CARD RESUMO */}
+            {/* IMAGEM sozinha, sem overlay */}
             <div className="relative flex items-center justify-center">
-              <div className="relative h-52 w-full max-w-sm md:h-64">
-                <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
-                  <Image
-                    src="/images/maternabox2.png"
-                    alt="Mãe brincando com o filho enquanto abre a MaternaBox"
-                    fill
-                    priority
-                    sizes="(min-width: 1024px) 360px, 100vw"
-                    className="object-cover"
-                  />
-                </div>
-
-                {/* Card-resumo por cima da foto */}
-                <div className="absolute -bottom-4 left-3 right-4 rounded-2xl border border-white/80 bg-white/98 px-3 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.20)]">
-                  <p className="text-[11px] font-semibold text-[#2f3a56] mb-1">
-                    Dentro da caixa, todo mês:
-                  </p>
-                  <ul className="text-[10px] text-[#545454] space-y-0.5">
-                    <li>• 1 brinquedo educativo alinhado à fase do seu filho.</li>
-                    <li>• 1 atividade guiada para viver um momento especial.</li>
-                    <li>• 1 mini-guia impresso com passo a passo simples.</li>
-                    <li>• Surpresinhas pensadas para fortalecer a conexão.</li>
-                  </ul>
-                </div>
+              <div className="relative h-52 w-full max-w-sm md:h-64 lg:h-72">
+                <Image
+                  src="/images/maternabox2.png"
+                  alt="Mãe brincando com o filho enquanto abre a MaternaBox"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 360px, 100vw"
+                  className="rounded-3xl object-cover shadow-[0_18px_40px_rgba(0,0,0,0.22)]"
+                />
               </div>
             </div>
           </SoftCard>
 
           {/* BLOCO 2 · O QUE VEM NA CAIXA */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)] md:p-6">
-            <div className="space-y-3">
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
+            <div className="space-y-4">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                   O QUE VEM NA SUA MATERNABOX?
@@ -150,7 +135,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* BLOCO 2.5 · PARA QUEM É / NÃO É */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_10px_22px_rgba(0,0,0,0.10)] md:p-6">
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/80">
@@ -185,7 +170,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* BLOCO 3 · FAIXA ETÁRIA */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
             <div className="space-y-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -220,7 +205,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* BLOCO 4 · PLANOS */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.12)] md:p-6">
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
             <div className="space-y-4">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -273,13 +258,13 @@ export default function MaternaBoxPage() {
                   </div>
                 </div>
 
-                {/* Card destacado – cor oficial + texto branco */}
-                <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-[#ff005e] p-3 text-white">
+                {/* Card destacado – fundo rosa oficial + texto branco */}
+                <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-[#ff005e] p-3">
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase">
+                    <p className="text-[11px] font-semibold uppercase text-white">
                       Experiência completa
                     </p>
-                    <p className="text-sm font-semibold">Plano anual</p>
+                    <p className="text-sm font-semibold text-white">Plano anual</p>
                     <p className="text-xs text-white/90">
                       12 meses com temas variados, registros afetivos e memórias espalhadas ao longo do ano.
                     </p>
@@ -299,7 +284,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* BLOCO 5 · LISTA DE ESPERA */}
-          <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#ff005e] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.28)] md:px-6 md:py-6">
+          <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#ff005e] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.26)] md:px-6 md:py-6">
             <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-6">
               <div className="space-y-1 max-w-xl">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-white/90">
@@ -314,7 +299,7 @@ export default function MaternaBoxPage() {
                 </p>
               </div>
 
-              <div className="mt-3 flex flex-col gap-2 md:mt-0 md:min-w-[250px]">
+              <div className="mt-3 flex flex-col gap-2 md:mt-0 md:min-w-[260px]">
                 <input
                   type="email"
                   placeholder="Seu melhor e-mail"
