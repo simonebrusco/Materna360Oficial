@@ -688,41 +688,40 @@ export default function MinhasConquistasPage() {
           {/* ======================================================
               BLOCO 5 — POR QUE ISSO IMPORTA
           ====================================================== */}
-          <RevealSection delay={200}>
-            <SoftCard className="rounded-[32px] md:rounded-[36px] p-6 md:p-7 bg-white/80 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
-              <div className="grid gap-4 md:gap-6 md:grid-cols-2 items-start">
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
-                    Por que isso importa
-                  </p>
-                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                    Cada registro aqui é um gesto de presença.
-                  </h2>
-                  <p className="text-sm text-[#545454]">
-                    As conquistas não existem para te cobrar resultados. Elas existem para mostrar,
-                    com carinho, tudo o que você já está fazendo — mesmo nos dias em que parece
-                    pouco.
-                  </p>
-                </div>
+       <RevealSection delay={200}>
+  <div className="rounded-[28px] md:rounded-[32px] border border-[#ffd8e6]/80 bg-[#ffe8f2]/70 px-5 py-5 md:px-6 md:py-6">
+    <div className="grid gap-4 md:gap-6 md:grid-cols-2 items-start">
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+          Por que isso importa
+        </p>
+        <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+          Cada registro aqui é um gesto de presença.
+        </h2>
+        <p className="text-sm text-[#545454]">
+          As conquistas não existem para te cobrar resultados. Elas existem para mostrar,
+          com carinho, tudo o que você já está fazendo — mesmo nos dias em que parece pouco.
+        </p>
+      </div>
 
-                <div className="space-y-2 text-sm text-[#545454]">
-                  <p>
-                    Quando você marca uma missão, registra seu humor ou salva um cuidado, o
-                    Materna360 transforma isso em XP, selos e presença contínua. É um jeito visual
-                    de enxergar a sua dedicação ao longo do tempo.
-                  </p>
-                  <p>
-                    Você não precisa cumprir todas as missões nem desbloquear todos os selos para
-                    “ir bem”. Um único gesto já conta muito.{' '}
-                    <span className="font-semibold">
-                      A jornada é sua, no seu ritmo — nós só ajudamos a iluminar o caminho.
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </SoftCard>
-          </RevealSection>
-
+      <div className="space-y-2 text-sm text-[#545454]">
+        <p>
+          Quando você marca uma missão, registra seu humor ou salva um cuidado, o
+          Materna360 transforma isso em XP, selos e presença contínua. É um jeito visual
+          de enxergar a sua dedicação ao longo do tempo.
+        </p>
+        <p>
+          Você não precisa cumprir todas as missões nem desbloquear todos os selos para
+          “ir bem”. Um único gesto já conta muito.{' '}
+          <span className="font-semibold">
+            A jornada é sua, no seu ritmo — nós só ajudamos a iluminar o caminho.
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+</RevealSection>
+          
           <MotivationalFooter routeKey="maternar-minhas-conquistas" />
         </div>
       </ClientOnly>
