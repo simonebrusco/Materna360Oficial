@@ -48,6 +48,13 @@ type DailyInsight = {
   reminder: string
 }
 
+type CheckinSnapshot = {
+  moodId?: MoodId | null
+  energyId?: EnergyLevel | null
+  note?: string | null
+  dateKey?: string
+}
+
 // ======================================================
 // HELPERS
 // ======================================================
@@ -123,7 +130,8 @@ export default function ComoEstouHojePage() {
   const currentDateKey = useMemo(() => getBrazilDateKey(), [])
 
   const [selectedMood, setSelectedMood] = useState<MoodId | null>(null)
-  const [selectedEnergy, setSelectedEnergy] = useState<EnergyLevel | null>(null)
+  const [selectedEnergy, setSelectedEnergy] =
+    useState<EnergyLevel | null>(null)
   const [note, setNote] = useState('')
 
   const [usedCheckinsToday, setUsedCheckinsToday] = useState(0)
@@ -166,7 +174,7 @@ export default function ComoEstouHojePage() {
 
   // Carrega snapshot do último check-in do dia (confirmado)
   useEffect(() => {
-    const snapshot = load(LAST_CHECKIN_SNAPSHOT_KEY)
+    const snapshot = load<CheckinSnapshot | null>(LAST_CHECKIN_SNAPSHOT_KEY)
 
     if (!snapshot || snapshot.dateKey !== currentDateKey) return
 
@@ -177,7 +185,7 @@ export default function ComoEstouHojePage() {
 
   // Carrega estado parcial (rascunho) se existir para o dia atual
   useEffect(() => {
-    const partial = load(PARTIAL_STATE_KEY)
+    const partial = load<CheckinSnapshot | null>(PARTIAL_STATE_KEY)
     if (!partial || partial.dateKey !== currentDateKey) return
 
     if (partial.moodId) setSelectedMood(partial.moodId)
@@ -187,12 +195,13 @@ export default function ComoEstouHojePage() {
 
   // Salva estado parcial sempre que humor, energia ou nota mudarem
   useEffect(() => {
-    save(PARTIAL_STATE_KEY, {
+    const partial: CheckinSnapshot = {
       moodId: selectedMood,
       energyId: selectedEnergy,
       note,
       dateKey: currentDateKey,
-    })
+    }
+    save(PARTIAL_STATE_KEY, partial)
   }, [selectedMood, selectedEnergy, note, currentDateKey])
 
   // Navegação interna com ?abrir=checkin | semana
@@ -345,12 +354,13 @@ export default function ComoEstouHojePage() {
       })
 
       // Snapshot do último check-in do dia
-      save(LAST_CHECKIN_SNAPSHOT_KEY, {
+      const snapshot: CheckinSnapshot = {
         moodId: selectedMood,
         energyId: selectedEnergy,
         note: note.trim() || null,
         dateKey: currentDateKey,
-      })
+      }
+      save(LAST_CHECKIN_SNAPSHOT_KEY, snapshot)
 
       // XP – gesto emocional importante
       try {
