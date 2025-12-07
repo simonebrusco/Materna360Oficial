@@ -38,6 +38,8 @@ type Inspiration = {
   ritual: string
 }
 
+type WeekPlan = Record<string, Record<string, string>>
+
 // ---------- MOCKS (fallback padrão) ----------
 
 function mockGenerateIdeas(): Promise<QuickIdea[]> {
@@ -294,7 +296,7 @@ export default function RotinaLevePage() {
   const [usedInspirationsToday, setUsedInspirationsToday] = useState(0)
 
   // Ideias Rápidas
-  const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
+  const [ideas, setIdeas] = useState<QuickIdea | null[]>(null as any)
 
   // Ideias Rápidas - Filtros
   const [tempoDisponivel, setTempoDisponivel] = useState<string | null>(null)
@@ -328,6 +330,82 @@ export default function RotinaLevePage() {
   )
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
+
+  // ---------- CARDÁPIO LEVE DA SEMANA (estado + helpers) ----------
+
+  const savedRecipes = plannerItemsFromRotinaLeve.filter(
+    (item) => item.type === 'recipe',
+  )
+
+  const defaultMeals = ['Café da manhã', 'Almoço', 'Lanche', 'Jantar']
+
+  const [meals, setMeals] = useState<string[]>(() => {
+    const stored = load('rotina-leve:cardapio:meals')
+    return Array.isArray(stored) && stored.length > 0 ? (stored as string[]) : defaultMeals
+  })
+
+  const [weekPlan, setWeekPlan] = useState<WeekPlan>(() => {
+    const stored = load('rotina-leve:cardapio:week')
+    if (stored && typeof stored === 'object') {
+      return stored as WeekPlan
+    }
+    return {}
+  })
+
+  const weekdays = [
+    'Segunda',
+    'Terça',
+    'Quarta',
+    'Quinta',
+    'Sexta',
+    'Sábado',
+    'Domingo',
+  ]
+
+  const saveAll = (nextWeek: WeekPlan, nextMeals: string[]) => {
+    save('rotina-leve:cardapio:meals', nextMeals)
+    save('rotina-leve:cardapio:week', nextWeek)
+  }
+
+  const addMeal = () => {
+    const name = prompt('Nome da refeição:')
+    if (!name?.trim()) return
+
+    const nextMeals = [...meals, name.trim()]
+    setMeals(nextMeals)
+    save('rotina-leve:cardapio:meals', nextMeals)
+  }
+
+  const removeMeal = (meal: string) => {
+    if (!confirm('Remover esta refeição?')) return
+
+    const nextMeals = meals.filter((m) => m !== meal)
+
+    const nextWeek: WeekPlan = {}
+    for (const day of weekdays) {
+      nextWeek[day] = { ...(weekPlan[day] || {}) }
+      delete nextWeek[day][meal]
+    }
+
+    setMeals(nextMeals)
+    setWeekPlan(nextWeek)
+    saveAll(nextWeek, nextMeals)
+  }
+
+  const assignRecipe = (day: string, meal: string, recipe: { title: string }) => {
+    const nextWeek: WeekPlan = {
+      ...weekPlan,
+      [day]: {
+        ...(weekPlan[day] || {}),
+        [meal]: recipe.title,
+      },
+    }
+
+    setWeekPlan(nextWeek)
+    saveAll(nextWeek, meals)
+  }
+
+  // ---------- efeitos ----------
 
   // Telemetria de abertura da página
   useEffect(() => {
@@ -398,7 +476,7 @@ export default function RotinaLevePage() {
       }))
 
     if (quickIdeas.length > 0) {
-      setIdeas(quickIdeas)
+      setIdeas(quickIdeas as any)
 
       try {
         track('rotina_leve.ideas.generated', {
@@ -439,11 +517,13 @@ export default function RotinaLevePage() {
     }
   }, [abrir])
 
+  // ---------- handlers ----------
+
   const handleSaveIdeia = () => {
     try {
       const ideasToSave =
-        ideas && ideas.length > 0
-          ? ideas.map((idea) => idea.text)
+        ideas && (ideas as any[]).length > 0
+          ? (ideas as any[]).map((idea: QuickIdea) => idea.text)
           : [
               'Mini brincadeira sensorial com objetos da sala.',
               'Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.',
@@ -679,10 +759,7 @@ export default function RotinaLevePage() {
       try {
         void updateXP(4)
       } catch (e) {
-        console.error(
-          '[Rotina Leve] Erro ao atualizar XP (gerar receitas):',
-          e,
-        )
+        console.error('[Rotina Leve] Erro ao atualizar XP (gerar receitas):', e)
       }
 
       const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
@@ -1077,213 +1154,127 @@ export default function RotinaLevePage() {
                 </div>
               </div>
             </SoftCard>
-{/* BLOCO EXTRA — CARDÁPIO LEVE DA SEMANA */}
-<SoftCard
-  id="rotina-leve-cardapio"
-  className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
->
-  <div className="space-y-6 flex flex-col">
 
-    {/* HEADER */}
-    <header className="space-y-1 pb-1">
-      <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
-        Semana · Cardápio leve
-      </p>
-      <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-        Planeje sua semana com leveza
-      </h3>
-      <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
-        Conforme você salva receitinhas no Materna360, pode distribuí-las nos dias 
-        da semana como quiser — sem regras, só o que funciona para você.
-      </p>
-    </header>
+            {/* BLOCO EXTRA — CARDÁPIO LEVE DA SEMANA */}
+            <SoftCard
+              id="rotina-leve-cardapio"
+              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+            >
+              <div className="space-y-6 flex flex-col">
+                {/* HEADER */}
+                <header className="space-y-1 pb-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    Semana · Cardápio leve
+                  </p>
+                  <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Planeje sua semana com leveza
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
+                    Conforme você salva receitinhas no Materna360, pode distribuí-las nos
+                    dias da semana como quiser — sem regras, só o que funciona para você.
+                  </p>
+                </header>
 
-    {/* BLOCO INTERNO AUTOMÁTICO */}
-    {(() => {
+                {/* LISTA DE RECEITAS DISPONÍVEIS */}
+                <div>
+                  <p className="text-xs font-semibold text-[#2f3a56] mb-2">
+                    Receitas salvas para usar no cardápio
+                  </p>
 
-      const savedRecipes = plannerItemsFromRotinaLeve.filter(
-        (item) => item.type === 'recipe'
-      );
-
-      const defaultMeals = ['Café da manhã', 'Almoço', 'Lanche', 'Jantar'];
-
-      const [meals, setMeals] = useState<string[]>(() => {
-        const stored = load('rotina-leve:cardapio:meals');
-        return Array.isArray(stored) && stored.length > 0 ? stored : defaultMeals;
-      });
-
-      const [weekPlan, setWeekPlan] = useState<Record<string, Record<string, string>>>(() => {
-  const stored = load('rotina-leve:cardapio:week');
-
-  if (stored && typeof stored === 'object') {
-    return stored as Record<string, Record<string, string>>;
-  }
-
-  return {} as Record<string, Record<string, string>>;
-});
-
-      const weekdays = [
-        'Segunda',
-        'Terça',
-        'Quarta',
-        'Quinta',
-        'Sexta',
-        'Sábado',
-        'Domingo',
-      ];
-
-      const saveAll = (
-        nextWeek: Record<string, Record<string, string>>,
-        nextMeals: string[]
-      ) => {
-        save('rotina-leve:cardapio:meals', nextMeals);
-        save('rotina-leve:cardapio:week', nextWeek);
-      };
-
-      const addMeal = () => {
-        const name = prompt('Nome da refeição:');
-        if (!name?.trim()) return;
-
-        const nextMeals = [...meals, name.trim()];
-        setMeals(nextMeals);
-        save('rotina-leve:cardapio:meals', nextMeals);
-      };
-
-      const removeMeal = (meal: string) => {
-        if (!confirm('Remover esta refeição?')) return;
-
-        const nextMeals = meals.filter((m) => m !== meal);
-
-        const nextWeek: Record<string, Record<string, string>> = {};
-        for (const day of weekdays) {
-          nextWeek[day] = { ...(weekPlan[day] || {}) };
-          delete nextWeek[day][meal];
-        }
-
-        setMeals(nextMeals);
-        setWeekPlan(nextWeek);
-        saveAll(nextWeek, nextMeals);
-      };
-
-      const assignRecipe = (day: string, meal: string, recipe: any) => {
-        const nextWeek = {
-          ...weekPlan,
-          [day]: {
-            ...(weekPlan[day] || {}),
-            [meal]: recipe.title,
-          },
-        };
-        setWeekPlan(nextWeek);
-        saveAll(nextWeek, meals);
-      };
-
-      return (
-        <div className="space-y-6">
-
-          {/* LISTA DE RECEITAS DISPONÍVEIS */}
-          <div>
-            <p className="text-xs font-semibold text-[#2f3a56] mb-2">
-              Receitas salvas para usar no cardápio
-            </p>
-
-            {savedRecipes.length === 0 && (
-              <p className="text-xs text-[#545454]">
-                Salve uma receita no planner para poder adicioná-la ao cardápio.
-              </p>
-            )}
-
-            {savedRecipes.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto py-2">
-                {savedRecipes.map((rec) => (
-                  <div
-                    key={rec.id}
-                    className="min-w-[180px] rounded-xl border border-[#ffd8e6] bg-white p-3 shadow-sm cursor-pointer hover:bg-[#ffd8e6]/10 transition"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('recipe', JSON.stringify(rec));
-                    }}
-                  >
-                    <p className="text-sm font-semibold text-[#2f3a56]">
-                      {rec.title}
+                  {savedRecipes.length === 0 && (
+                    <p className="text-xs text-[#545454]">
+                      Salve uma receita no planner para poder adicioná-la ao cardápio.
                     </p>
-                    <p className="text-[11px] text-[#545454] mt-1 line-clamp-2">
-                      {rec.payload?.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  )}
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={addMeal}
-            className="self-start"
-          >
-            + Adicionar nova refeição
-          </Button>
-
-          {/* TABELA — SEMANA */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs md:text-sm">
-              <thead>
-                <tr>
-                  <th className="p-2 text-left text-[#2f3a56]/70">Dia</th>
-                  {meals.map((meal) => (
-                    <th key={meal} className="p-2 text-left text-[#2f3a56]/70">
-                      <div className="flex items-center gap-2">
-                        {meal}
-                        <button
-                          onClick={() => removeMeal(meal)}
-                          className="text-[#ff005e] text-[10px] hover:underline"
-                        >
-                          remover
-                        </button>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {weekdays.map((day) => (
-                  <tr key={day} className="border-t border-[#ffd8e6]">
-                    <td className="p-2 font-medium text-[#2f3a56]">{day}</td>
-
-                    {meals.map((meal) => (
-                      <td key={meal} className="p-2 align-top">
+                  {savedRecipes.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto py-2">
+                      {savedRecipes.map((rec) => (
                         <div
-                          className="min-h-[60px] rounded-xl border border-[#ffd8e6] bg-[#fff7fb] p-2 text-[11px] text-[#2f3a56] flex items-center justify-center text-center cursor-pointer hover:bg-[#ffd8e6]/20 transition"
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => {
-                            const rec = JSON.parse(
-                              e.dataTransfer.getData('recipe')
-                            );
-                            assignRecipe(day, meal, rec);
+                          key={rec.id}
+                          className="min-w-[180px] rounded-xl border border-[#ffd8e6] bg-white p-3 shadow-sm cursor-pointer hover:bg-[#ffd8e6]/10 transition"
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('recipe', JSON.stringify(rec))
                           }}
                         >
-                          {weekPlan?.[day]?.[meal] || (
-                            <span className="text-[#545454]/60">
-                              Arraste uma receita aqui
-                            </span>
-                          )}
+                          <p className="text-sm font-semibold text-[#2f3a56]">
+                            {rec.title}
+                          </p>
+                          <p className="text-[11px] text-[#545454] mt-1 line-clamp-2">
+                            {rec.payload?.description}
+                          </p>
                         </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-        </div>
-      );
-    })()}
-  </div>
-</SoftCard>
+                {/* BOTÃO PARA ADICIONAR REFEIÇÃO */}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={addMeal}
+                  className="self-start"
+                >
+                  + Adicionar nova refeição
+                </Button>
 
-            
+                {/* TABELA — SEMANA */}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-xs md:text-sm">
+                    <thead>
+                      <tr>
+                        <th className="p-2 text-left text-[#2f3a56]/70">Dia</th>
+                        {meals.map((meal) => (
+                          <th key={meal} className="p-2 text-left text-[#2f3a56]/70">
+                            <div className="flex items-center gap-2">
+                              {meal}
+                              <button
+                                onClick={() => removeMeal(meal)}
+                                className="text-[#ff005e] text-[10px] hover:underline"
+                              >
+                                remover
+                              </button>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {weekdays.map((day) => (
+                        <tr key={day} className="border-t border-[#ffd8e6]">
+                          <td className="p-2 font-medium text-[#2f3a56]">{day}</td>
+
+                          {meals.map((meal) => (
+                            <td key={meal} className="p-2 align-top">
+                              <div
+                                className="min-h-[60px] rounded-xl border border-[#ffd8e6] bg-[#fff7fb] p-2 text-[11px] text-[#2f3a56] flex items-center justify-center text-center cursor-pointer hover:bg-[#ffd8e6]/20 transition"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => {
+                                  const raw = e.dataTransfer.getData('recipe')
+                                  if (!raw) return
+                                  const rec = JSON.parse(raw) as { title: string }
+                                  assignRecipe(day, meal, rec)
+                                }}
+                              >
+                                {weekPlan?.[day]?.[meal] || (
+                                  <span className="text-[#545454]/60">
+                                    Arraste uma receita aqui
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </SoftCard>
+
             {/* BLOCO 2 — IDEIAS RÁPIDAS + INSPIRAÇÕES */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* IDEIAS RÁPIDAS */}
@@ -1452,7 +1443,7 @@ export default function RotinaLevePage() {
 
                         {!ideasLoading && ideas && (
                           <ul className="space-y-2 text-xs text-[#545454]">
-                            {ideas.map((idea) => (
+                            {(ideas as any[]).map((idea: QuickIdea) => (
                               <li key={idea.id}>• {idea.text}</li>
                             ))}
                           </ul>
