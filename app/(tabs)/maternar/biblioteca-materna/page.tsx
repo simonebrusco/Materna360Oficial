@@ -35,8 +35,10 @@ const THEMES = [
   'Parentalidade Sem Culpa',
 ]
 
+// Inclui “Trilha educativa” no sistema de formatos
 const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Trilha educativa']
 
+// Versão inicial – placeholders. Depois é só trocar title/description/href pelos materiais reais.
 const MATERIALS: MaterialCard[] = [
   {
     id: 'checklist-rotina-manha',
@@ -46,7 +48,7 @@ const MATERIALS: MaterialCard[] = [
     theme: 'Rotinas',
     format: 'Checklist',
     icon: 'book-open',
-    href: '#',
+    href: '#', // futuro: link para download / admin
   },
   {
     id: 'guia-leve-birras',
@@ -111,11 +113,12 @@ export default function BibliotecaMaternaPage() {
 
   const materialsRef = useRef<HTMLDivElement | null>(null)
 
-  // lê o ?filtro= vindo do hub Maternar
+  // Lê o ?filtro= vindo do hub Maternar (Biblioteca Materna)
   useEffect(() => {
     const filtro = searchParams.get('filtro')
     if (!filtro) return
 
+    // sempre que vier um novo filtro via URL, limpamos seleções manuais
     setSelectedTheme(null)
     setSelectedFormat(null)
 
@@ -126,11 +129,12 @@ export default function BibliotecaMaternaPage() {
     } else if (filtro === 'trilhas') {
       setPresetFilter('trilhas')
     } else if (filtro === 'tema-fase' || filtro === 'idade-tema') {
+      // aceita os dois jeitos de escrever
       setPresetFilter('tema-fase')
     }
   }, [searchParams])
 
-  // scroll automático p/ lista de materiais quando vem de atalho
+  // Quando vier de um atalho do hub, desce direto para a lista de materiais
   useEffect(() => {
     if (presetFilter && materialsRef.current) {
       materialsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -142,8 +146,19 @@ export default function BibliotecaMaternaPage() {
   }
 
   const handleFormatSelect = (format: string) => {
+    // ao escolher um formato manualmente, saímos do preset vindo do hub
     setPresetFilter(null)
     setSelectedFormat(prev => (prev === format ? null : format))
+  }
+
+  const handleMaterialOpen = (material: MaterialCard) => {
+    if (!material.href || material.href === '#') return
+
+    if (material.external) {
+      window.open(material.href, '_blank', 'noopener,noreferrer')
+    } else {
+      window.location.href = material.href
+    }
   }
 
   const filteredMaterials = useMemo(
@@ -151,6 +166,7 @@ export default function BibliotecaMaternaPage() {
       MATERIALS.filter(material => {
         if (selectedTheme && material.theme !== selectedTheme) return false
 
+        // Se veio de um atalho do hub (presetFilter), ele tem prioridade
         if (presetFilter) {
           if (presetFilter === 'guias') {
             if (
@@ -170,6 +186,7 @@ export default function BibliotecaMaternaPage() {
               return false
             }
           }
+          // preset 'tema-fase' por enquanto não restringe nada
         } else if (selectedFormat && material.format !== selectedFormat) {
           return false
         }
@@ -178,8 +195,6 @@ export default function BibliotecaMaternaPage() {
       }),
     [selectedTheme, selectedFormat, presetFilter],
   )
-
-  const quickResults = filteredMaterials.slice(0, 6)
 
   const hasActiveFilter =
     !!selectedTheme || !!selectedFormat || !!presetFilter
@@ -205,16 +220,8 @@ export default function BibliotecaMaternaPage() {
     if (presetFilter === 'trilhas') {
       return format === 'Trilha educativa'
     }
+    // sem preset: utiliza seleção manual
     return !presetFilter && selectedFormat === format
-  }
-
-  const handleMaterialClick = (material: MaterialCard) => {
-    if (!material.href) return
-    if (material.external) {
-      window.open(material.href, '_blank', 'noopener,noreferrer')
-    } else {
-      window.location.href = material.href
-    }
   }
 
   return (
@@ -224,21 +231,20 @@ export default function BibliotecaMaternaPage() {
       subtitle="Guias, trilhas e materiais que apoiam sua jornada, no seu tempo."
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 pb-24 pt-4 md:px-6 space-y-10 md:space-y-12">
+        <div className="mx-auto max-w-5xl px-4 pb-24 pt-4 md:px-6 space-y-8 md:space-y-10">
           {/* Intro */}
           <Reveal delay={0}>
             <div className="max-w-3xl">
               <p className="text-sm md:text-base leading-relaxed text-white/90">
-                Encontre materiais selecionados — PDFs, eBooks, guias práticos e
-                conteúdos personalizados — filtrados por tema e formato para
-                facilitar sua jornada.
+                Encontre materiais selecionados — PDFs, eBooks, guias práticos e conteúdos
+                personalizados — filtrados por tema e formato para facilitar sua jornada.
               </p>
             </div>
           </Reveal>
 
-          {/* FILTROS + LISTA RÁPIDA */}
+          {/* FILTRAR & EXPLORAR */}
           <Reveal delay={40}>
-            <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/10 px-4 py-6 shadow-[0_22px_55px_rgba(0,0,0,0.22)] backdrop-blur-2xl md:px-8 md:py-8">
+            <SoftCard className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/10 px-4 py-6 shadow-[0_22px_55px_rgba(0,0,0,0.22)] backdrop-blur-2xl md:px-8 md:py-8">
               {/* glow de fundo */}
               <div className="pointer-events-none absolute inset-0 opacity-70">
                 <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
@@ -251,14 +257,14 @@ export default function BibliotecaMaternaPage() {
                     Filtrar e explorar
                   </h2>
                   <p className="text-xs md:text-sm text-white/90 max-w-2xl">
-                    Escolha um formato e, se quiser, um tema. A lista ao lado já
-                    mostra os materiais que combinam com o seu momento.
+                    Escolha um formato e, se quiser, um tema. A lista ao lado já mostra
+                    os materiais que combinam com o seu momento.
                   </p>
 
                   {!hasActiveFilter && (
                     <p className="text-[11px] md:text-xs text-white/75">
-                      Nenhum filtro ativo — você está vendo uma amostra geral
-                      da biblioteca.
+                      Nenhum filtro ativo no momento — você está vendo uma amostra geral da
+                      biblioteca.
                     </p>
                   )}
 
@@ -270,107 +276,117 @@ export default function BibliotecaMaternaPage() {
                   )}
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2 md:gap-6">
-                  {/* Coluna esquerda: filtros */}
-                  <div className="space-y-4">
-                    {/* Tema */}
-                    <SoftCard className="rounded-2xl bg-white/90 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
-                      <label className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
-                        Tema
-                      </label>
-                      <div className="grid grid-cols-1 gap-2">
-                        {THEMES.map(theme => (
-                          <FilterPill
+                <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+                  {/* Tema */}
+                  <SoftCard className="rounded-3xl bg-white/92 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
+                    <label className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
+                      Tema
+                    </label>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {THEMES.map(theme => {
+                        const active = selectedTheme === theme
+                        return (
+                          <button
                             key={theme}
-                            active={selectedTheme === theme}
+                            type="button"
                             onClick={() => handleThemeSelect(theme)}
+                            className={[
+                              'w-full rounded-full px-4 py-3 text-sm md:text-[15px] font-medium',
+                              'border transition-all shadow-[0_6px_16px_rgba(0,0,0,0.04)]',
+                              active
+                                ? 'border-[#ff005e] bg-[#ffd8e6]/80 text-[#ff005e]'
+                                : 'border-[#ffd8e6] bg-white text-[#2f3a56] hover:border-[#ff005e]/70 hover:bg-[#ffd8e6]/30',
+                            ].join(' ')}
                           >
                             {theme}
-                          </FilterPill>
-                        ))}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </SoftCard>
+
+                  {/* Resultados por filtro */}
+                  <SoftCard className="rounded-3xl bg-white/92 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
+                          Resultados por filtro
+                        </p>
+                        <p className="mt-1 text-[11px] md:text-xs text-[var(--color-text-muted)] max-w-sm">
+                          Clique em um material para abrir. Quando os downloads estiverem
+                          ativos, você poderá salvar direto no seu dispositivo.
+                        </p>
                       </div>
-                    </SoftCard>
+                    </div>
 
-                    {/* Formato */}
-                    <SoftCard className="rounded-2xl bg-white/90 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
-                      <label className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
-                        Formato
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {FORMATS.map(format => (
-                          <FilterPill
-                            key={format}
-                            active={formatIsActive(format)}
-                            onClick={() => handleFormatSelect(format)}
-                          >
-                            {format}
-                          </FilterPill>
-                        ))}
-                      </div>
-                    </SoftCard>
-                  </div>
-
-                  {/* Coluna direita: lista rápida de materiais */}
-                  <SoftCard className="rounded-2xl bg-white/95 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
-                    <h3 className="mb-1 text-sm md:text-base font-semibold text-[var(--color-text-main)]">
-                      Resultados por filtro
-                    </h3>
-                    <p className="mb-3 text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                      Clique em um material para abrir. Quando os downloads
-                      estiverem ativos, você poderá salvar direto no seu
-                      dispositivo.
-                    </p>
-
-                    {quickResults.length === 0 ? (
-                      <p className="mt-2 text-[11px] md:text-xs text-[var(--color-text-muted)]">
-                        Nenhum material encontrado para essa combinação de tema
-                        e formato. Experimente ajustar os filtros.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2">
-                        {quickResults.map(material => (
-                          <li key={material.id}>
-                            <button
-                              type="button"
-                              onClick={() => handleMaterialClick(material)}
-                              className="w-full rounded-2xl border border-[var(--color-border-soft)] bg-white px-3 py-2.5 text-left text-xs md:text-sm text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all flex items-start justify-between gap-3"
-                            >
-                              <div className="flex items-start gap-2">
-                                <div className="mt-0.5 h-7 w-7 flex items-center justify-center rounded-full bg-[var(--color-soft-strong)]/60">
-                                  <AppIcon
-                                    name={material.icon as any}
-                                    size={16}
-                                    className="text-[var(--color-brand)]"
-                                    decorative
-                                  />
+                    <div className="mt-4 space-y-2">
+                      {filteredMaterials.length === 0 ? (
+                        <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                          Nenhum material encontrado para esse filtro. Você pode ajustar os
+                          filtros ou limpar as seleções para ver a lista completa novamente.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {filteredMaterials.map(material => (
+                            <li key={material.id}>
+                              <button
+                                type="button"
+                                onClick={() => handleMaterialOpen(material)}
+                                className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3.5 py-3 text-left text-xs md:text-sm text-[var(--color-text-main)] shadow-[0_4px_14px_rgba(0,0,0,0.06)] hover:border-[#ff005e]/70 hover:shadow-[0_10px_24px_rgba(0,0,0,0.10)] transition-all"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-xl bg-[var(--color-soft-strong)]/60">
+                                    <AppIcon
+                                      name={material.icon as any}
+                                      size={16}
+                                      className="text-[var(--color-brand)]"
+                                      decorative
+                                    />
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#cf285f]">
+                                      {material.format} · {material.theme}
+                                    </p>
+                                    <p className="text-xs md:text-sm font-semibold text-[var(--color-text-main)]">
+                                      {material.title}
+                                    </p>
+                                    <p className="text-[11px] text-[var(--color-text-muted)]">
+                                      {material.description}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-brand)] font-semibold">
-                                    {material.format} · {material.theme}
-                                  </p>
-                                  <p className="text-xs md:text-sm font-semibold">
-                                    {material.title}
-                                  </p>
-                                </div>
-                              </div>
-                              <AppIcon
-                                name="arrow-right"
-                                size={14}
-                                decorative
-                                className="mt-1 text-[var(--color-text-muted)]"
-                              />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </SoftCard>
                 </div>
+
+                {/* Formato */}
+                <SoftCard className="rounded-3xl bg-white/92 p-4 md:p-5 shadow-md border border-[var(--color-border-soft)]">
+                  <label className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-main)] md:text-xs">
+                    Formato
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {FORMATS.map(format => (
+                      <FilterPill
+                        key={format}
+                        active={formatIsActive(format)}
+                        onClick={() => handleFormatSelect(format)}
+                      >
+                        {format}
+                      </FilterPill>
+                    ))}
+                  </div>
+                </SoftCard>
               </div>
-            </div>
+            </SoftCard>
           </Reveal>
 
-          {/* MATERIAIS DISPONÍVEIS – cards estilo kanban */}
+          {/* MATERIAIS DISPONÍVEIS — CARDS EM ESTILO QUADRO */}
           <Reveal delay={80}>
             <div ref={materialsRef} className="space-y-4">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -379,40 +395,57 @@ export default function BibliotecaMaternaPage() {
                     Materiais disponíveis
                   </h2>
                   <p className="text-xs md:text-sm text-white/90 max-w-xl">
-                    Visualize os materiais como um quadro: cada card representa
-                    um cuidado possível para a sua jornada.
+                    {presetLabel
+                      ? `Você está vendo uma seleção de materiais baseada no atalho “${presetLabel.replace(
+                          'Atalho: ',
+                          '',
+                        )}”.`
+                      : 'Visualize os materiais como um quadro: cada card representa um cuidado possível para a sua jornada.'}
                   </p>
+
+                  {filteredMaterials.length > 0 && (
+                    <p className="text-[11px] md:text-xs text-white/70 mt-1">
+                      {filteredMaterials.length} material
+                      {filteredMaterials.length > 1 ? 'es' : ''} encontrado
+                      {filteredMaterials.length > 1 ? 's' : ''} para esse filtro.
+                    </p>
+                  )}
                 </div>
               </div>
 
               {filteredMaterials.length === 0 ? (
                 <SoftCard className="mt-2 rounded-3xl bg-white p-6 text-sm text-[var(--color-text-muted)] shadow-md">
                   Nenhum material encontrado para esse filtro. Você pode ajustar
-                  os filtros ou limpar as seleções para ver a lista completa
-                  novamente.
+                  os filtros ou limpar as seleções para ver a lista completa novamente.
                 </SoftCard>
               ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
-                  {filteredMaterials.map((material, index) => (
-                    <Reveal key={material.id} delay={100 + index * 30}>
-                      <button
-                        type="button"
-                        onClick={() => handleMaterialClick(material)}
-                        className="h-full w-full text-left"
-                      >
-                        <SoftCard className="h-full rounded-3xl bg-white p-4 md:p-5 shadow-md border border-[var(--color-border-soft)] transition-all duration-200 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
-                          <p className="text-[11px] uppercase tracking-wide text-[var(--color-brand)] font-semibold">
-                            {material.format} · {material.theme}
-                          </p>
-                          <h3 className="mt-1 text-sm md:text-base font-semibold text-[var(--color-text-main)]">
-                            {material.title}
-                          </h3>
-                          <p className="mt-2 text-xs md:text-sm text-[var(--color-text-muted)] leading-relaxed">
-                            {material.description}
-                          </p>
-                        </SoftCard>
-                      </button>
-                    </Reveal>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-5">
+                  {filteredMaterials.map(material => (
+                    <SoftCard
+                      key={material.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleMaterialOpen(material)}
+                      className="flex h-full cursor-pointer flex-col rounded-3xl bg-white p-5 shadow-md border border-[var(--color-border-soft)] transition-all duration-200 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)] hover:border-[#ff005e]/70"
+                    >
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#cf285f]">
+                        {material.format.toUpperCase()} · {material.theme.toUpperCase()}
+                      </p>
+
+                      <h3 className="mb-1 text-sm font-semibold text-[var(--color-text-main)] md:text-base">
+                        {material.title}
+                      </h3>
+
+                      <p className="mb-3 text-xs text-[var(--color-text-muted)] md:text-sm">
+                        {material.description}
+                      </p>
+
+                      <div className="mt-auto pt-1 text-[11px] font-semibold text-[var(--color-brand)]">
+                        {material.href && material.href !== '#'
+                          ? 'Clique para acessar o material'
+                          : 'Em breve disponível para download'}
+                      </div>
+                    </SoftCard>
                   ))}
                 </div>
               )}
@@ -426,8 +459,8 @@ export default function BibliotecaMaternaPage() {
                 Insight personalizado
               </h2>
               <p className="mb-4 text-xs md:text-sm text-[var(--color-text-muted)]">
-                Em breve, a Biblioteca vai conversar com o Eu360 para sugerir
-                materiais sob medida para a fase do seu filho.
+                Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais
+                sob medida para a fase do seu filho.
               </p>
 
               <div className="mt-2 flex items-start gap-3 md:gap-4">
@@ -440,10 +473,9 @@ export default function BibliotecaMaternaPage() {
                   />
                 </div>
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)] leading-relaxed">
-                  Quando essa área estiver ativa, você vai receber aqui
-                  recomendações explicadas com carinho: por que aquele material
-                  foi sugerido e como ele pode deixar o seu dia um pouco mais
-                  leve.
+                  Quando essa área estiver ativa, você vai receber aqui recomendações explicadas
+                  com carinho: por que aquele material foi sugerido e como ele pode deixar o seu
+                  dia um pouco mais leve.
                 </p>
               </div>
             </SoftCard>
@@ -462,9 +494,8 @@ export default function BibliotecaMaternaPage() {
                     Desbloqueie conteúdos completos
                   </h3>
                   <p className="text-xs md:text-sm text-white/90 max-w-xl">
-                    PDFs avançados, eBooks exclusivos, trilhas educativas e
-                    guias profissionais em um só lugar — tudo pensado para a sua
-                    rotina real.
+                    PDFs avançados, eBooks exclusivos, trilhas educativas e guias profissionais
+                    em um só lugar — tudo pensado para a sua rotina real.
                   </p>
                 </div>
 
