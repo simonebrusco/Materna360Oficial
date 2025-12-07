@@ -1143,7 +1143,7 @@ export default function RotinaLevePage() {
         save('rotina-leve:cardapio:meals', nextMeals);
       };
 
-      const removeMeal = (meal) => {
+     const removeMeal = (meal: string) => {
         if (!confirm('Remover esta refeição?')) return;
 
         const nextMeals = meals.filter((m) => m !== meal);
