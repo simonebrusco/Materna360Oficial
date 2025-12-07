@@ -107,6 +107,9 @@ export default function CuidarComAmorPage() {
   const rituaisBlockRef = useRef<HTMLDivElement | null>(null)
   const ideiasBlockRef = useRef<HTMLDivElement | null>(null)
 
+  // controle para não repetir toast de retomada
+  const resumeToastShownRef = useRef(false)
+
   // estado das sugestões
   const [suggestionLoading, setSuggestionLoading] = useState(false)
   const [currentFeature, setCurrentFeature] =
@@ -117,6 +120,19 @@ export default function CuidarComAmorPage() {
   useEffect(() => {
     setIsHydrated(true)
   }, [])
+
+  // telemetria de abertura de página
+  useEffect(() => {
+    try {
+      const abrirParam = searchParams.get('abrir')
+      track('cuidar_com_amor.page_opened', {
+        dateKey: currentDateKey,
+        abrir: abrirParam ?? null,
+      })
+    } catch {
+      // telemetria nunca quebra UX
+    }
+  }, [currentDateKey, searchParams])
 
   // carregar dados salvos
   useEffect(() => {
@@ -130,16 +146,38 @@ export default function CuidarComAmorPage() {
     const savedCare = load<CareCareData>(careKey)
     const savedBond = load<BondData>(bondKey)
 
+    let hasAnyData = false
+
     if (savedSignals && Array.isArray(savedSignals.selectedSignals)) {
       setSignalsData(savedSignals)
+      if (
+        savedSignals.selectedSignals.length > 0 ||
+        savedSignals.observation.trim().length > 0
+      ) {
+        hasAnyData = true
+      }
     }
 
     if (savedCare && Array.isArray(savedCare.checkedItems)) {
       setCareData(savedCare)
+      if (savedCare.checkedItems.length > 0) {
+        hasAnyData = true
+      }
     }
 
     if (savedBond && 'selectedOption' in savedBond) {
       setBondData(savedBond)
+      if (savedBond.selectedOption) {
+        hasAnyData = true
+      }
+    }
+
+    // toast suave dizendo que retomamos o dia
+    if (hasAnyData && !resumeToastShownRef.current) {
+      resumeToastShownRef.current = true
+      toast.info(
+        'Continuamos de onde você parou hoje. Seus registros foram mantidos.',
+      )
     }
   }, [isHydrated, currentDateKey])
 
@@ -342,6 +380,14 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
       })
       setCurrentSuggestion(data)
+
+      // auto-scroll para o bloco de ideias ao receber sugestão
+      if (ideiasBlockRef.current) {
+        ideiasBlockRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
     } catch (error) {
       console.error('[Cuidar com Amor] Erro ao buscar sugestão:', error)
       toast.danger(
