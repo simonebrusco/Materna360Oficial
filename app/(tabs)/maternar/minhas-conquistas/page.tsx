@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import clsx from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
@@ -185,6 +185,7 @@ function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
 
 export default function MinhasConquistasPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const highlightFromQuery = useMemo(() => {
     const abrir = searchParams.get('abrir')
@@ -236,8 +237,7 @@ export default function MinhasConquistasPage() {
     // Missões do dia
     try {
       const stored =
-        load<Record<string, boolean>>(`${MISSIONS_STATE_PREFIX}${todayDateKey}`) ??
-        {}
+        load<Record<string, boolean>>(`${MISSIONS_STATE_PREFIX}${todayDateKey}`) ?? {}
 
       setMissions(
         INITIAL_MISSIONS.map((m) => ({
@@ -292,8 +292,7 @@ export default function MinhasConquistasPage() {
     })
   }
 
-  const highlightRing = (target: HighlightTarget) =>
-    highlightRingClass(highlightFromQuery, target)
+  const highlightRing = (target: HighlightTarget) => highlightRingClass(highlightFromQuery, target)
 
   const levelBadgeLabel =
     totalXp > 0
@@ -343,7 +342,8 @@ export default function MinhasConquistasPage() {
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
-                      Este espaço mostra um resumo do que você já fez — sem cobranças, só reconhecimento.
+                      Este espaço mostra um resumo do que você já fez — sem cobranças, só
+                      reconhecimento.
                     </p>
                   </div>
 
@@ -522,7 +522,7 @@ export default function MinhasConquistasPage() {
                     variant="ghost"
                     className="w-full justify-center border border-[#ff005e]/20 text-[#ff005e]"
                     onClick={() => {
-                      window.location.href = '/meu-dia/como-estou-hoje?abrir=topo'
+                      router.push('/meu-dia/como-estou-hoje?abrir=topo')
                     }}
                   >
                     Registrar como estou hoje
@@ -538,7 +538,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 bg:white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)] bg-white',
+                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
                 highlightRing('selos'),
               )}
             >
@@ -621,7 +621,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={160}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 bg-white/80 border border:white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)] border-white/70',
+                'rounded-[32px] md:rounded-[36px] p-6 bg-white/80 border border-white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)]',
                 highlightRing('mensal'),
               )}
             >
@@ -681,6 +681,44 @@ export default function MinhasConquistasPage() {
                   Conforme você for registrando mais dias, o mês vai ganhando forma e cor — a sua
                   jornada registrada com carinho.
                 </p>
+              </div>
+            </SoftCard>
+          </RevealSection>
+
+          {/* ======================================================
+              BLOCO 5 — POR QUE ISSO IMPORTA
+          ====================================================== */}
+          <RevealSection delay={200}>
+            <SoftCard className="rounded-[32px] md:rounded-[36px] p-6 md:p-7 bg-white/80 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
+              <div className="grid gap-4 md:gap-6 md:grid-cols-2 items-start">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    Por que isso importa
+                  </p>
+                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cada registro aqui é um gesto de presença.
+                  </h2>
+                  <p className="text-sm text-[#545454]">
+                    As conquistas não existem para te cobrar resultados. Elas existem para mostrar,
+                    com carinho, tudo o que você já está fazendo — mesmo nos dias em que parece
+                    pouco.
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-sm text-[#545454]">
+                  <p>
+                    Quando você marca uma missão, registra seu humor ou salva um cuidado, o
+                    Materna360 transforma isso em XP, selos e presença contínua. É um jeito visual
+                    de enxergar a sua dedicação ao longo do tempo.
+                  </p>
+                  <p>
+                    Você não precisa cumprir todas as missões nem desbloquear todos os selos para
+                    “ir bem”. Um único gesto já conta muito.{' '}
+                    <span className="font-semibold">
+                      A jornada é sua, no seu ritmo — nós só ajudamos a iluminar o caminho.
+                    </span>
+                  </p>
+                </div>
               </div>
             </SoftCard>
           </RevealSection>
