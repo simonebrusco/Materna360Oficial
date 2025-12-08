@@ -6,7 +6,6 @@ import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import CardHub from '@/components/maternar/CardHub'
-import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 
 export const dynamic = 'force-dynamic'
@@ -55,14 +54,10 @@ export default function MaternarClient() {
           </header>
 
           <div className="space-y-8 md:space-y-10 pb-6">
-            {/* GRID NOVO DE PASTAS */}
+            {/* GRID NOVO DE PASTAS (CARDS TRANSLÚCIDOS 2x2) */}
             <Reveal>
               <CardHub />
             </Reveal>
-
-            {/* Motivacional */}
-            {/* Mantivemos o Footer motivacional original caso existisse,
-                mas como você pediu padrão total, o legal footer fica igual ao Meu Dia */}
 
             {/* Rodapé legal padrão do Materna360 */}
             <div className="mt-6">
