@@ -49,7 +49,7 @@ export default function MaternaBoxPage() {
                 <Button
                   variant="primary"
                   size="md"
-                  className="w-full md:w-auto bg-[#fd279d] hover:bg-[#e0208c] text-white border-none"
+                 className="w-full md:w-auto bg-[#fd279d] hover:bg-[#d31f86] text-white border-none"
                 >
                   Quero viver esses momentos com meu filho
                 </Button>
@@ -312,7 +312,7 @@ export default function MaternaBoxPage() {
                   <Button
                     variant="primary"
                     size="sm"
-                    className="w-full md:w-auto bg-[#fd279d] hover:bg-[#e0208c] text-white border-none"
+                   className="w-full md:w-auto bg-[#fd279d] hover:bg-[#d31f86] text-white border-none"
                   >
                     Ver valores e detalhes dos planos
                   </Button>
