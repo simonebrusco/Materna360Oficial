@@ -49,13 +49,41 @@ export default function MaternaBoxPage() {
                 <Button
                   variant="primary"
                   size="md"
-                  className="w-full md:w-auto"
+                  className="w-full md:w-auto bg-[#fd279d] hover:bg-[#e0208c] text-white border-none"
                 >
                   Quero viver esses momentos com meu filho
                 </Button>
                 <p className="text-[11px] text-[#6a6a6a] md:max-w-xs">
                   Um passo de cada vez. Você escolhe o plano quando se sentir pronta.
                 </p>
+              </div>
+
+              {/* Mini fluxo “como funciona” */}
+              <div className="mt-1 grid gap-2 text-[10px] text-[#4a4a4a]/80 md:grid-cols-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f2] text-[11px] font-semibold text-[#fd279d]">
+                    1
+                  </span>
+                  <p>
+                    Você escolhe a faixa etária e o plano que faz sentido agora.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f2] text-[11px] font-semibold text-[#fd279d]">
+                    2
+                  </span>
+                  <p>
+                    A cada mês, recebe uma caixa pensada para a fase do seu filho.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f2] text-[11px] font-semibold text-[#fd279d]">
+                    3
+                  </span>
+                  <p>
+                    Vocês vivem um momento leve juntos — sem precisar planejar nada.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -281,13 +309,52 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <div className="pt-1">
-                  <Button variant="primary" size="sm" className="w-full md:w-auto">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full md:w-auto bg-[#fd279d] hover:bg-[#e0208c] text-white border-none"
+                  >
                     Ver valores e detalhes dos planos
                   </Button>
                 </div>
               </div>
             </SoftCard>
           </div>
+
+          {/* BLOCO 4.5 · POR QUE ISSO IMPORTA PARA O SEU FILHO */}
+          <SoftCard className="rounded-3xl border border-[#ffe1f2] bg-gradient-to-r from-white via-[#ffe1f2]/60 to-white px-5 py-6 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:px-7 md:py-7">
+            <div className="grid gap-4 md:grid-cols-[1.1fr,0.9fr] md:items-center">
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd279d]/80">
+                  POR QUE ISSO IMPORTA PARA O SEU FILHO?
+                </p>
+                <h3 className="text-sm md:text-base font-semibold text-[#4a4a4a]">
+                  Muito além da caixa: é sobre memórias, segurança e vínculo.
+                </h3>
+                <p className="text-xs md:text-sm text-[#4a4a4a]">
+                  Para a criança, esses pequenos momentos de presença viram referência de amor,
+                  segurança e pertencimento. Não é sobre fazer algo perfeito, é sobre estar ali
+                  de verdade — mesmo que por poucos minutos.
+                </p>
+                <ul className="mt-2 space-y-1.5 text-[11px] md:text-xs text-[#4a4a4a]">
+                  <li>• Cada atividade é um convite para olho no olho, riso e descoberta juntos.</li>
+                  <li>• A criança sente que tem um espaço especial só de vocês na rotina.</li>
+                  <li>• Você mostra, na prática, que ela é importante mesmo nos dias corridos.</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2 rounded-2xl bg-white/80 p-4 text-[11px] md:text-xs text-[#4a4a4a]">
+                <p className="font-semibold text-[#fd279d]">
+                  “Não é sobre ter mais coisas, é sobre viver mais momentos.”
+                </p>
+                <p>
+                  A MaternaBox foi pensada para mães reais: cansadas, cheias de tarefas,
+                  mas que não querem abrir mão de criar lembranças boas com os filhos.
+                  Um lembrete mensal de que você não precisa ser perfeita — só presente.
+                </p>
+              </div>
+            </div>
+          </SoftCard>
 
           {/* BLOCO 5 · LISTA DE ESPERA */}
           <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#fd279d] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.26)] md:px-6 md:py-6">
@@ -309,12 +376,12 @@ export default function MaternaBoxPage() {
                 <input
                   type="email"
                   placeholder="Seu melhor e-mail"
-                  className="w-full rounded-full border border_white/70 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/80"
+                  className="w-full rounded-full border border-white/70 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/80"
                 />
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full border border-white bg-white text-[#fd279d] hover:bg:white/90"
+                  className="w-full border border-white bg-white text-[#fd279d] hover:bg-white/90"
                 >
                   Quero ser avisada quando abrir ✨
                 </Button>
