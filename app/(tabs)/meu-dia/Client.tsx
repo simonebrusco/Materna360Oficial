@@ -60,7 +60,12 @@ export default function MeuDiaClient() {
   return (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-32 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#9B4D96_0,#FF1475_30%,#FF7BB1_60%,#FF4B9A_82%,#FFB3D3_100%)]"
+      className="
+        min-h-[100dvh] 
+        pb-32 
+        bg-[#FFE8F2]
+        bg-[radial-gradient(circle_at_top,#FFE8F2_0,#FFD8E6_40%,#fd2597_100%)]
+      "
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO — cópia do Maternar, só mudando textos */}
