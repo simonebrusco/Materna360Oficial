@@ -87,7 +87,7 @@ export default function MaternaBoxPage() {
               </div>
             </div>
 
-            {/* IMAGEM sozinha, respeitando 1080x1200 */}
+            {/* IMAGEM */}
             <div className="relative flex items-center justify-center">
               <div className="relative w-full max-w-sm aspect-[9/10] md:max-w-md">
                 <Image
@@ -291,18 +291,20 @@ export default function MaternaBoxPage() {
                     </div>
                   </div>
 
-                  {/* Card destacado – fundo rosa oficial + texto branco */}
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-[#ff005e] p-3.5">
+                  {/* Card destacado – agora branco com borda rosa */}
+                  <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-white p-3.5 shadow-[0_8px_22px_rgba(0,0,0,0.10)]">
                     <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold uppercase text-white">
+                      <span className="inline-flex items-center rounded-full bg-[#ff005e] px-3 py-0.5 text-[10px] font-semibold uppercase text-white">
                         Experiência completa
+                      </span>
+                      <p className="text-sm font-semibold text-[#4a4a4a] mt-1">
+                        Plano anual
                       </p>
-                      <p className="text-sm font-semibold text-white">Plano anual</p>
-                      <p className="text-xs text-white/90">
+                      <p className="text-xs text-[#4a4a4a]">
                         12 meses com temas variados, registros afetivos e memórias espalhadas ao longo do ano.
                       </p>
                     </div>
-                    <p className="mt-2 text-[10px] font-medium text-white/90">
+                    <p className="mt-2 text-[10px] font-medium text-[#ff005e]">
                       Melhor custo-benefício para quem já decidiu caminhar com a MaternaBox.
                     </p>
                   </div>
@@ -363,7 +365,7 @@ export default function MaternaBoxPage() {
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-white/90">
                   LISTA DE ESPERA
                 </p>
-                <p className="text-sm md:text-base font-semibold">
+                <p className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm md:text-base font-semibold text-white">
                   Quer ser avisada quando a MaternaBox abrir as primeiras assinaturas?
                 </p>
                 <p className="text-[11px] md:text-xs text-white/90">
@@ -376,12 +378,12 @@ export default function MaternaBoxPage() {
                 <input
                   type="email"
                   placeholder="Seu melhor e-mail"
-                  className="w-full rounded-full border border-white/70 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/80"
+                  className="w-full rounded-full border border-white/70 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/70 focus:outline-none fokus:ring-2 focus:ring-white/80"
                 />
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full border border-white bg-white text-[#ff005e] hover:bg-white/90"
+                  className="w-full border border-white bg-white text-[#ff005e] hover:bg:white/90"
                 >
                   Quero ser avisada quando abrir ✨
                 </Button>
