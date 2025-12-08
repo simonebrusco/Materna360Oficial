@@ -42,7 +42,8 @@ const PLANS = [
     badge: 'Recomendado',
     price: 'R$29,90',
     pricePeriod: '/mês',
-    priceNote: 'Para mães que desejam organização gentil, clareza emocional e apoio diário.',
+    priceNote:
+      'Para mães que desejam organização gentil, clareza emocional e apoio diário.',
     subtitle:
       'Recursos avançados para uma rotina organizada, leve e acolhida.',
     features: [
@@ -88,7 +89,10 @@ const PLANS = [
       { label: 'IA ilimitada e avançada com leitura emocional detalhada' },
       { label: 'Relatórios emocionais semanais e mensais' },
       { label: 'Trilhas educativas personalizadas para sua família' },
-      { label: 'Rotina Inteligente 360, com ajustes automáticos ao longo da semana' },
+      {
+        label:
+          'Rotina Inteligente 360, com ajustes automáticos ao longo da semana',
+      },
       {
         label:
           'Conteúdos avançados da Biblioteca Materna, trilhas terapêuticas e aulas especiais',
@@ -246,7 +250,7 @@ export default function PlanosPage() {
                     {planConfig.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <AppIcon
-                          name='check'
+                          name="check"
                           size={16}
                           decorative
                           className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
@@ -262,7 +266,7 @@ export default function PlanosPage() {
                   <Button
                     variant={planConfig.buttonVariant}
                     size="lg"
-                    className="w-full"
+                    className="w-full md:w-[230px]"
                     onClick={() => {
                       handleViewPlans(planConfig.id)
                       if (planConfig.id !== 'essencial') {
@@ -290,17 +294,17 @@ export default function PlanosPage() {
 
           {/* Tabela comparativa simplificada */}
           <div className="mb-10">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-3">
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
               Comparando os planos
             </h3>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">
+            <p className="text-sm text-white/90 mb-4 drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
               Um resumo dos principais recursos em cada plano, para te ajudar a
               escolher com calma o que faz mais sentido para a sua rotina.
             </p>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[640px] rounded-2xl border border-[var(--color-pink-snow)]/70 bg-white/80">
-                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70">
+              <div className="min-w-[640px] rounded-3xl border border-white/70 bg-white/92 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/95 rounded-t-3xl">
                   <div className="px-3 py-3">Recurso</div>
                   <div className="px-3 py-3 text-center">Essencial</div>
                   <div className="px-3 py-3 text-center">Materna+</div>
@@ -371,7 +375,7 @@ export default function PlanosPage() {
                 ].map(row => (
                   <div
                     key={row.feature}
-                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs"
+                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white/95 even:bg-[#fff5fb]/80"
                   >
                     <div className="px-3 py-2 font-medium text-[var(--color-text-main)]">
                       {row.feature}
