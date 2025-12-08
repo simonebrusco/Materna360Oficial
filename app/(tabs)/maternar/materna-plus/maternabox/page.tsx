@@ -11,8 +11,8 @@ export default function MaternaBoxPage() {
   return (
     <PageTemplate
       label="MATERNAR"
-      title="MaternaBox — surpresas que acolhem sua rotina."
-      subtitle="Todo mês, uma caixa criada para aproximar você do seu filho com leveza, carinho e criatividade."
+      title="MaternaBox — pequenos rituais que acolhem sua rotina."
+      subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
     >
       <ClientOnly>
         <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
@@ -20,30 +20,22 @@ export default function MaternaBoxPage() {
           <SoftCard className="grid gap-8 rounded-3xl border border-white/80 bg-white/95 p-5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] md:grid-cols-[1.2fr,1fr] md:p-7">
             {/* TEXTO */}
             <div className="flex flex-col justify-center space-y-4 md:space-y-5">
-              <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
-                UM CARINHO MENSAL ENTREGUE NA SUA PORTA
+              <p className="text-xs md:text-sm font-medium text-[#4a4a4a]">
+                A experiência mensal de carinho que aproxima você do seu filho — e de você mesma.
               </p>
 
               <h2 className="text-lg md:text-xl font-semibold text-[#4a4a4a]">
-                Mais conexão, menos culpa. Uma caixa pensada para caber na sua rotina real.
+                MaternaBox — pequenos rituais que acolhem sua rotina.
               </h2>
 
-              {/* Selinho de autoridade */}
+              <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed">
+                Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas,
+                fortalecer vínculos e trazer mais leveza para o seu dia.
+              </p>
+
               <div className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[10px] font-medium text-[#4a4a4a]">
-                Criada por mãe pedagoga há mais de 20 anos na educação infantil
+                Não revelamos o conteúdo. A surpresa faz parte da magia — e da experiência Materna360.
               </div>
-
-              <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed">
-                Sabe aquela sensação de que o dia acaba e vocês quase não brincaram?
-                A MaternaBox nasce justamente para isso: te ajudar a viver momentos simples,
-                mas cheios de presença, mesmo na correria.
-              </p>
-
-              <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed">
-                Todo mês, você recebe uma caixa com atividades prontas, brinquedos educativos
-                e ideias rápidas para se conectar com seu filho — sem precisar pesquisar,
-                planejar ou inventar tudo do zero.
-              </p>
 
               <div className="pt-1 flex flex-col gap-2 md:flex-row md:items-center">
                 <Button
@@ -51,43 +43,15 @@ export default function MaternaBoxPage() {
                   size="md"
                   className="w-full md:w-auto bg-[#ff005e] hover:bg-[#cf285f] text-white border-none"
                 >
-                  Quero viver esses momentos com meu filho
+                  Escolha o seu plano
                 </Button>
                 <p className="text-[11px] text-[#6a6a6a] md:max-w-xs">
-                  Um passo de cada vez. Você escolhe o plano quando se sentir pronta.
+                  Um passo de cada vez. A sua rotina pode ser mais acolhedora — um gesto de cuidado por vez.
                 </p>
-              </div>
-
-              {/* Mini fluxo “como funciona” */}
-              <div className="mt-1 grid gap-2 text-[10px] text-[#4a4a4a]/80 md:grid-cols-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffd8e6] text-[11px] font-semibold text-[#ff005e]">
-                    1
-                  </span>
-                  <p>
-                    Você escolhe a faixa etária e o plano que faz sentido agora.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffd8e6] text-[11px] font-semibold text-[#ff005e]">
-                    2
-                  </span>
-                  <p>
-                    A cada mês, recebe uma caixa pensada para a fase do seu filho.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffd8e6] text-[11px] font-semibold text-[#ff005e]">
-                    3
-                  </span>
-                  <p>
-                    Vocês vivem um momento leve juntos — sem precisar planejar nada.
-                  </p>
-                </div>
               </div>
             </div>
 
-            {/* IMAGEM */}
+            {/* IMAGEM (mantida) */}
             <div className="relative flex items-center justify-center">
               <div className="relative w-full max-w-sm aspect-[9/10] md:max-w-md">
                 <Image
@@ -102,10 +66,31 @@ export default function MaternaBoxPage() {
             </div>
           </SoftCard>
 
-          {/* SEÇÃO 2 · O QUE VEM + PARA QUEM É */}
+          {/* COMO FUNCIONA A MATERNABOX */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)] md:p-6">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
+                Como funciona a MaternaBox?
+              </h3>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                A MaternaBox é uma experiência mensal cuidadosamente pensada para trazer:
+              </p>
+              <ul className="space-y-1.5 text-[11px] md:text-xs text-[#4a4a4a]">
+                <li>• estímulos criativos para seu filho,</li>
+                <li>• rituais de presença para vocês viverem juntos,</li>
+                <li>• um carinho especial para você,</li>
+                <li>• e um momento de pausa dentro da sua rotina.</li>
+              </ul>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                Cada edição traz algo novo. Sempre leve, sempre acolhedor, sempre Materna360.
+              </p>
+            </div>
+          </SoftCard>
+
+          {/* O QUE VEM + PARA QUEM É / NÃO É */}
           <div className="grid gap-6 md:gap-8 md:grid-cols-[1.1fr,1fr]">
-            {/* BLOCO 2 · O QUE VEM NA CAIXA */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
+            {/* O QUE VEM NA CAIXA (mantido, levemente editorial) */}
+            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)] md:p-6">
               <div className="space-y-5">
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
@@ -164,7 +149,7 @@ export default function MaternaBoxPage() {
               </div>
             </SoftCard>
 
-            {/* BLOCO 2.5 · PARA QUEM É / NÃO É */}
+            {/* PARA QUEM É / NÃO É (mantido) */}
             <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
               <div className="space-y-4">
                 <div className="space-y-2.5">
@@ -200,192 +185,265 @@ export default function MaternaBoxPage() {
             </SoftCard>
           </div>
 
-          {/* SEÇÃO 3 · FAIXA ETÁRIA + PLANOS */}
-          <div className="grid gap-6 md:gap-8 md:grid-cols-[1.05fr,1fr]">
-            {/* BLOCO 3 · FAIXA ETÁRIA */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
-                    ESCOLHA A FAIXA ETÁRIA
-                  </p>
-                  <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
-                    A caixa acompanha o ritmo do seu filho — e o seu também.
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#4a4a4a]">
-                    Você seleciona a faixa etária ao assinar e pode ajustar depois,
-                    conforme seu filho cresce ou muda de fase.
-                  </p>
-                </div>
-
-                <div className="grid gap-2.5 md:grid-cols-2 lg:grid-cols-4">
-                  {['0–1 ano', '1–3 anos', '3–5 anos', '5–8 anos'].map(range => (
-                    <button
-                      key={range}
-                      type="button"
-                      className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] px-3 py-2 text-xs font-medium text-[#4a4a4a] transition hover:border-[#ff005e] hover:bg-[#ffd8e6]"
-                    >
-                      {range}
-                    </button>
-                  ))}
-                </div>
-
-                <p className="text-[11px] text-[#6a6a6a]">
-                  Se você mudar de ideia ou seu filho “disparar” no desenvolvimento,
-                  é só atualizar a faixa etária antes da próxima caixa.
+          {/* FAIXA ETÁRIA */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                  ESCOLHA A FAIXA ETÁRIA
+                </p>
+                <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
+                  A caixa acompanha o ritmo do seu filho — e o seu também.
+                </h3>
+                <p className="text-xs md:text-sm text-[#4a4a4a]">
+                  Você seleciona a faixa etária ao assinar e pode ajustar depois,
+                  conforme seu filho cresce ou muda de fase.
                 </p>
               </div>
-            </SoftCard>
 
-            {/* BLOCO 4 · PLANOS */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
-                    PLANOS PENSADOS PARA A SUA ROTINA
-                  </p>
-                  <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
-                    Comece leve, experimente e depois decide se quer seguir.
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#4a4a4a]">
-                    Você pode começar testando por pouco tempo ou já garantir um período maior
-                    com mais economia. Todos os planos têm a mesma experiência dentro da caixa
-                    — o que muda é o tempo de companhia.
-                  </p>
-                </div>
+              <div className="grid gap-2.5 md:grid-cols-4">
+                {['0–1 ano', '1–3 anos', '3–5 anos', '5–8 anos'].map(range => (
+                  <button
+                    key={range}
+                    type="button"
+                    className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] px-3 py-2 text-xs font-medium text-[#4a4a4a] transition hover:border-[#ff005e] hover:bg-[#ffd8e6]"
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
 
-                <div className="grid gap-3.5 md:grid-cols-2">
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
-                        Comece leve
-                      </p>
-                      <p className="text-sm font-semibold text-[#4a4a4a]">Plano mensal</p>
-                      <p className="text-xs text-[#4a4a4a]">
-                        1 mês para experimentar a MaternaBox e sentir como ela encaixa nos seus dias.
-                      </p>
-                    </div>
-                  </div>
+              <p className="text-[11px] text-[#6a6a6a]">
+                Se você mudar de ideia ou seu filho “disparar” no desenvolvimento,
+                é só atualizar a faixa etária antes da próxima caixa.
+              </p>
+            </div>
+          </SoftCard>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-white p-3.5">
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
-                        Ritmo constante
-                      </p>
-                      <p className="text-sm font-semibold text-[#4a4a4a]">Plano trimestral</p>
-                      <p className="text-xs text-[#4a4a4a]">
-                        3 meses de caixinhas para criar um novo ritual de conexão na semana.
-                      </p>
-                    </div>
-                  </div>
+          {/* PLANOS DISPONÍVEIS */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
+                  Planos disponíveis
+                </h3>
+                <p className="text-xs md:text-sm text-[#4a4a4a]">
+                  Escolha o ritmo que faz sentido para a sua família.
+                  Cada plano representa um movimento de cuidado — no seu tempo, do seu jeito.
+                </p>
+              </div>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-white p-3.5">
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
-                        Presença na rotina
-                      </p>
-                      <p className="text-sm font-semibold text-[#4a4a4a]">Plano semestral</p>
-                      <p className="text-xs text-[#4a4a4a]">
-                        Meio ano com uma ajudinha mensal para manter momentos bons mesmo nos dias corridos.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card destacado – agora branco com borda rosa */}
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-white p-3.5 shadow-[0_8px_22px_rgba(0,0,0,0.10)]">
-                    <div className="space-y-1.5">
-                      <span className="inline-flex items-center rounded-full bg-[#ff005e] px-3 py-0.5 text-[10px] font-semibold uppercase text-white">
-                        Experiência completa
-                      </span>
-                      <p className="text-sm font-semibold text-[#4a4a4a] mt-1">
-                        Plano anual
-                      </p>
-                      <p className="text-xs text-[#4a4a4a]">
-                        12 meses com temas variados, registros afetivos e memórias espalhadas ao longo do ano.
-                      </p>
-                    </div>
-                    <p className="mt-2 text-[10px] font-medium text-[#ff005e]">
-                      Melhor custo-benefício para quem já decidiu caminhar com a MaternaBox.
+              <div className="grid gap-3.5 md:grid-cols-2 lg:grid-cols-4">
+                {/* Comece Leve — Plano Mensal */}
+                <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
+                      Comece Leve — Plano Mensal
+                    </p>
+                    <p className="text-xs text-[#4a4a4a]">
+                      O primeiro passo para viver a experiência MaternaBox.
+                    </p>
+                    <p className="text-xs font-semibold text-[#4a4a4a]">
+                      Investimento mensal: R$ 99
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#4a4a4a]">
+                      <li>✔ 1 caixa por mês</li>
+                      <li>✔ renovação automática</li>
+                      <li>✔ pausa quando quiser</li>
+                      <li>✔ experiência completa da edição do mês</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#4a4a4a]">
+                      Ideal para quem deseja começar aos poucos, sentindo a leveza mês a mês.
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-1">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="w-full md:w-auto bg-[#ff005e] hover:bg-[#cf285f] text-white border-none"
-                  >
-                    Ver valores e detalhes dos planos
-                  </Button>
+                {/* Ritmo Constante — Plano Trimestral */}
+                <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-white p-3.5">
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
+                      Ritmo Constante — Plano Trimestral
+                    </p>
+                    <p className="text-xs text-[#4a4a4a]">
+                      Três meses de presença, criatividade e momentos que aproximam.
+                    </p>
+                    <p className="text-xs font-semibold text-[#4a4a4a]">
+                      Investimento total: R$ 279
+                    </p>
+                    <p className="text-[11px] text-[#4a4a4a]">
+                      (equivalente a R$ 93 por mês)
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#4a4a4a]">
+                      <li>✔ 1 caixa por mês durante 3 meses</li>
+                      <li>✔ prioridade na seleção das edições</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#4a4a4a]">
+                      Para quem deseja criar um hábito de conexão contínua.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </SoftCard>
-          </div>
 
-          {/* BLOCO 4.5 · POR QUE ISSO IMPORTA PARA O SEU FILHO */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-gradient-to-r from-white via-[#ffd8e6]/60 to-white px-5 py-6 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:px-7 md:py-7">
-            <div className="grid gap-4 md:grid-cols-[1.1fr,0.9fr] md:items-center">
-              <div className="space-y-2.5">
-                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/80">
-                  POR QUE ISSO IMPORTA PARA O SEU FILHO?
-                </p>
-                <h3 className="text-sm md:text-base font-semibold text-[#4a4a4a]">
-                  Muito além da caixa: é sobre memórias, segurança e vínculo.
-                </h3>
-                <p className="text-xs md:text-sm text-[#4a4a4a]">
-                  Para a criança, esses pequenos momentos de presença viram referência de amor,
-                  segurança e pertencimento. Não é sobre fazer algo perfeito, é sobre estar ali
-                  de verdade — mesmo que por poucos minutos.
-                </p>
-                <ul className="mt-2 space-y-1.5 text-[11px] md:text-xs text-[#4a4a4a]">
-                  <li>• Cada atividade é um convite para olho no olho, riso e descoberta juntos.</li>
-                  <li>• A criança sente que tem um espaço especial só de vocês na rotina.</li>
-                  <li>• Você mostra, na prática, que ela é importante mesmo nos dias corridos.</li>
-                </ul>
-              </div>
+                {/* Presença na Rotina — Plano Semestral */}
+                <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-white p-3.5">
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
+                      Presença na Rotina — Plano Semestral
+                    </p>
+                    <p className="text-xs text-[#4a4a4a]">
+                      Seis meses para transformar pequenos momentos em memórias.
+                    </p>
+                    <p className="text-xs font-semibold text-[#4a4a4a]">
+                      Investimento total: R$ 534
+                    </p>
+                    <p className="text-[11px] text-[#4a4a4a]">
+                      (equivalente a R$ 89 por mês)
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#4a4a4a]">
+                      <li>✔ 1 caixa por mês durante 6 meses</li>
+                      <li>✔ prioridade no estoque</li>
+                      <li>✔ mimo especial de boas-vindas</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#4a4a4a]">
+                      Para quem deseja estabilidade emocional e momentos consistentes de presença.
+                    </p>
+                  </div>
+                </div>
 
-              <div className="space-y-2 rounded-2xl bg-white/80 p-4 text-[11px] md:text-xs text-[#4a4a4a]">
-                <p className="font-semibold text-[#ff005e]">
-                  “Não é sobre ter mais coisas, é sobre viver mais momentos.”
-                </p>
-                <p>
-                  A MaternaBox foi pensada para mães reais: cansadas, cheias de tarefas,
-                  mas que não querem abrir mão de criar lembranças boas com os filhos.
-                  Um lembrete mensal de que você não precisa ser perfeita — só presente.
-                </p>
+                {/* Experiência Completa — Plano Anual */}
+                <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-white p-3.5 shadow-[0_8px_22px_rgba(0,0,0,0.10)]">
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
+                      Experiência Completa — Plano Anual
+                    </p>
+                    <p className="text-xs text-[#4a4a4a]">
+                      Um ano inteiro de carinho, criatividade e conexão.
+                    </p>
+                    <p className="text-xs font-semibold text-[#4a4a4a]">
+                      Investimento total: R$ 948
+                    </p>
+                    <p className="text-[11px] text-[#4a4a4a]">
+                      (equivalente a R$ 79 por mês)
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#4a4a4a]">
+                      <li>✔ 1 caixa por mês durante 12 meses</li>
+                      <li>✔ prioridade máxima nas edições</li>
+                      <li>✔ mimo exclusivo anual</li>
+                      <li>✔ edição especial comemorativa</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#4a4a4a]">
+                      Para quem quer viver a experiência MaternaBox de forma profunda, leve e contínua.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </SoftCard>
 
-          {/* BLOCO 5 · LISTA DE ESPERA */}
-          <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#ff005e] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.26)] md:px-6 md:py-6">
-            <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-6">
-              <div className="space-y-1.5 max-w-xl">
-                <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-white/90">
-                  LISTA DE ESPERA
+          {/* VALORES ESPECIAIS PARA QUEM JÁ VIVE O MATERNA360 */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
+                Valores especiais para quem já vive o Materna360
+              </h3>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                Se você já faz parte da nossa jornada:
+              </p>
+              <ul className="space-y-1.5 text-[11px] md:text-xs text-[#4a4a4a]">
+                <li>Assinantes Materna+ recebem 5% de leveza no investimento da MaternaBox.</li>
+                <li>Assinantes Materna+360 recebem 10% de cuidado no valor final.</li>
+              </ul>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                O ajuste é aplicado automaticamente no checkout.
+                Uma forma de agradecer por caminhar conosco — mês após mês.
+              </p>
+            </div>
+          </SoftCard>
+
+          {/* POR QUE A MATERNABOX É DIFERENTE? */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-gradient-to-r from-white via-[#ffd8e6]/40 to-white px-5 py-6 shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-7 md:py-7">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
+                Por que a MaternaBox é diferente?
+              </h3>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                Porque ela não é uma caixa.
+                Ela é um convite.
+              </p>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                Um convite para:
+              </p>
+              <ul className="space-y-1.5 text-[11px] md:text-xs text-[#4a4a4a]">
+                <li>• respirar</li>
+                <li>• desacelerar</li>
+                <li>• brincar com intenção</li>
+                <li>• criar vínculos profundos</li>
+                <li>• e trazer mais presença para a infância do seu filho — e para a sua jornada como mãe.</li>
+              </ul>
+              <p className="text-xs md:text-sm text-[#4a4a4a]">
+                A cada edição, um carinho pensado com cuidado, sensibilidade e propósito.
+              </p>
+            </div>
+          </SoftCard>
+
+          {/* CTA FINAL + LISTA DE ESPERA (bloco branco com borda rosa) */}
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 px-5 py-6 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:px-7 md:py-7">
+            <div className="grid gap-6 md:grid-cols-[1.1fr,0.9fr] md:items-center">
+              <div className="space-y-3">
+                <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
+                  Escolha o seu plano e comece a viver essa experiência com leveza.
+                </h3>
+                <p className="text-xs md:text-sm text-[#4a4a4a]">
+                  A sua rotina pode ser mais acolhedora — um passo de cada vez.
                 </p>
-                <p className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm md:text-base font-semibold text-white">
-                  Quer ser avisada quando a MaternaBox abrir as primeiras assinaturas?
-                </p>
-                <p className="text-[11px] md:text-xs text-white/90">
-                  Deixe seu e-mail e nós te avisamos em primeira mão — sem spam, só novidades
-                  sobre a abertura e os presentes de boas-vindas.
+                <p className="text-[11px] md:text-xs text-[#4a4a4a]/90">
+                  Ao deixar seus dados, você entra na lista de espera oficial da MaternaBox
+                  e será avisada quando abrirmos as primeiras assinaturas.
                 </p>
               </div>
 
-              <div className="mt-3 flex flex-col gap-2 md:mt-0 md:min-w-[260px]">
-                <input
-                  type="email"
-                  placeholder="Seu melhor e-mail"
-                  className="w-full rounded-full border border-white/70 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/70 focus:outline-none fokus:ring-2 focus:ring-white/80"
-                />
+              <div className="space-y-2.5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-[#4a4a4a]" htmlFor="maternabox-name">
+                    Nome completo
+                  </label>
+                  <input
+                    id="maternabox-name"
+                    type="text"
+                    placeholder="Como você gostaria de ser chamada?"
+                    className="w-full rounded-full border border-[#ffd8e6] bg-white px-3 py-2 text-xs text-[#4a4a4a] placeholder:text-[#4a4a4a]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-[#4a4a4a]" htmlFor="maternabox-whatsapp">
+                    WhatsApp
+                  </label>
+                  <input
+                    id="maternabox-whatsapp"
+                    type="tel"
+                    placeholder="(00) 00000-0000"
+                    className="w-full rounded-full border border-[#ffd8e6] bg-white px-3 py-2 text-xs text-[#4a4a4a] placeholder:text-[#4a4a4a]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-[#4a4a4a]" htmlFor="maternabox-email">
+                    E-mail
+                  </label>
+                  <input
+                    id="maternabox-email"
+                    type="email"
+                    placeholder="Seu melhor e-mail"
+                    className="w-full rounded-full border border-[#ffd8e6] bg-white px-3 py-2 text-xs text-[#4a4a4a] placeholder:text-[#4a4a4a]/40 focus:outline-none focus:ring-1 focus:ring-[#ff005e]"
+                  />
+                </div>
+
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   size="sm"
-                  className="w-full border border-white bg-white text-[#ff005e] hover:bg:white/90"
+                  className="mt-1 w-full bg-[#ff005e] hover:bg-[#cf285f] text-white border-none"
                 >
-                  Quero ser avisada quando abrir ✨
+                  Entrar na lista de espera da MaternaBox ✨
                 </Button>
               </div>
             </div>
