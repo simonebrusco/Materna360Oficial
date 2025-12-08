@@ -262,7 +262,8 @@ export default function WeeklyPlannerShell() {
                   >
                     ‹
                   </button>
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
+                  {/* removido "capitalize" para deixar "dezembro de 2025" */}
+                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
                     {selectedDate.toLocaleDateString('pt-BR', {
                       month: 'long',
                       year: 'numeric',
@@ -350,7 +351,7 @@ export default function WeeklyPlannerShell() {
                 <div className="flex h-full">
                   <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
                     <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
-                      Lembretes rápidos
+                      Lembretes Rápidos
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
                       Tudo que você salvar nos atalhos aparece aqui como
@@ -419,7 +420,7 @@ export default function WeeklyPlannerShell() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
-                        {/* Prioridades do dia */}
+                        {/* Prioridades do Dia */}
                         <button
                           type="button"
                           onClick={() => setQuickAction('top3')}
@@ -431,12 +432,12 @@ export default function WeeklyPlannerShell() {
                               className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
-                              Prioridades do dia
+                              Prioridades do Dia
                             </span>
                           </div>
                         </button>
 
-                        {/* Agenda & compromissos */}
+                        {/* Agenda & Compromissos */}
                         <button
                           type="button"
                           onClick={() => {
@@ -447,15 +448,15 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duração-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
-                              Agenda &amp; compromissos
+                              Agenda &amp; Compromissos
                             </span>
                           </div>
                         </button>
 
-                        {/* Cuidar de mim */}
+                        {/* Cuidar de Mim */}
                         <button
                           type="button"
                           onClick={() => setQuickAction('selfcare')}
@@ -464,27 +465,27 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duração-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
-                              Cuidar de mim
+                              Cuidar de Mim
                             </span>
                           </div>
                         </button>
 
-                        {/* Cuidar do meu filho */}
+                        {/* Cuidar do Meu Filho */}
                         <button
                           type="button"
                           onClick={() => setQuickAction('family')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duração-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
-                              Cuidar do meu filho
+                              Cuidar do Meu Filho
                             </span>
                           </div>
                         </button>
