@@ -1,4 +1,3 @@
-// components/common/LegalFooter.tsx
 'use client'
 
 export default function LegalFooter() {
