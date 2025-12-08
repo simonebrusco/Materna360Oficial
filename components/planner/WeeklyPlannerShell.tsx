@@ -13,22 +13,16 @@ import {
   usePlannerSavedContents,
   type PlannerSavedContent,
 } from '@/app/hooks/usePlannerSavedContents'
+
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import WeekView from './WeekView'
 import { Reveal } from '@/components/ui/Reveal'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import SavedContentsSection from '@/components/blocks/SavedContentsSection'
-import { track } from '@/app/lib/telemetry'
-import { updateXP } from '@/app/lib/xp'
-import { useDayEmotion } from '@/app/store/useDayEmotion' // << NOVO
 
-// =======================================================
-// TIPAGENS
-// =======================================================
 type Appointment = {
   id: string
-  dateKey: string
   time: string
   title: string
   tag?: string
@@ -46,30 +40,9 @@ type TaskItem = {
 type PlannerData = {
   appointments: Appointment[]
   tasks: TaskItem[]
-  notes: string
+  notes: string // compatibilidade
 }
 
-type ModalAppointmentFormProps = {
-  mode: 'create' | 'edit'
-  initialDateKey: string
-  initialTitle?: string
-  initialTime?: string
-  onSubmit: (data: { dateKey: string; title: string; time: string }) => void
-  onCancel: () => void
-  onDelete?: () => void
-}
-
-type QuickListModalProps = {
-  mode: 'top3' | 'selfcare' | 'family'
-  items: TaskItem[]
-  onAdd: (title: string) => void
-  onToggle: (id: string) => void
-  onClose: () => void
-}
-
-// =======================================================
-// COMPONENTE PRINCIPAL
-// =======================================================
 export default function WeeklyPlannerShell() {
   // ===========================
   // ESTADO PRINCIPAL
@@ -88,18 +61,14 @@ export default function WeeklyPlannerShell() {
   // Planner (sincronizar data com mini-hubs)
   const plannerHook = usePlannerSavedContents()
 
-  // Estado global para IA (humor + intenção do dia)
-  const { mood, dayIntention, setMood, setDayIntention } = useDayEmotion()
-
+  // Estado local para IA (humor + intenção do dia)
+  const [mood, setMood] = useState<string | null>(null)
+  const [dayIntention, setDayIntention] = useState<string | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  // Modal de compromisso (novo, via calendário / atalhos)
+  // Modal de compromisso (calendário)
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-
-  // Modal de edição de compromisso
-  const [editingAppointment, setEditingAppointment] =
-    useState<Appointment | null>(null)
 
   // Modal de conteúdo salvo (kanban)
   const [selectedSavedContent, setSelectedSavedContent] =
@@ -118,28 +87,11 @@ export default function WeeklyPlannerShell() {
     setSelectedDateKey(dateKey)
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
-
-    try {
-      track('planner.opened', {
-        tab: 'meu-dia',
-        dateKey,
-      })
-    } catch {
-      // ignora
-    }
   }, [plannerHook])
 
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
-      try {
-        track('planner.date_changed', {
-          tab: 'meu-dia',
-          dateKey: selectedDateKey,
-        })
-      } catch {
-        // ignora
-      }
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
@@ -149,36 +101,32 @@ export default function WeeklyPlannerShell() {
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
-    const loadedAppointments: Appointment[] =
-      load('planner/appointments/all', []) ?? []
-    const loadedTasks: TaskItem[] =
-      load(`planner/tasks/${selectedDateKey}`, []) ?? []
-    const loadedNotes: string =
-      load(`planner/notes/${selectedDateKey}`, '') ?? ''
+    const loadedData: PlannerData = {
+      appointments:
+        load(`planner/appointments/${selectedDateKey}`, []) ?? [],
+      tasks: load(`planner/tasks/${selectedDateKey}`, []) ?? [],
+      notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
+    }
 
-    setPlannerData({
-      appointments: loadedAppointments,
-      tasks: loadedTasks,
-      notes: loadedNotes,
-    })
+    setPlannerData(loadedData)
   }, [selectedDateKey, isHydrated])
 
   // ===========================
   // SAVE DATA
   // ===========================
-  // Compromissos: persistência global
   useEffect(() => {
-    if (!isHydrated) return
-    save('planner/appointments/all', plannerData.appointments)
-  }, [plannerData.appointments, isHydrated])
+    if (!isHydrated || !selectedDateKey) return
+    save(
+      `planner/appointments/${selectedDateKey}`,
+      plannerData.appointments,
+    )
+  }, [plannerData.appointments, selectedDateKey, isHydrated])
 
-  // Tarefas: por dia
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/tasks/${selectedDateKey}`, plannerData.tasks)
   }, [plannerData.tasks, selectedDateKey, isHydrated])
 
-  // Notas: por dia (futuro)
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
@@ -188,17 +136,7 @@ export default function WeeklyPlannerShell() {
   // ACTIONS
   // ===========================
   const handleDateSelect = useCallback((date: Date) => {
-    const dateKey = getBrazilDateKey(date)
-    setSelectedDateKey(dateKey)
-
-    try {
-      track('planner.date_clicked', {
-        tab: 'meu-dia',
-        dateKey,
-      })
-    } catch {
-      // ignora
-    }
+    setSelectedDateKey(getBrazilDateKey(date))
   }, [])
 
   const handleAddAppointment = useCallback(
@@ -207,93 +145,17 @@ export default function WeeklyPlannerShell() {
         ...appointment,
         id: Math.random().toString(36).slice(2, 9),
       }
-
       setPlannerData(prev => ({
         ...prev,
         appointments: [...prev.appointments, newAppointment],
       }))
-
-      try {
-        track('planner.appointment_added', {
-          tab: 'meu-dia',
-          time: appointment.time ?? null,
-          dateKey: appointment.dateKey,
-        })
-      } catch {
-        // ignora
-      }
-
-      try {
-        void updateXP(6)
-      } catch {
-        // ignora
-      }
     },
     [],
   )
 
-  const handleUpdateAppointment = useCallback((updated: Appointment) => {
-    setPlannerData(prev => ({
-      ...prev,
-      appointments: prev.appointments.map(app =>
-        app.id === updated.id ? updated : app,
-      ),
-    }))
-
-    try {
-      track('planner.appointment_updated', {
-        tab: 'meu-dia',
-        id: updated.id,
-        dateKey: updated.dateKey,
-      })
-    } catch {
-      // ignora
-    }
-  }, [])
-
-  const handleDeleteAppointment = useCallback((id: string) => {
-    setPlannerData(prev => ({
-      ...prev,
-      appointments: prev.appointments.filter(app => app.id !== id),
-    }))
-
-    try {
-      track('planner.appointment_deleted', {
-        tab: 'meu-dia',
-        id,
-      })
-    } catch {
-      // ignora
-    }
-  }, [])
-
-  const openModalForDate = (day: Date) => {
-    const key = getBrazilDateKey(day)
-    setSelectedDateKey(key)
-    setModalDate(day)
+  const openModalForDate = (date: Date) => {
+    setModalDate(date)
     setIsModalOpen(true)
-
-    try {
-      track('planner.appointment_modal_opened', {
-        tab: 'meu-dia',
-        dateKey: key,
-      })
-    } catch {
-      // ignora
-    }
-  }
-
-  const openEditModalForAppointment = (appointment: Appointment) => {
-    setEditingAppointment(appointment)
-
-    try {
-      track('planner.appointment_edit_opened', {
-        tab: 'meu-dia',
-        id: appointment.id,
-      })
-    } catch {
-      // ignora
-    }
   }
 
   // TAREFAS – helpers
@@ -304,177 +166,19 @@ export default function WeeklyPlannerShell() {
       done: false,
       origin,
     }
-
     setPlannerData(prev => ({
       ...prev,
       tasks: [...prev.tasks, newTask],
     }))
-
-    try {
-      track('planner.task_added', {
-        tab: 'meu-dia',
-        origin,
-      })
-    } catch {
-      // ignora
-    }
-
-    try {
-      const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
-      void updateXP(base)
-    } catch (e) {
-      console.error('[Planner] Erro ao atualizar XP por tarefa:', e)
-    }
   }
 
   const toggleTask = (id: string) => {
-    setPlannerData(prev => {
-      const task = prev.tasks.find(t => t.id === id)
-      const willBeDone = task ? !task.done : false
-
-      const updatedTasks = prev.tasks.map(t =>
-        t.id === id ? { ...t, done: !t.done } : t,
-      )
-
-      if (task) {
-        try {
-          track('planner.task_toggled', {
-            tab: 'meu-dia',
-            id: task.id,
-            origin: task.origin,
-            done: willBeDone,
-          })
-        } catch {
-          // ignora
-        }
-
-        if (willBeDone) {
-          try {
-            void updateXP(4)
-          } catch (e) {
-            console.error(
-              '[Planner] Erro ao atualizar XP por concluir tarefa:',
-              e,
-            )
-          }
-        }
-      }
-
-      return {
-        ...prev,
-        tasks: updatedTasks,
-      }
-    })
-  }
-
-  const handleViewModeChange = (mode: 'day' | 'week') => {
-    setViewMode(mode)
-
-    try {
-      track('planner.view_mode_changed', {
-        tab: 'meu-dia',
-        mode,
-      })
-    } catch {
-      // ignora
-    }
-  }
-
-  const handleMoodSelect = (key: string) => {
-    setMood(prev => {
-      const next = prev === key ? null : key
-
-      try {
-        track('planner.mood.selected', {
-          tab: 'meu-dia',
-          mood: next,
-        })
-      } catch {
-        // ignora
-      }
-
-      if (next) {
-        try {
-          void updateXP(3)
-        } catch (e) {
-          console.error(
-            '[Planner] Erro ao atualizar XP por registro de humor:',
-            e,
-          )
-        }
-      }
-
-      return next
-    })
-  }
-
-  const handleDayIntentionSelect = (value: string) => {
-    setDayIntention(prev => {
-      const next = prev === value ? null : value
-
-      try {
-        track('planner.day_intention.selected', {
-          tab: 'meu-dia',
-          intention: next,
-        })
-      } catch {
-        // ignora
-      }
-
-      if (next) {
-        try {
-          void updateXP(3)
-        } catch (e) {
-          console.error(
-            '[Planner] Erro ao atualizar XP por intenção do dia:',
-            e,
-          )
-        }
-      }
-
-      return next
-    })
-  }
-
-  const handleToggleSuggestions = () => {
-    setShowSuggestions(prev => {
-      const next = !prev
-
-      try {
-        track('planner.suggestions.toggle', {
-          tab: 'meu-dia',
-          enabled: next,
-        })
-      } catch {
-        // ignora
-      }
-
-      if (next) {
-        try {
-          void updateXP(5)
-        } catch (e) {
-          console.error(
-            '[Planner] Erro ao atualizar XP por abrir sugestões:',
-            e,
-          )
-        }
-      }
-
-      return next
-    })
-  }
-
-  const handleOpenQuickAction = (mode: 'top3' | 'selfcare' | 'family') => {
-    setQuickAction(mode)
-
-    try {
-      track('planner.quick_action.opened', {
-        tab: 'meu-dia',
-        mode,
-      })
-    } catch {
-      // ignora
-    }
+    setPlannerData(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(task =>
+        task.id === id ? { ...task, done: !task.done } : task,
+      ),
+    }))
   }
 
   // ===========================
@@ -482,29 +186,11 @@ export default function WeeklyPlannerShell() {
   // ===========================
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
-    const [year, month, day] = selectedDateKey.split('-').map(Number)
+    const [year, month, day] = selectedDateKey
+      .split('-')
+      .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
-
-  // NOVO: agenda geral ordenada (data + horário)
-  const sortedAppointments = useMemo(() => {
-    const list = [...plannerData.appointments]
-
-    return list.sort((a, b) => {
-      if (a.dateKey !== b.dateKey) {
-        return a.dateKey.localeCompare(b.dateKey)
-      }
-
-      if (!a.time && !b.time) return 0
-      if (!a.time) return 1
-      if (!b.time) return -1
-
-      const [ah, am] = a.time.split(':').map(Number)
-      const [bh, bm] = b.time.split(':').map(Number)
-
-      return ah !== bh ? ah - bh : am - bm
-    })
-  }, [plannerData.appointments])
 
   if (!isHydrated) return null
 
@@ -533,14 +219,14 @@ export default function WeeklyPlannerShell() {
   }
 
   const moodSummary =
-    (mood ? moodLabel[mood as keyof typeof moodLabel] : null) &&
-    (dayIntention
-      ? intentionLabel[dayIntention as keyof typeof intentionLabel]
-      : null)
+    (mood ? moodLabel[mood] : null) &&
+    (dayIntention ? intentionLabel[dayIntention] : null)
       ? `Hoje você está ${
           moodLabel[mood as keyof typeof moodLabel]
         } e escolheu um dia ${
-          intentionLabel[dayIntention as keyof typeof intentionLabel]
+          intentionLabel[
+            dayIntention as keyof typeof intentionLabel
+          ]
         }. Que tal começar definindo suas prioridades?`
       : 'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.'
 
@@ -557,7 +243,6 @@ export default function WeeklyPlannerShell() {
           {/* CALENDÁRIO PREMIUM */}
           <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              {/* Ícone + Navegação mês */}
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
                   <AppIcon
@@ -565,9 +250,7 @@ export default function WeeklyPlannerShell() {
                     className="w-4 h-4 text-[var(--color-brand)]"
                   />
                 </span>
-
                 <div className="flex items-center gap-2">
-                  {/* Voltar mês */}
                   <button
                     type="button"
                     className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
@@ -579,16 +262,12 @@ export default function WeeklyPlannerShell() {
                   >
                     ‹
                   </button>
-
-                  {/* Mês + Ano */}
                   <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
                     {selectedDate.toLocaleDateString('pt-BR', {
                       month: 'long',
                       year: 'numeric',
                     })}
                   </h2>
-
-                  {/* Avançar mês */}
                   <button
                     type="button"
                     className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
@@ -603,7 +282,6 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
 
-              {/* Alternância de modo Dia / Semana */}
               <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
                 <button
                   className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
@@ -611,18 +289,17 @@ export default function WeeklyPlannerShell() {
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                   }`}
-                  onClick={() => handleViewModeChange('day')}
+                  onClick={() => setViewMode('day')}
                 >
                   Dia
                 </button>
-
                 <button
                   className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
                     viewMode === 'week'
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
                   }`}
-                  onClick={() => handleViewModeChange('week')}
+                  onClick={() => setViewMode('week')}
                 >
                   Semana
                 </button>
@@ -643,35 +320,24 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) => {
-                  if (!day) {
-                    return <div key={i} className="h-8 md:h-9" />
-                  }
-
-                  const dayKey = getBrazilDateKey(day)
-                  const isSelected = dayKey === selectedDateKey
-                  const hasAppointments = plannerData.appointments.some(
-                    app => app.dateKey === dayKey,
-                  )
-
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex flex-col items-center justify-center transition-all border ${
-                        isSelected
-                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                      }`}
-                    >
-                      <span>{day.getDate()}</span>
-                      {hasAppointments && (
-                        <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
-                      )}
-                    </button>
-                  )
-                })}
+                {generateMonthMatrix(selectedDate).map(
+                  (day, i) =>
+                    day ? (
+                      <button
+                        key={i}
+                        onClick={() => openModalForDate(day)}
+                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                          getBrazilDateKey(day) === selectedDateKey
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                        }`}
+                      >
+                        {day.getDate()}
+                      </button>
+                    ) : (
+                      <div key={i} className="h-8 md:h-9" />
+                    ),
+                )}
               </div>
             </div>
           </SoftCard>
@@ -679,7 +345,6 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
-              {/* LEMBRETES + ATALHOS */}
               <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
                 {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
@@ -688,8 +353,8 @@ export default function WeeklyPlannerShell() {
                       Lembretes rápidos
                     </h2>
                     <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui
-                      como uma lista simples para o seu dia.
+                      Tudo que você salvar nos atalhos aparece aqui como
+                      uma lista simples para o seu dia.
                     </p>
 
                     {/* Lista de tarefas */}
@@ -748,8 +413,8 @@ export default function WeeklyPlannerShell() {
                           Comece pelo que faz mais sentido hoje
                         </h2>
                         <p className="mt-1 text-sm text-white/85">
-                          Use esses atalhos para criar lembretes rápidos de
-                          prioridades, compromissos e cuidados.
+                          Use esses atalhos para criar lembretes rápidos
+                          de prioridades, compromissos e cuidados.
                         </p>
                       </div>
 
@@ -757,15 +422,15 @@ export default function WeeklyPlannerShell() {
                         {/* Prioridades do dia */}
                         <button
                           type="button"
-                          onClick={() => handleOpenQuickAction('top3')}
+                          onClick={() => setQuickAction('top3')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="target"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
                               Prioridades do dia
                             </span>
                           </div>
@@ -782,9 +447,9 @@ export default function WeeklyPlannerShell() {
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
                               Agenda &amp; compromissos
                             </span>
                           </div>
@@ -793,17 +458,15 @@ export default function WeeklyPlannerShell() {
                         {/* Cuidar de mim */}
                         <button
                           type="button"
-                          onClick={() =>
-                            handleOpenQuickAction('selfcare')
-                          }
+                          onClick={() => setQuickAction('selfcare')}
                           className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
                               Cuidar de mim
                             </span>
                           </div>
@@ -812,17 +475,15 @@ export default function WeeklyPlannerShell() {
                         {/* Cuidar do meu filho */}
                         <button
                           type="button"
-                          onClick={() =>
-                            handleOpenQuickAction('family')
-                          }
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          onClick={() => setQuickAction('family')}
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
                               Cuidar do meu filho
                             </span>
                           </div>
@@ -831,85 +492,6 @@ export default function WeeklyPlannerShell() {
                     </div>
                   </div>
                 </div>
-              </section>
-
-              {/* NOVO CARD — AGENDA & COMPROMISSOS */}
-              <section>
-                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-5">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="space-y-1">
-                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        Agenda
-                      </p>
-                      <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                        Agenda & compromissos
-                      </h2>
-                      <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
-                        Veja todos os compromissos que você já marcou no
-                        Materna360, em ordem de data e horário.
-                      </p>
-                    </div>
-
-                    {/* Botão redondo +Novo */}
-                    <button
-                      type="button"
-                      onClick={() => openModalForDate(selectedDate)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/60 focus-visible:ring-offset-2"
-                      aria-label="Adicionar novo compromisso"
-                    >
-                      <span className="text-lg leading-none">+</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                    {sortedAppointments.length === 0 && (
-                      <p className="text-xs text-[var(--color-text-muted)]">
-                        Você ainda não marcou nenhum compromisso. Use o
-                        botão de mais ou o atalho de Agenda para adicionar
-                        o primeiro.
-                      </p>
-                    )}
-
-                    {sortedAppointments.map(appointment => {
-                      const [y, m, d] = appointment.dateKey
-                        .split('-')
-                        .map(Number)
-                      const dateLabel =
-                        y && m && d
-                          ? new Date(y, m - 1, d).toLocaleDateString(
-                              'pt-BR',
-                            )
-                          : appointment.dateKey
-
-                      return (
-                        <button
-                          key={appointment.id}
-                          type="button"
-                          onClick={() =>
-                            openEditModalForAppointment(appointment)
-                          }
-                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-xs md:text-sm text-[var(--color-text-main)] text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)]">
-                              {appointment.time || '--:--'}
-                            </span>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {appointment.title || 'Compromisso'}
-                              </span>
-                              <span className="text-[11px] text-[var(--color-text-muted)]">
-                                {appointment.time ||
-                                  'Sem horário definido'}{' '}
-                                · {dateLabel}
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </SoftCard>
               </section>
             </div>
           )}
@@ -939,7 +521,6 @@ export default function WeeklyPlannerShell() {
                   <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
                     Escolha como você se sente agora.
                   </p>
-
                   <div className="flex flex-wrap gap-2 mt-1">
                     {[
                       { key: 'happy', label: 'Feliz' },
@@ -949,7 +530,11 @@ export default function WeeklyPlannerShell() {
                       <button
                         key={option.key}
                         type="button"
-                        onClick={() => handleMoodSelect(option.key)}
+                        onClick={() =>
+                          setMood(prev =>
+                            prev === option.key ? null : option.key,
+                          )
+                        }
                         className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
                           mood === option.key
                             ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
@@ -970,26 +555,31 @@ export default function WeeklyPlannerShell() {
                   <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
                     Selecione o estilo do seu dia.
                   </p>
-
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(
-                      option => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() =>
-                            handleDayIntentionSelect(option)
-                          }
-                          className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                            dayIntention === option
-                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                              : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ),
-                    )}
+                    {[
+                      'leve',
+                      'focado',
+                      'produtivo',
+                      'slow',
+                      'automático',
+                    ].map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() =>
+                          setDayIntention(prev =>
+                            prev === option ? null : option,
+                          )
+                        }
+                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
+                          dayIntention === option
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
+                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1001,13 +591,16 @@ export default function WeeklyPlannerShell() {
               <div className="mt-3">
                 <button
                   type="button"
-                  onClick={handleToggleSuggestions}
+                  onClick={() => setShowSuggestions(prev => !prev)}
                   className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
                 >
                   {showSuggestions
                     ? 'Esconder sugestões para o seu dia'
                     : 'Ver sugestões para o seu dia'}
-                  <AppIcon name="lightbulb" className="w-4 h-4" />
+                  <AppIcon
+                    name="lightbulb"
+                    className="w-4 h-4"
+                  />
                 </button>
               </div>
             </SoftCard>
@@ -1025,48 +618,10 @@ export default function WeeklyPlannerShell() {
             <SavedContentsSection
               contents={[]}
               plannerContents={plannerHook.items}
-              onItemClick={item => {
-                setSelectedSavedContent(item)
-                try {
-                  track('planner.saved_content.opened', {
-                    tab: 'meu-dia',
-                    origin: item.origin,
-                    type: item.type,
-                  })
-                } catch {
-                  // ignora
-                }
-              }}
+              onItemClick={item => setSelectedSavedContent(item)}
               onItemDone={({ id, source }) => {
                 if (source === 'planner') {
                   plannerHook.removeItem(id)
-
-                  try {
-                    track('planner.saved_content.completed', {
-                      tab: 'meu-dia',
-                      source,
-                    })
-                  } catch {
-                    // ignora
-                  }
-
-                  try {
-                    void updateXP(6)
-                  } catch (e) {
-                    console.error(
-                      '[Planner] Erro ao atualizar XP por conteúdo concluído:',
-                      e,
-                    )
-                  }
-                } else {
-                  try {
-                    track('planner.saved_content.dismissed', {
-                      tab: 'meu-dia',
-                      source,
-                    })
-                  } catch {
-                    // ignora
-                  }
                 }
               }}
             />
@@ -1081,9 +636,7 @@ export default function WeeklyPlannerShell() {
         </div>
       </Reveal>
 
-      {/* ======================================================= */}
-      {/* MODAL — NOVO COMPROMISSO */}
-      {/* ======================================================= */}
+      {/* MODAL NOVO COMPROMISSO */}
       {isModalOpen && modalDate && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
@@ -1092,44 +645,24 @@ export default function WeeklyPlannerShell() {
                 Novo compromisso –{' '}
                 {modalDate.toLocaleDateString('pt-BR')}
               </h3>
-
               <button
-                type="button"
-                onClick={() => {
-                  setIsModalOpen(false)
-                  try {
-                    track('planner.appointment_modal_closed', {
-                      tab: 'meu-dia',
-                    })
-                  } catch {
-                    // ignora
-                  }
-                }}
+                onClick={() => setIsModalOpen(false)}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
               >
                 ✕
               </button>
             </div>
-
             <ModalAppointmentForm
-              mode="create"
-              initialDateKey={getBrazilDateKey(modalDate)}
               onSubmit={data => {
-                const appointmentDateKey = data.dateKey
-
-                // 1) Salva compromisso na AGENDA (sempre)
+                // salva no bloco de compromissos
                 handleAddAppointment({
-                  dateKey: appointmentDateKey,
                   time: data.time,
                   title: data.title,
                   tag: undefined,
                 })
 
-                // 2) Ajusta o dia selecionado para o dia do compromisso
-                setSelectedDateKey(appointmentDateKey)
-
-                // 3) Cria lembrete rápido vinculado à agenda
-                if (data.title.trim()) {
+                // também cria lembrete rápido na lista
+                if (data.title?.trim()) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
@@ -1137,84 +670,14 @@ export default function WeeklyPlannerShell() {
                 }
 
                 setIsModalOpen(false)
-
-                try {
-                  track('planner.appointment_modal_saved', {
-                    tab: 'meu-dia',
-                  })
-                } catch {
-                  // ignora
-                }
               }}
-              onCancel={() => {
-                setIsModalOpen(false)
-                try {
-                  track('planner.appointment_modal_cancelled', {
-                    tab: 'meu-dia',
-                  })
-                } catch {
-                  // ignora
-                }
-              }}
+              onCancel={() => setIsModalOpen(false)}
             />
           </div>
         </div>
       )}
 
-      {/* ======================================================= */}
-      {/* MODAL — EDITAR COMPROMISSO */}
-      {/* ======================================================= */}
-      {editingAppointment && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-[var(--color-text-main)]">
-                Editar compromisso
-              </h3>
-              <button
-                type="button"
-                onClick={() => setEditingAppointment(null)}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
-              >
-                ✕
-              </button>
-            </div>
-
-            <ModalAppointmentForm
-              mode="edit"
-              initialDateKey={editingAppointment.dateKey}
-              initialTitle={editingAppointment.title}
-              initialTime={editingAppointment.time}
-              onSubmit={data => {
-                const updated: Appointment = {
-                  ...editingAppointment,
-                  dateKey: data.dateKey,
-                  time: data.time,
-                  title: data.title,
-                }
-
-                handleUpdateAppointment(updated)
-                setSelectedDateKey(updated.dateKey)
-                setEditingAppointment(null)
-              }}
-              onCancel={() => setEditingAppointment(null)}
-              onDelete={() => {
-                const confirmed = window.confirm(
-                  'Tem certeza que deseja excluir este compromisso? Essa ação não pode ser desfeita.',
-                )
-                if (!confirmed) return
-
-                handleDeleteAppointment(editingAppointment.id)
-                setEditingAppointment(null)
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================= */}
       {/* MODAL DETALHE CONTEÚDO SALVO */}
-      {/* ======================================================= */}
       {selectedSavedContent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
@@ -1231,19 +694,8 @@ export default function WeeklyPlannerShell() {
                     'CONTEÚDO'}
                 </span>
               </div>
-
               <button
-                type="button"
-                onClick={() => {
-                  setSelectedSavedContent(null)
-                  try {
-                    track('planner.saved_content.modal_closed', {
-                      tab: 'meu-dia',
-                    })
-                  } catch {
-                    // ignora
-                  }
-                }}
+                onClick={() => setSelectedSavedContent(null)}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
               >
                 ✕
@@ -1255,7 +707,7 @@ export default function WeeklyPlannerShell() {
             </h3>
 
             {(() => {
-              const anyItem: any = selectedSavedContent
+              const anyItem = selectedSavedContent as any
               const payload = anyItem.payload ?? {}
               const description =
                 anyItem.description ??
@@ -1265,9 +717,14 @@ export default function WeeklyPlannerShell() {
                 payload.excerpt ??
                 ''
 
-              return (
+              return description ? (
                 <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
-                  {description || 'Conteúdo salvo no planner.'}
+                  {description}
+                </p>
+              ) : (
+                <p className="text-sm text-[var(--color-text-muted)] mb-3">
+                  Esse conteúdo foi salvo no planner. Em breve, você verá
+                  mais detalhes aqui.
                 </p>
               )
             })()}
@@ -1279,16 +736,7 @@ export default function WeeklyPlannerShell() {
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedSavedContent(null)
-                  try {
-                    track('planner.saved_content.modal_closed', {
-                      tab: 'meu-dia',
-                    })
-                  } catch {
-                    // ignora
-                  }
-                }}
+                onClick={() => setSelectedSavedContent(null)}
                 className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
               >
                 Fechar
@@ -1298,26 +746,6 @@ export default function WeeklyPlannerShell() {
                 onClick={() => {
                   plannerHook.removeItem(selectedSavedContent.id)
                   setSelectedSavedContent(null)
-
-                  try {
-                    track(
-                      'planner.saved_content.completed_from_modal',
-                      {
-                        tab: 'meu-dia',
-                      },
-                    )
-                  } catch {
-                    // ignora
-                  }
-
-                  try {
-                    void updateXP(6)
-                  } catch (e) {
-                    console.error(
-                      '[Planner] Erro ao atualizar XP por conteúdo concluído (modal):',
-                      e,
-                    )
-                  }
                 }}
                 className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
               >
@@ -1328,9 +756,7 @@ export default function WeeklyPlannerShell() {
         </div>
       )}
 
-      {/* ======================================================= */}
       {/* MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR) */}
-      {/* ======================================================= */}
       {quickAction && (
         <QuickListModal
           mode={quickAction}
@@ -1348,77 +774,75 @@ export default function WeeklyPlannerShell() {
             else addTask(title, 'family')
           }}
           onToggle={id => toggleTask(id)}
-          onClose={() => {
-            setQuickAction(null)
-            try {
-              track('planner.quick_action.closed', {
-                tab: 'meu-dia',
-              })
-            } catch {
-              // ignora
-            }
-          }}
+          onClose={() => setQuickAction(null)}
         />
       )}
     </>
   )
 }
 
-// =======================================================
-// MODAL FORM DE COMPROMISSO (CRIAR / EDITAR)
-// =======================================================
+// GERADOR DO CALENDÁRIO
+function generateMonthMatrix(currentDate: Date): (Date | null)[] {
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+
+  const matrix: (Date | null)[] = []
+  const offset = (firstDay.getDay() + 6) % 7
+
+  for (let i = 0; i < offset; i++) matrix.push(null)
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    matrix.push(new Date(year, month, d))
+  }
+
+  return matrix
+}
+
+function generateWeekData(base: Date) {
+  const monday = new Date(base)
+  const day = monday.getDay()
+  monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return {
+      dayNumber: d.getDate(),
+      dayName: d.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+      }),
+      agendaCount: 0,
+      top3Count: 0,
+      careCount: 0,
+      familyCount: 0,
+    }
+  })
+}
+
+// FORM DO MODAL (COMPROMISSO)
 function ModalAppointmentForm({
-  mode,
-  initialDateKey,
-  initialTitle,
-  initialTime,
   onSubmit,
   onCancel,
-  onDelete,
-}: ModalAppointmentFormProps) {
-  const [dateKey, setDateKey] = useState(initialDateKey)
-  const [title, setTitle] = useState(initialTitle ?? '')
-  const [time, setTime] = useState(initialTime ?? '')
-
-  const formattedLabelDate = useMemo(() => {
-    const [y, m, d] = dateKey.split('-').map(Number)
-    if (!y || !m || !d) return ''
-    return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
-  }, [dateKey])
+}: {
+  onSubmit: (data: { title: string; time: string }) => void
+  onCancel: () => void
+}) {
+  const [title, setTitle] = useState('')
+  const [time, setTime] = useState('')
 
   return (
     <form
       onSubmit={e => {
         e.preventDefault()
         if (!title.trim()) return
-
         onSubmit({
-          dateKey,
-          title: title.trim(),
+          title,
           time,
         })
       }}
       className="space-y-4"
     >
-      {/* Data do compromisso */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-[var(--color-text-main)]">
-          Data do compromisso
-        </label>
-        <input
-          type="date"
-          className="w-full rounded-lg border px-3 py-2 text-sm"
-          value={dateKey}
-          onChange={e => setDateKey(e.target.value)}
-        />
-        {formattedLabelDate && (
-          <p className="text-[11px] text-[var(--color-text-muted)]">
-            {formattedLabelDate}
-          </p>
-        )}
-      </div>
-
-      {/* Título */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-[var(--color-text-main)]">
           Título
@@ -1431,7 +855,6 @@ function ModalAppointmentForm({
         />
       </div>
 
-      {/* Horário */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-[var(--color-text-main)]">
           Horário
@@ -1444,43 +867,26 @@ function ModalAppointmentForm({
         />
       </div>
 
-      <div className="flex justify-between items-center pt-2 gap-3">
-        {/* Botão de excluir (apenas no modo edição) */}
-        {mode === 'edit' && onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="text-xs text-[var(--color-text-muted)] hover:text-red-500 underline"
-          >
-            Excluir compromisso
-          </button>
-        )}
-
-        <div className="flex justify-end gap-3 flex-1">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
-          >
-            {mode === 'create'
-              ? 'Salvar compromisso'
-              : 'Atualizar compromisso'}
-          </button>
-        </div>
+      <div className="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+        >
+          Salvar compromisso
+        </button>
       </div>
     </form>
   )
 }
 
-// =======================================================
 // INPUT RÁPIDO DE TAREFA
-// =======================================================
 function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   const [value, setValue] = useState('')
 
@@ -1507,9 +913,15 @@ function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
   )
 }
 
-// =======================================================
 // MODAL LISTA RÁPIDA (TOP3 / CUIDAR)
-// =======================================================
+type QuickListModalProps = {
+  mode: 'top3' | 'selfcare' | 'family'
+  items: TaskItem[]
+  onAdd: (title: string) => void
+  onToggle: (id: string) => void
+  onClose: () => void
+}
+
 function QuickListModal({
   mode,
   items,
@@ -1528,10 +940,10 @@ function QuickListModal({
 
   const helper =
     mode === 'top3'
-      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus lembretes rápidos.'
+      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus Lembretes rápidos.'
       : mode === 'selfcare'
-      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos lembretes rápidos.'
-      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos lembretes rápidos.'
+      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos Lembretes rápidos.'
+      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos Lembretes rápidos.'
 
   const placeholder =
     mode === 'top3'
@@ -1548,7 +960,6 @@ function QuickListModal({
             {title}
           </h3>
           <button
-            type="button"
             onClick={onClose}
             className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
           >
@@ -1566,7 +977,6 @@ function QuickListModal({
               Ainda não há nada aqui. Comece adicionando o primeiro item.
             </p>
           )}
-
           {items.map(item => (
             <button
               key={item.id}
@@ -1632,46 +1042,4 @@ function QuickListModal({
       </div>
     </div>
   )
-}
-
-// =======================================================
-// HELPERS: CALENDÁRIO / SEMANA
-// =======================================================
-function generateMonthMatrix(currentDate: Date): (Date | null)[] {
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth()
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-
-  const matrix: (Date | null)[] = []
-  const offset = (firstDay.getDay() + 6) % 7
-
-  for (let i = 0; i < offset; i++) matrix.push(null)
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    matrix.push(new Date(year, month, d))
-  }
-
-  return matrix
-}
-
-function generateWeekData(base: Date) {
-  const monday = new Date(base)
-  const day = monday.getDay()
-  monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
-
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-
-    return {
-      dayNumber: d.getDate(),
-      dayName: d.toLocaleDateString('pt-BR', {
-        weekday: 'long',
-      }),
-      agendaCount: 0,
-      top3Count: 0,
-      careCount: 0,
-      familyCount: 0,
-    }
-  })
 }
