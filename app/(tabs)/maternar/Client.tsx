@@ -29,10 +29,10 @@ export default function MaternarClient() {
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
-        min-h-[100dvh] 
+        min-h-[100dvh]
         pb-32
         bg-[#FFE8F2]
-        bg-[radial-gradient(circle_at_top_left,#FFE8F2_0,#FFD8E6_40%,#fd2597_100%)]
+        bg-[linear-gradient(to_bottom,#fd2597_0,#FFD8E6_45%,#FFE8F2_100%)]
       "
     >
       <ClientOnly>
