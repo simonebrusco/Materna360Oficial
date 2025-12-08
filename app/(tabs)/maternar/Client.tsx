@@ -67,14 +67,23 @@ export default function MaternarClient() {
 
             <MotivationalFooter routeKey="maternar-minha-jornada" />
 
-            {/* Rodapé legal global */}
-           <div className="mt-6 md:mt-8 flex justify-center">
-  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)] text-center">
-    © 2025 Materna360®. Todos os direitos reservados.
-    <br />
-    Proibida a reprodução total ou parcial sem autorização.
-  </p>
-</div>
+          {/* RODAPÉ LEGAL — sempre encostado na parte de baixo do degradê */}
+      <footer
+        className="
+          w-full
+          text-center
+          pt-4
+          pb-2
+          px-4
+          text-[11px]
+          md:text-[12px]
+          leading-relaxed
+          text-[#6A6A6A]/85
+        "
+      >
+        <p>© 2025 Materna360®. Todos os direitos reservados.</p>
+        <p>Proibida a reprodução total ou parcial sem autorização.</p>
+      </footer>
     </main>
-  )
+  );
 }
