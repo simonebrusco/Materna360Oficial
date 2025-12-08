@@ -326,15 +326,15 @@ function Eu360Inner() {
 
                   {/* CTA + texto lateral */}
                   <div className="flex flex-col items-center md:items-end gap-4">
-                    <Link href="/planos">
-                      <Button
-                        type="button"
-                        variant="primary"
-                        className="px-6 py-3 rounded-full text-sm font-semibold bg-white text-[#fd2597] shadow-[0_10px_28px_rgba(0,0,0,0.24)] hover:bg-[#ffe1f1] hover:text-[#b8236b] transition"
-                      >
-                        Conhecer os planos
-                      </Button>
-                    </Link>
+                   <Link href="/planos">
+  <Button
+    type="button"
+    variant="primary"
+    className="px-6 py-3 rounded-full text-sm font-semibold bg-white !text-[#fd2597] shadow-[0_10px_28px_rgba(0,0,0,0.24)] hover:bg-[#ffe1f1] hover:!text-[#b8236b] transition"
+  >
+    Conhecer os planos
+  </Button>
+</Link>
                     <p className="max-w-xs text-center md:text-right text-[11px] text-white/85 leading-relaxed">
                       Planos pensados para diferentes fases da maternidade —
                       você escolhe o que faz mais sentido agora.
