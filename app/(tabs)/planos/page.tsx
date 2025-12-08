@@ -17,13 +17,19 @@ const PLANS = [
     badge: 'Seu plano atual',
     price: 'R$0',
     pricePeriod: '/mês',
-    priceNote: 'Sem necessidade de cartão de crédito',
-    subtitle: 'Essencial para começar',
+    priceNote: 'Para começar leve, sem compromisso e sem cartão.',
+    subtitle: 'Para começar leve, sem compromisso e sem cartão.',
     features: [
-      { label: 'Planner diário' },
+      { label: 'Planner diário (versão básica)' },
       { label: 'Registro de humor e energia' },
-      { label: 'Atividades do dia' },
       { label: 'Anotações rápidas' },
+      { label: 'Atividades do dia (não personalizadas)' },
+      { label: '1 insight emocional por dia' },
+      { label: 'Acesso parcial ao Eu360' },
+      { label: 'Histórico emocional dos últimos 7 dias' },
+      { label: 'Biblioteca Materna limitada (1 guia por categoria)' },
+      { label: '1 trilha educativa introdutória' },
+      { label: 'Até 5 interações de IA por dia' },
     ],
     buttonText: 'Seu plano atual',
     buttonVariant: 'secondary' as const,
@@ -36,15 +42,34 @@ const PLANS = [
     badge: 'Recomendado',
     price: 'R$29,90',
     pricePeriod: '/mês',
-    priceNote: 'Teste 7 dias grátis, sem compromisso',
-    subtitle: 'Tudo liberado + recursos avançados',
+    priceNote: 'Para mães que desejam organização gentil, clareza emocional e apoio diário.',
+    subtitle:
+      'Recursos avançados para uma rotina organizada, leve e acolhida.',
     features: [
       { label: 'Tudo do Essencial' },
-      { label: 'Exportar PDF' },
-      { label: 'Insights avançados' },
+      { label: 'Exportar PDF (Planner, Rotina Leve, Como Estou Hoje)' },
+      { label: 'Insights emocionais e organizacionais avançados' },
       { label: 'Modo offline' },
+      { label: 'Histórico emocional completo' },
+      { label: 'Rotinas inteligentes do dia (com IA personalizada)' },
+      { label: 'Atividades guiadas por idade' },
+      {
+        label:
+          'Trilhas educativas completas e trilhas de desenvolvimento infantil',
+      },
+      { label: 'Biblioteca Materna completa' },
+      { label: 'Wallpapers exclusivos' },
+      { label: 'Gamificação: primeiros níveis de conquistas (níveis 1 e 2)' },
+      {
+        label:
+          'Conteúdos premium incluídos: Manual de Sobrevivência para Pais, Minicurso Parentalidade Inteligente, Áudios de Acalmamento, Caderno de Exercícios e guias complementares',
+      },
+      {
+        label:
+          'Até 40 interações de IA por dia, personalizadas pelo seu perfil no Eu360',
+      },
     ],
-    buttonText: 'Upgrade agora',
+    buttonText: 'Quero o Materna+',
     buttonVariant: 'primary' as const,
     highlighted: true,
     badgeIcon: 'sparkles' as const,
@@ -55,15 +80,34 @@ const PLANS = [
     badge: 'Completo',
     price: 'R$49,90',
     pricePeriod: '/mês',
-    priceNote: 'Acesso à biblioteca completa',
-    subtitle: 'Tudo do Materna+ + conteúdos exclusivos',
+    priceNote:
+      'Para acompanhar sua jornada emocional e familiar de forma completa e personalizada.',
+    subtitle: 'A experiência completa de cuidado, presença e personalização.',
     features: [
       { label: 'Tudo do Materna+' },
-      { label: 'Biblioteca Materna completa' },
-      { label: 'Conteúdos premium (aulas, guias, áudios)' },
-      { label: 'Novidades em primeira mão' },
+      { label: 'IA ilimitada e avançada com leitura emocional detalhada' },
+      { label: 'Relatórios emocionais semanais e mensais' },
+      { label: 'Trilhas educativas personalizadas para sua família' },
+      { label: 'Rotina Inteligente 360, com ajustes automáticos ao longo da semana' },
+      {
+        label:
+          'Conteúdos avançados da Biblioteca Materna, trilhas terapêuticas e aulas especiais',
+      },
+      {
+        label:
+          'Gamificação premium: níveis 3 a 5, missões semanais personalizadas e medalhas exclusivas',
+      },
+      { label: 'Painel mensal e anual de evolução da sua jornada' },
+      {
+        label:
+          'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais',
+      },
+      {
+        label:
+          'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros',
+      },
     ],
-    buttonText: 'Quero o completo',
+    buttonText: 'Quero o Materna+ 360',
     buttonVariant: 'primary' as const,
     highlighted: false,
     badgeIcon: 'crown' as const,
@@ -93,25 +137,27 @@ export default function PlanosPage() {
         {/* HERO da página de planos */}
         <header className="mb-8 sm:mb-10 text-center">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
-            MATERNA+
+            PLANOS MATERNA360
           </span>
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-            Escolha seu plano
+            Planos feitos para acompanhar o seu ritmo
           </h1>
           <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-            Desbloqueie o potencial completo do Materna360 com recursos premium,
-            no seu ritmo.
+            Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
+            que faz sentido para o seu momento — sem pressão, sem cobrança. Aqui,
+            você é quem guia o caminho.
           </p>
 
           {currentPlanId && (
             <div className="mt-4 space-y-1">
               <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
-                ✓ Você já está no plano{' '}
-                {PLANS.find((p) => p.id === currentPlanId)?.name}
+                Você já está no plano{' '}
+                {PLANS.find(p => p.id === currentPlanId)?.name}
               </p>
               <p className="text-xs sm:text-sm text-white/90">
                 Se fizer sentido para você, pode mudar de plano com calma, sem
-                pressa e sem multas.
+                pressa e sem multas. O plano acompanha a sua fase, não o
+                contrário.
               </p>
             </div>
           )}
@@ -120,8 +166,8 @@ export default function PlanosPage() {
         {/* Card grande com conteúdo em branco */}
         <div className="rounded-[32px] border border-white/70 bg-white/96 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
           {/* Grid de planos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
-            {PLANS.map((planConfig) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-10">
+            {PLANS.map(planConfig => {
               const isCurrentPlan = currentPlanId === planConfig.id
               const isHighlighted = planConfig.highlighted
 
@@ -200,7 +246,7 @@ export default function PlanosPage() {
                     {planConfig.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <AppIcon
-                          name="check"
+                          name='check'
                           size={16}
                           decorative
                           className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
@@ -234,12 +280,152 @@ export default function PlanosPage() {
 
                   {isCurrentPlan && planConfig.id !== 'essencial' && (
                     <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
-                      ✓ Ativo até 31 de dezembro de 2025
+                      Plano ativo atualmente
                     </p>
                   )}
                 </SoftCard>
               )
             })}
+          </div>
+
+          {/* Tabela comparativa simplificada */}
+          <div className="mb-10">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-3">
+              Comparando os planos
+            </h3>
+            <p className="text-sm text-[var(--color-text-muted)] mb-4">
+              Um resumo dos principais recursos em cada plano, para te ajudar a
+              escolher com calma o que faz mais sentido para a sua rotina.
+            </p>
+
+            <div className="overflow-x-auto">
+              <div className="min-w-[640px] rounded-2xl border border-[var(--color-pink-snow)]/70 bg-white/80">
+                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70">
+                  <div className="px-3 py-3">Recurso</div>
+                  <div className="px-3 py-3 text-center">Essencial</div>
+                  <div className="px-3 py-3 text-center">Materna+</div>
+                  <div className="px-3 py-3 text-center">Materna+ 360</div>
+                </div>
+
+                {[
+                  {
+                    feature: 'Planner diário',
+                    essencial: 'Básico',
+                    plus: 'Avançado',
+                    full: 'Avançado + IA preditiva',
+                  },
+                  {
+                    feature: 'Humor e energia',
+                    essencial: 'Registro simples',
+                    plus: 'Visão completa',
+                    full: 'Com relatórios e evolução',
+                  },
+                  {
+                    feature: 'IA',
+                    essencial: '5 interações por dia',
+                    plus: 'Até 40 por dia',
+                    full: 'Ilimitada',
+                  },
+                  {
+                    feature: 'Biblioteca Materna',
+                    essencial: 'Limitada',
+                    plus: 'Completa',
+                    full: 'Completa + conteúdos avançados',
+                  },
+                  {
+                    feature: 'Trilhas educativas',
+                    essencial: 'Introdutória',
+                    plus: 'Completas',
+                    full: 'Personalizadas',
+                  },
+                  {
+                    feature: 'Exportar PDF',
+                    essencial: 'Não incluído',
+                    plus: 'Disponível',
+                    full: 'Disponível',
+                  },
+                  {
+                    feature: 'Produtos digitais',
+                    essencial: 'Não incluídos',
+                    plus: 'Incluídos',
+                    full: 'Incluídos',
+                  },
+                  {
+                    feature: 'Gamificação',
+                    essencial: 'Não disponível',
+                    plus: 'Níveis 1 e 2',
+                    full: 'Níveis 3 a 5 e painel avançado',
+                  },
+                  {
+                    feature: 'Mentorias com parceiros',
+                    essencial: 'Valor integral',
+                    plus: 'Valor integral',
+                    full: 'Descontos de 10% a 15%',
+                  },
+                  {
+                    feature: 'MaternaBox',
+                    essencial: 'Sem benefícios adicionais',
+                    plus: 'Condições especiais',
+                    full: 'Condições especiais',
+                  },
+                ].map(row => (
+                  <div
+                    key={row.feature}
+                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs"
+                  >
+                    <div className="px-3 py-2 font-medium text-[var(--color-text-main)]">
+                      {row.feature}
+                    </div>
+                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
+                      {row.essencial}
+                    </div>
+                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
+                      {row.plus}
+                    </div>
+                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
+                      {row.full}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Valores especiais para quem já vive o Materna360 */}
+          <div className="mb-10 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/90 px-4 py-4 sm:px-5 sm:py-5">
+            <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)] mb-2">
+              Valores especiais para quem já vive o Materna360
+            </h3>
+            <p className="text-sm text-[var(--color-text-main)] mb-2">
+              Se você já faz parte da nossa jornada:
+            </p>
+            <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-muted)] mb-2">
+              <li>
+                Assinantes Materna+ recebem 5% de desconto no investimento da
+                MaternaBox.
+              </li>
+              <li>
+                Assinantes Materna+ 360 recebem 10% de desconto no valor final
+                da MaternaBox.
+              </li>
+            </ul>
+            <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
+              O ajuste é aplicado automaticamente no checkout. É a nossa forma
+              de agradecer por caminhar com você, mês após mês.
+            </p>
+          </div>
+
+          {/* CALL TO ACTION textual antes do FAQ */}
+          <div className="mb-8 text-center">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-2">
+              Escolha o plano que acolhe a sua rotina
+            </h3>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-2xl mx-auto">
+              Aqui, tudo acontece no seu tempo — com carinho, calma e presença.
+              Você pode começar pelo Essencial, seguir para o Materna+ ou
+              aprofundar sua jornada no Materna+ 360, sempre que sentir que é o
+              momento.
+            </p>
           </div>
 
           {/* FAQ */}
@@ -256,35 +442,52 @@ export default function PlanosPage() {
                   </span>
                 </summary>
                 <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim, você pode fazer downgrade ou cancelar a qualquer momento
-                  sem penalidades. O plano precisa acompanhar a sua fase, não o
-                  contrário.
+                  Sim. Você pode mudar de plano ou cancelar quando quiser. O
+                  Materna360 foi pensado para acompanhar as fases da sua
+                  maternidade, não para te prender em um contrato.
                 </div>
               </details>
+
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  O teste premium de 7 dias é realmente grátis?
+                  Preciso de cartão de crédito para usar o plano Essencial?
                   <span className="transition-transform group-open:rotate-180">
                     <AppIcon name="chevron-down" size={20} decorative />
                   </span>
                 </summary>
                 <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim, é totalmente grátis e você não precisa de cartão de
-                  crédito para testar. Você só continua se fizer sentido para
+                  Não. O plano Essencial é gratuito, não exige cartão de
+                  crédito e foi criado para que você possa sentir o Materna360
+                  com calma, sem compromisso financeiro.
+                </div>
+              </details>
+
+              <details className="group">
+                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
+                  O que acontece com meus dados se eu cancelar?
+                  <span className="transition-transform group-open:rotate-180">
+                    <AppIcon name="chevron-down" size={20} decorative />
+                  </span>
+                </summary>
+                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Seus registros permanecem guardados com segurança. Você pode
+                  voltar para o plano Essencial e seguir usando o app de forma
+                  gratuita, ou reativar um plano pago quando fizer sentido para
                   você.
                 </div>
               </details>
+
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  Meus dados ficarão privados?
+                  Meus dados e registros são privados?
                   <span className="transition-transform group-open:rotate-180">
                     <AppIcon name="chevron-down" size={20} decorative />
                   </span>
                 </summary>
                 <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim. Seus dados são criptografados e armazenados com
-                  segurança. O que você registra aqui é seu e não é compartilhado
-                  com terceiros.
+                  Sim. Seus dados são armazenados com segurança e não são
+                  compartilhados com terceiros. O que você registra aqui é
+                  tratado com respeito e sigilo.
                 </div>
               </details>
             </div>
