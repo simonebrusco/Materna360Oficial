@@ -20,7 +20,7 @@ export default function MaternaBoxPage() {
           <SoftCard className="grid gap-8 rounded-3xl border border-white/80 bg-white/95 p-5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] md:grid-cols-[1.2fr,1fr] md:p-7">
             {/* TEXTO */}
             <div className="flex flex-col justify-center space-y-4 md:space-y-5">
-              <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd279d]/80">
+              <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                 UM CARINHO MENSAL ENTREGUE NA SUA PORTA
               </p>
 
@@ -29,7 +29,7 @@ export default function MaternaBoxPage() {
               </h2>
 
               {/* Selinho de autoridade */}
-              <div className="inline-flex items-center rounded-full bg-[#ffe1f2] px-3 py-1 text-[10px] font-medium text-[#4a4a4a]">
+              <div className="inline-flex items-center rounded-full bg-[#ffd8e6] px-3 py-1 text-[10px] font-medium text-[#4a4a4a]">
                 Criada por mãe pedagoga há mais de 20 anos na educação infantil
               </div>
 
@@ -49,7 +49,7 @@ export default function MaternaBoxPage() {
                 <Button
                   variant="primary"
                   size="md"
-                 className="w-full md:w-auto bg-[#fd279d] hover:bg-[#d31f86] text-white border-none"
+                  className="w-full md:w-auto bg-[#ff005e] hover:bg-[#cf285f] text-white border-none"
                 >
                   Quero viver esses momentos com meu filho
                 </Button>
@@ -61,7 +61,7 @@ export default function MaternaBoxPage() {
               {/* Mini fluxo “como funciona” */}
               <div className="mt-1 grid gap-2 text-[10px] text-[#4a4a4a]/80 md:grid-cols-3">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f2] text-[11px] font-semibold text-[#fd279d]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffd8e6] text-[11px] font-semibold text-[#ff005e]">
                     1
                   </span>
                   <p>
@@ -69,7 +69,7 @@ export default function MaternaBoxPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f2] text-[11px] font-semibold text-[#fd279d]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffd8e6] text-[11px] font-semibold text-[#ff005e]">
                     2
                   </span>
                   <p>
@@ -77,7 +77,7 @@ export default function MaternaBoxPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f2] text-[11px] font-semibold text-[#fd279d]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffd8e6] text-[11px] font-semibold text-[#ff005e]">
                     3
                   </span>
                   <p>
@@ -87,7 +87,7 @@ export default function MaternaBoxPage() {
               </div>
             </div>
 
-            {/* IMAGEM sozinha, sem overlay, respeitando 1080x1200 */}
+            {/* IMAGEM sozinha, respeitando 1080x1200 */}
             <div className="relative flex items-center justify-center">
               <div className="relative w-full max-w-sm aspect-[9/10] md:max-w-md">
                 <Image
@@ -105,10 +105,10 @@ export default function MaternaBoxPage() {
           {/* SEÇÃO 2 · O QUE VEM + PARA QUEM É */}
           <div className="grid gap-6 md:gap-8 md:grid-cols-[1.1fr,1fr]">
             {/* BLOCO 2 · O QUE VEM NA CAIXA */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffe1f2] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
+            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
               <div className="space-y-5">
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd279d]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     O QUE VEM NA SUA MATERNABOX?
                   </p>
                   <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
@@ -121,7 +121,7 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <div className="grid gap-3.5 md:grid-cols-2">
-                  <div className="space-y-1.5 rounded-2xl border border-[#ffe1f2] bg-[#fff7fb] p-3.5">
+                  <div className="space-y-1.5 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
                     <p className="text-xs font-semibold text-[#4a4a4a]">
                       Brinquedo educativo principal
                     </p>
@@ -131,7 +131,7 @@ export default function MaternaBoxPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-1.5 rounded-2xl border border-[#ffe1f2] bg-[#fff7fb] p-3.5">
+                  <div className="space-y-1.5 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
                     <p className="text-xs font-semibold text-[#4a4a4a]">
                       Atividades guiadas prontas
                     </p>
@@ -141,7 +141,7 @@ export default function MaternaBoxPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-1.5 rounded-2xl border border-[#ffe1f2] bg-[#fff7fb] p-3.5">
+                  <div className="space-y-1.5 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
                     <p className="text-xs font-semibold text-[#4a4a4a]">
                       Mini-guia de conexão
                     </p>
@@ -151,7 +151,7 @@ export default function MaternaBoxPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-1.5 rounded-2xl border border-[#ffe1f2] bg-[#fff7fb] p-3.5">
+                  <div className="space-y-1.5 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
                     <p className="text-xs font-semibold text-[#4a4a4a]">
                       Surpresa mensal
                     </p>
@@ -165,10 +165,10 @@ export default function MaternaBoxPage() {
             </SoftCard>
 
             {/* BLOCO 2.5 · PARA QUEM É / NÃO É */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffe1f2] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
               <div className="space-y-4">
                 <div className="space-y-2.5">
-                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd279d]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/80">
                     PARA QUEM É A MATERNABOX?
                   </p>
                   <h3 className="text-sm md:text-base font-semibold text-[#4a4a4a]">
@@ -183,7 +183,7 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <div className="space-y-2.5 rounded-2xl bg-[#fff7fb] p-3.5 md:p-4">
-                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd279d]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/80">
                     PARA QUEM AINDA NÃO É
                   </p>
                   <p className="text-sm md:text-base font-semibold text-[#4a4a4a]">
@@ -203,10 +203,10 @@ export default function MaternaBoxPage() {
           {/* SEÇÃO 3 · FAIXA ETÁRIA + PLANOS */}
           <div className="grid gap-6 md:gap-8 md:grid-cols-[1.05fr,1fr]">
             {/* BLOCO 3 · FAIXA ETÁRIA */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffe1f2] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd279d]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     ESCOLHA A FAIXA ETÁRIA
                   </p>
                   <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
@@ -223,7 +223,7 @@ export default function MaternaBoxPage() {
                     <button
                       key={range}
                       type="button"
-                      className="rounded-2xl border border-[#ffe1f2] bg-[#fff7fb] px-3 py-2 text-xs font-medium text-[#4a4a4a] transition hover:border-[#fd279d] hover:bg-[#ffe1f2]"
+                      className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] px-3 py-2 text-xs font-medium text-[#4a4a4a] transition hover:border-[#ff005e] hover:bg-[#ffd8e6]"
                     >
                       {range}
                     </button>
@@ -238,10 +238,10 @@ export default function MaternaBoxPage() {
             </SoftCard>
 
             {/* BLOCO 4 · PLANOS */}
-            <SoftCard className="h-full rounded-3xl border border-[#ffe1f2] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
+            <SoftCard className="h-full rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd279d]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
                     PLANOS PENSADOS PARA A SUA ROTINA
                   </p>
                   <h3 className="text-base md:text-lg font-semibold text-[#4a4a4a]">
@@ -255,9 +255,9 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <div className="grid gap-3.5 md:grid-cols-2">
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffe1f2] bg-[#fff7fb] p-3.5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-3.5">
                     <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold text-[#fd279d] uppercase">
+                      <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
                         Comece leve
                       </p>
                       <p className="text-sm font-semibold text-[#4a4a4a]">Plano mensal</p>
@@ -267,9 +267,9 @@ export default function MaternaBoxPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffe1f2] bg-white p-3.5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-white p-3.5">
                     <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold text-[#fd279d] uppercase">
+                      <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
                         Ritmo constante
                       </p>
                       <p className="text-sm font-semibold text-[#4a4a4a]">Plano trimestral</p>
@@ -279,9 +279,9 @@ export default function MaternaBoxPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffe1f2] bg-white p-3.5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-[#ffd8e6] bg-white p-3.5">
                     <div className="space-y-1.5">
-                      <p className="text-[11px] font-semibold text-[#fd279d] uppercase">
+                      <p className="text-[11px] font-semibold text-[#ff005e] uppercase">
                         Presença na rotina
                       </p>
                       <p className="text-sm font-semibold text-[#4a4a4a]">Plano semestral</p>
@@ -292,7 +292,7 @@ export default function MaternaBoxPage() {
                   </div>
 
                   {/* Card destacado – fundo rosa oficial + texto branco */}
-                  <div className="flex flex-col justify-between rounded-2xl border border-[#fd279d] bg-[#fd279d] p-3.5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-[#ff005e] bg-[#ff005e] p-3.5">
                     <div className="space-y-1.5">
                       <p className="text-[11px] font-semibold uppercase text-white">
                         Experiência completa
@@ -312,7 +312,7 @@ export default function MaternaBoxPage() {
                   <Button
                     variant="primary"
                     size="sm"
-                   className="w-full md:w-auto bg-[#fd279d] hover:bg-[#d31f86] text-white border-none"
+                    className="w-full md:w-auto bg-[#ff005e] hover:bg-[#cf285f] text-white border-none"
                   >
                     Ver valores e detalhes dos planos
                   </Button>
@@ -322,10 +322,10 @@ export default function MaternaBoxPage() {
           </div>
 
           {/* BLOCO 4.5 · POR QUE ISSO IMPORTA PARA O SEU FILHO */}
-          <SoftCard className="rounded-3xl border border-[#ffe1f2] bg-gradient-to-r from-white via-[#ffe1f2]/60 to-white px-5 py-6 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:px-7 md:py-7">
+          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-gradient-to-r from-white via-[#ffd8e6]/60 to-white px-5 py-6 shadow-[0_10px_26px_rgba(0,0,0,0.10)] md:px-7 md:py-7">
             <div className="grid gap-4 md:grid-cols-[1.1fr,0.9fr] md:items-center">
               <div className="space-y-2.5">
-                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd279d]/80">
+                <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#ff005e]/80">
                   POR QUE ISSO IMPORTA PARA O SEU FILHO?
                 </p>
                 <h3 className="text-sm md:text-base font-semibold text-[#4a4a4a]">
@@ -344,7 +344,7 @@ export default function MaternaBoxPage() {
               </div>
 
               <div className="space-y-2 rounded-2xl bg-white/80 p-4 text-[11px] md:text-xs text-[#4a4a4a]">
-                <p className="font-semibold text-[#fd279d]">
+                <p className="font-semibold text-[#ff005e]">
                   “Não é sobre ter mais coisas, é sobre viver mais momentos.”
                 </p>
                 <p>
@@ -357,7 +357,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* BLOCO 5 · LISTA DE ESPERA */}
-          <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#fd279d] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.26)] md:px-6 md:py-6">
+          <SoftCard className="rounded-3xl border border-white/80 bg-gradient-to-r from-[#ff005e] to-[#ff7aa5] px-4 py-5 text-white shadow-[0_16px_36px_rgba(0,0,0,0.26)] md:px-6 md:py-6">
             <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-6">
               <div className="space-y-1.5 max-w-xl">
                 <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-white/90">
@@ -381,7 +381,7 @@ export default function MaternaBoxPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full border border-white bg-white text-[#fd279d] hover:bg-white/90"
+                  className="w-full border border-white bg-white text-[#ff005e] hover:bg-white/90"
                 >
                   Quero ser avisada quando abrir ✨
                 </Button>
