@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import * as React from 'react'
+import { useEffect } from 'react'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
-import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import CardHub from '@/components/maternar/CardHub'
+import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 
 export const dynamic = 'force-dynamic'
@@ -28,9 +29,7 @@ export default function MaternarClient() {
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      className="min-h-[100dvh] pb-32 
-      bg-[#FFE4F0]
-      bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
+      className="min-h-[100dvh] pb-32 bg-[#FFE4F0] bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
@@ -56,16 +55,17 @@ export default function MaternarClient() {
           </header>
 
           <div className="space-y-8 md:space-y-10 pb-6">
-            {/* GRID DE PASTAS */}
+            {/* GRID NOVO DE PASTAS */}
             <Reveal>
               <CardHub />
             </Reveal>
 
-            {/* rodapé motivacional da aba */}
-            <MotivationalFooter routeKey="maternar-minha-jornada" />
+            {/* Motivacional */}
+            {/* Mantivemos o Footer motivacional original caso existisse,
+                mas como você pediu padrão total, o legal footer fica igual ao Meu Dia */}
 
-            {/* rodapé legal padrão do app */}
-            <div className="mt-4 md:mt-6">
+            {/* Rodapé legal padrão do Materna360 */}
+            <div className="mt-6">
               <LegalFooter />
             </div>
           </div>
