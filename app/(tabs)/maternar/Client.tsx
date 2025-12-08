@@ -1,8 +1,6 @@
-// app/(tabs)/maternar/Client.tsx
 'use client'
 
-import * as React from 'react'
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -30,11 +28,9 @@ export default function MaternarClient() {
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      className="
-        min-h-[100dvh]
-        pb-32
-        maternar-hub-bg
-      "
+      className="min-h-[100dvh] pb-32 
+      bg-[#FFE4F0]
+      bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
@@ -60,30 +56,21 @@ export default function MaternarClient() {
           </header>
 
           <div className="space-y-8 md:space-y-10 pb-6">
-            {/* GRID NOVO DE PASTAS (CARDS TRANSLÚCIDOS 2x2) */}
+            {/* GRID DE PASTAS */}
             <Reveal>
               <CardHub />
             </Reveal>
 
+            {/* rodapé motivacional da aba */}
             <MotivationalFooter routeKey="maternar-minha-jornada" />
 
-          {/* RODAPÉ LEGAL — sempre encostado na parte de baixo do degradê */}
-      <footer
-        className="
-          w-full
-          text-center
-          pt-4
-          pb-2
-          px-4
-          text-[11px]
-          md:text-[12px]
-          leading-relaxed
-          text-[#6A6A6A]/85
-        "
-      >
-        <p>© 2025 Materna360®. Todos os direitos reservados.</p>
-        <p>Proibida a reprodução total ou parcial sem autorização.</p>
-      </footer>
+            {/* rodapé legal padrão do app */}
+            <div className="mt-4 md:mt-6">
+              <LegalFooter />
+            </div>
+          </div>
+        </div>
+      </ClientOnly>
     </main>
-  );
+  )
 }
