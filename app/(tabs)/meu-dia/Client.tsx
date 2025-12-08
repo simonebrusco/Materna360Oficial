@@ -9,7 +9,6 @@ import { DAILY_MESSAGES } from '@/app/data/dailyMessages';
 import { getDailyIndex } from '@/app/lib/dailyMessage';
 import { getTimeGreeting } from '@/app/lib/greetings';
 import { ClientOnly } from '@/components/common/ClientOnly';
-import { LegalFooter } from '@/components/common/LegalFooter';
 import { MotivationalFooter } from '@/components/common/MotivationalFooter';
 
 export const dynamic = 'force-dynamic';
@@ -63,8 +62,8 @@ export default function MeuDiaClient() {
       className="
         min-h-[100dvh]
         pb-32
-        bg-[#FFE8F2]
-        bg-[linear-gradient(to_bottom,#fd2597_0%,#FFD8E6_40%,#FFE8F2_100%)]
+        bg-[#FFE1F1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#FDBED7_40%,#FFE1F1_100%)]
       "
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
@@ -109,8 +108,23 @@ export default function MeuDiaClient() {
         </div>
       </div>
 
-      {/* Rodapé legal */}
-      <LegalFooter />
+      {/* Rodapé legal alinhado ao estilo Materna360 */}
+      <footer
+        className="
+          mt-16
+          w-full
+          text-center
+          py-10
+          px-6
+          text-[12px]
+          leading-relaxed
+          text-[#6A6A6A]
+          bg-[linear-gradient(to_bottom,rgba(253,190,215,0)_0%,rgba(253,190,215,0.45)_45%,#FFE1F1_100%)]
+        "
+      >
+        <p>© 2025 Materna360®. Todos os direitos reservados.</p>
+        <p>Proibida a reprodução total ou parcial sem autorização.</p>
+      </footer>
     </main>
   );
 }
