@@ -28,7 +28,12 @@ export default function MaternarClient() {
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      className="min-h-[100dvh] pb-32 bg-[#FFE4F0] bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
+      className="
+        min-h-[100dvh] 
+        pb-32
+        bg-[#FFE8F2]
+        bg-[radial-gradient(circle_at_top_left,#FFE8F2_0,#FFD8E6_40%,#fd2597_100%)]
+      "
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
