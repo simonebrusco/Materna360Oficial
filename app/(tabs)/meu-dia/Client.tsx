@@ -61,12 +61,15 @@ export default function MeuDiaClient() {
       data-layout="page-template-v1"
       className="
         min-h-[100dvh]
-        pb-32
+        pb-24
+        flex
+        flex-col
         bg-[#FFE1F1]
         bg-[linear-gradient(to_bottom,#fd2597_0%,#FDBED7_40%,#FFE1F1_100%)]
       "
     >
-      <div className="mx-auto max-w-3xl px-4 md:px-6">
+      {/* CONTEÚDO PRINCIPAL */}
+      <div className="flex-1 mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO — cópia do Maternar, só mudando textos */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <div className="flex items-start justify-between gap-4">
@@ -108,18 +111,18 @@ export default function MeuDiaClient() {
         </div>
       </div>
 
-      {/* Rodapé legal alinhado ao estilo Materna360 */}
+      {/* RODAPÉ LEGAL — sempre encostado na parte de baixo do degradê */}
       <footer
         className="
-          mt-16
           w-full
           text-center
-          py-10
-          px-6
-          text-[12px]
+          pt-4
+          pb-2
+          px-4
+          text-[11px]
+          md:text-[12px]
           leading-relaxed
-          text-[#6A6A6A]
-          bg-[linear-gradient(to_bottom,rgba(253,190,215,0)_0%,rgba(253,190,215,0.45)_45%,#FFE1F1_100%)]
+          text-[#6A6A6A]/85
         "
       >
         <p>© 2025 Materna360®. Todos os direitos reservados.</p>
