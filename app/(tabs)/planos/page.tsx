@@ -7,7 +7,7 @@ import { setPlan, getPlan } from '@/app/lib/plan'
 import UpgradeSheet from '@/components/premium/UpgradeSheet'
 import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
-import LegalFooter from '@/components/common/LegalFooter' // ✅ corrigido aqui
+import LegalFooter from '@/components/common/LegalFooter'
 
 // Configuração dos planos
 const PLANS = [
@@ -29,7 +29,7 @@ const PLANS = [
       { label: 'Histórico emocional dos últimos 7 dias' },
       { label: 'Biblioteca Materna limitada (1 guia por categoria)' },
       { label: '1 trilha educativa introdutória' },
-      { label: 'Até 5 interações de IA por dia' },
+      { label: 'Até 5 orientações personalizadas por dia' },
     ],
     buttonText: 'Seu plano atual',
     buttonVariant: 'secondary' as const,
@@ -52,7 +52,7 @@ const PLANS = [
       { label: 'Insights emocionais e organizacionais avançados' },
       { label: 'Modo offline' },
       { label: 'Histórico emocional completo' },
-      { label: 'Rotinas inteligentes do dia (com IA personalizada)' },
+      { label: 'Rotinas inteligentes do dia, personalizadas para a sua rotina' },
       { label: 'Atividades guiadas por idade' },
       {
         label:
@@ -67,7 +67,7 @@ const PLANS = [
       },
       {
         label:
-          'Até 40 interações de IA por dia, personalizadas pelo seu perfil no Eu360',
+          'Até 40 orientações personalizadas por dia, de acordo com o seu perfil no Eu360',
       },
     ],
     buttonText: 'Quero o Materna+',
@@ -86,7 +86,7 @@ const PLANS = [
     subtitle: 'A experiência completa de cuidado, presença e personalização.',
     features: [
       { label: 'Tudo do Materna+' },
-      { label: 'IA ilimitada e avançada com leitura emocional detalhada' },
+      { label: 'Orientações ilimitadas com leitura emocional detalhada' },
       { label: 'Relatórios emocionais semanais e mensais' },
       { label: 'Trilhas educativas personalizadas para sua família' },
       {
@@ -316,7 +316,7 @@ export default function PlanosPage() {
                     feature: 'Planner diário',
                     essencial: 'Básico',
                     plus: 'Avançado',
-                    full: 'Avançado + IA preditiva',
+                    full: 'Avançado + leitura emocional',
                   },
                   {
                     feature: 'Humor e energia',
@@ -325,10 +325,10 @@ export default function PlanosPage() {
                     full: 'Com relatórios e evolução',
                   },
                   {
-                    feature: 'IA',
-                    essencial: '5 interações por dia',
+                    feature: 'Orientações personalizadas',
+                    essencial: '5 por dia',
                     plus: 'Até 40 por dia',
-                    full: 'Ilimitada',
+                    full: 'Ilimitadas',
                   },
                   {
                     feature: 'Biblioteca Materna',
@@ -395,7 +395,7 @@ export default function PlanosPage() {
             </div>
           </div>
 
-          {/* Valores especiais para quem já vive o Materna360 */}
+          {/* Valores especiais */}
           <div className="mb-10 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/90 px-4 py-4 sm:px-5 sm:py-5">
             <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)] mb-2">
               Valores especiais para quem já vive o Materna360
@@ -419,7 +419,7 @@ export default function PlanosPage() {
             </p>
           </div>
 
-          {/* CALL TO ACTION textual antes do FAQ */}
+          {/* CTA textual */}
           <div className="mb-8 text-center">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-2">
               Escolha o plano que acolhe a sua rotina
@@ -460,9 +460,9 @@ export default function PlanosPage() {
                   </span>
                 </summary>
                 <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Não. O plano Essencial é gratuito, não exige cartão de
-                  crédito e foi criado para que você possa sentir o Materna360
-                  com calma, sem compromisso financeiro.
+                  Não. O plano Essencial é gratuito e não exige cartão de
+                  crédito. Ele foi criado para que você possa sentir o Materna360
+                  com calma e sem compromisso financeiro.
                 </div>
               </details>
 
@@ -490,7 +490,7 @@ export default function PlanosPage() {
                 </summary>
                 <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
                   Sim. Seus dados são armazenados com segurança e não são
-                  compartilhados com terceiros. O que você registra aqui é
+                  compartilhados com terceiros. Tudo o que você registra aqui é
                   tratado com respeito e sigilo.
                 </div>
               </details>
@@ -498,11 +498,9 @@ export default function PlanosPage() {
           </div>
         </div>
 
-        {/* Sheet de upgrade */}
         <UpgradeSheet open={open} onOpenChange={setOpen} />
       </div>
 
-      {/* Rodapé legal global */}
       <LegalFooter />
     </main>
   )
