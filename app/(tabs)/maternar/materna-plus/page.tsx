@@ -115,10 +115,10 @@ export default function MaternaPlusPage() {
       <ClientOnly>
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
           {/* HERO */}
-          <SoftCard className="rounded-3xl border border-white/80 bg-white/95 p-5 shadow-[0_16px_38px_rgba(0,0,0,0.18)] md:p-7">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-5 shadow-[0_16px_38px_rgba(0,0,0,0.18)] md:p-7">
             <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
               <div className="space-y-4 max-w-xl">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd279d]/85">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   MATERNA+
                 </p>
                 <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
@@ -140,22 +140,22 @@ export default function MaternaPlusPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 text-[13px] md:w-64">
-                <div className="rounded-2xl bg-white border border-[#ffd8e6] px-3 py-2.5">
-                  <p className="font-semibold text-[#fd279d]">Profissionais</p>
+                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-3 py-2.5">
+                  <p className="font-semibold text-[#fd2597]">Profissionais</p>
                   <p className="text-[#545454]">
                     Indicações selecionadas de especialistas em maternidade e
                     infância, com foco em atendimento online.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white border border-[#ffd8e6] px-3 py-2.5">
-                  <p className="font-semibold text-[#fd279d]">Comunidade</p>
+                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-3 py-2.5">
+                  <p className="font-semibold text-[#fd2597]">Comunidade</p>
                   <p className="text-[#545454]">
                     Em breve, um espaço seguro para trocar com outras mães que
                     vivem desafios parecidos com os seus.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white border border-[#ffd8e6] px-3 py-2.5">
-                  <p className="font-semibold text-[#fd279d]">
+                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-3 py-2.5">
+                  <p className="font-semibold text-[#fd2597]">
                     Serviços Materna360
                   </p>
                   <p className="text-[#545454]">
@@ -168,10 +168,10 @@ export default function MaternaPlusPage() {
           </SoftCard>
 
           {/* PROFISSIONAIS PARCEIROS */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] md:p-7">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] md:p-7">
             <div className="space-y-5">
               <header className="space-y-2">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd279d]/85">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   PROFISSIONAIS PARCEIROS
                 </p>
                 <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
@@ -208,8 +208,8 @@ export default function MaternaPlusPage() {
                           onClick={() => setSelectedSpecialty(spec.id)}
                           className={`rounded-full border px-3 py-1.5 text-[12px] md:text-[13px] font-medium transition-colors ${
                             isActive
-                              ? 'border-[#fd279d] bg-[#ffd8e6] text-[#fd279d]'
-                              : 'border-[#ffd8e6] bg-white text-[#2F3A56] hover:border-[#fd279d] hover:bg-[#ffd8e6]/40'
+                              ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
+                              : 'border-[#F5D7E5] bg-white text-[#2F3A56] hover:border-[#fd2597] hover:bg-[#fdbed7]/40'
                           }`}
                         >
                           {spec.label}
@@ -218,7 +218,7 @@ export default function MaternaPlusPage() {
                     })}
                   </div>
 
-                  <SoftCard className="mt-3 rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-4 space-y-2">
+                  <SoftCard className="mt-3 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2">
                     <p className="text-[13px] font-semibold text-[#2F3A56]">
                       Como funciona na prática?
                     </p>
@@ -246,7 +246,7 @@ export default function MaternaPlusPage() {
                   {filteredProfessionals.map(prof => (
                     <div
                       key={prof.id}
-                      className="rounded-2xl border border-[#ffd8e6] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.06)] flex flex-col gap-2"
+                      className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.06)] flex flex-col gap-2"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
@@ -260,7 +260,7 @@ export default function MaternaPlusPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedProfessional(prof)}
-                          className="text-[12px] font-semibold text-[#fd279d] hover:text-[#d81f83]"
+                          className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
                         >
                           Ver detalhes
                         </button>
@@ -275,7 +275,7 @@ export default function MaternaPlusPage() {
                         {prof.tags.map(tag => (
                           <span
                             key={tag}
-                            className="rounded-full bg-[#ffd8e6]/70 px-2 py-0.5 text-[11px] font-medium text-[#2F3A56]"
+                            className="rounded-full bg-[#fdbed7]/70 px-2 py-0.5 text-[11px] font-medium text-[#2F3A56]"
                           >
                             {tag}
                           </span>
@@ -289,10 +289,10 @@ export default function MaternaPlusPage() {
           </SoftCard>
 
           {/* COMUNIDADE */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/96 p-5 shadow-[0_12px_28px_rgba(0,0,0,0.14)] md:p-7">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/96 p-5 shadow-[0_12px_28px_rgba(0,0,0,0.14)] md:p-7">
             <div className="grid gap-4 md:grid-cols-[1.4fr,1fr] md:items-center">
               <div className="space-y-3">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd279d]/85">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   COMUNIDADE MATERNA+ · EM BREVE
                 </p>
                 <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
@@ -322,7 +322,7 @@ export default function MaternaPlusPage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-4 space-y-2 text-[13px] text-[#545454]">
+              <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 text-[13px] text-[#545454]">
                 <p className="font-semibold text-[#2F3A56]">
                   O que você pode esperar:
                 </p>
@@ -336,9 +336,9 @@ export default function MaternaPlusPage() {
           </SoftCard>
 
           {/* SERVIÇOS MATERNA360 */}
-          <SoftCard className="rounded-3xl border border-[#ffd8e6] bg-white/98 p-5 shadow-[0_12px_30px_rgba(0,0,0,0.15)] md:p-7">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_12px_30px_rgba(0,0,0,0.15)] md:p-7">
             <div className="space-y-4">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd279d]/85">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                 SERVIÇOS MATERNA360
               </p>
               <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
@@ -348,8 +348,8 @@ export default function MaternaPlusPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 {/* MaternaBox */}
-                <div className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] p-4 space-y-2">
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#fd279d]">
+                <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2">
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                     MATERNABOX · ASSINATURA DE CARINHO MENSAL
                   </p>
                   <p className="text-[15px] font-semibold text-[#2F3A56]">
@@ -376,8 +376,8 @@ export default function MaternaPlusPage() {
                 </div>
 
                 {/* Concierge */}
-                <div className="rounded-2xl border border-[#ffd8e6] bg-white p-4 space-y-2">
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#fd279d]">
+                <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2">
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                     CONCIERGE MATERNA+
                   </p>
                   <p className="text-[15px] font-semibold text-[#2F3A56]">
@@ -404,7 +404,7 @@ export default function MaternaPlusPage() {
           {selectedProfessional && (
             <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
               <div className="max-w-lg w-full">
-                <SoftCard className="rounded-3xl bg-white p-6 shadow-[0_20px_45px_rgba(0,0,0,0.45)] border border-[#ffd8e6]">
+                <SoftCard className="rounded-3xl bg-white p-6 shadow-[0_20px_45px_rgba(0,0,0,0.45)] border border-[#F5D7E5]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <h3 className="text-[20px] font-semibold text-[#2F3A56]">
@@ -417,7 +417,7 @@ export default function MaternaPlusPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedProfessional(null)}
-                      className="text-[12px] font-semibold text-[#fd279d] hover:text-[#d81f83]"
+                      className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
                     >
                       Fechar
                     </button>
@@ -434,7 +434,7 @@ export default function MaternaPlusPage() {
                     {selectedProfessional.tags.map(tag => (
                       <span
                         key={tag}
-                        className="rounded-full bg-[#ffd8e6]/80 px-2 py-0.5 text-[11px] font-medium text-[#2F3A56]"
+                        className="rounded-full bg-[#fdbed7]/80 px-2 py-0.5 text-[11px] font-medium text-[#2F3A56]"
                       >
                         {tag}
                       </span>
