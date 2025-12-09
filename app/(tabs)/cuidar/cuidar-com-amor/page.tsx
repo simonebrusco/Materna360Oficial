@@ -485,13 +485,13 @@ export default function CuidarComAmorPage() {
         <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
           {/* BLOCO 1 — Hoje com seu filho */}
           <Reveal>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_14px_40px_rgba(0,0,0,0.16)]">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="space-y-6">
                 <header className="space-y-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                     Hoje com seu filho
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                     Entenda o momento do seu filho com carinho.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
@@ -502,16 +502,16 @@ export default function CuidarComAmorPage() {
 
                 <div className="grid gap-6 lg:gap-7 md:grid-cols-2">
                   {/* SINAIS DO DIA */}
-                  <SoftCard className="rounded-3xl p-5 md:p-6 lg:p-7 bg-white border border-[#ffd8e6] shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
+                  <SoftCard className="rounded-3xl p-5 md:p-6 lg:p-7 bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                     <div className="space-y-5">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
                           <AppIcon
                             name="idea"
-                            className="w-4 h-4 text-[#ff005e]"
+                            className="w-4 h-4 text-[#fd2597]"
                             decorative
                           />
-                          <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                          <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                             Sinais do dia
                           </h3>
                         </div>
@@ -522,7 +522,7 @@ export default function CuidarComAmorPage() {
                       </div>
 
                       <div className="space-y-3">
-                        <p className="text-sm text-[#2f3a56] font-medium">
+                        <p className="text-sm text-[#545454] font-medium">
                           Quais desses sinais você percebe hoje?
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -530,10 +530,10 @@ export default function CuidarComAmorPage() {
                             <button
                               key={signal}
                               onClick={() => handleSignalToggle(signal)}
-                              className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/20 ${
+                              className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
                                 signalsData.selectedSignals.includes(signal)
-                                  ? 'bg-[#ff005e] text-white shadow-md border border-[#ff005e]'
-                                  : 'bg-white text-[#2f3a56] border border-[#ffd8e6] hover:border-[#ff005e] hover:bg-[#ffd8e6]/15'
+                                  ? 'bg-[#fd2597] text-white shadow-md border border-[#fd2597]'
+                                  : 'bg-white text-[#545454] border border-[#F5D7E5] hover:border-[#fd2597] hover:bg-[#fdbed7]/20'
                               }`}
                             >
                               {signal}
@@ -543,7 +543,7 @@ export default function CuidarComAmorPage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#2f3a56] uppercase tracking-wide mb-2.5">
+                        <label className="block text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2.5">
                           Quer detalhar algo?
                         </label>
                         <textarea
@@ -555,7 +555,7 @@ export default function CuidarComAmorPage() {
                             })
                           }
                           placeholder="Escreva aqui algo que você percebeu no seu filho hoje."
-                          className="w-full p-3 rounded-2xl border border-[#ffd8e6] bg-white text-sm text-[#2f3a56] placeholder-[#545454]/40 focus:outline-none focus:border-[#ff005e] focus:ring-2 focus:ring-[#ff005e]/20 resize-none"
+                          className="w-full p-3 rounded-2xl border border-[#F5D7E5] bg-white text-sm text-[#545454] placeholder-[#545454]/40 focus:outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/20 resize-none"
                           rows={3}
                         />
                       </div>
@@ -576,10 +576,10 @@ export default function CuidarComAmorPage() {
                     {/* CUIDADO EMOCIONAL POR IDADE */}
                     <div ref={conexaoBlockRef}>
                       <SoftCard
-                        className={`rounded-3xl p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-3xl p-5 md:p-6 bg-white border shadow-[0_4px_18px_rgba(0,0,0,0.08)] transition-all ${
                           highlightTarget === 'conexao'
-                            ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
-                            : 'border-[#ffd8e6]'
+                            ? 'border-[#fd2597] ring-2 ring-[#fd2597]/30'
+                            : 'border-[#F5D7E5]'
                         }`}
                       >
                         <div className="space-y-4">
@@ -587,10 +587,10 @@ export default function CuidarComAmorPage() {
                             <div className="flex items-center gap-2">
                               <AppIcon
                                 name="heart"
-                                className="w-4 h-4 text-[#ff005e]"
+                                className="w-4 h-4 text-[#fd2597]"
                                 decorative
                               />
-                              <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                                 Cuidado emocional por idade
                               </h3>
                             </div>
@@ -600,7 +600,7 @@ export default function CuidarComAmorPage() {
                             </p>
                           </div>
 
-                          <div className="p-3.5 rounded-2xl bg-[#ffe5ef]/60 border border-[#ffd8e6]/70">
+                          <div className="p-3.5 rounded-2xl bg-[#ffe1f1]/80 border border-[#F5D7E5]/70">
                             <p className="text-xs md:text-sm text-[#545454]">
                               Cadastre a idade do seu filho no Eu360 para
                               receber ideias ainda mais próximas da rotina de
@@ -611,7 +611,7 @@ export default function CuidarComAmorPage() {
                           <div className="space-y-2.5">
                             {EMOTIONAL_CARE_TIPS.map((tip, idx) => (
                               <div key={idx} className="flex gap-2.5">
-                                <span className="mt-1 text-[#ff005e]">•</span>
+                                <span className="mt-1 text-[#fd2597]">•</span>
                                 <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                                   {tip}
                                 </p>
@@ -622,7 +622,7 @@ export default function CuidarComAmorPage() {
                           <button
                             type="button"
                             onClick={handleScrollToMoreIdeas}
-                            className="text-xs md:text-sm font-semibold text-[#ff005e] hover:text-[#cf285f] transition-colors inline-flex items-center gap-1"
+                            className="text-xs md:text-sm font-semibold text-[#fd2597] hover:text-[#b8236b] transition-colors inline-flex items-center gap-1"
                           >
                             Ver mais ideias de cuidado →
                           </button>
@@ -633,10 +633,10 @@ export default function CuidarComAmorPage() {
                     {/* SONO & ROTINA — ÁUDIOS */}
                     <div ref={sonoBlockRef}>
                       <SoftCard
-                        className={`rounded-3xl p-5 md:p-6 bg-[#fff7fb] border shadow-[0_10px_34px_rgba(0,0,0,0.10)] transition-all ${
+                        className={`rounded-3xl p-5 md:p-6 bg-[#ffe1f1]/80 border shadow-[0_4px_18px_rgba(0,0,0,0.08)] transition-all ${
                           highlightTarget === 'sono'
-                            ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
-                            : 'border-[#ffd8e6]'
+                            ? 'border-[#fd2597] ring-2 ring-[#fd2597]/30'
+                            : 'border-[#F5D7E5]'
                         }`}
                       >
                         <div className="space-y-4">
@@ -644,10 +644,10 @@ export default function CuidarComAmorPage() {
                             <div className="flex items-center gap-2">
                               <AppIcon
                                 name="time"
-                                className="w-4 h-4 text-[#ff005e]"
+                                className="w-4 h-4 text-[#fd2597]"
                                 decorative
                               />
-                              <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                                 Sono & rotina
                               </h3>
                             </div>
@@ -661,20 +661,20 @@ export default function CuidarComAmorPage() {
                             {SLEEP_AUDIO_PLACEHOLDERS.map(audio => (
                               <div
                                 key={audio.id}
-                                className="flex items-center gap-4 rounded-2xl border border-[#ffd8e6]/80 bg-white/80 px-4 py-3"
+                                className="flex items-center gap-4 rounded-2xl border border-[#F5D7E5]/80 bg-white/80 px-4 py-3"
                               >
                                 <button
                                   type="button"
-                                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ffd8e6] bg-white shadow-sm"
+                                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#F5D7E5] bg-white shadow-sm"
                                 >
                                   <AppIcon
                                     name="play"
-                                    className="w-4 h-4 text-[#ff005e]"
+                                    className="w-4 h-4 text-[#fd2597]"
                                     decorative
                                   />
                                 </button>
                                 <div className="flex-1 space-y-0.5">
-                                  <p className="text-sm font-semibold text-[#2f3a56]">
+                                  <p className="text-sm font-semibold text-[#545454]">
                                     {audio.title}
                                   </p>
                                   <p className="text-xs text-[#545454]">
@@ -705,13 +705,13 @@ export default function CuidarComAmorPage() {
 
           {/* BLOCO 2 — Cuidados & vínculo */}
           <Reveal>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="space-y-6">
                 <header className="space-y-2">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                     Cuidados & vínculo
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                     Acompanhe os cuidados do dia e escolha um gesto especial.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
@@ -720,10 +720,10 @@ export default function CuidarComAmorPage() {
                   </p>
 
                   {highlightTarget && (
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#fff7fb] border border-[#ffd8e6]/80 px-3 py-1 text-[11px] text-[#2f3a56] mt-1.5">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[#ffe1f1] border border-[#F5D7E5]/80 px-3 py-1 text-[11px] text-[#545454] mt-1.5">
                       <AppIcon
                         name="sparkles"
-                        className="w-3.5 h-3.5 text-[#ff005e]"
+                        className="w-3.5 h-3.5 text-[#fd2597]"
                         decorative
                       />
                       <span>
@@ -741,10 +741,10 @@ export default function CuidarComAmorPage() {
                   {/* CUIDADOS DO DIA */}
                   <div ref={cuidadosBlockRef}>
                     <SoftCard
-                      className={`rounded-3xl p-5 md:p-6 lg:p-7 bg-white border shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-all ${
+                      className={`rounded-3xl p-5 md:p-6 lg:p-7 bg-white border shadow-[0_4px_18px_rgba(0,0,0,0.08)] transition-all ${
                         highlightTarget === 'alimentacao'
-                          ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
-                          : 'border-[#ffd8e6]'
+                          ? 'border-[#fd2597] ring-2 ring-[#fd2597]/30'
+                          : 'border-[#F5D7E5]'
                       }`}
                     >
                       <div className="space-y-5">
@@ -752,10 +752,10 @@ export default function CuidarComAmorPage() {
                           <div className="flex items-center gap-2">
                             <AppIcon
                               name="heart"
-                              className="w-4 h-4 text-[#ff005e]"
+                              className="w-4 h-4 text-[#fd2597]"
                               decorative
                             />
-                            <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                            <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                               Cuidados do dia
                             </h3>
                           </div>
@@ -765,14 +765,14 @@ export default function CuidarComAmorPage() {
                         </div>
 
                         <div className="space-y-3">
-                          <p className="text-xs font-semibold text-[#2f3a56] uppercase tracking-wide">
+                          <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
                             Marque o que você já conseguiu cuidar hoje:
                           </p>
                           <div className="space-y-2.5">
                             {CARE_ITEMS.map(item => (
                               <label
                                 key={item}
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#ffd8e6]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#ff005e]/20"
+                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#fdbed7]/15 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#fd2597]/20"
                               >
                                 <input
                                   type="checkbox"
@@ -780,9 +780,9 @@ export default function CuidarComAmorPage() {
                                     item,
                                   )}
                                   onChange={() => handleCareToggle(item)}
-                                  className="w-5 h-5 rounded border-[#ffd8e6] text-[#ff005e] cursor-pointer accent-[#ff005e]"
+                                  className="w-5 h-5 rounded border-[#F5D7E5] text-[#fd2597] cursor-pointer accent-[#fd2597]"
                                 />
-                                <span className="text-sm text-[#2f3a56] flex-1 font-medium">
+                                <span className="text-sm text-[#545454] flex-1 font-medium">
                                   {item}
                                 </span>
                               </label>
@@ -806,10 +806,10 @@ export default function CuidarComAmorPage() {
                     {/* PARA FORTALECER O VÍNCULO */}
                     <div ref={rituaisBlockRef}>
                       <SoftCard
-                        className={`rounded-3xl p-5 md:p-6 bg-white border shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-all ${
+                        className={`rounded-3xl p-5 md:p-6 bg-white border shadow-[0_4px_18px_rgba(0,0,0,0.08)] transition-all ${
                           highlightTarget === 'rituais'
-                            ? 'border-[#ff005e] ring-2 ring-[#ff005e]/30'
-                            : 'border-[#ffd8e6]'
+                            ? 'border-[#fd2597] ring-2 ring-[#fd2597]/30'
+                            : 'border-[#F5D7E5]'
                         }`}
                       >
                         <div className="space-y-4">
@@ -817,10 +817,10 @@ export default function CuidarComAmorPage() {
                             <div className="flex items-center gap-2">
                               <AppIcon
                                 name="care"
-                                className="w-4 h-4 text-[#ff005e]"
+                                className="w-4 h-4 text-[#fd2597]"
                                 decorative
                               />
-                              <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                                 Para fortalecer o vínculo
                               </h3>
                             </div>
@@ -835,12 +835,12 @@ export default function CuidarComAmorPage() {
                               style={{
                                 borderColor:
                                   bondData.selectedOption === 'gesto'
-                                    ? '#ff005e'
-                                    : '#ffd8e6',
+                                    ? '#fd2597'
+                                    : '#F5D7E5',
                                 backgroundColor:
                                   bondData.selectedOption === 'gesto'
-                                    ? 'rgba(255,216,230,0.35)'
-                                    : 'rgba(255,216,230,0.15)',
+                                    ? 'rgba(253,190,215,0.35)'
+                                    : 'rgba(253,190,215,0.15)',
                               }}
                             >
                               <input
@@ -851,10 +851,10 @@ export default function CuidarComAmorPage() {
                                 onChange={() =>
                                   handleBondOptionChange('gesto')
                                 }
-                                className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
+                                className="w-5 h-5 mt-0.5 accent-[#fd2597] cursor-pointer flex-shrink-0"
                               />
                               <div className="flex-1">
-                                <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                                <h4 className="text-sm font-semibold text-[#545454] mb-1">
                                   Gesto de hoje
                                 </h4>
                                 <p className="text-xs text-[#545454] leading-relaxed">
@@ -870,12 +870,12 @@ export default function CuidarComAmorPage() {
                               style={{
                                 borderColor:
                                   bondData.selectedOption === 'ritual'
-                                    ? '#ff005e'
-                                    : '#ffd8e6',
+                                    ? '#fd2597'
+                                    : '#F5D7E5',
                                 backgroundColor:
                                   bondData.selectedOption === 'ritual'
-                                    ? 'rgba(255,216,230,0.35)'
-                                    : 'rgba(255,216,230,0.15)',
+                                    ? 'rgba(253,190,215,0.35)'
+                                    : 'rgba(253,190,215,0.15)',
                               }}
                             >
                               <input
@@ -886,10 +886,10 @@ export default function CuidarComAmorPage() {
                                 onChange={() =>
                                   handleBondOptionChange('ritual')
                                 }
-                                className="w-5 h-5 mt-0.5 accent-[#ff005e] cursor-pointer flex-shrink-0"
+                                className="w-5 h-5 mt-0.5 accent-[#fd2597] cursor-pointer flex-shrink-0"
                               />
                               <div className="flex-1">
-                                <h4 className="text-sm font-semibold text-[#2f3a56] mb-1">
+                                <h4 className="text-sm font-semibold text-[#545454] mb-1">
                                   Ritual rápido
                                 </h4>
                                 <p className="text-xs text-[#545454] leading-relaxed">
@@ -914,16 +914,16 @@ export default function CuidarComAmorPage() {
 
                     {/* IDEIAS DE CUIDADO PARA HOJE */}
                     <div ref={ideiasBlockRef}>
-                      <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/95 border border-[#ffd8e6] shadow-[0_10px_34px_rgba(0,0,0,0.12)]">
+                      <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/95 border border-[#F5D7E5] shadow-[0_4px_18px_rgba(0,0,0,0.08)]">
                         <div className="space-y-4">
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
                               <AppIcon
                                 name="sparkles"
-                                className="w-4 h-4 text-[#ff005e]"
+                                className="w-4 h-4 text-[#fd2597]"
                                 decorative
                               />
-                              <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                                 Ideias de cuidado para hoje
                               </h3>
                             </div>
@@ -976,7 +976,7 @@ export default function CuidarComAmorPage() {
                             </Button>
                           </div>
 
-                          <div className="rounded-2xl border border-[#ffd8e6]/70 bg-[#fff7fb] px-4 py-3 space-y-3">
+                          <div className="rounded-2xl border border-[#F5D7E5]/70 bg-[#ffe1f1] px-4 py-3 space-y-3">
                             {suggestionLoading && (
                               <p className="text-xs text-[#545454]">
                                 Estamos preparando algumas ideias para você…
@@ -986,7 +986,7 @@ export default function CuidarComAmorPage() {
                             {!suggestionLoading && currentSuggestion && (
                               <>
                                 <div className="space-y-1">
-                                  <p className="text-sm font-semibold text-[#2f3a56]">
+                                  <p className="text-sm font-semibold text-[#545454]">
                                     {suggestionTitle(currentFeature)}
                                   </p>
                                   <p className="text-xs text-[#545454]">
@@ -999,7 +999,7 @@ export default function CuidarComAmorPage() {
                                       key={`${idx}-${tip.slice(0, 10)}`}
                                       className="flex gap-2 text-xs text-[#545454]"
                                     >
-                                      <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#ff005e]" />
+                                      <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#fd2597]" />
                                       <span>{tip}</span>
                                     </li>
                                   ))}
