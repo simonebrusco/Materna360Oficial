@@ -161,7 +161,7 @@ export default function ProfileForm() {
 
         const data = await response.json()
 
-        setForm((previous) => ({
+        setForm(previous => ({
           ...previous,
           nomeMae: data?.name || '',
           userPreferredName: data?.userPreferredName || '',
@@ -207,9 +207,9 @@ export default function ProfileForm() {
     key: keyof ChildProfile,
     value: string | number | string[],
   ) => {
-    setForm((previous) => ({
+    setForm(previous => ({
       ...previous,
-      filhos: previous.filhos.map((child) => {
+      filhos: previous.filhos.map(child => {
         if (child.id !== id) return child
 
         if (key === 'idadeMeses') {
@@ -228,19 +228,19 @@ export default function ProfileForm() {
               ? value.split(',')
               : []
           const normalized = base
-            .map((item) => (typeof item === 'string' ? item.trim() : ''))
-            .filter((item) => item.length > 0)
+            .map(item => (typeof item === 'string' ? item.trim() : ''))
+            .filter(item => item.length > 0)
 
           const unique = Array.from(
-            new Set(normalized.map((item) => item.toLocaleLowerCase('pt-BR'))),
+            new Set(normalized.map(item => item.toLocaleLowerCase('pt-BR'))),
           )
             .map(
-              (keyName) =>
+              keyName =>
                 normalized.find(
-                  (item) => item.toLocaleLowerCase('pt-BR') === keyName,
+                  item => item.toLocaleLowerCase('pt-BR') === keyName,
                 ) ?? '',
             )
-            .filter((item) => item.length > 0)
+            .filter(item => item.length > 0)
 
           return { ...child, alergias: unique }
         }
@@ -254,27 +254,27 @@ export default function ProfileForm() {
   }
 
   const addChild = () => {
-    setForm((previous) => ({
+    setForm(previous => ({
       ...previous,
       filhos: [...previous.filhos, createEmptyChild(previous.filhos.length)],
     }))
   }
 
   const removeChild = (id: string) => {
-    setForm((previous) => ({
+    setForm(previous => ({
       ...previous,
       filhos:
         previous.filhos.length > 1
-          ? previous.filhos.filter((child) => child.id !== id)
+          ? previous.filhos.filter(child => child.id !== id)
           : previous.filhos,
     }))
   }
 
   const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
-    setForm((previous) => {
+    setForm(previous => {
       const current = previous[fieldName] as string[] | undefined
       const updated = (current || []).includes(value)
-        ? (current || []).filter((item) => item !== value)
+        ? (current || []).filter(item => item !== value)
         : [...(current || []), value]
       return { ...previous, [fieldName]: updated }
     })
@@ -329,7 +329,7 @@ export default function ProfileForm() {
 
   const triggerAutoSave = useCallback(
     async (step: Eu360Step) => {
-      setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saving' }))
+      setAutoSaveStatus(prev => ({ ...prev, [step]: 'saving' }))
 
       try {
         const normalizedBirthdate = babyBirthdate || null
@@ -374,19 +374,19 @@ export default function ProfileForm() {
         })
 
         if (response.ok) {
-          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'saved' }))
+          setAutoSaveStatus(prev => ({ ...prev, [step]: 'saved' }))
           if (autoSaveTimeoutRef.current[step]) {
             clearTimeout(autoSaveTimeoutRef.current[step])
           }
           autoSaveTimeoutRef.current[step] = setTimeout(() => {
-            setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+            setAutoSaveStatus(prev => ({ ...prev, [step]: 'idle' }))
           }, 3000)
         } else {
-          setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+          setAutoSaveStatus(prev => ({ ...prev, [step]: 'idle' }))
         }
       } catch (error) {
         console.warn('Autosave failed:', error)
-        setAutoSaveStatus((prev) => ({ ...prev, [step]: 'idle' }))
+        setAutoSaveStatus(prev => ({ ...prev, [step]: 'idle' }))
       }
     },
     [form, babyBirthdate],
@@ -508,7 +508,7 @@ export default function ProfileForm() {
   }
 
   const handleChange = (updates: Partial<ProfileFormState>) => {
-    setForm((previous) => ({ ...previous, ...updates }))
+    setForm(previous => ({ ...previous, ...updates }))
   }
 
   /* ========= RENDER ========= */
@@ -617,7 +617,7 @@ export default function ProfileForm() {
           )}
 
           {/* Banda final – botão de salvar */}
-          <div className="mx-auto max-w-3xl px-4 md:px-6 py-8 md:py-10">
+          <div className="mx-auto max-w-3xl px-4 md:px-6 py-4 md:py-6">
             <div className="rounded-3xl bg-white border border-[var(--color-pink-snow)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-6 md:p-8 space-y-3">
               <Button
                 type="submit"
