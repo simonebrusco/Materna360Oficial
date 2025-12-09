@@ -275,6 +275,9 @@ export default function WeeklyPlannerShell() {
   const tasksByOrigin = (origin: TaskOrigin) =>
     plannerData.tasks.filter(task => task.origin === origin)
 
+  const hasItemsToday =
+    plannerData.tasks.length > 0 || plannerData.appointments.length > 0
+
   // ===========================
   // RENDER
   // ===========================
@@ -369,16 +372,23 @@ export default function WeeklyPlannerShell() {
                   }
 
                   const dayKey = getBrazilDateKey(day)
-                  const dayAppointments =
+
+                  // carrega do localStorage p/ mostrar pontinho também em outros dias
+                  const dayAppointments: Appointment[] =
                     load(`planner/appointments/${dayKey}`, []) ?? []
-                  const dayTasks =
+                  const dayTasks: TaskItem[] =
                     load(`planner/tasks/${dayKey}`, []) ?? []
-                  const hasItems =
+
+                  const hasStoredItems =
                     (Array.isArray(dayAppointments) &&
                       dayAppointments.length > 0) ||
                     (Array.isArray(dayTasks) && dayTasks.length > 0)
 
                   const isSelected = dayKey === selectedDateKey
+
+                  const hasDot =
+                    hasStoredItems ||
+                    (isSelected && hasItemsToday)
 
                   return (
                     <button
@@ -392,7 +402,7 @@ export default function WeeklyPlannerShell() {
                     >
                       <div className="relative flex flex-col items-center justify-center h-full">
                         <span>{day.getDate()}</span>
-                        {hasItems && (
+                        {hasDot && (
                           <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
                         )}
                       </div>
@@ -755,7 +765,13 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4 pb-10">
-              <WeekView weekData={generateWeekData(selectedDate)} />
+              <WeekView
+                weekData={generateWeekData(
+                  selectedDate,
+                  selectedDateKey,
+                  plannerData,
+                )}
+              />
             </div>
           )}
         </div>
@@ -924,7 +940,11 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-function generateWeekData(base: Date) {
+function generateWeekData(
+  base: Date,
+  currentDateKey: string,
+  currentPlanner: PlannerData,
+) {
   const monday = new Date(base)
   const day = monday.getDay()
   monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
@@ -934,26 +954,42 @@ function generateWeekData(base: Date) {
     d.setDate(monday.getDate() + i)
 
     const dateKey = getBrazilDateKey(d)
+
+    // dados base vindos do localStorage
     const appointments: Appointment[] =
       load(`planner/appointments/${dateKey}`, []) ?? []
     const tasks: TaskItem[] =
       load(`planner/tasks/${dateKey}`, []) ?? []
 
-    const agendaCount = Array.isArray(appointments)
+    let agendaCount = Array.isArray(appointments)
       ? appointments.length
       : 0
 
-    const top3Count = Array.isArray(tasks)
+    let top3Count = Array.isArray(tasks)
       ? tasks.filter(t => t.origin === 'top3').length
       : 0
 
-    const careCount = Array.isArray(tasks)
+    let careCount = Array.isArray(tasks)
       ? tasks.filter(t => t.origin === 'selfcare').length
       : 0
 
-    const familyCount = Array.isArray(tasks)
+    let familyCount = Array.isArray(tasks)
       ? tasks.filter(t => t.origin === 'family').length
       : 0
+
+    // garante que o dia atual use os dados em memória (mais confiáveis)
+    if (dateKey === currentDateKey) {
+      agendaCount = currentPlanner.appointments.length
+      top3Count = currentPlanner.tasks.filter(
+        t => t.origin === 'top3',
+      ).length
+      careCount = currentPlanner.tasks.filter(
+        t => t.origin === 'selfcare',
+      ).length
+      familyCount = currentPlanner.tasks.filter(
+        t => t.origin === 'family',
+      ).length
+    }
 
     return {
       dayNumber: d.getDate(),
