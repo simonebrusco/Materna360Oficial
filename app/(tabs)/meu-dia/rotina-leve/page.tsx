@@ -939,9 +939,9 @@ export default function RotinaLevePage() {
             {/* BLOCO 0 — BOAS ÂNCORAS DO DIA (Ideias + Inspirações) */}
             <SoftCard
               id="rotina-leve-ancoras"
-              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+              className="rounded-3xl p-6 md:p-8 bg-[#ffe1f1]/70 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
             >
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <header className="space-y-1 pb-1">
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                     Dia · Boas âncoras
@@ -958,324 +958,322 @@ export default function RotinaLevePage() {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {/* COLUNA — IDEIAS RÁPIDAS */}
-                  <div
-                    id="rotina-leve-ideias"
-                    className="space-y-4 flex flex-col h-full"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                        Dia · Ideias rápidas
-                      </p>
-                      <h4 className="text-sm md:text-base font-semibold text-[#545454]">
-                        Pequenas ideias para encaixar entre um compromisso e outro
-                      </h4>
-                      <p className="text-xs text-[#545454] leading-relaxed">
-                        Brincadeiras, organização, autocuidado ou uma coisinha rápida na
-                        cozinha — tudo pensado para caber em minutos.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setOpenIdeas((prev) => !prev)}
-                      className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
-                    >
-                      {openIdeas ? 'Recolher filtros ↑' : 'Escolher filtros →'}
-                    </button>
-
-                    {openIdeas && (
-                      <div className="space-y-4 text-xs flex-1">
-                        {/* TEMPO DISPONÍVEL */}
-                        <div>
-                          <p className="mb-1 font-medium text-[#545454]">
-                            Quanto tempo você tem agora?
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { id: '5', label: '5 min' },
-                              { id: '10', label: '10 min' },
-                              { id: '20', label: '20 min' },
-                              { id: '30+', label: '30+' },
-                            ].map((option) => (
-                              <button
-                                key={option.id}
-                                type="button"
-                                onClick={() =>
-                                  setTempoDisponivel((current) =>
-                                    current === option.id ? null : option.id,
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
-                                  tempoDisponivel === option.id
-                                    ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
-                                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
-                                )}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* COM QUEM */}
-                        <div>
-                          <p className="mb-1 font-medium text-[#545454]">
-                            Quem está com você nesse momento?
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { id: 'so-eu', label: 'Só eu' },
-                              { id: 'eu-e-meu-filho', label: 'Eu e meu filho' },
-                              { id: 'familia-toda', label: 'Família toda' },
-                            ].map((option) => (
-                              <button
-                                key={option.id}
-                                type="button"
-                                onClick={() =>
-                                  setComQuem((current) =>
-                                    current === option.id ? null : option.id,
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
-                                  comQuem === option.id
-                                    ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
-                                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
-                                )}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* TIPO DE IDEIA */}
-                        <div>
-                          <p className="mb-1 font-medium text-[#545454]">
-                            Você prefere uma ideia de…
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { id: 'brincadeira', label: 'Brincadeira' },
-                              { id: 'organizacao', label: 'Organização da casa' },
-                              { id: 'autocuidado', label: 'Autocuidado' },
-                              { id: 'receita-rapida', label: 'Receita rápida' },
-                            ].map((option) => (
-                              <button
-                                key={option.id}
-                                type="button"
-                                onClick={() =>
-                                  setTipoIdeia((current) =>
-                                    current === option.id ? null : option.id,
-                                  )
-                                }
-                                className={clsx(
-                                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
-                                  tipoIdeia === option.id
-                                    ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
-                                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
-                                )}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleGenerateIdeas}
-                          disabled={ideasLoading || isIdeasOverLimit}
-                          className="w-full md:w-auto"
-                        >
-                          {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias para agora'}
-                        </Button>
-
-                        <p className="text-[11px] text-[#545454]">
-                          Hoje você já usou{' '}
-                          <span className="font-semibold text-[#545454]">
-                            {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
-                          </span>{' '}
-                          gerações de ideias.
+                  <div id="rotina-leve-ideias" className="h-full">
+                    <div className="h-full rounded-2xl bg-white border border-[#ffd8e6] p-4 md:p-5 shadow-[0_4px_14px_rgba(0,0,0,0.04)] flex flex-col space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
+                          Dia · Ideias rápidas
                         </p>
+                        <h4 className="text-sm md:text-base font-semibold text-[#545454]">
+                          Pequenas ideias para encaixar entre um compromisso e outro
+                        </h4>
+                        <p className="text-xs text-[#545454] leading-relaxed">
+                          Brincadeiras, organização, autocuidado ou uma coisinha rápida na
+                          cozinha — tudo pensado para caber em minutos.
+                        </p>
+                      </div>
 
-                        {isIdeasOverLimit && (
-                          <p className="text-[11px] text-[#fd2597] font-medium">
-                            Você chegou ao limite de ideias rápidas por hoje. O resto do
-                            dia pode ser só vivido, sem pressão 💗
-                          </p>
-                        )}
+                      <button
+                        type="button"
+                        onClick={() => setOpenIdeas((prev) => !prev)}
+                        className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
+                      >
+                        {openIdeas ? 'Recolher filtros ↑' : 'Escolher filtros →'}
+                      </button>
 
-                        {/* LISTA IDEIAS */}
-                        <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                          <p className="text-xs font-medium text-[#545454] mb-2">
-                            Sugestões para agora
-                          </p>
-
-                          {ideasLoading && (
-                            <p className="text-[11px] text-[#545454]">
-                              Pensando em pequenas ações que cabem no seu momento…
+                      {openIdeas && (
+                        <div className="space-y-4 text-xs flex-1">
+                          {/* TEMPO DISPONÍVEL */}
+                          <div>
+                            <p className="mb-1 font-medium text-[#545454]">
+                              Quanto tempo você tem agora?
                             </p>
-                          )}
-
-                          {!ideasLoading && ideas && (
-                            <ul className="space-y-2 text-xs text-[#545454]">
-                              {ideas.map((idea) => (
-                                <li key={idea.id}>• {idea.text}</li>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                { id: '5', label: '5 min' },
+                                { id: '10', label: '10 min' },
+                                { id: '20', label: '20 min' },
+                                { id: '30+', label: '30+' },
+                              ].map((option) => (
+                                <button
+                                  key={option.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setTempoDisponivel((current) =>
+                                      current === option.id ? null : option.id,
+                                    )
+                                  }
+                                  className={clsx(
+                                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
+                                    tempoDisponivel === option.id
+                                      ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
+                                      : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
+                                  )}
+                                >
+                                  {option.label}
+                                </button>
                               ))}
-                            </ul>
-                          )}
+                            </div>
+                          </div>
 
-                          {!ideasLoading && !ideas && (
-                            <ul className="space-y-2 text-xs text-[#545454]">
-                              <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                              <li>
-                                • Conexão de 5 minutos: conte algo bom do seu dia para o
-                                seu filho.
-                              </li>
-                              <li>
-                                • Ritual rápido: uma pausa tranquila juntas antes de
-                                recomeçar.
-                              </li>
-                            </ul>
-                          )}
+                          {/* COM QUEM */}
+                          <div>
+                            <p className="mb-1 font-medium text-[#545454]">
+                              Quem está com você nesse momento?
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                { id: 'so-eu', label: 'Só eu' },
+                                { id: 'eu-e-meu-filho', label: 'Eu e meu filho' },
+                                { id: 'familia-toda', label: 'Família toda' },
+                              ].map((option) => (
+                                <button
+                                  key={option.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setComQuem((current) =>
+                                      current === option.id ? null : option.id,
+                                    )
+                                  }
+                                  className={clsx(
+                                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
+                                    comQuem === option.id
+                                      ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
+                                      : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
+                                  )}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* TIPO DE IDEIA */}
+                          <div>
+                            <p className="mb-1 font-medium text-[#545454]">
+                              Você prefere uma ideia de…
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                { id: 'brincadeira', label: 'Brincadeira' },
+                                { id: 'organizacao', label: 'Organização da casa' },
+                                { id: 'autocuidado', label: 'Autocuidado' },
+                                { id: 'receita-rapida', label: 'Receita rápida' },
+                              ].map((option) => (
+                                <button
+                                  key={option.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setTipoIdeia((current) =>
+                                      current === option.id ? null : option.id,
+                                    )
+                                  }
+                                  className={clsx(
+                                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
+                                    tipoIdeia === option.id
+                                      ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
+                                      : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
+                                  )}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
 
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={handleSaveIdeia}
-                            className="w-full mt-3"
+                            onClick={handleGenerateIdeas}
+                            disabled={ideasLoading || isIdeasOverLimit}
+                            className="w-full md:w-auto"
                           >
-                            Salvar ideias no planner
+                            {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias para agora'}
                           </Button>
+
+                          <p className="text-[11px] text-[#545454]">
+                            Hoje você já usou{' '}
+                            <span className="font-semibold text-[#545454]">
+                              {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
+                            </span>{' '}
+                            gerações de ideias.
+                          </p>
+
+                          {isIdeasOverLimit && (
+                            <p className="text-[11px] text-[#fd2597] font-medium">
+                              Você chegou ao limite de ideias rápidas por hoje. O resto do
+                              dia pode ser só vivido, sem pressão 💗
+                            </p>
+                          )}
+
+                          {/* LISTA IDEIAS */}
+                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
+                            <p className="text-xs font-medium text-[#545454] mb-2">
+                              Sugestões para agora
+                            </p>
+
+                            {ideasLoading && (
+                              <p className="text-[11px] text-[#545454]">
+                                Pensando em pequenas ações que cabem no seu momento…
+                              </p>
+                            )}
+
+                            {!ideasLoading && ideas && (
+                              <ul className="space-y-2 text-xs text-[#545454]">
+                                {ideas.map((idea) => (
+                                  <li key={idea.id}>• {idea.text}</li>
+                                ))}
+                              </ul>
+                            )}
+
+                            {!ideasLoading && !ideas && (
+                              <ul className="space-y-2 text-xs text-[#545454]">
+                                <li>• Mini brincadeira sensorial com objetos da sala.</li>
+                                <li>
+                                  • Conexão de 5 minutos: conte algo bom do seu dia para o
+                                  seu filho.
+                                </li>
+                                <li>
+                                  • Ritual rápido: uma pausa tranquila juntas antes de
+                                  recomeçar.
+                                </li>
+                              </ul>
+                            )}
+
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={handleSaveIdeia}
+                              className="w-full mt-3"
+                            >
+                              Salvar ideias no planner
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* COLUNA — INSPIRAÇÕES DO DIA */}
-                  <div
-                    id="rotina-leve-inspiracoes"
-                    className="space-y-4 flex flex-col h-full"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                        Dia · Inspirações
-                      </p>
-                      <h4 className="text-sm md:text-base font-semibold text-[#545454]">
-                        Uma frase, um cuidado e um mini ritual para hoje
-                      </h4>
-                      <p className="text-xs text-[#545454] leading-relaxed">
-                        Pequenas âncoras emocionais para lembrar que você não precisa dar
-                        conta de tudo ao mesmo tempo.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setOpenInspiration((prev) => !prev)}
-                      className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
-                    >
-                      {openInspiration
-                        ? 'Recolher inspiração ↑'
-                        : 'Ver inspiração de hoje →'}
-                    </button>
-
-                    {openInspiration && (
-                      <div className="text-xs space-y-4 flex-1">
-                        <div className="space-y-1">
-                          <p className="font-medium text-[#545454]">Foco de hoje</p>
-                          <select
-                            className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
-                            value={focusOfDay}
-                            onChange={(e) => setFocusOfDay(e.target.value)}
-                          >
-                            <option>Cansaço</option>
-                            <option>Culpa</option>
-                            <option>Organização</option>
-                            <option>Conexão com o filho</option>
-                          </select>
-                        </div>
-
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleGenerateInspiration}
-                          disabled={inspirationLoading || isInspirationOverLimit}
-                          className="w-full md:w-auto"
-                        >
-                          {inspirationLoading
-                            ? 'Gerando inspiração…'
-                            : 'Gerar inspiração para hoje'}
-                        </Button>
-
-                        <p className="text-[11px] text-[#545454]">
-                          Hoje você já usou{' '}
-                          <span className="font-semibold text-[#545454]">
-                            {usedInspirationsToday} de {DAILY_INSPIRATION_LIMIT}
-                          </span>{' '}
-                          inspirações do dia.
+                  <div id="rotina-leve-inspiracoes" className="h-full">
+                    <div className="h-full rounded-2xl bg-white border border-[#ffd8e6] p-4 md:p-5 shadow-[0_4px_14px_rgba(0,0,0,0.04)] flex flex-col space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
+                          Dia · Inspirações
                         </p>
+                        <h4 className="text-sm md:text-base font-semibold text-[#545454]">
+                          Uma frase, um cuidado e um mini ritual para hoje
+                        </h4>
+                        <p className="text-xs text-[#545454] leading-relaxed">
+                          Pequenas âncoras emocionais para lembrar que você não precisa
+                          dar conta de tudo ao mesmo tempo.
+                        </p>
+                      </div>
 
-                        {isInspirationOverLimit && (
-                          <p className="text-[11px] text-[#fd2597] font-medium">
-                            Você chegou ao limite de inspirações do dia. O que você já
-                            está fazendo hoje pela sua família já é muita coisa 💗
-                          </p>
-                        )}
+                      <button
+                        type="button"
+                        onClick={() => setOpenInspiration((prev) => !prev)}
+                        className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
+                      >
+                        {openInspiration
+                          ? 'Recolher inspiração ↑'
+                          : 'Ver inspiração de hoje →'}
+                      </button>
 
-                        <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
-                          {inspirationLoading && (
-                            <p className="text-[11px]">
-                              Pensando em uma frase e um cuidado especial para hoje…
-                            </p>
-                          )}
-
-                          {!inspirationLoading && (
-                            <>
-                              <div>
-                                <p className="mb-1 text-[11px] font-medium text-[#545454]">
-                                  Frase de hoje
-                                </p>
-                                <p>
-                                  {(inspiration && inspiration.phrase) ||
-                                    'Você não precisa dar conta de tudo hoje.'}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="mb-1 text-[11px] font-medium text-[#545454]">
-                                  Pequeno cuidado
-                                </p>
-                                <p>
-                                  {(inspiration && inspiration.care) ||
-                                    '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="mb-1 text-[11px] font-medium text-[#545454]">
-                                  Mini ritual
-                                </p>
-                                <p>
-                                  {(inspiration && inspiration.ritual) ||
-                                    'Envie uma mensagem carinhosa para alguém que te apoia.'}
-                                </p>
-                              </div>
-                            </>
-                          )}
+                      {openInspiration && (
+                        <div className="text-xs space-y-4 flex-1">
+                          <div className="space-y-1">
+                            <p className="font-medium text-[#545454]">Foco de hoje</p>
+                            <select
+                              className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                              value={focusOfDay}
+                              onChange={(e) => setFocusOfDay(e.target.value)}
+                            >
+                              <option>Cansaço</option>
+                              <option>Culpa</option>
+                              <option>Organização</option>
+                              <option>Conexão com o filho</option>
+                            </select>
+                          </div>
 
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={handleSaveInspiracao}
-                            className="w-full mt-2"
+                            onClick={handleGenerateInspiration}
+                            disabled={inspirationLoading || isInspirationOverLimit}
+                            className="w-full md:w-auto"
                           >
-                            Salvar inspiração no planner
+                            {inspirationLoading
+                              ? 'Gerando inspiração…'
+                              : 'Gerar inspiração para hoje'}
                           </Button>
+
+                          <p className="text-[11px] text-[#545454]">
+                            Hoje você já usou{' '}
+                            <span className="font-semibold text-[#545454]">
+                              {usedInspirationsToday} de {DAILY_INSPIRATION_LIMIT}
+                            </span>{' '}
+                            inspirações do dia.
+                          </p>
+
+                          {isInspirationOverLimit && (
+                            <p className="text-[11px] text-[#fd2597] font-medium">
+                              Você chegou ao limite de inspirações do dia. O que você já
+                              está fazendo hoje pela sua família já é muita coisa 💗
+                            </p>
+                          )}
+
+                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
+                            {inspirationLoading && (
+                              <p className="text-[11px]">
+                                Pensando em uma frase e um cuidado especial para hoje…
+                              </p>
+                            )}
+
+                            {!inspirationLoading && (
+                              <>
+                                <div>
+                                  <p className="mb-1 text-[11px] font-medium text-[#545454]">
+                                    Frase de hoje
+                                  </p>
+                                  <p>
+                                    {(inspiration && inspiration.phrase) ||
+                                      'Você não precisa dar conta de tudo hoje.'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="mb-1 text-[11px] font-medium text-[#545454]">
+                                    Pequeno cuidado
+                                  </p>
+                                  <p>
+                                    {(inspiration && inspiration.care) ||
+                                      '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="mb-1 text-[11px] font-medium text-[#545454]">
+                                    Mini ritual
+                                  </p>
+                                  <p>
+                                    {(inspiration && inspiration.ritual) ||
+                                      'Envie uma mensagem carinhosa para alguém que te apoia.'}
+                                  </p>
+                                </div>
+                              </>
+                            )}
+
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={handleSaveInspiracao}
+                              className="w-full mt-2"
+                            >
+                              Salvar inspiração no planner
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
