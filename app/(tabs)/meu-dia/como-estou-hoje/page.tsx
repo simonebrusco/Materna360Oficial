@@ -509,7 +509,7 @@ export default function ComoEstouHojePage() {
       subtitle="Um espaço seguro para você nomear o que sente, sem julgamentos."
     >
       <ClientOnly>
-        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
+        <div className="pt-6 pb-12 space-y-10">
           {/* TEXTO DE ABERTURA */}
           <div className="space-y-2">
             <p className="text-sm md:text-base text-white">
