@@ -116,8 +116,9 @@ export default function MaternaPlusPage() {
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
           {/* HERO */}
           <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:p-7">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-3.5 max-w-xl">
+            <div className="space-y-6 md:space-y-7">
+              {/* Texto principal */}
+              <div className="max-w-3xl space-y-3.5">
                 <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   MATERNA+
                 </p>
@@ -139,26 +140,33 @@ export default function MaternaPlusPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 text-[13px] md:w-64">
-                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-3 py-2.5">
-                  <p className="font-semibold text-[#fd2597]">Profissionais</p>
-                  <p className="text-[#545454]">
+              {/* Cards de apoio – agora embaixo e centralizados */}
+              <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
+                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left">
+                  <p className="font-semibold text-[13px] text-[#fd2597]">
+                    Profissionais
+                  </p>
+                  <p className="text-[13px] text-[#545454] leading-snug">
                     Indicações selecionadas de especialistas em maternidade e
                     infância, com foco em atendimento online.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-3 py-2.5">
-                  <p className="font-semibold text-[#fd2597]">Comunidade</p>
-                  <p className="text-[#545454]">
+
+                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left">
+                  <p className="font-semibold text-[13px] text-[#fd2597]">
+                    Comunidade
+                  </p>
+                  <p className="text-[13px] text-[#545454] leading-snug">
                     Em breve, um espaço seguro para trocar com outras mães que
                     vivem desafios parecidos com os seus.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-3 py-2.5">
-                  <p className="font-semibold text-[#fd2597]">
+
+                <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left">
+                  <p className="font-semibold text-[13px] text-[#fd2597]">
                     Serviços Materna360
                   </p>
-                  <p className="text-[#545454]">
+                  <p className="text-[13px] text-[#545454] leading-snug">
                     Experiências como a MaternaBox e um concierge preparado para
                     te ajudar a encontrar o apoio certo.
                   </p>
