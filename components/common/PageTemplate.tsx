@@ -21,15 +21,7 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className="
         min-h-[100dvh]
-        bg-[#ffe1f1]
-        bg-[linear-gradient(
-          to_bottom,
-          #fd2597_0%,
-          #fd2597_18%,
-          #fdbed7_42%,
-          #ffe1f1_80%,
-          #ffffff_100%
-        )]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_30%,#fdbed7_55%,#ffe1f1_82%,#ffffff_100%)]
       "
     >
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-20">
