@@ -35,7 +35,6 @@ async function fetchWeeklyInsight(
   context: WeeklyInsightContext,
 ): Promise<WeeklyInsight> {
   try {
-    // Telemetria simples de requisição de IA
     track('ai.request', {
       feature: 'weekly_overview',
       origin: 'eu360',
@@ -149,7 +148,7 @@ export default function Eu360Client() {
     <main
       data-layout="page-template-v1"
       data-tab="eu360"
-      className="min-h-[100dvh] pb-24 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#b8236b_0,#fd2597_28%,#fdbed7_70%,#FFE8F2_100%)]"
+      className="min-h-[100dvh] pb-16 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#b8236b_0,#fd2597_28%,#fdbed7_70%,#FFE8F2_100%)]"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -169,7 +168,7 @@ export default function Eu360Client() {
           </p>
         </header>
 
-        <div className="space-y-6 md:space-y-7 pb-10">
+        <div className="space-y-6 md:space-y-7 pb-8">
           {/* 1 — WIZARD DO PERFIL */}
           <ProfileForm />
 
@@ -294,14 +293,14 @@ export default function Eu360Client() {
           {/* 3 — BANNER DE PLANOS */}
           <SectionWrapper>
             <Reveal>
-              <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#fd2597_0,#b8236b_40%,#fdbed7_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
+              <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#fd2597_0,#b8236b_45%,#fdbed7_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
                 <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                   <div className="space-y-2 max-w-xl">
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
                       Materna360+
                     </p>
-                    <h2 className="text-xl md:text-2xl font-semibold leading-snug">
+                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">
                       Leve o Materna360 para o próximo nível
                     </h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
@@ -313,17 +312,16 @@ export default function Eu360Client() {
 
                   <div className="flex flex-col items-start gap-3 md:items-end">
                     <Link href="/planos">
-                      <Button
+                      <button
                         type="button"
-                        variant="primary"
-                        className="px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2]"
+                        className="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2] transition-colors"
                       >
                         Conhecer os planos
-                      </Button>
+                      </button>
                     </Link>
                     <p className="text-[11px] text-white/85 md:text-right max-w-xs">
-                      Planos pensados para diferentes fases da maternidade — você
-                      escolhe o que faz mais sentido agora.
+                      Planos pensados para diferentes fases da maternidade —
+                      você escolhe o que faz mais sentido agora.
                     </p>
                   </div>
                 </div>
