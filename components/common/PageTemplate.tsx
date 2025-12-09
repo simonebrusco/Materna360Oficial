@@ -21,11 +21,11 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className="
         min-h-[100dvh]
+        bg-[#ffe1f1]
         bg-[linear-gradient(
           to_bottom,
-          #fd2597_0%,
-          #fdbed7_22%,
-          #ffe1f1_60%,
+          #fdbed7_0%,
+          #ffe1f1_55%,
           #ffffff_100%
         )]
       "
