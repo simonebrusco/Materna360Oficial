@@ -6,6 +6,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import AppIcon from '@/components/ui/AppIcon'
 
 export default function MaternaBoxPage() {
   return (
@@ -328,7 +329,7 @@ export default function MaternaBoxPage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg_WHITE text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
                   >
                     Escolher plano semestral
                   </Button>
@@ -363,7 +364,7 @@ export default function MaternaBoxPage() {
                   <Button
                     variant="primary"
                     size="sm"
-                    className="mt-3 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-[11px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                    className="mt-3 w_full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-[11px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
                   >
                     Escolher plano anual
                   </Button>
@@ -373,7 +374,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* VALORES ESPECIAIS PARA QUEM JÁ VIVE O MATERNA360 */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg_WHITE/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
             <div className="space-y-3 md:space-y-4">
               <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                 Valores especiais para quem já vive o Materna360
@@ -392,29 +393,67 @@ export default function MaternaBoxPage() {
             </div>
           </SoftCard>
 
-          {/* POR QUE A MATERNABOX É DIFERENTE? */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)] px-5 py-6 shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-7 md:py-7">
-            <div className="space-y-3 md:space-y-4">
-              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
-                Por que a MaternaBox é diferente?
-              </h3>
-              <p className="text-xs md:text-sm text-[#545454]">
-                Porque ela não é uma caixa.
-                Ela é um convite.
-              </p>
-              <p className="text-xs md:text-sm text-[#545454]">
-                Um convite para:
-              </p>
-              <ul className="space-y-1.5 text-[11px] md:text-xs text-[#545454]">
-                <li>• respirar</li>
-                <li>• desacelerar</li>
-                <li>• brincar com intenção</li>
-                <li>• criar vínculos profundos</li>
-                <li>• e trazer mais presença para a infância do seu filho — e para a sua jornada como mãe.</li>
-              </ul>
-              <p className="text-xs md:text-sm text-[#545454]">
-                A cada edição, um carinho pensado com cuidado, sensibilidade e propósito.
-              </p>
+          {/* POR QUE A MATERNABOX É DIFERENTE? · VERSÃO PREMIUM */}
+          <SoftCard className="relative overflow-hidden rounded-3xl border border-[#F5D7E5] bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)] px-5 py-6 shadow-[0_14px_32px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
+            {/* GLOW / DECORAÇÃO */}
+            <div className="pointer-events-none absolute inset-0 opacity-70">
+              <div className="absolute -top-10 -left-6 h-32 w-32 rounded-full bg-[#fdbed7] blur-3xl" />
+              <div className="absolute -bottom-14 right-0 h-32 w-32 rounded-full bg-[#ffe1f1] blur-3xl" />
+            </div>
+            <div className="absolute inset-y-6 left-5 w-1 rounded-full bg-[#fd2597]/80" />
+
+            <div className="relative z-10 grid gap-5 md:grid-cols-[1.4fr,1fr] md:items-start">
+              <div className="md:pl-4 space-y-3 md:space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]">
+                  <AppIcon name="sparkles" size={12} decorative className="text-[#fd2597]" />
+                  <span>Essência MaternaBox</span>
+                </div>
+
+                <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                  Por que a MaternaBox é diferente?
+                </h3>
+
+                <p className="text-xs md:text-sm text-[#545454]">
+                  Porque ela não é só uma caixa chegando na sua porta.
+                  Ela é um convite gentil para você viver a maternidade com mais presença e menos cobrança.
+                </p>
+
+                <p className="text-xs md:text-sm text-[#545454]">
+                  Um convite para transformar pequenos momentos em memórias:
+                </p>
+
+                <div className="space-y-1.5">
+                  {[
+                    'respirar antes de apertar o piloto automático,',
+                    'desacelerar, nem que seja por 10 minutos,',
+                    'brincar com intenção — do jeito que dá hoje,',
+                    'criar vínculos profundos com gestos simples,',
+                    'trazer mais presença para a infância do seu filho e para a sua jornada como mãe.',
+                  ].map(item => (
+                    <div key={item} className="flex items-start gap-2 text-[11px] md:text-xs text-[#545454]">
+                      <span className="mt-[3px] flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] font-semibold text-[#fd2597]">
+                        •
+                      </span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-2xl bg-white/80 p-4 shadow-[0_10px_26px_rgba(0,0,0,0.10)] border border-[#F5D7E5]">
+                <p className="text-[11px] font-semibold text-[#545454]">
+                  A cada edição, você recebe:
+                </p>
+                <ul className="space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                  <li>• um brinquedo com intenção, não só mais um item em casa;</li>
+                  <li>• um roteiro simples para aproveitar o momento sem esforço;</li>
+                  <li>• um carinho pensado também para você, não só para o seu filho;</li>
+                  <li>• e a lembrança de que presença possível vale mais do que perfeição.</li>
+                </ul>
+                <p className="pt-1 text-[11px] text-[#6A6A6A]">
+                  MaternaBox é sobre cuidado real: com a infância do seu filho e com o seu coração de mãe.
+                </p>
+              </div>
             </div>
           </SoftCard>
 
