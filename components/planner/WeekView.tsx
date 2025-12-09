@@ -183,7 +183,7 @@ function CountPill({
         className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
           hasItems
             ? `${colorClass} text-white`
-            : 'bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]`
+            : 'bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]'
         } ${textColorClass ?? ''}`}
       >
         {count}
