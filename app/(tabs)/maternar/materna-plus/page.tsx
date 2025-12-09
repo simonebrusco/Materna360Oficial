@@ -115,13 +115,13 @@ export default function MaternaPlusPage() {
       <ClientOnly>
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
           {/* HERO */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-5 shadow-[0_16px_38px_rgba(0,0,0,0.18)] md:p-7">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-4 max-w-xl">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:p-7">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-3.5 max-w-xl">
+                <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   MATERNA+
                 </p>
-                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
                   O Materna+ conecta você a profissionais, serviços e
                   experiências que complementam o app — sempre olhando para a
                   sua rotina real.
@@ -174,7 +174,7 @@ export default function MaternaPlusPage() {
                 <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   PROFISSIONAIS PARCEIROS
                 </p>
-                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
                   Encontros profissionais indicados pelo Materna360 — com
                   agendamento direto pelo WhatsApp.
                 </h2>
@@ -195,7 +195,7 @@ export default function MaternaPlusPage() {
               <div className="grid gap-5 md:grid-cols-[0.9fr,1.4fr]">
                 {/* FILTROS */}
                 <div className="space-y-4">
-                  <p className="text-[13px] font-semibold text-[#2F3A56]">
+                  <p className="text-[13px] font-semibold text-[#545454]">
                     Escolha a área em que você precisa de apoio
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -295,7 +295,7 @@ export default function MaternaPlusPage() {
                 <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                   COMUNIDADE MATERNA+ · EM BREVE
                 </p>
-                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
                   Um lugar seguro para compartilhar o que a teoria não conta.
                 </h2>
                 <p className="text-[14px] md:text-[15px] text-[#545454] leading-relaxed">
@@ -341,7 +341,7 @@ export default function MaternaPlusPage() {
               <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                 SERVIÇOS MATERNA360
               </p>
-              <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+              <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
                 Experiências que vão além do app — mas continuam cuidando da sua
                 rotina.
               </h2>
