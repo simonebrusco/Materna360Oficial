@@ -31,8 +31,8 @@ export default function MaternarClient() {
       className="
         min-h-[100dvh]
         pb-32
-        bg-[#FFE8F2]
-        bg-[linear-gradient(to_bottom,#fd2597_0,#FFD8E6_45%,#FFE8F2_100%)]
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_26%,#fdbed7_56%,#ffe1f1_90%,#ffffff_100%)]
       "
     >
       <ClientOnly>
