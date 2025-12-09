@@ -79,6 +79,10 @@ export default function WeeklyPlannerShell() {
     'top3' | 'selfcare' | 'family' | null
   >(null)
 
+  // EDIÇÃO DE LEMBRETES RÁPIDOS
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [editingTaskValue, setEditingTaskValue] = useState('')
+
   // ===========================
   // HYDRATION
   // ===========================
@@ -179,6 +183,44 @@ export default function WeeklyPlannerShell() {
         task.id === id ? { ...task, done: !task.done } : task,
       ),
     }))
+  }
+
+  const deleteTask = (id: string) => {
+    setPlannerData(prev => ({
+      ...prev,
+      tasks: prev.tasks.filter(task => task.id !== id),
+    }))
+    if (editingTaskId === id) {
+      setEditingTaskId(null)
+      setEditingTaskValue('')
+    }
+  }
+
+  const startEditingTask = (task: TaskItem) => {
+    setEditingTaskId(task.id)
+    setEditingTaskValue(task.title)
+  }
+
+  const saveEditingTask = () => {
+    if (!editingTaskId) return
+    setPlannerData(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(task =>
+        task.id === editingTaskId
+          ? {
+              ...task,
+              title: editingTaskValue.trim() || task.title,
+            }
+          : task,
+      ),
+    }))
+    setEditingTaskId(null)
+    setEditingTaskValue('')
+  }
+
+  const cancelEditingTask = () => {
+    setEditingTaskId(null)
+    setEditingTaskValue('')
   }
 
   // ===========================
@@ -321,24 +363,42 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map(
-                  (day, i) =>
-                    day ? (
-                      <button
-                        key={i}
-                        onClick={() => openModalForDate(day)}
-                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                          getBrazilDateKey(day) === selectedDateKey
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
-                            : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                        }`}
-                      >
-                        {day.getDate()}
-                      </button>
-                    ) : (
-                      <div key={i} className="h-8 md:h-9" />
-                    ),
-                )}
+                {generateMonthMatrix(selectedDate).map((day, i) => {
+                  if (!day) {
+                    return <div key={i} className="h-8 md:h-9" />
+                  }
+
+                  const dayKey = getBrazilDateKey(day)
+                  const dayAppointments =
+                    load(`planner/appointments/${dayKey}`, []) ?? []
+                  const dayTasks =
+                    load(`planner/tasks/${dayKey}`, []) ?? []
+                  const hasItems =
+                    (Array.isArray(dayAppointments) &&
+                      dayAppointments.length > 0) ||
+                    (Array.isArray(dayTasks) && dayTasks.length > 0)
+
+                  const isSelected = dayKey === selectedDateKey
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => openModalForDate(day)}
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
+                        isSelected
+                          ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                          : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                      }`}
+                    >
+                      <div className="relative flex flex-col items-center justify-center h-full">
+                        <span>{day.getDate()}</span>
+                        {hasItems && (
+                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </SoftCard>
@@ -367,29 +427,93 @@ export default function WeeklyPlannerShell() {
                         </p>
                       )}
 
-                      {plannerData.tasks.map(task => (
-                        <button
-                          key={task.id}
-                          type="button"
-                          onClick={() => toggleTask(task.id)}
-                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
-                            task.done
-                              ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
-                              : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
-                          }`}
-                        >
-                          <span
-                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                      {plannerData.tasks.map(task => {
+                        const isEditing = editingTaskId === task.id
+                        return (
+                          <div
+                            key={task.id}
+                            className={`w-full flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all ${
                               task.done
-                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                                ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)]'
+                                : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
                             }`}
                           >
-                            {task.done ? '✓' : ''}
-                          </span>
-                          <span>{task.title}</span>
-                        </button>
-                      ))}
+                            <button
+                              type="button"
+                              onClick={() => toggleTask(task.id)}
+                              className="flex flex-1 items-center gap-3 text-left"
+                            >
+                              <span
+                                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                                  task.done
+                                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                                }`}
+                              >
+                                {task.done ? '✓' : ''}
+                              </span>
+                              {isEditing ? (
+                                <input
+                                  className="w-full rounded-md border px-2 py-1 text-xs"
+                                  value={editingTaskValue}
+                                  onChange={e =>
+                                    setEditingTaskValue(e.target.value)
+                                  }
+                                  onClick={e => e.stopPropagation()}
+                                />
+                              ) : (
+                                <span
+                                  className={
+                                    task.done
+                                      ? 'line-through text-[var(--color-text-muted)]'
+                                      : ''
+                                  }
+                                >
+                                  {task.title}
+                                </span>
+                              )}
+                            </button>
+
+                            <div className="flex items-center gap-1">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={saveEditingTask}
+                                    className="text-[11px] px-2 py-1 rounded-lg bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+                                  >
+                                    OK
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={cancelEditingTask}
+                                    className="text-[11px] px-2 py-1 rounded-lg bg-gray-100 text-[var(--color-text-muted)] hover:bg-gray-200"
+                                  >
+                                    Canc.
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditingTask(task)}
+                                    className="text-[11px] px-2 py-1 rounded-lg bg-white text-[var(--color-text-muted)] border border-[#F1E4EC] hover:border-[var(--color-brand)]/60"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteTask(task.id)}
+                                    className="text-[11px] px-2 py-1 rounded-lg bg-white text-[#C2285F] border border-[#F1E4EC] hover:border-[#ff005e]/70"
+                                  >
+                                    Excluir
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
 
                     {/* Campo rápido para novo lembrete */}
@@ -424,12 +548,12 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => setQuickAction('top3')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="target"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duration-150"
+                              className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-brand-deep)] group-hover:scale-110 transition-transform duração-150"
                             />
                             <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[var(--color-text-main)] group-hover:text-[var(--color-brand-deep)]">
                               Prioridades do Dia
@@ -443,7 +567,7 @@ export default function WeeklyPlannerShell() {
                           onClick={() => {
                             openModalForDate(selectedDate)
                           }}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -460,7 +584,7 @@ export default function WeeklyPlannerShell() {
                         <button
                           type="button"
                           onClick={() => setQuickAction('selfcare')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duração-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
@@ -808,15 +932,38 @@ function generateWeekData(base: Date) {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
+
+    const dateKey = getBrazilDateKey(d)
+    const appointments: Appointment[] =
+      load(`planner/appointments/${dateKey}`, []) ?? []
+    const tasks: TaskItem[] =
+      load(`planner/tasks/${dateKey}`, []) ?? []
+
+    const agendaCount = Array.isArray(appointments)
+      ? appointments.length
+      : 0
+
+    const top3Count = Array.isArray(tasks)
+      ? tasks.filter(t => t.origin === 'top3').length
+      : 0
+
+    const careCount = Array.isArray(tasks)
+      ? tasks.filter(t => t.origin === 'selfcare').length
+      : 0
+
+    const familyCount = Array.isArray(tasks)
+      ? tasks.filter(t => t.origin === 'family').length
+      : 0
+
     return {
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
         weekday: 'long',
       }),
-      agendaCount: 0,
-      top3Count: 0,
-      careCount: 0,
-      familyCount: 0,
+      agendaCount,
+      top3Count,
+      careCount,
+      familyCount,
     }
   })
 }
