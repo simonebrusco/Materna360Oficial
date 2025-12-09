@@ -22,7 +22,13 @@ export function PageTemplate({
       className="
         min-h-[100dvh]
         bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#fdbed7_0%,#ffe1f1_55%,#ffffff_100%)]
+        bg-[linear-gradient(
+          to_bottom,
+          #fdbed7_0%,
+          #fdbed7_24%,
+          #ffe1f1_72%,
+          #ffffff_100%
+        )]
       "
     >
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-20">
