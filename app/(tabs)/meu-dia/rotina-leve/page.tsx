@@ -41,7 +41,7 @@ type Inspiration = {
 // ---------- MOCKS (fallback padrão) ----------
 
 function mockGenerateIdeas(): Promise<QuickIdea[]> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
         {
@@ -62,7 +62,7 @@ function mockGenerateIdeas(): Promise<QuickIdea[]> {
 }
 
 function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
         {
@@ -99,7 +99,7 @@ function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
 }
 
 function mockGenerateInspiration(): Promise<Inspiration> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         phrase: 'Você não precisa dar conta de tudo hoje.',
@@ -321,10 +321,10 @@ export default function RotinaLevePage() {
   // Dados agregados do Planner para este mini-hub
   const plannerItemsFromRotinaLeve = getByOrigin('rotina-leve')
   const savedRecipesCount = plannerItemsFromRotinaLeve.filter(
-    item => item.type === 'recipe',
+    (item) => item.type === 'recipe',
   ).length
   const savedInsights = plannerItemsFromRotinaLeve.filter(
-    item => item.type === 'insight',
+    (item) => item.type === 'insight',
   )
   const savedInspirationCount = savedInsights.length
   const lastInspiration = savedInsights[savedInsights.length - 1]
@@ -391,7 +391,7 @@ export default function RotinaLevePage() {
     if (!aiSuggestions || aiSuggestions.length === 0) return
 
     const quickIdeas: QuickIdea[] = aiSuggestions
-      .filter(s => s.category === 'ideia-rapida')
+      .filter((s) => s.category === 'ideia-rapida')
       .map((s, index) => ({
         id: s.id || `ai-idea-${index}`,
         text: s.description || s.title,
@@ -443,7 +443,7 @@ export default function RotinaLevePage() {
     try {
       const ideasToSave =
         ideas && ideas.length > 0
-          ? ideas.map(idea => idea.text)
+          ? ideas.map((idea) => idea.text)
           : [
               'Mini brincadeira sensorial com objetos da sala.',
               'Conexão de 5 minutos: conte algo bom do seu dia para o seu filho.',
@@ -686,7 +686,7 @@ export default function RotinaLevePage() {
       }
 
       const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
-      setUsedRecipesToday(prev => {
+      setUsedRecipesToday((prev) => {
         const next = prev + 1
         save(storageKey, next)
         return next
@@ -758,7 +758,7 @@ export default function RotinaLevePage() {
       }
 
       const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
-      setUsedIdeasToday(prev => {
+      setUsedIdeasToday((prev) => {
         const next = prev + 1
         save(storageKey, next)
         return next
@@ -808,7 +808,7 @@ export default function RotinaLevePage() {
       }
 
       const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
-      setUsedInspirationsToday(prev => {
+      setUsedInspirationsToday((prev) => {
         const next = prev + 1
         save(storageKey, next)
         return next
@@ -835,7 +835,7 @@ export default function RotinaLevePage() {
 
   // ---------- Cardápio leve da semana (estados locais) ----------
   const savedRecipes = plannerItemsFromRotinaLeve.filter(
-    item => item.type === 'recipe',
+    (item) => item.type === 'recipe',
   )
 
   const defaultMeals = ['Café da manhã', 'Almoço', 'Lanche', 'Jantar']
@@ -882,7 +882,7 @@ export default function RotinaLevePage() {
   const removeMeal = (meal: string) => {
     if (!confirm('Remover esta refeição?')) return
 
-    const nextMeals = meals.filter(m => m !== meal)
+    const nextMeals = meals.filter((m) => m !== meal)
 
     const nextWeek: Record<string, Record<string, string>> = {}
     for (const day of weekdays) {
@@ -895,7 +895,11 @@ export default function RotinaLevePage() {
     saveAll(nextWeek, nextMeals)
   }
 
-  const assignRecipe = (day: string, meal: string, recipe: { title?: string }) => {
+  const assignRecipe = (
+    day: string,
+    meal: string,
+    recipe: { title?: string },
+  ) => {
     const nextWeek: Record<string, Record<string, string>> = {
       ...weekPlan,
       [day]: {
@@ -932,32 +936,28 @@ export default function RotinaLevePage() {
           </div>
 
           <div className="space-y-6">
-            {/* BLOCO 0 — BOAS ÂNCORAS DO DIA (header + 2 cards) */}
-            <section
+            {/* BLOCO 0 — BOAS ÂNCORAS DO DIA (Ideias + Inspirações) */}
+            <SoftCard
               id="rotina-leve-ancoras"
-              className="space-y-4"
-              aria-labelledby="boas-ancoras-heading"
+              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
             >
-              <header className="space-y-1">
-                <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                  Dia · Boas âncoras
-                </p>
-                <h3
-                  id="boas-ancoras-heading"
-                  className="text-base md:text-lg font-semibold text-[#545454]"
-                >
-                  Pequenas âncoras para o seu dia real
-                </h3>
-                <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
-                  Antes de organizar as tarefas e receitas, você pode escolher uma pequena
-                  ação ou inspiração para te acompanhar hoje. É o cuidado emocional que
-                  vem antes da lista de coisas a fazer.
-                </p>
-              </header>
+              <div className="space-y-4">
+                <header className="space-y-1 pb-1">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
+                    Dia · Boas âncoras
+                  </p>
+                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                    Escolha uma âncora para te acompanhar hoje
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
+                    Antes de organizar tarefas e receitas, comece por uma pequena ação ou
+                    inspiração. É o seu ponto de calma antes da lista de coisas a fazer —
+                    e ele pode vir de uma ideia rápida ou de uma inspiração do dia.
+                  </p>
+                </header>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* CARD — IDEIAS RÁPIDAS */}
-                <SoftCard className="rounded-3xl h-full p-5 md:p-6 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {/* COLUNA — IDEIAS RÁPIDAS */}
                   <div
                     id="rotina-leve-ideias"
                     className="space-y-4 flex flex-col h-full"
@@ -977,7 +977,7 @@ export default function RotinaLevePage() {
 
                     <button
                       type="button"
-                      onClick={() => setOpenIdeas(prev => !prev)}
+                      onClick={() => setOpenIdeas((prev) => !prev)}
                       className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
                     >
                       {openIdeas ? 'Recolher filtros ↑' : 'Escolher filtros →'}
@@ -996,20 +996,20 @@ export default function RotinaLevePage() {
                               { id: '10', label: '10 min' },
                               { id: '20', label: '20 min' },
                               { id: '30+', label: '30+' },
-                            ].map(option => (
+                            ].map((option) => (
                               <button
                                 key={option.id}
                                 type="button"
                                 onClick={() =>
-                                  setTempoDisponivel(current =>
+                                  setTempoDisponivel((current) =>
                                     current === option.id ? null : option.id,
                                   )
                                 }
                                 className={clsx(
                                   'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
                                   tempoDisponivel === option.id
-                                    ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
-                                    : 'border-[#F5D7E5] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#fdbed7]/15',
+                                    ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
+                                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
                                 )}
                               >
                                 {option.label}
@@ -1028,20 +1028,20 @@ export default function RotinaLevePage() {
                               { id: 'so-eu', label: 'Só eu' },
                               { id: 'eu-e-meu-filho', label: 'Eu e meu filho' },
                               { id: 'familia-toda', label: 'Família toda' },
-                            ].map(option => (
+                            ].map((option) => (
                               <button
                                 key={option.id}
                                 type="button"
                                 onClick={() =>
-                                  setComQuem(current =>
+                                  setComQuem((current) =>
                                     current === option.id ? null : option.id,
                                   )
                                 }
                                 className={clsx(
                                   'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
                                   comQuem === option.id
-                                    ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
-                                    : 'border-[#F5D7E5] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#fdbed7]/15',
+                                    ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
+                                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
                                 )}
                               >
                                 {option.label}
@@ -1061,20 +1061,20 @@ export default function RotinaLevePage() {
                               { id: 'organizacao', label: 'Organização da casa' },
                               { id: 'autocuidado', label: 'Autocuidado' },
                               { id: 'receita-rapida', label: 'Receita rápida' },
-                            ].map(option => (
+                            ].map((option) => (
                               <button
                                 key={option.id}
                                 type="button"
                                 onClick={() =>
-                                  setTipoIdeia(current =>
+                                  setTipoIdeia((current) =>
                                     current === option.id ? null : option.id,
                                   )
                                 }
                                 className={clsx(
                                   'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
                                   tipoIdeia === option.id
-                                    ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
-                                    : 'border-[#F5D7E5] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#fdbed7]/15',
+                                    ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
+                                    : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
                                 )}
                               >
                                 {option.label}
@@ -1109,7 +1109,7 @@ export default function RotinaLevePage() {
                         )}
 
                         {/* LISTA IDEIAS */}
-                        <div className="rounded-2xl bg-[#fdbed7]/10 p-3">
+                        <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                           <p className="text-xs font-medium text-[#545454] mb-2">
                             Sugestões para agora
                           </p>
@@ -1122,7 +1122,7 @@ export default function RotinaLevePage() {
 
                           {!ideasLoading && ideas && (
                             <ul className="space-y-2 text-xs text-[#545454]">
-                              {ideas.map(idea => (
+                              {ideas.map((idea) => (
                                 <li key={idea.id}>• {idea.text}</li>
                               ))}
                             </ul>
@@ -1154,10 +1154,8 @@ export default function RotinaLevePage() {
                       </div>
                     )}
                   </div>
-                </SoftCard>
 
-                {/* CARD — INSPIRAÇÕES DO DIA */}
-                <SoftCard className="rounded-3xl h-full p-5 md:p-6 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+                  {/* COLUNA — INSPIRAÇÕES DO DIA */}
                   <div
                     id="rotina-leve-inspiracoes"
                     className="space-y-4 flex flex-col h-full"
@@ -1177,7 +1175,7 @@ export default function RotinaLevePage() {
 
                     <button
                       type="button"
-                      onClick={() => setOpenInspiration(prev => !prev)}
+                      onClick={() => setOpenInspiration((prev) => !prev)}
                       className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
                     >
                       {openInspiration
@@ -1190,9 +1188,9 @@ export default function RotinaLevePage() {
                         <div className="space-y-1">
                           <p className="font-medium text-[#545454]">Foco de hoje</p>
                           <select
-                            className="w-full rounded-2xl border border-[#F5D7E5] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                            className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                             value={focusOfDay}
-                            onChange={e => setFocusOfDay(e.target.value)}
+                            onChange={(e) => setFocusOfDay(e.target.value)}
                           >
                             <option>Cansaço</option>
                             <option>Culpa</option>
@@ -1228,7 +1226,7 @@ export default function RotinaLevePage() {
                           </p>
                         )}
 
-                        <div className="rounded-2xl bg-[#fdbed7]/10 p-3 text-xs text-[#545454] space-y-3">
+                        <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
                           {inspirationLoading && (
                             <p className="text-[11px]">
                               Pensando em uma frase e um cuidado especial para hoje…
@@ -1279,14 +1277,14 @@ export default function RotinaLevePage() {
                       </div>
                     )}
                   </div>
-                </SoftCard>
+                </div>
               </div>
-            </section>
+            </SoftCard>
 
             {/* BLOCO 1 — RECEITAS INTELIGENTES */}
             <SoftCard
               id="rotina-leve-receitas"
-              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
             >
               <div className="space-y-6 flex flex-col">
                 <header className="space-y-1 pb-1">
@@ -1310,8 +1308,8 @@ export default function RotinaLevePage() {
                       type="text"
                       placeholder="Ex.: banana, aveia, frango..."
                       value={recipeIngredient}
-                      onChange={e => setRecipeIngredient(e.target.value)}
-                      className="w-full rounded-2xl border border-[#F5D7E5] px-3 py-2 text-xs text-[#545454] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                      onChange={(e) => setRecipeIngredient(e.target.value)}
+                      className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                     />
                   </div>
 
@@ -1320,12 +1318,10 @@ export default function RotinaLevePage() {
                       <p className="font-medium text-[#545454]">Tipo de refeição</p>
                       <select
                         value={recipeMealType ?? ''}
-                        onChange={e =>
-                          setRecipeMealType(
-                            e.target.value === '' ? null : e.target.value,
-                          )
+                        onChange={(e) =>
+                          setRecipeMealType(e.target.value === '' ? null : e.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#F5D7E5] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                       >
                         <option value="">Selecione</option>
                         <option value="lanche">Lanche</option>
@@ -1339,12 +1335,10 @@ export default function RotinaLevePage() {
                       <p className="font-medium text-[#545454]">Tempo de preparo</p>
                       <select
                         value={recipeTime ?? ''}
-                        onChange={e =>
-                          setRecipeTime(
-                            e.target.value === '' ? null : e.target.value,
-                          )
+                        onChange={(e) =>
+                          setRecipeTime(e.target.value === '' ? null : e.target.value)
                         }
-                        className="w-full rounded-2xl border border-[#F5D7E5] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                       >
                         <option value="">Selecione</option>
                         <option value="10">10 min</option>
@@ -1355,7 +1349,7 @@ export default function RotinaLevePage() {
                     </div>
                   </div>
 
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[#fdbed7]/20 px-3 py-1 text-[11px] text-[#fd2597]">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#fd2597]">
                     <span>Idade principal: {idadeLabel}</span>
                   </div>
                 </div>
@@ -1404,7 +1398,7 @@ export default function RotinaLevePage() {
                 {/* LISTA DE RECEITAS */}
                 <div className="space-y-3">
                   {recipesLoading && (
-                    <div className="rounded-2xl bg-[#fdbed7]/10 p-3">
+                    <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                       <p className="text-[11px] text-[#545454]">
                         Estou pensando nas melhores opções que cabem no seu dia…
                       </p>
@@ -1417,13 +1411,13 @@ export default function RotinaLevePage() {
                         Sugestões de hoje (até 3)
                       </p>
                       <div className="space-y-3">
-                        {recipes!.slice(0, 3).map(recipe => (
+                        {recipes!.slice(0, 3).map((recipe) => (
                           <div
                             key={recipe.id}
-                            className="rounded-2xl bg-white border border-[#F5D7E5] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
+                            className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
                           >
                             <div
-                              className="p-4 cursor-pointer hover:bg-[#fdbed7]/5 transition-colors"
+                              className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
                               onClick={() =>
                                 setExpandedRecipeId(
                                   expandedRecipeId === recipe.id ? null : recipe.id,
@@ -1444,7 +1438,7 @@ export default function RotinaLevePage() {
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={e => {
+                                  onClick={(e) => {
                                     e.stopPropagation()
                                     setExpandedRecipeId(
                                       expandedRecipeId === recipe.id ? null : recipe.id,
@@ -1460,7 +1454,7 @@ export default function RotinaLevePage() {
                             </div>
 
                             {expandedRecipeId === recipe.id && (
-                              <div className="border-t border-[#F5D7E5] bg-[#fdbed7]/5 p-4 space-y-3">
+                              <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
                                 <div>
                                   <h5 className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2">
                                     Modo de preparo
@@ -1497,7 +1491,7 @@ export default function RotinaLevePage() {
                   {!recipesLoading &&
                     (!recipes || recipes.length === 0) &&
                     !isBabyUnderSixMonths && (
-                      <div className="rounded-2xl bg-[#fdbed7]/10 p-3">
+                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
                         <p className="text-[11px] text-[#545454]">
                           Clique em &quot;Gerar receitas para hoje&quot; para receber
                           sugestões adaptadas à idade do seu filho.
@@ -1511,7 +1505,7 @@ export default function RotinaLevePage() {
             {/* BLOCO EXTRA — CARDÁPIO LEVE DA SEMANA */}
             <SoftCard
               id="rotina-leve-cardapio"
-              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
             >
               <div className="space-y-6 flex flex-col">
                 {/* HEADER */}
@@ -1543,12 +1537,12 @@ export default function RotinaLevePage() {
 
                     {savedRecipes.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto py-2">
-                        {savedRecipes.map(rec => (
+                        {savedRecipes.map((rec) => (
                           <div
                             key={rec.id}
-                            className="min-w-[180px] rounded-xl border border-[#F5D7E5] bg-white p-3 shadow-sm cursor-pointer hover:bg-[#fdbed7]/10 transition"
+                            className="min-w-[180px] rounded-xl border border-[#ffd8e6] bg-white p-3 shadow-sm cursor-pointer hover:bg-[#ffd8e6]/10 transition"
                             draggable
-                            onDragStart={e => {
+                            onDragStart={(e) => {
                               e.dataTransfer.setData('recipe', JSON.stringify(rec))
                             }}
                           >
@@ -1579,9 +1573,9 @@ export default function RotinaLevePage() {
                     <table className="w-full border-collapse text-xs md:text-sm">
                       <thead>
                         <tr>
-                          <th className="p-2 text-left text-[#545454]/80">Dia</th>
-                          {meals.map(meal => (
-                            <th key={meal} className="p-2 text-left text-[#545454]/80">
+                          <th className="p-2 text-left text-[#545454]/70">Dia</th>
+                          {meals.map((meal) => (
+                            <th key={meal} className="p-2 text-left text-[#545454]/70">
                               <div className="flex items-center gap-2">
                                 {meal}
                                 <button
@@ -1597,16 +1591,16 @@ export default function RotinaLevePage() {
                       </thead>
 
                       <tbody>
-                        {weekdays.map(day => (
-                          <tr key={day} className="border-t border-[#F5D7E5]">
+                        {weekdays.map((day) => (
+                          <tr key={day} className="border-t border-[#ffd8e6]">
                             <td className="p-2 font-medium text-[#545454]">{day}</td>
 
-                            {meals.map(meal => (
+                            {meals.map((meal) => (
                               <td key={meal} className="p-2 align-top">
                                 <div
-                                  className="min-h-[60px] rounded-xl border border-[#F5D7E5] bg-[#ffe1f1] p-2 text-[11px] text-[#545454] flex items-center justify-center text-center cursor-pointer hover:bg-[#fdbed7]/20 transition"
-                                  onDragOver={e => e.preventDefault()}
-                                  onDrop={e => {
+                                  className="min-h-[60px] rounded-xl border border-[#ffd8e6] bg-[#fff7fb] p-2 text-[11px] text-[#545454] flex items-center justify-center text-center cursor-pointer hover:bg-[#ffd8e6]/20 transition"
+                                  onDragOver={(e) => e.preventDefault()}
+                                  onDrop={(e) => {
                                     const data = e.dataTransfer.getData('recipe')
                                     if (!data) return
                                     const rec = JSON.parse(data)
@@ -1634,7 +1628,7 @@ export default function RotinaLevePage() {
           {/* BLOCO 3 — RESUMO NO PLANNER */}
           <SoftCard
             id="rotina-leve-planner"
-            className="rounded-3xl p-5 md:p-6 bg-white/90 border border-[#F5D7E5] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+            className="rounded-3xl p-5 md:p-6 bg-white/90 border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
@@ -1664,7 +1658,7 @@ export default function RotinaLevePage() {
               </div>
 
               {lastInspiration && (
-                <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#fdbed7]/20 border border-[#F5D7E5]/60 px-4 py-3 space-y-1">
+                <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
                   <p className="text-[11px] font-semibold text-[#545454] uppercase tracking-wide">
                     Última inspiração salva
                   </p>
