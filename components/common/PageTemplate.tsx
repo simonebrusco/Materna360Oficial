@@ -46,7 +46,7 @@ export function PageTemplate({
               mt-3
               text-3xl md:text-4xl
               font-semibold leading-tight
-              text-[#2f3a56]
+              text-[#545454]
             "
           >
             {title}
