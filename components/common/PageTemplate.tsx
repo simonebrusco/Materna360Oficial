@@ -24,15 +24,7 @@ export function PageTemplate({
         bg-[radial-gradient(circle_at_top,_#fdbed7_0%,_#ffe1f1_60%,_#ffffff_100%)]
       "
     >
-      <div
-        className="
-          mx-auto
-          w-full
-          max-w-4xl
-          px-4 md:px-6
-          pb-20
-        "
-      >
+      <div className="mx-auto max-w-4xl px-4 md:px-6 pb-20">
         {/* HERO padrão das páginas internas */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
           <span
