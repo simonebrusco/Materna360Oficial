@@ -64,13 +64,13 @@ export default function MeuDiaClient() {
         pb-24
         flex
         flex-col
-        bg-[#fd2597]
+        bg-[#ffe1f1]
         bg-[linear-gradient(
           to_bottom,
           #fd2597_0%,
           #fd2597_35%,
-          #fdbed7_70%,
-          #ffe1f1_94%,
+          #fdbed7_75%,
+          #ffe1f1_92%,
           #ffffff_100%
         )]
       "
