@@ -11,10 +11,10 @@ import AppIcon from '@/components/ui/AppIcon'
 export default function MaternaBoxPage() {
   return (
     <PageTemplate
-      label="MATERNAR"
-      title="MaternaBox 
-      subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
-    >
+  label="MATERNAR"
+  title="MaternaBox"
+  subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
+>
       <ClientOnly>
         <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
           {/* HERO · TEXTO + IMAGEM */}
