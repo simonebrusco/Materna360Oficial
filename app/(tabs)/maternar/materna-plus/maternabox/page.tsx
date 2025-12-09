@@ -220,120 +220,153 @@ export default function MaternaBoxPage() {
             </div>
           </SoftCard>
 
-          {/* PLANOS DISPONÍVEIS */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:p-6">
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <h3 className="text-base md:text-lg font-semibold text-[#545454]">
-                  Planos disponíveis
-                </h3>
-                <p className="text-xs md:text-sm text-[#545454]">
-                  Escolha o ritmo que faz sentido para a sua família.
-                  Cada plano representa um movimento de cuidado — no seu tempo, do seu jeito.
-                </p>
+          {/* PLANOS DISPONÍVEIS – VERSÃO LANDING PAGE */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] md:p-6">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd2597]/80">
+                    PLANOS DISPONÍVEIS
+                  </p>
+                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                    Escolha o ritmo de carinho que faz sentido para a sua família.
+                  </h3>
+                  <p className="text-[11px] md:text-xs text-[#6A6A6A] max-w-xl">
+                    Todos os planos incluem 1 MaternaBox por mês com brinquedo educativo, guia de
+                    conexão e uma surpresa especial.
+                  </p>
+                </div>
+
+                <div className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[10px] font-medium text-[#545454]">
+                  Você pode pausar ou cancelar depois — sem culpa, sem burocracia.
+                </div>
               </div>
 
-              <div className="grid gap-3.5 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Comece Leve — Plano Mensal */}
-                <div className="flex flex-col justify-between rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-3.5">
+                <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
                   <div className="space-y-1.5">
-                    <p className="text-[11px] font-semibold text-[#fd2597] uppercase">
-                      Comece Leve — Plano Mensal
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Comece leve
                     </p>
-                    <p className="text-xs text-[#545454]">
-                      O primeiro passo para viver a experiência MaternaBox.
-                    </p>
-                    <p className="text-xs font-semibold text-[#545454]">
-                      Investimento mensal: R$ 99
+                    <p className="text-sm font-semibold text-[#545454]">Plano mensal</p>
+                    <p className="text-[22px] font-semibold text-[#545454]">
+                      R$ 99
+                      <span className="text-xs font-normal text-[#6A6A6A]"> /mês</span>
                     </p>
                     <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
                       <li>✔ 1 caixa por mês</li>
                       <li>✔ renovação automática</li>
                       <li>✔ pausa quando quiser</li>
-                      <li>✔ experiência completa da edição do mês</li>
                     </ul>
-                    <p className="mt-1 text-[11px] text-[#545454]">
-                      Ideal para quem deseja começar aos poucos, sentindo a leveza mês a mês.
+                    <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                      Ideal para experimentar a experiência MaternaBox no seu tempo.
                     </p>
                   </div>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                  >
+                    Escolher plano mensal
+                  </Button>
                 </div>
 
                 {/* Ritmo Constante — Plano Trimestral */}
-                <div className="flex flex-col justify-between rounded-2xl border border-[#F5D7E5] bg-white p-3.5">
+                <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
                   <div className="space-y-1.5">
-                    <p className="text-[11px] font-semibold text-[#fd2597] uppercase">
-                      Ritmo Constante — Plano Trimestral
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Ritmo constante
                     </p>
-                    <p className="text-xs text-[#545454]">
-                      Três meses de presença, criatividade e momentos que aproximam.
+                    <p className="text-sm font-semibold text-[#545454]">Plano trimestral</p>
+                    <p className="text-[22px] font-semibold text-[#545454]">
+                      R$ 279
+                      <span className="text-xs font-normal text-[#6A6A6A]"> /3 meses</span>
                     </p>
-                    <p className="text-xs font-semibold text-[#545454]">
-                      Investimento total: R$ 279
-                    </p>
-                    <p className="text-[11px] text-[#545454]">
-                      (equivalente a R$ 93 por mês)
-                    </p>
+                    <p className="text-[11px] text-[#6A6A6A]">(equivalente a R$ 93 por mês)</p>
                     <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
                       <li>✔ 1 caixa por mês durante 3 meses</li>
                       <li>✔ prioridade na seleção das edições</li>
                     </ul>
-                    <p className="mt-1 text-[11px] text-[#545454]">
-                      Para quem deseja criar um hábito de conexão contínua.
+                    <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                      Para criar um hábito de conexão contínua, sem compromisso longo.
                     </p>
                   </div>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                  >
+                    Escolher plano trimestral
+                  </Button>
                 </div>
 
                 {/* Presença na Rotina — Plano Semestral */}
-                <div className="flex flex-col justify-between rounded-2xl border border-[#F5D7E5] bg-white p-3.5">
+                <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
                   <div className="space-y-1.5">
-                    <p className="text-[11px] font-semibold text-[#fd2597] uppercase">
-                      Presença na Rotina — Plano Semestral
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Presença na rotina
                     </p>
-                    <p className="text-xs text-[#545454]">
-                      Seis meses para transformar pequenos momentos em memórias.
+                    <p className="text-sm font-semibold text-[#545454]">Plano semestral</p>
+                    <p className="text-[22px] font-semibold text-[#545454]">
+                      R$ 534
+                      <span className="text-xs font-normal text-[#6A6A6A]"> /6 meses</span>
                     </p>
-                    <p className="text-xs font-semibold text-[#545454]">
-                      Investimento total: R$ 534
-                    </p>
-                    <p className="text-[11px] text-[#545454]">
-                      (equivalente a R$ 89 por mês)
-                    </p>
+                    <p className="text-[11px] text-[#6A6A6A]">(equivalente a R$ 89 por mês)</p>
                     <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
                       <li>✔ 1 caixa por mês durante 6 meses</li>
                       <li>✔ prioridade no estoque</li>
                       <li>✔ mimo especial de boas-vindas</li>
                     </ul>
-                    <p className="mt-1 text-[11px] text-[#545454]">
-                      Para quem deseja estabilidade emocional e momentos consistentes de presença.
+                    <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                      Para quem quer garantir meia estação inteira de momentos especiais.
                     </p>
                   </div>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                  >
+                    Escolher plano semestral
+                  </Button>
                 </div>
 
-                {/* Experiência Completa — Plano Anual */}
-                <div className="flex flex-col justify-between rounded-2xl border border-[#fd2597] bg-white p-3.5 shadow-[0_8px_22px_rgba(0,0,0,0.10)]">
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-semibold text-[#fd2597] uppercase">
-                      Experiência Completa — Plano Anual
+                {/* Experiência Completa — Plano Anual (destaque) */}
+                <div className="flex flex-col rounded-2xl border border-[#fd2597] bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Experiência completa
                     </p>
-                    <p className="text-xs text-[#545454]">
-                      Um ano inteiro de carinho, criatividade e conexão.
-                    </p>
-                    <p className="text-xs font-semibold text-[#545454]">
-                      Investimento total: R$ 948
-                    </p>
-                    <p className="text-[11px] text-[#545454]">
-                      (equivalente a R$ 79 por mês)
-                    </p>
-                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
-                      <li>✔ 1 caixa por mês durante 12 meses</li>
-                      <li>✔ prioridade máxima nas edições</li>
-                      <li>✔ mimo exclusivo anual</li>
-                      <li>✔ edição especial comemorativa</li>
-                    </ul>
-                    <p className="mt-1 text-[11px] text-[#545454]">
-                      Para quem quer viver a experiência MaternaBox de forma profunda, leve e contínua.
-                    </p>
+                    <span className="rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[9px] font-semibold text-[#fd2597]">
+                      Mais escolhido
+                    </span>
                   </div>
+                  <p className="mt-1 text-sm font-semibold text-[#545454]">Plano anual</p>
+                  <p className="text-[22px] font-semibold text-[#545454]">
+                    R$ 948
+                    <span className="text-xs font-normal text-[#6A6A6A]"> /12 meses</span>
+                  </p>
+                  <p className="text-[11px] text-[#6A6A6A]">(equivalente a R$ 79 por mês)</p>
+                  <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
+                    <li>✔ 1 caixa por mês durante 12 meses</li>
+                    <li>✔ prioridade máxima nas edições</li>
+                    <li>✔ mimo exclusivo anual</li>
+                    <li>✔ edição especial comemorativa</li>
+                  </ul>
+                  <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                    Para viver a experiência MaternaBox inteira — com calma, constância e muito carinho.
+                  </p>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-[11px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                  >
+                    Escolher plano anual
+                  </Button>
                 </div>
               </div>
             </div>
