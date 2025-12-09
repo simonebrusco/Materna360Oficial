@@ -25,9 +25,9 @@ export function PageTemplate({
         bg-[linear-gradient(
           to_bottom,
           #fd2597_0%,
-          #fd2597_12%,
-          #fdbed7_42%,
-          #ffe1f1_80%,
+          #fd2597_30%,
+          #fdbed7_55%,
+          #ffe1f1_85%,
           #ffffff_100%
         )]
       "
