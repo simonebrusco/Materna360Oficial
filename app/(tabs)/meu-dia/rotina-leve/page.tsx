@@ -932,28 +932,32 @@ export default function RotinaLevePage() {
           </div>
 
           <div className="space-y-6">
-            {/* BLOCO 0 — BOAS ÂNCORAS DO DIA (Ideias + Inspirações) */}
-            <SoftCard
+            {/* BLOCO 0 — BOAS ÂNCORAS DO DIA (header + 2 cards) */}
+            <section
               id="rotina-leve-ancoras"
-              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+              className="space-y-4"
+              aria-labelledby="boas-ancoras-heading"
             >
-              <div className="space-y-4">
-                <header className="space-y-1 pb-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                    Dia · Boas âncoras
-                  </p>
-                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
-                    Pequenas âncoras para o seu dia real
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
-                    Antes de organizar as tarefas e receitas, você pode escolher uma
-                    pequena ação ou inspiração para te acompanhar hoje. É o cuidado
-                    emocional que vem antes da lista de coisas a fazer.
-                  </p>
-                </header>
+              <header className="space-y-1">
+                <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
+                  Dia · Boas âncoras
+                </p>
+                <h3
+                  id="boas-ancoras-heading"
+                  className="text-base md:text-lg font-semibold text-[#545454]"
+                >
+                  Pequenas âncoras para o seu dia real
+                </h3>
+                <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
+                  Antes de organizar as tarefas e receitas, você pode escolher uma pequena
+                  ação ou inspiração para te acompanhar hoje. É o cuidado emocional que
+                  vem antes da lista de coisas a fazer.
+                </p>
+              </header>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* COLUNA — IDEIAS RÁPIDAS */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* CARD — IDEIAS RÁPIDAS */}
+                <SoftCard className="rounded-3xl h-full p-5 md:p-6 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
                   <div
                     id="rotina-leve-ideias"
                     className="space-y-4 flex flex-col h-full"
@@ -1150,8 +1154,10 @@ export default function RotinaLevePage() {
                       </div>
                     )}
                   </div>
+                </SoftCard>
 
-                  {/* COLUNA — INSPIRAÇÕES DO DIA */}
+                {/* CARD — INSPIRAÇÕES DO DIA */}
+                <SoftCard className="rounded-3xl h-full p-5 md:p-6 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
                   <div
                     id="rotina-leve-inspiracoes"
                     className="space-y-4 flex flex-col h-full"
@@ -1273,9 +1279,9 @@ export default function RotinaLevePage() {
                       </div>
                     )}
                   </div>
-                </div>
+                </SoftCard>
               </div>
-            </SoftCard>
+            </section>
 
             {/* BLOCO 1 — RECEITAS INTELIGENTES */}
             <SoftCard
