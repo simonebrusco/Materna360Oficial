@@ -449,37 +449,41 @@ export default function BibliotecaMaternaPage() {
 
              {/* CTA PREMIUM — BANNER COLORIDO */}
           <Reveal delay={150}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.22)] border border-[#fd2597]/40 bg-[#fd2597] text-white">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex-1">
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
-                    <AppIcon name="sparkles" className="h-3 w-3" />
-                    <span>Premium</span>
+            <SoftCard className="p-0 bg-transparent border-none shadow-none">
+              <div className="rounded-3xl p-6 md:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.25)] bg-[radial-gradient(circle_at_top_left,#fdbed7_0,#fd2597_45%,#b8236b_100%)] text-white">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      <AppIcon name="sparkles" className="h-3 w-3" />
+                      <span>Premium</span>
+                    </div>
+
+                    <h3 className="mb-1 text-lg font-semibold md:text-xl">
+                      Desbloqueie conteúdos completos
+                    </h3>
+                    <p className="text-xs md:text-sm text-white/90 max-w-xl">
+                      PDFs avançados, eBooks exclusivos, trilhas educativas e guias profissionais
+                      em um só lugar — tudo pensado para a sua rotina real.
+                    </p>
                   </div>
 
-                  <h3 className="mb-1 text-lg font-semibold md:text-xl">
-                    Desbloqueie conteúdos completos
-                  </h3>
-                  <p className="text-xs md:text-sm text-white/90 max-w-xl">
-                    PDFs avançados, eBooks exclusivos, trilhas educativas e guias profissionais em um só lugar — tudo pensado para a sua rotina real.
-                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto rounded-full px-5 bg-white text-[#fd2597] hover:bg-[#ffe1f1] shadow-[0_10px_26px_rgba(0,0,0,0.25)]"
+                  >
+                    <AppIcon
+                      name="crown"
+                      className="mr-2 h-4 w-4 text-[#fd2597]"
+                    />
+                    Conhecer Materna+
+                  </Button>
                 </div>
-
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  className="w-full flex-shrink-0 whitespace-nowrap sm:w-auto rounded-full px-5 bg-white text-[#fd2597] hover:bg-[#ffe1f1] shadow-[0_10px_26px_rgba(0,0,0,0.25)]"
-                >
-                  <AppIcon
-                    name="crown"
-                    className="mr-2 h-4 w-4 text-[#fd2597]"
-                  />
-                  Conhecer Materna+
-                </Button>
               </div>
             </SoftCard>
           </Reveal>
+
           <MotivationalFooter routeKey="biblioteca-materna" />
         </div>
       </ClientOnly>
