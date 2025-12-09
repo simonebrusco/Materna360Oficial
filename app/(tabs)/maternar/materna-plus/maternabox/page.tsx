@@ -12,7 +12,7 @@ export default function MaternaBoxPage() {
   return (
     <PageTemplate
       label="MATERNAR"
-      title="MaternaBox — pequenos rituais que acolhem sua rotina."
+      title="MaternaBox 
       subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
     >
       <ClientOnly>
