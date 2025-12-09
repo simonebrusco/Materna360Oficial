@@ -65,14 +65,7 @@ export default function MeuDiaClient() {
         flex
         flex-col
         bg-[#ffe1f1]
-        bg-[linear-gradient(
-          to_bottom,
-          #fd2597_0%,
-          #fd2597_35%,
-          #fdbed7_75%,
-          #ffe1f1_92%,
-          #ffffff_100%
-        )]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_26%,#fdbed7_56%,#ffe1f1_90%,#ffffff_100%)]
       "
     >
       {/* CONTEÚDO PRINCIPAL */}
