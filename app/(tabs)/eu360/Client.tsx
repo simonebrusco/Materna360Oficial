@@ -148,7 +148,12 @@ export default function Eu360Client() {
     <main
       data-layout="page-template-v1"
       data-tab="eu360"
-      className="min-h-[100dvh] pb-16 bg-[#FFB3D3] bg-[radial-gradient(circle_at_top_left,#b8236b_0,#fd2597_28%,#fdbed7_70%,#FFE8F2_100%)]"
+      className="
+        min-h-[100dvh]
+        pb-16
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_26%,#fdbed7_56%,#ffe1f1_90%,#ffffff_100%)]
+      "
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
@@ -175,7 +180,7 @@ export default function Eu360Client() {
           {/* 2 — PAINEL DA JORNADA */}
           <SectionWrapper>
             <Reveal>
-              <SoftCard className="rounded-3xl bg-white border border-[#ffd8e6] shadow-[0_4px_14px_rgba(0,0,0,0.04)] px-5 py-5 md:px-7 md:py-7 space-y-5">
+              <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.04)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
@@ -222,7 +227,7 @@ export default function Eu360Client() {
                 </div>
 
                 {/* insight emocional da semana */}
-                <SoftCard className="mt-2 rounded-2xl border border-[#FFE0F0] bg-[#FFF5FA] px-4 py-4 md:px-5 md:py-5 shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
+                <SoftCard className="mt-2 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/80 px-4 py-4 md:px-5 md:py-5 shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">
@@ -314,7 +319,7 @@ export default function Eu360Client() {
                     <Link href="/planos">
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#FFE8F2] transition-colors"
+                        className="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#ffe1f1] transition-colors"
                       >
                         Conhecer os planos
                       </button>
