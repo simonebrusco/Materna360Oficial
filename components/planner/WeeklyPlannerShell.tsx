@@ -79,10 +79,6 @@ export default function WeeklyPlannerShell() {
     'top3' | 'selfcare' | 'family' | null
   >(null)
 
-  // EDIÇÃO DE LEMBRETES RÁPIDOS
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
-  const [editingTaskValue, setEditingTaskValue] = useState('')
-
   // ===========================
   // HYDRATION
   // ===========================
@@ -185,44 +181,6 @@ export default function WeeklyPlannerShell() {
     }))
   }
 
-  const deleteTask = (id: string) => {
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.filter(task => task.id !== id),
-    }))
-    if (editingTaskId === id) {
-      setEditingTaskId(null)
-      setEditingTaskValue('')
-    }
-  }
-
-  const startEditingTask = (task: TaskItem) => {
-    setEditingTaskId(task.id)
-    setEditingTaskValue(task.title)
-  }
-
-  const saveEditingTask = () => {
-    if (!editingTaskId) return
-    setPlannerData(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(task =>
-        task.id === editingTaskId
-          ? {
-              ...task,
-              title: editingTaskValue.trim() || task.title,
-            }
-          : task,
-      ),
-    }))
-    setEditingTaskId(null)
-    setEditingTaskValue('')
-  }
-
-  const cancelEditingTask = () => {
-    setEditingTaskId(null)
-    setEditingTaskValue('')
-  }
-
   // ===========================
   // FORMATAÇÕES
   // ===========================
@@ -233,6 +191,44 @@ export default function WeeklyPlannerShell() {
       .map(Number)
     return new Date(year, month - 1, day)
   }, [selectedDateKey, isHydrated])
+
+  // Compromissos do dia atual (para Agenda do dia)
+  const todaysAppointments = useMemo(
+    () =>
+      [...plannerData.appointments].sort((a, b) =>
+        (a.time ?? '').localeCompare(b.time ?? ''),
+      ),
+    [plannerData.appointments],
+  )
+
+  // Pontinho rosa nos dias que têm dados (compromissos ou tarefas)
+  const hasDataForDate = useCallback(
+    (date: Date) => {
+      if (!isHydrated) return false
+
+      const key = getBrazilDateKey(date)
+
+      // se for o dia selecionado atual, usa o estado já carregado
+      if (key === selectedDateKey) {
+        return (
+          plannerData.appointments.length > 0 ||
+          plannerData.tasks.length > 0
+        )
+      }
+
+      const appointments =
+        (load(`planner/appointments/${key}`, []) as Appointment[] | null) ??
+        []
+      const tasks =
+        (load(`planner/tasks/${key}`, []) as TaskItem[] | null) ?? []
+
+      return (
+        (Array.isArray(appointments) && appointments.length > 0) ||
+        (Array.isArray(tasks) && tasks.length > 0)
+      )
+    },
+    [isHydrated, selectedDateKey, plannerData.appointments, plannerData.tasks],
+  )
 
   if (!isHydrated) return null
 
@@ -275,9 +271,6 @@ export default function WeeklyPlannerShell() {
   const tasksByOrigin = (origin: TaskOrigin) =>
     plannerData.tasks.filter(task => task.origin === origin)
 
-  const hasItemsToday =
-    plannerData.tasks.length > 0 || plannerData.appointments.length > 0
-
   // ===========================
   // RENDER
   // ===========================
@@ -307,7 +300,7 @@ export default function WeeklyPlannerShell() {
                   >
                     ‹
                   </button>
-                  {/* removido "capitalize" para deixar "dezembro de 2025" */}
+                  {/* mês por extenso + ano */}
                   <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
                     {selectedDate.toLocaleDateString('pt-BR', {
                       month: 'long',
@@ -366,49 +359,26 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map((day, i) => {
-                  if (!day) {
-                    return <div key={i} className="h-8 md:h-9" />
-                  }
-
-                  const dayKey = getBrazilDateKey(day)
-
-                  // carrega do localStorage p/ mostrar pontinho também em outros dias
-                  const dayAppointments: Appointment[] =
-                    load(`planner/appointments/${dayKey}`, []) ?? []
-                  const dayTasks: TaskItem[] =
-                    load(`planner/tasks/${dayKey}`, []) ?? []
-
-                  const hasStoredItems =
-                    (Array.isArray(dayAppointments) &&
-                      dayAppointments.length > 0) ||
-                    (Array.isArray(dayTasks) && dayTasks.length > 0)
-
-                  const isSelected = dayKey === selectedDateKey
-
-                  const hasDot =
-                    hasStoredItems ||
-                    (isSelected && hasItemsToday)
-
-                  return (
+                {generateMonthMatrix(selectedDate).map((day, i) =>
+                  day ? (
                     <button
                       key={i}
                       onClick={() => openModalForDate(day)}
-                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                        isSelected
+                      className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex flex-col items-center justify-center gap-0.5 transition-all border ${
+                        getBrazilDateKey(day) === selectedDateKey
                           ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
                           : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
                       }`}
                     >
-                      <div className="relative flex flex-col items-center justify-center h-full">
-                        <span>{day.getDate()}</span>
-                        {hasDot && (
-                          <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
-                        )}
-                      </div>
+                      <span>{day.getDate()}</span>
+                      {hasDataForDate(day) && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                      )}
                     </button>
-                  )
-                })}
+                  ) : (
+                    <div key={i} className="h-8 md:h-9" />
+                  ),
+                )}
               </div>
             </div>
           </SoftCard>
@@ -416,6 +386,10 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
+              {/* ===========================
+                  LEMBRETES RÁPIDOS + ATALHOS DO DIA
+                  (BLOCO MANTIDO EXATAMENTE COMO VOCÊ ENVIOU)
+              ============================ */}
               <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
                 {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
                 <div className="flex h-full">
@@ -437,93 +411,29 @@ export default function WeeklyPlannerShell() {
                         </p>
                       )}
 
-                      {plannerData.tasks.map(task => {
-                        const isEditing = editingTaskId === task.id
-                        return (
-                          <div
-                            key={task.id}
-                            className={`w-full flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all ${
+                      {plannerData.tasks.map(task => (
+                        <button
+                          key={task.id}
+                          type="button"
+                          onClick={() => toggleTask(task.id)}
+                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                            task.done
+                              ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
+                              : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
                               task.done
-                                ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)]'
-                                : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
+                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
                             }`}
                           >
-                            <button
-                              type="button"
-                              onClick={() => toggleTask(task.id)}
-                              className="flex flex-1 items-center gap-3 text-left"
-                            >
-                              <span
-                                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                                  task.done
-                                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                                }`}
-                              >
-                                {task.done ? '✓' : ''}
-                              </span>
-                              {isEditing ? (
-                                <input
-                                  className="w-full rounded-md border px-2 py-1 text-xs"
-                                  value={editingTaskValue}
-                                  onChange={e =>
-                                    setEditingTaskValue(e.target.value)
-                                  }
-                                  onClick={e => e.stopPropagation()}
-                                />
-                              ) : (
-                                <span
-                                  className={
-                                    task.done
-                                      ? 'line-through text-[var(--color-text-muted)]'
-                                      : ''
-                                  }
-                                >
-                                  {task.title}
-                                </span>
-                              )}
-                            </button>
-
-                            <div className="flex items-center gap-1">
-                              {isEditing ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={saveEditingTask}
-                                    className="text-[11px] px-2 py-1 rounded-lg bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
-                                  >
-                                    OK
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={cancelEditingTask}
-                                    className="text-[11px] px-2 py-1 rounded-lg bg-gray-100 text-[var(--color-text-muted)] hover:bg-gray-200"
-                                  >
-                                    Canc.
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditingTask(task)}
-                                    className="text-[11px] px-2 py-1 rounded-lg bg-white text-[var(--color-text-muted)] border border-[#F1E4EC] hover:border-[var(--color-brand)]/60"
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => deleteTask(task.id)}
-                                    className="text-[11px] px-2 py-1 rounded-lg bg-white text-[#C2285F] border border-[#F1E4EC] hover:border-[#ff005e]/70"
-                                  >
-                                    Excluir
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
+                            {task.done ? '✓' : ''}
+                          </span>
+                          <span>{task.title}</span>
+                        </button>
+                      ))}
                     </div>
 
                     {/* Campo rápido para novo lembrete */}
@@ -627,6 +537,91 @@ export default function WeeklyPlannerShell() {
                     </div>
                   </div>
                 </div>
+              </section>
+
+              {/* ===========================
+                  AGENDA DO DIA
+              ============================ */}
+              <section className="grid max-md:grid-cols-1 md:grid-cols-[minmax(0,1.3fr),minmax(0,0.9fr)] gap-4 md:gap-6">
+                {/* Lista de compromissos do dia */}
+                <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 space-y-3">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div>
+                      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+                        Agenda do dia
+                      </h2>
+                      <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                        Veja todos os compromissos que você salvou para hoje.
+                      </p>
+                    </div>
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
+                      <AppIcon
+                        name="calendar"
+                        className="w-4 h-4 text-[var(--color-brand)]"
+                        decorative
+                      />
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                    {todaysAppointments.length === 0 && (
+                      <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                        Nenhum compromisso adicionado para hoje ainda. Toque em{' '}
+                        <span className="font-semibold">
+                          “Agenda &amp; Compromissos”
+                        </span>{' '}
+                        nos atalhos do dia ou clique em um dia no calendário para
+                        criar o primeiro.
+                      </p>
+                    )}
+
+                    {todaysAppointments.map(item => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2.5 text-sm shadow-[0_4px_12px_rgba(0,0,0,0.03)]"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFE8F2] text-[var(--color-brand-deep)] text-xs font-semibold">
+                          {item.time ? item.time.slice(0, 5) : '--:--'}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs md:text-sm font-medium text-[var(--color-text-main)]">
+                            {item.title}
+                          </p>
+                          <p className="text-[10px] text-[var(--color-text-muted)]">
+                            Esse compromisso também aparece nos seus Lembretes
+                            Rápidos.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SoftCard>
+
+                {/* Cartão explicativo suave */}
+                <SoftCard className="rounded-3xl bg-[var(--color-soft-bg)]/80 border border-[var(--color-soft-strong)] p-4 md:p-5 space-y-3">
+                  <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                    Dica de uso
+                  </p>
+                  <h3 className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
+                    Use a agenda a seu favor
+                  </h3>
+                  <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+                    Sempre que você criar um novo compromisso pelo calendário ou pelos
+                    atalhos, ele aparece aqui na Agenda do dia <strong>e</strong> como
+                    Lembrete Rápido. Assim, você não perde nada importante — e ainda
+                    mantém tudo em um só lugar.
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] text-[var(--color-text-muted)] mt-1">
+                    <AppIcon
+                      name="sparkles"
+                      className="h-3.5 w-3.5 text-[var(--color-brand)]"
+                      decorative
+                    />
+                    <span>
+                      A ideia é deixar sua cabeça mais leve, não mais cheia.
+                    </span>
+                  </div>
+                </SoftCard>
               </section>
             </div>
           )}
@@ -765,13 +760,7 @@ export default function WeeklyPlannerShell() {
           {/* VISÃO SEMANA */}
           {viewMode === 'week' && (
             <div className="mt-4 pb-10">
-              <WeekView
-                weekData={generateWeekData(
-                  selectedDate,
-                  selectedDateKey,
-                  plannerData,
-                )}
-              />
+              <WeekView weekData={generateWeekData(selectedDate)} />
             </div>
           )}
         </div>
@@ -940,11 +929,7 @@ function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   return matrix
 }
 
-function generateWeekData(
-  base: Date,
-  currentDateKey: string,
-  currentPlanner: PlannerData,
-) {
+function generateWeekData(base: Date) {
   const monday = new Date(base)
   const day = monday.getDay()
   monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1))
@@ -952,54 +937,15 @@ function generateWeekData(
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
-
-    const dateKey = getBrazilDateKey(d)
-
-    // dados base vindos do localStorage
-    const appointments: Appointment[] =
-      load(`planner/appointments/${dateKey}`, []) ?? []
-    const tasks: TaskItem[] =
-      load(`planner/tasks/${dateKey}`, []) ?? []
-
-    let agendaCount = Array.isArray(appointments)
-      ? appointments.length
-      : 0
-
-    let top3Count = Array.isArray(tasks)
-      ? tasks.filter(t => t.origin === 'top3').length
-      : 0
-
-    let careCount = Array.isArray(tasks)
-      ? tasks.filter(t => t.origin === 'selfcare').length
-      : 0
-
-    let familyCount = Array.isArray(tasks)
-      ? tasks.filter(t => t.origin === 'family').length
-      : 0
-
-    // garante que o dia atual use os dados em memória (mais confiáveis)
-    if (dateKey === currentDateKey) {
-      agendaCount = currentPlanner.appointments.length
-      top3Count = currentPlanner.tasks.filter(
-        t => t.origin === 'top3',
-      ).length
-      careCount = currentPlanner.tasks.filter(
-        t => t.origin === 'selfcare',
-      ).length
-      familyCount = currentPlanner.tasks.filter(
-        t => t.origin === 'family',
-      ).length
-    }
-
     return {
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
         weekday: 'long',
       }),
-      agendaCount,
-      top3Count,
-      careCount,
-      familyCount,
+      agendaCount: 0,
+      top3Count: 0,
+      careCount: 0,
+      familyCount: 0,
     }
   })
 }
