@@ -19,7 +19,11 @@ export function PageTemplate({
   return (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] bg-[#FFE4F0] bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
+      className="
+        min-h-[100dvh]
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fdbed7_0%,#ffe1f1_55%,#ffffff_100%)]
+      "
     >
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-20">
         {/* HERO padrão das páginas internas */}
