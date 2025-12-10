@@ -106,7 +106,8 @@ export default function AjudaEParceriasPage() {
                 </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              {/* cards agora empilhados */}
+              <div className="grid gap-4">
                 <div className="rounded-2xl bg-[#ffe1f1] p-4">
                   <h3 className="mb-1 text-[16px] md:text-[17px] font-semibold text-[#2F3A56]">
                     Dúvidas sobre o app
