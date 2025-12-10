@@ -38,7 +38,7 @@ const THEMES = [
 // Inclui “Trilha educativa” no sistema de formatos
 const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Trilha educativa']
 
-// Versão inicial – placeholders. Depois é só trocar title/description/href pelos materiais reais.
+// Versão inicial – placeholders
 const MATERIALS: MaterialCard[] = [
   {
     id: 'checklist-rotina-manha',
@@ -48,7 +48,7 @@ const MATERIALS: MaterialCard[] = [
     theme: 'Rotinas',
     format: 'Checklist',
     icon: 'book-open',
-    href: '#', // futuro: link para download / admin
+    href: '#',
   },
   {
     id: 'guia-leve-birras',
@@ -128,7 +128,6 @@ export default function BibliotecaMaternaPage() {
     } else if (filtro === 'trilhas') {
       setPresetFilter('trilhas')
     } else if (filtro === 'tema-fase' || filtro === 'idade-tema') {
-      // aceita os dois jeitos de escrever
       setPresetFilter('tema-fase')
     }
   }, [searchParams])
@@ -165,7 +164,6 @@ export default function BibliotecaMaternaPage() {
       MATERIALS.filter(material => {
         if (selectedTheme && material.theme !== selectedTheme) return false
 
-        // Se veio de um atalho do hub (presetFilter), ele tem prioridade
         if (presetFilter) {
           if (presetFilter === 'guias') {
             if (
@@ -185,7 +183,6 @@ export default function BibliotecaMaternaPage() {
               return false
             }
           }
-          // preset 'tema-fase' por enquanto não restringe nada
         } else if (selectedFormat && material.format !== selectedFormat) {
           return false
         }
@@ -219,7 +216,6 @@ export default function BibliotecaMaternaPage() {
     if (presetFilter === 'trilhas') {
       return format === 'Trilha educativa'
     }
-    // sem preset: utiliza seleção manual
     return !presetFilter && selectedFormat === format
   }
 
@@ -230,10 +226,11 @@ export default function BibliotecaMaternaPage() {
       subtitle="Guias, trilhas e materiais que apoiam sua jornada, no seu tempo."
     >
       <ClientOnly>
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 md:pb-20 md:px-6 space-y-8 md:space-y-10">
+        {/* agora usamos só a largura padrão do PageTemplate */}
+        <div className="space-y-8 md:space-y-10 pb-16 md:pb-20">
           {/* INTRO */}
           <Reveal delay={0}>
-            <div className="max-w-3xl">
+            <div className="max-w-2xl">
               <p className="text-sm md:text-base leading-relaxed text-[#545454]">
                 Encontre materiais selecionados — PDFs, eBooks, guias práticos e
                 conteúdos personalizados — filtrados por tema e formato para
@@ -299,7 +296,7 @@ export default function BibliotecaMaternaPage() {
                   </div>
                 </SoftCard>
 
-                {/* Resultados por filtro (lista resumida / explicação) */}
+                {/* Resultados por filtro */}
                 <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -447,7 +444,7 @@ export default function BibliotecaMaternaPage() {
             </SoftCard>
           </Reveal>
 
-             {/* CTA PREMIUM — BANNER COLORIDO */}
+          {/* CTA PREMIUM — BANNER COLORIDO */}
           <Reveal delay={150}>
             <SoftCard className="p-0 bg-transparent border-none shadow-none">
               <div className="rounded-3xl p-6 md:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.25)] bg-[radial-gradient(circle_at_top_left,#fdbed7_0,#fd2597_45%,#b8236b_100%)] text-white">
@@ -462,8 +459,9 @@ export default function BibliotecaMaternaPage() {
                       Desbloqueie conteúdos completos
                     </h3>
                     <p className="text-xs md:text-sm text-white/90 max-w-xl">
-                      PDFs avançados, eBooks exclusivos, trilhas educativas e guias profissionais
-                      em um só lugar — tudo pensado para a sua rotina real.
+                      PDFs avançados, eBooks exclusivos, trilhas educativas e
+                      guias profissionais em um só lugar — tudo pensado para a
+                      sua rotina real.
                     </p>
                   </div>
 
