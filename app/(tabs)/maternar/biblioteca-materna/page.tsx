@@ -226,8 +226,8 @@ export default function BibliotecaMaternaPage() {
       subtitle="Guias, trilhas e materiais que apoiam sua jornada, no seu tempo."
     >
       <ClientOnly>
-        {/* agora usamos só a largura padrão do PageTemplate */}
-        <div className="space-y-8 md:space-y-10 pb-16 md:pb-20">
+        {/* padrão central Materna360 */}
+        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
           {/* INTRO */}
           <Reveal delay={0}>
             <div className="max-w-2xl">
@@ -241,9 +241,9 @@ export default function BibliotecaMaternaPage() {
 
           {/* FILTRAR & EXPLORAR */}
           <Reveal delay={40}>
-            <SoftCard className="rounded-[32px] border border-[#F5D7E5] bg-white shadow-[0_18px_55px_rgba(0,0,0,0.12)] p-5 md:p-8 space-y-6 md:space-y-8">
+            <SoftCard className="rounded-[32px] border border-[#F5D7E5] bg-white/95 shadow-[0_6px_22px_rgba(0,0,0,0.06)] p-5 md:p-8 space-y-6 md:space-y-8">
               <div className="space-y-2">
-                <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                <h2 className="text-base md:text-lg font-semibold text-[#545454]">
                   Filtrar e explorar
                 </h2>
                 <p className="text-xs md:text-sm text-[#545454] max-w-2xl">
@@ -268,7 +268,7 @@ export default function BibliotecaMaternaPage() {
 
               <div className="grid gap-4 md:grid-cols-2 md:gap-6">
                 {/* Tema */}
-                <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+                <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
                   <label className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#545454] md:text-xs">
                     Tema
                   </label>
@@ -283,10 +283,10 @@ export default function BibliotecaMaternaPage() {
                           onClick={() => handleThemeSelect(theme)}
                           className={[
                             'w-full rounded-full px-4 py-2.5 text-sm md:text-[15px] font-medium',
-                            'border transition-all shadow-[0_6px_16px_rgba(0,0,0,0.04)]',
+                            'border transition-all shadow-[0_4px_16px_rgba(0,0,0,0.04)]',
                             active
                               ? 'border-[#fd2597] bg-[#fdbed7]/80 text-[#fd2597]'
-                              : 'border-[#F5D7E5] bg-white text-[#2f3a56] hover:border-[#fd2597]/70 hover:bg-[#fdbed7]/30',
+                              : 'border-[#F5D7E5] bg-white text-[#545454] hover:border-[#fd2597]/70 hover:bg-[#fdbed7]/30',
                           ].join(' ')}
                         >
                           {theme}
@@ -297,7 +297,7 @@ export default function BibliotecaMaternaPage() {
                 </SoftCard>
 
                 {/* Resultados por filtro */}
-                <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+                <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#545454] md:text-xs">
@@ -331,7 +331,7 @@ export default function BibliotecaMaternaPage() {
               </div>
 
               {/* Formato */}
-              <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+              <SoftCard className="rounded-3xl bg-white p-4 md:p-5 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
                 <label className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#545454] md:text-xs">
                   Formato
                 </label>
@@ -355,7 +355,7 @@ export default function BibliotecaMaternaPage() {
             <div ref={materialsRef} className="space-y-4">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                  <h2 className="text-base md:text-lg font-semibold text-[#545454]">
                     Materiais disponíveis
                   </h2>
                   <p className="text-xs md:text-sm text-[#545454] max-w-xl">
@@ -379,7 +379,7 @@ export default function BibliotecaMaternaPage() {
               </div>
 
               {filteredMaterials.length === 0 ? (
-                <SoftCard className="mt-2 rounded-3xl bg-white p-6 text-sm text-[#6A6A6A] shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+                <SoftCard className="mt-2 rounded-3xl bg-white p-6 text-sm text-[#6A6A6A] shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
                   Nenhum material encontrado para esse filtro. Você pode
                   ajustar os filtros ou limpar as seleções para ver a lista
                   completa novamente.
@@ -392,7 +392,7 @@ export default function BibliotecaMaternaPage() {
                       role="button"
                       tabIndex={0}
                       onClick={() => handleMaterialOpen(material)}
-                      className="flex h-full cursor-pointer flex-col rounded-3xl bg-white p-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5] transition-all duration-200 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)] hover:border-[#fd2597]/70"
+                      className="flex h-full cursor-pointer flex-col rounded-3xl bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5] transition-all duration-200 hover:shadow-[0_10px_26px_rgba(0,0,0,0.12)] hover:border-[#fd2597]/70"
                     >
                       <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b8236b]">
                         {material.format.toUpperCase()} ·{' '}
@@ -421,8 +421,8 @@ export default function BibliotecaMaternaPage() {
 
           {/* INSIGHT PERSONALIZADO */}
           <Reveal delay={120}>
-            <SoftCard className="rounded-3xl bg-white p-6 md:p-8 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
-              <h2 className="mb-2 text-base md:text-lg font-semibold text-[#2f3a56]">
+            <SoftCard className="rounded-3xl bg-white p-6 md:p-8 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+              <h2 className="mb-2 text-base md:text-lg font-semibold text-[#545454]">
                 Insight personalizado
               </h2>
               <p className="mb-4 text-xs md:text-sm text-[#6A6A6A]">
@@ -447,7 +447,7 @@ export default function BibliotecaMaternaPage() {
           {/* CTA PREMIUM — BANNER COLORIDO */}
           <Reveal delay={150}>
             <SoftCard className="p-0 bg-transparent border-none shadow-none">
-              <div className="rounded-3xl p-6 md:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.25)] bg-[radial-gradient(circle_at_top_left,#fdbed7_0,#fd2597_45%,#b8236b_100%)] text-white">
+              <div className="rounded-3xl p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.22)] bg-[radial-gradient(circle_at_top_left,#fdbed7_0,#fd2597_45%,#b8236b_100%)] text-white">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex-1">
                     <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
