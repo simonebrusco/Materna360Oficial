@@ -98,6 +98,14 @@ export default function MaternaPlusPage() {
     }
   }
 
+  const handleScrollToPremium = () => {
+    if (typeof window === 'undefined') return
+    const el = document.getElementById('materna-plus-premium-content')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <PageTemplate
       label="MATERNAR"
@@ -114,18 +122,18 @@ export default function MaternaPlusPage() {
                 {/* Texto principal */}
                 <div className="max-w-3xl space-y-3.5">
                   <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    MATERNA+
+                    MATERNA+ · PORTAL PREMIUM
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                     O Materna+ conecta você a profissionais, serviços e
-                    experiências que complementam o app — sempre olhando para a
-                    sua rotina real.
+                    conteúdos que complementam o app — sempre olhando para a sua
+                    rotina real.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] leading-relaxed">
                     Aqui você encontra indicações cuidadosas de especialistas,
-                    formas de cuidado extra para a sua família e, em breve, uma
-                    comunidade feita para acolher dúvidas, medos e conquistas do
-                    dia a dia.
+                    experiências como a MaternaBox, e, em breve, trilhas guiadas
+                    e conteúdos exclusivos para tornar a maternidade mais leve e
+                    possível.
                   </p>
                   <p className="text-[12px] text-[#6A6A6A] leading-relaxed">
                     O pagamento dos atendimentos é feito diretamente com cada
@@ -171,6 +179,194 @@ export default function MaternaPlusPage() {
             </SoftCard>
           </Reveal>
 
+          {/* STATUS DO PLANO / SLOT DE ASSINATURA */}
+          <Reveal delay={20}>
+            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+                    STATUS DO SEU PLANO
+                  </p>
+                  <h2 className="text-sm md:text-[15px] font-semibold text-[#545454]">
+                    Você está usando o Materna360 na versão essencial.
+                  </h2>
+                  <p className="text-[12px] md:text-[13px] text-[#6A6A6A] leading-relaxed max-w-xl">
+                    Em breve, aqui você verá seu plano Materna+ ou Materna+360,
+                    com acesso direto às trilhas guiadas, biblioteca premium e
+                    IA personalizada. Por enquanto, você já pode conhecer o que
+                    está sendo preparado para esse espaço.
+                  </p>
+                </div>
+
+                <div className="flex-shrink-0">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="text-[13px] px-5 py-2"
+                    onClick={handleScrollToPremium}
+                  >
+                    Conhecer os benefícios do Materna+
+                  </Button>
+                </div>
+              </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* CONTEÚDOS PREMIUM & TRILHAS GUIADAS */}
+          <Reveal delay={40}>
+            <SoftCard
+              id="materna-plus-premium-content"
+              className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
+            >
+              <div className="space-y-5">
+                <header className="space-y-2">
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+                    CONTEÚDOS PREMIUM & TRILHAS GUIADAS
+                  </p>
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                    Caminhos guiados para uma maternidade mais leve — no seu
+                    tempo.
+                  </h2>
+                  <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
+                    Este será o coração do Materna+: trilhas estruturadas,
+                    conteúdos aprofundados e uma experiência integrada com o
+                    Eu360 e a IA Premium, para apoiar suas decisões do dia a
+                    dia, sem te sobrecarregar.
+                  </p>
+                  <p className="text-[12px] text-[#6A6A6A] max-w-2xl">
+                    Abaixo você vê um preview do que está sendo desenhado.
+                    Alguns conteúdos estarão disponíveis apenas para assinantes
+                    Materna+ e Materna+360, sempre com linguagem simples e
+                    respeito ao seu momento.
+                  </p>
+                </header>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Trilha Primeiro ano leve */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                          TRILHA GUIADA
+                        </p>
+                        <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
+                          Primeiro ano leve
+                        </h3>
+                      </div>
+                      <span className="rounded-full border border-[#F5D7E5] bg-white px-2 py-0.5 text-[11px] font-medium text-[#6A6A6A]">
+                        Em breve
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-[#545454] leading-relaxed">
+                      Um caminho pensado para mães de bebês de 0 a 12 meses, com
+                      apoio diário sobre sono, rotina, vínculo, colo, banhos e
+                      pequenos rituais que fazem diferença.
+                    </p>
+                    <p className="text-[12px] text-[#6A6A6A]">
+                      Desbloqueios diários, sugestões práticas e momentos de
+                      pausa para você também ser cuidada.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                      className="mt-2 text-[12px] cursor-not-allowed opacity-70"
+                    >
+                      Ver trilha (disponível em breve)
+                    </Button>
+                  </div>
+
+                  {/* Trilha Desenvolvimento por idade */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                          TRILHA GUIADA
+                        </p>
+                        <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
+                          Desenvolvimento por idade
+                        </h3>
+                      </div>
+                      <span className="rounded-full border border-[#F5D7E5] bg-[#ffe1f1] px-2 py-0.5 text-[11px] font-medium text-[#545454]">
+                        Em breve
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-[#545454] leading-relaxed">
+                      Trilhas pensadas por faixa etária (1–3, 3–5, 5–7 anos),
+                      com ideias de brincadeiras, limites, autonomia e rituais
+                      que cabem na sua rotina real.
+                    </p>
+                    <p className="text-[12px] text-[#6A6A6A]">
+                      Um passo a passo gentil, para você se sentir menos
+                      perdida e mais segura em cada fase.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                      className="mt-2 text-[12px] cursor-not-allowed opacity-70"
+                    >
+                      Ver trilha (disponível em breve)
+                    </Button>
+                  </div>
+
+                  {/* Biblioteca Premium */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                      BIBLIOTECA PREMIUM
+                    </p>
+                    <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
+                      Conteúdos exclusivos Materna+
+                    </h3>
+                    <p className="text-[13px] text-[#545454] leading-relaxed">
+                      PDFs aprofundados, roteiros práticos, checklists e
+                      materiais que vão além do app essencial, sempre com foco
+                      em situações reais que as mães vivem no dia a dia.
+                    </p>
+                    <ul className="space-y-1 text-[12px] text-[#545454]">
+                      <li>• Guias avançados por idade e tema.</li>
+                      <li>• Checklists extensos para momentos críticos.</li>
+                      <li>• Roteiros para conversas difíceis em família.</li>
+                    </ul>
+                    <p className="text-[12px] text-[#6A6A6A]">
+                      Acesso completo será liberado para assinantes Materna+ e
+                      Materna+360.
+                    </p>
+                  </div>
+
+                  {/* Integração Eu360 / IA Premium */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                      EU360 & IA PREMIUM · PLANEJADO
+                    </p>
+                    <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
+                      Sua jornada alimentando respostas mais personalizadas.
+                    </h3>
+                    <p className="text-[13px] text-[#545454] leading-relaxed">
+                      Em breve, o que você vive nas trilhas, no planner e nos
+                      mini-hubs vai ajudar a IA a responder de forma ainda mais
+                      precisa e humana — sem fórmulas prontas.
+                    </p>
+                    <p className="text-[12px] text-[#6A6A6A]">
+                      Tudo com muito cuidado, respeitando sua história, seu
+                      tempo e os limites que você quiser configurar.
+                    </p>
+                    <span className="inline-flex rounded-full border border-[#F5D7E5] bg-white px-3 py-1 text-[11px] font-medium text-[#545454]">
+                      Disponível na fase de IA Premium
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] md:text-[12px] text-[#6A6A6A]">
+                  Assinantes Materna+ e Materna+360 terão acesso completo às
+                  trilhas guiadas, à biblioteca premium e à IA personalizada.
+                  Todos os detalhes de planos serão apresentados no checkout,
+                  assim que o programa for aberto.
+                </p>
+              </div>
+            </SoftCard>
+          </Reveal>
+
           {/* PROFISSIONAIS PARCEIROS */}
           <Reveal delay={60}>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
@@ -180,8 +376,8 @@ export default function MaternaPlusPage() {
                     PROFISSIONAIS PARCEIROS
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Encontros profissionais indicados pelo Materna360 — com
-                    agendamento direto pelo WhatsApp.
+                    Rede Materna+ de profissionais indicados — com agendamento
+                    direto pelo WhatsApp.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
                     Você escolhe a área, conhece o profissional em um resumo
