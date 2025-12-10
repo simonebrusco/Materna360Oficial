@@ -87,7 +87,7 @@ function highlightRingClass(
   target: HighlightTarget,
 ) {
   return highlightFromQuery === target
-    ? 'ring-2 ring-[#fd2597] ring-offset-2 ring-offset-pink-100/60'
+    ? 'ring-2 ring-[#fd2597] ring-offset-2 ring-offset-[#ffe1f1]'
     : ''
 }
 
@@ -325,14 +325,14 @@ export default function MinhasConquistasPage() {
       subtitle="Um espaço para celebrar o que você já fez — um passo de cada vez."
     >
       <ClientOnly>
-        <div className="max-w-6xl mx-auto px-4 pb-16 md:pb-20 space-y-8 md:space-y-10">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6 pb-16 md:pb-20 space-y-8 md:space-y-10">
           {/* ======================================================
               BLOCO 1 — PAINEL DA SUA JORNADA
           ====================================================== */}
           <RevealSection delay={0}>
             <SoftCard
               className={clsx(
-                'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.20)]',
+                'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 border border-[#F5D7E5] bg-white/95 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.12)]',
                 highlightRing('painel'),
               )}
             >
@@ -348,7 +348,7 @@ export default function MinhasConquistasPage() {
                     <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                       Painel da sua jornada
                     </p>
-                    <h2 className="mt-1 text-xl md:text-2xl font-semibold text-[#2f3a56]">
+                    <h2 className="mt-1 text-xl md:text-2xl font-semibold text-[#545454]">
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
@@ -359,7 +359,7 @@ export default function MinhasConquistasPage() {
 
                   {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)] leading-none">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#545454] shadow-[0_8px_18px_rgba(0,0,0,0.12)] leading-none">
                       <AppIcon
                         name="crown"
                         className="h-4 w-4 text-[#fd2597]"
@@ -424,7 +424,7 @@ export default function MinhasConquistasPage() {
               {/* MISSÕES */}
               <SoftCard
                 className={clsx(
-                  'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
+                  'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#F5D7E5] shadow-[0_12px_36px_rgba(0,0,0,0.12)]',
                   highlightRing('missoes'),
                 )}
               >
@@ -433,7 +433,7 @@ export default function MinhasConquistasPage() {
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#fd2597]/80">
                       Missões do dia
                     </p>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                       Pequenas ações que somam leveza.
                     </h2>
                     <p className="text-sm text-[#545454]">
@@ -479,7 +479,7 @@ export default function MinhasConquistasPage() {
                                 'text-sm md:text-[15px]',
                                 isDone
                                   ? 'text-[#545454] line-through'
-                                  : 'text-[#2f3a56]',
+                                  : 'text-[#545454]',
                               )}
                             >
                               {mission.label}
@@ -510,7 +510,7 @@ export default function MinhasConquistasPage() {
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">
                       Seu resumo de hoje
                     </p>
-                    <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                       {todaySummaryTitle}
                     </h3>
                   </header>
@@ -521,7 +521,9 @@ export default function MinhasConquistasPage() {
                         name="heart"
                         className="mt-0.5 h-4 w-4 text-[#fd2597]"
                       />
-                      <span>Você apareceu por você — mesmo num dia corrido.</span>
+                      <span>
+                        Você apareceu por você — mesmo num dia corrido.
+                      </span>
                     </li>
 
                     <li className="flex items-start gap-2">
@@ -569,7 +571,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#F5D7E5] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
+                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#F5D7E5] shadow-[0_18px_60px_rgba(0,0,0,0.12)]',
                 highlightRing('selos'),
               )}
             >
@@ -579,7 +581,7 @@ export default function MinhasConquistasPage() {
                     <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                       Selos & medalhas
                     </p>
-                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56]">
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#545454]">
                       Suas pequenas grandes vitórias.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-2xl">
@@ -604,7 +606,7 @@ export default function MinhasConquistasPage() {
                       <div
                         key={seal.id}
                         className={clsx(
-                          'flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)] transition-all',
+                          'flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.12)] transition-all',
                           unlocked
                             ? 'border-[#F5D7E5] bg-white/90'
                             : 'border-[#F5D7E5]/80 bg-white/70 opacity-60',
@@ -622,12 +624,12 @@ export default function MinhasConquistasPage() {
                               'h-5 w-5',
                               unlocked
                                 ? 'text-[#fd2597]'
-                                : 'text-[#b26b7c]',
+                                : 'text-[#A0A0A0]',
                             )}
                           />
                         </div>
 
-                        <p className="text-[11px] font-semibold text-[#2f3a56] leading-snug min-h-[2.4rem] flex items-center justify-center text-center">
+                        <p className="text-[11px] font-semibold text-[#545454] leading-snug min-h-[2.4rem] flex items-center justify-center text-center">
                           {seal.label}
                         </p>
 
@@ -636,7 +638,7 @@ export default function MinhasConquistasPage() {
                             'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
                             unlocked
                               ? 'bg-[#fdbed7]/90 text-[#b8236b]'
-                              : 'bg-[#F5D7E5] text-[#8f4f66]',
+                              : 'bg-[#F5D7E5] text-[#6A6A6A]',
                           )}
                         >
                           {unlocked ? 'Conquistado' : 'Bloqueado'}
@@ -655,7 +657,10 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={160}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
+                'rounded-[32px] md:rounded-[36px] p-6 bg.white border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.12)]'.replace(
+                  'bg.white',
+                  'bg-white',
+                ),
                 highlightRing('mensal'),
               )}
             >
@@ -664,7 +669,7 @@ export default function MinhasConquistasPage() {
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                     Progresso mensal
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
@@ -727,13 +732,13 @@ export default function MinhasConquistasPage() {
               BLOCO 5 — POR QUE ISSO IMPORTA
           ====================================================== */}
           <RevealSection delay={200}>
-            <SoftCard className="rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-white border border-[#F5D7E5] shadow-[0_12px_36px_rgba(0,0,0,0.16)]">
+            <SoftCard className="rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-white border border-[#F5D7E5] shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
               <div className="grid gap-4 md:gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] items-start">
                 <div className="space-y-2">
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                     Por que isso importa
                   </p>
-                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                  <h2 className="text-base md:text-lg font-semibold text-[#545454]">
                     Cada registro aqui é um gesto de presença.
                   </h2>
                   <p className="text-sm text-[#545454]">
@@ -820,7 +825,7 @@ function StatCard({ label, value, helper, icon }: StatCardProps) {
           </div>
         </div>
 
-        <p className="text-2xl md:text-[26px] font-semibold text-[#2f3a56]">
+        <p className="text-2xl md:text-[26px] font-semibold text-[#545454]">
           {value}
         </p>
 
