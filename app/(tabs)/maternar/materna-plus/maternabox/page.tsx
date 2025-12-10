@@ -57,7 +57,7 @@ export default function MaternaBoxPage() {
     try {
       setIsSubmitting(true)
 
-      const res = await fetch('/api/materna-box/waitlist', {
+      const res = await fetch('/api/maternabox/waitlist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,10 +74,10 @@ export default function MaternaBoxPage() {
       try {
         data = await res.json()
       } catch {
-        // se por algum motivo não vier JSON, seguimos pela verificação de status
+        // se não vier JSON, usamos apenas o status
       }
 
-      if (!res.ok || (data && data.ok === false)) {
+      if (!res.ok) {
         const apiError =
           (data && typeof data.error === 'string' && data.error) || null
 
@@ -88,12 +88,9 @@ export default function MaternaBoxPage() {
         return
       }
 
-      // Se chegou aqui, consideramos sucesso independente do formato exato do JSON
-      const successMessage =
-        (data && typeof data.message === 'string' && data.message) ||
-        'Pronto! Você entrou na lista de espera oficial da MaternaBox. Quando abrirmos as assinaturas, você será avisada com prioridade.'
-
-      setFormSuccess(successMessage)
+      setFormSuccess(
+        'Pronto! Você entrou na lista de espera oficial da MaternaBox. Quando abrirmos as assinaturas, você será avisada com prioridade.',
+      )
       setForm({
         name: '',
         whatsapp: '',
@@ -205,7 +202,7 @@ export default function MaternaBoxPage() {
                   <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                     Uma combinação leve de carinho, estímulo e presença.
                   </h3>
-                  <p className="text-xs md:text-sm text-[#545454]}>
+                  <p className="text-xs md:text-sm text-[#545454]">
                     A ideia não é encher sua casa de coisas, e sim te dar
                     oportunidades prontas de se conectar com seu filho, com o
                     que você consegue hoje.
