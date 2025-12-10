@@ -1,953 +1,661 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState } from 'react'
+import Image from 'next/image'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import { Reveal } from '@/components/ui/Reveal'
-import { ClientOnly } from '@/components/common/ClientOnly'
-import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
-import { save, load } from '@/app/lib/persist'
-import { track } from '@/app/lib/telemetry'
-import { toast } from '@/app/lib/toast'
-import { updateXP } from '@/app/lib/xp'
-import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
+import AppIcon from '@/components/ui/AppIcon'
 
-const AUTOCUIDADO_KEY = 'eu360/autocuidado-inteligente'
-
-// ======================
-// TYPES
-// ======================
-
-type Ritmo = 'leve' | 'cansada' | 'animada' | 'exausta' | 'focada'
-
-type SonoLabel = 'Pouco (≤6h)' | 'Adequado (7-8h)' | 'Restaurador (9+h)'
-
-type HidratacaoLevel = 0 | 1 | null
-
-type SelfCareAISuggestion = {
-  headline: string
-  description: string
-  tips: string[]
-  reminder: string
+type WaitlistFormState = {
+  name: string
+  whatsapp: string
+  email: string
 }
 
-type AutocuidadoDia = {
-  ritmo?: {
-    estiloDia: Ritmo | null
-    tags?: string[]
-    nota?: string | null
+export default function MaternaBoxPage() {
+  const [form, setForm] = useState<WaitlistFormState>({
+    name: '',
+    whatsapp: '',
+    email: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formSuccess, setFormSuccess] = useState<string | null>(null)
+
+  function handleChange(
+    field: keyof WaitlistFormState,
+    value: string
+  ) {
+    setForm(prev => ({
+      ...prev,
+      [field]: value,
+    }))
   }
-  rotina?: {
-    itensSelecionados: string[]
-  }
-  saude?: {
-    hidratacao?: HidratacaoLevel
-    sono?: SonoLabel | null
-    alimentacao?: 'leve' | 'ok' | 'pesada' | null
-  }
-  sugestao?: {
-    escolhida?: string | null
-    ai?: SelfCareAISuggestion | null
-  }
-}
 
-type AutocuidadoStorage = {
-  [dateKey: string]: AutocuidadoDia
-}
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (isSubmitting) return
 
-// ======================
-// CONSTANTES
-// ======================
+    setFormError(null)
+    setFormSuccess(null)
 
-const RITMO_OPTIONS: Ritmo[] = [
-  'leve',
-  'cansada',
-  'animada',
-  'exausta',
-  'focada',
-]
+    const name = form.name.trim()
+    const whatsapp = form.whatsapp.trim()
+    const email = form.email.trim()
 
-const MINI_ROTINA_ITEMS = [
-  'Respirar por 1 minuto',
-  'Tomar um copo de água',
-  'Fazer um alongamento rápido',
-  'Mover o corpo por 3 minutos',
-  'Pausa sem culpa por 5 minutos',
-]
-
-const SONO_OPTIONS: SonoLabel[] = [
-  'Pouco (≤6h)',
-  'Adequado (7-8h)',
-  'Restaurador (9+h)',
-]
-
-const SUGESTOES_FIXAS = [
-  'Beba um copo de água com calma, sem pressa.',
-  'Respire fundo por 1 minuto antes de pegar o celular.',
-  'Envie uma mensagem carinhosa para alguém que te apoia.',
-  'Dê uma pausa de 3 minutos só para você.',
-  'Alongue o corpo enquanto bebe algo quente.',
-  'Anote uma coisa que você fez bem hoje.',
-]
-
-export default function AutocuidadoInteligentePage() {
-  const [isHydrated, setIsHydrated] = useState(false)
-  const currentDateKey = useMemo(() => getBrazilDateKey(), [])
-  const { addItem } = usePlannerSavedContents()
-
-  // Ritmo state
-  const [selectedRitmo, setSelectedRitmo] = useState<Ritmo | null>(null)
-  const [ritmoNota, setRitmoNota] = useState<string>('')
-
-  // Mini rotina state
-  const [selectedRotinItems, setSelectedRotinaItems] = useState<Set<string>>(
-    new Set(),
-  )
-
-  // Saúde state
-  const [hidratacao, setHidratacao] = useState<HidratacaoLevel>(null)
-  const [sono, setSono] = useState<SonoLabel | null>(null)
-  const [alimentacao, setAlimentacao] = useState<
-    'leve' | 'ok' | 'pesada' | null
-  >(null)
-
-  // Sugestão state
-  const [sugestaoAtual, setSugestaoAtual] = useState<string | null>(null)
-  const [aiSuggestion, setAiSuggestion] =
-    useState<SelfCareAISuggestion | null>(null)
-  const [isLoadingSugestao, setIsLoadingSugestao] = useState(false)
-
-  useEffect(() => {
-    setIsHydrated(true)
-  }, [])
-
-  // Telemetria de abertura de página
-  useEffect(() => {
-    try {
-      track('autocuidado.page_opened', {
-        dateKey: currentDateKey,
-      })
-    } catch {
-      // nunca quebra UX
-    }
-  }, [currentDateKey])
-
-  // Carrega dados salvos do dia
-  useEffect(() => {
-    if (!isHydrated) return
-
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
-    const diaData = storage[currentDateKey] || {}
-
-    if (diaData.ritmo?.estiloDia) {
-      setSelectedRitmo(diaData.ritmo.estiloDia)
-    }
-    if (diaData.ritmo?.nota) {
-      setRitmoNota(diaData.ritmo.nota)
-    }
-    if (diaData.rotina?.itensSelecionados) {
-      setSelectedRotinaItems(new Set(diaData.rotina.itensSelecionados))
-    }
-
-    if (diaData.saude) {
-      const h = diaData.saude.hidratacao
-      if (h === 0 || h === 1) {
-        setHidratacao(h)
-      } else {
-        setHidratacao(null)
-      }
-
-      if (diaData.saude.sono && SONO_OPTIONS.includes(diaData.saude.sono)) {
-        setSono(diaData.saude.sono)
-      } else {
-        setSono(null)
-      }
-
-      if (diaData.saude.alimentacao) {
-        setAlimentacao(diaData.saude.alimentacao)
-      }
-    }
-
-    if (diaData.sugestao?.escolhida) {
-      setSugestaoAtual(diaData.sugestao.escolhida)
-    }
-    if (diaData.sugestao?.ai) {
-      setAiSuggestion(diaData.sugestao.ai)
-    }
-  }, [isHydrated, currentDateKey])
-
-  // CARD 1: Meu Ritmo Hoje
-  const handleSalvarRitmo = () => {
-    if (!selectedRitmo) {
-      toast.danger('Selecione um ritmo para continuar.')
+    if (!name || !whatsapp || !email) {
+      setFormError('Por favor, preencha seu nome, WhatsApp e e-mail.')
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
-    storage[currentDateKey] = storage[currentDateKey] || {}
-    storage[currentDateKey].ritmo = {
-      estiloDia: selectedRitmo,
-      nota: ritmoNota || null,
-    }
-
-    save(AUTOCUIDADO_KEY, storage)
-
-    try {
-      track('autocuidado_ritmo_salvo', {
-        dateKey: currentDateKey,
-        estiloDia: selectedRitmo,
-        temNota: !!ritmoNota,
-      })
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao rastrear ritmo:', e)
-    }
-
-    try {
-      void updateXP(10)
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao atualizar XP (ritmo):', e)
-    }
-
-    toast.success('Seu ritmo de hoje foi salvo com carinho.')
-  }
-
-  // CARD 2: Mini Rotina de Cuidado
-  const handleToggleRotinaItem = (item: string) => {
-    setSelectedRotinaItems(prev => {
-      const next = new Set(prev)
-      if (next.has(item)) {
-        next.delete(item)
-      } else {
-        next.add(item)
-      }
-      return next
-    })
-  }
-
-  const handleSalvarRotina = () => {
-    if (selectedRotinItems.size === 0) {
-      toast.danger('Selecione pelo menos um gesto de cuidado.')
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setFormError('Por favor, informe um e-mail válido.')
       return
     }
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
-    storage[currentDateKey] = storage[currentDateKey] || {}
-    storage[currentDateKey].rotina = {
-      itensSelecionados: Array.from(selectedRotinItems),
-    }
-
-    save(AUTOCUIDADO_KEY, storage)
-
     try {
-      track('autocuidado_rotina_salva', {
-        dateKey: currentDateKey,
-        totalItens: selectedRotinItems.size,
-      })
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao rastrear rotina:', e)
-    }
+      setIsSubmitting(true)
 
-    try {
-      void updateXP(15)
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao atualizar XP (rotina):', e)
-    }
-
-    // levar também pro planner como checklist simples
-    try {
-      addItem({
-        origin: 'cuidar-com-amor', // mesmo hub Cuidar
-        type: 'checklist',
-        title: 'Mini rotina de autocuidado de hoje',
-        payload: {
-          dateKey: currentDateKey,
-          itensSelecionados: Array.from(selectedRotinItems),
-        },
-      })
-    } catch (e) {
-      console.error(
-        '[Autocuidado] Erro ao salvar mini rotina no planner:',
-        e,
-      )
-    }
-
-    toast.success(
-      'Sua mini rotina de cuidado foi salva. Um passo de cada vez já é muito.',
-    )
-  }
-
-  // CARD 3: Saúde & Bem-Estar
-  const handleSalvarSaude = () => {
-    if (hidratacao === null && !sono && !alimentacao) {
-      toast.danger('Registre pelo menos um dado de saúde para continuar.')
-      return
-    }
-
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
-    storage[currentDateKey] = storage[currentDateKey] || {}
-    storage[currentDateKey].saude = {
-      hidratacao,
-      sono: sono ?? null,
-      alimentacao: alimentacao ?? null,
-    }
-
-    save(AUTOCUIDADO_KEY, storage)
-
-    try {
-      track('autocuidado_saude_salva', {
-        dateKey: currentDateKey,
-        temHidratacao: hidratacao !== null,
-        temSono: sono !== null,
-        temAlimentacao: alimentacao !== null,
-      })
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao rastrear saúde:', e)
-    }
-
-    try {
-      void updateXP(15)
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao atualizar XP (saúde):', e)
-    }
-
-    toast.success('Seus cuidados de saúde de hoje foram salvos.')
-  }
-
-  // CARD 4: Para Você Hoje — IA + fallback
-  const buildFallbackSuggestion = () => {
-    const indexAleatorio = Math.floor(Math.random() * SUGESTOES_FIXAS.length)
-    const texto = SUGESTOES_FIXAS[indexAleatorio]
-    setAiSuggestion(null)
-    setSugestaoAtual(texto)
-    return texto
-  }
-
-  const handleGerarSugestao = async () => {
-    setIsLoadingSugestao(true)
-
-    try {
-      const res = await fetch('/api/ai/autocuidado-inteligente', {
+      const res = await fetch('/api/maternabox/waitlist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          dateKey: currentDateKey,
-          ritmo: selectedRitmo,
-          nota: ritmoNota || null,
-          hidratacao,
-          sono,
-          alimentacao,
+          name,
+          whatsapp,
+          email,
+          source: 'materna-box-page',
         }),
       })
 
-      if (!res.ok) {
-        console.error('[Autocuidado] IA retornou status', res.status)
-        buildFallbackSuggestion()
-        toast.info(
-          'Não consegui falar com a IA agora, então te trouxe um carinho simples para hoje.',
-        )
-        try {
-          track('autocuidado_sugestao_gerada', {
-            dateKey: currentDateKey,
-            via: 'fallback',
-          })
-        } catch {
-          // ignora
-        }
-        return
-      }
-
-      const data = await res.json()
-      const suggestion: SelfCareAISuggestion | undefined = data?.suggestion
-
-      if (!suggestion || !suggestion.headline) {
-        console.warn('[Autocuidado] Sugestão de IA vazia, usando fallback.')
-        buildFallbackSuggestion()
-        try {
-          track('autocuidado_sugestao_gerada', {
-            dateKey: currentDateKey,
-            via: 'fallback',
-          })
-        } catch {
-          // ignora
-        }
-        return
-      }
-
-      setAiSuggestion(suggestion)
-
-      const resumo =
-        suggestion.reminder ||
-        suggestion.tips?.[0] ||
-        suggestion.description ||
-        suggestion.headline
-
-      setSugestaoAtual(resumo)
-
+      let data: any = null
       try {
-        track('autocuidado_sugestao_gerada', {
-          dateKey: currentDateKey,
-          via: 'ia',
-        })
-      } catch (e) {
-        console.error('[Autocuidado] Erro ao rastrear sugestão IA:', e)
-      }
-
-      try {
-        void updateXP(12)
-      } catch (e) {
-        console.error('[Autocuidado] Erro ao atualizar XP (IA sugestão):', e)
-      }
-    } catch (e) {
-      console.error('[Autocuidado] Erro geral ao gerar sugestão:', e)
-      buildFallbackSuggestion()
-      toast.info(
-        'A conexão com a IA falhou agora, mas preparei um carinho simples para você.',
-      )
-      try {
-        track('autocuidado_sugestao_gerada', {
-          dateKey: currentDateKey,
-          via: 'error-fallback',
-        })
+        data = await res.json()
       } catch {
-        // ignora
+        // se por algum motivo não vier JSON, seguimos pela verificação de status
       }
-    } finally {
-      setIsLoadingSugestao(false)
-    }
-  }
 
-  const handleSalvarSugestao = async () => {
-    if (!sugestaoAtual) {
-      toast.danger('Gere uma sugestão primeiro.')
-      return
-    }
+      if (!res.ok) {
+        const apiError =
+          (data && typeof data.error === 'string' && data.error) || null
 
-    const storage = load<AutocuidadoStorage>(AUTOCUIDADO_KEY, {}) ?? {}
-    storage[currentDateKey] = storage[currentDateKey] || {}
-    storage[currentDateKey].sugestao = {
-      escolhida: sugestaoAtual,
-      ai: aiSuggestion ?? null,
-    }
+        setFormError(
+          apiError ||
+            'Não conseguimos salvar seus dados agora. Tente novamente em alguns instantes.'
+        )
+        return
+      }
 
-    save(AUTOCUIDADO_KEY, storage)
-
-    try {
-      track('autocuidado_sugestao_salva', {
-        dateKey: currentDateKey,
-        via: aiSuggestion ? 'ia' : 'fixa',
-      })
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao rastrear salvamento da sugestão:', e)
-    }
-
-    try {
-      void updateXP(10)
-    } catch (e) {
-      console.error('[Autocuidado] Erro ao atualizar XP (sugestão):', e)
-    }
-
-    // salvar carinho também no planner
-    try {
-      await addItem({
-        origin: 'cuidar-com-amor', // mesmo hub Cuidar
-        type: 'insight',
-        title: 'Carinho de autocuidado para hoje',
-        payload: {
-          dateKey: currentDateKey,
-          resumo: sugestaoAtual,
-          via: aiSuggestion ? 'ia' : 'fixa',
-          suggestion: aiSuggestion ?? null,
-        },
-      })
-    } catch (e) {
-      console.error(
-        '[Autocuidado] Erro ao salvar carinho no planner:',
-        e,
+      // Se chegou aqui, consideramos sucesso independente do formato exato do JSON
+      setFormSuccess(
+        'Pronto! Você entrou na lista de espera oficial da MaternaBox. Quando abrirmos as assinaturas, você será avisada com prioridade.'
       )
+      setForm({
+        name: '',
+        whatsapp: '',
+        email: '',
+      })
+    } catch {
+      setFormError(
+        'Tivemos um imprevisto ao enviar seus dados. Tente novamente em alguns instantes.'
+      )
+    } finally {
+      setIsSubmitting(false)
     }
-
-    toast.success('Sugestão salva para você revisitar quando quiser.')
   }
 
   return (
     <PageTemplate
-      label="CUIDAR"
-      title="Autocuidado Inteligente"
-      subtitle="Cuidados que cabem na rotina, feitos na sua medida."
+      label="MATERNAR"
+      title="MaternaBox"
+      subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
     >
       <ClientOnly>
-        {/* MESMO PADRÃO DE LAYOUT DO "COMO ESTOU HOJE" */}
-        <div className="pt-6 pb-12 space-y-10">
-          {/* BLOCO 1 — Hoje / Cuidados que combinam com o seu ritmo */}
-          <Reveal delay={0}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <div className="space-y-6">
-                {/* Header do bloco */}
-                <header className="space-y-1">
+        <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
+          {/* HERO · TEXTO + IMAGEM */}
+          <SoftCard className="grid gap-8 rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:grid-cols-[1.2fr,1fr] md:p-7">
+            {/* TEXTO */}
+            <div className="flex flex-col justify-center space-y-4 md:space-y-5">
+              <p className="text-xs md:text-sm font-medium text-[#545454]">
+                A experiência mensal de carinho que aproxima você do seu filho — e de você mesma.
+              </p>
+
+              <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                MaternaBox — pequenos rituais que acolhem sua rotina.
+              </h2>
+
+              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
+                Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas,
+                fortalecer vínculos e trazer mais leveza para o seu dia.
+              </p>
+
+              <div className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[10px] font-medium text-[#545454]">
+                Não revelamos o conteúdo. A surpresa faz parte da magia — e da experiência Materna360.
+              </div>
+
+              <div className="pt-1 flex flex-col gap-2 md:flex-row md:items-center">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full md:w-auto rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-white border-none shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                >
+                  Escolha o seu plano
+                </Button>
+                <p className="text-[11px] text-[#6A6A6A] md:max-w-xs">
+                  Um passo de cada vez. A sua rotina pode ser mais acolhedora — um gesto de cuidado por vez.
+                </p>
+              </div>
+            </div>
+
+            {/* IMAGEM */}
+            <div className="relative flex items-center justify-center">
+              <div className="relative w-full max-w-sm aspect-[9/10] md:max-w-md">
+                <Image
+                  src="/images/maternabox2.png"
+                  alt="Mãe brincando com o filho enquanto abre a MaternaBox"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 420px, (min-width: 768px) 360px, 100vw"
+                  className="rounded-3xl object-cover shadow-[0_18px_40px_rgba(0,0,0,0.22)]"
+                />
+              </div>
+            </div>
+          </SoftCard>
+
+          {/* COMO FUNCIONA A MATERNABOX */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)] md:p-6">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                Como funciona a MaternaBox?
+              </h3>
+              <p className="text-xs md:text-sm text-[#545454]">
+                A MaternaBox é uma experiência mensal cuidadosamente pensada para trazer:
+              </p>
+              <ul className="space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                <li>• estímulos criativos para seu filho,</li>
+                <li>• rituais de presença para vocês viverem juntos,</li>
+                <li>• um carinho especial para você,</li>
+                <li>• e um momento de pausa dentro da sua rotina.</li>
+              </ul>
+              <p className="text-xs md:text-sm text-[#545454]">
+                Cada edição traz algo novo. Sempre leve, sempre acolhedor, sempre Materna360.
+              </p>
+            </div>
+          </SoftCard>
+
+          {/* O QUE VEM + PARA QUEM É / NÃO É */}
+          <div className="grid gap-6 md:gap-8 md:grid-cols-[1.1fr,1fr]">
+            {/* O QUE VEM NA CAIXA */}
+            <SoftCard className="h-full rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)] md:p-6">
+              <div className="space-y-5">
+                <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                    Hoje
+                    O QUE VEM NA SUA MATERNABOX?
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Cuidados que combinam com o seu ritmo de agora.
-                  </h2>
-                  <p className="text-sm text-[#545454] max-w-2xl">
-                    Escolha como você está e organize pequenos gestos de cuidado
-                    que caibam no seu momento — um passo de cada vez, sem
-                    perfeição e sem culpa.
+                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                    Uma combinação leve de carinho, estímulo e presença.
+                  </h3>
+                  <p className="text-xs md:text-sm text-[#545454]">
+                    A ideia não é encher sua casa de coisas, e sim te dar oportunidades
+                    prontas de se conectar com seu filho, com o que você consegue hoje.
                   </p>
-                </header>
+                </div>
 
-                {/* Grid com dois cards: Meu Ritmo Hoje + Mini Rotina de Cuidado */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  {/* CARD 1 — Meu Ritmo Hoje */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b border-[#F5D7E5] pb-4">
-                        <h3 className="text-base md:text-lg font-semibold text-[#545454] flex items-center gap-2">
-                          <AppIcon
-                            name="sparkles"
-                            size={18}
-                            className="text-[#fd2597]"
-                            decorative
-                          />
-                          Meu Ritmo Hoje
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Conte para o Materna360 que tipo de dia você está
-                          vivendo — leve, corrido, cansado ou cheio de energia.
-                        </p>
-                      </div>
+                <div className="grid gap-3.5 md:grid-cols-2">
+                  <div className="space-y-1.5 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-3.5">
+                    <p className="text-xs font-semibold text-[#545454]">
+                      Brinquedo educativo principal
+                    </p>
+                    <p className="text-[11px] text-[#545454]">
+                      Pensado para a fase de desenvolvimento do seu filho: coordenação,
+                      criatividade, linguagem, vínculo — sempre com olhar pedagógico.
+                    </p>
+                  </div>
 
-                      <div className="space-y-5 flex-1">
-                        {/* Ritmo buttons */}
-                        <div>
-                          <p className="text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide mb-3">
-                            Como você está?
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {RITMO_OPTIONS.map(ritmo => (
-                              <button
-                                key={ritmo}
-                                onClick={() =>
-                                  setSelectedRitmo(
-                                    selectedRitmo === ritmo ? null : ritmo,
-                                  )
-                                }
-                                className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
-                                  selectedRitmo === ritmo
-                                    ? 'bg-[#fd2597] text-white shadow-md border border-[#fd2597]'
-                                    : 'bg-white text-[#545454] border border-[#F5D7E5] hover:border-[#fd2597] hover:bg-[#fdbed7]/15'
-                                }`}
-                              >
-                                {ritmo.charAt(0).toUpperCase() +
-                                  ritmo.slice(1)}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                  <div className="space-y-1.5 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-3.5">
+                    <p className="text-xs font-semibold text-[#545454]">
+                      Atividades guiadas prontas
+                    </p>
+                    <p className="text-[11px] text-[#545454]">
+                      Ideias simples com um roteiro em poucos passos para você só chegar,
+                      sentar e aproveitar o momento — sem precisar preparar um “evento”.
+                    </p>
+                  </div>
 
-                        {/* Nota textarea */}
-                        <div>
-                          <p className="text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2.5">
-                            Deixe uma nota (opcional)
-                          </p>
-                          <textarea
-                            value={ritmoNota}
-                            onChange={e => setRitmoNota(e.target.value)}
-                            placeholder="Se quiser, escreva um pouco sobre como o dia está aí…"
-                            className="w-full p-3 rounded-2xl border border-[#F5D7E5] bg-white text-sm text-[#545454] placeholder-[#545454]/40 focus:outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/20 resize-none"
-                            rows={3}
-                          />
-                        </div>
-                      </div>
+                  <div className="space-y-1.5 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-3.5">
+                    <p className="text-xs font-semibold text-[#545454]">
+                      Mini-guia de conexão
+                    </p>
+                    <p className="text-[11px] text-[#545454]">
+                      Um folheto impresso com sugestões de fala, ajustes para diferentes idades
+                      e ideias de como repetir a atividade em outros dias.
+                    </p>
+                  </div>
 
-                      <div>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleSalvarRitmo}
-                          className="w-full"
-                        >
-                          Salvar meu ritmo de hoje
-                        </Button>
-                        <p className="mt-3 text-[11px] md:text-xs text-[#545454] text-center">
-                          Cada registro é um jeito de se escutar com mais
-                          carinho.
-                        </p>
-                      </div>
-                    </div>
-                  </SoftCard>
-
-                  {/* CARD 2 — Mini Rotina de Cuidado */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b border-[#F5D7E5] pb-4">
-                        <h3 className="text-base md:text-lg font-semibold text-[#545454] flex items-center gap-2">
-                          <AppIcon
-                            name="heart"
-                            size={18}
-                            className="text-[#fd2597]"
-                            decorative
-                          />
-                          Mini Rotina de Cuidado
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Escolha pequenos gestos que caibam na sua realidade de
-                          hoje — sem listas impossíveis.
-                        </p>
-                      </div>
-
-                      <div className="space-y-2.5 flex-1">
-                        {MINI_ROTINA_ITEMS.map(item => (
-                          <label
-                            key={item}
-                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#fdbed7]/10 cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-[#fd2597]/20"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedRotinItems.has(item)}
-                              onChange={() => handleToggleRotinaItem(item)}
-                              className="w-5 h-5 rounded border-[#F5D7E5] text-[#fd2597] cursor-pointer accent-[#fd2597]"
-                            />
-                            <span className="text-sm text-[#545454] flex-1 font-medium">
-                              {item}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <div>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleSalvarRotina}
-                          className="w-full"
-                        >
-                          Guardar minha mini rotina
-                        </Button>
-                        <p className="mt-3 text-[11px] md:text-xs text-[#545454] text-center">
-                          Você não precisa fazer tudo: alguns poucos gestos já
-                          contam como cuidado.
-                        </p>
-                      </div>
-                    </div>
-                  </SoftCard>
+                  <div className="space-y-1.5 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-3.5">
+                    <p className="text-xs font-semibold text-[#545454]">
+                      Surpresa mensal
+                    </p>
+                    <p className="text-[11px] text-[#545454]">
+                      Pode ser um item sensorial, algo para você ou um detalhe extra para
+                      tornar a experiência ainda mais gostosa e afetiva.
+                    </p>
+                  </div>
                 </div>
               </div>
             </SoftCard>
-          </Reveal>
 
-          {/* BLOCO 2 — Corpo & Bem-Estar */}
-          <Reveal delay={80}>
-            <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <div className="space-y-6">
-                {/* Header do bloco */}
-                <header className="space-y-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                    Corpo & bem-estar
+            {/* PARA QUEM É / NÃO É */}
+            <SoftCard className="h-full rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+              <div className="space-y-4">
+                <div className="space-y-2.5">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd2597]/80">
+                    PARA QUEM É A MATERNABOX?
                   </p>
-                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Cuide do seu corpo e receba um carinho só para você.
-                  </h2>
-                  <p className="text-sm text-[#545454] max-w-2xl">
-                    Registre como você está hoje e deixe o Materna360 sugerir um
-                    cuidado especial para o seu momento.
+                  <h3 className="text-sm md:text-base font-semibold text-[#545454]">
+                    Para mães que querem presença possível, não perfeição.
+                  </h3>
+                  <ul className="mt-1 space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                    <li>• Você sente culpa por não ter tempo (ou energia) para planejar brincadeiras.</li>
+                    <li>• Quer momentos de qualidade com seu filho, mesmo em dias corridos.</li>
+                    <li>• Gosta de coisas simples, práticas e que já vêm prontas para usar.</li>
+                    <li>• Valoriza brinquedos com intenção, não só mais um “monte de coisas” em casa.</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2.5 rounded-2xl bg-[#ffe1f1] p-3.5 md:p-4">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd2597]/80">
+                    PARA QUEM AINDA NÃO É
                   </p>
-                </header>
-
-                {/* Grid com dois cards: Saúde & Bem-Estar + Para Você Hoje */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  {/* CARD 3 — Saúde & Bem-Estar */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b border-[#F5D7E5] pb-4">
-                        <h3 className="text-base md:text-lg font-semibold text-[#545454] flex items-center gap-2">
-                          <AppIcon
-                            name="zap"
-                            size={18}
-                            className="text-[#fd2597]"
-                            decorative
-                          />
-                          Saúde & Bem-Estar
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Registre como seu corpo está hoje, sem julgamentos.
-                        </p>
-                      </div>
-
-                      <div className="space-y-5 flex-1">
-                        {/* Hidratação */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                            <AppIcon
-                              name="droplets"
-                              className="w-4 h-4 text-[#fd2597]"
-                            />
-                            <span>Hidratação</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { idx: 0 as 0, label: 'Preciso beber mais' },
-                              { idx: 1 as 1, label: 'Estou me cuidando bem' },
-                            ].map(({ idx, label }) => (
-                              <button
-                                key={label}
-                                onClick={() =>
-                                  setHidratacao(
-                                    hidratacao === idx ? null : idx,
-                                  )
-                                }
-                                className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
-                                  hidratacao === idx
-                                    ? 'bg-[#fd2597] text-white shadow-md border border-[#fd2597]'
-                                    : 'bg-white text-[#545454] border border-[#F5D7E5] hover:border-[#fd2597] hover:bg-[#fdbed7]/15'
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Sono */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                            <AppIcon
-                              name="moon"
-                              className="w-4 h-4 text-[#fd2597]"
-                            />
-                            <span>Sono</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {SONO_OPTIONS.map(label => (
-                              <button
-                                key={label}
-                                onClick={() =>
-                                  setSono(sono === label ? null : label)
-                                }
-                                className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
-                                  sono === label
-                                    ? 'bg-[#fd2597] text-white shadow-md border border-[#fd2597]'
-                                    : 'bg-white text-[#545454] border border-[#F5D7E5] hover:border-[#fd2597] hover:bg-[#fdbed7]/15'
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Alimentação */}
-                        <div className="space-y-3">
-                          <p className="text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                            🍽️ Alimentação
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { key: 'leve', label: 'Leve' },
-                              { key: 'ok', label: 'Equilibrada' },
-                              { key: 'pesada', label: 'Pesada' },
-                            ].map(({ key, label }) => (
-                              <button
-                                key={key}
-                                onClick={() =>
-                                  setAlimentacao(
-                                    alimentacao ===
-                                      (key as typeof alimentacao)
-                                      ? null
-                                      : (key as typeof alimentacao),
-                                  )
-                                }
-                                className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
-                                  alimentacao === key
-                                    ? 'bg-[#fd2597] text-white shadow-md border border-[#fd2597]'
-                                    : 'bg-white text-[#545454] border border-[#F5D7E5] hover:border-[#fd2597] hover:bg-[#fdbed7]/15'
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={handleSalvarSaude}
-                          className="w-full"
-                        >
-                          Salvar cuidados de hoje
-                        </Button>
-                        <p className="mt-3 text-[11px] md:text-xs text-[#545454] text-center">
-                          Seu corpo também merece esse olhar gentil.
-                        </p>
-                      </div>
-                    </div>
-                  </SoftCard>
-
-                  {/* CARD 4 — Para Você Hoje */}
-                  <SoftCard className="h-full rounded-3xl p-6 md:p-7 bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div className="space-y-3 border-b border-[#F5D7E5] pb-4">
-                        <h3 className="text-base md:text-lg font-semibold text-[#545454] flex items-center gap-2">
-                          <AppIcon
-                            name="lightbulb"
-                            size={18}
-                            className="text-[#fd2597]"
-                            decorative
-                          />
-                          Para Você Hoje
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Sugestões carinhosas só para você — sem cobrança, só
-                          acolhimento.
-                        </p>
-                      </div>
-
-                      <div className="flex-1 space-y-4">
-                        {sugestaoAtual ? (
-                          <div className="p-4 rounded-2xl bg-[#ffe1f1]/80 border border-[#F5D7E5]/70 space-y-3 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
-                            {aiSuggestion ? (
-                              <>
-                                <p className="text-sm md:text-base leading-relaxed text-[#545454] font-semibold">
-                                  {aiSuggestion.headline}
-                                </p>
-                                <p className="text-sm text-[#545454]">
-                                  {aiSuggestion.description}
-                                </p>
-                                {aiSuggestion.tips?.length > 0 && (
-                                  <ul className="mt-2 space-y-1.5 text-sm text-[#545454] list-disc list-inside">
-                                    {aiSuggestion.tips.map(tip => (
-                                      <li key={tip}>{tip}</li>
-                                    ))}
-                                  </ul>
-                                )}
-                                {aiSuggestion.reminder && (
-                                  <p className="mt-2 text-xs text-[#545454]">
-                                    {aiSuggestion.reminder}
-                                  </p>
-                                )}
-                                <button
-                                  onClick={handleGerarSugestao}
-                                  disabled={isLoadingSugestao}
-                                  className="mt-3 text-sm font-semibold text-[#fd2597] hover:text-[#b8236b] transition-colors inline-flex items-center gap-1 disabled:opacity-60"
-                                >
-                                  {isLoadingSugestao
-                                    ? 'Gerando outro carinho...'
-                                    : 'Ver outra sugestão'}
-                                  {!isLoadingSugestao && (
-                                    <AppIcon
-                                      name="refresh-cw"
-                                      size={14}
-                                      decorative
-                                    />
-                                  )}
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <p className="text-sm md:text-base leading-relaxed text-[#545454] font-medium">
-                                  {sugestaoAtual}
-                                </p>
-                                <button
-                                  onClick={handleGerarSugestao}
-                                  disabled={isLoadingSugestao}
-                                  className="mt-3 text-sm font-semibold text-[#fd2597] hover:text-[#b8236b] transition-colors inline-flex items-center gap-1 disabled:opacity-60"
-                                >
-                                  {isLoadingSugestao
-                                    ? 'Gerando outro carinho...'
-                                    : 'Ver outra sugestão'}
-                                  {!isLoadingSugestao && (
-                                    <AppIcon
-                                      name="refresh-cw"
-                                      size={14}
-                                      decorative
-                                    />
-                                  )}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="p-4 rounded-2xl bg-[#ffe1f1]/60 border border-[#F5D7E5]/70 text-center">
-                            <p className="text-sm text-[#545454]">
-                              Clique abaixo para descobrir um cuidado especial
-                              feito só para você hoje.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        {!sugestaoAtual ? (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleGerarSugestao}
-                            disabled={isLoadingSugestao}
-                            className="w-full disabled:opacity-60"
-                          >
-                            {isLoadingSugestao
-                              ? 'Gerando um carinho para você...'
-                              : 'Gerar um carinho para hoje'}
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleSalvarSugestao}
-                            className="w-full"
-                          >
-                            Guardar esse carinho para você
-                          </Button>
-                        )}
-                        <p className="text-[11px] md:text-xs text-[#545454] text-center">
-                          Você pode voltar aqui a qualquer momento para lembrar
-                          desse cuidado.
-                        </p>
-                      </div>
-                    </div>
-                  </SoftCard>
+                  <p className="text-sm md:text-base font-semibold text-[#545454]">
+                    Talvez não seja o momento se…
+                  </p>
+                  <ul className="mt-1 space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                    <li>• Você busca apenas muitos brinquedos pelo menor preço possível.</li>
+                    <li>• Prefere atividades complexas, cheias de materiais e produções longas.</li>
+                    <li>• Não deseja receber orientações de uso ou conteúdos guiados.</li>
+                    <li>• Não se sente confortável em reservar pequenos momentos só para vocês.</li>
+                  </ul>
                 </div>
               </div>
             </SoftCard>
-          </Reveal>
+          </div>
 
-          {/* BLOCO 3 — FAIXA EXPLICATIVA */}
-          <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-[#F5D7E5]/70 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                  Por que esse cuidado importa
+          {/* FAIXA ETÁRIA */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
+                  ESCOLHA A FAIXA ETÁRIA
                 </p>
-                <p className="text-sm text-[#545454] max-w-xl">
-                  Quando você registra seu ritmo, pequenos gestos e como o
-                  corpo está, o Materna360 te ajuda a enxergar padrões de
-                  cansaço, energia e pausas possíveis. Isso vira base para um
-                  dia mais leve, sem precisar se encaixar em uma rotina
-                  perfeita.
+                <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                  A caixa acompanha o ritmo do seu filho — e o seu também.
+                </h3>
+                <p className="text-xs md:text-sm text-[#545454]">
+                  Você seleciona a faixa etária ao assinar e pode ajustar depois,
+                  conforme seu filho cresce ou muda de fase.
                 </p>
               </div>
-              <div className="mt-1 flex items-start gap-2 text-xs text-[#545454]/90 max-w-xs">
-                <div className="mt-0.5">
-                  <AppIcon name="sparkles" className="h-4 w-4 text-[#fd2597]" />
+
+              <div className="grid gap-2.5 md:grid-cols-4">
+                {['0–1 ano', '1–3 anos', '3–5 anos', '5–8 anos'].map(range => (
+                  <button
+                    key={range}
+                    type="button"
+                    className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-3 py-2 text-xs font-medium text-[#545454] transition hover:border-[#fd2597] hover:bg-[#fdbed7]"
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-[#6A6A6A]">
+                Se você mudar de ideia ou seu filho “disparar” no desenvolvimento,
+                é só atualizar a faixa etária antes da próxima caixa.
+              </p>
+            </div>
+          </SoftCard>
+
+          {/* PLANOS DISPONÍVEIS – VERSÃO LANDING PAGE */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_14px_32px_rgba(0,0,0,0.12)] md:p-6">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#fd2597]/80">
+                    PLANOS DISPONÍVEIS
+                  </p>
+                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                    Escolha o ritmo de carinho que faz sentido para a sua família.
+                  </h3>
+                  <p className="text-[11px] md:text-xs text-[#6A6A6A] max-w-xl">
+                    Todos os planos incluem 1 MaternaBox por mês com brinquedo educativo, guia de
+                    conexão e uma surpresa especial.
+                  </p>
                 </div>
-                <p>
-                  Cuidar de você também é maternar. Cada gesto aqui conta como
-                  presença com você mesma — e isso reflete em todo o resto.
+
+                <div className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[10px] font-medium text-[#545454]">
+                  Você pode pausar ou cancelar depois — sem culpa, sem burocracia.
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {/* Comece Leve — Plano Mensal */}
+                <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Comece leve
+                    </p>
+                    <p className="text-sm font-semibold text-[#545454]">Plano mensal</p>
+                    <p className="text-[22px] font-semibold text-[#545454]">
+                      R$ 99
+                      <span className="text-xs font-normal text-[#6A6A6A]"> /mês</span>
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
+                      <li>✔ 1 caixa por mês</li>
+                      <li>✔ renovação automática</li>
+                      <li>✔ pausa quando quiser</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                      Ideal para experimentar a experiência MaternaBox no seu tempo.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                  >
+                    Escolher plano mensal
+                  </Button>
+                </div>
+
+                {/* Ritmo Constante — Plano Trimestral */}
+                <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Ritmo constante
+                    </p>
+                    <p className="text-sm font-semibold text-[#545454]">Plano trimestral</p>
+                    <p className="text-[22px] font-semibold text-[#545454]">
+                      R$ 279
+                      <span className="text-xs font-normal text-[#6A6A6A]"> /3 meses</span>
+                    </p>
+                    <p className="text-[11px] text-[#6A6A6A]">(equivalente a R$ 93 por mês)</p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
+                      <li>✔ 1 caixa por mês durante 3 meses</li>
+                      <li>✔ prioridade na seleção das edições</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                      Para criar um hábito de conexão contínua, sem compromisso longo.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                  >
+                    Escolher plano trimestral
+                  </Button>
+                </div>
+
+                {/* Presença na Rotina — Plano Semestral */}
+                <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Presença na rotina
+                    </p>
+                    <p className="text-sm font-semibold text-[#545454]">Plano semestral</p>
+                    <p className="text-[22px] font-semibold text-[#545454]">
+                      R$ 534
+                      <span className="text-xs font-normal text-[#6A6A6A]"> /6 meses</span>
+                    </p>
+                    <p className="text-[11px] text-[#6A6A6A]">(equivalente a R$ 89 por mês)</p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
+                      <li>✔ 1 caixa por mês durante 6 meses</li>
+                      <li>✔ prioridade no estoque</li>
+                      <li>✔ mimo especial de boas-vindas</li>
+                    </ul>
+                    <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                      Para quem quer garantir meia estação inteira de momentos especiais.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                  >
+                    Escolher plano semestral
+                  </Button>
+                </div>
+
+                {/* Experiência Completa — Plano Anual (destaque) */}
+                <div className="flex flex-col rounded-2xl border border-[#fd2597] bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
+                  <div className="flex items-center justify_between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                      Experiência completa
+                    </p>
+                    <span className="rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[9px] font-semibold text-[#fd2597]">
+                      Mais escolhido
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold text-[#545454]">Plano anual</p>
+                  <p className="text-[22px] font-semibold text-[#545454]">
+                    R$ 948
+                    <span className="text-xs font-normal text-[#6A6A6A]"> /12 meses</span>
+                  </p>
+                  <p className="text-[11px] text-[#6A6A6A]">(equivalente a R$ 79 por mês)</p>
+                  <ul className="mt-1 space-y-0.5 text-[11px] text-[#545454]">
+                    <li>✔ 1 caixa por mês durante 12 meses</li>
+                    <li>✔ prioridade máxima nas edições</li>
+                    <li>✔ mimo exclusivo anual</li>
+                    <li>✔ edição especial comemorativa</li>
+                  </ul>
+                  <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                    Para viver a experiência MaternaBox inteira — com calma, constância e muito carinho.
+                  </p>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="mt-3 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-[11px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                  >
+                    Escolher plano anual
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SoftCard>
+
+          {/* VALORES ESPECIAIS PARA QUEM JÁ VIVE O MATERNA360 */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                Valores especiais para quem já vive o Materna360
+              </h3>
+              <p className="text-xs md:text-sm text-[#545454]">
+                Se você já faz parte da nossa jornada:
+              </p>
+              <ul className="space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                <li>Assinantes Materna+ recebem 5% de leveza no investimento da MaternaBox.</li>
+                <li>Assinantes Materna+360 recebem 10% de cuidado no valor final.</li>
+              </ul>
+              <p className="text-xs md:text-sm text-[#545454]">
+                O ajuste é aplicado automaticamente no checkout.
+                Uma forma de agradecer por caminhar conosco — mês após mês.
+              </p>
+            </div>
+          </SoftCard>
+
+          {/* POR QUE A MATERNABOX É DIFERENTE? · VERSÃO PREMIUM */}
+          <SoftCard className="relative overflow-hidden rounded-3xl border border-[#F5D7E5] bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)] px-5 py-6 shadow-[0_14px_32px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
+            {/* GLOW / DECORAÇÃO */}
+            <div className="pointer-events-none absolute inset-0 opacity-70">
+              <div className="absolute -top-10 -left-6 h-32 w-32 rounded-full bg-[#fdbed7] blur-3xl" />
+              <div className="absolute -bottom-14 right-0 h-32 w-32 rounded-full bg-[#ffe1f1] blur-3xl" />
+            </div>
+            <div className="absolute inset-y-6 left-5 w-1 rounded-full bg-[#fd2597]/80" />
+
+            <div className="relative z-10 grid gap-5 md:grid-cols-[1.4fr,1fr] md:items-start">
+              <div className="md:pl-4 space-y-3 md:space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]">
+                  <AppIcon name="sparkles" size={12} decorative className="text-[#fd2597]" />
+                  <span>Essência MaternaBox</span>
+                </div>
+
+                <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                  Por que a MaternaBox é diferente?
+                </h3>
+
+                <p className="text-xs md:text-sm text-[#545454]">
+                  Porque ela não é só uma caixa chegando na sua porta.
+                  Ela é um convite gentil para você viver a maternidade com mais presença e menos cobrança.
+                </p>
+
+                <p className="text-xs md:text-sm text-[#545454]">
+                  Um convite para transformar pequenos momentos em memórias:
+                </p>
+
+                <div className="space-y-1.5">
+                  {[
+                    'respirar antes de apertar o piloto automático,',
+                    'desacelerar, nem que seja por 10 minutos,',
+                    'brincar com intenção — do jeito que dá hoje,',
+                    'criar vínculos profundos com gestos simples,',
+                    'trazer mais presença para a infância do seu filho e para a sua jornada como mãe.',
+                  ].map(item => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-2 text-[11px] md:text-xs text-[#545454]"
+                    >
+                      <span className="mt-[3px] flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] font-semibold text-[#fd2597]">
+                        •
+                      </span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-2xl bg-white/80 p-4 shadow-[0_10px_26px_rgba(0,0,0,0.10)] border border-[#F5D7E5]">
+                <p className="text-[11px] font-semibold text-[#545454]">
+                  A cada edição, você recebe:
+                </p>
+                <ul className="space-y-1.5 text-[11px] md:text-xs text-[#545454]">
+                  <li>• um brinquedo com intenção, não só mais um item em casa;</li>
+                  <li>• um roteiro simples para aproveitar o momento sem esforço;</li>
+                  <li>• um carinho pensado também para você, não só para o seu filho;</li>
+                  <li>• e a lembrança de que presença possível vale mais do que perfeição.</li>
+                </ul>
+                <p className="pt-1 text-[11px] text-[#6A6A6A]">
+                  MaternaBox é sobre cuidado real: com a infância do seu filho e com o seu coração de mãe.
                 </p>
               </div>
             </div>
           </SoftCard>
 
-          <MotivationalFooter routeKey="cuidar-autocuidado-inteligente" />
+          {/* CTA FINAL + LISTA DE ESPERA */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-6 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:px-7 md:py-7">
+            <div className="grid gap-6 md:grid-cols-[1.1fr,0.9fr] md:items-center">
+              <div className="space-y-3">
+                <h3 className="text-base md:text-lg font-semibold text-[#545454]">
+                  Escolha o seu plano e comece a viver essa experiência com leveza.
+                </h3>
+                <p className="text-xs md:text-sm text-[#545454]">
+                  A sua rotina pode ser mais acolhedora — um passo de cada vez.
+                </p>
+                <p className="text-[11px] md:text-xs text-[#6A6A6A]">
+                  Ao deixar seus dados, você entra na lista de espera oficial da MaternaBox
+                  e será avisada quando abrirmos as primeiras assinaturas.
+                </p>
+
+                {formSuccess && (
+                  <div className="mt-1 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-3 py-2 text-[11px] text-[#545454]">
+                    {formSuccess}
+                  </div>
+                )}
+
+                {formError && (
+                  <div className="mt-1 rounded-2xl border border-[#F5D7E5] bg-[#fff1f6] px-3 py-2 text-[11px] text-[#b8236b]">
+                    {formError}
+                  </div>
+                )}
+              </div>
+
+              <form className="space-y-2.5" onSubmit={handleSubmit}>
+                <div className="space-y-1.5">
+                  <label
+                    className="text-[11px] font-semibold text-[#545454]"
+                    htmlFor="maternabox-name"
+                  >
+                    Nome completo
+                  </label>
+                  <input
+                    id="maternabox-name"
+                    type="text"
+                    value={form.name}
+                    onChange={e => handleChange('name', e.target.value)}
+                    placeholder="Como você gostaria de ser chamada?"
+                    className="w-full rounded-full border border-[#F5D7E5] bg-white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label
+                    className="text-[11px] font-semibold text-[#545454]"
+                    htmlFor="maternabox-whatsapp"
+                  >
+                    WhatsApp
+                  </label>
+                  <input
+                    id="maternabox-whatsapp"
+                    type="tel"
+                    value={form.whatsapp}
+                    onChange={e => handleChange('whatsapp', e.target.value)}
+                    placeholder="(00) 00000-0000"
+                    className="w-full rounded-full border border-[#F5D7E5] bg-white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label
+                    className="text-[11px] font-semibold text-[#545454]"
+                    htmlFor="maternabox-email"
+                  >
+                    E-mail
+                  </label>
+                  <input
+                    id="maternabox-email"
+                    type="email"
+                    value={form.email}
+                    onChange={e => handleChange('email', e.target.value)}
+                    placeholder="Seu melhor e-mail"
+                    className="w-full rounded-full border border-[#F5D7E5] bg_white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-white border-none shadow-[0_10px_26px_rgba(0,0,0,0.18)] disabled:opacity-80 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting
+                    ? 'Enviando seus dados...'
+                    : 'Entrar na lista de espera da MaternaBox ✨'}
+                </Button>
+              </form>
+            </div>
+          </SoftCard>
+
+          <MotivationalFooter routeKey="materna-box" />
         </div>
       </ClientOnly>
     </PageTemplate>
