@@ -118,18 +118,60 @@ const FEATURES = [
   },
 ]
 
+function getPlanCardClasses(plan: Plan, isCurrent: boolean): string {
+  const base =
+    'relative flex flex-col rounded-3xl border p-4 md:p-5 shadow-[0_10px_26px_rgba(0,0,0,0.10)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.16)]'
+
+  if (plan.id === 'materna-plus') {
+    return [
+      base,
+      'bg-[radial-gradient(circle_at_top,#fdbed7_0%,#ffe1f1_50%,#ffffff_100%)] border-[#fd2597]',
+      'md:scale-[1.03]',
+    ].join(' ')
+  }
+
+  if (plan.id === 'materna-360') {
+    return [
+      base,
+      'bg-white border-[#fd2597]/70',
+    ].join(' ')
+  }
+
+  // Essencial
+  return [base, 'bg-white border-[#F5D7E5]'].join(' ')
+}
+
+function getPlanButtonClasses(plan: Plan, isCurrent: boolean): string {
+  const base = 'mt-4 w-full rounded-full text-[11px] font-semibold'
+
+  if (isCurrent) {
+    return [
+      base,
+      'bg-white text-[#fd2597] border border-[#fd2597] hover:bg-[#ffe1f1]',
+    ].join(' ')
+  }
+
+  if (plan.id === 'materna-plus') {
+    return [
+      base,
+      'bg-[#fd2597] text-white border-none shadow-[0_10px_26px_rgba(0,0,0,0.20)] hover:bg-[#b8236b]',
+    ].join(' ')
+  }
+
+  return [
+    base,
+    'bg-white text-[#fd2597] border border-[#fd2597] hover:bg-[#ffe1f1]',
+  ].join(' ')
+}
+
 export default function PlanosPage() {
-  // Por enquanto, mantemos sem integração real de plano atual,
-  // apenas com layout pronto. Integração pode vir depois.
+  // Por enquanto usamos um plano atual fixo (sem integração real)
   const currentPlanId: PlanId = 'essencial'
 
   const handleSelectPlan = (plan: Plan) => {
-    // Aqui depois conectamos com UpgradeSheet / checkout real.
-    // Por enquanto, mantemos apenas um placeholder seguro.
     if (typeof window !== 'undefined') {
-      // Ex.: abrir futuro modal ou redirecionar
-      // window.alert(`Fluxo de upgrade para: ${plan.name} em breve.`)
       console.log('[Materna360][Planos] Selecionar plano:', plan.id)
+      // Futuro: abrir UpgradeSheet / checkout real
     }
   }
 
@@ -141,18 +183,29 @@ export default function PlanosPage() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-6xl px-4 pb-20 pt-6 md:px-6 md:pt-8 space-y-10 md:space-y-12">
-          {/* HERO / INTRO */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-6 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
-            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          {/* HERO PREMIUM */}
+          <SoftCard className="relative overflow-hidden rounded-3xl border border-[#F5D7E5] bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_45%,#ffffff_100%)] px-5 py-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)] md:px-8 md:py-8">
+            {/* Glow lateral */}
+            <div className="pointer-events-none absolute inset-0 opacity-60">
+              <div className="absolute -left-10 top-10 h-40 w-40 rounded-full bg-[#fdbed7] blur-3xl" />
+              <div className="absolute -right-16 bottom-0 h-48 w-48 rounded-full bg-[#ffe1f1] blur-3xl" />
+            </div>
+
+            <div className="relative z-10 grid gap-6 md:grid-cols-[1.5fr,1fr] md:items-center">
               <div className="space-y-3 md:space-y-4 max-w-2xl">
-                <p className="inline-flex items-center gap-2 rounded-full bg-[#ffe1f1] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]">
-                  <AppIcon name="sparkles" className="h-3 w-3 text-[#fd2597]" />
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]">
+                  <AppIcon
+                    name="sparkles"
+                    className="h-3 w-3 text-[#fd2597]"
+                  />
                   <span>Planos Materna360</span>
-                </p>
+                </div>
+
                 <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454] leading-snug">
                   Três formas de viver o Materna360 — começando pelo que cabe no
                   seu hoje.
                 </h2>
+
                 <p className="text-[13px] md:text-[14px] text-[#545454] leading-relaxed">
                   Todos os planos foram pensados para acompanhar a rotina real,
                   com dias bons, dias difíceis e muita coisa acontecendo ao
@@ -160,37 +213,45 @@ export default function PlanosPage() {
                   Materna+ ou viver a experiência completa — sem amarras e sem
                   culpa.
                 </p>
+
                 <p className="text-[12px] text-[#6A6A6A]">
-                  Você pode alterar ou cancelar o plano depois. O importante é
-                  que ele faça sentido para a sua fase, e não o contrário.
+                  Você não precisa decidir “para sempre”. Só o agora já é mais
+                  do que suficiente.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[12px] text-[#545454] space-y-1.5 max-w-sm">
-                <p className="font-semibold text-[#2F3A56]">
-                  Como pensar no plano certo?
-                </p>
-                <p>
-                  • Se você está começando agora a organizar sua rotina, o{' '}
-                  <span className="font-semibold">Essencial</span> já é um
-                  grande passo.
-                </p>
-                <p>
-                  • Se quer apoio extra, conteúdos e IA ampliada, o{' '}
-                  <span className="font-semibold">Materna+</span> costuma ser o
-                  ponto ideal.
-                </p>
-                <p>
-                  • Se deseja viver o ecossistema completo, o{' '}
-                  <span className="font-semibold">Materna+ 360</span> é o seu
-                  lugar.
-                </p>
+              <div className="relative">
+                <div className="absolute -left-3 top-0 h-full w-1 rounded-full bg-[#fd2597]/75" />
+                <div className="rounded-2xl border border-[#F5D7E5] bg-white/85 px-4 py-4 text-[12px] text-[#545454] shadow-[0_12px_28px_rgba(0,0,0,0.16)] backdrop-blur-sm space-y-2 max-w-sm ml-3">
+                  <p className="font-semibold text-[#2F3A56]">
+                    Como pensar no plano certo?
+                  </p>
+                  <p>
+                    • Se você está começando agora a organizar sua rotina, o{' '}
+                    <span className="font-semibold">Essencial</span> já é um
+                    grande passo.
+                  </p>
+                  <p>
+                    • Se quer apoio extra, conteúdos e IA ampliada, o{' '}
+                    <span className="font-semibold">Materna+</span> costuma ser
+                    o ponto ideal.
+                  </p>
+                  <p>
+                    • Se deseja viver o ecossistema completo, o{' '}
+                    <span className="font-semibold">Materna+ 360</span> é o seu
+                    lugar.
+                  </p>
+                  <p className="pt-1 text-[11px] text-[#6A6A6A]">
+                    Você pode alterar ou cancelar o plano depois — sem
+                    burocracia.
+                  </p>
+                </div>
               </div>
             </div>
           </SoftCard>
 
-          {/* CARDS DE PLANOS */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-6 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
+          {/* CARDS DE PLANOS — LAYOUT PREMIUM */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-6 shadow-[0_18px_40px_rgba(0,0,0,0.16)] md:px-7 md:py-7">
             <div className="space-y-5 md:space-y-6">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div className="space-y-1.5">
@@ -208,11 +269,12 @@ export default function PlanosPage() {
                 </div>
 
                 <div className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[10px] font-medium text-[#545454]">
-                  Você pode ajustar o plano depois — sem burocracia.
+                  Você pode ajustar o plano depois — com calma, no seu tempo.
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              {/* Grid com plano central destacado */}
+              <div className="grid gap-4 md:grid-cols-[1.05fr,1.2fr,1.05fr]">
                 {PLANS.map(plan => {
                   const isCurrent = plan.id === currentPlanId
                   const isHighlight = !!plan.highlight
@@ -220,20 +282,26 @@ export default function PlanosPage() {
                   return (
                     <div
                       key={plan.id}
-                      className={[
-                        'flex flex-col rounded-2xl border p-4 shadow-[0_10px_24px_rgba(0,0,0,0.08)]',
-                        plan.id === 'essencial'
-                          ? 'bg-white border-[#F5D7E5]'
-                          : '',
-                        plan.id === 'materna-plus'
-                          ? 'bg-[#ffe1f1] border-[#fd2597]'
-                          : '',
-                        plan.id === 'materna-360'
-                          ? 'bg-white border-[#fd2597]'
-                          : '',
-                      ].join(' ')}
+                      className={getPlanCardClasses(plan, isCurrent)}
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      {/* faixa superior para planos em destaque */}
+                      {isHighlight && (
+                        <div className="absolute inset-x-4 -top-3 flex justify-end">
+                          <div className="inline-flex items-center gap-1 rounded-full bg-[#fd2597] px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
+                            <AppIcon
+                              name="sparkles"
+                              className="h-3 w-3 text-white"
+                            />
+                            <span>
+                              {plan.highlight === 'recomendado'
+                                ? 'Recomendado'
+                                : 'Experiência completa'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-start justify-between gap-2 pt-1">
                         <div className="space-y-0.5">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
                             {plan.label}
@@ -245,7 +313,7 @@ export default function PlanosPage() {
 
                         <div className="flex flex-col items-end gap-1">
                           {plan.tag && (
-                            <span className="rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[9px] font-semibold text-[#fd2597]">
+                            <span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-semibold text-[#fd2597] border border-[#fd2597]/40">
                               {plan.tag}
                             </span>
                           )}
@@ -300,21 +368,7 @@ export default function PlanosPage() {
                         type="button"
                         size="sm"
                         onClick={() => handleSelectPlan(plan)}
-                        className={[
-                          'mt-4 w-full rounded-full text-[11px] font-semibold',
-                          isCurrent
-                            ? 'bg-white text-[#fd2597] border border-[#fd2597] hover:bg-[#ffe1f1]'
-                            : '',
-                          !isCurrent && !isHighlight
-                            ? 'bg-white text-[#fd2597] border border-[#fd2597] hover:bg-[#ffe1f1]'
-                            : '',
-                          !isCurrent && isHighlight && plan.id === 'materna-plus'
-                            ? 'bg-[#fd2597] text-white border-none hover:bg-[#b8236b]'
-                            : '',
-                          !isCurrent && isHighlight && plan.id === 'materna-360'
-                            ? 'bg-white text-[#fd2597] border border-[#fd2597] hover:bg-[#ffe1f1]'
-                            : '',
-                        ].join(' ')}
+                        className={getPlanButtonClasses(plan, isCurrent)}
                       >
                         {isCurrent
                           ? 'Seu plano atual'
@@ -331,8 +385,8 @@ export default function PlanosPage() {
             </div>
           </SoftCard>
 
-          {/* TABELA COMPARATIVA */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-6 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
+          {/* TABELA COMPARATIVA PREMIUM */}
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-6 shadow-[0_16px_36px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
             <div className="space-y-4 md:space-y-5">
               <div className="space-y-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
@@ -348,7 +402,7 @@ export default function PlanosPage() {
                 </p>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-2xl border border-[#F5D7E5] bg-[#fff7fb]">
                 <table className="min-w-full border-collapse text-[11px] md:text-[12px] text-[#545454]">
                   <thead>
                     <tr className="bg-[#ffe1f1]">
@@ -371,7 +425,7 @@ export default function PlanosPage() {
                       <tr
                         key={feature.label}
                         className={
-                          index % 2 === 0 ? 'bg-white' : 'bg-[#fff7fb]'
+                          index % 2 === 0 ? 'bg-white' : 'bg-[#ffe1f1]/35'
                         }
                       >
                         <td className="px-3 py-2 align-top">{feature.label}</td>
@@ -394,10 +448,10 @@ export default function PlanosPage() {
             </div>
           </SoftCard>
 
-          {/* NOTA FINAL / CONFORTO EM RELAÇÃO A MUDANÇA DE PLANO */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-5 shadow-[0_10px_24px_rgba(0,0,0,0.10)] md:px-7 md:py-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1.5 max-w-2xl">
+          {/* NOTAS FINAIS · EMOCIONAL + PRÁTICO */}
+          <div className="grid gap-4 md:grid-cols-[1.3fr,1fr]">
+            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 px-5 py-5 shadow-[0_10px_26px_rgba(0,0,0,0.12)] md:px-7 md:py-6">
+              <div className="space-y-1.5">
                 <h4 className="text-sm md:text-base font-semibold text-[#545454]">
                   Você não precisa decidir “para sempre”. Só o agora já é mais
                   do que suficiente.
@@ -409,17 +463,22 @@ export default function PlanosPage() {
                   fica é a forma como você se trata nesse processo.
                 </p>
               </div>
-              <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[11px] md:text-[12px] text-[#545454]">
+            </SoftCard>
+
+            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1] px-5 py-5 shadow-[0_10px_26px_rgba(0,0,0,0.12)] md:px-6">
+              <div className="space-y-1.5 text-[11px] md:text-[12px] text-[#545454]">
+                <p className="font-semibold text-[#2F3A56]">
+                  Lembrete importante:
+                </p>
                 <p>
-                  <span className="font-semibold">Lembrete importante:</span>{' '}
                   você não precisa ser perfeita nem ter tudo sob controle para
                   merecer cuidado. O Materna360 existe justamente para caminhar
                   com você nos dias em que é mais fácil e, principalmente, nos
                   dias em que não é.
                 </p>
               </div>
-            </div>
-          </SoftCard>
+            </SoftCard>
+          </div>
 
           <MotivationalFooter routeKey="planos-materna" />
         </div>
