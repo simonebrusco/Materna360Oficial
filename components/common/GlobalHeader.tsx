@@ -15,7 +15,14 @@ export function GlobalHeader() {
   const { name, avatar, isLoading } = useProfile()
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/85 border-b border-white/50">
+    <header
+      className="
+        sticky top-0 z-50
+        bg-transparent
+        backdrop-blur-lg
+        border-b border-white/40
+      "
+    >
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
         {/* Left: Logo */}
         <AppLogo width={128} height={32} />
@@ -25,14 +32,13 @@ export function GlobalHeader() {
           {!isLoading && name && (
             <ClientOnly>
               <div className="hidden sm:block text-right">
-                <p
-                  className="m360-micro font-medium"
-                >
+                <p className="m360-micro font-medium">
                   {getTimeGreeting(name)}
                 </p>
               </div>
             </ClientOnly>
           )}
+
           {avatar ? (
             <div className="flex-shrink-0 overflow-hidden">
               <img
@@ -42,7 +48,7 @@ export function GlobalHeader() {
               />
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-full bg-[#ff005e] text-white flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#fd2597] text-white flex items-center justify-center flex-shrink-0">
               <span className="font-semibold text-sm">
                 {name ? name.charAt(0) : 'U'}
               </span>

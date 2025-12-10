@@ -4,7 +4,7 @@ import React from 'react'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 
-type WeekViewData = {
+type WeekDaySummary = {
   dayNumber: number
   dayName: string
   agendaCount: number
@@ -14,127 +14,180 @@ type WeekViewData = {
 }
 
 type WeekViewProps = {
-  weekData: WeekViewData[]
+  weekData: WeekDaySummary[]
 }
 
 export default function WeekView({ weekData }: WeekViewProps) {
+  if (!weekData || weekData.length === 0) return null
+
   return (
-    <div className="space-y-4">
-      {/* Weekly Summary */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
-        <SoftCard className="p-4 md:p-5 text-center">
-          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-wide mb-2">
-            Tarefas
+    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
+      {/* Cabeçalho */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+            Visão da semana
           </p>
-          <p className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)]">
-            {weekData.reduce((acc, day) => acc + day.top3Count, 0)}
+          <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+            Como está a sua semana?
+          </h2>
+          <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
+            Veja, em cada dia da semana, quantos compromissos, prioridades e
+            cuidados com você e com seu filho já foram planejados.
           </p>
-          <p className="text-xs text-[var(--color-text-muted)]/60 mt-1">
-            planejadas esta semana
-          </p>
-        </SoftCard>
+        </div>
 
-        <SoftCard className="p-4 md:p-5 text-center">
-          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-wide mb-2">
-            Autocuidado
-          </p>
-          <p className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)]">
-            {weekData.reduce((acc, day) => acc + day.careCount, 0)}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]/60 mt-1">
-            ações programadas
-          </p>
-        </SoftCard>
-
-        <SoftCard className="p-4 md:p-5 text-center">
-          <p className="text-xs md:text-sm font-semibold text-[var(--color-text-muted)]/70 uppercase tracking-wide mb-2">
-            Família
-          </p>
-          <p className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)]">
-            {weekData.reduce((acc, day) => acc + day.familyCount, 0)}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]/60 mt-1">
-            ações com a família
-          </p>
-        </SoftCard>
+        <div className="inline-flex flex-wrap gap-2 text-[10px] md:text-[11px] text-[var(--color-text-muted)]">
+          <LegendDot colorClass="bg-[var(--color-brand)]" label="Agenda & compromissos" />
+          <LegendDot colorClass="bg-[#FFB3D3]" label="Prioridades do dia" />
+          <LegendDot colorClass="bg-[#9b4d96]" label="Cuidar de mim" />
+          <LegendDot colorClass="bg-[#2f3a56]" label="Cuidar do meu filho" />
+        </div>
       </div>
 
-      {/* Weekly Timeline */}
-      <SoftCard className="p-4 md:p-5">
-        <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] mb-4">
-          Timeline da semana
-        </h3>
-
-        <div className="space-y-2">
-          {weekData.map((day, idx) => (
+      {/* Board da semana */}
+      <div className="overflow-x-auto -mx-2 md:mx-0">
+        <div className="min-w-[640px] md:min-w-0 grid grid-cols-7 gap-2 px-2 md:px-0">
+          {weekData.map(day => (
             <div
-              key={idx}
-              className="flex items-center justify-between p-3 rounded-lg border border-[#f0f0f0] hover:border-[var(--color-brand)]/20 transition-all"
+              key={`${day.dayName}-${day.dayNumber}`}
+              className="flex flex-col rounded-2xl border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)]/60 p-2.5 md:p-3.5 min-h-[140px]"
             >
-              <div className="flex-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-[var(--color-text-main)]">
+              {/* Cabeçalho do dia */}
+              <div className="flex items-baseline justify-between gap-1 mb-1.5">
+                <div>
+                  <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                     {day.dayName}
-                  </span>
-                  <span className="text-xs text-[var(--color-text-muted)]/60">
+                  </p>
+                  <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
                     {day.dayNumber}
-                  </span>
+                  </p>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4">
-                {day.agendaCount > 0 && (
-                  <div className="flex items-center gap-1">
-                    <AppIcon
-                      name="clock"
-                      className="w-3.5 h-3.5 text-[var(--color-text-muted)]/40"
-                    />
-                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
-                      {day.agendaCount}
-                    </span>
-                  </div>
-                )}
-
-                {day.top3Count > 0 && (
-                  <div className="flex items-center gap-1">
-                    <AppIcon
-                      name="target"
-                      className="w-3.5 h-3.5 text-[var(--color-text-muted)]/40"
-                    />
-                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
-                      {day.top3Count}
-                    </span>
-                  </div>
-                )}
-
-                {day.careCount > 0 && (
-                  <div className="flex items-center gap-1">
-                    <AppIcon
-                      name="heart"
-                      className="w-3.5 h-3.5 text-[var(--color-brand)]/40"
-                    />
-                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
-                      {day.careCount}
-                    </span>
-                  </div>
-                )}
-
-                {day.familyCount > 0 && (
-                  <div className="flex items-center gap-1">
-                    <AppIcon
-                      name="smile"
-                      className="w-3.5 h-3.5 text-[var(--color-text-muted)]/40"
-                    />
-                    <span className="text-xs font-semibold text-[var(--color-text-muted)]/70">
-                      {day.familyCount}
-                    </span>
-                  </div>
+                {hasAnyActivity(day) && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#FFE8F2] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand-deep)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                    Dia em movimento
+                  </span>
                 )}
               </div>
+
+              {/* Cards compactos de contagem */}
+              <div className="mt-1 space-y-1.5">
+                <CountPill
+                  icon="calendar"
+                  label="Agenda & compromissos"
+                  count={day.agendaCount}
+                  colorClass="bg-[var(--color-brand)]"
+                />
+                <CountPill
+                  icon="target"
+                  label="Prioridades do dia"
+                  count={day.top3Count}
+                  colorClass="bg-[#FFB3D3]"
+                  textColorClass="text-[#C2285F]"
+                />
+                <CountPill
+                  icon="heart"
+                  label="Cuidar de mim"
+                  count={day.careCount}
+                  colorClass="bg-[#9b4d96]"
+                />
+                <CountPill
+                  icon="smile"
+                  label="Cuidar do meu filho"
+                  count={day.familyCount}
+                  colorClass="bg-[#2f3a56]"
+                />
+              </div>
+
+              {/* Mensagem suave quando está vazio */}
+              {!hasAnyActivity(day) && (
+                <p className="mt-2 text-[10px] md:text-[11px] text-[var(--color-text-muted)]">
+                  Esse dia ainda está em branco. Você pode começar pelos atalhos
+                  do planner ou adicionando um compromisso no calendário.
+                </p>
+              )}
             </div>
           ))}
         </div>
-      </SoftCard>
+      </div>
+    </SoftCard>
+  )
+}
+
+function hasAnyActivity(day: WeekDaySummary) {
+  return (
+    day.agendaCount > 0 ||
+    day.top3Count > 0 ||
+    day.careCount > 0 ||
+    day.familyCount > 0
+  )
+}
+
+function LegendDot({
+  colorClass,
+  label,
+}: {
+  colorClass: string
+  label: string
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#F5D7E5] px-2.5 py-1">
+      <span className={`h-1.5 w-1.5 rounded-full ${colorClass}`} />
+      <span className="text-[10px] md:text-[11px] font-medium text-[var(--color-text-muted)]">
+        {label}
+      </span>
+    </span>
+  )
+}
+
+type CountPillProps = {
+  icon: 'calendar' | 'target' | 'heart' | 'smile'
+  label: string
+  count: number
+  colorClass: string
+  textColorClass?: string
+}
+
+function CountPill({
+  icon,
+  label,
+  count,
+  colorClass,
+  textColorClass,
+}: CountPillProps) {
+  const hasItems = count > 0
+
+  return (
+    <div
+      className={`flex items-center justify-between gap-2 rounded-xl border px-2.5 py-1.5 ${
+        hasItems
+          ? 'bg-white border-[#FFE0F0] shadow-[0_4px_14px_rgba(0,0,0,0.06)]'
+          : 'bg-white/80 border-transparent'
+      }`}
+    >
+      <div className="flex items-center gap-1.5">
+        <span
+          className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${colorClass} ${
+            icon === 'target' ? 'text-[#C2285F]' : 'text-white'
+          }`}
+        >
+          <AppIcon name={icon} className="h-3.5 w-3.5" decorative />
+        </span>
+        <span className="text-[10px] md:text-[11px] font-medium text-[var(--color-text-main)]">
+          {label}
+        </span>
+      </div>
+      <span
+        className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+          hasItems
+            ? `${colorClass} text-white`
+            : 'bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]'
+        } ${textColorClass ?? ''}`}
+      >
+        {count}
+      </span>
     </div>
   )
 }

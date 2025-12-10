@@ -37,25 +37,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'humor-energia',
         href: '/meu-dia/como-estou-hoje?abrir=humor',
         icon: 'smile',
-        label: 'Humor & energia',
+        label: 'Humor & Energia',
       },
       {
         id: 'notas-do-dia',
         href: '/meu-dia/como-estou-hoje?abrir=notas',
         icon: 'book-open',
-        label: 'Notas do dia',
+        label: 'Notas do Dia',
       },
       {
         id: 'resumo-emocional',
         href: '/meu-dia/como-estou-hoje?abrir=resumo',
         icon: 'idea',
-        label: 'Resumo emocional',
+        label: 'Resumo Emocional',
       },
       {
         id: 'semana-emocional',
         href: '/meu-dia/como-estou-hoje?abrir=semana',
         icon: 'time',
-        label: 'Semana emocional',
+        label: 'Semana Emocional',
       },
     ],
   },
@@ -70,7 +70,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'ideias-rapidas',
         href: '/meu-dia/rotina-leve?abrir=ideias',
         icon: 'idea',
-        label: 'Ideias rápidas',
+        label: 'Ideias Rápidas',
       },
       {
         id: 'receitas-inteligentes',
@@ -88,7 +88,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'planner-dia',
         href: '/meu-dia?abrir=planner',
         icon: 'calendar',
-        label: 'Planejar o dia',
+        label: 'Planejar o Dia',
       },
     ],
   },
@@ -103,25 +103,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'meu-ritmo',
         href: '/cuidar/autocuidado-inteligente?abrir=ritmo',
         icon: 'time',
-        label: 'Meu ritmo hoje',
+        label: 'Meu Ritmo Hoje',
       },
       {
         id: 'mini-rotina',
         href: '/cuidar/autocuidado-inteligente?abrir=rotina',
         icon: 'home',
-        label: 'Mini rotina',
+        label: 'Mini Rotina',
       },
       {
         id: 'pausas-respiracao',
         href: '/cuidar/autocuidado-inteligente?abrir=pausas',
         icon: 'idea',
-        label: 'Pausas & respiração',
+        label: 'Pausas & Respiração',
       },
       {
         id: 'pra-voce-hoje',
         href: '/cuidar/autocuidado-inteligente?abrir=gestos',
         icon: 'heart',
-        label: 'Pra você hoje',
+        label: 'Pra Você Hoje',
       },
     ],
   },
@@ -142,19 +142,19 @@ const HUB_CARDS: HubCard[] = [
         id: 'sono-rotina',
         href: '/cuidar/cuidar-com-amor?abrir=sono',
         icon: 'home',
-        label: 'Sono & rotina',
+        label: 'Sono & Rotina',
       },
       {
         id: 'conexao-afetuosa',
         href: '/cuidar/cuidar-com-amor?abrir=conexao',
         icon: 'care',
-        label: 'Conexão afetuosa',
+        label: 'Conexão Afetuosa',
       },
       {
         id: 'pequenos-rituais',
         href: '/cuidar/cuidar-com-amor?abrir=rituais',
         icon: 'star',
-        label: 'Pequenos rituais',
+        label: 'Pequenos Rituais',
       },
     ],
   },
@@ -169,25 +169,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'missoes-dia',
         href: '/maternar/minhas-conquistas?abrir=missoes',
         icon: 'star',
-        label: 'Missões do dia',
+        label: 'Missões do Dia',
       },
       {
         id: 'painel-progresso',
         href: '/maternar/minhas-conquistas?abrir=painel',
         icon: 'calendar',
-        label: 'Painel de progresso',
+        label: 'Painel de Progresso',
       },
       {
         id: 'selos-medalhas',
         href: '/maternar/minhas-conquistas?abrir=selos',
         icon: 'crown',
-        label: 'Selos & medalhas',
+        label: 'Selos & Medalhas',
       },
       {
         id: 'progresso-mensal',
         href: '/maternar/minhas-conquistas?abrir=mensal',
         icon: 'time',
-        label: 'Progresso mensal',
+        label: 'Progresso Mensal',
       },
     ],
   },
@@ -202,25 +202,25 @@ const HUB_CARDS: HubCard[] = [
         id: 'guias-checklists',
         href: '/maternar/biblioteca-materna?filtro=guias',
         icon: 'book-open',
-        label: 'Guias & checklists',
+        label: 'Guias & Checklists',
       },
       {
         id: 'pdfs-ebooks',
         href: '/maternar/biblioteca-materna?filtro=ebooks',
         icon: 'books',
-        label: 'PDFs & e-books',
+        label: 'PDFs & E-books',
       },
       {
         id: 'trilhas-educativas',
         href: '/maternar/biblioteca-materna?filtro=trilhas',
         icon: 'play',
-        label: 'Trilhas educativas',
+        label: 'Trilhas Educativas',
       },
       {
         id: 'por-idade-tema',
         href: '/maternar/biblioteca-materna?filtro=idade-tema',
         icon: 'idea',
-        label: 'Por idade / tema',
+        label: 'Por Idade / Tema',
       },
     ],
   },
@@ -280,7 +280,7 @@ const HUB_CARDS: HubCard[] = [
         id: 'ajuda-suporte',
         href: '/maternar/ferramentas/ajuda-e-parcerias?abrir=ajuda',
         icon: 'idea',
-        label: 'Ajuda & suporte',
+        label: 'Ajuda & Suporte',
       },
       {
         id: 'parcerias',
@@ -301,7 +301,7 @@ export default function CardHub() {
       <Reveal>
         {/* 2 colunas no mobile e no desktop */}
         <div className="grid grid-cols-2 gap-4 md:gap-5">
-          {HUB_CARDS.map((card) => (
+          {HUB_CARDS.map(card => (
             <div
               key={card.id}
               className="flex flex-col items-stretch gap-2 md:gap-3"
@@ -316,7 +316,7 @@ export default function CardHub() {
 
                 {/* Ícones 2x2 */}
                 <div className="relative z-10 grid grid-cols-2 gap-2.5 md:gap-3">
-                  {card.icons.map((item) => (
+                  {card.icons.map(item => (
                     <Link
                       key={item.id}
                       href={item.href}

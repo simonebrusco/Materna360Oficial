@@ -1,155 +1,190 @@
 // app/api/ai/emocional/route.ts
-
 import { NextResponse } from 'next/server'
-import {
-  callMaternaAI,
-  type MaternaProfile,
-  type MaternaChildProfile,
-  type MaternaFocusOfDay,
-} from '@/app/lib/ai/maternaCore'
-import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
-import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
 
-export const runtime = 'nodejs'
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const MODEL = 'gpt-4.1-mini' // pode trocar depois, se quiser
 
-type EmocionalRequestBody = {
-  feature?: 'daily_inspiration' | 'weekly_overview' | 'daily_insight'
+type EmotionalRequestBody = {
+  feature: 'weekly_overview' | 'daily_inspiration'
   origin?: string
-  focus?: MaternaFocusOfDay | null
+  // Campos extras possíveis para contexto futuro (sem obrigação de enviar agora)
+  mood?: string | null
+  energy?: string | null
+  notesPreview?: string | null
 }
 
-const NO_STORE_HEADERS = {
-  'Cache-Control': 'no-store',
-}
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    // Proteção de uso da IA para o eixo emocional
-    assertRateLimit(req, 'ai-emocional', {
-      limit: 30,
-      windowMs: 5 * 60_000, // 30 chamadas a cada 5 minutos
-    })
+    const apiKey = process.env.OPENAI_API_KEY
 
-    let body: EmocionalRequestBody | null = null
+    if (!apiKey) {
+      console.error('[IA Emocional] OPENAI_API_KEY não configurada')
+      return NextResponse.json(
+        { error: 'Configuração de IA indisponível no momento.' },
+        { status: 500 },
+      )
+    }
 
+    const body = (await request.json()) as EmotionalRequestBody
+    const { feature, origin, mood, energy, notesPreview } = body
+
+    if (!feature) {
+      return NextResponse.json(
+        { error: 'Parâmetro "feature" é obrigatório.' },
+        { status: 400 },
+      )
+    }
+
+    // Prompt base alinhado ao tom do Materna360
+    const systemMessage = `
+Você é a IA emocional do Materna360, um app para mães que combina organização leve com apoio emocional.
+Sua missão é oferecer reflexões curtas, acolhedoras e sem julgamentos, sempre em TOM DE VOZ Materna360:
+- gentil, humano, realista, sem frases motivacionais vazias
+- reconhece o cansaço da mãe SEM culpá-la
+- traz alívio e não mais cobrança
+- frases em português do Brasil, curtas e diretas
+Nunca fale de diagnóstico, remédio ou temas médicos.
+Nunca mande a mãe "ser mais grata" ou "pensar positivo" – seja mais concreta e empática.
+Respeite SEMPRE o formato JSON pedido.
+    `.trim()
+
+    const userContext = {
+      origem: origin ?? 'como-estou-hoje',
+      humorAtual: mood ?? null,
+      energiaAtual: energy ?? null,
+      resumoNotas: notesPreview ?? null,
+    }
+
+    const userMessageCommon = `
+Dados de contexto (podem estar vazios):
+${JSON.stringify(userContext, null, 2)}
+    `.trim()
+
+    let userMessage = ''
+    let expectedShapeDescription = ''
+
+    if (feature === 'weekly_overview') {
+      expectedShapeDescription = `
+Responda APENAS com JSON válido neste formato:
+
+{
+  "weeklyInsight": {
+    "title": "string",
+    "summary": "string",
+    "highlights": {
+      "bestDay": "string",
+      "toughDays": "string"
+    }
+  }
+}
+
+- "title": título curto, acolhedor.
+- "summary": visão geral da semana, em 3 a 5 linhas.
+- "bestDay": quando os dias fluem melhor (sem culpar a mãe).
+- "toughDays": quando o dia pesa mais, com lembrete de gentileza consigo mesma.
+      `.trim()
+
+      userMessage = `
+Gere um insight emocional da semana da mãe a partir dos registros dela.
+
+${userMessageCommon}
+
+${expectedShapeDescription}
+      `.trim()
+    } else if (feature === 'daily_inspiration') {
+      expectedShapeDescription = `
+Responda APENAS com JSON válido neste formato:
+
+{
+  "inspiration": {
+    "phrase": "string",
+    "care": "string",
+    "ritual": "string"
+  }
+}
+
+- "phrase": frase curtinha de título (1 linha).
+- "care": texto principal, 3 a 6 linhas, acolhendo o dia da mãe.
+- "ritual": sugestão prática e simples de autocuidado ou conexão, que caiba num dia corrido.
+      `.trim()
+
+      userMessage = `
+Gere uma inspiração emocional para o dia da mãe, considerando humor, energia e notas.
+
+${userMessageCommon}
+
+${expectedShapeDescription}
+      `.trim()
+    } else {
+      return NextResponse.json(
+        { error: 'Feature inválida para IA emocional.' },
+        { status: 400 },
+      )
+    }
+
+    // Chamada para a OpenAI com timeout seguro
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15_000)
+
+    const openAiRes = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.7,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userMessage },
+        ],
+      }),
+    }).finally(() => clearTimeout(timeout))
+
+    if (!openAiRes.ok) {
+      console.error(
+        '[IA Emocional] Erro HTTP da OpenAI:',
+        openAiRes.status,
+        await openAiRes.text().catch(() => '(sem corpo)'),
+      )
+      return NextResponse.json(
+        { error: 'Não consegui gerar a análise emocional agora.' },
+        { status: 502 },
+      )
+    }
+
+    const completion = await openAiRes.json()
+
+    const content: string =
+      completion?.choices?.[0]?.message?.content?.trim() ?? '{}'
+
+    // Tenta fazer o parse do JSON, mesmo que venha com texto ao redor
+    let parsed: any
     try {
-      body = (await req.json()) as EmocionalRequestBody
+      parsed = JSON.parse(content)
     } catch {
-      body = null
+      const first = content.indexOf('{')
+      const last = content.lastIndexOf('}')
+      if (first >= 0 && last > first) {
+        parsed = JSON.parse(content.slice(first, last + 1))
+      } else {
+        throw new Error('Resposta da IA sem JSON válido')
+      }
     }
 
-    // Carrega perfil + criança principal via Eu360 (com fallback neutro)
-    const { profile, child } = (await loadMaternaContextFromRequest(
-      req,
-    )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
-
-    // Chamamos sempre o modo "daily-inspiration" e adaptamos conforme a feature
-    const result = await callMaternaAI({
-      mode: 'daily-inspiration',
-      profile,
-      child,
-      context: {
-        focusOfDay: body?.focus ?? null,
-      },
-    })
-
-    const inspiration = result.inspiration
-
-    // Caso especial: /eu360 pede "weekly_overview" e espera weeklyInsight
-    if (body?.feature === 'weekly_overview') {
-      return NextResponse.json(
-        {
-          weeklyInsight: {
-            title:
-              inspiration?.phrase ??
-              'Como sua semana tem se desenhado',
-            summary:
-              inspiration?.care ??
-              'Pelos seus registros recentes, sua semana parece misturar momentos de cansaço com alguns respiros de leveza.',
-            highlights: {
-              bestDay:
-                inspiration?.ritual ??
-                'Seus melhores dias costumam ser aqueles em que você respeita seus limites e não tenta abraçar o mundo de uma vez.',
-              toughDays:
-                'Os dias mais pesados tendem a aparecer quando você tenta dar conta de tudo sozinha. Pedir ajuda ou reduzir expectativas também é um gesto de amor.',
-            },
-          },
-        },
-        {
-          status: 200,
-          headers: NO_STORE_HEADERS,
-        },
-      )
-    }
-
-    // Novo caso: Insight diário emocional (usado em "Como estou hoje")
-    if (body?.feature === 'daily_insight') {
-      return NextResponse.json(
-        {
-          dailyInsight: {
-            title:
-              inspiration?.phrase ??
-              'Um olhar gentil para o seu dia',
-            body:
-              inspiration?.care ??
-              'Pelos sinais que você tem dado, parece que o dia de hoje veio com uma mistura de cansaço e responsabilidade.',
-            gentleReminder:
-              inspiration?.ritual ??
-              'Você não precisa fazer tudo hoje. Escolha uma coisa importante e permita que o resto seja “suficientemente bom”.',
-          },
-        },
-        {
-          status: 200,
-          headers: NO_STORE_HEADERS,
-        },
-      )
-    }
-
-    // Caso padrão: Inspirações do Dia
-    return NextResponse.json(
-      {
-        inspiration: {
-          phrase:
-            inspiration?.phrase ??
-            'Você não precisa dar conta de tudo hoje.',
-          care:
-            inspiration?.care ??
-            '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-          ritual:
-            inspiration?.ritual ??
-            'Envie uma mensagem carinhosa para alguém que te apoia.',
-        },
-      },
-      {
-        status: 200,
-        headers: NO_STORE_HEADERS,
-      },
-    )
+    return NextResponse.json(parsed, { status: 200 })
   } catch (error) {
-    if (error instanceof RateLimitError) {
-      console.warn('[API /api/ai/emocional] Rate limit atingido:', error.message)
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: error.status ?? 429,
-          headers: NO_STORE_HEADERS,
-        },
-      )
-    }
+    console.error('[IA Emocional] Erro geral na rota /api/ai/emocional:', error)
 
-    console.error('[API /api/ai/emocional] Erro ao gerar inspiração:', error)
-
+    // Resposta genérica, mas acolhedora (o front já tem fallback extra)
     return NextResponse.json(
       {
-        error:
-          'Não consegui gerar uma inspiração agora, tente novamente em instantes.',
+        error: 'Não foi possível gerar a análise emocional agora.',
       },
-      {
-        status: 500,
-        headers: NO_STORE_HEADERS,
-      },
+      { status: 500 },
     )
   }
 }

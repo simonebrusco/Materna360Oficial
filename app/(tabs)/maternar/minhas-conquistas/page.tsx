@@ -1,20 +1,30 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { clsx } from 'clsx'
+import { useSearchParams, useRouter } from 'next/navigation'
+import clsx from 'clsx'
 
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import AppIcon, { type AppIconName } from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
-import { getXpSnapshot, updateXP, type XpSnapshot } from '@/app/lib/xp'
 
-// ===== TYPES & CONSTANTS =====
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { save, load } from '@/app/lib/persist'
+import {
+  getXpSnapshot,
+  updateXP,
+  getXpHistory,
+  type XpSnapshot,
+  type XpHistoryEntry,
+} from '@/app/lib/xp'
+
+// ======================================================
+// TYPES & CONSTANTS
+// ======================================================
 
 type HighlightTarget = 'painel' | 'missoes' | 'selos' | 'mensal' | null
 
@@ -25,220 +35,416 @@ type Mission = {
   done?: boolean
 }
 
+type SealId =
+  | 'primeiro-passo'
+  | 'semana-leve'
+  | 'cuidar-de-mim'
+  | 'conexao'
+  | 'rotina'
+  | 'presenca'
+
+type Seal = {
+  id: SealId
+  label: string
+  icon: AppIconName
+}
+
+type UnlockedSealsMap = Record<SealId, boolean>
+
+type WeekDayIntensity = 'none' | 'low' | 'medium' | 'high'
+
+type WeekSummary = {
+  label: string
+  days: { xp: number; intensity: WeekDayIntensity }[]
+}
+
 const INITIAL_MISSIONS: Mission[] = [
-  { id: 'humor', label: 'Registrar como estou hoje', xp: 10 },
-  { id: 'planner', label: 'Preencher meu planner', xp: 20 },
-  { id: 'pausa', label: 'Fazer uma pausa de 5 minutos sem culpa', xp: 15 },
-  { id: 'conquista', label: 'Registrar uma conquista', xp: 25 },
+  { id: 'humor', label: 'Registrar como estou hoje', xp: 15 },
+  { id: 'planner', label: 'Preencher meu planner', xp: 25 },
+  { id: 'pausa', label: 'Fazer uma pausa de 5 minutos sem culpa', xp: 20 },
+  { id: 'conquista', label: 'Registrar uma conquista', xp: 30 },
 ]
 
-const SEALS = [
-  { id: 'primeiro-passo', label: 'Primeiro passo', icon: 'sparkles' as AppIconName },
-  { id: 'semana-leve', label: 'Semana leve', icon: 'sun' as AppIconName },
-  { id: 'cuidar-de-mim', label: 'Cuidando de mim', icon: 'heart' as AppIconName },
-  { id: 'conexao', label: 'Conectando com meu filho', icon: 'smile' as AppIconName },
-  { id: 'rotina', label: 'Rotina em dia', icon: 'calendar' as AppIconName },
-  { id: 'presenca', label: 'Presença real', icon: 'star' as AppIconName },
+const SEALS: Seal[] = [
+  { id: 'primeiro-passo', label: 'Primeiro passo', icon: 'sparkles' },
+  { id: 'semana-leve', label: 'Semana leve', icon: 'sun' },
+  { id: 'cuidar-de-mim', label: 'Cuidando de mim', icon: 'heart' },
+  { id: 'conexao', label: 'Conectando com meu filho', icon: 'smile' },
+  { id: 'rotina', label: 'Rotina em dia', icon: 'calendar' },
+  { id: 'presenca', label: 'Presença real', icon: 'star' },
 ]
 
-// ===== COMPONENT =====
+// XP alvo por nível
+const LEVEL_XP = 300
+const MISSIONS_STATE_PREFIX = 'missions:minhas-conquistas:'
+
+// ======================================================
+// HELPERS
+// ======================================================
+
+function highlightRingClass(
+  highlightFromQuery: HighlightTarget,
+  target: HighlightTarget,
+) {
+  return highlightFromQuery === target
+    ? 'ring-2 ring-[#fd2597] ring-offset-2 ring-offset-pink-100/60'
+    : ''
+}
+
+function computeLevel(totalXp: number) {
+  if (totalXp <= 0) {
+    return {
+      level: 1,
+      inLevelProgressPercent: 0,
+      missingToNext: LEVEL_XP,
+    }
+  }
+
+  const level = Math.floor(totalXp / LEVEL_XP) + 1
+  const levelBaseXp = (level - 1) * LEVEL_XP
+  const currentInLevel = Math.max(0, totalXp - levelBaseXp)
+  const missingToNext = Math.max(0, level * LEVEL_XP - totalXp)
+  const inLevelProgressPercent = Math.min(
+    100,
+    (currentInLevel / LEVEL_XP) * 100,
+  )
+
+  return {
+    level,
+    inLevelProgressPercent,
+    missingToNext,
+  }
+}
+
+function computeUnlockedSeals(
+  snapshot: XpSnapshot,
+  history: XpHistoryEntry[],
+): UnlockedSealsMap {
+  const daysWithPresence = history.filter(d => d.xp > 0).length
+
+  return {
+    'primeiro-passo': daysWithPresence > 0,
+    'semana-leve': snapshot.streak >= 5,
+    'cuidar-de-mim': snapshot.total >= LEVEL_XP,
+    conexao: daysWithPresence >= 10,
+    rotina: snapshot.streak >= 10,
+    presenca: daysWithPresence >= 20 && snapshot.streak >= 14,
+  }
+}
+
+function buildTodaySummaryText(todayXp: number, completedMissions: number) {
+  if (todayXp <= 0 && completedMissions === 0)
+    return 'Se hoje nada coube na agenda, você ainda merece gentileza.'
+
+  if (completedMissions === 0 && todayXp > 0)
+    return 'Só de aparecer por aqui, você já está cuidando de você.'
+
+  if (completedMissions > 0 && todayXp < 50)
+    return 'Você deu pequenos passos hoje, e isso já conta muito.'
+
+  if (completedMissions >= 2 && todayXp >= 50 && todayXp < 120)
+    return 'Você marcou cuidados importantes hoje. Celebre esse movimento.'
+
+  return 'Hoje você se fez presente de um jeito muito bonito. Não precisa ser perfeito para ser valioso.'
+}
+
+function xpToIntensity(xp: number): WeekDayIntensity {
+  if (xp <= 0) return 'none'
+  if (xp < 30) return 'low'
+  if (xp < 80) return 'medium'
+  return 'high'
+}
+
+function buildMonthWeeks(history: XpHistoryEntry[]): WeekSummary[] {
+  const todayKey = getBrazilDateKey()
+  const [yearStr, monthStr] = todayKey.split('-')
+  const year = Number(yearStr)
+  const month = Number(monthStr)
+  const daysInMonth = new Date(year, month, 0).getDate()
+
+  const byDate = new Map(history.map(h => [h.dateKey, h.xp]))
+
+  const weeks: WeekSummary[] = []
+  let current: WeekSummary = { label: 'Semana 1', days: [] }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = String(day).padStart(2, '0')
+    const key = `${yearStr}-${monthStr}-${d}`
+    const xp = byDate.get(key) ?? 0
+
+    current.days.push({ xp, intensity: xpToIntensity(xp) })
+
+    if (current.days.length === 7 || day === daysInMonth) {
+      weeks.push(current)
+      if (day !== daysInMonth) {
+        current = { label: `Semana ${weeks.length + 1}`, days: [] }
+      }
+    }
+  }
+
+  return weeks.slice(0, 4)
+}
+
+// ======================================================
+// PAGE COMPONENT
+// ======================================================
 
 export default function MinhasConquistasPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
-  const highlightFromQuery: HighlightTarget = useMemo(() => {
+  const highlightFromQuery = useMemo(() => {
     const abrir = searchParams.get('abrir')
     if (!abrir) return null
-    if (abrir === 'painel' || abrir === 'missoes' || abrir === 'selos' || abrir === 'mensal') {
-      return abrir
-    }
+    if (['painel', 'missoes', 'selos', 'mensal'].includes(abrir))
+      return abrir as HighlightTarget
     return null
   }, [searchParams])
 
-  const [missions, setMissions] = useState(
-    INITIAL_MISSIONS.map((m) => ({ ...m, done: false }))
+  const todayDateKey = useMemo(() => getBrazilDateKey(), [])
+
+  const [missions, setMissions] = useState<Mission[]>(
+    INITIAL_MISSIONS.map(m => ({ ...m, done: false })),
   )
 
   const [xp, setXp] = useState<XpSnapshot | null>(null)
+  const [xpHistory, setXpHistory] = useState<XpHistoryEntry[]>([])
+  const [unlockedSeals, setUnlockedSeals] = useState<UnlockedSealsMap>({
+    'primeiro-passo': false,
+    'semana-leve': false,
+    'cuidar-de-mim': false,
+    conexao: false,
+    rotina: false,
+    presenca: false,
+  })
 
-  // Carrega XP salvo ao abrir a página
+  const completedMissions = missions.filter(m => m.done).length
+  const todayXp = xp?.today ?? 0
+  const totalXp = xp?.total ?? 0
+  const streak = xp?.streak ?? 0
+  const todaySummaryTitle = buildTodaySummaryText(todayXp, completedMissions)
+  const levelInfo = computeLevel(totalXp)
+
+  // Carregamento inicial
   useEffect(() => {
     try {
       const snapshot = getXpSnapshot()
+      const history = getXpHistory()
+
       setXp(snapshot)
-    } catch (error) {
-      console.error('[MinhasConquistas] Erro ao carregar XP inicial:', error)
-      setXp({ today: 0, total: 0, streak: 0 })
+      setXpHistory(history)
+      setUnlockedSeals(computeUnlockedSeals(snapshot, history))
+    } catch {
+      const fallback: XpSnapshot = { today: 0, total: 0, streak: 0 }
+      setXp(fallback)
+      setXpHistory([])
+      setUnlockedSeals(computeUnlockedSeals(fallback, []))
     }
-  }, [])
 
-  const completedMissions = missions.filter((m) => m.done).length
+    // Missões do dia
+    try {
+      const stored =
+        load<Record<string, boolean>>(
+          `${MISSIONS_STATE_PREFIX}${todayDateKey}`,
+        ) ?? {}
 
-  const handleMissionToggle = (id: string) => {
-    const mission = missions.find((m) => m.id === id)
+      setMissions(
+        INITIAL_MISSIONS.map(m => ({
+          ...m,
+          done: !!stored[m.id],
+        })),
+      )
+    } catch {}
+  }, [todayDateKey])
+
+  const weeks = useMemo(() => buildMonthWeeks(xpHistory), [xpHistory])
+
+  function handleMissionToggle(id: string) {
+    const mission = missions.find(m => m.id === id)
     if (!mission) return
 
-    const wasDone = !!mission.done
-    const delta = wasDone ? -mission.xp : mission.xp
+    const isDone = !mission.done
+    const delta = isDone ? mission.xp : -mission.xp
 
-    // Atualiza missões visualmente
-    setMissions((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, done: !item.done } : item
+    // Atualiza missões e salva estado
+    setMissions(prev => {
+      const updated = prev.map(m =>
+        m.id === id ? { ...m, done: isDone } : m,
       )
-    )
 
-    // Atualiza XP com fallback seguro (sempre mexe nos números)
-    setXp((prev) => {
-      const base: XpSnapshot = prev ?? { today: 0, total: 0, streak: 0 }
+      const stored: Record<string, boolean> = {}
+      updated.forEach(m => m.done && (stored[m.id] = true))
+      save(`${MISSIONS_STATE_PREFIX}${todayDateKey}`, stored)
 
-      // Fallback calculado no estado local
+      return updated
+    })
+
+    // XP + selos
+    setXp(prev => {
+      const base = prev ?? { today: 0, total: 0, streak: 0 }
       const fallback: XpSnapshot = {
         today: Math.max(0, base.today + delta),
         total: Math.max(0, base.total + delta),
-        // streak: mantém o que já existe; uma lógica mais fina pode ser feita depois
-        streak: base.streak || (delta > 0 ? 1 : 0),
+        streak: delta > 0 ? base.streak + 1 : base.streak,
       }
 
       try {
         const fromStore = updateXP(delta)
+        const history = getXpHistory()
+        setXpHistory(history)
+        setUnlockedSeals(computeUnlockedSeals(fromStore, history))
+
         return fromStore
-      } catch (error) {
-        console.error('[MinhasConquistas] Erro ao atualizar XP global, usando fallback local:', error)
+      } catch {
         return fallback
       }
     })
   }
 
   const highlightRing = (target: HighlightTarget) =>
-    highlightFromQuery === target
-      ? 'ring-2 ring-[#ff005e] ring-offset-2 ring-offset-pink-100/60'
-      : ''
+    highlightRingClass(highlightFromQuery, target)
 
-  const todayXp = xp?.today ?? 0
-  const totalXp = xp?.total ?? 0
-  const streak = xp?.streak ?? 0
+  const levelBadgeLabel =
+    totalXp > 0
+      ? `Nível ${levelInfo.level} · Jornada em andamento`
+      : 'Nível 1 · Jornada começando com calma'
 
-  const xpProgressPercent =
-    todayXp === 0 ? 0 : Math.min(100, (todayXp / 400) * 100) // 400 é só um exemplo de meta diária
+  const progressHelperText =
+    totalXp > 0
+      ? `Faltam aproximadamente ${levelInfo.missingToNext} XP para o próximo nível.`
+      : `Seu próximo nível chega a cada ${LEVEL_XP} XP somados, sem pressa.`
+
+  // ======================================================
+  // RENDER
+  // ======================================================
 
   return (
     <PageTemplate
       label="MATERNAR"
       title="Minhas conquistas"
-      subtitle="Um espaço para celebrar o que você já fez – um passo de cada vez."
+      subtitle="Um espaço para celebrar o que você já fez — um passo de cada vez."
     >
       <ClientOnly>
-        <div className="max-w-6xl mx-auto px-4 pb-16 md:pb-20 space-y-10 md:space-y-12">
-          {/* BLOCO 1 – Painel da sua jornada */}
+        <div className="max-w-6xl mx-auto px-4 pb-16 md:pb-20 space-y-8 md:space-y-10">
+          {/* ======================================================
+              BLOCO 1 — PAINEL DA SUA JORNADA
+          ====================================================== */}
           <RevealSection delay={0}>
             <SoftCard
               className={clsx(
-                'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 lg:p-9 border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.20)]',
-                highlightRing('painel')
+                'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.20)]',
+                highlightRing('painel'),
               )}
             >
-              {/* Fundo com glow */}
+              {/* Fundo */}
               <div className="pointer-events-none absolute inset-0 opacity-80">
-                <div className="absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[rgba(255,0,94,0.28)] blur-3xl" />
-                <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-[rgba(255,216,230,0.9)] blur-3xl" />
+                <div className="absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[rgba(253,37,151,0.28)] blur-3xl" />
+                <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-[rgba(253,190,215,0.9)] blur-3xl" />
               </div>
 
               <div className="relative z-10 space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                       Painel da sua jornada
                     </p>
                     <h2 className="mt-1 text-xl md:text-2xl font-semibold text-[#2f3a56]">
                       Você está avançando. Cada cuidado conta.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-xl">
-                      Este espaço mostra um resumo leve do que você já fez hoje
-                      e ao longo dos dias – sem cobrança, só reconhecimento.
+                      Este espaço mostra um resumo do que você já fez — sem
+                      cobranças, só reconhecimento.
                     </p>
                   </div>
 
+                  {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
-                      <AppIcon name="crown" className="h-4 w-4 text-[#ff005e]" decorative />
-                      Nível 3 · Jornada em andamento
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#2f3a56] shadow-[0_8px_18px_rgba(0,0,0,0.18)] leading-none">
+                      <AppIcon
+                        name="crown"
+                        className="h-4 w-4 text-[#fd2597]"
+                      />
+                      {levelBadgeLabel}
                     </span>
                     <span className="text-[11px] text-[#545454]/80">
-                      Os números abaixo acompanham o que você já fez na plataforma.
+                      Seu progresso atualizado diariamente
                     </span>
                   </div>
                 </div>
 
-                {/* Cards de números */}
+                {/* Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                   <StatCard
                     label="Pontuação de hoje"
                     value={String(todayXp)}
-                    helper="+XP somados a partir das ações de hoje"
+                    helper="+XP de hoje"
                     icon="sparkles"
                   />
                   <StatCard
                     label="Pontuação total"
                     value={String(totalXp)}
-                    helper="Soma de todos os pequenos passos registrados"
+                    helper="Acumulado da jornada"
                     icon="star"
                   />
                   <StatCard
                     label="Dias de sequência"
                     value={String(streak)}
-                    helper="Dias seguidos em que você conseguiu aparecer por aqui"
+                    helper="Presença contínua"
                     icon="calendar"
                   />
                 </div>
 
-                {/* Barra de progresso geral (mock simples usando XP de hoje) */}
+                {/* Barra */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-[#545454]/90">
+                  <div className="flex justify-between text-xs text-[#545454]/90">
                     <span>Rumo ao próximo nível</span>
                     <span>{todayXp} XP hoje</span>
                   </div>
-                  <div className="w-full h-2.5 rounded-full bg-[#ffd8e6]/60 overflow-hidden">
+
+                  <div className="w-full h-2.5 rounded-full bg-[#fdbed7]/40 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#ff005e] to-[#ff8fb4]"
-                      style={{ width: `${xpProgressPercent}%` }}
+                      className="h-full rounded-full bg-[#fd2597]"
+                      style={{ width: `${levelInfo.inLevelProgressPercent}%` }}
                     />
                   </div>
+
                   <p className="text-xs text-[#545454]/80">
-                    Você não precisa fazer tudo. Só continuar aparecendo um pouquinho por dia.
+                    {progressHelperText}
                   </p>
                 </div>
               </div>
             </SoftCard>
           </RevealSection>
 
-          {/* BLOCO 2 – Missões & cuidados do dia */}
+          {/* ======================================================
+              BLOCO 2 — MISSÕES + RESUMO DO DIA
+          ====================================================== */}
           <RevealSection delay={60}>
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6">
-              {/* Missões do dia – ocupa 3/5 no desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* MISSÕES */}
               <SoftCard
                 className={clsx(
-                  'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-5 md:p-7 bg-white border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
-                  highlightRing('missoes')
+                  'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
+                  highlightRing('missoes'),
                 )}
               >
                 <div className="space-y-5">
-                  <header className="space-y-1">
-                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#ff005e]/80">
+                  <header>
+                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#fd2597]/80">
                       Missões do dia
                     </p>
                     <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
-                      Pequenas ações que somam pontos (e leveza).
+                      Pequenas ações que somam leveza.
                     </h2>
                     <p className="text-sm text-[#545454]">
-                      Use este espaço como um lembrete gentil, não como obrigação.
-                      Marque só o que fizer sentido hoje.
+                      Use apenas o que fizer sentido hoje — sem pressão.
                     </p>
                   </header>
 
                   <div className="space-y-2.5">
-                    {missions.map((mission) => {
+                    {missions.map(mission => {
                       const isDone = mission.done
+
                       return (
                         <button
                           key={mission.id}
@@ -247,8 +453,8 @@ export default function MinhasConquistasPage() {
                           className={clsx(
                             'w-full flex items-center justify-between rounded-2xl border px-3.5 py-3 text-left transition-all duration-150',
                             isDone
-                              ? 'border-[#ff005e]/40 bg-[#ffd8e6]/40 shadow-[0_10px_26px_rgba(0,0,0,0.10)]'
-                              : 'border-[#ffd8e6] bg-white hover:bg-[#ffd8e6]/20 hover:border-[#ff005e]/60'
+                              ? 'border-[#fd2597]/40 bg-[#fdbed7]/35 shadow-[0_10px_26px_rgba(0,0,0,0.10)]'
+                              : 'border-[#F5D7E5] bg-white hover:bg-[#fdbed7]/20 hover:border-[#fd2597]/60',
                           )}
                         >
                           <div className="flex items-center gap-3.5">
@@ -256,30 +462,31 @@ export default function MinhasConquistasPage() {
                               className={clsx(
                                 'h-5 w-5 rounded-full border flex items-center justify-center transition-colors',
                                 isDone
-                                  ? 'border-[#ff005e] bg-[#ff005e]'
-                                  : 'border-[#ffd8e6] bg-white'
+                                  ? 'border-[#fd2597] bg-[#fd2597]'
+                                  : 'border-[#F5D7E5] bg-white',
                               )}
                             >
                               {isDone && (
                                 <AppIcon
                                   name="check"
                                   className="h-3.5 w-3.5 text-white"
-                                  decorative
                                 />
                               )}
                             </div>
+
                             <span
                               className={clsx(
                                 'text-sm md:text-[15px]',
                                 isDone
                                   ? 'text-[#545454] line-through'
-                                  : 'text-[#2f3a56]'
+                                  : 'text-[#2f3a56]',
                               )}
                             >
                               {mission.label}
                             </span>
                           </div>
-                          <span className="ml-3 inline-flex items-center rounded-full bg-[#ffd8e6]/80 px-2.5 py-0.5 text-[11px] font-semibold text-[#ff005e]">
+
+                          <span className="ml-3 inline-flex items-center rounded-full bg-[#fdbed7]/80 px-2.5 py-0.5 text-[11px] font-semibold text-[#fd2597] whitespace-nowrap leading-none">
                             {isDone ? `-${mission.xp} XP` : `+${mission.xp} XP`}
                           </span>
                         </button>
@@ -287,24 +494,24 @@ export default function MinhasConquistasPage() {
                     })}
                   </div>
 
-                  <footer className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#545454]/85">
+                  <footer className="flex justify-between text-xs text-[#545454]/85">
                     <span>
-                      {completedMissions} de {missions.length} missões concluídas hoje.
+                      {completedMissions} de {missions.length} concluídas
                     </span>
-                    <span>Se não der pra marcar nenhuma, tudo bem também.</span>
+                    <span>Se nenhuma couber, tudo bem também.</span>
                   </footer>
                 </div>
               </SoftCard>
 
-              {/* Resumo rápido do dia – 2/5 no desktop */}
-              <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-[#ffeef6]/70 border border-[#ffd8e6] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
+              {/* RESUMO DO DIA */}
+              <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-6 bg-[#ffe1f1]/70 border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
                 <div className="space-y-4">
-                  <header className="space-y-1">
-                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#cf285f]">
+                  <header>
+                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">
                       Seu resumo de hoje
                     </p>
                     <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">
-                      Quando você cuida de si, a jornada toda ganha brilho.
+                      {todaySummaryTitle}
                     </h3>
                   </header>
 
@@ -312,31 +519,30 @@ export default function MinhasConquistasPage() {
                     <li className="flex items-start gap-2">
                       <AppIcon
                         name="heart"
-                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#ff005e]"
-                        decorative
+                        className="mt-0.5 h-4 w-4 text-[#fd2597]"
                       />
-                      <span>
-                        Cada missão marcada aqui já mostra que você está olhando para você – mesmo que o dia esteja corrido.
-                      </span>
+                      <span>Você apareceu por você — mesmo num dia corrido.</span>
                     </li>
+
                     <li className="flex items-start gap-2">
                       <AppIcon
                         name="idea"
-                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#ff005e]"
-                        decorative
+                        className="mt-0.5 h-4 w-4 text-[#fd2597]"
                       />
                       <span>
-                        Use este painel junto com o <strong>Meu Dia</strong> e o <strong>Cuidar</strong> para acompanhar sua energia, cuidados e vínculos.
+                        Combine com o <strong>Meu Dia</strong> e{' '}
+                        <strong>Cuidar</strong> para ver sua evolução emocional.
                       </span>
                     </li>
+
                     <li className="flex items-start gap-2">
                       <AppIcon
                         name="smile"
-                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#ff005e]"
-                        decorative
+                        className="mt-0.5 h-4 w-4 text-[#fd2597]"
                       />
                       <span>
-                        Ao final da semana, você poderá olhar para trás e enxergar não só tarefas, mas todos os gestos de presença que fez por você e pela sua família.
+                        No final da semana, você verá sua constância — mesmo nos
+                        dias mais difíceis.
                       </span>
                     </li>
                   </ul>
@@ -345,148 +551,227 @@ export default function MinhasConquistasPage() {
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="w-full justify-center border border-[#ff005e]/20 text-[#ff005e]"
-                    disabled
+                    className="w-full justify-center border border-[#fd2597]/20 text-[#fd2597]"
+                    onClick={() => {
+                      router.push('/meu-dia/como-estou-hoje?abrir=topo')
+                    }}
                   >
-                    Sugestões automáticas chegam em breve
+                    Registrar como estou hoje
                   </Button>
                 </div>
               </SoftCard>
             </div>
           </RevealSection>
 
-          {/* BLOCO 3 – Selos & medalhas */}
+          {/* ======================================================
+              BLOCO 3 — SELOS
+          ====================================================== */}
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg:white border border-[#ffd8e6] shadow-[0_18px_60px_rgba(0,0,0,0.18)] bg-white',
-                highlightRing('selos')
+                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#F5D7E5] shadow-[0_18px_60px_rgba(0,0,0,0.18)]',
+                highlightRing('selos'),
               )}
             >
               <div className="space-y-6">
-                <header className="flex flex-wrap items-baseline justify-between gap-3">
+                <header className="flex items-baseline justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                    <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                       Selos & medalhas
                     </p>
                     <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56]">
-                      Uma coleção das suas pequenas grandes vitórias.
+                      Suas pequenas grandes vitórias.
                     </h2>
                     <p className="mt-1 text-sm text-[#545454] max-w-2xl">
-                      Cada selo representa um momento em que você escolheu cuidar, insistir ou
-                      recomeçar. Não é sobre perfeição, é sobre presença.
+                      Cada selo celebra presença, constância e autocuidado real.
                     </p>
                   </div>
 
-                  <div className="text-xs text-right text-[#545454]/90">
+                  <div className="text-xs text-right text-[#545454]/90 leading-tight">
                     <p>
-                      <span className="font-semibold">{SEALS.length}</span> selos disponíveis
+                      <span className="font-semibold">{SEALS.length}</span> selos
+                      disponíveis
                     </p>
                     <p>Novas conquistas serão desbloqueadas ao longo da jornada.</p>
                   </div>
                 </header>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-                  {SEALS.map((seal) => (
-                    <div
-                      key={seal.id}
-                      className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-[#ffd8e6] bg:white/80 px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)] bg-white/80"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ffe5ef]">
-                        <AppIcon
-                          name={seal.icon}
-                          className="h-5 w-5 text-[#ff005e]"
-                          decorative
-                        />
+                  {SEALS.map(seal => {
+                    const unlocked = unlockedSeals[seal.id]
+
+                    return (
+                      <div
+                        key={seal.id}
+                        className={clsx(
+                          'flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.14)] transition-all',
+                          unlocked
+                            ? 'border-[#F5D7E5] bg-white/90'
+                            : 'border-[#F5D7E5]/80 bg-white/70 opacity-60',
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'flex h-10 w-10 items-center justify-center rounded-2xl',
+                            unlocked ? 'bg-[#ffe1f1]' : 'bg-[#fdbed7]/70',
+                          )}
+                        >
+                          <AppIcon
+                            name={seal.icon}
+                            className={clsx(
+                              'h-5 w-5',
+                              unlocked
+                                ? 'text-[#fd2597]'
+                                : 'text-[#b26b7c]',
+                            )}
+                          />
+                        </div>
+
+                        <p className="text-[11px] font-semibold text-[#2f3a56] leading-snug min-h-[2.4rem] flex items-center justify-center text-center">
+                          {seal.label}
+                        </p>
+
+                        <span
+                          className={clsx(
+                            'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            unlocked
+                              ? 'bg-[#fdbed7]/90 text-[#b8236b]'
+                              : 'bg-[#F5D7E5] text-[#8f4f66]',
+                          )}
+                        >
+                          {unlocked ? 'Conquistado' : 'Bloqueado'}
+                        </span>
                       </div>
-                      <p className="text-[11px] font-semibold leading-snug text-[#2f3a56]">
-                        {seal.label}
-                      </p>
-                      <span className="inline-flex items-center rounded-full bg-[#ffd8e6]/90 px-2 py-0.5 text-[10px] font-semibold text-[#cf285f]">
-                        Conquistado
-                      </span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </SoftCard>
           </RevealSection>
 
-          {/* BLOCO 4 – Progresso mensal */}
+          {/* ======================================================
+              BLOCO 4 — PROGRESSO MENSAL
+          ====================================================== */}
           <RevealSection delay={160}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white/80 border border:white/70 shadow-[0_20px_65px_rgba(0,0,0,0.20)] border-white/70',
-                highlightRing('mensal')
+                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.16)]',
+                highlightRing('mensal'),
               )}
             >
               <div className="space-y-6">
                 <header className="space-y-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#ff005e]/80">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
                     Progresso mensal
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#2f3a56]">
                     Um mês visto com carinho, não com cobrança.
                   </h2>
                   <p className="text-sm text-[#545454] max-w-2xl">
-                    Aqui você terá um resumo dos dias em que conseguiu se cuidar, registrar a
-                    rotina ou criar momentos especiais. Mesmo quando os quadrinhos ficarem em
-                    branco, isso também conta a história da sua fase.
+                    As barrinhas mostram presença e intensidade — cada cor tem
+                    um significado.
                   </p>
                 </header>
 
-                {/* Mapa simplificado de semanas (mock) */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs text-[#545454]/95">
-                    <span>Visão do mês atual (exemplo)</span>
-                    <span>Em breve com dados reais da sua jornada.</span>
+                    <span>Visão do mês atual</span>
+                    <span>Intensidade baseada no XP diário</span>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-3">
-                    {['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'].map((week, index) => (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {weeks.map(week => (
                       <div
-                        key={week}
-                        className="rounded-2xl border border-[#ffd8e6] bg-[#fff7fb] px-3 py-3 flex flex-col gap-2"
+                        key={week.label}
+                        className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/80 px-3 py-3"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-[#cf285f]">
-                            {week}
-                          </span>
-                          <span className="text-[10px] text-[#545454]/90">
-                            {index === 0 ? 'Exemplo' : 'Em breve'}
-                          </span>
-                        </div>
+                        <span className="text-[11px] font-semibold text-[#b8236b]">
+                          {week.label}
+                        </span>
 
-                        <div className="flex gap-1.5">
-                          {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                        <div className="mt-2 flex gap-1.5">
+                          {week.days.map((day, idx) => (
                             <div
-                              key={day}
+                              key={idx}
                               className={clsx(
-                                'h-6 w-2.5 rounded-full bg-[#ffd8e6]/70',
-                                index === 0 && day < 4 && 'bg-[#ff005e]/70'
+                                'h-6 w-2.5 rounded-full transition-all bg-[#fdbed7]/40',
+                                day.intensity === 'none' &&
+                                  'bg-white/90 border border-[#F5D7E5]/90',
+                                day.intensity === 'low' && 'bg-[#fdbed7]',
+                                day.intensity === 'medium' &&
+                                  'bg-[#fd2597]/70',
+                                day.intensity === 'high' && 'bg-[#fd2597]',
                               )}
                             />
                           ))}
                         </div>
 
-                        <p className="mt-1 text-[11px] text-[#545454]/90">
-                          Dias marcados mostram momentos em que você conseguiu aparecer por aqui.
+                        <p className="mt-2 text-[10px] text-[#545454]/90">
+                          Tons mais fortes indicam dias com mais gestos de
+                          presença.
                         </p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <p className="text-xs md:text-sm text-[#545454]/85">
-                  Quando essa área estiver conectada aos seus registros, você poderá enxergar o
-                  mês inteiro com mais gentileza: não só o que faltou, mas tudo o que você já
-                  conseguiu fazer por você e pela sua família.
+                <p className="text-xs text-[#545454]/85">
+                  Conforme você for registrando mais dias, o mês vai ganhando
+                  forma e cor — a sua jornada registrada com carinho.
                 </p>
               </div>
             </SoftCard>
           </RevealSection>
 
-          {/* Rodapé motivacional geral */}
+          {/* ======================================================
+              BLOCO 5 — POR QUE ISSO IMPORTA
+          ====================================================== */}
+          <RevealSection delay={200}>
+            <SoftCard className="rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-white border border-[#F5D7E5] shadow-[0_12px_36px_rgba(0,0,0,0.16)]">
+              <div className="grid gap-4 md:gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] items-start">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
+                    Por que isso importa
+                  </p>
+                  <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
+                    Cada registro aqui é um gesto de presença.
+                  </h2>
+                  <p className="text-sm text-[#545454]">
+                    As conquistas não existem para te cobrar resultados. Elas
+                    existem para mostrar, com carinho, tudo o que você já está
+                    fazendo — mesmo nos dias em que parece pouco.
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-sm text-[#545454]">
+                  <div className="flex items-start gap-2">
+                    <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe1f1]">
+                      <AppIcon
+                        name="sparkles"
+                        className="h-3.5 w-3.5 text-[#fd2597]"
+                      />
+                    </div>
+                    <p>
+                      Quando você marca uma missão, registra seu humor ou salva
+                      um cuidado, o Materna360 transforma isso em XP, selos e
+                      presença contínua. É um jeito visual de enxergar a sua
+                      dedicação ao longo do tempo.
+                    </p>
+                  </div>
+
+                  <p>
+                    Você não precisa cumprir todas as missões nem desbloquear
+                    todos os selos para “ir bem”. Um único gesto já conta muito.{' '}
+                    <span className="font-semibold">
+                      A jornada é sua, no seu ritmo — nós só ajudamos a iluminar
+                      o caminho.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </SoftCard>
+          </RevealSection>
+
           <MotivationalFooter routeKey="maternar-minhas-conquistas" />
         </div>
       </ClientOnly>
@@ -494,7 +779,9 @@ export default function MinhasConquistasPage() {
   )
 }
 
-// ===== SMALL HELPERS =====
+// ======================================================
+// SMALL HELPERS
+// ======================================================
 
 function RevealSection({
   children,
@@ -519,18 +806,24 @@ type StatCardProps = {
 
 function StatCard({ label, value, helper, icon }: StatCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.12)] p-3.5 md:p-4">
-      <div className="absolute -top-6 -right-4 h-14 w-14 rounded-full bg-[#ffd8e6] blur-2xl opacity-80" />
+    <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.12)] p-4">
+      <div className="absolute -top-6 -right-4 h-14 w-14 rounded-full bg-[#ffe1f1] blur-2xl opacity-80" />
+
       <div className="relative z-10 space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#545454]/80">
             {label}
           </p>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#ffe5ef]">
-            <AppIcon name={icon} className="h-3.5 w-3.5 text-[#ff005e]" decorative />
+
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#ffe1f1]">
+            <AppIcon name={icon} className="h-3.5 w-3.5 text-[#fd2597]" />
           </div>
         </div>
-        <p className="text-2xl md:text-[26px] font-semibold text-[#2f3a56]">{value}</p>
+
+        <p className="text-2xl md:text-[26px] font-semibold text-[#2f3a56]">
+          {value}
+        </p>
+
         {helper && (
           <p className="text-[11px] text-[#545454]/80 leading-snug">
             {helper}

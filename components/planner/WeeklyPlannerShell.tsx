@@ -13,16 +13,21 @@ import {
   usePlannerSavedContents,
   type PlannerSavedContent,
 } from '@/app/hooks/usePlannerSavedContents'
-
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import WeekView from './WeekView'
 import { Reveal } from '@/components/ui/Reveal'
 import { IntelligentSuggestionsSection } from '@/components/blocks/IntelligentSuggestionsSection'
 import SavedContentsSection from '@/components/blocks/SavedContentsSection'
+import { track } from '@/app/lib/telemetry'
+import { updateXP } from '@/app/lib/xp'
 
+// =======================================================
+// TIPAGENS
+// =======================================================
 type Appointment = {
   id: string
+  dateKey: string
   time: string
   title: string
   tag?: string
@@ -40,13 +45,31 @@ type TaskItem = {
 type PlannerData = {
   appointments: Appointment[]
   tasks: TaskItem[]
-  notes: string // compatibilidade
+  notes: string
 }
 
+type ModalAppointmentFormProps = {
+  mode: 'create' | 'edit'
+  initialDateKey: string
+  initialTitle?: string
+  initialTime?: string
+  onSubmit: (data: { dateKey: string; title: string; time: string }) => void
+  onCancel: () => void
+  onDelete?: () => void
+}
+
+type QuickListModalProps = {
+  mode: 'top3' | 'selfcare' | 'family'
+  items: TaskItem[]
+  onAdd: (title: string) => void
+  onToggle: (id: string) => void
+  onClose: () => void
+}
+
+// =======================================================
+// COMPONENTE PRINCIPAL
+// =======================================================
 export default function WeeklyPlannerShell() {
-  // ===========================
-  // ESTADO PRINCIPAL
-  // ===========================
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -61,66 +84,80 @@ export default function WeeklyPlannerShell() {
   // Planner (sincronizar data com mini-hubs)
   const plannerHook = usePlannerSavedContents()
 
-  // Estado local para IA (humor + intenção do dia)
+  // Estado local para IA
   const [mood, setMood] = useState<string | null>(null)
   const [dayIntention, setDayIntention] = useState<string | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  // Modal de compromisso (calendário)
   const [modalDate, setModalDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Modal de conteúdo salvo (kanban)
+  const [editingAppointment, setEditingAppointment] =
+    useState<Appointment | null>(null)
+
   const [selectedSavedContent, setSelectedSavedContent] =
     useState<PlannerSavedContent | null>(null)
 
-  // Modal de ações rápidas (top3 / cuidar de mim / filho)
   const [quickAction, setQuickAction] = useState<
     'top3' | 'selfcare' | 'family' | null
   >(null)
 
-  // ===========================
+  // ======================================================
   // HYDRATION
-  // ===========================
+  // ======================================================
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
     plannerHook.setDateKey(dateKey)
     setIsHydrated(true)
+
+    try {
+      track('planner.opened', {
+        tab: 'meu-dia',
+        dateKey,
+      })
+    } catch {}
   }, [plannerHook])
 
   useEffect(() => {
     if (isHydrated && selectedDateKey) {
       plannerHook.setDateKey(selectedDateKey)
+      try {
+        track('planner.date_changed', {
+          tab: 'meu-dia',
+          dateKey: selectedDateKey,
+        })
+      } catch {}
     }
   }, [selectedDateKey, isHydrated, plannerHook])
 
-  // ===========================
-  // LOAD DATA (localStorage)
-  // ===========================
+  // ======================================================
+  // LOAD DATA
+  // ======================================================
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
-    const loadedData: PlannerData = {
-      appointments:
-        load(`planner/appointments/${selectedDateKey}`, []) ?? [],
-      tasks: load(`planner/tasks/${selectedDateKey}`, []) ?? [],
-      notes: load(`planner/notes/${selectedDateKey}`, '') ?? '',
-    }
+    const loadedAppointments: Appointment[] =
+      load('planner/appointments/all', []) ?? []
+    const loadedTasks: TaskItem[] =
+      load(`planner/tasks/${selectedDateKey}`, []) ?? []
+    const loadedNotes: string =
+      load(`planner/notes/${selectedDateKey}`, '') ?? ''
 
-    setPlannerData(loadedData)
+    setPlannerData({
+      appointments: loadedAppointments,
+      tasks: loadedTasks,
+      notes: loadedNotes,
+    })
   }, [selectedDateKey, isHydrated])
 
-  // ===========================
+  // ======================================================
   // SAVE DATA
-  // ===========================
+  // ======================================================
   useEffect(() => {
-    if (!isHydrated || !selectedDateKey) return
-    save(
-      `planner/appointments/${selectedDateKey}`,
-      plannerData.appointments,
-    )
-  }, [plannerData.appointments, selectedDateKey, isHydrated])
+    if (!isHydrated) return
+    save('planner/appointments/all', plannerData.appointments)
+  }, [plannerData.appointments, isHydrated])
 
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
@@ -132,33 +169,106 @@ export default function WeeklyPlannerShell() {
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
-  // ===========================
+  // ======================================================
   // ACTIONS
-  // ===========================
+  // ======================================================
   const handleDateSelect = useCallback((date: Date) => {
-    setSelectedDateKey(getBrazilDateKey(date))
-  }, [])
+    const dateKey = getBrazilDateKey(date)
+    setSelectedDateKey(dateKey)
 
+    try {
+      track('planner.date_clicked', {
+        tab: 'meu-dia',
+        dateKey,
+      })
+    } catch {}
+  }, [])
   const handleAddAppointment = useCallback(
     (appointment: Omit<Appointment, 'id'>) => {
       const newAppointment: Appointment = {
         ...appointment,
         id: Math.random().toString(36).slice(2, 9),
       }
+
       setPlannerData(prev => ({
         ...prev,
         appointments: [...prev.appointments, newAppointment],
       }))
+
+      try {
+        track('planner.appointment_added', {
+          tab: 'meu-dia',
+          time: appointment.time ?? null,
+          dateKey: appointment.dateKey,
+        })
+      } catch {}
+
+      try {
+        void updateXP(6)
+      } catch {}
     },
     [],
   )
 
-  const openModalForDate = (date: Date) => {
-    setModalDate(date)
+  const handleUpdateAppointment = useCallback((updated: Appointment) => {
+    setPlannerData(prev => ({
+      ...prev,
+      appointments: prev.appointments.map(app =>
+        app.id === updated.id ? updated : app,
+      ),
+    }))
+
+    try {
+      track('planner.appointment_updated', {
+        tab: 'meu-dia',
+        id: updated.id,
+        dateKey: updated.dateKey,
+      })
+    } catch {}
+  }, [])
+
+  const handleDeleteAppointment = useCallback((id: string) => {
+    setPlannerData(prev => ({
+      ...prev,
+      appointments: prev.appointments.filter(app => app.id !== id),
+    }))
+
+    try {
+      track('planner.appointment_deleted', {
+        tab: 'meu-dia',
+        id,
+      })
+    } catch {}
+  }, [])
+
+  const openModalForDate = (day: Date) => {
+    const key = getBrazilDateKey(day)
+    setSelectedDateKey(key)
+    setModalDate(day)
     setIsModalOpen(true)
+
+    try {
+      track('planner.appointment_modal_opened', {
+        tab: 'meu-dia',
+        dateKey: key,
+      })
+    } catch {}
   }
 
-  // TAREFAS – helpers
+  const openEditModalForAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment)
+
+    try {
+      track('planner.appointment_edit_opened', {
+        tab: 'meu-dia',
+        id: appointment.id,
+      })
+    } catch {}
+  }
+
+  // ======================================================
+  // TAREFAS
+  // ======================================================
   const addTask = (title: string, origin: TaskOrigin) => {
     const newTask: TaskItem = {
       id: Math.random().toString(36).slice(2, 9),
@@ -166,31 +276,196 @@ export default function WeeklyPlannerShell() {
       done: false,
       origin,
     }
+
     setPlannerData(prev => ({
       ...prev,
       tasks: [...prev.tasks, newTask],
     }))
+
+    try {
+      track('planner.task_added', {
+        tab: 'meu-dia',
+        origin,
+      })
+    } catch {}
+
+    try {
+      const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
+      void updateXP(base)
+    } catch {}
   }
 
   const toggleTask = (id: string) => {
+    setPlannerData(prev => {
+      const task = prev.tasks.find(t => t.id === id)
+      const willBeDone = task ? !task.done : false
+
+      const updatedTasks = prev.tasks.map(t =>
+        t.id === id ? { ...t, done: !t.done } : t,
+      )
+
+      if (task) {
+        try {
+          track('planner.task_toggled', {
+            tab: 'meu-dia',
+            id: task.id,
+            origin: task.origin,
+            done: willBeDone,
+          })
+        } catch {}
+
+        if (willBeDone) {
+          try {
+            void updateXP(4)
+          } catch {}
+        }
+      }
+
+      return {
+        ...prev,
+        tasks: updatedTasks,
+      }
+    })
+  }
+
+  const editTask = (id: string) => {
+    setPlannerData(prev => {
+      const task = prev.tasks.find(t => t.id === id)
+      if (!task) return prev
+
+      const novoTitulo = window.prompt('Editar lembrete:', task.title)
+      if (!novoTitulo || !novoTitulo.trim()) return prev
+
+      const updated = prev.tasks.map(t =>
+        t.id === id ? { ...t, title: novoTitulo.trim() } : t,
+      )
+
+      return { ...prev, tasks: updated }
+    })
+  }
+
+  const deleteTask = (id: string) => {
+    const confirmar = window.confirm(
+      'Tem certeza que deseja excluir este lembrete?',
+    )
+    if (!confirmar) return
+
     setPlannerData(prev => ({
       ...prev,
-      tasks: prev.tasks.map(task =>
-        task.id === id ? { ...task, done: !task.done } : task,
-      ),
+      tasks: prev.tasks.filter(t => t.id !== id),
     }))
   }
 
-  // ===========================
+  const handleViewModeChange = (mode: 'day' | 'week') => {
+    setViewMode(mode)
+
+    try {
+      track('planner.view_mode_changed', {
+        tab: 'meu-dia',
+        mode,
+      })
+    } catch {}
+  }
+
+  const handleMoodSelect = (key: string) => {
+    setMood(prev => {
+      const next = prev === key ? null : key
+
+      try {
+        track('planner.mood.selected', {
+          tab: 'meu-dia',
+          mood: next,
+        })
+      } catch {}
+
+      if (next) {
+        try {
+          void updateXP(3)
+        } catch {}
+      }
+
+      return next
+    })
+  }
+
+  const handleDayIntentionSelect = (value: string) => {
+    setDayIntention(prev => {
+      const next = prev === value ? null : value
+
+      try {
+        track('planner.day_intention.selected', {
+          tab: 'meu-dia',
+          intention: next,
+        })
+      } catch {}
+
+      if (next) {
+        try {
+          void updateXP(3)
+        } catch {}
+      }
+
+      return next
+    })
+  }
+
+  const handleToggleSuggestions = () => {
+    setShowSuggestions(prev => {
+      const next = !prev
+
+      try {
+        track('planner.suggestions.toggle', {
+          tab: 'meu-dia',
+          enabled: next,
+        })
+      } catch {}
+
+      if (next) {
+        try {
+          void updateXP(5)
+        } catch {}
+      }
+
+      return next
+    })
+  }
+
+  const handleOpenQuickAction = (mode: 'top3' | 'selfcare' | 'family') => {
+    setQuickAction(mode)
+
+    try {
+      track('planner.quick_action.opened', {
+        tab: 'meu-dia',
+        mode,
+      })
+    } catch {}
+  }
+
+  // ======================================================
   // FORMATAÇÕES
-  // ===========================
+  // ======================================================
   const selectedDate = useMemo(() => {
     if (!isHydrated || !selectedDateKey) return new Date()
-    const [year, month, day] = selectedDateKey
-      .split('-')
-      .map(Number)
-    return new Date(year, month - 1, day)
+    const [y, m, d] = selectedDateKey.split('-').map(Number)
+    return new Date(y, m - 1, d)
   }, [selectedDateKey, isHydrated])
+
+  const sortedAppointments = useMemo(() => {
+    const list = [...plannerData.appointments]
+
+    return list.sort((a, b) => {
+      if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey)
+
+      if (!a.time && !b.time) return 0
+      if (!a.time) return 1
+      if (!b.time) return -1
+
+      const [ah, am] = a.time.split(':').map(Number)
+      const [bh, bm] = b.time.split(':').map(Number)
+
+      return ah !== bh ? ah - bh : am - bm
+    })
+  }, [plannerData.appointments])
 
   if (!isHydrated) return null
 
@@ -217,32 +492,40 @@ export default function WeeklyPlannerShell() {
     goal: 'META',
     event: 'EVENTO',
   }
-
   const moodSummary =
     (mood ? moodLabel[mood] : null) &&
     (dayIntention ? intentionLabel[dayIntention] : null)
       ? `Hoje você está ${
           moodLabel[mood as keyof typeof moodLabel]
         } e escolheu um dia ${
-          intentionLabel[
-            dayIntention as keyof typeof intentionLabel
-          ]
+          intentionLabel[dayIntention as keyof typeof intentionLabel]
         }. Que tal começar definindo suas prioridades?`
       : 'Conte pra gente como você está e que tipo de dia você quer ter. Vamos organizar tudo a partir disso.'
 
   const tasksByOrigin = (origin: TaskOrigin) =>
     plannerData.tasks.filter(task => task.origin === origin)
 
-  // ===========================
+  // ======================================================
   // RENDER
-  // ===========================
+  // ======================================================
   return (
     <>
       <Reveal delay={150}>
         <div className="space-y-6 md:space-y-8 mt-4 md:mt-6">
           {/* CALENDÁRIO PREMIUM */}
-          <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_22px_55px_rgba(255,20,117,0.12)] p-4 md:p-6 space-y-4 md:space-y-6 bg-white/80 backdrop-blur-xl">
+          <SoftCard className="
+            rounded-3xl 
+            bg-white 
+            border border-[var(--color-soft-strong)] 
+            shadow-[0_22px_55px_rgba(253,37,151,0.12)] 
+            p-4 md:p-6 
+            space-y-4 md:space-y-6 
+            bg-white/80 
+            backdrop-blur-xl
+          ">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+              {/* Ícone + Navegação mês */}
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
                   <AppIcon
@@ -250,10 +533,17 @@ export default function WeeklyPlannerShell() {
                     className="w-4 h-4 text-[var(--color-brand)]"
                   />
                 </span>
+
                 <div className="flex items-center gap-2">
+                  {/* Voltar mês */}
                   <button
                     type="button"
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+                    className="
+                      h-7 w-7 rounded-full flex items-center justify-center 
+                      text-[var(--color-text-muted)] 
+                      hover:bg-[var(--color-soft-strong)]/70 
+                      text-sm
+                    "
                     onClick={() => {
                       const d = new Date(selectedDate)
                       d.setMonth(d.getMonth() - 1)
@@ -262,15 +552,29 @@ export default function WeeklyPlannerShell() {
                   >
                     ‹
                   </button>
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
+
+                  {/* Mês + Ano */}
+                  <h2 className="
+                    text-base md:text-lg 
+                    font-semibold 
+                    text-[var(--color-text-main)] 
+                    capitalize
+                  ">
                     {selectedDate.toLocaleDateString('pt-BR', {
                       month: 'long',
                       year: 'numeric',
                     })}
                   </h2>
+
+                  {/* Avançar mês */}
                   <button
                     type="button"
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+                    className="
+                      h-7 w-7 rounded-full flex items-center justify-center 
+                      text-[var(--color-text-muted)] 
+                      hover:bg-[var(--color-soft-strong)]/70 
+                      text-sm
+                    "
                     onClick={() => {
                       const d = new Date(selectedDate)
                       d.setMonth(d.getMonth() + 1)
@@ -282,24 +586,43 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
 
-              <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full self-start md:self-auto">
+              {/* Alternância de modo Dia / Semana */}
+              <div className="
+                flex gap-2 
+                bg-[var(--color-soft-bg)]/80 
+                p-1 rounded-full 
+                self-start md:self-auto
+              ">
                 <button
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                    viewMode === 'day'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                  onClick={() => setViewMode('day')}
+                  className={`
+                    px-4 py-1.5 rounded-full 
+                    text-xs md:text-sm 
+                    font-semibold 
+                    transition-all
+                    ${
+                      viewMode === 'day'
+                        ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+                    }
+                  `}
+                  onClick={() => handleViewModeChange('day')}
                 >
                   Dia
                 </button>
+
                 <button
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                    viewMode === 'week'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                  onClick={() => setViewMode('week')}
+                  className={`
+                    px-4 py-1.5 rounded-full 
+                    text-xs md:text-sm 
+                    font-semibold 
+                    transition-all
+                    ${
+                      viewMode === 'week'
+                        ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+                    }
+                  `}
+                  onClick={() => handleViewModeChange('week')}
                 >
                   Semana
                 </button>
@@ -308,7 +631,13 @@ export default function WeeklyPlannerShell() {
 
             {/* Cabeçalho dos dias */}
             <div className="space-y-2 md:space-y-3">
-              <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
+              <div className="
+                grid grid-cols-7 
+                text-[10px] md:text-xs 
+                font-semibold 
+                text-[var(--color-text-muted)] 
+                text-center uppercase tracking-wide
+              ">
                 <span>Seg</span>
                 <span>Ter</span>
                 <span>Qua</span>
@@ -320,47 +649,102 @@ export default function WeeklyPlannerShell() {
 
               {/* Grade do mês */}
               <div className="grid grid-cols-7 gap-1.5 md:gap-2">
-                {generateMonthMatrix(selectedDate).map(
-                  (day, i) =>
-                    day ? (
-                      <button
-                        key={i}
-                        onClick={() => openModalForDate(day)}
-                        className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex items-center justify-center transition-all border ${
-                          getBrazilDateKey(day) === selectedDateKey
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.45)]'
+                {generateMonthMatrix(selectedDate).map((day, i) => {
+                  if (!day) {
+                    return <div key={i} className="h-8 md:h-9" />
+                  }
+
+                  const dayKey = getBrazilDateKey(day)
+                  const isSelected = dayKey === selectedDateKey
+                  const hasAppointments = plannerData.appointments.some(
+                    app => app.dateKey === dayKey,
+                  )
+
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => openModalForDate(day)}
+                      className={`
+                        h-8 md:h-9 rounded-full 
+                        text-xs md:text-sm 
+                        flex flex-col items-center justify-center 
+                        transition-all border
+                        ${
+                          isSelected
+                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(253,37,151,0.45)]'
                             : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
-                        }`}
-                      >
-                        {day.getDate()}
-                      </button>
-                    ) : (
-                      <div key={i} className="h-8 md:h-9" />
-                    ),
-                )}
+                        }
+                      `}
+                    >
+                      <span>{day.getDate()}</span>
+
+                      {hasAppointments && (
+                        <span className="
+                          mt-0.5 h-1.5 w-1.5 rounded-full 
+                          bg-[var(--color-brand)]
+                        " />
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </SoftCard>
-
           {/* VISÃO DIA */}
           {viewMode === 'day' && (
             <div className="mt-2 md:mt-4 space-y-8 md:space-y-10">
-            <section className="grid grid-cols-2 max-[380px]:grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 md:items-stretch">
-                {/* LEMBRETES RÁPIDOS – LISTA ÚNICA */}
+              
+              {/* LEMBRETES + ATALHOS */}
+              <section className="
+                grid grid-cols-2 
+                max-[380px]:grid-cols-1 
+                gap-4 
+                md:grid-cols-2 
+                md:gap-8 
+                md:items-stretch
+              ">
+                
+                {/* LEMBRETES RÁPIDOS */}
                 <div className="flex h-full">
-                  <SoftCard className="flex-1 h-full rounded-3xl bg-white border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.05)] p-4 md:p-5 flex flex-col">
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)] mb-1">
+                  <SoftCard className="
+                    flex-1 h-full 
+                    rounded-3xl bg-white 
+                    border border-[var(--color-soft-strong)] 
+                    shadow-[0_18px_40px_rgba(0,0,0,0.05)] 
+                    p-4 md:p-5 
+                    flex flex-col
+                  ">
+                    <h2 className="
+                      text-lg md:text-xl 
+                      font-semibold 
+                      text-[var(--color-text-main)] 
+                      mb-1
+                    ">
                       Lembretes rápidos
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                      Tudo que você salvar nos atalhos aparece aqui como
-                      uma lista simples para o seu dia.
+
+                    <p className="
+                      text-sm 
+                      text-[var(--color-text-muted)] 
+                      mb-3
+                    ">
+                      Tudo que você salvar nos atalhos aparece aqui
+                      como uma lista simples para o seu dia.
                     </p>
 
                     {/* Lista de tarefas */}
-                    <div className="flex-1 min-h-[120px] max-h-48 overflow-y-auto pr-1 space-y-2">
+                    <div className="
+                      flex-1 min-h-[120px] max-h-48 
+                      overflow-y-auto 
+                      pr-1 
+                      space-y-2
+                    ">
                       {plannerData.tasks.length === 0 && (
-                        <p className="text-xs text-[var(--color-text-muted)]">
+                        <p className="
+                          text-xs 
+                          text-[var(--color-text-muted)]
+                        ">
                           Ainda não há lembretes para hoje. Use os atalhos
                           ao lado ou adicione algo rápido abaixo.
                         </p>
@@ -371,27 +755,72 @@ export default function WeeklyPlannerShell() {
                           key={task.id}
                           type="button"
                           onClick={() => toggleTask(task.id)}
-                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
-                            task.done
-                              ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
-                              : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
-                          }`}
+                          className={`
+                            w-full flex items-center gap-3 
+                            rounded-xl border px-3 py-2 
+                            text-sm text-left transition-all
+                            ${
+                              task.done
+                                ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
+                                : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
+                            }
+                          `}
                         >
                           <span
-                            className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                              task.done
-                                ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                            }`}
+                            className={`
+                              flex h-4 w-4 items-center justify-center 
+                              rounded-full border text-[10px]
+                              ${
+                                task.done
+                                  ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                  : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                              }
+                            `}
                           >
                             {task.done ? '✓' : ''}
                           </span>
-                          <span>{task.title}</span>
+
+                          <span className="flex-1">{task.title}</span>
+
+                          {/* AÇÕES: EDITAR / EXCLUIR */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                editTask(task.id)
+                              }}
+                              className="
+                                text-[10px] 
+                                text-[var(--color-text-muted)] 
+                                hover:text-[var(--color-brand)] 
+                                underline
+                              "
+                            >
+                              Editar
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                deleteTask(task.id)
+                              }}
+                              className="
+                                text-[10px] 
+                                text-[var(--color-text-muted)] 
+                                hover:text-red-500 
+                                underline
+                              "
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         </button>
                       ))}
                     </div>
 
-                    {/* Campo rápido para novo lembrete */}
+                    {/* Campo rápido */}
                     <QuickAddTaskInput
                       onAdd={title => addTask(title, 'manual')}
                     />
@@ -400,90 +829,181 @@ export default function WeeklyPlannerShell() {
 
                 {/* ATALHOS DO DIA */}
                 <div className="flex h-full">
-                  <div className="flex-1 relative overflow-hidden rounded-3xl border border-[var(--color-soft-strong)] bg-white/10 shadow-[0_22px_55px_rgba(255,20,117,0.12)] px-3 py-3 md:px-4 md:py-4 backdrop-blur-2xl">
-                    {/* Glows de fundo */}
+                  <div className="
+                    flex-1 relative 
+                    overflow-hidden 
+                    rounded-3xl 
+                    border border-[var(--color-soft-strong)] 
+                    bg-white/10 
+                    shadow-[0_22px_55px_rgba(255,20,117,0.12)] 
+                    px-3 py-3 md:px-4 md:py-4 
+                    backdrop-blur-2xl
+                  ">
+                    {/* ILUMINAÇÕES DE FUNDO */}
                     <div className="pointer-events-none absolute inset-0 opacity-80">
-                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(255,20,117,0.22)] blur-3xl" />
-                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(155,77,150,0.2)] blur-3xl" />
+                      <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-[rgba(253,37,151,0.22)] blur-3xl" />
+                      <div className="absolute -bottom-12 -right-10 h-28 w-28 rounded-full bg-[rgba(184,35,107,0.2)] blur-3xl" />
                     </div>
 
                     <div className="relative z-10 h-full flex flex-col">
-                     <div className="mb-3">
-  <h2 className="text-lg md:text-xl font-semibold text-white">
-    Comece pelo que faz mais sentido hoje
-  </h2>
-  <p className="mt-1 text-sm text-white/85">
-    Use esses atalhos para criar lembretes rápidos
-    de prioridades, compromissos e cuidados.
-  </p>
-</div>
+                      <div className="mb-3">
+                        <h2 className="text-lg md:text-xl font-semibold text-white">
+                          Comece pelo que faz mais sentido hoje
+                        </h2>
+                        <p className="mt-1 text-sm text-white/85">
+                          Use esses atalhos para criar lembretes rápidos de
+                          prioridades, compromissos e cuidados.
+                        </p>
+                      </div>
 
+                      {/* GRID DOS ATALHOS */}
                       <div className="grid grid-cols-2 gap-2.5 md:gap-3 mt-auto">
-                        {/* Prioridades do dia */}
+                        {/* PRIORIDADES */}
                         <button
                           type="button"
-                          onClick={() => setQuickAction('top3')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          onClick={() => handleOpenQuickAction('top3')}
+                          className="
+                            group flex aspect-square items-center justify-center 
+                            rounded-2xl 
+                            bg-white/80 border border-white/80 
+                            shadow-[0_10px_26px_rgba(0,0,0,0.16)] 
+                            backdrop-blur-xl 
+                            transition-all duration-150 
+                            hover:-translate-y-[2px] 
+                            hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] 
+                            active:translate-y-0 
+                            active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]
+                          "
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="target"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="
+                                w-5 h-5 md:w-6 md:h-6 
+                                text-[#fd2597] 
+                                group-hover:scale-110 
+                                transition-transform duration-150
+                              "
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="
+                              text-[10px] md:text-[11px] 
+                              font-medium leading-tight 
+                              text-[#b8236b] 
+                              group-hover:text-[#fd2597]
+                            ">
                               Prioridades do dia
                             </span>
                           </div>
                         </button>
 
-                        {/* Agenda & compromissos */}
+                        {/* AGENDA */}
                         <button
                           type="button"
-                          onClick={() => {
-                            openModalForDate(selectedDate)
-                          }}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          onClick={() => openModalForDate(selectedDate)}
+                          className="
+                            group flex aspect-square items-center justify-center 
+                            rounded-2xl 
+                            bg-white/80 border border-white/80 
+                            shadow-[0_10px_26px_rgba(0,0,0,0.16)] 
+                            backdrop-blur-xl 
+                            transition-all duration-150 
+                            hover:-translate-y-[2px] 
+                            hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] 
+                            active:translate-y-0 
+                            active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]
+                          "
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="calendar"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="
+                                w-5 h-5 md:w-6 md:h-6 
+                                text-[#fd2597] 
+                                group-hover:scale-110 
+                                transition-transform duration-150
+                              "
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
-                              Agenda &amp; compromissos
+                            <span className="
+                              text-[10px] md:text-[11px] 
+                              font-medium leading-tight 
+                              text-[#b8236b] 
+                              group-hover:text-[#fd2597]
+                            ">
+                              Agenda & compromissos
                             </span>
                           </div>
                         </button>
-
-                        {/* Cuidar de mim */}
+                        {/* CUIDAR DE MIM */}
                         <button
                           type="button"
-                          onClick={() => setQuickAction('selfcare')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          onClick={() => handleOpenQuickAction('selfcare')}
+                          className="
+                            group flex aspect-square items-center justify-center 
+                            rounded-2xl bg-white/80 
+                            border border-white/80 
+                            shadow-[0_10px_26px_rgba(0,0,0,0.16)] 
+                            backdrop-blur-xl 
+                            transition-all duration-150 
+                            hover:-translate-y-[2px] 
+                            hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] 
+                            active:translate-y-0 
+                            active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]
+                          "
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="heart"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="
+                                w-5 h-5 md:w-6 md:h-6 
+                                text-[#fd2597] 
+                                group-hover:scale-110 
+                                transition-transform duration-150
+                              "
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="
+                              text-[10px] md:text-[11px] 
+                              font-medium leading-tight 
+                              text-[#b8236b] 
+                              group-hover:text-[#fd2597]
+                            ">
                               Cuidar de mim
                             </span>
                           </div>
                         </button>
 
-                        {/* Cuidar do meu filho */}
+                        {/* CUIDAR DO MEU FILHO */}
                         <button
                           type="button"
-                          onClick={() => setQuickAction('family')}
-                          className="group flex aspect-square items-center justify-center rounded-2xl bg-white/80 border border-white/80 shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-150 hover:-translate-y-[2px] hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:translate-y-0 active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]"
+                          onClick={() => handleOpenQuickAction('family')}
+                          className="
+                            group flex aspect-square items-center justify-center 
+                            rounded-2xl bg-white/80 
+                            border border-white/80 
+                            shadow-[0_10px_26px_rgba(0,0,0,0.16)] 
+                            backdrop-blur-xl 
+                            transition-all duration-150 
+                            hover:-translate-y-[2px] 
+                            hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] 
+                            active:translate-y-0 
+                            active:shadow-[0_8px_20px_rgba(0,0,0,0.16)]
+                          "
                         >
                           <div className="flex flex-col items-center justify-center gap-1 text-center px-1">
                             <AppIcon
                               name="smile"
-                              className="w-5 h-5 md:w-6 md:h-6 text-[#E6005F] group-hover:scale-110 transition-transform duration-150"
+                              className="
+                                w-5 h-5 md:w-6 md:h-6 
+                                text-[#fd2597] 
+                                group-hover:scale-110 
+                                transition-transform duration-150
+                              "
                             />
-                            <span className="text-[10px] md:text-[11px] font-medium leading-tight text-[#CF285F] group-hover:text-[#E6005F]">
+                            <span className="
+                              text-[10px] md:text-[11px] 
+                              font-medium leading-tight 
+                              text-[#b8236b] 
+                              group-hover:text-[#fd2597]
+                            ">
                               Cuidar do meu filho
                             </span>
                           </div>
@@ -493,34 +1013,194 @@ export default function WeeklyPlannerShell() {
                   </div>
                 </div>
               </section>
+
+              {/* ====================== */}
+              {/* CARD — AGENDA COMPLETA */}
+              {/* ====================== */}
+              <section>
+                <SoftCard className="
+                  rounded-3xl bg-white 
+                  border border-[var(--color-soft-strong)] 
+                  shadow-[0_16px_38px_rgba(0,0,0,0.06)] 
+                  p-4 md:p-5
+                ">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="space-y-1">
+                      <p className="
+                        text-[10px] md:text-[11px] 
+                        font-semibold tracking-[0.18em] 
+                        uppercase 
+                        text-[var(--color-brand)]
+                      ">
+                        Agenda
+                      </p>
+
+                      <h2 className="
+                        text-base md:text-lg 
+                        font-semibold 
+                        text-[var(--color-text-main)]
+                      ">
+                        Agenda & compromissos
+                      </h2>
+
+                      <p className="
+                        text-xs md:text-sm 
+                        text-[var(--color-text-muted)]
+                      ">
+                        Veja todos os compromissos que você já marcou no
+                        Materna360, em ordem de data e horário.
+                      </p>
+                    </div>
+
+                    {/* BOTÃO + NOVO */}
+                    <button
+                      type="button"
+                      onClick={() => openModalForDate(selectedDate)}
+                      className="
+                        inline-flex h-9 w-9 items-center justify-center 
+                        rounded-full 
+                        bg-[var(--color-brand)] text-white 
+                        shadow-[0_10px_26px_rgba(253,37,151,0.35)] 
+                        hover:bg-[#e00070] 
+                        transition-all
+                        focus-visible:outline-none 
+                        focus-visible:ring-2 
+                        focus-visible:ring-[var(--color-brand)]/60 
+                        focus-visible:ring-offset-2
+                      "
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {sortedAppointments.length === 0 && (
+                      <p className="
+                        text-xs 
+                        text-[var(--color-text-muted)]
+                      ">
+                        Você ainda não marcou nenhum compromisso. Use o
+                        botão de mais ou o atalho de Agenda para adicionar
+                        o primeiro.
+                      </p>
+                    )}
+
+                    {sortedAppointments.map(appointment => {
+                      const [y, m, d] = appointment.dateKey.split('-').map(Number)
+                      const dateLabel =
+                        y && m && d
+                          ? new Date(y, m - 1, d).toLocaleDateString('pt-BR')
+                          : appointment.dateKey
+
+                      return (
+                        <button
+                          key={appointment.id}
+                          type="button"
+                          onClick={() => openEditModalForAppointment(appointment)}
+                          className="
+                            w-full flex items-center justify-between gap-3 
+                            rounded-xl 
+                            border border-[#F1E4EC] 
+                            bg:white 
+                            px-3 py-2 
+                            text-xs md:text-sm 
+                            text-[var(--color-text-main)] text-left 
+                            hover:border-[var(--color-brand)]/60 
+                            hover:bg-[#FFF3F8]
+                          "
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="
+                              inline-flex h-7 w-7 items-center justify-center 
+                              rounded-full 
+                              bg-[#FFE8F2] 
+                              text-[11px] 
+                              font-semibold 
+                              text-[var(--color-brand)]
+                            ">
+                              {appointment.time || '--:--'}
+                            </span>
+
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {appointment.title || 'Compromisso'}
+                              </span>
+
+                              <span className="
+                                text-[11px] 
+                                text-[var(--color-text-muted)]
+                              ">
+                                {appointment.time || 'Sem horário definido'} ·{' '}
+                                {dateLabel}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </SoftCard>
+              </section>
             </div>
           )}
-
           {/* HOJE POR AQUI + SUGESTÕES INTELIGENTES */}
           <section className="space-y-4 md:space-y-5">
-            <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_40px_rgba(0,0,0,0.08)] p-4 md:p-6 space-y-4">
+            <SoftCard className="
+              rounded-3xl 
+              bg-white/95 
+              border border-[var(--color-soft-strong)] 
+              shadow-[0_16px_40px_rgba(0,0,0,0.08)] 
+              p-4 md:p-6 
+              space-y-4
+            ">
               <div className="space-y-1.5">
-                <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                <p className="
+                  text-[10px] md:text-[11px] 
+                  font-semibold 
+                  tracking-[0.18em] 
+                  uppercase 
+                  text-[var(--color-brand)]
+                ">
                   Hoje por aqui
                 </p>
-                <h2 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
+
+                <h2 className="
+                  text-lg md:text-xl 
+                  font-semibold 
+                  text-[var(--color-text-main)]
+                ">
                   Como você está hoje?
                 </h2>
-                <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
+
+                <p className="
+                  text-xs md:text-sm 
+                  text-[var(--color-text-muted)]
+                ">
                   Escolha como você se sente agora e o estilo de dia que
                   você gostaria de ter.
                 </p>
               </div>
 
               <div className="space-y-3 md:space-y-4">
+
                 {/* COMO VOCÊ ESTÁ */}
                 <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+                  <p className="
+                    text-[11px] md:text-xs 
+                    font-semibold 
+                    text-[var(--color-text-main)] 
+                    uppercase tracking-wide
+                  ">
                     Como você está?
                   </p>
-                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
+
+                  <p className="
+                    text-[11px] md:text-xs 
+                    text-[var(--color-text-muted)]
+                  ">
                     Escolha como você se sente agora.
                   </p>
+
                   <div className="flex flex-wrap gap-2 mt-1">
                     {[
                       { key: 'happy', label: 'Feliz' },
@@ -530,16 +1210,20 @@ export default function WeeklyPlannerShell() {
                       <button
                         key={option.key}
                         type="button"
-                        onClick={() =>
-                          setMood(prev =>
-                            prev === option.key ? null : option.key,
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          mood === option.key
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
+                        onClick={() => handleMoodSelect(option.key)}
+                        className={`
+                          px-3.5 py-1.5 
+                          rounded-full 
+                          text-xs md:text-sm 
+                          font-semibold 
+                          transition-all 
+                          border
+                          ${
+                            mood === option.key
+                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(253,37,151,0.4)]'
+                              : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                          }
+                        `}
                       >
                         {option.label}
                       </button>
@@ -549,33 +1233,41 @@ export default function WeeklyPlannerShell() {
 
                 {/* HOJE EU QUERO UM DIA... */}
                 <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+                  <p className="
+                    text-[11px] md:text-xs 
+                    font-semibold 
+                    text-[var(--color-text-main)] 
+                    uppercase tracking-wide
+                  ">
                     Hoje eu quero um dia...
                   </p>
-                  <p className="text-[11px] md:text-xs text-[var(--color-text-muted)]">
+
+                  <p className="
+                    text-[11px] md:text-xs 
+                    text-[var(--color-text-muted)]
+                  ">
                     Selecione o estilo do seu dia.
                   </p>
+
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      'leve',
-                      'focado',
-                      'produtivo',
-                      'slow',
-                      'automático',
-                    ].map(option => (
+                    {['leve', 'focado', 'produtivo', 'slow', 'automático'].map(option => (
                       <button
                         key={option}
                         type="button"
-                        onClick={() =>
-                          setDayIntention(prev =>
-                            prev === option ? null : option,
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all border ${
-                          dayIntention === option
-                            ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(255,20,117,0.4)]'
-                            : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
-                        }`}
+                        onClick={() => handleDayIntentionSelect(option)}
+                        className={`
+                          px-3.5 py-1.5 
+                          rounded-full 
+                          text-xs md:text-sm 
+                          font-semibold 
+                          transition-all 
+                          border
+                          ${
+                            dayIntention === option
+                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(253,37,151,0.4)]'
+                              : 'bg-white border-[#FFE8F2] text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60'
+                          }
+                        `}
                       >
                         {option}
                       </button>
@@ -584,23 +1276,34 @@ export default function WeeklyPlannerShell() {
                 </div>
               </div>
 
-              <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-2">
+              <p className="
+                text-xs md:text-sm 
+                text-[var(--color-text-muted)] 
+                mt-2
+              ">
                 {moodSummary}
               </p>
 
               <div className="mt-3">
                 <button
                   type="button"
-                  onClick={() => setShowSuggestions(prev => !prev)}
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs md:text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_6px_18px_rgba(255,20,117,0.35)] hover:bg-[var(--color-brand-deep)] transition-all"
+                  onClick={handleToggleSuggestions}
+                  className="
+                    inline-flex items-center gap-2 
+                    rounded-full 
+                    px-4 py-2 
+                    text-xs md:text-sm 
+                    font-semibold 
+                    bg-[var(--color-brand)] text-white 
+                    shadow-[0_6px_18px_rgba(253,37,151,0.35)] 
+                    hover:bg-[#e00070] 
+                    transition-all
+                  "
                 >
                   {showSuggestions
                     ? 'Esconder sugestões para o seu dia'
                     : 'Ver sugestões para o seu dia'}
-                  <AppIcon
-                    name="lightbulb"
-                    className="w-4 h-4"
-                  />
+                  <AppIcon name="lightbulb" className="w-4 h-4" />
                 </button>
               </div>
             </SoftCard>
@@ -618,10 +1321,37 @@ export default function WeeklyPlannerShell() {
             <SavedContentsSection
               contents={[]}
               plannerContents={plannerHook.items}
-              onItemClick={item => setSelectedSavedContent(item)}
+              onItemClick={item => {
+                setSelectedSavedContent(item)
+                try {
+                  track('planner.saved_content.opened', {
+                    tab: 'meu-dia',
+                    origin: item.origin,
+                    type: item.type,
+                  })
+                } catch {}
+              }}
               onItemDone={({ id, source }) => {
                 if (source === 'planner') {
                   plannerHook.removeItem(id)
+
+                  try {
+                    track('planner.saved_content.completed', {
+                      tab: 'meu-dia',
+                      source,
+                    })
+                  } catch {}
+
+                  try {
+                    void updateXP(6)
+                  } catch {}
+                } else {
+                  try {
+                    track('planner.saved_content.dismissed', {
+                      tab: 'meu-dia',
+                      source,
+                    })
+                  } catch {}
                 }
               }}
             />
@@ -636,33 +1366,66 @@ export default function WeeklyPlannerShell() {
         </div>
       </Reveal>
 
-      {/* MODAL NOVO COMPROMISSO */}
+      {/* ======================================================= */}
+      {/* MODAL — NOVO COMPROMISSO */}
+      {/* ======================================================= */}
       {isModalOpen && modalDate && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <div className="
+          fixed inset-0 
+          bg-black/40 backdrop-blur-sm 
+          flex items-center justify-center 
+          z-[999]
+        ">
+          <div className="
+            bg-white 
+            rounded-2xl 
+            p-6 
+            w-full max-w-sm 
+            shadow-xl
+          ">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-[var(--color-text-main)]">
-                Novo compromisso –{' '}
-                {modalDate.toLocaleDateString('pt-BR')}
+              <h3 className="
+                font-semibold 
+                text-[var(--color-text-main)]
+              ">
+                Novo compromisso – {modalDate.toLocaleDateString('pt-BR')}
               </h3>
+
               <button
-                onClick={() => setIsModalOpen(false)}
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  try {
+                    track('planner.appointment_modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {}
+                }}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
               >
                 ✕
               </button>
             </div>
+
             <ModalAppointmentForm
+              mode="create"
+              initialDateKey={getBrazilDateKey(modalDate)}
               onSubmit={data => {
-                // salva no bloco de compromissos
+                const appointmentDateKey = data.dateKey
+
+                // 1 — sempre salva compromisso
                 handleAddAppointment({
+                  dateKey: appointmentDateKey,
                   time: data.time,
                   title: data.title,
                   tag: undefined,
                 })
 
-                // também cria lembrete rápido na lista
-                if (data.title?.trim()) {
+                // 2 — ajusta o dia selecionado
+                setSelectedDateKey(appointmentDateKey)
+
+                // 3 — cria lembrete correspondente
+                if (data.title.trim()) {
                   const label = data.time
                     ? `${data.time} · ${data.title.trim()}`
                     : data.title.trim()
@@ -670,44 +1433,169 @@ export default function WeeklyPlannerShell() {
                 }
 
                 setIsModalOpen(false)
+
+                try {
+                  track('planner.appointment_modal_saved', {
+                    tab: 'meu-dia',
+                  })
+                } catch {}
               }}
-              onCancel={() => setIsModalOpen(false)}
+              onCancel={() => {
+                setIsModalOpen(false)
+                try {
+                  track('planner.appointment_modal_cancelled', {
+                    tab: 'meu-dia',
+                  })
+                } catch {}
+              }}
             />
           </div>
         </div>
       )}
+      {/* ======================================================= */}
+      {/* MODAL — EDITAR COMPROMISSO */}
+      {/* ======================================================= */}
+      {editingAppointment && (
+        <div className="
+          fixed inset-0 
+          bg-black/40 backdrop-blur-sm 
+          flex items-center justify-center 
+          z-[999]
+        ">
+          <div className="
+            bg-white 
+            rounded-2xl 
+            p-6 
+            w-full max-w-sm 
+            shadow-xl
+          ">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="
+                font-semibold 
+                text-[var(--color-text-main)]
+              ">
+                Editar compromisso
+              </h3>
 
-      {/* MODAL DETALHE CONTEÚDO SALVO */}
-      {selectedSavedContent && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[998]">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
-                  <AppIcon
-                    name="target"
-                    className="w-4 h-4 text-[var(--color-brand)]"
-                  />
-                </span>
-                <span className="inline-flex items-center rounded-full border border-[var(--color-soft-strong)] bg-[#FFE8F2]/60 px-2 py-0.5 text-[10px] font-medium text-[#C2285F]">
-                  {plannerTypeLabels[selectedSavedContent.type] ??
-                    'CONTEÚDO'}
-                </span>
-              </div>
               <button
-                onClick={() => setSelectedSavedContent(null)}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
+                type="button"
+                onClick={() => setEditingAppointment(null)}
+                className="
+                  text-[var(--color-text-muted)] 
+                  hover:text-[var(--color-brand)]
+                "
               >
                 ✕
               </button>
             </div>
 
-            <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] mb-2">
+            <ModalAppointmentForm
+              mode="edit"
+              initialDateKey={editingAppointment.dateKey}
+              initialTitle={editingAppointment.title}
+              initialTime={editingAppointment.time}
+              onSubmit={data => {
+                const updated: Appointment = {
+                  ...editingAppointment,
+                  dateKey: data.dateKey,
+                  time: data.time,
+                  title: data.title,
+                }
+
+                handleUpdateAppointment(updated)
+                setSelectedDateKey(updated.dateKey)
+                setEditingAppointment(null)
+              }}
+              onCancel={() => setEditingAppointment(null)}
+              onDelete={() => {
+                const confirmed = window.confirm(
+                  'Tem certeza que deseja excluir este compromisso? Essa ação não pode ser desfeita.',
+                )
+                if (!confirmed) return
+
+                handleDeleteAppointment(editingAppointment.id)
+                setEditingAppointment(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================= */}
+      {/* MODAL DETALHE DE CONTEÚDO SALVO */}
+      {/* ======================================================= */}
+      {selectedSavedContent && (
+        <div className="
+          fixed inset-0 
+          bg-black/40 backdrop-blur-sm 
+          flex items-center justify-center 
+          z-[998]
+        ">
+          <div className="
+            bg-white 
+            rounded-2xl 
+            p-6 
+            w-full max-w-md 
+            shadow-xl
+          ">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2">
+                <span className="
+                  inline-flex h-8 w-8 
+                  items-center justify-center 
+                  rounded-full 
+                  bg-[var(--color-soft-strong)]
+                ">
+                  <AppIcon
+                    name="target"
+                    className="w-4 h-4 text-[var(--color-brand)]"
+                  />
+                </span>
+                <span className="
+                  inline-flex items-center 
+                  rounded-full 
+                  border border-[var(--color-soft-strong)] 
+                  bg-[#FFE8F2]/60 
+                  px-2 py-0.5 
+                  text-[10px] 
+                  font-medium 
+                  text-[#b8236b]
+                ">
+                  {plannerTypeLabels[selectedSavedContent.type] ??
+                    'CONTEÚDO'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {}
+                }}
+                className="
+                  text-[var(--color-text-muted)] 
+                  hover:text-[var(--color-brand)]
+                "
+              >
+                ✕
+              </button>
+            </div>
+
+            <h3 className="
+              text-base md:text-lg 
+              font-semibold 
+              text-[var(--color-text-main)] 
+              mb-2
+            ">
               {selectedSavedContent.title}
             </h3>
 
             {(() => {
-              const anyItem = selectedSavedContent as any
+              const anyItem: any = selectedSavedContent
               const payload = anyItem.payload ?? {}
               const description =
                 anyItem.description ??
@@ -717,37 +1605,73 @@ export default function WeeklyPlannerShell() {
                 payload.excerpt ??
                 ''
 
-              return description ? (
-                <p className="text-sm text-[var(--color-text-muted)] mb-3 whitespace-pre-line">
-                  {description}
-                </p>
-              ) : (
-                <p className="text-sm text-[var(--color-text-muted)] mb-3">
-                  Esse conteúdo foi salvo no planner. Em breve, você verá
-                  mais detalhes aqui.
+              return (
+                <p className="
+                  text-sm 
+                  text-[var(--color-text-muted)] 
+                  mb-3 
+                  whitespace-pre-line
+                ">
+                  {description || 'Conteúdo salvo no planner.'}
                 </p>
               )
             })()}
 
-            <p className="text-[11px] text-[var(--color-text-muted)]/80 mb-4">
+            <p className="
+              text-[11px] 
+              text-[var(--color-text-muted)]/80 
+              mb-4
+            ">
               Salvo em: {selectedSavedContent.origin.replace('-', ' ')}
             </p>
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setSelectedSavedContent(null)}
-                className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
+                onClick={() => {
+                  setSelectedSavedContent(null)
+                  try {
+                    track('planner.saved_content.modal_closed', {
+                      tab: 'meu-dia',
+                    })
+                  } catch {}
+                }}
+                className="
+                  px-4 py-2 
+                  rounded-lg 
+                  text-sm 
+                  bg-gray-100 
+                  hover:bg-gray-200
+                "
               >
                 Fechar
               </button>
+
               <button
                 type="button"
                 onClick={() => {
                   plannerHook.removeItem(selectedSavedContent.id)
                   setSelectedSavedContent(null)
+
+                  try {
+                    track(
+                      'planner.saved_content.completed_from_modal',
+                      { tab: 'meu-dia' },
+                    )
+                  } catch {}
+
+                  try {
+                    void updateXP(6)
+                  } catch {}
                 }}
-                className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
+                className="
+                  px-4 py-2 
+                  rounded-lg 
+                  text-sm 
+                  bg-[var(--color-brand)] 
+                  text-white 
+                  hover:bg-[#e00070]
+                "
               >
                 Marcar como feito
               </button>
@@ -756,7 +1680,9 @@ export default function WeeklyPlannerShell() {
         </div>
       )}
 
-      {/* MODAIS DE AÇÕES RÁPIDAS (TOP3 / CUIDAR) */}
+      {/* ======================================================= */}
+      {/* MODAIS DE AÇÕES RÁPIDAS — TOP3 / CUIDAR */}
+      {/* ======================================================= */}
       {quickAction && (
         <QuickListModal
           mode={quickAction}
@@ -769,19 +1695,396 @@ export default function WeeklyPlannerShell() {
           }
           onAdd={title => {
             if (quickAction === 'top3') addTask(title, 'top3')
-            else if (quickAction === 'selfcare')
-              addTask(title, 'selfcare')
+            else if (quickAction === 'selfcare') addTask(title, 'selfcare')
             else addTask(title, 'family')
           }}
           onToggle={id => toggleTask(id)}
-          onClose={() => setQuickAction(null)}
+          onClose={() => {
+            setQuickAction(null)
+            try {
+              track('planner.quick_action.closed', {
+                tab: 'meu-dia',
+              })
+            } catch {}
+          }}
         />
       )}
     </>
   )
 }
 
-// GERADOR DO CALENDÁRIO
+// =======================================================
+// FORM DE COMPROMISSO (CRIAR / EDITAR)
+// =======================================================
+function ModalAppointmentForm({
+  mode,
+  initialDateKey,
+  initialTitle,
+  initialTime,
+  onSubmit,
+  onCancel,
+  onDelete,
+}: ModalAppointmentFormProps) {
+  const [dateKey, setDateKey] = useState(initialDateKey)
+  const [title, setTitle] = useState(initialTitle ?? '')
+  const [time, setTime] = useState(initialTime ?? '')
+
+  const formattedLabelDate = useMemo(() => {
+    const [y, m, d] = dateKey.split('-').map(Number)
+    if (!y || !m || !d) return ''
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
+  }, [dateKey])
+
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault()
+        if (!title.trim()) return
+
+        onSubmit({
+          dateKey,
+          title: title.trim(),
+          time,
+        })
+      }}
+      className="space-y-4"
+    >
+      {/* Data */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Data do compromisso
+        </label>
+        <input
+          type="date"
+          className="
+            w-full rounded-lg border 
+            px-3 py-2 
+            text-sm
+          "
+          value={dateKey}
+          onChange={e => setDateKey(e.target.value)}
+        />
+        {formattedLabelDate && (
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            {formattedLabelDate}
+          </p>
+        )}
+      </div>
+
+      {/* Título */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Título
+        </label>
+        <input
+          className="
+            w-full rounded-lg border 
+            px-3 py-2 
+            text-sm
+          "
+          placeholder="Ex: Consulta médica..."
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+        />
+      </div>
+
+      {/* Horário */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-[var(--color-text-main)]">
+          Horário
+        </label>
+        <input
+          type="time"
+          className="
+            w-full rounded-lg border 
+            px-3 py-2 
+            text-sm
+          "
+          value={time}
+          onChange={e => setTime(e.target.value)}
+        />
+      </div>
+
+      <div className="flex justify-between items-center pt-2 gap-3">
+        {/* Botão excluir */}
+        {mode === 'edit' && onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="
+              text-xs 
+              text-[var(--color-text-muted)] 
+              hover:text-red-500 
+              underline
+            "
+          >
+            Excluir compromisso
+          </button>
+        )}
+
+        <div className="flex justify-end gap-3 flex-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="
+              px-4 py-2 
+              rounded-lg 
+              text-sm 
+              bg-gray-100 
+              hover:bg-gray-200
+            "
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="
+              px-4 py-2 
+              rounded-lg 
+              text-sm 
+              bg-[var(--color-brand)] 
+              text-white 
+              hover:bg-[#e00070]
+            "
+          >
+            {mode === 'create' ? 'Salvar compromisso' : 'Atualizar compromisso'}
+          </button>
+        </div>
+      </div>
+    </form>
+  )
+}
+
+// =======================================================
+// INPUT RÁPIDO DE TAREFA
+// =======================================================
+function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
+  const [value, setValue] = useState('')
+
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault()
+        if (!value.trim()) return
+        onAdd(value.trim())
+        setValue('')
+      }}
+      className="mt-3 space-y-1"
+    >
+      <label className="
+        text-[11px] 
+        font-medium 
+        text-[var(--color-text-main)]
+      ">
+        Adicionar lembrete rápido
+      </label>
+
+      <input
+        className="
+          w-full rounded-xl border 
+          px-3 py-2 
+          text-sm 
+          bg-[var(--color-soft-bg)]
+          focus:outline-none 
+          focus:ring-2 
+          focus:ring-[var(--color-brand)]/40 
+          focus:border-[var(--color-brand)]/60
+        "
+        placeholder="Ex: Levar exame no pediatra, separar uniforme..."
+        value={value}
+        onChange={e => setValue(e.target.value)}
+      />
+    </form>
+  )
+}
+
+// =======================================================
+// MODAL AÇÕES RÁPIDAS (TOP3, SELFCARE, FAMILY)
+// =======================================================
+function QuickListModal({
+  mode,
+  items,
+  onAdd,
+  onToggle,
+  onClose,
+}: QuickListModalProps) {
+  const [input, setInput] = useState('')
+
+  const title =
+    mode === 'top3'
+      ? 'Prioridades do dia'
+      : mode === 'selfcare'
+      ? 'Cuidar de mim'
+      : 'Cuidar do meu filho'
+
+  const helper =
+    mode === 'top3'
+      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus lembretes rápidos.'
+      : mode === 'selfcare'
+      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos lembretes rápidos.'
+      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos lembretes rápidos.'
+
+  const placeholder =
+    mode === 'top3'
+      ? 'Ex: Resolver algo importante do trabalho'
+      : mode === 'selfcare'
+      ? 'Ex: Tomar um café em silêncio por 5 minutos'
+      : 'Ex: Ler uma história antes de dormir'
+
+  return (
+    <div className="
+      fixed inset-0 
+      bg-black/40 backdrop-blur-sm 
+      flex items-center justify-center 
+      z-[999]
+    ">
+      <div className="
+        bg-white 
+        rounded-2xl 
+        p-6 
+        w-full max-w-md 
+        shadow-xl
+      ">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="
+            font-semibold 
+            text-[var(--color-text-main)]
+          ">
+            {title}
+          </h3>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="
+              text-[var(--color-text-muted)] 
+              hover:text-[var(--color-brand)]
+            "
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="
+          text-sm 
+          text-[var(--color-text-muted)] 
+          mb-4
+        ">
+          {helper}
+        </p>
+
+        <div className="space-y-2 max-h-56 overflow-y-auto mb-4 pr-1">
+          {items.length === 0 && (
+            <p className="
+              text-xs 
+              text-[var(--color-text-muted)]
+            ">
+              Ainda não há nada aqui. Comece adicionando o primeiro item.
+            </p>
+          )}
+
+          {items.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onToggle(item.id)}
+              className={`
+                w-full flex items-center gap-3 
+                rounded-lg border px-3 py-2 
+                text-sm text-left
+                ${
+                  item.done
+                    ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-[var(--color-text-muted)]'
+                    : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
+                }
+              `}
+            >
+              <span
+                className={`
+                  flex h-4 w-4 items-center justify-center 
+                  rounded-full border text-[10px]
+                  ${
+                    item.done
+                      ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                      : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                  }
+                `}
+              >
+                {item.done ? '✓' : ''}
+              </span>
+
+              <span>{item.title}</span>
+            </button>
+          ))}
+        </div>
+
+        <form
+          onSubmit={e => {
+            e.preventDefault()
+            if (!input.trim()) return
+            onAdd(input.trim())
+            setInput('')
+          }}
+          className="space-y-3"
+        >
+          <div className="space-y-1">
+            <label className="
+              text-xs 
+              font-medium 
+              text-[var(--color-text-main)]
+            ">
+              Adicionar novo item
+            </label>
+
+            <input
+              className="
+                w-full rounded-lg border 
+                px-3 py-2 
+                text-sm
+              "
+              placeholder={placeholder}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="
+                px-4 py-2 
+                rounded-lg 
+                text-sm 
+                bg-gray-100 
+                hover:bg-gray-200
+              "
+            >
+              Fechar
+            </button>
+            <button
+              type="submit"
+              className="
+                px-4 py-2 
+                rounded-lg 
+                text-sm 
+                bg-[var(--color-brand)] 
+                text-white 
+                hover:bg-[#e00070]
+              "
+            >
+              Adicionar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// =======================================================
+// HELPERS — CALENDÁRIO E SEMANA
+// =======================================================
 function generateMonthMatrix(currentDate: Date): (Date | null)[] {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -807,6 +2110,7 @@ function generateWeekData(base: Date) {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
+
     return {
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', {
@@ -818,228 +2122,4 @@ function generateWeekData(base: Date) {
       familyCount: 0,
     }
   })
-}
-
-// FORM DO MODAL (COMPROMISSO)
-function ModalAppointmentForm({
-  onSubmit,
-  onCancel,
-}: {
-  onSubmit: (data: { title: string; time: string }) => void
-  onCancel: () => void
-}) {
-  const [title, setTitle] = useState('')
-  const [time, setTime] = useState('')
-
-  return (
-    <form
-      onSubmit={e => {
-        e.preventDefault()
-        if (!title.trim()) return
-        onSubmit({
-          title,
-          time,
-        })
-      }}
-      className="space-y-4"
-    >
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-[var(--color-text-main)]">
-          Título
-        </label>
-        <input
-          className="w-full rounded-lg border px-3 py-2 text-sm"
-          placeholder="Ex: Consulta médica..."
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-[var(--color-text-main)]">
-          Horário
-        </label>
-        <input
-          type="time"
-          className="w-full rounded-lg border px-3 py-2 text-sm"
-          value={time}
-          onChange={e => setTime(e.target.value)}
-        />
-      </div>
-
-      <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
-        >
-          Salvar compromisso
-        </button>
-      </div>
-    </form>
-  )
-}
-
-// INPUT RÁPIDO DE TAREFA
-function QuickAddTaskInput({ onAdd }: { onAdd: (title: string) => void }) {
-  const [value, setValue] = useState('')
-
-  return (
-    <form
-      onSubmit={e => {
-        e.preventDefault()
-        if (!value.trim()) return
-        onAdd(value.trim())
-        setValue('')
-      }}
-      className="mt-3 space-y-1"
-    >
-      <label className="text-[11px] font-medium text-[var(--color-text-main)]">
-        Adicionar lembrete rápido
-      </label>
-      <input
-        className="w-full rounded-xl border px-3 py-2 text-sm bg-[var(--color-soft-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/40 focus:border-[var(--color-brand)]/60"
-        placeholder="Ex: Levar exame no pediatra, separar uniforme..."
-        value={value}
-        onChange={e => setValue(e.target.value)}
-      />
-    </form>
-  )
-}
-
-// MODAL LISTA RÁPIDA (TOP3 / CUIDAR)
-type QuickListModalProps = {
-  mode: 'top3' | 'selfcare' | 'family'
-  items: TaskItem[]
-  onAdd: (title: string) => void
-  onToggle: (id: string) => void
-  onClose: () => void
-}
-
-function QuickListModal({
-  mode,
-  items,
-  onAdd,
-  onToggle,
-  onClose,
-}: QuickListModalProps) {
-  const [input, setInput] = useState('')
-
-  const title =
-    mode === 'top3'
-      ? 'Prioridades do dia'
-      : mode === 'selfcare'
-      ? 'Cuidar de mim'
-      : 'Cuidar do meu filho'
-
-  const helper =
-    mode === 'top3'
-      ? 'Escolha até três coisas que realmente importam para hoje. Elas também vão aparecer nos seus Lembretes rápidos.'
-      : mode === 'selfcare'
-      ? 'Liste pequenos gestos de autocuidado que cabem no seu dia. Tudo aparece nos Lembretes rápidos.'
-      : 'Anote os cuidados ou momentos importantes com seu filho hoje. Eles também aparecem nos Lembretes rápidos.'
-
-  const placeholder =
-    mode === 'top3'
-      ? 'Ex: Resolver algo importante do trabalho'
-      : mode === 'selfcare'
-      ? 'Ex: Tomar um café em silêncio por 5 minutos'
-      : 'Ex: Ler uma história antes de dormir'
-
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-[var(--color-text-main)]">
-            {title}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"
-          >
-            ✕
-          </button>
-        </div>
-
-        <p className="text-sm text-[var(--color-text-muted)] mb-4">
-          {helper}
-        </p>
-
-        <div className="space-y-2 max-h-56 overflow-y-auto mb-4 pr-1">
-          {items.length === 0 && (
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Ainda não há nada aqui. Comece adicionando o primeiro item.
-            </p>
-          )}
-          {items.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onToggle(item.id)}
-              className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-left ${
-                item.done
-                  ? 'bg-[#FFE8F2] border-[#FFB3D3] line-through text-[var(--color-text-muted)]'
-                  : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60'
-              }`}
-            >
-              <span
-                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                  item.done
-                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                }`}
-              >
-                {item.done ? '✓' : ''}
-              </span>
-              <span>{item.title}</span>
-            </button>
-          ))}
-        </div>
-
-        <form
-          onSubmit={e => {
-            e.preventDefault()
-            if (!input.trim()) return
-            onAdd(input.trim())
-            setInput('')
-          }}
-          className="space-y-3"
-        >
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--color-text-main)]">
-              Adicionar novo item
-            </label>
-            <input
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-              placeholder={placeholder}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-gray-200"
-            >
-              Fechar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg text-sm bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-deep)]"
-            >
-              Adicionar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
 }

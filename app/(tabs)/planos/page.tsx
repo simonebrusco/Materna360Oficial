@@ -1,302 +1,328 @@
 'use client'
 
-import React from 'react'
-import { SoftCard } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
-import { setPlan, getPlan } from '@/app/lib/plan'
-import UpgradeSheet from '@/components/premium/UpgradeSheet'
-import AppIcon from '@/components/ui/AppIcon'
-import { track } from '@/app/lib/telemetry'
-import { LegalFooter } from '@/components/common/LegalFooter'
+import { useState, type FormEvent, type ChangeEvent } from 'react'
+import { PageTemplate } from '@/components/common/PageTemplate'
 
-// Configuração dos planos
-const PLANS = [
-  {
-    id: 'essencial',
-    name: 'Essencial',
-    badge: 'Seu plano atual',
-    price: 'R$0',
-    pricePeriod: '/mês',
-    priceNote: 'Sem necessidade de cartão de crédito',
-    subtitle: 'Essencial para começar',
-    features: [
-      { label: 'Planner diário' },
-      { label: 'Registro de humor e energia' },
-      { label: 'Atividades do dia' },
-      { label: 'Anotações rápidas' },
-    ],
-    buttonText: 'Seu plano atual',
-    buttonVariant: 'secondary' as const,
-    highlighted: false,
-    badgeIcon: 'star' as const,
-  },
-  {
-    id: 'materna-plus',
-    name: 'Materna+',
-    badge: 'Recomendado',
-    price: 'R$29,90',
-    pricePeriod: '/mês',
-    priceNote: 'Teste 7 dias grátis, sem compromisso',
-    subtitle: 'Tudo liberado + recursos avançados',
-    features: [
-      { label: 'Tudo do Essencial' },
-      { label: 'Exportar PDF' },
-      { label: 'Insights avançados' },
-      { label: 'Modo offline' },
-    ],
-    buttonText: 'Upgrade agora',
-    buttonVariant: 'primary' as const,
-    highlighted: true,
-    badgeIcon: 'sparkles' as const,
-  },
-  {
-    id: 'materna-360',
-    name: 'Materna+ 360',
-    badge: 'Completo',
-    price: 'R$49,90',
-    pricePeriod: '/mês',
-    priceNote: 'Acesso à biblioteca completa',
-    subtitle: 'Tudo do Materna+ + conteúdos exclusivos',
-    features: [
-      { label: 'Tudo do Materna+' },
-      { label: 'Biblioteca Materna completa' },
-      { label: 'Conteúdos premium (aulas, guias, áudios)' },
-      { label: 'Novidades em primeira mão' },
-    ],
-    buttonText: 'Quero o completo',
-    buttonVariant: 'primary' as const,
-    highlighted: false,
-    badgeIcon: 'crown' as const,
-  },
-]
+type PartnershipType =
+  | 'profissional_saude'
+  | 'criadora_conteudo'
+  | 'marca_produto'
+  | 'outros'
 
-export default function PlanosPage() {
-  const [open, setOpen] = React.useState(false)
-  const plan = typeof window !== 'undefined' ? getPlan() : 'free'
-  const currentPlanId = plan === 'premium' ? 'materna-plus' : 'essencial'
+interface PartnershipFormState {
+  partnershipType: PartnershipType
+  name: string
+  email: string
+  message: string
+}
 
-  const handleViewPlans = (planId: string) => {
-    track('paywall_view', { plan: planId, source: 'planos_page' })
+const initialFormState: PartnershipFormState = {
+  partnershipType: 'profissional_saude',
+  name: '',
+  email: '',
+  message: '',
+}
+
+export default function AjudaEParceriasPage() {
+  const [form, setForm] = useState<PartnershipFormState>(initialFormState)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const handleChange = (
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = event.target
+    setForm(prev => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
-  const handleUpgradeClick = () => {
-    track('paywall_click', { plan: 'premium', source: 'planos_page' })
-    setOpen(true)
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setSuccessMessage(null)
+    setErrorMessage(null)
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/maternar/parcerias', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        const messageFromApi =
+          data && typeof data.message === 'string'
+            ? data.message
+            : 'Algo não saiu como esperado.'
+
+        throw new Error(messageFromApi)
+      }
+
+      setSuccessMessage(
+        'Recebemos seu interesse em parcerias com o Materna360. Em breve alguém do time entra em contato com você.',
+      )
+      setForm(initialFormState)
+    } catch (error) {
+      console.error('[Materna360][Parcerias] erro ao enviar formulário', error)
+      setErrorMessage(
+        'Não conseguimos enviar suas informações agora. Se fizer sentido para você, tente novamente em alguns instantes.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <main
-      data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-16 bg-[#FFE4F0] bg-[radial-gradient(circle_at_top_left,#F2C3EA_0,#FF78B3_30%,#FF9BC8_60%,#FFB3D8_82%,#FFE4F0_100%)]"
+    <PageTemplate
+      label="MATERNAR"
+      title="Ajuda & Parcerias"
+      subtitle="Um lugar seguro para tirar dúvidas, pedir ajuda e se conectar com o Materna360 de forma leve."
     >
-      <div className="mx-auto max-w-5xl px-4 md:px-6 pt-10">
-        {/* HERO da página de planos */}
-        <header className="mb-8 sm:mb-10 text-center">
-          <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
-            MATERNA+
-          </span>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-            Escolha seu plano
-          </h1>
-          <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-            Desbloqueie o potencial completo do Materna360 com recursos premium,
-            no seu ritmo.
-          </p>
+      {/* GRID PRINCIPAL */}
+      <section className="grid gap-6 md:gap-7 md:grid-cols-2">
+        {/* Coluna esquerda – Ajuda & suporte */}
+        <div className="flex-1">
+          <div className="h-full rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.14)] backdrop-blur-md md:p-7">
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <p className="text-[12px] font-semibold tracking-[0.24em] text-[#b8236b] uppercase">
+                  Ajuda &amp; suporte
+                </p>
+                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                  Quando algo não está funcionando bem
+                </h2>
+                <p className="text-[14px] md:text-[15px] leading-relaxed text-[#545454]">
+                  Se alguma parte do app estiver diferente do esperado ou se
+                  você tiver dúvidas sobre como usar um mini-hub, você não
+                  precisa resolver isso sozinha. Aqui é o seu ponto de apoio.
+                </p>
+              </div>
 
-          {currentPlanId && (
-            <div className="mt-4 space-y-1">
-              <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
-                ✓ Você já está no plano{' '}
-                {PLANS.find((p) => p.id === currentPlanId)?.name}
-              </p>
-              <p className="text-xs sm:text-sm text-white/90">
-                Se fizer sentido para você, pode mudar de plano com calma, sem
-                pressa e sem multas.
-              </p>
-            </div>
-          )}
-        </header>
-
-        {/* Card grande com conteúdo em branco */}
-        <div className="rounded-[32px] border border-white/70 bg-white/96 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
-          {/* Grid de planos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
-            {PLANS.map((planConfig) => {
-              const isCurrentPlan = currentPlanId === planConfig.id
-              const isHighlighted = planConfig.highlighted
-
-              return (
-                <SoftCard
-                  key={planConfig.id}
-                  className={`rounded-3xl border transition-all flex flex-col relative bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] ${
-                    isCurrentPlan
-                      ? 'border-[var(--color-brand)]/40'
-                      : isHighlighted
-                        ? 'border-[var(--color-brand-plum)]/30'
-                        : 'border-[var(--color-pink-snow)]/60'
-                  } ${
-                    isHighlighted
-                      ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.18)]'
-                      : ''
-                  } p-6 sm:p-8`}
-                >
-                  {/* Badge */}
-                  <div className="mb-4">
-                    <div
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
-                        isHighlighted
-                          ? 'bg-[var(--color-brand)] text-white'
-                          : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
-                      }`}
-                    >
-                      <AppIcon
-                        name={planConfig.badgeIcon}
-                        size={12}
-                        decorative
-                      />
-                      {planConfig.badge}
-                    </div>
-                  </div>
-
-                  {/* Nome do plano */}
-                  <div className="mb-1">
-                    <h2
-                      className={`text-xl sm:text-2xl font-bold mb-1 ${
-                        isHighlighted
-                          ? 'text-[var(--color-brand)]'
-                          : 'text-[var(--color-text-main)]'
-                      }`}
-                    >
-                      {planConfig.name}
-                    </h2>
-                    <p className="text-sm text-[var(--color-text-muted)]">
-                      {planConfig.subtitle}
-                    </p>
-                  </div>
-
-                  {/* Preço */}
-                  <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
-                    <div className="flex items-baseline gap-1">
-                      <span
-                        className={`text-4xl sm:text-5xl font-bold ${
-                          isHighlighted
-                            ? 'text-[var(--color-brand)]'
-                            : 'text-[var(--color-text-main)]'
-                        }`}
-                      >
-                        {planConfig.price}
-                      </span>
-                      <span className="text-sm text-[var(--color-text-muted)]">
-                        {planConfig.pricePeriod}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                      {planConfig.priceNote}
-                    </p>
-                  </div>
-
-                  {/* Lista de benefícios */}
-                  <div className="flex-1 space-y-3 mb-6">
-                    {planConfig.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <AppIcon
-                          name="check"
-                          size={16}
-                          decorative
-                          className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
-                        />
-                        <span className="text-sm text-[var(--color-text-main)]">
-                          {feature.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Botão */}
-                  <Button
-                    variant={planConfig.buttonVariant}
-                    size="lg"
-                    className="w-full"
-                    onClick={() => {
-                      handleViewPlans(planConfig.id)
-                      if (planConfig.id !== 'essencial') {
-                        handleUpgradeClick()
-                      } else {
-                        setPlan('free')
-                      }
-                    }}
-                    disabled={isCurrentPlan && planConfig.id === 'essencial'}
-                  >
-                    {isCurrentPlan && planConfig.id === 'essencial'
-                      ? 'Seu plano atual'
-                      : planConfig.buttonText}
-                  </Button>
-
-                  {isCurrentPlan && planConfig.id !== 'essencial' && (
-                    <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
-                      ✓ Ativo até 31 de dezembro de 2025
-                    </p>
-                  )}
-                </SoftCard>
-              )
-            })}
-          </div>
-
-          {/* FAQ */}
-          <div className="max-w-2xl mx-auto">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
-              Perguntas frequentes
-            </h3>
-            <div className="space-y-3">
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  Posso mudar de plano depois?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim, você pode fazer downgrade ou cancelar a qualquer momento
-                  sem penalidades. O plano precisa acompanhar a sua fase, não o
-                  contrário.
+              {/* cards agora empilhados */}
+              <div className="grid gap-4">
+                <div className="rounded-2xl bg-[#ffe1f1] p-4">
+                  <h3 className="mb-1 text-[16px] md:text-[17px] font-semibold text-[#2F3A56]">
+                    Dúvidas sobre o app
+                  </h3>
+                  <p className="text-[13px] leading-relaxed text-[#545454]">
+                    Que tal anotar o que está confuso para você? Pode ser sobre
+                    o Planner, XP, MaternaBox ou qualquer mini-hub. Isso nos
+                    ajuda a melhorar a sua experiência.
+                  </p>
                 </div>
-              </details>
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  O teste premium de 7 dias é realmente grátis?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim, é totalmente grátis e você não precisa de cartão de
-                  crédito para testar. Você só continua se fizer sentido para
-                  você.
+
+                <div className="rounded-2xl bg-[#ffe1f1]/80 p-4">
+                  <h3 className="mb-1 text-[16px] md:text-[17px] font-semibold text-[#2F3A56]">
+                    Suporte técnico
+                  </h3>
+                  <p className="text-[13px] leading-relaxed text-[#545454]">
+                    Se o app travar, não carregar ou algo estranho acontecer,
+                    respire fundo. Você pode registrar o problema e nós
+                    investigamos por aqui.
+                  </p>
                 </div>
-              </details>
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  Meus dados ficarão privados?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim. Seus dados são criptografados e armazenados com
-                  segurança. O que você registra aqui é seu e não é compartilhado
-                  com terceiros.
+              </div>
+
+              <div className="space-y-3 rounded-2xl border border-[#F5D7E5] bg-white/98 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
+                <p className="text-[12px] font-semibold tracking-[0.18em] text-[#6A6A6A] uppercase">
+                  FAQ rápido
+                </p>
+                <div className="space-y-3 text-[#2F3A56]">
+                  <details className="group rounded-xl bg-[#ffe1f1]/50 p-3">
+                    <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                      O que eu faço se o app não carregar?
+                    </summary>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
+                      Primeiro, verifique sua conexão com a internet e feche o
+                      app por alguns segundos. Se ainda assim não funcionar,
+                      você pode registrar o problema nesta área de suporte ou
+                      entrar em contato pelo canal oficial quando estiver
+                      disponível.
+                    </p>
+                  </details>
+
+                  <details className="group rounded-xl bg-[#ffe1f1]/50 p-3">
+                    <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                      Onde vejo os conteúdos que salvei no Planner?
+                    </summary>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
+                      Tudo o que você salva em mini-hubs como “Como Estou
+                      Hoje”, “Rotina Leve” ou “Cuidar com Amor” fica organizado
+                      dentro do Planner, na aba Meu Dia ou Eu360, sempre
+                      identificado pela origem.
+                    </p>
+                  </details>
+
+                  <details className="group rounded-xl bg-[#ffe1f1]/50 p-3">
+                    <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                      Ainda estou com dúvidas. E agora?
+                    </summary>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
+                      Está tudo bem ter dúvidas. Em breve, esta área terá um
+                      canal direto de contato com o time Materna360. Por
+                      enquanto, você pode anotar suas perguntas aqui para não
+                      esquecer e revisitar quando quiser.
+                    </p>
+                  </details>
                 </div>
-              </details>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Sheet de upgrade */}
-        <UpgradeSheet open={open} onOpenChange={setOpen} />
-      </div>
+        {/* Coluna direita – Parcerias */}
+        <div className="flex-1">
+          <div
+            className="
+              h-full rounded-3xl border border-[#F5D7E5]
+              bg-[radial-gradient(circle_at_top,#ffe1f1_0%,#ffffff_55%,#ffe1f1_100%)]
+              p-6 md:p-7
+              shadow-[0_10px_28px_rgba(0,0,0,0.14)]
+              backdrop-blur-md
+            "
+          >
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <p className="text-[12px] font-semibold tracking-[0.24em] text-[#b8236b] uppercase">
+                  Parcerias
+                </p>
+                <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                  Conecte sua jornada ao Materna360
+                </h2>
+                <p className="text-[14px] md:text-[15px] leading-relaxed text-[#545454]">
+                  Se você é profissional, criadora de conteúdo ou representa uma
+                  marca que conversa com o universo materno, este é o espaço
+                  para se aproximar da nossa comunidade.
+                </p>
+              </div>
 
-      {/* Rodapé legal global */}
-      <LegalFooter />
-    </main>
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="partnershipType"
+                    className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                  >
+                    Tipo de parceria
+                  </label>
+                  <select
+                    id="partnershipType"
+                    name="partnershipType"
+                    value={form.partnershipType}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                    disabled={isSubmitting}
+                  >
+                    <option value="profissional_saude">
+                      Profissional da saúde / desenvolvimento infantil
+                    </option>
+                    <option value="criadora_conteudo">
+                      Criadora de conteúdo
+                    </option>
+                    <option value="marca_produto">
+                      Marca / produto para mães ou crianças
+                    </option>
+                    <option value="outros">Outro tipo de parceria</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="name"
+                    className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                  >
+                    Nome completo
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="Como você gostaria de ser chamada?"
+                    className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                  >
+                    E-mail
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="Seu melhor e-mail para contato"
+                    className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="message"
+                    className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                  >
+                    Como você gostaria de se conectar?
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={4}
+                    value={form.message}
+                    onChange={handleChange}
+                    placeholder="Conte, com calma, que tipo de parceria faz sentido para você e como imagina essa construção junto com o Materna360."
+                    className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                {successMessage && (
+                  <p className="rounded-2xl bg-[#ffe1f1] px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                    {successMessage}
+                  </p>
+                )}
+
+                {errorMessage && (
+                  <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                    {errorMessage}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-[#fd2597] px-4 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#e0218c] disabled:cursor-not-allowed disabled:bg-[#fd2597]/60"
+                >
+                  {isSubmitting
+                    ? 'Enviando com carinho...'
+                    : 'Quero falar sobre parcerias'}
+                </button>
+
+                <p className="text-[12px] leading-relaxed text-[#6A6A6A]">
+                  Ao enviar este formulário, você não assume nenhum compromisso
+                  imediato. É apenas o primeiro passo para uma conversa com
+                  calma sobre como caminhar junto com o Materna360.
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </PageTemplate>
   )
 }

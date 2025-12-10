@@ -6,14 +6,14 @@
 export const pdfTheme = {
   // Colors (RGB values converted to hex for PDF)
   colors: {
-    primary: '#FF005E', // --color-primary
-    primaryWeak: '#FFD8E6', // --color-primary-weak
-    ink1: '#2F3A56', // --color-ink-1 (dark text)
-    ink2: '#545454', // --color-ink-2 (muted text)
+    primary: '#fd2597',        // Pink Materna360
+    primaryWeak: '#fdbed7',    // Rosa suave
+    ink1: '#545454',           // texto principal
+    ink2: '#6A6A6A',           // texto suave
     white: '#FFFFFF',
-    softBg: '#FFF7FB', // --soft-page-bg
-    border: '#E9ECF2', // --border-soft-gray
-    borderLight: 'rgba(255, 255, 255, 0.6)',
+    softBg: '#ffe1f1',         // Pink Snow
+    border: '#F5D7E5',         // border soft
+    borderLight: 'rgba(255, 225, 241, 0.8)',
   },
 
   // Spacing (8px grid)
@@ -101,8 +101,8 @@ export const pdfTheme = {
 
   // Shadows (for styling reference, not directly used in PDF)
   shadows: {
-    card: '0 8px 28px rgba(47, 58, 86, 0.08)',
-    cardHover: '0 12px 40px rgba(47, 58, 86, 0.12)',
+    card: '0 8px 28px rgba(0, 0, 0, 0.08)',
+    cardHover: '0 12px 40px rgba(0, 0, 0, 0.12)',
   },
 };
 
