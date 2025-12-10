@@ -114,7 +114,7 @@ export default function MaternaPlusPage() {
     >
       <ClientOnly>
         {/* padrão central Materna360 */}
-        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
+        <div className="pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
           {/* HERO */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
@@ -241,9 +241,9 @@ export default function MaternaPlusPage() {
                   </p>
                 </header>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2 items-stretch">
                   {/* Trilha Primeiro ano leve */}
-                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
@@ -270,14 +270,14 @@ export default function MaternaPlusPage() {
                       variant="secondary"
                       size="sm"
                       disabled
-                      className="mt-2 text-[12px] cursor-not-allowed opacity-70"
+                      className="mt-3 text-[12px] cursor-not-allowed opacity-70 self-start"
                     >
                       Ver trilha (disponível em breve)
                     </Button>
                   </div>
 
                   {/* Trilha Desenvolvimento por idade */}
-                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
@@ -297,21 +297,21 @@ export default function MaternaPlusPage() {
                       que cabem na sua rotina real.
                     </p>
                     <p className="text-[12px] text-[#6A6A6A]">
-                      Um passo a passo gentil, para você se sentir menos
-                      perdida e mais segura em cada fase.
+                      Um passo a passo gentil, para você se sentir menos perdida
+                      e mais segura em cada fase.
                     </p>
                     <Button
                       variant="secondary"
                       size="sm"
                       disabled
-                      className="mt-2 text-[12px] cursor-not-allowed opacity-70"
+                      className="mt-3 text-[12px] cursor-not-allowed opacity-70 self-start"
                     >
                       Ver trilha (disponível em breve)
                     </Button>
                   </div>
 
                   {/* Biblioteca Premium */}
-                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                       BIBLIOTECA PREMIUM
                     </p>
@@ -335,7 +335,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   {/* Integração Eu360 / IA Premium */}
-                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                       EU360 & IA PREMIUM · PLANEJADO
                     </p>
@@ -522,7 +522,7 @@ export default function MaternaPlusPage() {
                     {!isLoading &&
                       !error &&
                       filteredProfessionals.length === 0 && (
-                        <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                        <div className="mt-1.5 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/80 px-4 py-3 text-[13px] text-[#545454] shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
                           <p className="font-semibold">
                             Ainda não temos profissionais nessa área específica.
                           </p>
