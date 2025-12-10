@@ -137,8 +137,7 @@ export default function PlanosPage() {
       data-layout="page-template-v1"
       className="min-h-[100dvh] pb-16 bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]"
     >
-      {/* 👇 largura alinhada às páginas internas (max-w-4xl) */}
-      <div className="mx-auto max-w-4xl px-4 md:px-6 pt-10">
+      <div className="mx-auto max-w-5xl px-4 md:px-6 pt-10">
         {/* HERO da página de planos */}
         <header className="mb-8 sm:mb-10 text-center">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
@@ -149,8 +148,8 @@ export default function PlanosPage() {
           </h1>
           <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
             Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
-            que faz sentido para o seu momento — sem pressão, sem cobrança.
-            Aqui, você é quem guia o caminho.
+            que faz sentido para o seu momento — sem pressão, sem cobrança. Aqui,
+            você é quem guia o caminho.
           </p>
 
           {currentPlanId && (
@@ -183,18 +182,18 @@ export default function PlanosPage() {
                     isCurrentPlan
                       ? 'border-[var(--color-brand)]/40'
                       : isHighlighted
-                        ? 'border-[var(--color-brand-plum)]/30'
-                        : 'border-[var(--color-pink-snow)]/60'
+                      ? 'border-[var(--color-brand-plum)]/30'
+                      : 'border-[var(--color-pink-snow)]/60'
                   } ${
                     isHighlighted
                       ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.18)]'
                       : ''
-                  } p-6 sm:p-8`}
+                  } p-5 sm:p-6 lg:p-7`}
                 >
                   {/* Badge */}
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <div
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold mb-3 ${
                         isHighlighted
                           ? 'bg-[var(--color-brand)] text-white'
                           : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
@@ -210,9 +209,9 @@ export default function PlanosPage() {
                   </div>
 
                   {/* Nome do plano */}
-                  <div className="mb-1">
+                  <div className="mb-2">
                     <h2
-                      className={`text-xl sm:text-2xl font-bold mb-1 ${
+                      className={`text-lg sm:text-xl font-bold mb-0.5 ${
                         isHighlighted
                           ? 'text-[var(--color-brand)]'
                           : 'text-[var(--color-text-main)]'
@@ -220,16 +219,16 @@ export default function PlanosPage() {
                     >
                       {planConfig.name}
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)]">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
                       {planConfig.subtitle}
                     </p>
                   </div>
 
                   {/* Preço */}
-                  <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
+                  <div className="mb-5 pb-4 border-b border-[var(--color-pink-snow)]/60">
                     <div className="flex items-baseline gap-1">
                       <span
-                        className={`text-4xl sm:text-5xl font-bold ${
+                        className={`text-3xl sm:text-4xl font-bold ${
                           isHighlighted
                             ? 'text-[var(--color-brand)]'
                             : 'text-[var(--color-text-main)]'
@@ -237,26 +236,26 @@ export default function PlanosPage() {
                       >
                         {planConfig.price}
                       </span>
-                      <span className="text-sm text-[var(--color-text-muted)]">
+                      <span className="text-xs sm:text-sm text-[var(--color-text-muted)]">
                         {planConfig.pricePeriod}
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                    <p className="text-[11px] sm:text-xs text-[var(--color-text-muted)] mt-2">
                       {planConfig.priceNote}
                     </p>
                   </div>
 
                   {/* Lista de benefícios */}
-                  <div className="flex-1 space-y-3 mb-6">
+                  <div className="flex-1 space-y-2.5 mb-5">
                     {planConfig.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
+                      <div key={idx} className="flex items-start gap-2.5">
                         <AppIcon
                           name="check"
-                          size={16}
+                          size={14}
                           decorative
                           className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
                         />
-                        <span className="text-sm text-[var(--color-text-main)]">
+                        <span className="text-[12px] sm:text-sm text-[var(--color-text-main)] leading-snug">
                           {feature.label}
                         </span>
                       </div>
@@ -267,7 +266,7 @@ export default function PlanosPage() {
                   <Button
                     variant={planConfig.buttonVariant}
                     size="lg"
-                    className="w-full md:w-[230px]"
+                    className="w-full md:w-[220px]"
                     onClick={() => {
                       handleViewPlans(planConfig.id)
                       if (planConfig.id !== 'essencial') {
@@ -284,7 +283,7 @@ export default function PlanosPage() {
                   </Button>
 
                   {isCurrentPlan && planConfig.id !== 'essencial' && (
-                    <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
+                    <p className="text-center text-[11px] text-[var(--color-brand)] font-semibold mt-3">
                       Plano ativo atualmente
                     </p>
                   )}
