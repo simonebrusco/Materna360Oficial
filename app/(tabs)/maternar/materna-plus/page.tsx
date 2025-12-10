@@ -109,7 +109,7 @@ export default function MaternaPlusPage() {
   return (
     <PageTemplate
       label="MATERNAR"
-      title="Materna+ — sua rede de apoio curada pelo Materna360."
+      title="Materna+"
       subtitle="Profissionais parceiros, serviços especiais e, em breve, uma comunidade pensada para que você não precise maternar tudo sozinha."
     >
       <ClientOnly>
