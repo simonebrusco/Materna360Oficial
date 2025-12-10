@@ -168,7 +168,7 @@ export default function PlanosPage() {
         </header>
 
         {/* Card grande com conteúdo em branco */}
-        <div className="rounded-[32px] border border-white/80 bg-white/96 backdrop-blur-2xl shadow-[0_16px_40px_rgba(0,0,0,0.14)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
+        <div className="rounded-[32px] border border-white/80 bg-white/96 backdrop-blur-2xl shadow-[0_14px_36px_rgba(0,0,0,0.16)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
           {/* Grid de planos */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-10">
             {PLANS.map(planConfig => {
@@ -292,8 +292,8 @@ export default function PlanosPage() {
             })}
           </div>
 
-          {/* Tabela comparativa */}
-          <div className="mb-10">
+          {/* Tabela comparativa dentro de um card branco, com textos escuros */}
+          <SoftCard className="mb-10 rounded-3xl border border-[var(--color-pink-snow)]/90 bg-white/96 px-4 py-5 sm:px-6 sm:py-6 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-1">
               Comparando os planos
             </h3>
@@ -303,8 +303,8 @@ export default function PlanosPage() {
             </p>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[640px] rounded-3xl border border-[var(--color-pink-snow)]/80 bg-white/96 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/98 rounded-t-3xl">
+              <div className="min-w-[640px] rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/98">
+                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/98 rounded-t-2xl">
                   <div className="px-3 py-3">Recurso</div>
                   <div className="px-3 py-3 text-center">Essencial</div>
                   <div className="px-3 py-3 text-center">Materna+</div>
@@ -375,7 +375,7 @@ export default function PlanosPage() {
                 ].map(row => (
                   <div
                     key={row.feature}
-                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white/98 even:bg-[#fff5fb]/90"
+                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white even:bg-[#fff5fb]/80"
                   >
                     <div className="px-3 py-2 font-medium text-[var(--color-text-main)]">
                       {row.feature}
@@ -393,7 +393,7 @@ export default function PlanosPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </SoftCard>
 
           {/* Valores especiais para quem já vive o Materna360 */}
           <div className="mb-10 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/92 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
