@@ -25,10 +25,7 @@ export default function MaternaBoxPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
 
-  function handleChange(
-    field: keyof WaitlistFormState,
-    value: string
-  ) {
+  function handleChange(field: keyof WaitlistFormState, value: string) {
     setForm(prev => ({
       ...prev,
       [field]: value,
@@ -86,14 +83,13 @@ export default function MaternaBoxPage() {
 
         setFormError(
           apiError ||
-            'Não conseguimos salvar seus dados agora. Tente novamente em alguns instantes.'
+            'Não conseguimos salvar seus dados agora. Tente novamente em alguns instantes.',
         )
         return
       }
 
-      // Se chegou aqui, consideramos sucesso independente do formato exato do JSON
       setFormSuccess(
-        'Pronto! Você entrou na lista de espera oficial da MaternaBox. Quando abrirmos as assinaturas, você será avisada com prioridade.'
+        'Pronto! Você entrou na lista de espera oficial da MaternaBox. Quando abrirmos as assinaturas, você será avisada com prioridade.',
       )
       setForm({
         name: '',
@@ -102,7 +98,7 @@ export default function MaternaBoxPage() {
       })
     } catch {
       setFormError(
-        'Tivemos um imprevisto ao enviar seus dados. Tente novamente em alguns instantes.'
+        'Tivemos um imprevisto ao enviar seus dados. Tente novamente em alguns instantes.',
       )
     } finally {
       setIsSubmitting(false)
@@ -437,7 +433,7 @@ export default function MaternaBoxPage() {
 
                 {/* Experiência Completa — Plano Anual (destaque) */}
                 <div className="flex flex-col rounded-2xl border border-[#fd2597] bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
-                  <div className="flex items-center justify_between gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
                       Experiência completa
                     </p>
@@ -495,7 +491,6 @@ export default function MaternaBoxPage() {
 
           {/* POR QUE A MATERNABOX É DIFERENTE? · VERSÃO PREMIUM */}
           <SoftCard className="relative overflow-hidden rounded-3xl border border-[#F5D7E5] bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)] px-5 py-6 shadow-[0_14px_32px_rgba(0,0,0,0.14)] md:px-7 md:py-7">
-            {/* GLOW / DECORAÇÃO */}
             <div className="pointer-events-none absolute inset-0 opacity-70">
               <div className="absolute -top-10 -left-6 h-32 w-32 rounded-full bg-[#fdbed7] blur-3xl" />
               <div className="absolute -bottom-14 right-0 h-32 w-32 rounded-full bg-[#ffe1f1] blur-3xl" />
@@ -636,7 +631,7 @@ export default function MaternaBoxPage() {
                     value={form.email}
                     onChange={e => handleChange('email', e.target.value)}
                     placeholder="Seu melhor e-mail"
-                    className="w-full rounded-full border border-[#F5D7E5] bg_white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                    className="w-full rounded-full border border-[#F5D7E5] bg-white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                   />
                 </div>
 
