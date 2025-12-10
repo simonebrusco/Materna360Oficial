@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -8,13 +9,112 @@ import { Button } from '@/components/ui/Button'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import AppIcon from '@/components/ui/AppIcon'
 
+type WaitlistFormState = {
+  name: string
+  whatsapp: string
+  email: string
+}
+
 export default function MaternaBoxPage() {
+  const [form, setForm] = useState<WaitlistFormState>({
+    name: '',
+    whatsapp: '',
+    email: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formSuccess, setFormSuccess] = useState<string | null>(null)
+
+  function handleChange(
+    field: keyof WaitlistFormState,
+    value: string
+  ) {
+    setForm(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (isSubmitting) return
+
+    setFormError(null)
+    setFormSuccess(null)
+
+    const name = form.name.trim()
+    const whatsapp = form.whatsapp.trim()
+    const email = form.email.trim()
+
+    if (!name || !whatsapp || !email) {
+      setFormError('Por favor, preencha seu nome, WhatsApp e e-mail.')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setFormError('Por favor, informe um e-mail válido.')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      const res = await fetch('/api/maternabox/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          whatsapp,
+          email,
+          source: 'materna-box-page',
+        }),
+      })
+
+      let data: any = null
+      try {
+        data = await res.json()
+      } catch {
+        // se por algum motivo não vier JSON, seguimos pela verificação de status
+      }
+
+      if (!res.ok) {
+        const apiError =
+          (data && typeof data.error === 'string' && data.error) || null
+
+        setFormError(
+          apiError ||
+            'Não conseguimos salvar seus dados agora. Tente novamente em alguns instantes.'
+        )
+        return
+      }
+
+      // Se chegou aqui, consideramos sucesso independente do formato exato do JSON
+      setFormSuccess(
+        'Pronto! Você entrou na lista de espera oficial da MaternaBox. Quando abrirmos as assinaturas, você será avisada com prioridade.'
+      )
+      setForm({
+        name: '',
+        whatsapp: '',
+        email: '',
+      })
+    } catch {
+      setFormError(
+        'Tivemos um imprevisto ao enviar seus dados. Tente novamente em alguns instantes.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <PageTemplate
-  label="MATERNAR"
-  title="MaternaBox"
-  subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
->
+      label="MATERNAR"
+      title="MaternaBox"
+      subtitle="Todo mês, uma caixa criada para transformar momentos simples em conexões afetivas, fortalecer vínculos e trazer mais leveza para o seu dia."
+    >
       <ClientOnly>
         <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 md:px-6 space-y-10 md:space-y-12">
           {/* HERO · TEXTO + IMAGEM */}
@@ -329,7 +429,7 @@ export default function MaternaBoxPage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="mt-3 w-full rounded-full border border-[#fd2597] bg_WHITE text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
+                    className="mt-3 w-full rounded-full border border-[#fd2597] bg-white text-[11px] font-semibold text-[#fd2597] hover:bg-[#ffe1f1]"
                   >
                     Escolher plano semestral
                   </Button>
@@ -337,7 +437,7 @@ export default function MaternaBoxPage() {
 
                 {/* Experiência Completa — Plano Anual (destaque) */}
                 <div className="flex flex-col rounded-2xl border border-[#fd2597] bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify_between gap-2">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
                       Experiência completa
                     </p>
@@ -364,7 +464,7 @@ export default function MaternaBoxPage() {
                   <Button
                     variant="primary"
                     size="sm"
-                    className="mt-3 w_full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-[11px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                    className="mt-3 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-[11px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
                   >
                     Escolher plano anual
                   </Button>
@@ -374,7 +474,7 @@ export default function MaternaBoxPage() {
           </SoftCard>
 
           {/* VALORES ESPECIAIS PARA QUEM JÁ VIVE O MATERNA360 */}
-          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg_WHITE/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
+          <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:p-6">
             <div className="space-y-3 md:space-y-4">
               <h3 className="text-base md:text-lg font-semibold text-[#545454]">
                 Valores especiais para quem já vive o Materna360
@@ -430,7 +530,10 @@ export default function MaternaBoxPage() {
                     'criar vínculos profundos com gestos simples,',
                     'trazer mais presença para a infância do seu filho e para a sua jornada como mãe.',
                   ].map(item => (
-                    <div key={item} className="flex items-start gap-2 text-[11px] md:text-xs text-[#545454]">
+                    <div
+                      key={item}
+                      className="flex items-start gap-2 text-[11px] md:text-xs text-[#545454]"
+                    >
                       <span className="mt-[3px] flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] font-semibold text-[#fd2597]">
                         •
                       </span>
@@ -471,9 +574,21 @@ export default function MaternaBoxPage() {
                   Ao deixar seus dados, você entra na lista de espera oficial da MaternaBox
                   e será avisada quando abrirmos as primeiras assinaturas.
                 </p>
+
+                {formSuccess && (
+                  <div className="mt-1 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-3 py-2 text-[11px] text-[#545454]">
+                    {formSuccess}
+                  </div>
+                )}
+
+                {formError && (
+                  <div className="mt-1 rounded-2xl border border-[#F5D7E5] bg-[#fff1f6] px-3 py-2 text-[11px] text-[#b8236b]">
+                    {formError}
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-2.5">
+              <form className="space-y-2.5" onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
                   <label
                     className="text-[11px] font-semibold text-[#545454]"
@@ -484,6 +599,8 @@ export default function MaternaBoxPage() {
                   <input
                     id="maternabox-name"
                     type="text"
+                    value={form.name}
+                    onChange={e => handleChange('name', e.target.value)}
                     placeholder="Como você gostaria de ser chamada?"
                     className="w-full rounded-full border border-[#F5D7E5] bg-white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                   />
@@ -499,6 +616,8 @@ export default function MaternaBoxPage() {
                   <input
                     id="maternabox-whatsapp"
                     type="tel"
+                    value={form.whatsapp}
+                    onChange={e => handleChange('whatsapp', e.target.value)}
                     placeholder="(00) 00000-0000"
                     className="w-full rounded-full border border-[#F5D7E5] bg-white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                   />
@@ -514,19 +633,25 @@ export default function MaternaBoxPage() {
                   <input
                     id="maternabox-email"
                     type="email"
+                    value={form.email}
+                    onChange={e => handleChange('email', e.target.value)}
                     placeholder="Seu melhor e-mail"
-                    className="w-full rounded-full border border-[#F5D7E5] bg-white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
+                    className="w-full rounded-full border border-[#F5D7E5] bg_white px-3 py-2 text-xs text-[#545454] placeholder:text-[#A0A0A0] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
                   />
                 </div>
 
                 <Button
+                  type="submit"
                   variant="primary"
                   size="sm"
-                  className="mt-1 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-white border-none shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-full bg-[#fd2597] hover:bg-[#b8236b] text-white border-none shadow-[0_10px_26px_rgba(0,0,0,0.18)] disabled:opacity-80 disabled:cursor-not-allowed"
                 >
-                  Entrar na lista de espera da MaternaBox ✨
+                  {isSubmitting
+                    ? 'Enviando seus dados...'
+                    : 'Entrar na lista de espera da MaternaBox ✨'}
                 </Button>
-              </div>
+              </form>
             </div>
           </SoftCard>
 
