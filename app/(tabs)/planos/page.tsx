@@ -148,8 +148,8 @@ export default function PlanosPage() {
           </h1>
           <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
             Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
-            que faz sentido para o seu momento — sem pressão, sem cobrança. Aqui,
-            você é quem guia o caminho.
+            que faz sentido para o seu momento — sem pressão, sem cobrança.
+            Aqui, você é quem guia o caminho.
           </p>
 
           {currentPlanId && (
@@ -168,7 +168,7 @@ export default function PlanosPage() {
         </header>
 
         {/* Card grande com conteúdo em branco */}
-        <div className="rounded-[32px] border border-white/70 bg-white/96 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.22)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
+        <div className="rounded-[32px] border border-white/80 bg-white/96 backdrop-blur-2xl shadow-[0_16px_40px_rgba(0,0,0,0.14)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
           {/* Grid de planos */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-10">
             {PLANS.map(planConfig => {
@@ -178,12 +178,12 @@ export default function PlanosPage() {
               return (
                 <SoftCard
                   key={planConfig.id}
-                  className={`rounded-3xl border transition-all flex flex-col relative bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] ${
+                  className={`rounded-3xl border transition-all flex flex-col relative bg-white shadow-[0_6px_22px_rgba(0,0,0,0.08)] ${
                     isCurrentPlan
                       ? 'border-[var(--color-brand)]/40'
                       : isHighlighted
                         ? 'border-[var(--color-brand-plum)]/30'
-                        : 'border-[var(--color-pink-snow)]/60'
+                        : 'border-[var(--color-pink-snow)]/80'
                   } ${
                     isHighlighted
                       ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.18)]'
@@ -292,19 +292,19 @@ export default function PlanosPage() {
             })}
           </div>
 
-          {/* Tabela comparativa simplificada */}
+          {/* Tabela comparativa */}
           <div className="mb-10">
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-1">
               Comparando os planos
             </h3>
-            <p className="text-sm text-white/90 mb-4 drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+            <p className="text-sm text-[var(--color-text-muted)] mb-4">
               Um resumo dos principais recursos em cada plano, para te ajudar a
               escolher com calma o que faz mais sentido para a sua rotina.
             </p>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[640px] rounded-3xl border border-white/70 bg-white/92 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
-                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/95 rounded-t-3xl">
+              <div className="min-w-[640px] rounded-3xl border border-[var(--color-pink-snow)]/80 bg-white/96 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/98 rounded-t-3xl">
                   <div className="px-3 py-3">Recurso</div>
                   <div className="px-3 py-3 text-center">Essencial</div>
                   <div className="px-3 py-3 text-center">Materna+</div>
@@ -375,7 +375,7 @@ export default function PlanosPage() {
                 ].map(row => (
                   <div
                     key={row.feature}
-                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white/95 even:bg-[#fff5fb]/80"
+                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white/98 even:bg-[#fff5fb]/90"
                   >
                     <div className="px-3 py-2 font-medium text-[var(--color-text-main)]">
                       {row.feature}
@@ -396,7 +396,7 @@ export default function PlanosPage() {
           </div>
 
           {/* Valores especiais para quem já vive o Materna360 */}
-          <div className="mb-10 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/90 px-4 py-4 sm:px-5 sm:py-5">
+          <div className="mb-10 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/92 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
             <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)] mb-2">
               Valores especiais para quem já vive o Materna360
             </h3>
