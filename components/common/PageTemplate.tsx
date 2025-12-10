@@ -21,17 +21,17 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className="
         min-h-[100dvh]
-        bg-[radial-gradient(circle_at_top,_#fdbed7_0%,_#ffe1f1_60%,_#ffffff_100%)]
+        bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]
       "
     >
-      <div className="mx-auto max-w-4xl px-4 md:px-6 pb-20">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 pb-20">
         {/* HERO padrão das páginas internas */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
           <span
             className="
               inline-flex items-center rounded-full
-              border border-[#fdbed7]
-              bg-white/80
+              border border-[#F5D7E5]
+              bg-white/85
               px-3 py-1
               text-[10px] font-semibold tracking-[0.24em] uppercase
               text-[#b8236b]
@@ -44,7 +44,7 @@ export function PageTemplate({
           <h1
             className="
               mt-3
-              text-3xl md:text-4xl
+              text-[28px] md:text-[32px]
               font-semibold leading-tight
               text-[#545454]
             "
