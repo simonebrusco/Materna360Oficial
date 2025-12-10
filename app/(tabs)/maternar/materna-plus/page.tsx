@@ -28,6 +28,32 @@ type Professional = {
   whatsappUrl: string
 }
 
+// Utilitário simples para avatar com iniciais
+function getInitials(name: string): string {
+  const parts = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+  return parts.map(p => p[0]?.toUpperCase()).join('')
+}
+
+// Telemetria local — pronto para integrar com analytics real depois
+function trackProfessionalEvent(
+  type: 'view' | 'whatsapp_click',
+  professional: Professional
+) {
+  if (typeof window === 'undefined') return
+  // Ponto único para integrar com qualquer ferramenta (PostHog, GA, backend etc.)
+  // Exemplo futuro:
+  // window.gtag?.('event', type, { professional_id: professional.id, professional_name: professional.name })
+  // Por enquanto, mantemos seguro e não invasivo:
+  // eslint-disable-next-line no-console
+  console.log('[Materna360][Materna+] Event:', type, {
+    id: professional.id,
+    name: professional.name,
+  })
+}
+
 const SPECIALTIES: { id: SpecialtyId; label: string }[] = [
   { id: 'todos', label: 'Todos os profissionais' },
   { id: 'psicologia-infantil', label: 'Psicologia infantil' },
@@ -101,6 +127,7 @@ export default function MaternaPlusPage() {
 
   const handleContactProfessional = () => {
     if (!selectedProfessional) return
+    trackProfessionalEvent('whatsapp_click', selectedProfessional)
     if (typeof window !== 'undefined') {
       window.open(selectedProfessional.whatsappUrl, '_blank')
     }
@@ -267,7 +294,10 @@ export default function MaternaPlusPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setSelectedProfessional(prof)}
+                          onClick={() => {
+                            setSelectedProfessional(prof)
+                            trackProfessionalEvent('view', prof)
+                          }}
                           className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
                         >
                           Ver detalhes
@@ -408,19 +438,32 @@ export default function MaternaPlusPage() {
 
           <MotivationalFooter routeKey="materna-plus" />
 
-          {/* MODAL PROFISSIONAL */}
+          {/* MODAL PROFISSIONAL PREMIUM */}
           {selectedProfessional && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-              <div className="max-w-lg w-full">
-                <SoftCard className="rounded-3xl bg-white p-6 shadow-[0_20px_45px_rgba(0,0,0,0.45)] border border-[#F5D7E5]">
+            <div
+              className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+              onClick={() => setSelectedProfessional(null)}
+            >
+              <div
+                className="max-w-lg w-full"
+                onClick={e => e.stopPropagation()}
+              >
+                <SoftCard className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.22)] border border-[#F5D7E5] max-h-[90vh] overflow-y-auto">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <h3 className="text-[20px] font-semibold text-[#2F3A56]">
-                        {selectedProfessional.name}
-                      </h3>
-                      <p className="text-[13px] text-[#6A6A6A]">
-                        {selectedProfessional.specialtyLabel}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-12 w-12 rounded-full bg-[#fdbed7] flex items-center justify-center">
+                        <span className="text-[16px] font-semibold text-[#b8236b]">
+                          {getInitials(selectedProfessional.name)}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-[20px] font-semibold text-[#545454]">
+                          {selectedProfessional.name}
+                        </h3>
+                        <p className="text-[13px] text-[#6A6A6A]">
+                          {selectedProfessional.specialtyLabel}
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -431,7 +474,7 @@ export default function MaternaPlusPage() {
                     </button>
                   </div>
 
-                  <p className="mt-3 text-[14px] text-[#545454]">
+                  <p className="mt-4 text-[14px] text-[#545454] leading-relaxed">
                     {selectedProfessional.shortBio}
                   </p>
                   <p className="mt-2 text-[13px] text-[#6A6A6A]">
@@ -449,10 +492,11 @@ export default function MaternaPlusPage() {
                     ))}
                   </div>
 
-                  <p className="mt-4 text-[12px] text-[#6A6A6A]">
+                  <p className="mt-4 text-[12px] text-[#6A6A6A] leading-relaxed">
                     O agendamento, valores e forma de pagamento são combinados
                     diretamente entre você e o profissional. O Materna360 faz
-                    apenas a indicação e a ponte.
+                    apenas a indicação e a ponte — para que você se sinta
+                    acolhida e segura na escolha.
                   </p>
 
                   <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
