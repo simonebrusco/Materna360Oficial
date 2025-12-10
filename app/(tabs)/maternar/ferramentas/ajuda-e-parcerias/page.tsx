@@ -90,13 +90,13 @@ export default function AjudaEParceriasPage() {
         <section className="flex flex-col gap-8 lg:flex-row">
           {/* Coluna esquerda – Ajuda & suporte */}
           <div className="flex-1">
-            <div className="h-full rounded-3xl border border-white/50 bg-white/95 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.16)] backdrop-blur-md md:p-7">
+            <div className="h-full rounded-3xl border border-[#F5D7E5] bg-white/98 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.12)] backdrop-blur-md md:p-7">
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <p className="text-[12px] font-semibold tracking-[0.24em] text-[#fd279d]/85 uppercase">
-                    Ajuda &amp; suporte
+                  <p className="text-[12px] font-semibold tracking-[0.24em] text-[#fd2597]/85 uppercase">
+                    AJUDA &amp; SUPORTE
                   </p>
-                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
                     Quando algo não está funcionando bem
                   </h2>
                   <p className="text-[14px] md:text-[15px] leading-relaxed text-[#545454]">
@@ -107,8 +107,8 @@ export default function AjudaEParceriasPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl bg-[#ffd8e6]/70 p-4">
-                    <h3 className="mb-1 text-[18px] font-semibold text-[#2F3A56]">
+                  <div className="rounded-2xl bg-[#fdbed7]/80 p-4">
+                    <h3 className="mb-1 text-[18px] font-semibold text-[#545454]">
                       Dúvidas sobre o app
                     </h3>
                     <p className="text-[13px] leading-relaxed text-[#545454]">
@@ -118,8 +118,8 @@ export default function AjudaEParceriasPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-[#ffd8e6]/50 p-4">
-                    <h3 className="mb-1 text-[18px] font-semibold text-[#2F3A56]">
+                  <div className="rounded-2xl bg-[#fdbed7]/60 p-4">
+                    <h3 className="mb-1 text-[18px] font-semibold text-[#545454]">
                       Suporte técnico
                     </h3>
                     <p className="text-[13px] leading-relaxed text-[#545454]">
@@ -130,13 +130,13 @@ export default function AjudaEParceriasPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-white/70 bg-white/98 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.10)]">
+                <div className="space-y-3 rounded-2xl border border-[#F5D7E5] bg-white/98 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                   <p className="text-[12px] font-semibold tracking-[0.18em] text-[#6A6A6A] uppercase">
                     FAQ rápido
                   </p>
-                  <div className="space-y-3 text-[#2F3A56]">
-                    <details className="group rounded-xl bg-[#ffd8e6]/30 p-3">
-                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                  <div className="space-y-3 text-[#545454]">
+                    <details className="group rounded-xl bg-[#fdbed7]/30 p-3">
+                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#545454]">
                         O que eu faço se o app não carregar?
                       </summary>
                       <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
@@ -148,8 +148,8 @@ export default function AjudaEParceriasPage() {
                       </p>
                     </details>
 
-                    <details className="group rounded-xl bg-[#ffd8e6]/30 p-3">
-                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                    <details className="group rounded-xl bg-[#fdbed7]/30 p-3">
+                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#545454]">
                         Onde vejo os conteúdos que salvei no Planner?
                       </summary>
                       <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
@@ -160,8 +160,8 @@ export default function AjudaEParceriasPage() {
                       </p>
                     </details>
 
-                    <details className="group rounded-xl bg-[#ffd8e6]/30 p-3">
-                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                    <details className="group rounded-xl bg-[#fdbed7]/30 p-3">
+                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#545454]">
                         Ainda estou com dúvidas. E agora?
                       </summary>
                       <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
@@ -179,13 +179,13 @@ export default function AjudaEParceriasPage() {
 
           {/* Coluna direita – Parcerias */}
           <div className="flex-1">
-            <div className="h-full rounded-3xl border border-white/50 bg-white/96 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.16)] backdrop-blur-md md:p-7">
+            <div className="h-full rounded-3xl border border-[#F5D7E5] bg-white/98 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.12)] backdrop-blur-md md:p-7">
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <p className="text-[12px] font-semibold tracking-[0.24em] text-[#fd279d]/85 uppercase">
-                    Parcerias
+                  <p className="text-[12px] font-semibold tracking-[0.24em] text-[#fd2597]/85 uppercase">
+                    PARCERIAS
                   </p>
-                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#2F3A56]">
+                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
                     Conecte sua jornada ao Materna360
                   </h2>
                   <p className="text-[14px] md:text-[15px] leading-relaxed text-[#545454]">
@@ -208,7 +208,7 @@ export default function AjudaEParceriasPage() {
                       name="partnershipType"
                       value={form.partnershipType}
                       onChange={handleChange}
-                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] outline-none focus:border-[#fd279d] focus:ring-2 focus:ring-[#fd279d]/30"
+                      className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-3 py-2 text-[14px] text-[#545454] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                       disabled={isSubmitting}
                     >
                       <option value="profissional_saude">
@@ -238,7 +238,7 @@ export default function AjudaEParceriasPage() {
                       value={form.name}
                       onChange={handleChange}
                       placeholder="Como você gostaria de ser chamada?"
-                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd279d] focus:ring-2 focus:ring-[#fd279d]/30"
+                      className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-3 py-2 text-[14px] text-[#545454] placeholder:text-[#A0A0A0] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                       disabled={isSubmitting}
                     />
                   </div>
@@ -258,7 +258,7 @@ export default function AjudaEParceriasPage() {
                       value={form.email}
                       onChange={handleChange}
                       placeholder="Seu melhor e-mail para contato"
-                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd279d] focus:ring-2 focus:ring-[#fd279d]/30"
+                      className="w-full rounded-2xl border border-[#F5D7E5] bg:white px-3 py-2 text-[14px] text-[#545454] placeholder:text-[#A0A0A0] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                       disabled={isSubmitting}
                     />
                   </div>
@@ -277,19 +277,19 @@ export default function AjudaEParceriasPage() {
                       value={form.message}
                       onChange={handleChange}
                       placeholder="Conte, com calma, que tipo de parceria faz sentido para você e como imagina essa construção junto com o Materna360."
-                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd279d] focus:ring-2 focus:ring-[#fd279d]/30"
+                      className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#545454] placeholder:text-[#A0A0A0] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                       disabled={isSubmitting}
                     />
                   </div>
 
                   {successMessage && (
-                    <p className="rounded-2xl bg-[#ffd8e6]/80 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                    <p className="rounded-2xl bg-[#fdbed7]/80 px-4 py-2 text-[12px] leading-relaxed text-[#545454]">
                       {successMessage}
                     </p>
                   )}
 
                   {errorMessage && (
-                    <p className="rounded-2xl bg-[#fd279d]/10 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                    <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#545454]">
                       {errorMessage}
                     </p>
                   )}
@@ -297,7 +297,7 @@ export default function AjudaEParceriasPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[#fd279d] px-4 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#e0218c] disabled:cursor-not-allowed disabled:bg-[#fd279d]/60"
+                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[#fd2597] px-4 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#b8236b] disabled:cursor-not-allowed disabled:bg-[#fd2597]/60"
                   >
                     {isSubmitting
                       ? 'Enviando com carinho...'
