@@ -101,9 +101,16 @@ export default function MaternaPlusPage() {
   const handleScrollToPremium = () => {
     if (typeof window === 'undefined') return
     const el = document.getElementById('materna-plus-premium-content')
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    if (!el) return
+
+    const headerOffset = 88 // altura aproximada do header global
+    const rect = el.getBoundingClientRect()
+    const offsetTop = rect.top + window.scrollY - headerOffset
+
+    window.scrollTo({
+      top: offsetTop,
+      behavior: 'smooth',
+    })
   }
 
   return (
@@ -114,7 +121,7 @@ export default function MaternaPlusPage() {
     >
       <ClientOnly>
         {/* padrão central Materna360 */}
-        <div className="pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
           {/* HERO */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
@@ -145,7 +152,7 @@ export default function MaternaPlusPage() {
 
                 {/* Cards de apoio */}
                 <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">
                       Profissionais
                     </p>
@@ -155,7 +162,7 @@ export default function MaternaPlusPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">
                       Comunidade
                     </p>
@@ -165,7 +172,7 @@ export default function MaternaPlusPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">
                       Serviços Materna360
                     </p>
@@ -182,7 +189,7 @@ export default function MaternaPlusPage() {
           {/* STATUS DO PLANO / SLOT DE ASSINATURA */}
           <Reveal delay={20}>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
                 <div className="space-y-1.5">
                   <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                     STATUS DO SEU PLANO
@@ -198,7 +205,7 @@ export default function MaternaPlusPage() {
                   </p>
                 </div>
 
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 md:ml-auto">
                   <Button
                     variant="primary"
                     size="sm"
@@ -243,7 +250,7 @@ export default function MaternaPlusPage() {
 
                 <div className="grid gap-4 md:grid-cols-2 items-stretch">
                   {/* Trilha Primeiro ano leve */}
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
@@ -277,7 +284,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   {/* Trilha Desenvolvimento por idade */}
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
@@ -311,7 +318,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   {/* Biblioteca Premium */}
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                       BIBLIOTECA PREMIUM
                     </p>
@@ -335,7 +342,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   {/* Integração Eu360 / IA Premium */}
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)] h-full">
+                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                       EU360 & IA PREMIUM · PLANEJADO
                     </p>
@@ -419,7 +426,7 @@ export default function MaternaPlusPage() {
                       })}
                     </div>
 
-                    <SoftCard className="mt-3 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                    <SoftCard className="mt-3 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="text-[13px] font-semibold text-[#545454]">
                         Como funciona na prática?
                       </p>
@@ -446,12 +453,12 @@ export default function MaternaPlusPage() {
                   <div className="space-y-3">
                     {isLoading && (
                       <div className="space-y-3">
-                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.06)] animate-pulse">
+                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)] animate-pulse">
                           <div className="h-4 w-40 rounded bg-[#ffe1f1]" />
                           <div className="mt-2 h-3 w-64 rounded bg-[#ffe1f1]" />
                           <div className="mt-4 h-3 w-52 rounded bg-[#ffe1f1]" />
                         </div>
-                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.06)] animate-pulse">
+                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)] animate-pulse">
                           <div className="h-4 w-48 rounded bg-[#ffe1f1]" />
                           <div className="mt-2 h-3 w-60 rounded bg-[#ffe1f1]" />
                           <div className="mt-4 h-3 w-40 rounded bg-[#ffe1f1]" />
@@ -460,7 +467,7 @@ export default function MaternaPlusPage() {
                     )}
 
                     {!isLoading && error && (
-                      <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                      <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                         <p className="font-semibold">
                           Não conseguimos carregar os profissionais agora.
                         </p>
@@ -476,7 +483,7 @@ export default function MaternaPlusPage() {
                       filteredProfessionals.map(prof => (
                         <div
                           key={prof.id}
-                          className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.06)] flex flex-col gap-2"
+                          className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)] flex flex-col gap-2"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
@@ -572,7 +579,7 @@ export default function MaternaPlusPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="font-semibold text-[#545454]">
                     O que você pode esperar:
                   </p>
@@ -600,7 +607,7 @@ export default function MaternaPlusPage() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* MaternaBox */}
-                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                       MATERNABOX · ASSINATURA DE CARINHO MENSAL
                     </p>
@@ -628,7 +635,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   {/* Concierge */}
-                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
                       CONCIERGE MATERNA+
                     </p>
