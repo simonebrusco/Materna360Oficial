@@ -325,21 +325,21 @@ export default function MinhasConquistasPage() {
       subtitle="Um espaço para celebrar o que você já fez — um passo de cada vez."
     >
       <ClientOnly>
-        <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6 pb-16 md:pb-20 space-y-8 md:space-y-10">
+        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
           {/* ======================================================
               BLOCO 1 — PAINEL DA SUA JORNADA
           ====================================================== */}
           <RevealSection delay={0}>
             <SoftCard
               className={clsx(
-                'relative overflow-hidden rounded-[32px] md:rounded-[40px] p-6 md:p-8 border border-[#F5D7E5] bg-white/95 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.12)]',
+                'relative overflow-hidden rounded-3xl md:rounded-[32px] p-6 md:p-8 border border-[#F5D7E5] bg-white/95 backdrop-blur-xl shadow-[0_6px_22px_rgba(0,0,0,0.06)]',
                 highlightRing('painel'),
               )}
             >
-              {/* Fundo */}
+              {/* Fundo suave */}
               <div className="pointer-events-none absolute inset-0 opacity-80">
-                <div className="absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[rgba(253,37,151,0.28)] blur-3xl" />
-                <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-[rgba(253,190,215,0.9)] blur-3xl" />
+                <div className="absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[rgba(253,37,151,0.18)] blur-3xl" />
+                <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-[rgba(253,190,215,0.75)] blur-3xl" />
               </div>
 
               <div className="relative z-10 space-y-6">
@@ -359,7 +359,7 @@ export default function MinhasConquistasPage() {
 
                   {/* Badge alinhado */}
                   <div className="flex flex-col items-end gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[#545454] shadow-[0_8px_18px_rgba(0,0,0,0.12)] leading-none">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-[#545454] shadow-[0_4px_16px_rgba(0,0,0,0.10)] leading-none">
                       <AppIcon
                         name="crown"
                         className="h-4 w-4 text-[#fd2597]"
@@ -424,7 +424,7 @@ export default function MinhasConquistasPage() {
               {/* MISSÕES */}
               <SoftCard
                 className={clsx(
-                  'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#F5D7E5] shadow-[0_12px_36px_rgba(0,0,0,0.12)]',
+                  'lg:col-span-3 rounded-[28px] md:rounded-[32px] p-6 bg-white border border-[#F5D7E5] shadow-[0_4px_18px_rgba(0,0,0,0.08)]',
                   highlightRing('missoes'),
                 )}
               >
@@ -453,7 +453,7 @@ export default function MinhasConquistasPage() {
                           className={clsx(
                             'w-full flex items-center justify-between rounded-2xl border px-3.5 py-3 text-left transition-all duration-150',
                             isDone
-                              ? 'border-[#fd2597]/40 bg-[#fdbed7]/35 shadow-[0_10px_26px_rgba(0,0,0,0.10)]'
+                              ? 'border-[#fd2597]/40 bg-[#fdbed7]/35 shadow-[0_4px_16px_rgba(0,0,0,0.08)]'
                               : 'border-[#F5D7E5] bg-white hover:bg-[#fdbed7]/20 hover:border-[#fd2597]/60',
                           )}
                         >
@@ -504,7 +504,7 @@ export default function MinhasConquistasPage() {
               </SoftCard>
 
               {/* RESUMO DO DIA */}
-              <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-6 bg-[#ffe1f1]/70 border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.10)]">
+              <SoftCard className="lg:col-span-2 rounded-[28px] md:rounded-[32px] p-6 bg-[#ffe1f1]/70 border border-[#F5D7E5] shadow-[0_4px_18px_rgba(0,0,0,0.08)]">
                 <div className="space-y-4">
                   <header>
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">
@@ -571,7 +571,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={120}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 bg-white border border-[#F5D7E5] shadow-[0_18px_60px_rgba(0,0,0,0.12)]',
+                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]',
                 highlightRing('selos'),
               )}
             >
@@ -606,7 +606,7 @@ export default function MinhasConquistasPage() {
                       <div
                         key={seal.id}
                         className={clsx(
-                          'flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_10px_28px_rgba(0,0,0,0.12)] transition-all',
+                          'flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center shadow-[0_4px_18px_rgba(0,0,0,0.08)] transition-all',
                           unlocked
                             ? 'border-[#F5D7E5] bg-white/90'
                             : 'border-[#F5D7E5]/80 bg-white/70 opacity-60',
@@ -657,10 +657,7 @@ export default function MinhasConquistasPage() {
           <RevealSection delay={160}>
             <SoftCard
               className={clsx(
-                'rounded-[32px] md:rounded-[36px] p-6 bg.white border border-[#F5D7E5] shadow-[0_16px_44px_rgba(0,0,0,0.12)]'.replace(
-                  'bg.white',
-                  'bg-white',
-                ),
+                'rounded-[32px] md:rounded-[36px] p-6 md:p-8 bg-white border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]',
                 highlightRing('mensal'),
               )}
             >
@@ -732,7 +729,7 @@ export default function MinhasConquistasPage() {
               BLOCO 5 — POR QUE ISSO IMPORTA
           ====================================================== */}
           <RevealSection delay={200}>
-            <SoftCard className="rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-white border border-[#F5D7E5] shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
+            <SoftCard className="rounded-[28px] md:rounded-[32px] p-5 md:p-6 bg-white border border-[#F5D7E5] shadow-[0_4px_18px_rgba(0,0,0,0.08)]">
               <div className="grid gap-4 md:gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] items-start">
                 <div className="space-y-2">
                   <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
@@ -811,7 +808,7 @@ type StatCardProps = {
 
 function StatCard({ label, value, helper, icon }: StatCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.12)] p-4">
+    <div className="relative overflow-hidden rounded-2xl border border-[#F5D7E5] bg-white/95 shadow-[0_4px_18px_rgba(0,0,0,0.08)] p-4">
       <div className="absolute -top-6 -right-4 h-14 w-14 rounded-full bg-[#ffe1f1] blur-2xl opacity-80" />
 
       <div className="relative z-10 space-y-1.5">
