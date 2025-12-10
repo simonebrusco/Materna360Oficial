@@ -257,7 +257,9 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
         signalsCount: signalsData.selectedSignals.length,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
 
     // XP por registrar sinais do dia
     try {
@@ -294,7 +296,9 @@ export default function CuidarComAmorPage() {
         origin: 'cuidar-com-amor',
         checkedCount: careData.checkedItems.length,
       })
-    } catch {}
+    } catch {
+      // ignora
+    }
 
     // XP por registrar cuidados do dia
     try {
@@ -348,7 +352,9 @@ export default function CuidarComAmorPage() {
           origin: 'cuidar-com-amor',
           type: bondData.selectedOption,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       // XP por salvar gesto/ritual de vínculo
       try {
@@ -450,7 +456,9 @@ export default function CuidarComAmorPage() {
           origin: 'cuidar-com-amor',
           feature: currentFeature,
         })
-      } catch {}
+      } catch {
+        // ignora
+      }
 
       // XP por salvar ideias de cuidado no planner
       try {
@@ -474,6 +482,9 @@ export default function CuidarComAmorPage() {
     }
   }
 
+  // ======================================
+  // RENDER
+  // ======================================
   return (
     <PageTemplate
       label="CUIDAR"
@@ -529,6 +540,7 @@ export default function CuidarComAmorPage() {
                           {SIGNALS_OPTIONS.map(signal => (
                             <button
                               key={signal}
+                              type="button"
                               onClick={() => handleSignalToggle(signal)}
                               className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
                                 signalsData.selectedSignals.includes(signal)
@@ -563,6 +575,7 @@ export default function CuidarComAmorPage() {
                       <Button
                         variant="primary"
                         size="sm"
+                        type="button"
                         onClick={handleSaveSignals}
                         className="w-full"
                       >
@@ -793,6 +806,7 @@ export default function CuidarComAmorPage() {
                         <Button
                           variant="primary"
                           size="sm"
+                          type="button"
                           onClick={handleSaveCare}
                           className="w-full"
                         >
@@ -903,6 +917,7 @@ export default function CuidarComAmorPage() {
                           <Button
                             variant="primary"
                             size="sm"
+                            type="button"
                             onClick={handleSaveBond}
                             className="w-full"
                           >

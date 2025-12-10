@@ -1,40 +1,102 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  // Não quebra o build, mas loga erro no servidor
+  console.error(
+    '[MaternaBox Waitlist] Variáveis de ambiente do Supabase ausentes. ' +
+      'Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.',
+  )
+}
+
+const supabase =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    : null
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { name, email, ageRange } = body || {};
+    const body = await req.json()
 
-    if (!email || typeof email !== 'string') {
+    const name = String(body.name ?? '').trim()
+    const email = String(body.email ?? '').trim()
+    const childAgeRange = String(body.childAgeRange ?? '').trim()
+    const city = String(body.city ?? '').trim()
+    const discoverySource = String(body.discoverySource ?? '').trim()
+    const notes = String(body.notes ?? '').trim()
+
+    if (!name || !email) {
       return NextResponse.json(
-        { error: 'E-mail é obrigatório.' },
-        { status: 400 }
-      );
+        { ok: false, error: 'Nome e e-mail são obrigatórios.' },
+        { status: 400 },
+      )
     }
 
-    // TODO: integrar com banco de dados / ferramenta de e-mail
-    // Exemplo (Prisma):
-    //
-    // await prisma.maternaBoxWaitlist.create({
-    //   data: {
-    //     name,
-    //     email,
-    //     ageRange,
-    //   },
-    // });
+    // Se não tiver Supabase configurado, só loga e responde OK (modo “degradação suave”)
+    if (!supabase) {
+      console.warn(
+        '[MaternaBox Waitlist] Supabase não configurado. Dados recebidos:',
+        {
+          name,
+          email,
+          childAgeRange,
+          city,
+          discoverySource,
+          notes,
+        },
+      )
 
-    console.log('Nova inscrição na lista de espera MaternaBox:', {
+      return NextResponse.json(
+        {
+          ok: true,
+          message:
+            'Cadastro recebido em modo de testes. Em breve, a lista de espera estará 100% ativa.',
+        },
+        { status: 200 },
+      )
+    }
+
+    const { error } = await supabase.from('materna_box_waitlist').insert({
       name,
       email,
-      ageRange,
-    });
+      child_age_range: childAgeRange || null,
+      city: city || null,
+      discovery_source: discoverySource || null,
+      notes: notes || null,
+    })
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error('Erro ao registrar lista de espera MaternaBox:', error);
+    if (error) {
+      console.error('[MaternaBox Waitlist] Erro ao salvar no Supabase:', error)
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            'Não conseguimos salvar seu cadastro agora. Tente novamente em alguns instantes.',
+        },
+        { status: 500 },
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Erro ao registrar sua inscrição. Tente novamente mais tarde.' },
-      { status: 500 }
-    );
+      {
+        ok: true,
+        message:
+          'Pronto! Você entrou para a lista de espera da MaternaBox. Vamos te avisar assim que as primeiras caixas forem liberadas.',
+      },
+      { status: 200 },
+    )
+  } catch (error) {
+    console.error('[MaternaBox Waitlist] Erro inesperado:', error)
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          'Tivemos um problema ao receber seus dados. Tente novamente em alguns instantes.',
+      },
+      { status: 500 },
+    )
   }
 }
