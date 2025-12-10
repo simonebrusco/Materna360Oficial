@@ -1,32 +1,21 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import {
+  getProfessionals,
+  type ProfessionalApi,
+  type SpecialtyId,
+} from '@/app/lib/profissionais'
 
-type SpecialtyId =
-  | 'todos'
-  | 'psicologia-infantil'
-  | 'psicopedagogia'
-  | 'nutricao-materno-infantil'
-  | 'sono-infantil'
-  | 'parentalidade-familia'
+type SpecialtyFilterId = 'todos' | SpecialtyId
 
-type Professional = {
-  id: string
-  name: string
-  specialtyId: SpecialtyId
-  specialtyLabel: string
-  focus: string
-  city: string
-  shortBio: string
-  tags: string[]
-  whatsappUrl: string
-}
+type Professional = ProfessionalApi
 
 // Utilitário simples para avatar com iniciais
 function getInitials(name: string): string {
@@ -43,10 +32,6 @@ function trackProfessionalEvent(
   professional: Professional
 ) {
   if (typeof window === 'undefined') return
-  // Ponto único para integrar com qualquer ferramenta (PostHog, GA, backend etc.)
-  // Exemplo futuro:
-  // window.gtag?.('event', type, { professional_id: professional.id, professional_name: professional.name })
-  // Por enquanto, mantemos seguro e não invasivo:
   // eslint-disable-next-line no-console
   console.log('[Materna360][Materna+] Event:', type, {
     id: professional.id,
@@ -54,7 +39,7 @@ function trackProfessionalEvent(
   })
 }
 
-const SPECIALTIES: { id: SpecialtyId; label: string }[] = [
+const SPECIALTIES: { id: SpecialtyFilterId; label: string }[] = [
   { id: 'todos', label: 'Todos os profissionais' },
   { id: 'psicologia-infantil', label: 'Psicologia infantil' },
   { id: 'psicopedagogia', label: 'Psicopedagogia' },
@@ -63,67 +48,46 @@ const SPECIALTIES: { id: SpecialtyId; label: string }[] = [
   { id: 'parentalidade-familia', label: 'Parentalidade & família' },
 ]
 
-const PROFESSIONALS: Professional[] = [
-  {
-    id: 'prof-1',
-    name: 'Dra. Mariana Alves',
-    specialtyId: 'psicologia-infantil',
-    specialtyLabel: 'Psicóloga infantil · CRP 00/00000',
-    focus: 'Regulação emocional, birras e rotina leve em casa.',
-    city: 'Atendimento online · Brasil',
-    shortBio:
-      'Psicóloga infantil com mais de 10 anos acolhendo famílias em desafios de comportamento, ansiedade infantil e culpa materna.',
-    tags: ['Atendimento online', 'Orientação para pais', 'Primeira infância'],
-    whatsappUrl: 'https://wa.me/5500000000000?text=Olá%2C+vim+pelo+Materna360',
-  },
-  {
-    id: 'prof-2',
-    name: 'Bruna Ribeiro',
-    specialtyId: 'psicopedagogia',
-    specialtyLabel: 'Psicopedagoga · Especialista em alfabetização',
-    focus: 'Dificuldades escolares, rotina de estudos e apoio às famílias.',
-    city: 'Atendimento online · Brasil',
-    shortBio:
-      'Ajuda mães e crianças a construírem um relacionamento mais leve com a escola, tarefas e primeiros anos escolares.',
-    tags: ['Rotina de estudos', 'Primeiros anos escolares'],
-    whatsappUrl: 'https://wa.me/5500000000000?text=Olá%2C+vim+pelo+Materna360',
-  },
-  {
-    id: 'prof-3',
-    name: 'Dr. Felipe Souza',
-    specialtyId: 'nutricao-materno-infantil',
-    specialtyLabel: 'Nutricionista materno-infantil · CRN 0000',
-    focus: 'Alimentação afetiva, seletividade alimentar e rotina de refeições.',
-    city: 'Atendimento online · Brasil',
-    shortBio:
-      'Trabalha com foco em vínculo e em refeições possíveis, sem terrorismo nutricional, respeitando o ritmo da família.',
-    tags: ['Rotina de refeições', 'Seletividade alimentar'],
-    whatsappUrl: 'https://wa.me/5500000000000?text=Olá%2C+vim+pelo+Materna360',
-  },
-  {
-    id: 'prof-4',
-    name: 'Ana Paula Mendes',
-    specialtyId: 'parentalidade-familia',
-    specialtyLabel: 'Mentora em parentalidade consciente',
-    focus: 'Culpa materna, divisão de tarefas e acordos familiares.',
-    city: 'Atendimento online · Brasil',
-    shortBio:
-      'Ajuda mães a saírem do piloto automático e construírem uma maternidade mais possível, com mais acordos e menos culpa.',
-    tags: ['Parentalidade consciente', 'Casal & família'],
-    whatsappUrl: 'https://wa.me/5500000000000?text=Olá%2C+vim+pelo+Materna360',
-  },
-]
-
 export default function MaternaPlusPage() {
   const [selectedSpecialty, setSelectedSpecialty] =
-    useState<SpecialtyId>('todos')
+    useState<SpecialtyFilterId>('todos')
+  const [professionals, setProfessionals] = useState<Professional[]>([])
   const [selectedProfessional, setSelectedProfessional] =
     useState<Professional | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadProfessionals() {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await getProfessionals()
+        if (!isMounted) return
+        setProfessionals(data)
+      } catch (err) {
+        if (!isMounted) return
+        setError('Não conseguimos carregar a lista de profissionais agora.')
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadProfessionals()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const filteredProfessionals =
     selectedSpecialty === 'todos'
-      ? PROFESSIONALS
-      : PROFESSIONALS.filter(p => p.specialtyId === selectedSpecialty)
+      ? professionals
+      : professionals.filter(p => p.specialtyId === selectedSpecialty)
 
   const handleContactProfessional = () => {
     if (!selectedProfessional) return
@@ -278,49 +242,94 @@ export default function MaternaPlusPage() {
 
                 {/* LISTA DE PROFISSIONAIS */}
                 <div className="space-y-3">
-                  {filteredProfessionals.map(prof => (
-                    <div
-                      key={prof.id}
-                      className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.06)] flex flex-col gap-2"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <h3 className="text-[18px] md:text-[20px] font-semibold text-[#2F3A56]">
-                            {prof.name}
-                          </h3>
-                          <p className="text-[13px] text-[#6A6A6A]">
-                            {prof.specialtyLabel}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedProfessional(prof)
-                            trackProfessionalEvent('view', prof)
-                          }}
-                          className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
-                        >
-                          Ver detalhes
-                        </button>
+                  {isLoading && (
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.06)] animate-pulse">
+                        <div className="h-4 w-40 rounded bg-[#ffe1f1]" />
+                        <div className="mt-2 h-3 w-64 rounded bg-[#ffe1f1]" />
+                        <div className="mt-4 h-3 w-52 rounded bg-[#ffe1f1]" />
                       </div>
-
-                      <p className="text-[14px] text-[#545454]">
-                        {prof.focus}
-                      </p>
-                      <p className="text-[12px] text-[#6A6A6A]">{prof.city}</p>
-
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {prof.tags.map(tag => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-[#fdbed7]/70 px-2 py-0.5 text-[11px] font-medium text-[#2F3A56]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                      <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.06)] animate-pulse">
+                        <div className="h-4 w-48 rounded bg-[#ffe1f1]" />
+                        <div className="mt-2 h-3 w-60 rounded bg-[#ffe1f1]" />
+                        <div className="mt-4 h-3 w-40 rounded bg-[#ffe1f1]" />
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {!isLoading && error && (
+                    <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[13px] text-[#545454]">
+                      <p className="font-semibold">
+                        Não conseguimos carregar os profissionais agora.
+                      </p>
+                      <p className="mt-1">
+                        Tente novamente em alguns minutos. Sua experiência é
+                        prioridade por aqui.
+                      </p>
+                    </div>
+                  )}
+
+                  {!isLoading &&
+                    !error &&
+                    filteredProfessionals.map(prof => (
+                      <div
+                        key={prof.id}
+                        className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.06)] flex flex-col gap-2"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <h3 className="text-[18px] md:text-[20px] font-semibold text-[#2F3A56]">
+                              {prof.name}
+                            </h3>
+                            <p className="text-[13px] text-[#6A6A6A]">
+                              {prof.specialtyLabel}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProfessional(prof)
+                              trackProfessionalEvent('view', prof)
+                            }}
+                            className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
+                          >
+                            Ver detalhes
+                          </button>
+                        </div>
+
+                        <p className="text-[14px] text-[#545454]">
+                          {prof.focus}
+                        </p>
+                        <p className="text-[12px] text-[#6A6A6A]">
+                          {prof.city}
+                        </p>
+
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {prof.tags.map(tag => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-[#fdbed7]/70 px-2 py-0.5 text-[11px] font-medium text-[#2F3A56]"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                  {!isLoading &&
+                    !error &&
+                    filteredProfessionals.length === 0 && (
+                      <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] px-4 py-3 text-[13px] text-[#545454]">
+                        <p className="font-semibold">
+                          Ainda não temos profissionais nessa área específica.
+                        </p>
+                        <p className="mt-1">
+                          Em breve, novos parceiros entram para a rede Materna+.
+                          Você pode escolher outra área por enquanto.
+                        </p>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
