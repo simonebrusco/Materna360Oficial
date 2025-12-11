@@ -39,14 +39,24 @@ function MiniTile({ label, href, tag }: MiniTileProps) {
         focus-visible:ring-2 focus-visible:ring-[#fd2597]/70
       "
     >
-      {tag && (
-        <span className="text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-          {tag}
+      <div className="flex flex-col gap-1">
+        {tag && (
+          <span
+            className="
+              inline-flex w-max items-center
+              rounded-full bg-[#ffe1f1]
+              px-2 py-0.5
+              text-[10px] font-semibold tracking-wide
+              text-[#b8236b] uppercase
+            "
+          >
+            {tag}
+          </span>
+        )}
+        <span className="block text-[13px] md:text-[14px] font-medium text-[#2f3a56] leading-snug">
+          {label}
         </span>
-      )}
-      <span className="mt-0.5 block text-[13px] md:text-[14px] font-medium text-[#2f3a56] leading-snug">
-        {label}
-      </span>
+      </div>
     </Link>
   )
 }
@@ -102,7 +112,7 @@ export default function MaternarClient() {
                 border border-white/35
                 backdrop-blur-xl
                 shadow-[0_18px_45px_rgba(184,35,107,0.25)]
-                p-4 md:p-5
+                p-4 md:p-6
                 space-y-6 md:space-y-7
               "
             >
@@ -114,6 +124,7 @@ export default function MaternarClient() {
                     bg-white/95
                     border border-[#f5d7e5]
                     shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
                   "
                 >
                   <div className="flex items-start gap-3">
@@ -133,7 +144,7 @@ export default function MaternarClient() {
                     </div>
                   </div>
 
-                  <p className="mt-3 text-[15px] text-[#545454] leading-relaxed">
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
                     Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
                   </p>
 
@@ -179,6 +190,7 @@ export default function MaternarClient() {
                     bg-white/95
                     border border-[#f5d7e5]
                     shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
                   "
                 >
                   <div className="flex items-start gap-3">
@@ -198,7 +210,7 @@ export default function MaternarClient() {
                     </div>
                   </div>
 
-                  <p className="mt-3 text-[15px] text-[#545454] leading-relaxed">
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
                     Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
                   </p>
 
@@ -243,6 +255,7 @@ export default function MaternarClient() {
                     bg-white/95
                     border border-[#f5d7e5]
                     shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
                   "
                 >
                   <div className="flex items-start gap-3">
@@ -262,7 +275,7 @@ export default function MaternarClient() {
                     </div>
                   </div>
 
-                  <p className="mt-3 text-[15px] text-[#545454] leading-relaxed">
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
                     Frases, ideias rápidas e sugestões para tornar o dia mais leve.
                   </p>
 
@@ -307,6 +320,7 @@ export default function MaternarClient() {
                     bg-white/95
                     border border-[#f5d7e5]
                     shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
                   "
                 >
                   <div className="flex items-start gap-3">
@@ -326,7 +340,7 @@ export default function MaternarClient() {
                     </div>
                   </div>
 
-                  <p className="mt-3 text-[15px] text-[#545454] leading-relaxed">
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
                     Acompanhe seu progresso com leveza, no seu tempo.
                   </p>
 
