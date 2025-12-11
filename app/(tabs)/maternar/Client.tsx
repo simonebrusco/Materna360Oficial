@@ -35,13 +35,13 @@ export default function MaternarClient() {
         min-h-[100dvh]
         pb-32
         bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_26%,#fdbed7_56%,#ffe1f1_90%,#ffffff_100%)]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_24%,#fdbed7_52%,#ffe1f1_86%,#ffffff_100%)]
       "
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           {/* HERO */}
-          <header className="pt-8 md:pt-10 mb-8">
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 Maternar
@@ -53,25 +53,41 @@ export default function MaternarClient() {
             </div>
           </header>
 
+          {/* INTRO DOS BLOCOS */}
+          <section className="mb-4 md:mb-6">
+            <p className="text-sm md:text-[15px] text-white/95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]">
+              Por onde você quer começar hoje?
+            </p>
+          </section>
+
           {/* BLOCOS PRINCIPAIS – LAYOUT A PREMIUM */}
-          <div className="space-y-8 md:space-y-10 pb-10">
+          <div className="space-y-7 md:space-y-8 pb-10">
             {/* BLOCO: Cuidar de Mim */}
             <Reveal>
               <SoftCard className="p-6 space-y-3 rounded-2xl">
                 <div className="flex items-center gap-3">
-                  <AppIcon name="heart" size={28} className="text-pink-600" />
-                  <h2 className="text-lg font-semibold text-[#2f3a56]">
-                    Cuidar de Mim
-                  </h2>
+                  <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center">
+                    <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                      Para você
+                    </span>
+                    <h2 className="mt-2 text-lg font-semibold text-[#2f3a56]">
+                      Cuidar de Mim
+                    </h2>
+                  </div>
                 </div>
 
                 <p className="text-[15px] text-[#545454] leading-relaxed">
                   Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
                 </p>
 
-                <div className="mt-2">
+                <div className="pt-1">
                   <Link href="/maternar/cuidar-de-mim">
-                    <Button className="w-full">Entrar</Button>
+                    <Button className="w-full md:w-auto px-6">
+                      Entrar
+                    </Button>
                   </Link>
                 </div>
               </SoftCard>
@@ -81,19 +97,28 @@ export default function MaternarClient() {
             <Reveal>
               <SoftCard className="p-6 space-y-3 rounded-2xl">
                 <div className="flex items-center gap-3">
-                  <AppIcon name="child" size={28} className="text-pink-600" />
-                  <h2 className="text-lg font-semibold text-[#2f3a56]">
-                    Meu Filho
-                  </h2>
+                  <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center">
+                    <AppIcon name="child" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                      Para o seu filho
+                    </span>
+                    <h2 className="mt-2 text-lg font-semibold text-[#2f3a56]">
+                      Meu Filho
+                    </h2>
+                  </div>
                 </div>
 
                 <p className="text-[15px] text-[#545454] leading-relaxed">
                   Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
                 </p>
 
-                <div className="mt-2">
+                <div className="pt-1">
                   <Link href="/maternar/meu-filho">
-                    <Button className="w-full">Entrar</Button>
+                    <Button className="w-full md:w-auto px-6">
+                      Entrar
+                    </Button>
                   </Link>
                 </div>
               </SoftCard>
@@ -103,19 +128,28 @@ export default function MaternarClient() {
             <Reveal>
               <SoftCard className="p-6 space-y-3 rounded-2xl">
                 <div className="flex items-center gap-3">
-                  <AppIcon name="sun" size={28} className="text-pink-600" />
-                  <h2 className="text-lg font-semibold text-[#2f3a56]">
-                    Meu Dia Leve
-                  </h2>
+                  <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center">
+                    <AppIcon name="sun" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                      Para o seu dia
+                    </span>
+                    <h2 className="mt-2 text-lg font-semibold text-[#2f3a56]">
+                      Meu Dia Leve
+                    </h2>
+                  </div>
                 </div>
 
                 <p className="text-[15px] text-[#545454] leading-relaxed">
                   Frases, ideias rápidas e sugestões para tornar o dia mais leve.
                 </p>
 
-                <div className="mt-2">
+                <div className="pt-1">
                   <Link href="/maternar/meu-dia-leve">
-                    <Button className="w-full">Entrar</Button>
+                    <Button className="w-full md:w-auto px-6">
+                      Entrar
+                    </Button>
                   </Link>
                 </div>
               </SoftCard>
@@ -125,19 +159,28 @@ export default function MaternarClient() {
             <Reveal>
               <SoftCard className="p-6 space-y-3 rounded-2xl">
                 <div className="flex items-center gap-3">
-                  <AppIcon name="star" size={28} className="text-pink-600" />
-                  <h2 className="text-lg font-semibold text-[#2f3a56]">
-                    Minha Jornada
-                  </h2>
+                  <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center">
+                    <AppIcon name="star" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                      Sua caminhada
+                    </span>
+                    <h2 className="mt-2 text-lg font-semibold text-[#2f3a56]">
+                      Minha Jornada
+                    </h2>
+                  </div>
                 </div>
 
                 <p className="text-[15px] text-[#545454] leading-relaxed">
                   Acompanhe seu progresso com leveza, no seu tempo.
                 </p>
 
-                <div className="mt-2">
+                <div className="pt-1">
                   <Link href="/maternar/minha-jornada">
-                    <Button className="w-full">Entrar</Button>
+                    <Button className="w-full md:w-auto px-6">
+                      Entrar
+                    </Button>
                   </Link>
                 </div>
               </SoftCard>
@@ -146,46 +189,52 @@ export default function MaternarClient() {
             {/* BLOCO FINAL: Serviços Materna360 */}
             <Reveal>
               <SoftCard className="p-6 space-y-4 rounded-2xl">
-                <div className="flex items-center gap-3 mb-1">
-                  <AppIcon name="grid" size={28} className="text-pink-600" />
-                  <h2 className="text-lg font-semibold text-[#2f3a56]">
-                    Serviços Materna360
-                  </h2>
+                <div className="flex items-start gap-3 mb-1">
+                  <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center">
+                    <AppIcon name="grid" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                      Serviços
+                    </span>
+                    <h2 className="mt-2 text-lg font-semibold text-[#2f3a56]">
+                      Serviços Materna360
+                    </h2>
+                    <p className="mt-1 text-[15px] text-[#545454] leading-relaxed">
+                      Tudo do Materna360 em um só lugar.
+                    </p>
+                  </div>
                 </div>
-
-                <p className="text-[15px] text-[#545454] leading-relaxed">
-                  Tudo do Materna360 em um só lugar.
-                </p>
 
                 {/* GRID 2x3 DE SERVIÇOS */}
                 <div className="grid grid-cols-3 gap-4 pt-2">
                   <Link href="/maternar/servicos/materna-plus">
-                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Materna+
                     </Button>
                   </Link>
                   <Link href="/maternar/servicos/materna-box">
-                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       MaternaBox
                     </Button>
                   </Link>
                   <Link href="/maternar/servicos/biblioteca">
-                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Biblioteca
                     </Button>
                   </Link>
                   <Link href="/maternar/servicos/planos">
-                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Planos
                     </Button>
                   </Link>
                   <Link href="/maternar/servicos/parcerias">
-                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Parcerias
                     </Button>
                   </Link>
                   <Link href="/maternar/servicos/ajuda">
-                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Ajuda
                     </Button>
                   </Link>
