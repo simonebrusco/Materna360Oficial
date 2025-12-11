@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -39,7 +40,6 @@ export default function MaternarClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
-
           {/* HERO */}
           <header className="pt-8 md:pt-10 mb-8">
             <div className="space-y-3">
@@ -55,7 +55,6 @@ export default function MaternarClient() {
 
           {/* BLOCOS PRINCIPAIS – LAYOUT A PREMIUM */}
           <div className="space-y-8 md:space-y-10 pb-10">
-
             {/* BLOCO: Cuidar de Mim */}
             <Reveal>
               <SoftCard className="p-6 space-y-3 rounded-2xl">
@@ -70,12 +69,11 @@ export default function MaternarClient() {
                   Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
                 </p>
 
-                <Button
-                  href="/maternar/cuidar-de-mim"
-                  className="w-full mt-2"
-                >
-                  Entrar
-                </Button>
+                <div className="mt-2">
+                  <Link href="/maternar/cuidar-de-mim">
+                    <Button className="w-full">Entrar</Button>
+                  </Link>
+                </div>
               </SoftCard>
             </Reveal>
 
@@ -93,12 +91,11 @@ export default function MaternarClient() {
                   Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
                 </p>
 
-                <Button
-                  href="/maternar/meu-filho"
-                  className="w-full mt-2"
-                >
-                  Entrar
-                </Button>
+                <div className="mt-2">
+                  <Link href="/maternar/meu-filho">
+                    <Button className="w-full">Entrar</Button>
+                  </Link>
+                </div>
               </SoftCard>
             </Reveal>
 
@@ -116,12 +113,11 @@ export default function MaternarClient() {
                   Frases, ideias rápidas e sugestões para tornar o dia mais leve.
                 </p>
 
-                <Button
-                  href="/maternar/meu-dia-leve"
-                  className="w-full mt-2"
-                >
-                  Entrar
-                </Button>
+                <div className="mt-2">
+                  <Link href="/maternar/meu-dia-leve">
+                    <Button className="w-full">Entrar</Button>
+                  </Link>
+                </div>
               </SoftCard>
             </Reveal>
 
@@ -139,12 +135,11 @@ export default function MaternarClient() {
                   Acompanhe seu progresso com leveza, no seu tempo.
                 </p>
 
-                <Button
-                  href="/maternar/minha-jornada"
-                  className="w-full mt-2"
-                >
-                  Entrar
-                </Button>
+                <div className="mt-2">
+                  <Link href="/maternar/minha-jornada">
+                    <Button className="w-full">Entrar</Button>
+                  </Link>
+                </div>
               </SoftCard>
             </Reveal>
 
@@ -162,26 +157,38 @@ export default function MaternarClient() {
                   Tudo do Materna360 em um só lugar.
                 </p>
 
-                {/* GRID 2x3 */}
+                {/* GRID 2x3 DE SERVIÇOS */}
                 <div className="grid grid-cols-3 gap-4 pt-2">
-                  <Button href="/maternar/servicos/materna-plus" variant="secondary">
-                    Materna+
-                  </Button>
-                  <Button href="/maternar/servicos/materna-box" variant="secondary">
-                    MaternaBox
-                  </Button>
-                  <Button href="/maternar/servicos/biblioteca" variant="secondary">
-                    Biblioteca
-                  </Button>
-                  <Button href="/maternar/servicos/planos" variant="secondary">
-                    Planos
-                  </Button>
-                  <Button href="/maternar/servicos/parcerias" variant="secondary">
-                    Parcerias
-                  </Button>
-                  <Button href="/maternar/servicos/ajuda" variant="secondary">
-                    Ajuda
-                  </Button>
+                  <Link href="/maternar/servicos/materna-plus">
+                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                      Materna+
+                    </Button>
+                  </Link>
+                  <Link href="/maternar/servicos/materna-box">
+                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                      MaternaBox
+                    </Button>
+                  </Link>
+                  <Link href="/maternar/servicos/biblioteca">
+                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                      Biblioteca
+                    </Button>
+                  </Link>
+                  <Link href="/maternar/servicos/planos">
+                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                      Planos
+                    </Button>
+                  </Link>
+                  <Link href="/maternar/servicos/parcerias">
+                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                      Parcerias
+                    </Button>
+                  </Link>
+                  <Link href="/maternar/servicos/ajuda">
+                    <Button variant="secondary" className="w-full text-xs md:text-sm">
+                      Ajuda
+                    </Button>
+                  </Link>
                 </div>
               </SoftCard>
             </Reveal>
