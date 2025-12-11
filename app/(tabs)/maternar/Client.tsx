@@ -66,171 +66,177 @@ export default function MaternarClient() {
                 backdrop-blur-xl
                 shadow-[0_18px_45px_rgba(184,35,107,0.25)]
                 p-4 md:p-5
-                space-y-6 md:space-y-7
               "
             >
-              {/* BLOCO: Cuidar de Mim */}
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-5 md:p-6 rounded-2xl
-                    bg-white/95
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    space-y-4
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                        Para você
-                      </span>
-                      <h2 className="text-lg font-semibold text-[#2f3a56]">
-                        Cuidar de Mim
-                      </h2>
-                      <p className="text-[13px] text-[#6a6a6a]">
-                        Leve · 3–5 minutos · foco em você
+              <div className="relative">
+                {/* Linha vertical suave ligando os blocos (desktop) */}
+                <div className="hidden md:block absolute left-4 top-3 bottom-3 w-px bg-gradient-to-b from-[#ffe1f1] via-[#f5d7e5] to-[#ffe1f1]" />
+
+                <div className="space-y-6 md:space-y-7 md:pl-4">
+                  {/* BLOCO: Cuidar de Mim */}
+                  <Reveal>
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                        space-y-4
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Para você
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">
+                            Cuidar de Mim
+                          </h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Leve · 3–5 minutos · foco em você
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-[15px] text-[#545454] leading-relaxed">
+                        Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
                       </p>
-                    </div>
-                  </div>
 
-                  <p className="text-[15px] text-[#545454] leading-relaxed">
-                    Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
-                  </p>
+                      <div className="pt-1">
+                        <Link href="/maternar/cuidar-de-mim">
+                          <Button className="w-full md:w-auto px-6">Entrar</Button>
+                        </Link>
+                      </div>
+                    </SoftCard>
+                  </Reveal>
 
-                  <div className="pt-1">
-                    <Link href="/maternar/cuidar-de-mim">
-                      <Button className="w-full md:w-auto px-6">Entrar</Button>
-                    </Link>
-                  </div>
-                </SoftCard>
-              </Reveal>
+                  {/* BLOCO: Meu Filho */}
+                  <Reveal>
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                        space-y-4
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="child" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Para o seu filho
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">
+                            Meu Filho
+                          </h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Brincadeiras · conexão · desenvolvimento leve
+                          </p>
+                        </div>
+                      </div>
 
-              {/* BLOCO: Meu Filho */}
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-5 md:p-6 rounded-2xl
-                    bg-white/95
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    space-y-4
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name="child" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                        Para o seu filho
-                      </span>
-                      <h2 className="text-lg font-semibold text-[#2f3a56]">
-                        Meu Filho
-                      </h2>
-                      <p className="text-[13px] text-[#6a6a6a]">
-                        Brincadeiras · conexão · desenvolvimento leve
+                      <p className="text-[15px] text-[#545454] leading-relaxed">
+                        Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
                       </p>
-                    </div>
-                  </div>
 
-                  <p className="text-[15px] text-[#545454] leading-relaxed">
-                    Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
-                  </p>
+                      <div className="pt-1">
+                        <Link href="/maternar/meu-filho">
+                          <Button className="w-full md:w-auto px-6">Entrar</Button>
+                        </Link>
+                      </div>
+                    </SoftCard>
+                  </Reveal>
 
-                  <div className="pt-1">
-                    <Link href="/maternar/meu-filho">
-                      <Button className="w-full md:w-auto px-6">Entrar</Button>
-                    </Link>
-                  </div>
-                </SoftCard>
-              </Reveal>
+                  {/* BLOCO: Meu Dia Leve */}
+                  <Reveal>
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                        space-y-4
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="sun" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Para o seu dia
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">
+                            Meu Dia Leve
+                          </h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Inspirações · ideias rápidas · leveza
+                          </p>
+                        </div>
+                      </div>
 
-              {/* BLOCO: Meu Dia Leve */}
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-5 md:p-6 rounded-2xl
-                    bg-white/95
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    space-y-4
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name="sun" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                        Para o seu dia
-                      </span>
-                      <h2 className="text-lg font-semibold text-[#2f3a56]">
-                        Meu Dia Leve
-                      </h2>
-                      <p className="text-[13px] text-[#6a6a6a]">
-                        Inspirações · ideias rápidas · leveza
+                      <p className="text-[15px] text-[#545454] leading-relaxed">
+                        Frases, ideias rápidas e sugestões para tornar o dia mais leve.
                       </p>
-                    </div>
-                  </div>
 
-                  <p className="text-[15px] text-[#545454] leading-relaxed">
-                    Frases, ideias rápidas e sugestões para tornar o dia mais leve.
-                  </p>
+                      <div className="pt-1">
+                        <Link href="/maternar/meu-dia-leve">
+                          <Button className="w-full md:w-auto px-6">Entrar</Button>
+                        </Link>
+                      </div>
+                    </SoftCard>
+                  </Reveal>
 
-                  <div className="pt-1">
-                    <Link href="/maternar/meu-dia-leve">
-                      <Button className="w-full md:w-auto px-6">Entrar</Button>
-                    </Link>
-                  </div>
-                </SoftCard>
-              </Reveal>
+                  {/* BLOCO: Minha Jornada */}
+                  <Reveal>
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                        space-y-4
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="star" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Sua caminhada
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">
+                            Minha Jornada
+                          </h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Conquistas · símbolos · progresso gentil
+                          </p>
+                        </div>
+                      </div>
 
-              {/* BLOCO: Minha Jornada */}
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-5 md:p-6 rounded-2xl
-                    bg-white/95
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    space-y-4
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name="star" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                        Sua caminhada
-                      </span>
-                      <h2 className="text-lg font-semibold text-[#2f3a56]">
-                        Minha Jornada
-                      </h2>
-                      <p className="text-[13px] text-[#6a6a6a]">
-                        Conquistas · símbolos · progresso gentil
+                      <p className="text-[15px] text-[#545454] leading-relaxed">
+                        Acompanhe seu progresso com leveza, no seu tempo.
                       </p>
-                    </div>
-                  </div>
 
-                  <p className="text-[15px] text-[#545454] leading-relaxed">
-                    Acompanhe seu progresso com leveza, no seu tempo.
-                  </p>
-
-                  <div className="pt-1">
-                    <Link href="/maternar/minha-jornada">
-                      <Button className="w-full md:w-auto px-6">Entrar</Button>
-                    </Link>
-                  </div>
-                </SoftCard>
-              </Reveal>
+                      <div className="pt-1">
+                        <Link href="/maternar/minha-jornada">
+                          <Button className="w-full md:w-auto px-6">Entrar</Button>
+                        </Link>
+                      </div>
+                    </SoftCard>
+                  </Reveal>
+                </div>
+              </div>
             </div>
 
-            {/* BLOCO FINAL: Serviços Materna360 (fica fora do painel translúcido) */}
+            {/* BLOCO FINAL: Serviços Materna360 */}
             <Reveal>
               <SoftCard
                 className="
@@ -320,4 +326,3 @@ export default function MaternarClient() {
     </main>
   )
 }
-
