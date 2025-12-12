@@ -38,27 +38,31 @@ export default function Client() {
       <ClientOnly>
         <div className="relative mx-auto max-w-3xl px-5 md:px-6">
 
-          {/* HERO PREMIUM — ESTACÃO SERENIDADE */}
+          {/* HERO PREMIUM — ESTAÇÃO SERENIDADE */}
           <header className="pt-10 md:pt-14 mb-10">
             <Reveal>
-              <h1 className="
-                text-3xl md:text-4xl
-                font-semibold
-                text-[#2f3a56]
-                leading-tight
-              ">
+              <h1
+                className="
+                  text-3xl md:text-4xl
+                  font-semibold
+                  text-[#2f3a56]
+                  leading-tight
+                "
+              >
                 Cuidar de Mim
               </h1>
             </Reveal>
 
             <Reveal delay={150}>
-              <p className="
-                text-[15px] md:text-[17px]
-                text-[#545454]
-                mt-2
-                max-w-xl
-                leading-relaxed
-              ">
+              <p
+                className="
+                  text-[15px] md:text-[17px]
+                  text-[#545454]
+                  mt-2
+                  max-w-xl
+                  leading-relaxed
+                "
+              >
                 Um espaço suave para você respirar, sentir e escolher pequenos gestos de autocuidado.
               </p>
             </Reveal>
@@ -268,20 +272,24 @@ export default function Client() {
                 </div>
               </div>
 
-              <div className="
-                bg-white/80 backdrop-blur
-                p-5 rounded-2xl
-                shadow-[0_3px_12px_rgba(0,0,0,0.06)]
-                border border-[#f5d7e5]
-                text-[15px] text-[#545454]
-                leading-relaxed
-              ">
+              <div
+                className="
+                  bg-white/80 backdrop-blur
+                  p-5 rounded-2xl
+                  shadow-[0_3px_12px_rgba(0,0,0,0.06)]
+                  border border-[#f5d7e5]
+                  text-[15px] text-[#545454]
+                  leading-relaxed
+                "
+              >
                 “Hoje, escolha algo que cuide de você do mesmo jeito que você cuida de todo mundo.”
               </div>
             </section>
           </Reveal>
 
-          <LegalFooter className="mt-10" />
+          <div className="mt-10">
+            <LegalFooter />
+          </div>
         </div>
       </ClientOnly>
     </main>
