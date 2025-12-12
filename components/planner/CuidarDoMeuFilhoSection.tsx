@@ -2,7 +2,7 @@
 
 import React from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import type { PlannerTask } from './MeuDiaPremium'
+import type { PlannerTask } from './types'
 
 interface CuidarDoMeuFilhoSectionProps {
   tasks: PlannerTask[]
