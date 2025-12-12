@@ -1,14 +1,13 @@
-import CuidarDeMimClient from './Client'
+// app/(tabs)/maternar/cuidar-de-mim/page.tsx
+import { Metadata } from 'next'
+import Client from './Client'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Cuidar de Mim | Materna360',
   description:
-    'Pequenos gestos de autocuidado que cabem no seu dia, com leveza e acolhimento.',
+    'Pequenos gestos de autocuidado, leveza e serenidade para você respirar e se cuidar no seu ritmo.',
 }
 
-export default function CuidarDeMimPage() {
-  return <CuidarDeMimClient />
+export default function Page() {
+  return <Client />
 }
