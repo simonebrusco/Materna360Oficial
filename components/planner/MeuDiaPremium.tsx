@@ -1,213 +1,175 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useProfile } from '@/app/hooks/useProfile'
-import { getTimeGreeting } from '@/app/lib/greetings'
-import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
-import { getDailyIndex } from '@/app/lib/dailyMessage'
-import { Reveal } from '@/components/ui/Reveal'
-import PlannerHeader from './PlannerHeader'
-import PlannerSummary from './PlannerSummary'
-import AcoesDoDiaSection from './AcoesDoDiaSection'
-import CuidarDeMimSection from './CuidarDeMimSection'
-import CuidarDoMeuFilhoSection from './CuidarDoMeuFilhoSection'
-import InspiracoesConteudosSection from './InspiracoesConteudosSection'
+import { useEffect, useState } from 'react'
 
-export type PlannerTask = {
-  id: string
-  title: string
-  done: boolean
-  priority: 'normal' | 'alta'
-  origin: 'planner' | 'rotina' | 'jornada' | 'autocuidado' | 'checkin' | 'carinho' | 'brincadeira' | 'biblioteca'
-  createdAt: string
-  tags?: string[]
+import { Card } from '@/components/ui/card'
+import Emoji from '@/components/ui/Emoji'
+import { DAILY_MESSAGES_PT } from '@/lib/dailyMessagesPt'
+
+const STORAGE_KEY = 'materna_daily_message_v2'
+const FALLBACK_NAME = 'Mãe'
+const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
+
+type StoredMessage = {
+  dateKey: string
+  message: string
 }
 
-export type PlannerContent = {
-  id: string
-  title: string
-  description?: string
-  image?: string
-  type: 'artigo' | 'receita' | 'ideia'
-  origin: string
-  savedAt: string
-}
+type DateParts = Record<'year' | 'month' | 'day', string>
 
-export type PlannerState = {
-  tasks: PlannerTask[]
-  contents: PlannerContent[]
-  dayTag: 'leve' | 'focado' | 'produtivo' | 'slow' | null
-  mood: 'happy' | 'okay' | 'stressed' | null
-}
-
-interface MeuDiaPremiumProps {
-  currentDateKey?: string
-}
-
-export default function MeuDiaPremium({ currentDateKey = '' }: MeuDiaPremiumProps) {
-  const { name } = useProfile()
-  const [greeting, setGreeting] = useState<string>('')
-  const [plannerState, setPlannerState] = useState<PlannerState>({
-    tasks: [
-      {
-        id: '1',
-        title: 'Planejar o dia',
-        done: false,
-        priority: 'alta',
-        origin: 'planner',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        title: 'Meditação matinal',
-        done: false,
-        priority: 'normal',
-        origin: 'autocuidado',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '3',
-        title: 'Atividade com a criança',
-        done: false,
-        priority: 'alta',
-        origin: 'brincadeira',
-        createdAt: new Date().toISOString(),
-      },
-    ],
-    contents: [
-      {
-        id: 'c1',
-        title: 'Receita: Bolo saudável',
-        type: 'receita',
-        origin: 'biblioteca',
-        savedAt: new Date().toISOString(),
-      },
-    ],
-    dayTag: null,
-    mood: null,
+const getTodayDateKey = () => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: BRAZIL_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   })
 
-  // Greeting based on time
+  const parts = formatter.formatToParts(new Date()).reduce<DateParts>(
+    (acc, part) => {
+      if (part.type === 'year' || part.type === 'month' || part.type === 'day') {
+        acc[part.type] = part.value
+      }
+      return acc
+    },
+    { year: '', month: '', day: '' },
+  )
+
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+const hashDateKey = (value: string) => {
+  let hash = 0
+  for (let index = 0; index < value.length; index += 1) {
+    hash += value.charCodeAt(index)
+  }
+  return Math.abs(hash)
+}
+
+const selectTemplateForDate = (dateKey: string) => {
+  const pool = DAILY_MESSAGES_PT
+
+  if (!pool || pool.length === 0) {
+    return { id: 'fallback', text: '{name}, respire fundo — você está fazendo o seu melhor hoje.' }
+  }
+
+  const index = hashDateKey(dateKey) % pool.length
+  return pool[index]
+}
+
+const replaceNamePlaceholder = (templateText: string, name: string) => {
+  const safeName = name.trim() || FALLBACK_NAME
+
+  if (templateText.includes('{name}')) {
+    return templateText.split('{name}').join(safeName)
+  }
+
+  return `${safeName}, ${templateText}`
+}
+
+const readCachedMessage = (): StoredMessage | null => {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<StoredMessage>
+    if (typeof parsed.dateKey !== 'string' || typeof parsed.message !== 'string') return null
+
+    return { dateKey: parsed.dateKey, message: parsed.message }
+  } catch {
+    return null
+  }
+}
+
+const persistMessage = (record: StoredMessage) => {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record))
+  } catch {
+    // silencioso: cache nunca pode quebrar UI
+  }
+}
+
+const fetchMotherName = async (): Promise<string> => {
+  try {
+    const response = await fetch('/api/profile', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+
+    if (!response.ok) throw new Error(`Failed to load profile (${response.status})`)
+
+    const data = await response.json()
+    const rawName = typeof data?.motherName === 'string' ? data.motherName : data?.nomeMae
+    return typeof rawName === 'string' && rawName.trim().length > 0 ? rawName.trim() : FALLBACK_NAME
+  } catch {
+    return FALLBACK_NAME
+  }
+}
+
+export function MessageOfDay() {
+  // ✅ estado inicial estável (SSR/primeiro render)
+  const [message, setMessage] = useState<string>('…')
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+
   useEffect(() => {
-    const firstName = name ? name.split(' ')[0] : 'Mãe'
-    const timeGreeting = getTimeGreeting(firstName)
-    setGreeting(timeGreeting)
+    let active = true
 
-    const interval = setInterval(() => {
-      const updatedGreeting = getTimeGreeting(firstName)
-      setGreeting(updatedGreeting)
-    }, 60000)
+    const todayKey = getTodayDateKey()
+    const cached = readCachedMessage()
 
-    return () => clearInterval(interval)
-  }, [name])
-
-  // Get daily message
-  const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length)
-  const dailyMessage = DAILY_MESSAGES[dayIndex]
-
-  // Task management
-  const toggleTask = (taskId: string) => {
-    setPlannerState(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(task =>
-        task.id === taskId ? { ...task, done: !task.done } : task
-      ),
-    }))
-  }
-
-  const togglePriority = (taskId: string) => {
-    setPlannerState(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(task =>
-        task.id === taskId
-          ? { ...task, priority: task.priority === 'alta' ? 'normal' : 'alta' }
-          : task
-      ),
-    }))
-  }
-
-  const addTask = (title: string, origin: PlannerTask['origin'], priority: 'normal' | 'alta' = 'normal') => {
-    const newTask: PlannerTask = {
-      id: Math.random().toString(36).slice(2, 9),
-      title,
-      done: false,
-      priority,
-      origin,
-      createdAt: new Date().toISOString(),
+    // ✅ se houver cache válido de hoje, já mostra imediatamente
+    if (cached?.dateKey === todayKey && cached.message.trim().length > 0) {
+      setMessage(cached.message)
+      setIsLoading(false)
     }
-    setPlannerState(prev => ({
-      ...prev,
-      tasks: [newTask, ...prev.tasks],
-    }))
-  }
 
-  // Group tasks by origin (section)
-  const acoesDodia = plannerState.tasks.filter(t =>
-    ['planner', 'rotina', 'jornada'].includes(t.origin)
-  )
-  const cuidarDeMim = plannerState.tasks.filter(t =>
-    ['autocuidado', 'checkin'].includes(t.origin)
-  )
-  const cuidarDoMeuFilho = plannerState.tasks.filter(t =>
-    ['carinho', 'brincadeira'].includes(t.origin)
-  )
+    const load = async () => {
+      const name = await fetchMotherName()
+      if (!active) return
 
-  const completedCount = plannerState.tasks.filter(t => t.done).length
+      const template = selectTemplateForDate(todayKey)
+      const computedMessage = replaceNamePlaceholder(template.text, name)
+
+      // Atualiza se não houver cache do dia ou se tiver divergido
+      if (cached?.dateKey !== todayKey || cached.message !== computedMessage) {
+        persistMessage({ dateKey: todayKey, message: computedMessage })
+        setMessage(computedMessage)
+      } else {
+        setMessage(cached.message)
+      }
+
+      if (active) setIsLoading(false)
+    }
+
+    void load()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <Reveal delay={0}>
-        <PlannerHeader greeting={greeting} onMoodSelect={mood => setPlannerState(prev => ({ ...prev, mood }))} />
-      </Reveal>
+    <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/80 via-white/95 to-white">
+      <div className="mb-5 flex flex-col gap-2">
+        <h2 className="text-lg font-semibold text-support-1 md:text-xl">
+          <Emoji char="✨" /> Mensagem do Dia
+        </h2>
 
-      {/* Summary */}
-      <Reveal delay={100}>
-        <PlannerSummary completedCount={completedCount} totalCount={plannerState.tasks.length} dailyMessage={dailyMessage} />
-      </Reveal>
+        <p className="text-sm italic leading-relaxed text-support-1/90 md:text-base">
+          “{isLoading && message === '…' ? '…' : message}”
+        </p>
+      </div>
 
-      {/* Ações do Dia */}
-      {acoesDodia.length > 0 && (
-        <Reveal delay={200}>
-          <AcoesDoDiaSection
-            tasks={acoesDodia}
-            onToggle={toggleTask}
-            onTogglePriority={togglePriority}
-            onAddTask={(title) => addTask(title, 'planner')}
-          />
-        </Reveal>
-      )}
+      <div className="mt-2" aria-hidden />
 
-      {/* Cuidar de Mim */}
-      {cuidarDeMim.length > 0 && (
-        <Reveal delay={300}>
-          <CuidarDeMimSection
-            tasks={cuidarDeMim}
-            onToggle={toggleTask}
-            onTogglePriority={togglePriority}
-            onAddTask={(title) => addTask(title, 'autocuidado')}
-          />
-        </Reveal>
-      )}
-
-      {/* Cuidar do Meu Filho */}
-      {cuidarDoMeuFilho.length > 0 && (
-        <Reveal delay={400}>
-          <CuidarDoMeuFilhoSection
-            tasks={cuidarDoMeuFilho}
-            onToggle={toggleTask}
-            onTogglePriority={togglePriority}
-            onAddTask={(title) => addTask(title, 'brincadeira')}
-          />
-        </Reveal>
-      )}
-
-      {/* Inspirações & Conteúdos */}
-      {plannerState.contents.length > 0 && (
-        <Reveal delay={500}>
-          <InspiracoesConteudosSection contents={plannerState.contents} />
-        </Reveal>
-      )}
-    </div>
+      <span
+        className="pointer-events-none absolute -right-6 bottom-4 h-24 w-24 rounded-full bg-primary/15 blur-3xl"
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute -left-8 top-2 h-16 w-16 rounded-3xl bg-white/60 blur-2xl"
+        aria-hidden
+      />
+    </Card>
   )
 }
