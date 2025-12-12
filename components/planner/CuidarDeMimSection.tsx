@@ -2,7 +2,7 @@
 
 import React from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import type { PlannerTask } from './MeuDiaPremium'
+ls -la components/planner/types.ts
 
 interface CuidarDeMimSectionProps {
   tasks: PlannerTask[]
