@@ -18,6 +18,9 @@ export default function MeuDiaClient() {
   const { name } = useProfile();
   const [greeting, setGreeting] = useState<string>('');
 
+  // ✅ Mensagem do dia calculada somente no client (evita hydration mismatch)
+  const [dailyMessage, setDailyMessage] = useState<string>('…');
+
   // tracking de navegação
   useEffect(() => {
     track('nav.click', {
@@ -36,23 +39,20 @@ export default function MeuDiaClient() {
     return () => window.clearInterval(interval);
   }, [name]);
 
-  // mensagem do dia
-  const dayIndex = getDailyIndex(new Date(), DAILY_MESSAGES.length);
-  const dailyMessage = DAILY_MESSAGES[dayIndex];
+  // ✅ define a mensagem do dia após montar
+  useEffect(() => {
+    const index = getDailyIndex(new Date(), DAILY_MESSAGES.length);
+    const msg = DAILY_MESSAGES[index] ?? '…';
+    setDailyMessage(msg);
+  }, []);
 
   // recarrega a mensagem à meia-noite (mesmo comportamento do Maternar)
   useEffect(() => {
     const now = new Date();
-    const midnight = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1,
-    );
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0);
-    const timeoutId = window.setTimeout(
-      () => window.location.reload(),
-      delay,
-    );
+
+    const timeoutId = window.setTimeout(() => window.location.reload(), delay);
     return () => window.clearTimeout(timeoutId);
   }, []);
 
