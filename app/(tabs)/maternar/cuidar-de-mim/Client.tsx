@@ -8,7 +8,6 @@ import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
-import { SoftCard } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -42,10 +41,6 @@ function safeSetLS(key: string, value: string) {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
   } catch {}
-}
-
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n))
 }
 
 function stepIndex(s: Step) {
@@ -139,15 +134,6 @@ const ROUTINES: Routine[] = [
 ]
 
 function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
-  /**
-   * Integração “best effort”:
-   * - hoje: lê localStorage se existir (sem acoplamento)
-   * - amanhã: troca por hook/context do Eu360 sem mexer no UX
-   *
-   * Chaves sugeridas (podem ser padronizadas depois no Eu360):
-   * - eu360_focus_time: "1min" | "3min" | "5min"
-   * - eu360_ritmo: "leve" | "cansada" | "animada" | "sobrecarregada"
-   */
   const focusRaw = safeGetLS('eu360_focus_time')
   const ritmoRaw = safeGetLS('eu360_ritmo')
 
@@ -159,8 +145,6 @@ function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
       ? ritmoRaw
       : 'cansada'
 
-  // Heurística simples (produto, não terapia):
-  // se sobrecarregada, prioriza curto.
   if (ritmo === 'sobrecarregada') return { focus: '1min', ritmo }
   return { focus, ritmo }
 }
@@ -183,12 +167,9 @@ export default function Client() {
   }, [])
 
   useEffect(() => {
-    // inicialização “pensa por ela”
     const inferred = inferFromEu360()
     setFocus(inferred.focus)
     setRitmo(inferred.ritmo)
-
-    // Mantém a experiência dinâmica: abre já sugerindo (sem perguntas)
     setStep('mini-rotina')
 
     try {
@@ -214,7 +195,7 @@ export default function Client() {
 
   function onSelectFocus(next: FocusMode) {
     setFocus(next)
-    safeSetLS('eu360_focus_time', next) // “best effort”: ajuda a personalização mesmo antes do Eu360 formal
+    safeSetLS('eu360_focus_time', next)
     try {
       track('cuidar_de_mim.focus.select', { focus: next })
     } catch {}
@@ -223,7 +204,6 @@ export default function Client() {
   function onSelectRitmo(next: Ritmo) {
     setRitmo(next)
     safeSetLS('eu360_ritmo', next)
-    // regra operacional: se sobrecarregada, encurta para 1 min automaticamente
     if (next === 'sobrecarregada') {
       setFocus('1min')
       safeSetLS('eu360_focus_time', '1min')
@@ -251,16 +231,18 @@ export default function Client() {
     } catch {}
   }
 
+  // Gradiente mais claro + final branco mais “limpo”
   const bgStyle: React.CSSProperties = {
-    background: 'radial-gradient(circle at top left, #ffe1f1 0%, #ffffff 72%, #ffffff 100%)',
+    background:
+      'linear-gradient(to bottom, rgba(255,216,230,0.55) 0%, rgba(255,225,241,0.28) 28%, #ffffff 78%, #ffffff 100%)',
   }
 
   return (
     <main data-tab="maternar-cuidar-de-mim" className="min-h-[100dvh] pb-32 relative overflow-hidden" style={bgStyle}>
-      {/* halos (mais claro e final branco) */}
+      {/* Halos (mais leves, para não pesar a página) */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-16%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/18 blur-[150px] rounded-full" />
-        <div className="absolute bottom-[-22%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/28 blur-[160px] rounded-full" />
+        <div className="absolute top-[-18%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/16 blur-[160px] rounded-full" />
+        <div className="absolute bottom-[-24%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/22 blur-[170px] rounded-full" />
       </div>
 
       <ClientOnly>
@@ -284,11 +266,12 @@ export default function Client() {
                     </span>
                   </p>
 
-                  <h1 className="text-[28px] md:text-[32px] font-semibold text-[#545454] leading-tight mt-2">
+                  {/* Ajuste de tamanho: iguala com as outras páginas internas */}
+                  <h1 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-tight mt-2">
                     Cuidar de Mim
                   </h1>
 
-                  <p className="text-[15px] md:text-[17px] text-[#6a6a6a] mt-2 max-w-xl leading-relaxed">
+                  <p className="text-[15px] md:text-[16px] text-[#6a6a6a] mt-2 max-w-xl leading-relaxed">
                     Um reset curto para você seguir o dia com mais clareza. Sem texto longo, sem esforço.
                   </p>
                 </div>
@@ -300,7 +283,7 @@ export default function Client() {
             </div>
           </header>
 
-          {/* EXPERIÊNCIA ÚNICA (um container) */}
+          {/* EXPERIÊNCIA ÚNICA */}
           <Reveal>
             <section
               className="
@@ -311,7 +294,7 @@ export default function Client() {
                 overflow-hidden
               "
             >
-              {/* Top bar: trilha + controles mínimos */}
+              {/* Top bar */}
               <div className="px-5 md:px-6 pt-5 md:pt-6 pb-4 border-b border-[#f5d7e5]">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -322,19 +305,17 @@ export default function Client() {
                       <div className="text-[12px] text-[#6a6a6a]">
                         Passo {stepIndex(step)}/4 • {focusTitle(focus)} • {ritmo}
                       </div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-1">
+                      <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-1">
                         Sugestão para agora: {routine.title}
                       </div>
-                      <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                        {routine.subtitle}
-                      </div>
+                      <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">{routine.subtitle}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => go('ritmo')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                     >
                       Ajustar
                     </button>
@@ -347,7 +328,7 @@ export default function Client() {
                   </div>
                 </div>
 
-                {/* Stepper minimalista */}
+                {/* Stepper */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(
                     [
@@ -365,7 +346,7 @@ export default function Client() {
                         className={[
                           'rounded-full px-3 py-1.5 text-[12px] border transition',
                           active
-                            ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
+                            ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
                             : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
                         ].join(' ')}
                       >
@@ -376,12 +357,12 @@ export default function Client() {
                 </div>
               </div>
 
-              {/* Body: troca de conteúdo dentro do mesmo container (sem blocos empilhados) */}
+              {/* Body */}
               <div className="px-5 md:px-6 py-5 md:py-6">
-                {/* 1) Meu Ritmo Hoje */}
+                {/* 1) Ritmo */}
                 {step === 'ritmo' ? (
                   <div id="ritmo" className="space-y-4">
-                    <div className="text-[14px] text-[#545454] font-semibold">Como você está chegando agora?</div>
+                    <div className="text-[14px] text-[#2f3a56] font-semibold">Como você está chegando agora?</div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
@@ -393,7 +374,7 @@ export default function Client() {
                             className={[
                               'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
                               active
-                                ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
+                                ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
                                 : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
                             ].join(' ')}
                           >
@@ -404,10 +385,10 @@ export default function Client() {
                     </div>
 
                     <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                      <div className="text-[14px] font-semibold text-[#545454]">{ritmoTitle(ritmo)}</div>
+                      <div className="text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
                       <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
 
-                      <div className="mt-4 text-[13px] text-[#545454] font-semibold">Quanto tempo dá agora?</div>
+                      <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Quanto tempo dá agora?</div>
                       <div className="mt-2 grid grid-cols-3 gap-2">
                         {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
                           const active = focus === f
@@ -417,13 +398,11 @@ export default function Client() {
                               onClick={() => onSelectFocus(f)}
                               className={[
                                 'rounded-2xl border p-3 text-left transition',
-                                active
-                                  ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                  : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                               ].join(' ')}
                             >
                               <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
-                              <div className="text-[13px] font-semibold text-[#545454]">{focusTitle(f)}</div>
+                              <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
                             </button>
                           )
                         })}
@@ -439,7 +418,7 @@ export default function Client() {
                         </button>
                         <button
                           onClick={() => go('pausas')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Só uma pausa rápida
                         </button>
@@ -448,21 +427,21 @@ export default function Client() {
                   </div>
                 ) : null}
 
-                {/* 2) Mini Rotina de Autocuidado */}
+                {/* 2) Mini rotina */}
                 {step === 'mini-rotina' ? (
                   <div id="mini-rotina" className="space-y-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-[14px] text-[#545454] font-semibold">Faça isso agora</div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">Faça isso agora</div>
                         <div className="text-[12px] text-[#6a6a6a]">
-                          Progresso: <span className="font-semibold text-[#545454]">{progress}</span>/4
+                          Progresso: <span className="font-semibold text-[#2f3a56]">{progress}</span>/4
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => go('pausas')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Preciso pausar
                         </button>
@@ -485,25 +464,21 @@ export default function Client() {
                             checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                           ].join(' ')}
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                            passo {i + 1}
-                          </div>
-                          <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">{s}</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">passo {i + 1}</div>
+                          <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
                           <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
                         </button>
                       ))}
                     </div>
 
                     <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                      <div className="text-[13px] text-[#545454] font-semibold">Se estiver corrido:</div>
-                      <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                        Faça só o passo 1. Isso já ajuda.
-                      </div>
+                      <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
+                      <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           onClick={() => go('pausas')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Ir para Pausas rápidas
                         </button>
@@ -518,22 +493,24 @@ export default function Client() {
                   </div>
                 ) : null}
 
-                {/* 3) Pausas Rápidas */}
+                {/* 3) Pausas */}
                 {step === 'pausas' ? (
                   <div id="pausas" className="space-y-4">
-                    <div className="text-[14px] text-[#545454] font-semibold">Escolha uma pausa (curta)</div>
+                    <div className="text-[14px] text-[#2f3a56] font-semibold">Escolha uma pausa (curta)</div>
 
                     <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
                       <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
+                      <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
                         {routine.pauseDeck[pauseIndex]?.label}
                       </div>
-                      <div className="text-[12px] text-[#6a6a6a] mt-2">Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min</div>
+                      <div className="text-[12px] text-[#6a6a6a] mt-2">
+                        Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
+                      </div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           onClick={nextPause}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Outra pausa
                         </button>
@@ -545,27 +522,25 @@ export default function Client() {
                         </button>
                         <button
                           onClick={() => go('para-voce')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Concluir
                         </button>
                       </div>
                     </div>
 
-                    <div className="text-[12px] text-[#6a6a6a]">
-                      Regra do Materna: uma pausa já conta. Não precisa fazer tudo.
-                    </div>
+                    <div className="text-[12px] text-[#6a6a6a]">Regra do Materna: uma pausa já conta. Não precisa fazer tudo.</div>
                   </div>
                 ) : null}
 
-                {/* 4) Para Você Hoje (fechamento funcional) */}
+                {/* 4) Fechamento */}
                 {step === 'para-voce' ? (
                   <div id="para-voce" className="space-y-4">
-                    <div className="text-[14px] text-[#545454] font-semibold">Fechamento</div>
+                    <div className="text-[14px] text-[#2f3a56] font-semibold">Fechamento</div>
 
                     <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
                       <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
+                      <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
                         {routine.close}
                       </div>
                       <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
@@ -579,13 +554,13 @@ export default function Client() {
                         </button>
                         <Link
                           href="/maternar/meu-filho"
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Ir para Meu Filho
                         </Link>
                         <button
                           onClick={() => go('ritmo')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Ajustar e trocar
                         </button>
