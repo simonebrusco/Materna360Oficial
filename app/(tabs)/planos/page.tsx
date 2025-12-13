@@ -116,19 +116,33 @@ const PLANS = [
     highlighted: false,
     badgeIcon: 'crown' as const,
   },
-]
+] as const
+
+type PlanId = (typeof PLANS)[number]['id']
 
 export default function PlanosPage() {
   const [open, setOpen] = React.useState(false)
-  const plan = typeof window !== 'undefined' ? getPlan() : 'free'
-  const currentPlanId = plan === 'premium' ? 'materna-plus' : 'essencial'
 
-  const handleViewPlans = (planId: string) => {
+  // Ajuste SSR/hidratação: lê plano só após mount
+  const [currentPlanId, setCurrentPlanId] = React.useState<PlanId>('essencial')
+
+  // Opcional: qual plano foi clicado (para o sheet abrir “contextualizado”)
+  const [selectedPlanId, setSelectedPlanId] = React.useState<PlanId>('materna-plus')
+
+  React.useEffect(() => {
+    const plan = getPlan()
+    const resolved = plan === 'premium' ? 'materna-plus' : 'essencial'
+    setCurrentPlanId(resolved)
+  }, [])
+
+  const handleViewPlans = (planId: PlanId) => {
     track('paywall_view', { plan: planId, source: 'planos_page' })
   }
 
-  const handleUpgradeClick = () => {
-    track('paywall_click', { plan: 'premium', source: 'planos_page' })
+  const handleUpgradeClick = (planId: PlanId) => {
+    // Telemetria mais fiel ao clique do usuário
+    track('paywall_click', { plan: planId, source: 'planos_page' })
+    setSelectedPlanId(planId)
     setOpen(true)
   }
 
@@ -143,28 +157,28 @@ export default function PlanosPage() {
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
             PLANOS MATERNA360
           </span>
+
           <h1 className="mt-3 text-3xl sm:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
             Planos feitos para acompanhar o seu ritmo
           </h1>
+
           <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
             Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
             que faz sentido para o seu momento — sem pressão, sem cobrança.
             Aqui, você é quem guia o caminho.
           </p>
 
-          {currentPlanId && (
-            <div className="mt-4 space-y-1">
-              <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
-                Você já está no plano{' '}
-                {PLANS.find(p => p.id === currentPlanId)?.name}
-              </p>
-              <p className="text-xs sm:text-sm text-white/90">
-                Se fizer sentido para você, pode mudar de plano com calma, sem
-                pressa e sem multas. O plano acompanha a sua fase, não o
-                contrário.
-              </p>
-            </div>
-          )}
+          <div className="mt-4 space-y-1">
+            <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
+              Você já está no plano{' '}
+              {PLANS.find(p => p.id === currentPlanId)?.name}
+            </p>
+            <p className="text-xs sm:text-sm text-white/90">
+              Se fizer sentido para você, pode mudar de plano com calma, sem
+              pressa e sem multas. O plano acompanha a sua fase, não o
+              contrário.
+            </p>
+          </div>
         </header>
 
         {/* Card grande com conteúdo em branco */}
@@ -245,8 +259,10 @@ export default function PlanosPage() {
                     </p>
                   </div>
 
-                  {/* Lista de benefícios */}
-                  <div className="flex-1 space-y-2.5 mb-6">
+                  {/* Lista de benefícios
+                      Ajuste sutil: altura máxima + scroll interno no mobile para não virar “paredão”,
+                      mantendo o mesmo visual. */}
+                  <div className="flex-1 space-y-2.5 mb-6 max-h-[320px] sm:max-h-none overflow-auto pr-1">
                     {planConfig.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <AppIcon
@@ -269,13 +285,21 @@ export default function PlanosPage() {
                     className="w-full md:w-[230px]"
                     onClick={() => {
                       handleViewPlans(planConfig.id)
-                      if (planConfig.id !== 'essencial') {
-                        handleUpgradeClick()
-                      } else {
+
+                      if (planConfig.id === 'essencial') {
                         setPlan('free')
+                        return
                       }
+
+                      // Abre o sheet, mas agora registrando qual plano a pessoa escolheu
+                      handleUpgradeClick(planConfig.id)
                     }}
                     disabled={isCurrentPlan && planConfig.id === 'essencial'}
+                    aria-label={
+                      isCurrentPlan && planConfig.id === 'essencial'
+                        ? 'Seu plano atual'
+                        : `Selecionar ${planConfig.name}`
+                    }
                   >
                     {isCurrentPlan && planConfig.id === 'essencial'
                       ? 'Seu plano atual'
@@ -430,6 +454,18 @@ export default function PlanosPage() {
               aprofundar sua jornada no Materna+ 360, sempre que sentir que é o
               momento.
             </p>
+
+            {/* CTA opcional (pequeno): abrir o sheet já no plano recomendado */}
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="primary"
+                size="sm"
+                className="px-5"
+                onClick={() => handleUpgradeClick('materna-plus')}
+              >
+                Ver upgrade recomendado
+              </Button>
+            </div>
           </div>
 
           {/* FAQ */}
@@ -498,7 +534,10 @@ export default function PlanosPage() {
           </div>
         </div>
 
-        {/* Sheet de upgrade */}
+        {/* Sheet de upgrade
+            Observação: eu mantive o componente como está (sem alterar API).
+            Se o UpgradeSheet aceitar props adicionais (ex: selectedPlan), você pode plugar aqui.
+         */}
         <UpgradeSheet open={open} onOpenChange={setOpen} />
       </div>
 
