@@ -81,16 +81,31 @@ export default function MaternarClient() {
         relative
         min-h-[100dvh]
         pb-32
+        overflow-hidden
 
-        /* OPÇÃO C — Fundo ousado (ameixa + rosa) */
+        /* Base — ameixa + rosa */
         bg-[linear-gradient(to_bottom,#2f3a56_0%,#ff005e_18%,#fd2597_34%,#fdbed7_62%,#ffe1f1_88%,#ffffff_100%)]
 
+        /* Glow principal suave */
         before:content-['']
         before:absolute before:inset-0
         before:pointer-events-none
-        before:bg-white/10
+        before:bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.06)_35%,rgba(255,255,255,0)_70%)]
+
+        /* Aurora — manchas de luz premium */
+        after:content-['']
+        after:absolute after:inset-0
+        after:pointer-events-none
+        after:bg-[
+          radial-gradient(900px_420px_at_20%_18%,rgba(255,216,230,0.35)_0%,rgba(255,216,230,0)_60%),
+          radial-gradient(720px_360px_at_82%_28%,rgba(255,0,94,0.22)_0%,rgba(255,0,94,0)_62%),
+          radial-gradient(520px_260px_at_55%_12%,rgba(47,58,86,0.28)_0%,rgba(47,58,86,0)_58%)
+        ]
       "
     >
+      {/* Grain sutil (acabamento premium) */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-soft-light [background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width=%22120%22 height=%22120%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22%2F%3E%3C%2Ffilter%3E%3Crect width=%22120%22 height=%22120%22 filter=%22url(%23n)%22 opacity=%220.55%22%2F%3E%3C%2Fsvg%3E')]" />
+
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           {/* HERO */}
