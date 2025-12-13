@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+// Não quebra o build: apenas registra no servidor (útil para diagnosticar Vercel env)
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  // Não quebra o build, mas loga erro no servidor
   console.error(
     '[MaternaBox Waitlist] Variáveis de ambiente do Supabase ausentes. ' +
       'Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.',
@@ -35,27 +35,28 @@ export async function POST(req: Request) {
       )
     }
 
-    // Se não tiver Supabase configurado, só loga e responde OK (modo “degradação suave”)
+    // Se não tiver Supabase configurado, NÃO mascara em produção.
     if (!supabase) {
-      console.warn(
-        '[MaternaBox Waitlist] Supabase não configurado. Dados recebidos:',
-        {
-          name,
-          email,
-          childAgeRange,
-          city,
-          discoverySource,
-          notes,
-        },
-      )
+      const vercelEnv = process.env.VERCEL_ENV
+      const nodeEnv = process.env.NODE_ENV
+      const isProd = vercelEnv === 'production' || nodeEnv === 'production'
+
+      console.warn('[MaternaBox Waitlist] Supabase não configurado.', {
+        vercelEnv,
+        nodeEnv,
+        hasUrl: Boolean(SUPABASE_URL),
+        hasServiceKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+        received: { name, email, childAgeRange, city, discoverySource, notes },
+      })
 
       return NextResponse.json(
         {
-          ok: true,
-          message:
-            'Cadastro recebido em modo de testes. Em breve, a lista de espera estará 100% ativa.',
+          ok: false,
+          error: isProd
+            ? 'Lista de espera temporariamente indisponível. Tente novamente em alguns instantes.'
+            : 'Supabase não configurado (ambiente de desenvolvimento/preview).',
         },
-        { status: 200 },
+        { status: 503 },
       )
     }
 
