@@ -10,7 +10,6 @@ import ProfileForm from '@/components/blocks/ProfileForm'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
-import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -149,24 +148,53 @@ export default function Eu360Client() {
       data-layout="page-template-v1"
       data-tab="eu360"
       className="
+        relative
         min-h-[100dvh]
-        pb-16
+        pb-24
+        overflow-hidden
+
         bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_26%,#fdbed7_56%,#ffe1f1_90%,#ffffff_100%)]
+        bg-[linear-gradient(to_bottom,#2f3a56_0%,#553a62_10%,#8b3563_22%,#fd2597_40%,#fdbed7_68%,#ffe1f1_88%,#fff7fa_100%)]
       "
     >
-      <div className="mx-auto max-w-3xl px-4 md:px-6">
+      {/* overlays premium (acabamento, sem mexer no layout interno) */}
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute inset-0
+          bg-[radial-gradient(900px_520px_at_18%_10%,rgba(255,216,230,0.40)_0%,rgba(255,216,230,0.00)_60%)]
+        "
+      />
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute inset-0
+          bg-[radial-gradient(820px_520px_at_78%_22%,rgba(253,37,151,0.26)_0%,rgba(253,37,151,0.00)_62%)]
+        "
+      />
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute inset-x-0 top-0 h-20
+          bg-[linear-gradient(to_bottom,rgba(255,255,255,0.18),rgba(255,255,255,0.00))]
+        "
+      />
+
+      <div className="relative z-10 mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
-          <span className="inline-flex items-center rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+          <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
             EU360
           </span>
 
-          <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+          <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.38)]">
             Seu mundo em perspectiva
           </h1>
 
-          <p className="mt-2 text-sm md:text-base text-white/85 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+          <p className="mt-2 text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_5px_rgba(0,0,0,0.45)]">
             Conte um pouco sobre você e a fase da sua família. Isso ajuda o
             Materna360 a cuidar de você com sugestões mais reais para a sua
             rotina.
@@ -180,7 +208,7 @@ export default function Eu360Client() {
           {/* 2 — PAINEL DA JORNADA */}
           <SectionWrapper>
             <Reveal>
-              <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_4px_14px_rgba(0,0,0,0.04)] px-5 py-5 md:px-7 md:py-7 space-y-5">
+              <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
