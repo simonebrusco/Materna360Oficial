@@ -10,18 +10,20 @@ import LegalFooter from '@/components/common/LegalFooter'
 type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
 type Etapa = 'ritmo' | 'mini-rotina' | 'pausas' | 'para-voce'
 
+const STORAGE_KEY_FAVORITE = 'maternar:cuidar-de-mim:favorited:v1'
+
 const RITMOS: { key: Ritmo; label: string; hint: string }[] = [
-  { key: 'leve', label: 'leve', hint: 'Hoje dá para fazer um pequeno passo.' },
-  { key: 'cansada', label: 'cansada', hint: 'Hoje o básico já é suficiente.' },
-  { key: 'animada', label: 'animada', hint: 'Aproveite a energia sem se cobrar.' },
-  { key: 'sobrecarregada', label: 'sobrecarregada', hint: 'Hoje é dia de reduzir peso.' },
+  { key: 'leve', label: 'leve', hint: 'Hoje dá para fazer um pequeno passo com leveza.' },
+  { key: 'cansada', label: 'cansada', hint: 'Hoje, o básico bem feito já é autocuidado.' },
+  { key: 'animada', label: 'animada', hint: 'Use a energia sem se cobrar — constância > intensidade.' },
+  { key: 'sobrecarregada', label: 'sobrecarregada', hint: 'Hoje é reduzir peso. Um “reset” curto já ajuda.' },
 ]
 
 const MINI_ROTINAS = [
   {
     id: 'alongar-1min',
     title: 'Alongamento leve (1 min)',
-    detail: 'Solte ombros e pescoço. Sem perfeição, só presença.',
+    detail: 'Solte ombros e pescoço. Sem perfeição — só presença.',
     minutes: 1,
   },
   {
@@ -39,7 +41,7 @@ const MINI_ROTINAS = [
   {
     id: 'hidratar-calma',
     title: 'Hidratante com calma',
-    detail: 'Um gesto simples para o corpo entender: estou cuidando.',
+    detail: 'Um gesto simples para o corpo entender: “estou cuidando”.',
     minutes: 2,
   },
 ] as const
@@ -48,7 +50,7 @@ const PAUSAS = [
   { id: 'respirar-60', title: 'Respirar 60s', detail: 'Inspire 4, solte 6. Repita.', minutes: 1 },
   { id: 'agua-pausa', title: 'Água + pausa', detail: 'Um gole e uma pausa real.', minutes: 1 },
   { id: 'alongar-pescoco', title: 'Soltar pescoço', detail: 'Gire de leve. Sem forçar.', minutes: 1 },
-  { id: 'janela-20', title: 'Olhar pela janela', detail: '20 segundos de “longe” para o cérebro.', minutes: 1 },
+  { id: 'janela-20', title: 'Olhar pela janela', detail: '20s de “longe” para o cérebro.', minutes: 1 },
 ] as const
 
 function scrollToId(id: Etapa) {
@@ -65,18 +67,43 @@ function nextStepFromRitmo(ritmo: Ritmo | null): Etapa {
 }
 
 function messageForRitmo(ritmo: Ritmo | null): string {
-  if (!ritmo) {
-    return 'Hoje você não precisa “dar conta”. Só precisa escolher um próximo passo pequeno.'
-  }
+  if (!ritmo) return 'Você não precisa “dar conta”. Só precisa escolher um próximo passo pequeno.'
   switch (ritmo) {
     case 'leve':
-      return 'Hoje, faça um gesto curto e consistente. Pequeno, mas seu.'
+      return 'Hoje, um gesto curto e consistente vale muito.'
     case 'cansada':
-      return 'Hoje, a meta é aliviar: uma pausa real já muda o tom do dia.'
+      return 'Hoje, alivie: uma pausa real já muda o tom do dia.'
     case 'animada':
-      return 'Hoje, use a energia com gentileza: sem acelerar para compensar.'
+      return 'Hoje, use a energia com gentileza — sem acelerar para compensar.'
     case 'sobrecarregada':
       return 'Hoje, seu foco é reduzir peso: menos exigência, mais ar.'
+  }
+}
+
+function computeProgress(ritmo: Ritmo | null, miniRotinaId: string | null, pausaId: string | null): number {
+  // 1) Ritmo escolhido = 1
+  // 2) Mini rotina (se escolhida) = +1
+  // 3) Pausa (se escolhida) = +1
+  // 4) Para você (sempre acessível — “conclusão” é chegar aqui)
+  let p = 0
+  if (ritmo) p += 1
+  if (miniRotinaId) p += 1
+  if (pausaId) p += 1
+  // Última etapa é “cheguei no final”; não dá para medir scroll sem observer.
+  // Aqui mantemos a progressão pragmática: quando ela seleciona algo e vai para “Para você”, já é o fechamento.
+  return Math.min(p, 3)
+}
+
+function stepLabel(id: Etapa): string {
+  switch (id) {
+    case 'ritmo':
+      return 'Meu ritmo'
+    case 'mini-rotina':
+      return 'Mini rotina'
+    case 'pausas':
+      return 'Pausas'
+    case 'para-voce':
+      return 'Para você'
   }
 }
 
@@ -86,15 +113,8 @@ export default function Client() {
   const [miniRotinaId, setMiniRotinaId] = useState<string | null>(null)
   const [pausaId, setPausaId] = useState<string | null>(null)
 
+  const [favorite, setFavorite] = useState(false)
   const [highlight, setHighlight] = useState<Etapa>('ritmo')
-
-  const ritmoHint = useMemo(() => {
-    if (!ritmo) return null
-    return RITMOS.find((r) => r.key === ritmo)?.hint ?? null
-  }, [ritmo])
-
-  const recommendedNext = useMemo(() => nextStepFromRitmo(ritmo), [ritmo])
-  const dailyMessage = useMemo(() => messageForRitmo(ritmo), [ritmo])
 
   const lastActionRef = useRef<string>('')
 
@@ -108,16 +128,55 @@ export default function Client() {
   }, [])
 
   useEffect(() => {
-    // Atualiza o “realce” da trilha conforme escolhas, sem travar o fluxo
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_FAVORITE)
+      setFavorite(stored === '1')
+    } catch {}
+  }, [])
+
+  const ritmoHint = useMemo(() => {
+    if (!ritmo) return null
+    return RITMOS.find((r) => r.key === ritmo)?.hint ?? null
+  }, [ritmo])
+
+  const recommendedNext = useMemo(() => nextStepFromRitmo(ritmo), [ritmo])
+  const dailyMessage = useMemo(() => messageForRitmo(ritmo), [ritmo])
+
+  const progress = useMemo(() => computeProgress(ritmo, miniRotinaId, pausaId), [ritmo, miniRotinaId, pausaId])
+  const progressText = useMemo(() => `${Math.min(progress + 1, 4)}/4`, [progress])
+
+  const ctaTarget = useMemo(() => {
+    if (!ritmo) return 'ritmo' as Etapa
+
+    // Se o recomendado é pausa e ela ainda não escolheu pausa → vai para pausas
+    if (recommendedNext === 'pausas' && !pausaId) return 'pausas' as Etapa
+    // Se o recomendado é mini-rotina e ela ainda não escolheu mini → vai para mini
+    if (recommendedNext === 'mini-rotina' && !miniRotinaId) return 'mini-rotina' as Etapa
+
+    // Se já escolheu algo, encerra em "Para você"
+    if (miniRotinaId || pausaId) return 'para-voce' as Etapa
+
+    // fallback
+    return recommendedNext
+  }, [ritmo, recommendedNext, miniRotinaId, pausaId])
+
+  const ctaLabel = useMemo(() => {
+    if (!ritmo) return 'Começar'
+    if (ctaTarget === 'para-voce') return `Fechar trilha (${progressText})`
+    return `Continuar (${progressText})`
+  }, [ritmo, ctaTarget, progressText])
+
+  useEffect(() => {
+    // Realce da trilha (visual) — sempre indica “o próximo lugar útil”.
     if (!ritmo) {
       setHighlight('ritmo')
       return
     }
-    if (!miniRotinaId && (recommendedNext === 'mini-rotina' || ritmo === 'leve' || ritmo === 'animada')) {
+    if (!miniRotinaId && recommendedNext === 'mini-rotina') {
       setHighlight('mini-rotina')
       return
     }
-    if (!pausaId && (recommendedNext === 'pausas' || ritmo === 'cansada' || ritmo === 'sobrecarregada')) {
+    if (!pausaId && recommendedNext === 'pausas') {
       setHighlight('pausas')
       return
     }
@@ -128,13 +187,34 @@ export default function Client() {
     background: 'radial-gradient(circle at top left, #fdbed7 0%, #ffe1f1 70%, #ffffff 100%)',
   }
 
+  const steps: { id: Etapa; index: number }[] = useMemo(
+    () => [
+      { id: 'ritmo', index: 1 },
+      { id: 'mini-rotina', index: 2 },
+      { id: 'pausas', index: 3 },
+      { id: 'para-voce', index: 4 },
+    ],
+    []
+  )
+
+  function toggleFavorite() {
+    const next = !favorite
+    setFavorite(next)
+    try {
+      localStorage.setItem(STORAGE_KEY_FAVORITE, next ? '1' : '0')
+    } catch {}
+    try {
+      track('cuidar_de_mim.favorite.toggle', { value: next })
+    } catch {}
+  }
+
   return (
     <main
       data-tab="maternar-cuidar-de-mim"
       className="min-h-[100dvh] pb-32 relative overflow-hidden"
       style={topBgStyle}
     >
-      {/* HALOS DE LUZ (somente tons suaves – sem pink saturado no fundo) */}
+      {/* HALOS SUAVES (internas) */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-12%] left-[-14%] w-[58%] h-[58%] bg-[#fdbed7]/55 blur-[110px] rounded-full" />
         <div className="absolute bottom-[-18%] right-[-14%] w-[52%] h-[52%] bg-[#ffe1f1]/70 blur-[120px] rounded-full" />
@@ -142,8 +222,8 @@ export default function Client() {
 
       <ClientOnly>
         <div className="relative mx-auto max-w-3xl px-5 md:px-6">
-          {/* HERO */}
-          <header className="pt-10 md:pt-14 mb-7">
+          {/* HERO -> Painel de decisão */}
+          <header className="pt-10 md:pt-14 mb-6">
             <Reveal>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -152,22 +232,40 @@ export default function Client() {
                       Maternar
                     </span>
                   </p>
+
                   <h1 className="text-3xl md:text-4xl font-semibold text-[#545454] leading-tight mt-2">
                     Cuidar de Mim
                   </h1>
+
                   <p className="text-[15px] md:text-[17px] text-[#6a6a6a] mt-2 max-w-xl leading-relaxed">
-                    Uma trilha curta para você respirar e escolher um gesto possível — sem culpa e sem esforço extra.
+                    Trilhas curtas, decisões simples e gestos possíveis — para você voltar para si sem precisar de tempo “extra”.
                   </p>
                 </div>
 
-                <div className="hidden md:flex items-center justify-center h-12 w-12 rounded-2xl bg-white/70 border border-[#f5d7e5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-                  <AppIcon name="heart" size={22} className="text-[#b8236b]" />
-                </div>
+                {/* Ação real: Favoritar trilha */}
+                <button
+                  onClick={toggleFavorite}
+                  className="
+                    shrink-0
+                    h-11 w-11
+                    rounded-2xl
+                    bg-white/70
+                    border border-[#f5d7e5]
+                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                    flex items-center justify-center
+                    hover:bg-white
+                    transition
+                  "
+                  aria-label={favorite ? 'Remover dos salvos' : 'Salvar esta trilha'}
+                  title={favorite ? 'Salvo' : 'Salvar'}
+                >
+                  <AppIcon name="heart" size={20} className={favorite ? 'text-[#fd2597]' : 'text-[#b8236b]'} />
+                </button>
               </div>
             </Reveal>
           </header>
 
-          {/* “AGORA” – trilha inteligente em 30s */}
+          {/* ESTAÇÃO: AGORA (mais inteligente / menos “bloco”) */}
           <Reveal delay={120}>
             <section
               className="
@@ -176,7 +274,7 @@ export default function Client() {
                 p-6 md:p-7
                 shadow-[0_6px_22px_rgba(0,0,0,0.06)]
                 border border-[#f5d7e5]
-                mb-8
+                mb-7
               "
             >
               <div className="flex items-start justify-between gap-4">
@@ -186,16 +284,16 @@ export default function Client() {
                   </div>
                   <div>
                     <h2 className="text-[18px] md:text-[20px] font-semibold text-[#545454] leading-snug">
-                      Agora, escolha só um próximo passo
+                      Agora: um passo bom o suficiente
                     </h2>
                     <p className="text-[13px] md:text-[14px] text-[#6a6a6a] mt-1 leading-relaxed">
-                      Em vez de fazer tudo, faça o que ajuda de verdade hoje.
+                      Escolha o que ajuda hoje. O resto pode esperar.
                     </p>
                   </div>
                 </div>
 
                 <button
-                  onClick={() => scrollToId(recommendedNext)}
+                  onClick={() => scrollToId(ctaTarget)}
                   className="
                     shrink-0
                     rounded-full
@@ -207,34 +305,46 @@ export default function Client() {
                     hover:opacity-95
                     transition
                   "
-                  aria-label="Ir para o próximo passo recomendado"
+                  aria-label="Ir para o próximo passo da trilha"
                 >
-                  Ir para o próximo
+                  {ctaLabel}
                 </button>
               </div>
 
+              {/* Mini stepper com estado */}
               <div className="mt-5 flex flex-wrap gap-2">
-                {(
-                  [
-                    { id: 'ritmo', label: '1. Meu ritmo' },
-                    { id: 'mini-rotina', label: '2. Mini rotina' },
-                    { id: 'pausas', label: '3. Pausas rápidas' },
-                    { id: 'para-voce', label: '4. Para você' },
-                  ] as const
-                ).map((chip) => {
-                  const active = highlight === chip.id
+                {steps.map((s) => {
+                  const isActive = highlight === s.id
+                  const isDone =
+                    (s.id === 'ritmo' && !!ritmo) ||
+                    (s.id === 'mini-rotina' && !!miniRotinaId) ||
+                    (s.id === 'pausas' && !!pausaId)
+
+                  const base =
+                    'rounded-full px-3.5 py-2 text-[12px] border transition inline-flex items-center gap-2'
+
+                  const styles = isActive
+                    ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
+                    : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]'
+
                   return (
                     <button
-                      key={chip.id}
-                      onClick={() => scrollToId(chip.id)}
-                      className={[
-                        'rounded-full px-3.5 py-2 text-[12px] border transition',
-                        active
-                          ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
-                          : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
-                      ].join(' ')}
+                      key={s.id}
+                      onClick={() => scrollToId(s.id)}
+                      className={[base, styles].join(' ')}
+                      aria-label={`Ir para ${stepLabel(s.id)}`}
                     >
-                      {chip.label}
+                      <span
+                        className={[
+                          'inline-flex h-5 w-5 rounded-full items-center justify-center text-[11px] border',
+                          isDone
+                            ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
+                            : 'bg-white border-[#f5d7e5] text-[#6a6a6a]',
+                        ].join(' ')}
+                      >
+                        {isDone ? '✓' : s.index}
+                      </span>
+                      <span className="leading-none">{stepLabel(s.id)}</span>
                     </button>
                   )
                 })}
@@ -242,6 +352,11 @@ export default function Client() {
 
               <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-4">
                 <p className="text-[14px] text-[#545454] leading-relaxed">{dailyMessage}</p>
+                {favorite ? (
+                  <p className="text-[12px] text-[#6a6a6a] mt-2">
+                    Salvo nos seus favoritos — para voltar rápido quando precisar.
+                  </p>
+                ) : null}
               </div>
             </section>
           </Reveal>
@@ -258,7 +373,7 @@ export default function Client() {
                 p-6 md:p-7
                 shadow-[0_6px_22px_rgba(0,0,0,0.06)]
                 border border-[#f5d7e5]
-                mb-8
+                mb-6
               "
             >
               <div className="flex items-start gap-4 mb-4">
@@ -267,7 +382,7 @@ export default function Client() {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-[#545454]">Meu ritmo hoje</h2>
-                  <p className="text-[14px] text-[#6a6a6a] mt-1">Como você chega aqui agora — sem julgamento.</p>
+                  <p className="text-[14px] text-[#6a6a6a] mt-1">Sem julgamento: como você chega agora?</p>
                 </div>
               </div>
 
@@ -318,7 +433,7 @@ export default function Client() {
                     focus:outline-none focus:ring-2 focus:ring-[#fd2597]/40
                     text-[#545454]
                     placeholder:text-[#a0a0a0]
-                    min-h-[98px]
+                    min-h-[92px]
                   "
                 />
               </label>
@@ -337,7 +452,7 @@ export default function Client() {
                 p-6 md:p-7
                 shadow-[0_6px_22px_rgba(0,0,0,0.06)]
                 border border-[#f5d7e5]
-                mb-8
+                mb-6
               "
             >
               <div className="flex items-start gap-4 mb-4">
@@ -347,7 +462,7 @@ export default function Client() {
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-[#545454]">Mini rotina de autocuidado</h2>
                   <p className="text-[14px] text-[#6a6a6a] mt-1">
-                    Escolha uma opção de 1 a 3 minutos — a melhor é a que cabe.
+                    Para quando você quer se sentir melhor sem precisar de “tempo livre”.
                   </p>
                 </div>
               </div>
@@ -367,9 +482,7 @@ export default function Client() {
                       }}
                       className={[
                         'text-left rounded-2xl p-4 border transition shadow-[0_3px_10px_rgba(0,0,0,0.05)]',
-                        active
-                          ? 'bg-[#fff7fb] border-[#f5d7e5]'
-                          : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                        active ? 'bg-[#fff7fb] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                       ].join(' ')}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -389,13 +502,13 @@ export default function Client() {
               {miniRotinaId ? (
                 <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] p-4">
                   <p className="text-[13px] text-[#545454] leading-relaxed">
-                    Perfeito. Se der, faça agora mesmo — sem esperar “o momento ideal”.
+                    Fez sentido. Se der, faça agora mesmo — sem esperar o momento perfeito.
                   </p>
                   <button
                     onClick={() => scrollToId('para-voce')}
                     className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                   >
-                    Concluir
+                    Fechar
                   </button>
                 </div>
               ) : null}
@@ -414,7 +527,7 @@ export default function Client() {
                 p-6 md:p-7
                 shadow-[0_6px_22px_rgba(0,0,0,0.06)]
                 border border-[#f5d7e5]
-                mb-8
+                mb-6
               "
             >
               <div className="flex items-start gap-4 mb-4">
@@ -423,9 +536,7 @@ export default function Client() {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-[#545454]">Pausas rápidas</h2>
-                  <p className="text-[14px] text-[#6a6a6a] mt-1">
-                    Para quando você precisa de um “reset” curto — sem sumir do seu dia.
-                  </p>
+                  <p className="text-[14px] text-[#6a6a6a] mt-1">Para quando você precisa se regular sem “sumir”.</p>
                 </div>
               </div>
 
@@ -444,9 +555,7 @@ export default function Client() {
                       }}
                       className={[
                         'text-left rounded-2xl p-4 border transition shadow-[0_3px_10px_rgba(0,0,0,0.05)]',
-                        active
-                          ? 'bg-[#fff7fb] border-[#f5d7e5]'
-                          : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                        active ? 'bg-[#fff7fb] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                       ].join(' ')}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -472,7 +581,7 @@ export default function Client() {
                     onClick={() => scrollToId('para-voce')}
                     className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                   >
-                    Concluir
+                    Fechar
                   </button>
                 </div>
               ) : null}
