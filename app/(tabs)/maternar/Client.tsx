@@ -78,31 +78,29 @@ export default function MaternarClient() {
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
+        relative
         min-h-[100dvh]
         pb-32
-        relative overflow-hidden
-        bg-[#fff7fa]
-        bg-[radial-gradient(1000px_520px_at_18%_-10%,rgba(47,58,86,0.55),transparent_62%),radial-gradient(900px_520px_at_82%_-18%,rgba(255,0,94,0.55),transparent_60%),radial-gradient(780px_520px_at_55%_10%,rgba(255,216,230,0.95),transparent_62%),linear-gradient(to_bottom,rgba(47,58,86,0.22)_0%,rgba(255,0,94,0.55)_22%,rgba(255,216,230,0.92)_58%,rgba(255,247,250,1)_100%)]
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#2f3a56_0%,#6b3a68_18%,#ff1f79_46%,#fdbed7_74%,#fff7fa_100%)]
       "
     >
-      {/* Glow suave (não mexe no layout) */}
+      {/* Top contrast (plum) — melhora legibilidade do hero sem mudar estrutura/layout */}
       <div
         aria-hidden
         className="
-          pointer-events-none absolute inset-0
-          bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.18),transparent_45%),radial-gradient(circle_at_80%_8%,rgba(255,255,255,0.12),transparent_52%)]
-          opacity-70
+          pointer-events-none absolute inset-x-0 top-0 h-[260px]
+          bg-[linear-gradient(to_bottom,rgba(47,58,86,0.58)_0%,rgba(47,58,86,0.28)_38%,rgba(47,58,86,0.0)_100%)]
         "
       />
 
-      {/* Grain premium (não mexe no layout) */}
+      {/* Soft glow leve para dar “tchannn” sem pesar */}
       <div
         aria-hidden
         className="
-          pointer-events-none absolute inset-0
-          opacity-[0.08]
-          mix-blend-overlay
-          bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22><filter id=%22n%22 x=%220%22 y=%220%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/></filter><rect width=%22120%22 height=%22120%22 filter=%22url(%23n)%22 opacity=%220.35%22/></svg>')]
+          pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[520px] -translate-x-1/2
+          rounded-full blur-3xl opacity-35
+          bg-[radial-gradient(circle_at_center,rgba(255,0,94,0.65)_0%,rgba(253,37,151,0.35)_35%,rgba(255,225,241,0.0)_70%)]
         "
       />
 
@@ -111,15 +109,15 @@ export default function MaternarClient() {
           {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+              <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.40)]">
                 Maternar
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]">
                 O seu espaço de acolhimento, leveza e apoio — para cuidar de você, do seu filho e da sua jornada.
               </p>
 
-              <p className="text-sm md:text-[15px] text-white/95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)] mt-1">
+              <p className="text-sm md:text-[15px] text-white/95 drop-shadow-[0_1px_6px_rgba(0,0,0,0.40)] mt-1">
                 Por onde você quer começar hoje?
               </p>
             </div>
@@ -186,7 +184,15 @@ export default function MaternarClient() {
 
                   <div className="mt-4 pt-1">
                     <Link href="/maternar/cuidar-de-mim">
-                      <Button className="w-full md:w-auto px-6">
+                      <Button
+                        className="
+                          w-full md:w-auto px-6
+                          bg-[linear-gradient(135deg,#ff005e_0%,#fd2597_55%,#ff4f9a_100%)]
+                          shadow-[0_10px_22px_rgba(255,0,94,0.20)]
+                          hover:shadow-[0_14px_28px_rgba(255,0,94,0.22)]
+                          border border-white/35
+                        "
+                      >
                         Ver tudo de Cuidar de Mim
                       </Button>
                     </Link>
@@ -241,7 +247,15 @@ export default function MaternarClient() {
 
                   <div className="mt-4 pt-1">
                     <Link href="/maternar/meu-filho">
-                      <Button className="w-full md:w-auto px-6">
+                      <Button
+                        className="
+                          w-full md:w-auto px-6
+                          bg-[linear-gradient(135deg,#ff005e_0%,#fd2597_55%,#ff4f9a_100%)]
+                          shadow-[0_10px_22px_rgba(255,0,94,0.20)]
+                          hover:shadow-[0_14px_28px_rgba(255,0,94,0.22)]
+                          border border-white/35
+                        "
+                      >
                         Ver tudo de Meu Filho
                       </Button>
                     </Link>
@@ -296,7 +310,15 @@ export default function MaternarClient() {
 
                   <div className="mt-4 pt-1">
                     <Link href="/maternar/meu-dia-leve">
-                      <Button className="w-full md:w-auto px-6">
+                      <Button
+                        className="
+                          w-full md:w-auto px-6
+                          bg-[linear-gradient(135deg,#ff005e_0%,#fd2597_55%,#ff4f9a_100%)]
+                          shadow-[0_10px_22px_rgba(255,0,94,0.20)]
+                          hover:shadow-[0_14px_28px_rgba(255,0,94,0.22)]
+                          border border-white/35
+                        "
+                      >
                         Ver tudo de Meu Dia Leve
                       </Button>
                     </Link>
@@ -351,7 +373,15 @@ export default function MaternarClient() {
 
                   <div className="mt-4 pt-1">
                     <Link href="/maternar/minha-jornada">
-                      <Button className="w-full md:w-auto px-6">
+                      <Button
+                        className="
+                          w-full md:w-auto px-6
+                          bg-[linear-gradient(135deg,#ff005e_0%,#fd2597_55%,#ff4f9a_100%)]
+                          shadow-[0_10px_22px_rgba(255,0,94,0.20)]
+                          hover:shadow-[0_14px_28px_rgba(255,0,94,0.22)]
+                          border border-white/35
+                        "
+                      >
                         Ver tudo de Minha Jornada
                       </Button>
                     </Link>
@@ -390,37 +420,89 @@ export default function MaternarClient() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
                   <Link href="/maternar/biblioteca-materna">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="
+                        w-full text-[12px] md:text-[13px]
+                        bg-white/70 hover:bg-white/85
+                        border border-white/60
+                        text-[#2f3a56]
+                        shadow-[0_6px_16px_rgba(47,58,86,0.08)]
+                      "
+                    >
                       Biblioteca Materna
                     </Button>
                   </Link>
 
                   <Link href="/maternar/ferramentas/ajuda-e-parcerias">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="
+                        w-full text-[12px] md:text-[13px]
+                        bg-white/70 hover:bg-white/85
+                        border border-white/60
+                        text-[#2f3a56]
+                        shadow-[0_6px_16px_rgba(47,58,86,0.08)]
+                      "
+                    >
                       Ajuda & Parcerias
                     </Button>
                   </Link>
 
                   <Link href="/maternar/minhas-conquistas">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="
+                        w-full text-[12px] md:text-[13px]
+                        bg-white/70 hover:bg-white/85
+                        border border-white/60
+                        text-[#2f3a56]
+                        shadow-[0_6px_16px_rgba(47,58,86,0.08)]
+                      "
+                    >
                       Minhas Conquistas
                     </Button>
                   </Link>
 
                   <Link href="/maternar/materna-plus">
-                    <Button className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      className="
+                        w-full text-[12px] md:text-[13px]
+                        bg-[linear-gradient(135deg,#ff005e_0%,#fd2597_55%,#ff4f9a_100%)]
+                        shadow-[0_10px_22px_rgba(255,0,94,0.18)]
+                        border border-white/35
+                      "
+                    >
                       Materna+
                     </Button>
                   </Link>
 
                   <Link href="/maternar/materna-plus/maternabox">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="
+                        w-full text-[12px] md:text-[13px]
+                        bg-white/70 hover:bg-white/85
+                        border border-white/60
+                        text-[#2f3a56]
+                        shadow-[0_6px_16px_rgba(47,58,86,0.08)]
+                      "
+                    >
                       MaternaBox
                     </Button>
                   </Link>
 
                   <Link href="/planos">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="
+                        w-full text-[12px] md:text-[13px]
+                        bg-white/70 hover:bg-white/85
+                        border border-white/60
+                        text-[#2f3a56]
+                        shadow-[0_6px_16px_rgba(47,58,86,0.08)]
+                      "
+                    >
                       Planos
                     </Button>
                   </Link>
