@@ -81,16 +81,10 @@ function messageForRitmo(ritmo: Ritmo | null): string {
 }
 
 function computeProgress(ritmo: Ritmo | null, miniRotinaId: string | null, pausaId: string | null): number {
-  // 1) Ritmo escolhido = 1
-  // 2) Mini rotina (se escolhida) = +1
-  // 3) Pausa (se escolhida) = +1
-  // 4) Para você (sempre acessível — “conclusão” é chegar aqui)
   let p = 0
   if (ritmo) p += 1
   if (miniRotinaId) p += 1
   if (pausaId) p += 1
-  // Última etapa é “cheguei no final”; não dá para medir scroll sem observer.
-  // Aqui mantemos a progressão pragmática: quando ela seleciona algo e vai para “Para você”, já é o fechamento.
   return Math.min(p, 3)
 }
 
@@ -147,16 +141,9 @@ export default function Client() {
 
   const ctaTarget = useMemo(() => {
     if (!ritmo) return 'ritmo' as Etapa
-
-    // Se o recomendado é pausa e ela ainda não escolheu pausa → vai para pausas
     if (recommendedNext === 'pausas' && !pausaId) return 'pausas' as Etapa
-    // Se o recomendado é mini-rotina e ela ainda não escolheu mini → vai para mini
     if (recommendedNext === 'mini-rotina' && !miniRotinaId) return 'mini-rotina' as Etapa
-
-    // Se já escolheu algo, encerra em "Para você"
     if (miniRotinaId || pausaId) return 'para-voce' as Etapa
-
-    // fallback
     return recommendedNext
   }, [ritmo, recommendedNext, miniRotinaId, pausaId])
 
@@ -167,7 +154,6 @@ export default function Client() {
   }, [ritmo, ctaTarget, progressText])
 
   useEffect(() => {
-    // Realce da trilha (visual) — sempre indica “o próximo lugar útil”.
     if (!ritmo) {
       setHighlight('ritmo')
       return
@@ -183,8 +169,9 @@ export default function Client() {
     setHighlight('para-voce')
   }, [ritmo, miniRotinaId, pausaId, recommendedNext])
 
+  // Fundo interno mais claro + sempre finaliza em branco
   const topBgStyle: React.CSSProperties = {
-    background: 'radial-gradient(circle at top left, #fdbed7 0%, #ffe1f1 70%, #ffffff 100%)',
+    background: 'radial-gradient(circle at top left, #ffe1f1 0%, #ffffff 72%, #ffffff 100%)',
   }
 
   const steps: { id: Etapa; index: number }[] = useMemo(
@@ -214,15 +201,14 @@ export default function Client() {
       className="min-h-[100dvh] pb-32 relative overflow-hidden"
       style={topBgStyle}
     >
-      {/* HALOS SUAVES (internas) */}
+      {/* HALOS SUAVES (ainda mais leves, para manter “tom claro”) */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-12%] left-[-14%] w-[58%] h-[58%] bg-[#fdbed7]/55 blur-[110px] rounded-full" />
-        <div className="absolute bottom-[-18%] right-[-14%] w-[52%] h-[52%] bg-[#ffe1f1]/70 blur-[120px] rounded-full" />
+        <div className="absolute top-[-16%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/28 blur-[130px] rounded-full" />
+        <div className="absolute bottom-[-20%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/40 blur-[140px] rounded-full" />
       </div>
 
       <ClientOnly>
         <div className="relative mx-auto max-w-3xl px-5 md:px-6">
-          {/* HERO -> Painel de decisão */}
           <header className="pt-10 md:pt-14 mb-6">
             <Reveal>
               <div className="flex items-start justify-between gap-4">
@@ -233,7 +219,8 @@ export default function Client() {
                     </span>
                   </p>
 
-                  <h1 className="text-3xl md:text-4xl font-semibold text-[#545454] leading-tight mt-2">
+                  {/* H1 alinhado com o padrão das abas (28–32px) */}
+                  <h1 className="text-[28px] md:text-[32px] font-semibold text-[#545454] leading-tight mt-2">
                     Cuidar de Mim
                   </h1>
 
@@ -242,7 +229,6 @@ export default function Client() {
                   </p>
                 </div>
 
-                {/* Ação real: Favoritar trilha */}
                 <button
                   onClick={toggleFavorite}
                   className="
@@ -265,7 +251,6 @@ export default function Client() {
             </Reveal>
           </header>
 
-          {/* ESTAÇÃO: AGORA (mais inteligente / menos “bloco”) */}
           <Reveal delay={120}>
             <section
               className="
@@ -311,7 +296,6 @@ export default function Client() {
                 </button>
               </div>
 
-              {/* Mini stepper com estado */}
               <div className="mt-5 flex flex-wrap gap-2">
                 {steps.map((s) => {
                   const isActive = highlight === s.id
@@ -352,18 +336,12 @@ export default function Client() {
 
               <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-4">
                 <p className="text-[14px] text-[#545454] leading-relaxed">{dailyMessage}</p>
-                {favorite ? (
-                  <p className="text-[12px] text-[#6a6a6a] mt-2">
-                    Salvo nos seus favoritos — para voltar rápido quando precisar.
-                  </p>
-                ) : null}
+                {favorite ? <p className="text-[12px] text-[#6a6a6a] mt-2">Salvo nos seus favoritos — para voltar rápido.</p> : null}
               </div>
             </section>
           </Reveal>
 
-          {/* ============================= */}
           {/* 1) MEU RITMO HOJE */}
-          {/* ============================= */}
           <Reveal>
             <section
               id="ritmo"
@@ -440,9 +418,7 @@ export default function Client() {
             </section>
           </Reveal>
 
-          {/* ============================= */}
           {/* 2) MINI ROTINA DE AUTOCUIDADO */}
-          {/* ============================= */}
           <Reveal>
             <section
               id="mini-rotina"
@@ -515,9 +491,7 @@ export default function Client() {
             </section>
           </Reveal>
 
-          {/* ============================= */}
           {/* 3) PAUSAS RÁPIDAS */}
-          {/* ============================= */}
           <Reveal>
             <section
               id="pausas"
@@ -588,9 +562,7 @@ export default function Client() {
             </section>
           </Reveal>
 
-          {/* ============================= */}
           {/* 4) PARA VOCÊ HOJE */}
-          {/* ============================= */}
           <Reveal>
             <section
               id="para-voce"
