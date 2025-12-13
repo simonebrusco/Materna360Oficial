@@ -1,57 +1,33 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import * as React from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
+import { SoftCard } from '@/components/ui/card'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+type FocusMode = 'respirar-1' | 'recarregar-3' | 'cuidar-5'
 type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
 type Etapa = 'ritmo' | 'mini-rotina' | 'pausas' | 'para-voce'
 
-const STORAGE_KEY_FAVORITE = 'maternar:cuidar-de-mim:favorited:v1'
-
-const RITMOS: { key: Ritmo; label: string; hint: string }[] = [
-  { key: 'leve', label: 'leve', hint: 'Hoje dá para fazer um pequeno passo com leveza.' },
-  { key: 'cansada', label: 'cansada', hint: 'Hoje, o básico bem feito já é autocuidado.' },
-  { key: 'animada', label: 'animada', hint: 'Use a energia sem se cobrar — constância > intensidade.' },
-  { key: 'sobrecarregada', label: 'sobrecarregada', hint: 'Hoje é reduzir peso. Um “reset” curto já ajuda.' },
-]
-
-const MINI_ROTINAS = [
-  {
-    id: 'alongar-1min',
-    title: 'Alongamento leve (1 min)',
-    detail: 'Solte ombros e pescoço. Sem perfeição — só presença.',
-    minutes: 1,
-  },
-  {
-    id: 'agua-respira',
-    title: 'Água + 3 respirações profundas',
-    detail: 'Beba um gole. Inspire 4, solte 6. Três vezes.',
-    minutes: 2,
-  },
-  {
-    id: 'cantinho-calma',
-    title: 'Organizar um cantinho que acalma',
-    detail: 'Só o que cabe: uma superfície, um item, um respiro.',
-    minutes: 3,
-  },
-  {
-    id: 'hidratar-calma',
-    title: 'Hidratante com calma',
-    detail: 'Um gesto simples para o corpo entender: “estou cuidando”.',
-    minutes: 2,
-  },
-] as const
-
-const PAUSAS = [
-  { id: 'respirar-60', title: 'Respirar 60s', detail: 'Inspire 4, solte 6. Repita.', minutes: 1 },
-  { id: 'agua-pausa', title: 'Água + pausa', detail: 'Um gole e uma pausa real.', minutes: 1 },
-  { id: 'alongar-pescoco', title: 'Soltar pescoço', detail: 'Gire de leve. Sem forçar.', minutes: 1 },
-  { id: 'janela-20', title: 'Olhar pela janela', detail: '20s de “longe” para o cérebro.', minutes: 1 },
-] as const
+type Suggestion = {
+  id: string
+  title: string
+  subtitle: string
+  minutes: 1 | 3 | 5
+  tags: string[]
+  steps: string[]
+  microWin: string
+  pauseOptions: { label: string; min: 1 | 2 }[]
+  phrase: string
+}
 
 function scrollToId(id: Etapa) {
   const el = document.getElementById(id)
@@ -59,139 +35,168 @@ function scrollToId(id: Etapa) {
   el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function nextStepFromRitmo(ritmo: Ritmo | null): Etapa {
-  if (!ritmo) return 'ritmo'
-  if (ritmo === 'sobrecarregada') return 'pausas'
-  if (ritmo === 'cansada') return 'pausas'
-  return 'mini-rotina'
+function focusLabel(f: FocusMode) {
+  switch (f) {
+    case 'respirar-1':
+      return 'Respirar agora (1 min)'
+    case 'recarregar-3':
+      return 'Recarregar (3 min)'
+    case 'cuidar-5':
+      return 'Cuidar com calma (5 min)'
+  }
 }
 
-function messageForRitmo(ritmo: Ritmo | null): string {
-  if (!ritmo) return 'Você não precisa “dar conta”. Só precisa escolher um próximo passo pequeno.'
-  switch (ritmo) {
+function focusHint(f: FocusMode) {
+  switch (f) {
+    case 'respirar-1':
+      return 'Quando você só precisa baixar o volume por um minuto.'
+    case 'recarregar-3':
+      return 'Quando dá para fazer um pequeno “reset” e seguir.'
+    case 'cuidar-5':
+      return 'Quando você consegue se tratar com um pouco mais de cuidado.'
+  }
+}
+
+function ritmoHint(r: Ritmo) {
+  switch (r) {
     case 'leve':
-      return 'Hoje, um gesto curto e consistente vale muito.'
+      return 'Hoje é um dia de manter leve e não se exigir demais.'
     case 'cansada':
-      return 'Hoje, alivie: uma pausa real já muda o tom do dia.'
+      return 'Hoje o foco é recuperar um pouco do seu fôlego.'
     case 'animada':
-      return 'Hoje, use a energia com gentileza — sem acelerar para compensar.'
+      return 'Hoje dá para cuidar de você e manter o ritmo bom.'
     case 'sobrecarregada':
-      return 'Hoje, seu foco é reduzir peso: menos exigência, mais ar.'
+      return 'Hoje o objetivo é reduzir pressão — um passo pequeno já ajuda.'
   }
 }
 
-function computeProgress(ritmo: Ritmo | null, miniRotinaId: string | null, pausaId: string | null): number {
-  let p = 0
-  if (ritmo) p += 1
-  if (miniRotinaId) p += 1
-  if (pausaId) p += 1
-  return Math.min(p, 3)
-}
+const SUGGESTIONS: Suggestion[] = [
+  {
+    id: 'respirar-1',
+    title: 'Respiração curta para acalmar',
+    subtitle: 'Um minuto para baixar a pressão do corpo e voltar para si.',
+    minutes: 1,
+    tags: ['1 min', 'agora'],
+    steps: ['Inspire pelo nariz contando 4.', 'Segure 2.', 'Solte pela boca contando 6.', 'Repita 3 vezes.'],
+    microWin: 'Você acabou de criar espaço dentro do seu dia.',
+    pauseOptions: [
+      { label: 'Respirar 1 min', min: 1 },
+      { label: 'Água + pausa', min: 1 },
+      { label: 'Ombros para baixo', min: 1 },
+      { label: 'Olhar pela janela', min: 1 },
+    ],
+    phrase: 'Hoje, você não precisa dar conta de tudo. Precisa só se acolher um pouco.',
+  },
+  {
+    id: 'recarregar-3',
+    title: 'Reset de 3 minutos (corpo + mente)',
+    subtitle: 'Pequeno ajuste para você seguir mais inteira, sem esperar “o momento ideal”.',
+    minutes: 3,
+    tags: ['3 min', 'reset'],
+    steps: [
+      'Beba alguns goles de água.',
+      'Solte o pescoço: 3 giros bem leves.',
+      'Respire: 4 inspirações lentas.',
+      'Escolha 1 próxima ação possível (bem pequena).',
+    ],
+    microWin: 'Você se deu um reinício sem precisar parar o mundo.',
+    pauseOptions: [
+      { label: 'Água + pausa', min: 1 },
+      { label: 'Alongar pescoço', min: 1 },
+      { label: 'Respirar 1 min', min: 1 },
+      { label: 'Alongar mãos', min: 1 },
+    ],
+    phrase: 'O cuidado de hoje pode ser simples — e ainda assim real.',
+  },
+  {
+    id: 'cuidar-5',
+    title: 'Cuidar com calma (5 min)',
+    subtitle: 'Um gesto mais completo, sem perfeição. Só cuidado possível.',
+    minutes: 5,
+    tags: ['5 min', 'suave'],
+    steps: [
+      'Passe um hidratante com atenção (mãos ou rosto).',
+      'Alongue braços por 30 segundos.',
+      'Respire 4 vezes com a mão no peito.',
+      'Organize um “cantinho” mínimo: 1 item no lugar.',
+    ],
+    microWin: 'Você se lembrou de você — isso muda o dia.',
+    pauseOptions: [
+      { label: 'Hidratante com calma', min: 2 },
+      { label: 'Alongar braços', min: 1 },
+      { label: 'Respirar 1 min', min: 1 },
+      { label: 'Água + pausa', min: 1 },
+    ],
+    phrase: 'Você merece o mesmo carinho que oferece para todo mundo.',
+  },
+]
 
-function stepLabel(id: Etapa): string {
-  switch (id) {
-    case 'ritmo':
-      return 'Meu ritmo'
-    case 'mini-rotina':
-      return 'Mini rotina'
-    case 'pausas':
-      return 'Pausas'
-    case 'para-voce':
-      return 'Para você'
+function pickSuggestion(focus: FocusMode, ritmo: Ritmo): Suggestion {
+  // “Inteligência suave”: se sobrecarregada, puxa para o mais curto por padrão.
+  if (ritmo === 'sobrecarregada' && focus !== 'respirar-1') {
+    return SUGGESTIONS.find((s) => s.id === 'respirar-1')!
   }
+  return SUGGESTIONS.find((s) => s.id === focus)!
 }
 
 export default function Client() {
-  const [ritmo, setRitmo] = useState<Ritmo | null>(null)
+  const [focus, setFocus] = useState<FocusMode>('respirar-1')
+  const [ritmo, setRitmo] = useState<Ritmo>('leve')
   const [note, setNote] = useState('')
-  const [miniRotinaId, setMiniRotinaId] = useState<string | null>(null)
-  const [pausaId, setPausaId] = useState<string | null>(null)
-
-  const [favorite, setFavorite] = useState(false)
-  const [highlight, setHighlight] = useState<Etapa>('ritmo')
-
-  const lastActionRef = useRef<string>('')
+  const [checked, setChecked] = useState<boolean[]>([false, false, false, false])
+  const [pauseIndex, setPauseIndex] = useState(0)
 
   useEffect(() => {
     try {
-      track('nav.view', {
-        page: 'cuidar-de-mim',
-        timestamp: new Date().toISOString(),
-      })
+      track('nav.view', { page: 'cuidar-de-mim', timestamp: new Date().toISOString() })
     } catch {}
   }, [])
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_FAVORITE)
-      setFavorite(stored === '1')
-    } catch {}
-  }, [])
-
-  const ritmoHint = useMemo(() => {
-    if (!ritmo) return null
-    return RITMOS.find((r) => r.key === ritmo)?.hint ?? null
-  }, [ritmo])
-
-  const recommendedNext = useMemo(() => nextStepFromRitmo(ritmo), [ritmo])
-  const dailyMessage = useMemo(() => messageForRitmo(ritmo), [ritmo])
-
-  const progress = useMemo(() => computeProgress(ritmo, miniRotinaId, pausaId), [ritmo, miniRotinaId, pausaId])
-  const progressText = useMemo(() => `${Math.min(progress + 1, 4)}/4`, [progress])
-
-  const ctaTarget = useMemo(() => {
-    if (!ritmo) return 'ritmo' as Etapa
-    if (recommendedNext === 'pausas' && !pausaId) return 'pausas' as Etapa
-    if (recommendedNext === 'mini-rotina' && !miniRotinaId) return 'mini-rotina' as Etapa
-    if (miniRotinaId || pausaId) return 'para-voce' as Etapa
-    return recommendedNext
-  }, [ritmo, recommendedNext, miniRotinaId, pausaId])
-
-  const ctaLabel = useMemo(() => {
-    if (!ritmo) return 'Começar'
-    if (ctaTarget === 'para-voce') return `Fechar trilha (${progressText})`
-    return `Continuar (${progressText})`
-  }, [ritmo, ctaTarget, progressText])
+  const featured = useMemo(() => pickSuggestion(focus, ritmo), [focus, ritmo])
 
   useEffect(() => {
-    if (!ritmo) {
-      setHighlight('ritmo')
-      return
-    }
-    if (!miniRotinaId && recommendedNext === 'mini-rotina') {
-      setHighlight('mini-rotina')
-      return
-    }
-    if (!pausaId && recommendedNext === 'pausas') {
-      setHighlight('pausas')
-      return
-    }
-    setHighlight('para-voce')
-  }, [ritmo, miniRotinaId, pausaId, recommendedNext])
+    // Reset suave quando muda o “caminho”
+    setChecked([false, false, false, false])
+    setPauseIndex(0)
+  }, [featured.id])
 
-  // Fundo interno mais claro + sempre finaliza em branco
-  const topBgStyle: React.CSSProperties = {
+  const progress = useMemo(() => checked.filter(Boolean).length, [checked])
+
+  const bgStyle: React.CSSProperties = {
     background: 'radial-gradient(circle at top left, #ffe1f1 0%, #ffffff 72%, #ffffff 100%)',
   }
 
-  const steps: { id: Etapa; index: number }[] = useMemo(
-    () => [
-      { id: 'ritmo', index: 1 },
-      { id: 'mini-rotina', index: 2 },
-      { id: 'pausas', index: 3 },
-      { id: 'para-voce', index: 4 },
-    ],
-    []
-  )
-
-  function toggleFavorite() {
-    const next = !favorite
-    setFavorite(next)
+  function onSelectFocus(next: FocusMode) {
+    setFocus(next)
     try {
-      localStorage.setItem(STORAGE_KEY_FAVORITE, next ? '1' : '0')
+      track('cuidar_de_mim.focus.select', { focus: next })
     } catch {}
+    scrollToId('mini-rotina')
+  }
+
+  function onSelectRitmo(next: Ritmo) {
+    setRitmo(next)
     try {
-      track('cuidar_de_mim.favorite.toggle', { value: next })
+      track('cuidar_de_mim.ritmo.select', { ritmo: next })
+    } catch {}
+    scrollToId('mini-rotina')
+  }
+
+  function toggleStep(i: number) {
+    setChecked((prev) => {
+      const next = [...prev]
+      next[i] = !next[i]
+      try {
+        track('cuidar_de_mim.step.toggle', { i, value: next[i], suggestion: featured.id })
+      } catch {}
+      return next
+    })
+  }
+
+  function nextPause() {
+    setPauseIndex((p) => (p + 1) % featured.pauseOptions.length)
+    try {
+      track('cuidar_de_mim.pause.next', { suggestion: featured.id })
     } catch {}
   }
 
@@ -199,63 +204,55 @@ export default function Client() {
     <main
       data-tab="maternar-cuidar-de-mim"
       className="min-h-[100dvh] pb-32 relative overflow-hidden"
-      style={topBgStyle}
+      style={bgStyle}
     >
-      {/* HALOS SUAVES (ainda mais leves, para manter “tom claro”) */}
+      {/* HALOS */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-16%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/28 blur-[130px] rounded-full" />
-        <div className="absolute bottom-[-20%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/40 blur-[140px] rounded-full" />
+        <div className="absolute top-[-16%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/22 blur-[145px] rounded-full" />
+        <div className="absolute bottom-[-22%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/38 blur-[155px] rounded-full" />
       </div>
 
       <ClientOnly>
         <div className="relative mx-auto max-w-3xl px-5 md:px-6">
+          {/* HERO */}
           <header className="pt-10 md:pt-14 mb-6">
-            <Reveal>
+            <div className="space-y-3">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-[#6a6a6a] hover:text-[#545454] transition mb-1"
+              >
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar para o Maternar
+              </Link>
+
+              <p className="inline-flex items-center gap-2 text-[12px] tracking-wide uppercase text-[#6a6a6a]">
+                <span className="inline-flex h-6 px-3 rounded-full bg-white/70 border border-[#f5d7e5] items-center">
+                  Cuidar de mim
+                </span>
+              </p>
+
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="inline-flex items-center gap-2 text-[12px] tracking-wide uppercase text-[#6a6a6a]">
-                    <span className="inline-flex h-6 px-3 rounded-full bg-white/70 border border-[#f5d7e5] items-center">
-                      Maternar
-                    </span>
-                  </p>
-
-                  {/* H1 alinhado com o padrão das abas (28–32px) */}
-                  <h1 className="text-[28px] md:text-[32px] font-semibold text-[#545454] leading-tight mt-2">
+                  <h1 className="text-[28px] md:text-[32px] font-semibold text-[#545454] leading-tight">
                     Cuidar de Mim
                   </h1>
-
                   <p className="text-[15px] md:text-[17px] text-[#6a6a6a] mt-2 max-w-xl leading-relaxed">
-                    Trilhas curtas, decisões simples e gestos possíveis — para você voltar para si sem precisar de tempo “extra”.
+                    Uma experiência curta e guiada para você respirar, se reorganizar por dentro e seguir com mais leveza.
                   </p>
                 </div>
 
-                <button
-                  onClick={toggleFavorite}
-                  className="
-                    shrink-0
-                    h-11 w-11
-                    rounded-2xl
-                    bg-white/70
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                    flex items-center justify-center
-                    hover:bg-white
-                    transition
-                  "
-                  aria-label={favorite ? 'Remover dos salvos' : 'Salvar esta trilha'}
-                  title={favorite ? 'Salvo' : 'Salvar'}
-                >
-                  <AppIcon name="heart" size={20} className={favorite ? 'text-[#fd2597]' : 'text-[#b8236b]'} />
-                </button>
+                <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-2xl bg-white/70 border border-[#f5d7e5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                </div>
               </div>
-            </Reveal>
+            </div>
           </header>
 
-          <Reveal delay={120}>
+          {/* COMANDO CENTRAL (interliga tudo) */}
+          <Reveal>
             <section
               className="
-                bg-white
-                rounded-3xl
+                bg-white rounded-3xl
                 p-6 md:p-7
                 shadow-[0_6px_22px_rgba(0,0,0,0.06)]
                 border border-[#f5d7e5]
@@ -265,340 +262,385 @@ export default function Client() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center">
-                    <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+                    <AppIcon name="heart" size={22} className="text-[#fd2597]" />
                   </div>
                   <div>
                     <h2 className="text-[18px] md:text-[20px] font-semibold text-[#545454] leading-snug">
-                      Agora: um passo bom o suficiente
+                      Agora, escolha só um próximo passo
                     </h2>
                     <p className="text-[13px] md:text-[14px] text-[#6a6a6a] mt-1 leading-relaxed">
-                      Escolha o que ajuda hoje. O resto pode esperar.
+                      Em vez de fazer tudo, faça o que ajuda de verdade hoje.
                     </p>
                   </div>
                 </div>
 
                 <button
-                  onClick={() => scrollToId(ctaTarget)}
+                  onClick={() => scrollToId('ritmo')}
                   className="
-                    shrink-0
-                    rounded-full
-                    bg-[#fd2597]
-                    text-white
-                    px-4 py-2.5
-                    text-[13px]
-                    shadow-lg
-                    hover:opacity-95
-                    transition
+                    shrink-0 rounded-full
+                    bg-[#fd2597] text-white
+                    px-4 py-2.5 text-[13px]
+                    shadow-lg hover:opacity-95 transition
                   "
-                  aria-label="Ir para o próximo passo da trilha"
                 >
-                  {ctaLabel}
+                  Começar
                 </button>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                {steps.map((s) => {
-                  const isActive = highlight === s.id
-                  const isDone =
-                    (s.id === 'ritmo' && !!ritmo) ||
-                    (s.id === 'mini-rotina' && !!miniRotinaId) ||
-                    (s.id === 'pausas' && !!pausaId)
-
-                  const base =
-                    'rounded-full px-3.5 py-2 text-[12px] border transition inline-flex items-center gap-2'
-
-                  const styles = isActive
-                    ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
-                    : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]'
-
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                {(
+                  [
+                    { id: 'respirar-1' as const, icon: 'timer', title: 'Respirar agora', meta: '1 min' },
+                    { id: 'recarregar-3' as const, icon: 'sparkles', title: 'Recarregar', meta: '3 min' },
+                    { id: 'cuidar-5' as const, icon: 'heart', title: 'Cuidar com calma', meta: '5 min' },
+                  ] as const
+                ).map((opt) => {
+                  const active = focus === opt.id
                   return (
                     <button
-                      key={s.id}
-                      onClick={() => scrollToId(s.id)}
-                      className={[base, styles].join(' ')}
-                      aria-label={`Ir para ${stepLabel(s.id)}`}
+                      key={opt.id}
+                      onClick={() => onSelectFocus(opt.id)}
+                      className={[
+                        'rounded-3xl border transition text-left p-4 shadow-[0_6px_22px_rgba(0,0,0,0.05)]',
+                        active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                      ].join(' ')}
+                      aria-label={focusLabel(opt.id)}
                     >
-                      <span
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="h-10 w-10 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center">
+                            <AppIcon name={opt.icon as any} size={20} className="text-[#b8236b]" />
+                          </div>
+                          <div>
+                            <div className="text-[14px] font-semibold text-[#545454]">{opt.title}</div>
+                            <div className="text-[12px] text-[#6a6a6a] mt-1">{opt.meta}</div>
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-[#6a6a6a]">{active ? 'ativo' : ' '}</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-4 text-[12px] text-[#6a6a6a]">
+                {focusHint(focus)}
+              </div>
+            </section>
+          </Reveal>
+
+          {/* ============================= */}
+          {/* 1) MEU RITMO HOJE */}
+          {/* ============================= */}
+          <section id="ritmo">
+            <Reveal>
+              <SoftCard
+                className="
+                  p-6 md:p-7 rounded-3xl
+                  bg-white border border-[#f5d7e5]
+                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                  mb-7
+                "
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
+                    <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                      Meu ritmo hoje
+                    </span>
+                    <h2 className="text-[18px] font-semibold text-[#545454]">
+                      Como você chega aqui agora?
+                    </h2>
+                    <p className="text-[14px] text-[#6a6a6a]">
+                      Sem julgamento — só para ajustar o cuidado de hoje.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
+                    const active = ritmo === r
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => onSelectRitmo(r)}
                         className={[
-                          'inline-flex h-5 w-5 rounded-full items-center justify-center text-[11px] border',
-                          isDone
+                          'rounded-full px-3.5 py-2 text-[12px] border transition',
+                          active
                             ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
-                            : 'bg-white border-[#f5d7e5] text-[#6a6a6a]',
+                            : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
                         ].join(' ')}
                       >
-                        {isDone ? '✓' : s.index}
+                        {r}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="mt-4 rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                  <div className="text-[14px] text-[#545454] font-semibold">
+                    {ritmoHint(ritmo)}
+                  </div>
+
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Se quiser, escreva uma frase (opcional). Ex.: “tô no limite hoje, só quero que o dia fique mais leve…”"
+                    className="
+                      mt-4 w-full rounded-2xl p-4 text-[13px]
+                      bg-white border border-[#f5d7e5]
+                      focus:outline-none focus:ring-2 focus:ring-[#fd2597]/30
+                      text-[#545454]
+                      placeholder:text-[#a0a0a0]
+                      min-h-[92px]
+                    "
+                  />
+                </div>
+              </SoftCard>
+            </Reveal>
+          </section>
+
+          {/* ============================= */}
+          {/* 2) MINI ROTINA DE AUTOCUIDADO (protagonista + checklist) */}
+          {/* ============================= */}
+          <section id="mini-rotina">
+            <Reveal>
+              <SoftCard
+                className="
+                  p-6 md:p-7 rounded-3xl
+                  bg-white border border-[#f5d7e5]
+                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                  mb-7
+                "
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
+                    <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                      Mini rotina de autocuidado
+                    </span>
+                    <h2 className="text-[18px] font-semibold text-[#545454]">
+                      A opção mais certeira para hoje
+                    </h2>
+                    <p className="text-[14px] text-[#6a6a6a]">
+                      Baseada no seu foco e no seu ritmo atual.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Card protagonista */}
+                <div className="mt-5 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5 md:p-6">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {featured.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center rounded-full bg-white border border-[#f5d7e5] px-2.5 py-1 text-[11px] text-[#6a6a6a]"
+                      >
+                        {t}
                       </span>
-                      <span className="leading-none">{stepLabel(s.id)}</span>
-                    </button>
-                  )
-                })}
-              </div>
+                    ))}
+                    <span className="ml-auto inline-flex items-center rounded-full bg-[#ffd8e6] border border-[#f5d7e5] px-2.5 py-1 text-[11px] text-[#545454]">
+                      {featured.minutes} min
+                    </span>
+                  </div>
 
-              <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-4">
-                <p className="text-[14px] text-[#545454] leading-relaxed">{dailyMessage}</p>
-                {favorite ? <p className="text-[12px] text-[#6a6a6a] mt-2">Salvo nos seus favoritos — para voltar rápido.</p> : null}
-              </div>
-            </section>
-          </Reveal>
+                  <div className="text-[16px] md:text-[18px] font-semibold text-[#545454]">
+                    {featured.title}
+                  </div>
+                  <div className="text-[13px] md:text-[14px] text-[#6a6a6a] mt-1 leading-relaxed">
+                    {featured.subtitle}
+                  </div>
 
-          {/* 1) MEU RITMO HOJE */}
-          <Reveal>
-            <section
-              id="ritmo"
-              className="
-                bg-white
-                rounded-3xl
-                p-6 md:p-7
-                shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                border border-[#f5d7e5]
-                mb-6
-              "
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="h-12 w-12 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center">
-                  <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-[#545454]">Meu ritmo hoje</h2>
-                  <p className="text-[14px] text-[#6a6a6a] mt-1">Sem julgamento: como você chega agora?</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                {RITMOS.map((r) => {
-                  const active = ritmo === r.key
-                  return (
-                    <button
-                      key={r.key}
-                      onClick={() => {
-                        setRitmo(r.key)
-                        try {
-                          track('cuidar_de_mim.ritmo.select', { ritmo: r.key })
-                        } catch {}
-                        lastActionRef.current = `ritmo:${r.key}`
-                      }}
-                      className={[
-                        'rounded-2xl text-sm py-3 border transition shadow-[0_3px_10px_rgba(0,0,0,0.05)]',
-                        active
-                          ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
-                          : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#ffe1f1]',
-                      ].join(' ')}
-                    >
-                      {r.label}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {ritmoHint ? (
-                <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-4">
-                  <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                    <span className="font-semibold text-[#545454]">Leitura rápida:</span> {ritmoHint}
-                  </p>
-                </div>
-              ) : null}
-
-              <label className="block mt-5">
-                <span className="text-[12px] text-[#6a6a6a]">Se quiser, deixe uma frase (opcional)</span>
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ex.: estou no limite hoje, só quero que o dia fique mais leve…"
-                  className="
-                    mt-2 w-full rounded-2xl p-4 text-[14px]
-                    bg-white
-                    border border-[#f5d7e5]
-                    focus:outline-none focus:ring-2 focus:ring-[#fd2597]/40
-                    text-[#545454]
-                    placeholder:text-[#a0a0a0]
-                    min-h-[92px]
-                  "
-                />
-              </label>
-            </section>
-          </Reveal>
-
-          {/* 2) MINI ROTINA DE AUTOCUIDADO */}
-          <Reveal>
-            <section
-              id="mini-rotina"
-              className="
-                bg-white
-                rounded-3xl
-                p-6 md:p-7
-                shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                border border-[#f5d7e5]
-                mb-6
-              "
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="h-12 w-12 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center">
-                  <AppIcon name="sparkles" size={22} className="text-[#b8236b]" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-[#545454]">Mini rotina de autocuidado</h2>
-                  <p className="text-[14px] text-[#6a6a6a] mt-1">
-                    Para quando você quer se sentir melhor sem precisar de “tempo livre”.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                {MINI_ROTINAS.map((step) => {
-                  const active = miniRotinaId === step.id
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => {
-                        setMiniRotinaId(step.id)
-                        try {
-                          track('cuidar_de_mim.mini_rotina.select', { id: step.id, minutes: step.minutes })
-                        } catch {}
-                        lastActionRef.current = `mini:${step.id}`
-                      }}
-                      className={[
-                        'text-left rounded-2xl p-4 border transition shadow-[0_3px_10px_rgba(0,0,0,0.05)]',
-                        active ? 'bg-[#fff7fb] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                      ].join(' ')}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-[14px] font-semibold text-[#545454]">{step.title}</div>
-                          <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">{step.detail}</div>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {featured.steps.slice(0, 4).map((s, i) => (
+                      <button
+                        key={s}
+                        onClick={() => toggleStep(i)}
+                        className={[
+                          'rounded-2xl border p-4 text-left transition',
+                          checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                        ].join(' ')}
+                      >
+                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                          passo {i + 1}
                         </div>
-                        <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] bg-white border border-[#f5d7e5] text-[#6a6a6a]">
-                          {step.minutes} min
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {miniRotinaId ? (
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] p-4">
-                  <p className="text-[13px] text-[#545454] leading-relaxed">
-                    Fez sentido. Se der, faça agora mesmo — sem esperar o momento perfeito.
-                  </p>
-                  <button
-                    onClick={() => scrollToId('para-voce')}
-                    className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              ) : null}
-            </section>
-          </Reveal>
-
-          {/* 3) PAUSAS RÁPIDAS */}
-          <Reveal>
-            <section
-              id="pausas"
-              className="
-                bg-white
-                rounded-3xl
-                p-6 md:p-7
-                shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                border border-[#f5d7e5]
-                mb-6
-              "
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="h-12 w-12 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center">
-                  <AppIcon name="timer" size={22} className="text-[#fd2597]" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-[#545454]">Pausas rápidas</h2>
-                  <p className="text-[14px] text-[#6a6a6a] mt-1">Para quando você precisa se regular sem “sumir”.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                {PAUSAS.map((item) => {
-                  const active = pausaId === item.id
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setPausaId(item.id)
-                        try {
-                          track('cuidar_de_mim.pausa.select', { id: item.id, minutes: item.minutes })
-                        } catch {}
-                        lastActionRef.current = `pausa:${item.id}`
-                      }}
-                      className={[
-                        'text-left rounded-2xl p-4 border transition shadow-[0_3px_10px_rgba(0,0,0,0.05)]',
-                        active ? 'bg-[#fff7fb] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                      ].join(' ')}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-[14px] font-semibold text-[#545454]">{item.title}</div>
-                          <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">{item.detail}</div>
+                        <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">
+                          {s}
                         </div>
-                        <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] bg-white border border-[#f5d7e5] text-[#6a6a6a]">
-                          {item.minutes} min
-                        </span>
-                      </div>
+                        <div className="text-[12px] text-[#6a6a6a] mt-3">
+                          {checked[i] ? 'feito ✓' : 'marcar como feito'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="text-[12px] text-[#6a6a6a]">
+                      progresso: <span className="font-semibold text-[#545454]">{progress}</span>/4
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => scrollToId('pausas')}
+                        className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                      >
+                        Preciso de pausa rápida
+                      </button>
+                      <button
+                        onClick={() => scrollToId('para-voce')}
+                        className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                      >
+                        Fechar com carinho
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-[12px] text-[#6a6a6a] leading-relaxed">
+                    {featured.microWin}
+                  </div>
+                </div>
+              </SoftCard>
+            </Reveal>
+          </section>
+
+          {/* ============================= */}
+          {/* 3) PAUSAS RÁPIDAS (1 pausa por vez + próximo) */}
+          {/* ============================= */}
+          <section id="pausas">
+            <Reveal>
+              <SoftCard
+                className="
+                  p-6 md:p-7 rounded-3xl
+                  bg-white border border-[#f5d7e5]
+                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                  mb-7
+                "
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
+                    <AppIcon name="timer" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                      Pausas rápidas
+                    </span>
+                    <h2 className="text-[18px] font-semibold text-[#545454]">
+                      Um “reset” sem sumir do seu dia
+                    </h2>
+                    <p className="text-[14px] text-[#6a6a6a]">
+                      Escolha uma pausa. Só uma. E já está valendo.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
+                  <div className="text-[12px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                    agora
+                  </div>
+
+                  <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
+                    {featured.pauseOptions[pauseIndex]?.label}
+                  </div>
+
+                  <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                    Duração sugerida: {featured.pauseOptions[pauseIndex]?.min} min
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={nextPause}
+                      className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                    >
+                      Outra pausa
                     </button>
-                  )
-                })}
-              </div>
+                    <button
+                      onClick={() => scrollToId('mini-rotina')}
+                      className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                    >
+                      Voltar para a mini rotina
+                    </button>
+                  </div>
 
-              {pausaId ? (
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] p-4">
-                  <p className="text-[13px] text-[#545454] leading-relaxed">
-                    Boa. Você não precisa recuperar o dia inteiro — só precisa recuperar você.
-                  </p>
-                  <button
-                    onClick={() => scrollToId('para-voce')}
-                    className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                  >
-                    Fechar
-                  </button>
+                  <div className="mt-4 text-[12px] text-[#6a6a6a] leading-relaxed">
+                    Se hoje estiver pesado, o seu cuidado pode ser mínimo — e ainda assim verdadeiro.
+                  </div>
                 </div>
-              ) : null}
-            </section>
-          </Reveal>
+              </SoftCard>
+            </Reveal>
+          </section>
 
-          {/* 4) PARA VOCÊ HOJE */}
-          <Reveal>
-            <section
-              id="para-voce"
-              className="
-                bg-white
-                rounded-3xl
-                p-6 md:p-7
-                shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                border border-[#f5d7e5]
-                mb-10
-              "
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="h-12 w-12 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center">
-                  <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+          {/* ============================= */}
+          {/* 4) PARA VOCÊ HOJE (fechamento emocional interligado) */}
+          {/* ============================= */}
+          <section id="para-voce">
+            <Reveal>
+              <SoftCard
+                className="
+                  p-6 md:p-7 rounded-3xl
+                  bg-white border border-[#f5d7e5]
+                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                  mb-10
+                "
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
+                    <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                      Para você hoje
+                    </span>
+                    <h2 className="text-[18px] font-semibold text-[#545454]">
+                      Um lembrete gentil (do tamanho do seu dia)
+                    </h2>
+                    <p className="text-[14px] text-[#6a6a6a]">
+                      Fechamento da experiência: um carinho que te devolve para você.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-[#545454]">Para você hoje</h2>
-                  <p className="text-[14px] text-[#6a6a6a] mt-1">Uma frase curta para te trazer de volta.</p>
+
+                <div className="mt-5 rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
+                  <div className="text-[12px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                    hoje
+                  </div>
+                  <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
+                    {featured.phrase}
+                  </div>
+
+                  <div className="mt-4 text-[12px] text-[#6a6a6a] leading-relaxed">
+                    Você escolheu: <span className="font-semibold text-[#545454]">{focusLabel(focus)}</span> · ritmo:{' '}
+                    <span className="font-semibold text-[#545454]">{ritmo}</span>
+                    {note?.trim() ? (
+                      <>
+                        <br />
+                        <span className="text-[#545454]">Sua frase:</span> “{note.trim()}”
+                      </>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => scrollToId('ritmo')}
+                      className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                    >
+                      Ajustar meu ritmo
+                    </button>
+                    <button
+                      onClick={() => scrollToId('mini-rotina')}
+                      className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                    >
+                      Repetir o cuidado de hoje
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </SoftCard>
+            </Reveal>
+          </section>
 
-              <div className="bg-[#fff7fb] p-5 rounded-2xl border border-[#f5d7e5] text-[15px] text-[#545454] leading-relaxed">
-                “Hoje, escolha algo que cuide de você do mesmo jeito que você cuida de todo mundo.”
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-white border border-[#f5d7e5] p-4">
-                <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                  Se você fez uma escolha aqui, você já fez algo importante: voltou para si. Amanhã, a trilha continua
-                  do mesmo jeito — pequena e possível.
-                </p>
-              </div>
-            </section>
-          </Reveal>
-
-          <div className="mt-10">
+          <div className="mt-4">
             <LegalFooter />
           </div>
         </div>
