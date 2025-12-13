@@ -61,61 +61,6 @@ function MiniTile({ label, href, tag }: MiniTileProps) {
   )
 }
 
-type StepWrapProps = {
-  index: number
-  isLast?: boolean
-  children: React.ReactNode
-}
-
-/**
- * Wrapper da “Trilha do dia” (linha + marcador + espaçamento premium)
- * - Evita sensação de blocos empilhados
- * - Cria progressão visual suave
- */
-function StepWrap({ index, isLast, children }: StepWrapProps) {
-  const step = index + 1
-
-  return (
-    <div className="relative flex gap-4 md:gap-5">
-      {/* Rail (coluna esquerda) */}
-      <div className="relative w-10 flex flex-col items-center">
-        {/* bolinha */}
-        <div
-          className="
-            mt-1.5
-            h-8 w-8 rounded-full
-            bg-white/90
-            border border-[#f5d7e5]
-            shadow-[0_6px_16px_rgba(184,35,107,0.14)]
-            flex items-center justify-center
-            text-[12px] font-bold text-[#b8236b]
-          "
-          aria-label={`Etapa ${step}`}
-        >
-          {step}
-        </div>
-
-        {/* linha */}
-        {!isLast && (
-          <div
-            className="
-              mt-3
-              w-[2px]
-              flex-1
-              rounded-full
-              bg-[linear-gradient(to_bottom,#ffd8e6_0%,rgba(255,216,230,0.55)_45%,rgba(255,216,230,0.2)_100%)]
-            "
-            aria-hidden="true"
-          />
-        )}
-      </div>
-
-      {/* Conteúdo do step */}
-      <div className="flex-1">{children}</div>
-    </div>
-  )
-}
-
 export default function MaternarClient() {
   useEffect(() => {
     try {
@@ -133,10 +78,17 @@ export default function MaternarClient() {
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
+        relative
         min-h-[100dvh]
         pb-32
-        bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+
+        /* OPÇÃO C — Fundo ousado (ameixa + rosa) */
+        bg-[linear-gradient(to_bottom,#2f3a56_0%,#ff005e_18%,#fd2597_34%,#fdbed7_62%,#ffe1f1_88%,#ffffff_100%)]
+
+        before:content-['']
+        before:absolute before:inset-0
+        before:pointer-events-none
+        before:bg-white/10
       "
     >
       <ClientOnly>
@@ -158,211 +110,258 @@ export default function MaternarClient() {
             </div>
           </header>
 
-          <div className="space-y-8 md:space-y-10 pb-10">
-            {/* TRILHA DO DIA — (sem sensação de blocos empilhados) */}
+          <div className="space-y-7 md:space-y-8 pb-10">
+            {/* PAINEL PRINCIPAL — SEÇÕES MODULARES */}
             <div
               className="
                 rounded-3xl
-                bg-white/8
-                border border-white/30
+                bg-white/10
+                border border-white/35
                 backdrop-blur-xl
-                shadow-[0_18px_45px_rgba(184,35,107,0.22)]
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
                 p-4 md:p-6
+                space-y-6 md:space-y-7
               "
             >
-              {/* header da trilha */}
-              <div className="mb-5 md:mb-6">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 border border-white/25 px-3 py-1">
-                  <span className="text-[11px] font-semibold tracking-wide text-white/95">
-                    Trilha do dia
-                  </span>
-                </div>
-                <p className="mt-2 text-[13px] md:text-[14px] text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]">
-                  Siga no seu ritmo. Tudo aqui foi pensado para caber no cotidiano, sem cobrança.
-                </p>
-              </div>
-
-              <div className="space-y-6 md:space-y-8">
-                {/* 1 — CUIDAR DE MIM */}
-                <StepWrap index={0}>
-                  <Reveal>
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_10px_26px_rgba(184,35,107,0.10)]
-                        space-y-3
-                      "
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Para você
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Cuidar de Mim</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Leve · 3–5 minutos · foco em você</p>
-                        </div>
-                      </div>
-
-                      <p className="text-[15px] text-[#545454] leading-relaxed">
-                        Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
+              {/* CUIDAR DE MIM */}
+              <Reveal>
+                <SoftCard
+                  className="
+                    p-5 md:p-6 rounded-2xl
+                    bg-white/95
+                    border border-[#f5d7e5]
+                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
+                  "
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                      <AppIcon
+                        name="heart"
+                        size={22}
+                        className="text-[#fd2597]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                        Para você
+                      </span>
+                      <h2 className="text-lg font-semibold text-[#2f3a56]">
+                        Cuidar de Mim
+                      </h2>
+                      <p className="text-[13px] text-[#6a6a6a]">
+                        Leve · 3–5 minutos · foco em você
                       </p>
+                    </div>
+                  </div>
 
-                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <MiniTile label="Meu ritmo hoje" href="/maternar/cuidar-de-mim#ritmo" tag="check-in" />
-                        <MiniTile label="Pausas rápidas" href="/maternar/cuidar-de-mim#pausas" tag="respirar" />
-                      </div>
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
+                    Seu espaço de acolhimento, autocuidado e pausas que cabem no
+                    seu dia.
+                  </p>
 
-                      <div className="mt-4 pt-1">
-                        <Link href="/maternar/cuidar-de-mim">
-                          <Button className="w-full md:w-auto px-6">Ver tudo de Cuidar de Mim</Button>
-                        </Link>
-                      </div>
-                    </SoftCard>
-                  </Reveal>
-                </StepWrap>
+                  {/* Mini cards (enxuto) */}
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <MiniTile
+                      label="Meu ritmo hoje"
+                      href="/maternar/cuidar-de-mim#ritmo"
+                      tag="check-in"
+                    />
+                    <MiniTile
+                      label="Pausas rápidas"
+                      href="/maternar/cuidar-de-mim#pausas"
+                      tag="respirar"
+                    />
+                  </div>
 
-                {/* 2 — MEU FILHO (leve offset para sensação de progressão) */}
-                <div className="md:pl-2">
-                  <StepWrap index={1}>
-                    <Reveal>
-                      <SoftCard
-                        className="
-                          p-5 md:p-6 rounded-2xl
-                          bg-white/95
-                          border border-[#f5d7e5]
-                          shadow-[0_10px_26px_rgba(184,35,107,0.10)]
-                          space-y-3
-                        "
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                            <AppIcon name="child" size={22} className="text-[#fd2597]" />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                              Para o seu filho
-                            </span>
-                            <h2 className="text-lg font-semibold text-[#2f3a56]">Meu Filho</h2>
-                            <p className="text-[13px] text-[#6a6a6a]">
-                              Brincadeiras · conexão · desenvolvimento leve
-                            </p>
-                          </div>
-                        </div>
+                  <div className="mt-4 pt-1">
+                    <Link href="/maternar/cuidar-de-mim">
+                      <Button className="w-full md:w-auto px-6">
+                        Ver tudo de Cuidar de Mim
+                      </Button>
+                    </Link>
+                  </div>
+                </SoftCard>
+              </Reveal>
 
-                        <p className="text-[15px] text-[#545454] leading-relaxed">
-                          Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
-                        </p>
+              {/* MEU FILHO */}
+              <Reveal>
+                <SoftCard
+                  className="
+                    p-5 md:p-6 rounded-2xl
+                    bg-white/95
+                    border border-[#f5d7e5]
+                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
+                  "
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                      <AppIcon
+                        name="child"
+                        size={22}
+                        className="text-[#fd2597]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                        Para o seu filho
+                      </span>
+                      <h2 className="text-lg font-semibold text-[#2f3a56]">
+                        Meu Filho
+                      </h2>
+                      <p className="text-[13px] text-[#6a6a6a]">
+                        Brincadeiras · conexão · desenvolvimento leve
+                      </p>
+                    </div>
+                  </div>
 
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <MiniTile label="Brincadeiras do dia" href="/maternar/meu-filho#brincadeiras" tag="ideias" />
-                          <MiniTile label="Gestos de conexão" href="/maternar/meu-filho#conexao" tag="vínculo" />
-                        </div>
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
+                    Ideias, brincadeiras e apoio leve para o desenvolvimento do
+                    seu pequeno.
+                  </p>
 
-                        <div className="mt-4 pt-1">
-                          <Link href="/maternar/meu-filho">
-                            <Button className="w-full md:w-auto px-6">Ver tudo de Meu Filho</Button>
-                          </Link>
-                        </div>
-                      </SoftCard>
-                    </Reveal>
-                  </StepWrap>
-                </div>
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <MiniTile
+                      label="Brincadeiras do dia"
+                      href="/maternar/meu-filho#brincadeiras"
+                      tag="ideias"
+                    />
+                    <MiniTile
+                      label="Gestos de conexão"
+                      href="/maternar/meu-filho#conexao"
+                      tag="vínculo"
+                    />
+                  </div>
 
-                {/* 3 — MEU DIA LEVE (offset maior) */}
-                <div className="md:pl-3">
-                  <StepWrap index={2}>
-                    <Reveal>
-                      <SoftCard
-                        className="
-                          p-5 md:p-6 rounded-2xl
-                          bg-white/95
-                          border border-[#f5d7e5]
-                          shadow-[0_10px_26px_rgba(184,35,107,0.10)]
-                          space-y-3
-                        "
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                            <AppIcon name="sun" size={22} className="text-[#fd2597]" />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                              Para o seu dia
-                            </span>
-                            <h2 className="text-lg font-semibold text-[#2f3a56]">Meu Dia Leve</h2>
-                            <p className="text-[13px] text-[#6a6a6a]">Inspirações · ideias rápidas · leveza</p>
-                          </div>
-                        </div>
+                  <div className="mt-4 pt-1">
+                    <Link href="/maternar/meu-filho">
+                      <Button className="w-full md:w-auto px-6">
+                        Ver tudo de Meu Filho
+                      </Button>
+                    </Link>
+                  </div>
+                </SoftCard>
+              </Reveal>
 
-                        <p className="text-[15px] text-[#545454] leading-relaxed">
-                          Frases, ideias rápidas e sugestões para tornar o dia mais leve.
-                        </p>
+              {/* MEU DIA LEVE */}
+              <Reveal>
+                <SoftCard
+                  className="
+                    p-5 md:p-6 rounded-2xl
+                    bg-white/95
+                    border border-[#f5d7e5]
+                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
+                  "
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                      <AppIcon
+                        name="sun"
+                        size={22}
+                        className="text-[#fd2597]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                        Para o seu dia
+                      </span>
+                      <h2 className="text-lg font-semibold text-[#2f3a56]">
+                        Meu Dia Leve
+                      </h2>
+                      <p className="text-[13px] text-[#6a6a6a]">
+                        Inspirações · ideias rápidas · leveza
+                      </p>
+                    </div>
+                  </div>
 
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <MiniTile label="Inspiração do dia" href="/maternar/meu-dia-leve#inspiracao" tag="frase" />
-                          <MiniTile label="Ideias rápidas" href="/maternar/meu-dia-leve#ideias" tag="rápido" />
-                        </div>
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
+                    Frases, ideias rápidas e sugestões para tornar o dia mais
+                    leve.
+                  </p>
 
-                        <div className="mt-4 pt-1">
-                          <Link href="/maternar/meu-dia-leve">
-                            <Button className="w-full md:w-auto px-6">Ver tudo de Meu Dia Leve</Button>
-                          </Link>
-                        </div>
-                      </SoftCard>
-                    </Reveal>
-                  </StepWrap>
-                </div>
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <MiniTile
+                      label="Inspiração do dia"
+                      href="/maternar/meu-dia-leve#inspiracao"
+                      tag="frase"
+                    />
+                    <MiniTile
+                      label="Ideias rápidas"
+                      href="/maternar/meu-dia-leve#ideias"
+                      tag="rápido"
+                    />
+                  </div>
 
-                {/* 4 — MINHA JORNADA (último step, sem linha) */}
-                <div className="md:pl-4">
-                  <StepWrap index={3} isLast>
-                    <Reveal>
-                      <SoftCard
-                        className="
-                          p-5 md:p-6 rounded-2xl
-                          bg-white/95
-                          border border-[#f5d7e5]
-                          shadow-[0_10px_26px_rgba(184,35,107,0.10)]
-                          space-y-3
-                        "
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                            <AppIcon name="star" size={22} className="text-[#fd2597]" />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                              Sua caminhada
-                            </span>
-                            <h2 className="text-lg font-semibold text-[#2f3a56]">Minha Jornada</h2>
-                            <p className="text-[13px] text-[#6a6a6a]">Conquistas · símbolos · progresso gentil</p>
-                          </div>
-                        </div>
+                  <div className="mt-4 pt-1">
+                    <Link href="/maternar/meu-dia-leve">
+                      <Button className="w-full md:w-auto px-6">
+                        Ver tudo de Meu Dia Leve
+                      </Button>
+                    </Link>
+                  </div>
+                </SoftCard>
+              </Reveal>
 
-                        <p className="text-[15px] text-[#545454] leading-relaxed">
-                          Acompanhe seu progresso com leveza, no seu tempo.
-                        </p>
+              {/* MINHA JORNADA */}
+              <Reveal>
+                <SoftCard
+                  className="
+                    p-5 md:p-6 rounded-2xl
+                    bg-white/95
+                    border border-[#f5d7e5]
+                    shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    space-y-3
+                  "
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                      <AppIcon
+                        name="star"
+                        size={22}
+                        className="text-[#fd2597]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                        Sua caminhada
+                      </span>
+                      <h2 className="text-lg font-semibold text-[#2f3a56]">
+                        Minha Jornada
+                      </h2>
+                      <p className="text-[13px] text-[#6a6a6a]">
+                        Conquistas · símbolos · progresso gentil
+                      </p>
+                    </div>
+                  </div>
 
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <MiniTile label="Painel da jornada" href="/maternar/minha-jornada#painel" tag="visão geral" />
-                          <MiniTile label="Missões do dia" href="/maternar/minha-jornada#missoes" tag="pequenos passos" />
-                        </div>
+                  <p className="text-[15px] text-[#545454] leading-relaxed">
+                    Acompanhe seu progresso com leveza, no seu tempo.
+                  </p>
 
-                        <div className="mt-4 pt-1">
-                          <Link href="/maternar/minha-jornada">
-                            <Button className="w-full md:w-auto px-6">Ver tudo de Minha Jornada</Button>
-                          </Link>
-                        </div>
-                      </SoftCard>
-                    </Reveal>
-                  </StepWrap>
-                </div>
-              </div>
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <MiniTile
+                      label="Painel da jornada"
+                      href="/maternar/minha-jornada#painel"
+                      tag="visão geral"
+                    />
+                    <MiniTile
+                      label="Missões do dia"
+                      href="/maternar/minha-jornada#missoes"
+                      tag="pequenos passos"
+                    />
+                  </div>
+
+                  <div className="mt-4 pt-1">
+                    <Link href="/maternar/minha-jornada">
+                      <Button className="w-full md:w-auto px-6">
+                        Ver tudo de Minha Jornada
+                      </Button>
+                    </Link>
+                  </div>
+                </SoftCard>
+              </Reveal>
             </div>
 
             {/* BLOCO FINAL: Mais ferramentas (rotas reais, menos ruído) */}
@@ -378,13 +377,19 @@ export default function MaternarClient() {
               >
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                    <AppIcon name="grid" size={22} className="text-[#fd2597]" />
+                    <AppIcon
+                      name="grid"
+                      size={22}
+                      className="text-[#fd2597]"
+                    />
                   </div>
                   <div className="space-y-1">
                     <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                       Mais ferramentas
                     </span>
-                    <h2 className="text-lg font-semibold text-[#2f3a56]">Outros espaços do Maternar</h2>
+                    <h2 className="text-lg font-semibold text-[#2f3a56]">
+                      Outros espaços do Maternar
+                    </h2>
                     <p className="text-[15px] text-[#545454] leading-relaxed">
                       Acesse quando fizer sentido, sem pesar seu começo do dia.
                     </p>
@@ -393,35 +398,52 @@ export default function MaternarClient() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
                   <Link href="/maternar/biblioteca-materna">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
                       Biblioteca Materna
                     </Button>
                   </Link>
 
                   <Link href="/maternar/ferramentas/ajuda-e-parcerias">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
-                      Ajuda &amp; Parcerias
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
+                      Ajuda & Parcerias
                     </Button>
                   </Link>
 
                   <Link href="/maternar/minhas-conquistas">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
                       Minhas Conquistas
                     </Button>
                   </Link>
 
                   <Link href="/maternar/materna-plus">
-                    <Button className="w-full text-[12px] md:text-[13px]">Materna+</Button>
+                    <Button className="w-full text-[12px] md:text-[13px]">
+                      Materna+
+                    </Button>
                   </Link>
 
                   <Link href="/maternar/materna-plus/maternabox">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
                       MaternaBox
                     </Button>
                   </Link>
 
                   <Link href="/planos">
-                    <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
                       Planos
                     </Button>
                   </Link>
@@ -429,15 +451,9 @@ export default function MaternarClient() {
               </SoftCard>
             </Reveal>
 
-            {/* respiro premium antes do rodapé */}
-            <div className="h-6 md:h-10" />
-
             <div className="mt-8">
               <LegalFooter />
             </div>
-
-            {/* respiro extra pós-footer para não “encerrar seco” */}
-            <div className="h-10 md:h-14" />
           </div>
         </div>
       </ClientOnly>
