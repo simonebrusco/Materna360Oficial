@@ -13,6 +13,9 @@ import AppIcon from '@/components/ui/AppIcon'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+type Step = 'painel' | 'selos' | 'progresso'
+type MissionId = 'autocuidado' | 'conexao' | 'apoio' | 'limite'
+
 type Badge = {
   id: string
   title: string
@@ -30,13 +33,19 @@ function safeGetLS(key: string): string | null {
   }
 }
 
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
 function safeParseInt(v: string | null, fallback = 0) {
   const n = Number.parseInt(String(v ?? ''), 10)
   return Number.isFinite(n) ? n : fallback
 }
 
 function todayKey() {
-  // YYYY-MM-DD local
   const d = new Date()
   const yyyy = d.getFullYear()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
@@ -58,54 +67,36 @@ function addDaysKey(date: Date, delta: number) {
 }
 
 function getWeekKeys(anchor = new Date()) {
-  // últimos 7 dias incluindo hoje
   const keys: string[] = []
   for (let i = -6; i <= 0; i++) keys.push(addDaysKey(anchor, i))
   return keys
 }
 
 function getMonthKeys(anchor = new Date()) {
-  // últimos 28 dias incluindo hoje (4 semanas)
   const keys: string[] = []
   for (let i = -27; i <= 0; i++) keys.push(addDaysKey(anchor, i))
   return keys
 }
 
-const LS = {
-  pointsTotal: 'mj_points_total',
-  dayPrefix: 'mj_day_', // mj_day_YYYY-MM-DD = number
-  streak: 'mj_streak',
+function stepIndex(s: Step) {
+  return s === 'painel' ? 1 : s === 'selos' ? 2 : 3
 }
 
+const LS = {
+  pointsTotal: 'mj_points_total',
+  dayPrefix: 'mj_day_',
+  donePrefix: 'mj_done_',
+  streak: 'mj_streak',
+  streakLastDay: 'mj_streak_last_day',
+}
+
+const MISSION_IDS: MissionId[] = ['autocuidado', 'conexao', 'apoio', 'limite']
+
 const BADGES: Badge[] = [
-  {
-    id: 'b-1',
-    title: 'Primeiro passo',
-    desc: 'Você começou. Isso já muda tudo.',
-    icon: 'star',
-    minPoints: 10,
-  },
-  {
-    id: 'b-2',
-    title: 'Dia possível',
-    desc: 'Você fez o que cabia — e isso conta.',
-    icon: 'sparkles',
-    minPoints: 22,
-  },
-  {
-    id: 'b-3',
-    title: 'Presença real',
-    desc: 'Você criou pequenos momentos de conexão.',
-    icon: 'heart',
-    minPoints: 40,
-  },
-  {
-    id: 'b-4',
-    title: 'Rotina mais leve',
-    desc: 'Você ajustou o dia com decisões simples.',
-    icon: 'sun',
-    minPoints: 70,
-  },
+  { id: 'b-1', title: 'Primeiro passo', desc: 'Você começou. Isso já muda tudo.', icon: 'star', minPoints: 10 },
+  { id: 'b-2', title: 'Dia possível', desc: 'Você fez o que cabia — e isso conta.', icon: 'sparkles', minPoints: 22 },
+  { id: 'b-3', title: 'Presença real', desc: 'Você criou pequenos momentos de conexão.', icon: 'heart', minPoints: 40 },
+  { id: 'b-4', title: 'Rotina mais leve', desc: 'Você ajustou o dia com decisões simples.', icon: 'sun', minPoints: 70 },
 ]
 
 function readDayPoints(key: string) {
@@ -120,15 +111,16 @@ function readStreak() {
   return safeParseInt(safeGetLS(LS.streak), 0)
 }
 
+function readDone(dayKey: string, missionId: MissionId) {
+  return safeGetLS(`${LS.donePrefix}${dayKey}_${missionId}`) === '1'
+}
+
 function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = clamp(Math.round((value / Math.max(1, max)) * 100), 0, 100)
   return (
     <div className="w-full">
       <div className="h-2.5 rounded-full bg-[#ffe1f1] overflow-hidden border border-[#f5d7e5]">
-        <div
-          className="h-full bg-[#fd2597] rounded-full"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full bg-[#fd2597] rounded-full" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-2 flex items-center justify-between text-[11px] text-[#6a6a6a]">
         <span>{pct}%</span>
@@ -140,7 +132,7 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   )
 }
 
-function SectionPill({
+function StepPill({
   active,
   onClick,
   label,
@@ -165,22 +157,17 @@ function SectionPill({
   )
 }
 
-type Section = 'visao' | 'progresso' | 'marcos'
-
 export default function MinhaJornadaClient() {
-  const [section, setSection] = useState<Section>('visao')
+  const [step, setStep] = useState<Step>('painel')
   const [today, setToday] = useState<string>(todayKey())
   const [totalPoints, setTotalPoints] = useState<number>(0)
   const [todayPoints, setTodayPoints] = useState<number>(0)
   const [streak, setStreak] = useState<number>(0)
+  const [completedTodayCount, setCompletedTodayCount] = useState<number>(0)
 
   useEffect(() => {
     try {
-      track('nav.view', {
-        tab: 'maternar',
-        page: 'minha-jornada',
-        timestamp: new Date().toISOString(),
-      })
+      track('nav.view', { tab: 'maternar', page: 'minha-jornada', timestamp: new Date().toISOString() })
     } catch {}
   }, [])
 
@@ -191,10 +178,12 @@ export default function MinhaJornadaClient() {
     const total = readTotalPoints()
     const tPoints = readDayPoints(t)
     const s = readStreak()
+    const doneCount = MISSION_IDS.filter(id => readDone(t, id)).length
 
     setTotalPoints(total)
     setTodayPoints(tPoints)
     setStreak(s)
+    setCompletedTodayCount(doneCount)
 
     try {
       track('minha_jornada.open', { today: t, totalPoints: total })
@@ -204,28 +193,13 @@ export default function MinhaJornadaClient() {
   const weekKeys = useMemo(() => getWeekKeys(new Date()), [])
   const monthKeys = useMemo(() => getMonthKeys(new Date()), [])
 
-  const daysActive7 = useMemo(
-    () => weekKeys.filter(k => readDayPoints(k) > 0).length,
-    [weekKeys],
-  )
-  const daysActive28 = useMemo(
-    () => monthKeys.filter(k => readDayPoints(k) > 0).length,
-    [monthKeys],
-  )
+  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
+  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
 
-  const weeklyTotal = useMemo(
-    () => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0),
-    [weekKeys],
-  )
+  const badgeUnlocked = useMemo(() => BADGES.filter(b => totalPoints >= b.minPoints), [totalPoints])
+  const nextBadge = useMemo(() => BADGES.find(b => totalPoints < b.minPoints) ?? null, [totalPoints])
 
-  const badgeUnlocked = useMemo(
-    () => BADGES.filter(b => totalPoints >= b.minPoints),
-    [totalPoints],
-  )
-  const nextBadge = useMemo(
-    () => BADGES.find(b => totalPoints < b.minPoints) ?? null,
-    [totalPoints],
-  )
+  const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
 
   const monthWeeks = useMemo(() => {
     const blocks: { label: string; total: number; activeDays: number }[] = []
@@ -238,18 +212,14 @@ export default function MinhaJornadaClient() {
     return blocks
   }, [monthKeys])
 
-  const todayGoal = 26
-  const weeklyGoal = 120
-
-  function go(next: Section) {
-    setSection(next)
+  function go(next: Step) {
+    setStep(next)
     try {
-      track('minha_jornada.section', { section: next })
+      track('minha_jornada.step', { step: next })
     } catch {}
   }
 
-  // Ajuste este caminho quando você confirmar o route final de "Conquistas & Selos"
-  const CONQUISTAS_HREF = '/maternar/minhas-conquistas'
+  const weeklyGoal = 120
 
   return (
     <main
@@ -280,8 +250,7 @@ export default function MinhaJornadaClient() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um painel para enxergar o que está acontecendo — com calma, sem
-                cobrança.
+                Um painel para enxergar progresso real: passos pequenos, consistência possível e selos que somam.
               </p>
             </div>
           </header>
@@ -302,385 +271,295 @@ export default function MinhaJornadaClient() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
-                      <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
+                      <AppIcon name="star" size={20} className="text-[#fd2597]" />
                     </div>
 
                     <div>
                       <div className="text-[12px] text-white/85">
-                        hoje: {today} • sequência: {streak} dia(s) • ativos (28):
-                        {' '}{daysActive28}/28
+                        Passo {stepIndex(step)}/3 • hoje: {completedTodayCount}/4 missões • sequência: {streak} dia(s)
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
-                        Visão geral da sua caminhada
+                        Sua jornada em visão clara
                       </div>
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        Você não precisa “render”. Só registrar o que foi possível.
+                        Missões agora ficam no Meu Dia. Aqui é leitura do que já aconteceu.
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Link
-                      href="/meu-dia"
-                      className="
-                        rounded-full
-                        bg-white/90 hover:bg-white
-                        text-[#2f3a56]
-                        px-4 py-2 text-[12px]
-                        shadow-lg transition
-                        text-center
-                      "
-                    >
-                      Ir para Meu Dia
-                    </Link>
-
-                    <Link
-                      href={CONQUISTAS_HREF}
-                      className="
-                        rounded-full
-                        bg-white/15 hover:bg-white/25
-                        text-white
-                        px-4 py-2 text-[12px]
-                        border border-white/35
-                        transition
-                        text-center
-                      "
-                    >
-                      Conquistas & Selos
-                    </Link>
-                  </div>
+                  <Link
+                    href="/meu-dia"
+                    className="
+                      rounded-full
+                      bg-white/90 hover:bg-white
+                      text-[#2f3a56]
+                      px-4 py-2 text-[12px]
+                      shadow-lg transition
+                      whitespace-nowrap
+                    "
+                    onClick={() => {
+                      try {
+                        track('minha_jornada.cta_meu_dia', { today })
+                      } catch {}
+                    }}
+                  >
+                    Abrir Meu Dia
+                  </Link>
                 </div>
 
-                {/* Mini menu interno */}
+                {/* Stepper */}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <SectionPill
-                    active={section === 'visao'}
-                    onClick={() => go('visao')}
-                    label="Visão"
-                  />
-                  <SectionPill
-                    active={section === 'progresso'}
-                    onClick={() => go('progresso')}
-                    label="Progresso"
-                  />
-                  <SectionPill
-                    active={section === 'marcos'}
-                    onClick={() => go('marcos')}
-                    label="Marcos"
-                  />
+                  <StepPill active={step === 'painel'} onClick={() => go('painel')} label="Painel" />
+                  <StepPill active={step === 'selos'} onClick={() => go('selos')} label="Selos & medalhas" />
+                  <StepPill active={step === 'progresso'} onClick={() => go('progresso')} label="Progresso mensal" />
                 </div>
               </div>
 
-              {/* Conteúdo */}
-              <div className="p-4 md:p-6 space-y-4">
-                {/* VISÃO */}
-                {section === 'visao' ? (
-                  <SoftCard
-                    className="
-                      p-5 md:p-6 rounded-2xl
-                      bg-white/95
-                      border border-[#f5d7e5]
-                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    "
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="star" size={22} className="text-[#fd2597]" />
-                      </div>
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                          Painel da jornada
-                        </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          O que já aconteceu conta
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Isso não é “meta”. É leitura de presença.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          hoje
+              <div className="p-4 md:p-6">
+                {/* PAINEL */}
+                {step === 'painel' ? (
+                  <div className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="star" size={22} className="text-[#fd2597]" />
                         </div>
-                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">
-                          {todayPoints} pts
-                        </div>
-                        <div className="mt-3">
-                          <ProgressBar value={todayPoints} max={todayGoal} />
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Painel da jornada
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Visão geral (sem julgamentos)</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Isso aqui não é produtividade. É visibilidade: você enxerga o que já aconteceu.
+                          </p>
                         </div>
                       </div>
 
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          últimos 7 dias
-                        </div>
-                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">
-                          {weeklyTotal} pts
-                        </div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                          dias ativos: {daysActive7}/7
-                        </div>
-                        <div className="mt-3">
-                          <ProgressBar value={weeklyTotal} max={weeklyGoal} />
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          total
-                        </div>
-                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">
-                          {totalPoints} pts
-                        </div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                          sequência: {streak} dia(s)
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
+                          <div className="mt-1 text-[12px] text-[#6a6a6a]">missões feitas: {completedTodayCount}/4</div>
                         </div>
 
-                        <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
-                          <div className="text-[12px] font-semibold text-[#2f3a56]">
-                            Próximo marco
-                          </div>
-                          {nextBadge ? (
-                            <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                              {nextBadge.title} • faltam{' '}
-                              <span className="font-semibold text-[#2f3a56]">
-                                {Math.max(0, nextBadge.minPoints - totalPoints)} pts
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                              Você já liberou todos os marcos atuais.
-                            </div>
-                          )}
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
+                          <div className="mt-1 text-[12px] text-[#6a6a6a]">dias ativos: {daysActive7}/7</div>
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => go('progresso')}
-                        className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                      >
-                        Ver progresso do mês
-                      </button>
-                      <button
-                        onClick={() => go('marcos')}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Ver marcos
-                      </button>
-                    </div>
-                  </SoftCard>
-                ) : null}
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalPoints} pts</div>
+                          <div className="mt-1 text-[12px] text-[#6a6a6a]">dias ativos (28): {daysActive28}/28</div>
 
-                {/* PROGRESSO */}
-                {section === 'progresso' ? (
-                  <SoftCard
-                    className="
-                      p-5 md:p-6 rounded-2xl
-                      bg-white/95
-                      border border-[#f5d7e5]
-                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    "
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
-                      </div>
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                          Progresso mensal
-                        </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          Quatro semanas em visão clara
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Tendência ajuda mais do que cobrança.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 space-y-3">
-                      {monthWeeks.map(w => (
-                        <div
-                          key={w.label}
-                          className="rounded-3xl border border-[#f5d7e5] bg-white p-5"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-[12px] font-semibold text-[#2f3a56]">
-                                {w.label}
-                              </div>
-                              <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                                {w.activeDays}/7 dias ativos • {w.total} pts
-                              </div>
-                            </div>
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                              {w.activeDays >= 5
-                                ? 'forte'
-                                : w.activeDays >= 3
-                                  ? 'ok'
-                                  : 'sobrevivência'}
-                            </span>
-                          </div>
-                          <div className="mt-3">
-                            <ProgressBar value={w.total} max={weeklyGoal} />
+                          <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
+                            <div className="text-[12px] font-semibold text-[#2f3a56]">Sequência</div>
+                            <div className="text-[12px] text-[#6a6a6a]">{streak} dia(s) seguidos com pelo menos 1 missão</div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        leitura rápida
-                      </div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Semana “sobrevivência” não é falha. É fase. O próximo passo
-                        nasce do que é possível agora.
                       </div>
 
-                      <div className="mt-5 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2">
                         <Link
                           href="/meu-dia"
                           className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                         >
-                          Ir para Meu Dia
+                          Marcar missões no Meu Dia
                         </Link>
                         <button
-                          onClick={() => go('visao')}
+                          onClick={() => go('selos')}
                           className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
-                          Voltar à visão
+                          Ver selos liberados
+                        </button>
+                        <button
+                          onClick={() => go('progresso')}
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ver seu mês
                         </button>
                       </div>
-                    </div>
-                  </SoftCard>
+                    </SoftCard>
+                  </div>
                 ) : null}
 
-                {/* MARCOS */}
-                {section === 'marcos' ? (
-                  <SoftCard
-                    className="
-                      p-5 md:p-6 rounded-2xl
-                      bg-white/95
-                      border border-[#f5d7e5]
-                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    "
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                {/* SELOS */}
+                {step === 'selos' ? (
+                  <div className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Selos & medalhas
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Conquistas reais (sem perfeição)</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Você desbloqueia conforme vive. Sem “metas inalcançáveis”.
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                          Marcos da jornada
-                        </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          Conquistas resumidas (sem vitrine)
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Aqui é só uma visão rápida. A vitrine completa fica em Conquistas & Selos.
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          liberados
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">liberados</div>
+                          <div className="mt-3 space-y-3">
+                            {badgeUnlocked.length === 0 ? (
+                              <div className="text-[13px] text-[#6a6a6a]">
+                                Ainda não tem selo liberado — marque uma missão no Meu Dia e o primeiro já aparece aqui.
+                              </div>
+                            ) : (
+                              badgeUnlocked.map(b => (
+                                <div key={b.id} className="flex items-start gap-3 rounded-2xl bg-white border border-[#f5d7e5] p-4">
+                                  <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                                    <AppIcon name={b.icon} size={18} className="text-[#fd2597]" />
+                                  </div>
+                                  <div>
+                                    <div className="text-[13px] font-semibold text-[#2f3a56]">{b.title}</div>
+                                    <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{b.desc}</div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
 
-                        <div className="mt-3 space-y-3">
-                          {badgeUnlocked.length === 0 ? (
-                            <div className="text-[13px] text-[#6a6a6a]">
-                              Quando você registrar presença no Meu Dia, seus marcos começam a aparecer aqui.
-                            </div>
-                          ) : (
-                            badgeUnlocked.slice(0, 3).map(b => (
-                              <div
-                                key={b.id}
-                                className="flex items-start gap-3 rounded-2xl bg-white border border-[#f5d7e5] p-4"
-                              >
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo selo</div>
+                          {nextBadge ? (
+                            <div className="mt-3">
+                              <div className="flex items-start gap-3">
                                 <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                                  <AppIcon name={b.icon} size={18} className="text-[#fd2597]" />
+                                  <AppIcon name={nextBadge.icon} size={18} className="text-[#fd2597]" />
                                 </div>
                                 <div>
-                                  <div className="text-[13px] font-semibold text-[#2f3a56]">
-                                    {b.title}
-                                  </div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                    {b.desc}
-                                  </div>
+                                  <div className="text-[14px] font-semibold text-[#2f3a56]">{nextBadge.title}</div>
+                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.desc}</div>
                                 </div>
                               </div>
-                            ))
+                              <div className="mt-4">
+                                <ProgressBar value={totalPoints} max={nextBadge.minPoints} />
+                              </div>
+                              <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                                Falta <span className="font-semibold text-[#2f3a56]">{Math.max(0, nextBadge.minPoints - totalPoints)} pts</span>.
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-3 text-[13px] text-[#6a6a6a]">
+                              Você liberou todos os selos atuais. (Depois a gente expande isso com P7/P8.)
+                            </div>
                           )}
-                        </div>
 
-                        <div className="mt-4 text-[12px] text-[#6a6a6a]">
-                          {badgeUnlocked.length > 3
-                            ? `+ ${badgeUnlocked.length - 3} marcos no total.`
-                            : ' '}
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <Link
+                              href="/meu-dia"
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Marcar missões no Meu Dia
+                            </Link>
+                            <button
+                              onClick={() => go('progresso')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ver mês
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
+
+                {/* PROGRESSO MENSAL */}
+                {step === 'progresso' ? (
+                  <div className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Progresso mensal
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Quatro semanas em visão clara</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Enxergar tendência ajuda mais do que cobrar constância perfeita.
+                          </p>
                         </div>
                       </div>
 
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          próximo
-                        </div>
-
-                        {nextBadge ? (
-                          <div className="mt-3">
-                            <div className="flex items-start gap-3">
-                              <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                                <AppIcon name={nextBadge.icon} size={18} className="text-[#fd2597]" />
-                              </div>
+                      <div className="mt-4 space-y-3">
+                        {monthWeeks.map(w => (
+                          <div
+                            key={w.label}
+                            className="rounded-3xl border border-[#f5d7e5] bg-white p-5"
+                          >
+                            <div className="flex items-start justify-between gap-3">
                               <div>
-                                <div className="text-[14px] font-semibold text-[#2f3a56]">
-                                  {nextBadge.title}
-                                </div>
-                                <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                  {nextBadge.desc}
+                                <div className="text-[12px] font-semibold text-[#2f3a56]">{w.label}</div>
+                                <div className="mt-1 text-[12px] text-[#6a6a6a]">
+                                  {w.activeDays}/7 dias ativos • {w.total} pts
                                 </div>
                               </div>
-                            </div>
-                            <div className="mt-4">
-                              <ProgressBar value={totalPoints} max={nextBadge.minPoints} />
-                            </div>
-                            <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                              Falta{' '}
-                              <span className="font-semibold text-[#2f3a56]">
-                                {Math.max(0, nextBadge.minPoints - totalPoints)} pts
+                              <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                                {w.activeDays >= 5 ? 'forte' : w.activeDays >= 3 ? 'ok' : 'sobrevivência'}
                               </span>
-                              .
+                            </div>
+                            <div className="mt-3">
+                              <ProgressBar value={w.total} max={weeklyGoal} />
                             </div>
                           </div>
-                        ) : (
-                          <div className="mt-3 text-[13px] text-[#6a6a6a]">
-                            Você liberou todos os marcos atuais.
-                          </div>
-                        )}
+                        ))}
+                      </div>
+
+                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">leitura rápida</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Semana “sobrevivência” não é falha. É dado. A próxima começa no próximo passo.
+                        </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <Link
-                            href={CONQUISTAS_HREF}
+                            href="/meu-dia"
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Ver Conquistas & Selos
+                            Marcar missão de hoje
                           </Link>
                           <button
-                            onClick={() => go('visao')}
+                            onClick={() => go('painel')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Voltar à visão
+                            Voltar ao painel
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </SoftCard>
+                    </SoftCard>
+                  </div>
                 ) : null}
               </div>
             </section>
