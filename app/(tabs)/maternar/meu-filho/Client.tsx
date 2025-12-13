@@ -13,304 +13,317 @@ import AppIcon from '@/components/ui/AppIcon'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-type FocusMode = 'conectar-2' | 'brincar-10' | 'fluir-dia'
-type AgeGroup = '0-2' | '3-4' | '5-6' | '6+'
-type Etapa = 'brincadeiras' | 'desenvolvimento' | 'rotina' | 'conexao'
+type Step = 'brincadeiras' | 'desenvolvimento' | 'rotina' | 'conexao'
+type TimeMode = '5' | '10' | '15'
+type AgeBand = '0-2' | '3-4' | '5-6' | '6+'
 
-type Activity = {
+type PlanItem = {
+  title: string
+  how: string
+  time: TimeMode
+  tag: string
+}
+
+type Kit = {
   id: string
   title: string
   subtitle: string
-  tags: string[]
-  minutes: 2 | 5 | 10
-  ageFit: AgeGroup[]
-  steps: string[]
-  routine: {
-    before: string
-    during: string
-    after: string
-  }
-  connection: string[]
+  time: TimeMode
+  plan: { a: PlanItem; b: PlanItem; c: PlanItem }
+  development: { label: string; note: string }
+  routine: { label: string; note: string }
+  connection: { label: string; note: string }
 }
 
-function scrollToId(id: Etapa) {
-  const el = document.getElementById(id)
-  if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n))
-}
-
-function ageLabel(a: AgeGroup) {
-  switch (a) {
-    case '0-2':
-      return '0–2'
-    case '3-4':
-      return '3–4'
-    case '5-6':
-      return '5–6'
-    case '6+':
-      return '+6'
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
   }
 }
 
-function focusLabel(f: FocusMode) {
-  switch (f) {
-    case 'conectar-2':
-      return 'Conectar agora (2 min)'
-    case 'brincar-10':
-      return 'Brincar rápido (10 min)'
-    case 'fluir-dia':
-      return 'Fazer o dia fluir'
-  }
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
 }
 
-function focusHint(f: FocusMode) {
-  switch (f) {
-    case 'conectar-2':
-      return 'Um gesto curto para mudar o clima sem bagunçar o dia.'
-    case 'brincar-10':
-      return 'Uma brincadeira simples para vocês se encontrarem com presença.'
-    case 'fluir-dia':
-      return 'Um ajuste leve de rotina para reduzir atrito ao longo do dia.'
-  }
+function stepIndex(s: Step) {
+  return s === 'brincadeiras' ? 1 : s === 'desenvolvimento' ? 2 : s === 'rotina' ? 3 : 4
 }
 
-const AGE_GROUPS: { id: AgeGroup; title: string; hint: string }[] = [
-  { id: '0-2', title: '0–2 anos', hint: 'Sentidos e segurança: explorar com calma.' },
-  { id: '3-4', title: '3–4 anos', hint: 'Faz de conta e energia: brincar é linguagem.' },
-  { id: '5-6', title: '5–6 anos', hint: 'Curiosidade e autonomia: perguntas e escolhas.' },
-  { id: '6+', title: '+6 anos', hint: 'Opinião e limites: combinar e sustentar com carinho.' },
-]
+function timeLabel(t: TimeMode) {
+  if (t === '5') return '5 min'
+  if (t === '10') return '10 min'
+  return '15 min'
+}
 
-const ACTIVITIES: Activity[] = [
-  {
-    id: 'tesouro-casa',
-    title: 'Caça aos tesouros da casa',
-    subtitle: 'Escolham 3 coisas para encontrar juntos. Simples e divertido.',
-    tags: ['rápido', 'conexão'],
-    minutes: 10,
-    ageFit: ['3-4', '5-6', '6+'],
-    steps: [
-      'Escolham 3 “tesouros” (ex.: algo redondo, algo macio, algo vermelho).',
-      'Definam o combinado: sem pressa, sem competir.',
-      'Quando acharem, comemorem com um “toque secreto” (mãozinha, abraço, sorriso).',
-    ],
-    routine: {
-      before: 'Avise: “vamos brincar 10 min e depois voltamos para o que estávamos fazendo”.',
-      during: 'Deixe ele liderar uma parte (ele escolhe 1 tesouro).',
-      after: 'Fechem com um gesto: “obrigada por brincar comigo”.',
+function timeTitle(t: TimeMode) {
+  if (t === '5') return 'Ligação rápida'
+  if (t === '10') return 'Presença prática'
+  return 'Momento completo'
+}
+
+function timeHint(t: TimeMode) {
+  if (t === '5') return 'Para quando você só precisa “conectar e seguir”.'
+  if (t === '10') return 'Para quando dá para brincar sem complicar.'
+  return 'Para quando você quer fechar o dia com presença de verdade.'
+}
+
+function inferContext(): { time: TimeMode; age: AgeBand } {
+  /**
+   * Integração “best effort” com Eu360:
+   * - eu360_time_with_child: "5" | "10" | "15"
+   * - eu360_child_age_band: "0-2" | "3-4" | "5-6" | "6+"
+   *
+   * Se não houver nada: default inteligente = 15 min, 3-4
+   */
+  const tRaw = safeGetLS('eu360_time_with_child')
+  const aRaw = safeGetLS('eu360_child_age_band')
+
+  const time: TimeMode = tRaw === '5' || tRaw === '10' || tRaw === '15' ? tRaw : '15'
+  const age: AgeBand = aRaw === '0-2' || aRaw === '3-4' || aRaw === '5-6' || aRaw === '6+' ? aRaw : '3-4'
+
+  return { time, age }
+}
+
+const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
+  '0-2': {
+    '5': {
+      id: 'k-0-2-5',
+      title: 'Conexão em 5 min (0–2)',
+      subtitle: 'Sem preparar nada. Só presença simples.',
+      time: '5',
+      plan: {
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
+        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
+      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
-    connection: [
-      'Olhos nos olhos por 10 segundos antes de começar.',
-      'Dizer uma coisa específica que você gostou: “eu gostei quando você…”',
-      'Abraço curto com respiração junto: 2 inspirações.',
-    ],
-  },
-  {
-    id: 'espelho-desenho',
-    title: 'Desenho espelhado',
-    subtitle: 'Um traço seu, um traço dele. Vocês criam juntos, sem certo/errado.',
-    tags: ['calminho', 'criativo'],
-    minutes: 10,
-    ageFit: ['3-4', '5-6', '6+'],
-    steps: [
-      'Você faz um traço bem simples.',
-      'Ele imita do jeito dele (sem corrigir).',
-      'Alternem 6 rodadas e deem um nome para o desenho.',
-    ],
-    routine: {
-      before: 'Organize “o mínimo”: papel + um lápis. Só isso.',
-      during: 'Se ele frustrar, valide: “entendi, vamos fazer do seu jeito”.',
-      after: 'Guardem o desenho em um lugar “da história de vocês”.',
+    '10': {
+      id: 'k-0-2-10',
+      title: 'Presença prática em 10 min (0–2)',
+      subtitle: 'Brincadeira curta + conexão no final.',
+      time: '10',
+      plan: {
+        a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
+        b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
+        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
+      connection: { label: 'Gesto de conexão', note: 'Um abraço demorado com respiração junto (3 respirações).' },
     },
-    connection: [
-      'Elogio específico: “adorei a sua ideia de…”',
-      'Toque no ombro com carinho e “tô aqui”.',
-      'Pergunta curta: “qual parte você mais gostou?”.',
-    ],
-  },
-  {
-    id: 'almofadas-caminho',
-    title: 'Caminho de almofadas',
-    subtitle: 'Um mini percurso na sala para gastar energia sem sair de casa.',
-    tags: ['movimento', 'energia'],
-    minutes: 10,
-    ageFit: ['3-4', '5-6', '6+'],
-    steps: [
-      'Disponha 4–6 almofadas no chão (sem perfeição).',
-      'Façam 3 travessias: normal, lento, “robô”.',
-      'Finalize com “estátua” por 5 segundos.',
-    ],
-    routine: {
-      before: 'Diga: “depois a gente guarda juntos em 1 minuto”.',
-      during: 'Você faz 1 rodada junto (mesmo que pequena).',
-      after: 'Guardem 3 almofadas juntos — e acabou.',
+    '15': {
+      id: 'k-0-2-15',
+      title: 'Momento completo em 15 min (0–2)',
+      subtitle: 'Brincar + desacelerar sem estender demais.',
+      time: '15',
+      plan: {
+        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: “eu tô aqui com você” e sorrir.' },
     },
-    connection: [
-      'Um high-five lento.',
-      'Um abraço curto depois da última travessia.',
-      'Dizer: “eu gostei de ver você se divertindo”.',
-    ],
   },
-  {
-    id: 'historia-a-dois',
-    title: 'História inventada a dois',
-    subtitle: 'Cada um diz uma frase. A história nasce — e vira lembrança.',
-    tags: ['conexão', 'imaginação'],
-    minutes: 10,
-    ageFit: ['3-4', '5-6', '6+'],
-    steps: [
-      'Comece com: “Era uma vez…” (bem simples).',
-      'Ele continua com uma frase.',
-      'Vocês fazem 8 frases no total e dão um título.',
-    ],
-    routine: {
-      before: 'Aviso curto: “vamos fazer uma história rapidinha”.',
-      during: 'Se ele repetir ideias, valide: repetição também é segurança.',
-      after: 'Feche com: “amanhã a gente continua”.',
+  '3-4': {
+    '5': {
+      id: 'k-3-4-5',
+      title: 'Conexão em 5 min (3–4)',
+      subtitle: 'Uma brincadeira que cabe antes da janta.',
+      time: '5',
+      plan: {
+        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
+        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
+        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).' },
+      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.' },
     },
-    connection: [
-      'Olhar atento enquanto ele fala (sem tela).',
-      'Sorriso e “obrigada por me contar”.',
-      'Pergunta: “quem foi o herói hoje?”.',
-    ],
-  },
-  {
-    id: 'sensorial-2min',
-    title: 'Explorar com os sentidos (2 min)',
-    subtitle: 'Um mini jogo sensorial para acalmar e reconectar.',
-    tags: ['2 min', 'sensorial'],
-    minutes: 2,
-    ageFit: ['0-2', '3-4'],
-    steps: [
-      'Escolha um objeto seguro (tecido, colher, bola macia).',
-      'Nomeie 2 coisas: “macio”, “frio”, “liso”…',
-      'Finalize com um sorriso e um toque carinhoso.',
-    ],
-    routine: {
-      before: 'Sente perto. Só presença.',
-      during: 'Descreva sem ensinar: “você está explorando”.',
-      after: 'Um abraço curto, acabou.',
+    '10': {
+      id: 'k-3-4-10',
+      title: 'Presença prática em 10 min (3–4)',
+      subtitle: 'Brincar sem produção e fechar bem.',
+      time: '10',
+      plan: {
+        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma “pista” com fita/almofadas. Ele percorre 3 vezes.' },
+        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relâmpago', how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.' },
+        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: “eu gostei quando você…”.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um mini ritual pré-janta (2 min) organiza o resto do período.' },
+      connection: { label: 'Gesto de conexão', note: 'Toque no ombro + olhar nos olhos por 5 segundos.' },
     },
-    connection: [
-      'Toque gentil na mão.',
-      'Dizer baixinho: “tô aqui com você”.',
-      'Olhar + sorriso (sem pressa).',
-    ],
+    '15': {
+      id: 'k-3-4-15',
+      title: 'Momento completo em 15 min (3–4)',
+      subtitle: 'O clássico: brincar + organizar + fechar com carinho.',
+      time: '15',
+      plan: {
+        a: { tag: 'casa', time: '15', title: 'Caça aos tesouros', how: 'Escolham 3 itens para achar. Depois guardam juntos.' },
+        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 “missões”: pular, buscar, entregar. Você narra.' },
+        c: { tag: 'calmo', time: '15', title: 'História + abraço', how: '10 min de história inventada + 5 min de abraço e guardar.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Imaginação + necessidade de rotina clara.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “obrigada por brincar comigo” e sorrir.' },
+    },
   },
-]
-
-function pickFeatured(activities: Activity[], focus: FocusMode, age: AgeGroup): Activity {
-  const ageFiltered = activities.filter((a) => a.ageFit.includes(age))
-
-  if (focus === 'conectar-2') {
-    const twoMin = ageFiltered.find((a) => a.minutes === 2) ?? activities.find((a) => a.minutes === 2)
-    return twoMin ?? activities[0]
-  }
-
-  if (focus === 'brincar-10') {
-    const ten = ageFiltered.find((a) => a.minutes === 10) ?? activities.find((a) => a.minutes === 10)
-    return ten ?? activities[0]
-  }
-
-  // fluir-dia -> prioriza uma brincadeira que vira “âncora” do dia (10 min) e tenha passos claros
-  const anchor =
-    ageFiltered.find((a) => a.minutes === 10 && a.steps.length >= 3) ??
-    activities.find((a) => a.minutes === 10 && a.steps.length >= 3)
-
-  return anchor ?? activities[0]
+  '5-6': {
+    '5': {
+      id: 'k-5-6-5',
+      title: 'Conexão em 5 min (5–6)',
+      subtitle: 'Rápido e direto: presença sem esticar.',
+      time: '5',
+      plan: {
+        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
+        b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
+        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “amanhã continua”.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: “eu vi você se esforçando em…”.' },
+    },
+    '10': {
+      id: 'k-5-6-10',
+      title: 'Presença prática em 10 min (5–6)',
+      subtitle: 'Brincar e fechar com organização mínima.',
+      time: '10',
+      plan: {
+        a: { tag: 'movimento', time: '10', title: 'Circuito rápido', how: '3 estações: pular, agachar, correr parado. 2 rodadas.' },
+        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.' },
+        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
+    },
+    '15': {
+      id: 'k-5-6-15',
+      title: 'Momento completo em 15 min (5–6)',
+      subtitle: 'Um ciclo simples: brincar → ajudar → fechar.',
+      time: '15',
+      plan: {
+        a: { tag: 'equilíbrio', time: '15', title: 'Brinca 10 + ajuda 5', how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.' },
+        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e você escreve 3 frases.' },
+        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (“qual animal…?”). Fecha com abraço.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Vontade de participar e de ser levado a sério.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um timer visível ajuda a encerrar sem briga.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).' },
+    },
+  },
+  '6+': {
+    '5': {
+      id: 'k-6p-5',
+      title: 'Conexão em 5 min (6+)',
+      subtitle: 'Curto e respeitoso — sem infantilizar.',
+      time: '5',
+      plan: {
+        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: '“De 0 a 10, como foi seu dia?” e uma frase de escuta.' },
+        b: { tag: 'corpo', time: '5', title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado do dia.' },
+        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Você agradece e reconhece.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Mais autonomia, mais opinião, mais sensibilidade a respeito.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar “o que vem agora” evita atrito nas transições.' },
+      connection: { label: 'Gesto de conexão', note: 'Escuta de 30 segundos sem corrigir.' },
+    },
+    '10': {
+      id: 'k-6p-10',
+      title: 'Presença prática em 10 min (6+)',
+      subtitle: 'Sem grandes jogos: presença e organização.',
+      time: '10',
+      plan: {
+        a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
+        b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
+        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
+      connection: { label: 'Gesto de conexão', note: 'Perguntar: “quer minha ajuda ou só que eu te ouça?”' },
+    },
+    '15': {
+      id: 'k-6p-15',
+      title: 'Momento completo em 15 min (6+)',
+      subtitle: 'Conexão + rotina leve do jeito que cabe.',
+      time: '15',
+      plan: {
+        a: { tag: 'equilíbrio', time: '15', title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.' },
+        b: { tag: 'casa', time: '15', title: 'Arrumar junto', how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.' },
+        c: { tag: 'fala', time: '15', title: 'Plano de amanhã', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },
+      connection: { label: 'Gesto de conexão', note: 'Reconhecer: “eu vi que foi difícil e você tentou”.' },
+    },
+  },
 }
 
 export default function MeuFilhoClient() {
-  const [focus, setFocus] = useState<FocusMode>('brincar-10')
-  const [age, setAge] = useState<AgeGroup>('3-4')
-  const [checked, setChecked] = useState<{ before: boolean; during: boolean; after: boolean }>({
-    before: false,
-    during: false,
-    after: false,
-  })
-  const [gestureIndex, setGestureIndex] = useState(0)
+  const [step, setStep] = useState<Step>('brincadeiras')
+  const [time, setTime] = useState<TimeMode>('15')
+  const [age, setAge] = useState<AgeBand>('3-4')
+  const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
   useEffect(() => {
     try {
-      track('nav.view', {
-        tab: 'maternar',
-        page: 'meu-filho',
-        timestamp: new Date().toISOString(),
-      })
+      track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
     } catch {}
   }, [])
 
-  const featured = useMemo(() => pickFeatured(ACTIVITIES, focus, age), [focus, age])
-  const alternatives = useMemo(() => {
-    const filtered = ACTIVITIES.filter((a) => a.id !== featured.id && a.ageFit.includes(age))
-    return filtered.slice(0, 3)
-  }, [featured.id, age])
-
   useEffect(() => {
-    // reset suave quando muda o “caminho”
-    setChecked({ before: false, during: false, after: false })
-    setGestureIndex(0)
-  }, [focus, age, featured.id])
+    const inferred = inferContext()
+    setTime(inferred.time)
+    setAge(inferred.age)
+    setStep('brincadeiras')
 
-  const bgStyle: React.CSSProperties = {
-    background: 'radial-gradient(circle at top left, #ffe1f1 0%, #ffffff 72%, #ffffff 100%)',
-  }
-
-  const halo = (
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-[-16%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/22 blur-[145px] rounded-full" />
-      <div className="absolute bottom-[-22%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/38 blur-[155px] rounded-full" />
-    </div>
-  )
-
-  const progress = useMemo(() => {
-    const n = Number(checked.before) + Number(checked.during) + Number(checked.after)
-    return clamp(n, 0, 3)
-  }, [checked])
-
-  const connectionLine = useMemo(() => {
-    const list = featured.connection
-    if (!list.length) return 'Hoje, só um gesto curto já muda o clima.'
-    const idx = clamp(gestureIndex, 0, list.length - 1)
-    return list[idx]
-  }, [featured.connection, gestureIndex])
-
-  function onSelectFocus(next: FocusMode) {
-    setFocus(next)
     try {
-      track('meu_filho.focus.select', { focus: next })
+      track('meu_filho.open', { time: inferred.time, age: inferred.age })
     } catch {}
-    // conduz para a seção 1 sempre (a experiência começa na brincadeira “protagonista”)
-    scrollToId('brincadeiras')
+  }, [])
+
+  const kit = useMemo(() => KITS[age][time], [age, time])
+  const selected = useMemo(() => kit.plan[chosen], [kit, chosen])
+
+  function go(next: Step) {
+    setStep(next)
+    try {
+      track('meu_filho.step', { step: next })
+    } catch {}
   }
 
-  function onSelectAge(next: AgeGroup) {
+  function onSelectTime(next: TimeMode) {
+    setTime(next)
+    safeSetLS('eu360_time_with_child', next)
+    setChosen('a')
+    try {
+      track('meu_filho.time.select', { time: next })
+    } catch {}
+  }
+
+  function onSelectAge(next: AgeBand) {
     setAge(next)
+    safeSetLS('eu360_child_age_band', next)
+    setChosen('a')
     try {
       track('meu_filho.age.select', { age: next })
     } catch {}
-    scrollToId('desenvolvimento')
   }
 
-  function toggleChecklist(key: 'before' | 'during' | 'after') {
-    setChecked((p) => {
-      const next = { ...p, [key]: !p[key] }
-      try {
-        track('meu_filho.routine.check', { key, value: next[key] })
-      } catch {}
-      return next
-    })
-  }
-
-  function nextGesture() {
-    const len = featured.connection.length || 1
-    setGestureIndex((p) => (p + 1) % len)
+  function onChoose(k: 'a' | 'b' | 'c') {
+    setChosen(k)
     try {
-      track('meu_filho.connection.next', { activity: featured.id })
+      track('meu_filho.plan.choose', { which: k, time, age })
     } catch {}
   }
 
@@ -318,530 +331,408 @@ export default function MeuFilhoClient() {
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      className="min-h-[100dvh] pb-32 relative overflow-hidden"
-      style={bgStyle}
+      className="
+        min-h-[100dvh]
+        pb-32
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+      "
     >
-      {halo}
-
       <ClientOnly>
-        <div className="relative mx-auto max-w-3xl px-4 md:px-6">
+        <div className="mx-auto max-w-3xl px-4 md:px-6">
           {/* HERO */}
-          <header className="pt-10 md:pt-14 mb-6">
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
                 href="/maternar"
-                className="inline-flex items-center text-[12px] text-[#6a6a6a] hover:text-[#545454] transition mb-1"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
               >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
 
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="inline-flex items-center gap-2 text-[12px] tracking-wide uppercase text-[#6a6a6a]">
-                    <span className="inline-flex h-6 px-3 rounded-full bg-white/70 border border-[#f5d7e5] items-center">
-                      Meu filho
-                    </span>
-                  </p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Meu Filho
+              </h1>
 
-                  <h1 className="text-[28px] md:text-[32px] font-semibold text-[#545454] leading-tight mt-2">
-                    Meu Filho
-                  </h1>
-
-                  <p className="text-[15px] md:text-[17px] text-[#6a6a6a] leading-relaxed max-w-xl mt-2">
-                    Uma experiência única para hoje: escolher um foco, ajustar pela fase do seu filho e sair com um passo claro.
-                  </p>
-                </div>
-
-                <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-2xl bg-white/70 border border-[#f5d7e5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-                  <AppIcon name="toy" size={20} className="text-[#b8236b]" />
-                </div>
-              </div>
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
+              </p>
             </div>
           </header>
 
-          {/* COMANDO CENTRAL (interliga tudo) */}
+          {/* EXPERIÊNCIA ÚNICA (um container) */}
           <Reveal>
             <section
               className="
-                bg-white
                 rounded-3xl
-                p-6 md:p-7
-                shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                border border-[#f5d7e5]
-                mb-7
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                overflow-hidden
               "
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center">
-                    <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+              {/* Top bar: contexto + trilha */}
+              <div className="p-4 md:p-6 border-b border-white/25">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
+                      <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                    </div>
+
+                    <div>
+                      <div className="text-[12px] text-white/85">
+                        Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
+                      </div>
+                      <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
+                        Sugestão pronta para agora
+                      </div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
+                        {timeHint(time)}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-[18px] md:text-[20px] font-semibold text-[#545454] leading-snug">
-                      Hoje, o que você precisa?
-                    </h2>
-                    <p className="text-[13px] md:text-[14px] text-[#6a6a6a] mt-1 leading-relaxed">
-                      {focusHint(focus)}
-                    </p>
+
+                  <button
+                    onClick={() => go('brincadeiras')}
+                    className="
+                      rounded-full
+                      bg-white/90 hover:bg-white
+                      text-[#2f3a56]
+                      px-4 py-2 text-[12px]
+                      shadow-lg transition
+                    "
+                  >
+                    Começar
+                  </button>
+                </div>
+
+                {/* Ajustes rápidos (secundários) */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Quanto tempo você tem agora?</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['5', '10', '15'] as TimeMode[]).map((t) => {
+                        const active = time === t
+                        return (
+                          <button
+                            key={t}
+                            onClick={() => onSelectTime(t)}
+                            className={[
+                              'rounded-xl border px-3 py-2 text-[12px] text-left transition',
+                              active
+                                ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                                : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                          >
+                            <div className="font-semibold">{timeLabel(t)}</div>
+                            <div className="text-[11px] opacity-90">{timeTitle(t)}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Faixa do seu filho (para ajustar a ideia)</div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
+                        const active = age === a
+                        return (
+                          <button
+                            key={a}
+                            onClick={() => onSelectAge(a)}
+                            className={[
+                              'rounded-xl border px-3 py-2 text-[12px] transition',
+                              active
+                                ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                                : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                          >
+                            {a}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => scrollToId('brincadeiras')}
-                  className="
-                    shrink-0
-                    rounded-full
-                    bg-[#fd2597]
-                    text-white
-                    px-4 py-2.5
-                    text-[13px]
-                    shadow-lg
-                    hover:opacity-95
-                    transition
-                  "
-                  aria-label="Ir para o começo da experiência"
-                >
-                  Começar
-                </button>
+                {/* Stepper */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {(
+                    [
+                      { id: 'brincadeiras' as const, label: 'Brincadeiras' },
+                      { id: 'desenvolvimento' as const, label: 'Fase' },
+                      { id: 'rotina' as const, label: 'Rotina' },
+                      { id: 'conexao' as const, label: 'Conexão' },
+                    ] as const
+                  ).map((it) => {
+                    const active = step === it.id
+                    return (
+                      <button
+                        key={it.id}
+                        onClick={() => go(it.id)}
+                        className={[
+                          'rounded-full px-3 py-1.5 text-[12px] border transition',
+                          active
+                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                            : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                        ].join(' ')}
+                      >
+                        {it.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                {(
-                  [
-                    { id: 'conectar-2' as const, icon: 'heart', title: 'Conectar agora', meta: '2 min' },
-                    { id: 'brincar-10' as const, icon: 'toy', title: 'Brincar rápido', meta: '10 min' },
-                    { id: 'fluir-dia' as const, icon: 'sun', title: 'Fazer o dia fluir', meta: 'rotina' },
-                  ] as const
-                ).map((opt) => {
-                  const active = focus === opt.id
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => onSelectFocus(opt.id)}
-                      className={[
-                        `
-                          rounded-3xl border transition text-left
-                          p-4
-                          shadow-[0_6px_22px_rgba(0,0,0,0.05)]
-                        `,
-                        active
-                          ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                          : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                      ].join(' ')}
-                      aria-label={focusLabel(opt.id)}
+              {/* Conteúdo muda dentro do mesmo container */}
+              <div className="p-4 md:p-6">
+                {/* 1) BRINCADEIRAS DO DIA */}
+                {step === 'brincadeiras' ? (
+                  <div id="brincadeiras" className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center">
-                            <AppIcon name={opt.icon as any} size={20} className="text-[#b8236b]" />
-                          </div>
-                          <div>
-                            <div className="text-[14px] font-semibold text-[#545454]">{opt.title}</div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-1">{opt.meta}</div>
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="toy" size={22} className="text-[#fd2597]" />
                         </div>
-                        <span className="text-[11px] text-[#6a6a6a]">
-                          {active ? 'ativo' : ' '}
-                        </span>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Brincadeiras do dia
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">{kit.subtitle}</p>
+                        </div>
                       </div>
-                    </button>
-                  )
-                })}
+
+                      {/* Escolha guiada (3 opções) */}
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {(['a', 'b', 'c'] as const).map((k) => {
+                          const it = kit.plan[k]
+                          const active = chosen === k
+                          return (
+                            <button
+                              key={k}
+                              onClick={() => onChoose(k)}
+                              className={[
+                                'rounded-2xl border p-4 text-left transition',
+                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                              ].join(' ')}
+                            >
+                              <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                                {it.tag} • {timeLabel(it.time)}
+                              </div>
+                              <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
+                              <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{it.how}</div>
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* “faça agora” destacado */}
+                      <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
+                        <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => go('conexao')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Fechar com conexão
+                          </button>
+                          <button
+                            onClick={() => go('rotina')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ajuste de rotina
+                          </button>
+                          <button
+                            onClick={() => go('desenvolvimento')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Entender a fase
+                          </button>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
+
+                {/* 2) DESENVOLVIMENTO POR FASE (sem diagnóstico) */}
+                {step === 'desenvolvimento' ? (
+                  <div id="desenvolvimento" className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="child" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Desenvolvimento por fase
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Pistas simples para você ajustar a forma de brincar hoje. Sem rótulos, sem “diagnóstico”.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                        <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
+                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Como usar isso agora:</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Escolha uma brincadeira que combine com essa fase e mantenha curta. O objetivo é conexão, não performance.
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Voltar para a brincadeira
+                          </button>
+                          <button
+                            onClick={() => go('rotina')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ajuste de rotina
+                          </button>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
+
+                {/* 3) ROTINA LEVE DA CRIANÇA */}
+                {step === 'rotina' ? (
+                  <div id="rotina" className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="sun" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Rotina leve da criança
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                        <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
+
+                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Aplicação rápida:</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Combine o “final” antes de começar. Ex.: “A gente brinca {timeLabel(time)} e depois guarda juntos.”
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Voltar para a brincadeira
+                          </button>
+                          <button
+                            onClick={() => go('conexao')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Fechar com conexão
+                          </button>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
+
+                {/* 4) GESTOS DE CONEXÃO */}
+                {step === 'conexao' ? (
+                  <div id="conexao" className="space-y-4">
+                    <SoftCard
+                      className="
+                        p-5 md:p-6 rounded-2xl
+                        bg-white/95
+                        border border-[#f5d7e5]
+                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                      "
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Gestos de conexão
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
+                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
+
+                        <div className="mt-4 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Se você fez só isso hoje, já valeu. O Materna é sobre o possível.
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Escolher outra brincadeira
+                          </button>
+                          <Link
+                            href="/maternar"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Voltar ao Maternar
+                          </Link>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
               </div>
             </section>
           </Reveal>
 
-          <div className="space-y-6 md:space-y-7 pb-10">
-            {/* ============================= */}
-            {/* 1) BRINCADEIRAS DO DIA (card protagonista + alternativas) */}
-            {/* ============================= */}
-            <section id="brincadeiras">
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-6 md:p-7 rounded-3xl
-                    bg-white
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
-                      <AppIcon name="toy" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        Brincadeiras do dia
-                      </span>
-                      <h2 className="text-[18px] font-semibold text-[#545454]">
-                        Uma ideia certa para hoje (sem caça)
-                      </h2>
-                      <p className="text-[14px] text-[#6a6a6a]">
-                        Baseada no seu foco e ajustada para a fase {ageLabel(age)}.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card protagonista (diferente do resto) */}
-                  <div className="mt-5 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5 md:p-6">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      {featured.tags.map((t) => (
-                        <span
-                          key={t}
-                          className="inline-flex items-center rounded-full bg-white border border-[#f5d7e5] px-2.5 py-1 text-[11px] text-[#6a6a6a]"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                      <span className="ml-auto inline-flex items-center rounded-full bg-[#ffd8e6] border border-[#f5d7e5] px-2.5 py-1 text-[11px] text-[#545454]">
-                        {featured.minutes} min
-                      </span>
-                    </div>
-
-                    <div className="text-[16px] md:text-[18px] font-semibold text-[#545454]">
-                      {featured.title}
-                    </div>
-                    <div className="text-[13px] md:text-[14px] text-[#6a6a6a] mt-1 leading-relaxed">
-                      {featured.subtitle}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {featured.steps.map((s, idx) => (
-                        <div
-                          key={s}
-                          className="rounded-2xl bg-white border border-[#f5d7e5] p-4"
-                        >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                            passo {idx + 1}
-                          </div>
-                          <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">
-                            {s}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => scrollToId('rotina')}
-                        className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                      >
-                        Como encaixar no dia
-                      </button>
-                      <button
-                        onClick={() => scrollToId('conexao')}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Fechar com conexão
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Alternativas menores (não competem) */}
-                  {alternatives.length ? (
-                    <div className="mt-5">
-                      <div className="text-[12px] text-[#6a6a6a] mb-2">
-                        Outras opções rápidas (se você quiser variar):
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {alternatives.map((a) => (
-                          <button
-                            key={a.id}
-                            onClick={() => {
-                              try {
-                                track('meu_filho.activity.switch', { from: featured.id, to: a.id })
-                              } catch {}
-                              // troca por “soft”: muda o foco para brincar e ajusta “featured” via estado
-                              // sem backend, o jeito mais seguro é direcionar para Desenvolvimento e incentivar troca de fase/foco.
-                              // Aqui fazemos apenas o scroll para manter o fluxo leve.
-                              scrollToId('desenvolvimento')
-                            }}
-                            className="
-                              rounded-3xl bg-white border border-[#f5d7e5]
-                              p-4 text-left
-                              shadow-[0_6px_22px_rgba(0,0,0,0.05)]
-                              hover:bg-[#ffe1f1] transition
-                            "
-                            aria-label={`Ver alternativa: ${a.title}`}
-                          >
-                            <div className="text-[13px] font-semibold text-[#545454] leading-snug">
-                              {a.title}
-                            </div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-1 leading-relaxed">
-                              {a.subtitle}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </SoftCard>
-              </Reveal>
-            </section>
-
-            {/* ============================= */}
-            {/* 2) DESENVOLVIMENTO POR FASE (seletor + painel dinâmico) */}
-            {/* ============================= */}
-            <section id="desenvolvimento">
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-6 md:p-7 rounded-3xl
-                    bg-white
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
-                      <AppIcon name="child" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        Desenvolvimento por fase
-                      </span>
-                      <h2 className="text-[18px] font-semibold text-[#545454]">
-                        Ajuste a experiência para a fase do seu filho
-                      </h2>
-                      <p className="text-[14px] text-[#6a6a6a]">
-                        Não é diagnóstico. É só um ajuste para as sugestões ficarem mais certeiras.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {AGE_GROUPS.map((g) => {
-                      const active = age === g.id
-                      return (
-                        <button
-                          key={g.id}
-                          onClick={() => onSelectAge(g.id)}
-                          className={[
-                            'rounded-full px-3.5 py-2 text-[12px] border transition',
-                            active
-                              ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
-                              : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
-                          ].join(' ')}
-                        >
-                          {g.title}
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  <div className="mt-4 rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                    <div className="text-[12px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                      Fase {ageLabel(age)}
-                    </div>
-                    <div className="text-[14px] text-[#545454] mt-1 leading-relaxed">
-                      {AGE_GROUPS.find((g) => g.id === age)?.hint}
-                    </div>
-                    <div className="text-[12px] text-[#6a6a6a] mt-3">
-                      Esta fase ajusta automaticamente a ideia principal em “Brincadeiras do dia”.
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => scrollToId('brincadeiras')}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Voltar para a ideia de hoje
-                      </button>
-                      <button
-                        onClick={() => scrollToId('rotina')}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Ver rotina leve
-                      </button>
-                    </div>
-                  </div>
-                </SoftCard>
-              </Reveal>
-            </section>
-
-            {/* ============================= */}
-            {/* 3) ROTINA LEVE DA CRIANÇA (timeline + checklist/progresso) */}
-            {/* ============================= */}
-            <section id="rotina">
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-6 md:p-7 rounded-3xl
-                    bg-white
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
-                      <AppIcon name="sun" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        Rotina leve da criança
-                      </span>
-                      <h2 className="text-[18px] font-semibold text-[#545454]">
-                        Como encaixar sem estressar
-                      </h2>
-                      <p className="text-[14px] text-[#6a6a6a]">
-                        Um mini fluxo antes/durante/depois para a ideia de hoje caber na vida real.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-[14px] font-semibold text-[#545454]">
-                        Mini fluxo da brincadeira: {featured.title}
-                      </div>
-                      <span className="text-[12px] text-[#6a6a6a]">
-                        progresso: {progress}/3
-                      </span>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <button
-                        onClick={() => toggleChecklist('before')}
-                        className={[
-                          'rounded-2xl border p-4 text-left transition',
-                          checked.before ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                        ].join(' ')}
-                      >
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                          antes
-                        </div>
-                        <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">
-                          {featured.routine.before}
-                        </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-3">
-                          {checked.before ? 'feito ✓' : 'marcar como feito'}
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => toggleChecklist('during')}
-                        className={[
-                          'rounded-2xl border p-4 text-left transition',
-                          checked.during ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                        ].join(' ')}
-                      >
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                          durante
-                        </div>
-                        <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">
-                          {featured.routine.during}
-                        </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-3">
-                          {checked.during ? 'feito ✓' : 'marcar como feito'}
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => toggleChecklist('after')}
-                        className={[
-                          'rounded-2xl border p-4 text-left transition',
-                          checked.after ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                        ].join(' ')}
-                      >
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                          depois
-                        </div>
-                        <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">
-                          {featured.routine.after}
-                        </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-3">
-                          {checked.after ? 'feito ✓' : 'marcar como feito'}
-                        </div>
-                      </button>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => scrollToId('conexao')}
-                        className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                      >
-                        Fechar com um gesto
-                      </button>
-                      <button
-                        onClick={() => scrollToId('brincadeiras')}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Voltar para a brincadeira
-                      </button>
-                    </div>
-                  </div>
-                </SoftCard>
-              </Reveal>
-            </section>
-
-            {/* ============================= */}
-            {/* 4) GESTOS DE CONEXÃO (1 gesto por vez + “outro gesto”) */}
-            {/* ============================= */}
-            <section id="conexao">
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-6 md:p-7 rounded-3xl
-                    bg-white
-                    border border-[#f5d7e5]
-                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                  "
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
-                      <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        Gestos de conexão
-                      </span>
-                      <h2 className="text-[18px] font-semibold text-[#545454]">
-                        Um gesto agora (curto e poderoso)
-                      </h2>
-                      <p className="text-[14px] text-[#6a6a6a]">
-                        Fechamento da experiência: um gesto que diz “eu tô aqui”.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                    <div className="text-[12px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                      para hoje
-                    </div>
-                    <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
-                      {connectionLine}
-                    </div>
-                    <div className="text-[12px] text-[#6a6a6a] mt-3">
-                      Baseado na ideia principal: <span className="font-semibold text-[#545454]">{featured.title}</span>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        onClick={nextGesture}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Outro gesto
-                      </button>
-                      <button
-                        onClick={() => scrollToId('brincadeiras')}
-                        className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                      >
-                        Recomeçar a experiência
-                      </button>
-                    </div>
-
-                    <div className="mt-4 text-[12px] text-[#6a6a6a] leading-relaxed">
-                      Se hoje só couber um gesto, escolha um. Um gesto por dia cria uma história inteira.
-                    </div>
-                  </div>
-                </SoftCard>
-              </Reveal>
-            </section>
-
-            <div className="mt-4">
-              <LegalFooter />
-            </div>
+          <div className="mt-6">
+            <LegalFooter />
           </div>
         </div>
       </ClientOnly>
