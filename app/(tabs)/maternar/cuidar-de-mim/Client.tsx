@@ -80,10 +80,10 @@ function ritmoHint(r: Ritmo) {
 }
 
 /**
- * Catálogo minimalista (não “autoajuda”):
+ * Catálogo operacional (não autoajuda):
  * - instruções curtas
  * - resultado claro
- * - linguagem operacional
+ * - linguagem prática
  */
 const ROUTINES: Routine[] = [
   {
@@ -231,349 +231,350 @@ export default function Client() {
     } catch {}
   }
 
-  // Gradiente mais claro + final branco mais “limpo”
-  const bgStyle: React.CSSProperties = {
-    background:
-      'linear-gradient(to bottom, rgba(255,216,230,0.55) 0%, rgba(255,225,241,0.28) 28%, #ffffff 78%, #ffffff 100%)',
-  }
-
   return (
-    <main data-tab="maternar-cuidar-de-mim" className="min-h-[100dvh] pb-32 relative overflow-hidden" style={bgStyle}>
-      {/* Halos (mais leves, para não pesar a página) */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-18%] left-[-18%] w-[62%] h-[62%] bg-[#fdbed7]/16 blur-[160px] rounded-full" />
-        <div className="absolute bottom-[-24%] right-[-18%] w-[58%] h-[58%] bg-[#ffe1f1]/22 blur-[170px] rounded-full" />
-      </div>
-
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="
+        min-h-[100dvh]
+        pb-32
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#ffffff_100%)]
+      "
+    >
       <ClientOnly>
-        <div className="relative mx-auto max-w-3xl px-5 md:px-6">
-          {/* HERO */}
-          <header className="pt-10 md:pt-14 mb-6">
+        <div className="mx-auto max-w-3xl px-4 md:px-6">
+          {/* HERO (alinhado com as outras internas) */}
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
                 href="/maternar"
-                className="inline-flex items-center text-[12px] text-[#6a6a6a] hover:text-[#545454] transition"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
               >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
 
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="inline-flex items-center gap-2 text-[12px] tracking-wide uppercase text-[#6a6a6a]">
-                    <span className="inline-flex h-6 px-3 rounded-full bg-white/70 border border-[#f5d7e5] items-center">
-                      Cuidar de mim
-                    </span>
-                  </p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Cuidar de Mim
+              </h1>
 
-                  {/* Ajuste de tamanho: iguala com as outras páginas internas */}
-                  <h1 className="text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-tight mt-2">
-                    Cuidar de Mim
-                  </h1>
-
-                  <p className="text-[15px] md:text-[16px] text-[#6a6a6a] mt-2 max-w-xl leading-relaxed">
-                    Um reset curto para você seguir o dia com mais clareza. Sem texto longo, sem esforço.
-                  </p>
-                </div>
-
-                <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-2xl bg-white/70 border border-[#f5d7e5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
-                </div>
-              </div>
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Você entra sem clareza e sai com um reset curto e prático para seguir melhor — sem precisar pensar muito.
+              </p>
             </div>
           </header>
 
-          {/* EXPERIÊNCIA ÚNICA */}
-          <Reveal>
-            <section
+          <div className="space-y-7 md:space-y-8 pb-10">
+            {/* PAINEL MODULAR (igual família), mas com corpo branco e final branco */}
+            <div
               className="
-                bg-white
                 rounded-3xl
-                border border-[#f5d7e5]
-                shadow-[0_8px_26px_rgba(0,0,0,0.06)]
-                overflow-hidden
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                p-4 md:p-6
               "
             >
-              {/* Top bar */}
-              <div className="px-5 md:px-6 pt-5 md:pt-6 pb-4 border-b border-[#f5d7e5]">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
-                      <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                    </div>
-                    <div>
-                      <div className="text-[12px] text-[#6a6a6a]">
-                        Passo {stepIndex(step)}/4 • {focusTitle(focus)} • {ritmo}
-                      </div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-1">
-                        Sugestão para agora: {routine.title}
-                      </div>
-                      <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">{routine.subtitle}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => go('ritmo')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Ajustar
-                    </button>
-                    <button
-                      onClick={() => go('mini-rotina')}
-                      className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                    >
-                      Começar
-                    </button>
-                  </div>
-                </div>
-
-                {/* Stepper */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {(
-                    [
-                      { id: 'ritmo' as const, label: 'Ritmo' },
-                      { id: 'mini-rotina' as const, label: 'Ação' },
-                      { id: 'pausas' as const, label: 'Pausa' },
-                      { id: 'para-voce' as const, label: 'Fechar' },
-                    ] as const
-                  ).map((it) => {
-                    const active = step === it.id
-                    return (
-                      <button
-                        key={it.id}
-                        onClick={() => go(it.id)}
-                        className={[
-                          'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active
-                            ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                            : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
-                        ].join(' ')}
-                      >
-                        {it.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="px-5 md:px-6 py-5 md:py-6">
-                {/* 1) Ritmo */}
-                {step === 'ritmo' ? (
-                  <div id="ritmo" className="space-y-4">
-                    <div className="text-[14px] text-[#2f3a56] font-semibold">Como você está chegando agora?</div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
-                        const active = ritmo === r
-                        return (
-                          <button
-                            key={r}
-                            onClick={() => onSelectRitmo(r)}
-                            className={[
-                              'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
-                              active
-                                ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
-                            ].join(' ')}
-                          >
-                            {r}
-                          </button>
-                        )
-                      })}
-                    </div>
-
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                      <div className="text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
-                      <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
-
-                      <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Quanto tempo dá agora?</div>
-                      <div className="mt-2 grid grid-cols-3 gap-2">
-                        {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
-                          const active = focus === f
-                          return (
-                            <button
-                              key={f}
-                              onClick={() => onSelectFocus(f)}
-                              className={[
-                                'rounded-2xl border p-3 text-left transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
-                              <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
-                      <div className="mt-4 flex gap-2">
-                        <button
-                          onClick={() => go('mini-rotina')}
-                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Aplicar e começar
-                        </button>
-                        <button
-                          onClick={() => go('pausas')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Só uma pausa rápida
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* 2) Mini rotina */}
-                {step === 'mini-rotina' ? (
-                  <div id="mini-rotina" className="space-y-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">Faça isso agora</div>
-                        <div className="text-[12px] text-[#6a6a6a]">
-                          Progresso: <span className="font-semibold text-[#2f3a56]">{progress}</span>/4
+              <Reveal>
+                <section className="bg-white rounded-3xl border border-[#f5d7e5] shadow-[0_8px_26px_rgba(0,0,0,0.06)] overflow-hidden">
+                  {/* Top bar */}
+                  <div className="px-5 md:px-6 pt-5 md:pt-6 pb-4 border-b border-[#f5d7e5]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] text-[#6a6a6a]">
+                            Passo {stepIndex(step)}/4 • {focusTitle(focus)} • {ritmo}
+                          </div>
+                          <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-1">
+                            Sugestão pronta para agora: {routine.title}
+                          </div>
+                          <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
+                            {routine.subtitle}
+                          </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => go('pausas')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          onClick={() => go('ritmo')}
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
-                          Preciso pausar
+                          Ajustar
                         </button>
                         <button
-                          onClick={() => go('para-voce')}
+                          onClick={() => go('mini-rotina')}
                           className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                         >
-                          Concluir
+                          Começar
                         </button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {routine.steps.slice(0, 4).map((s, i) => (
-                        <button
-                          key={s}
-                          onClick={() => toggleStep(i)}
-                          className={[
-                            'rounded-3xl border p-4 text-left transition',
-                            checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                          ].join(' ')}
-                        >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">passo {i + 1}</div>
-                          <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
-                          <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                      <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                      <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          onClick={() => go('pausas')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ir para Pausas rápidas
-                        </button>
-                        <button
-                          onClick={() => go('para-voce')}
-                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Finalizar
-                        </button>
-                      </div>
+                    {/* Stepper */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(
+                        [
+                          { id: 'ritmo' as const, label: 'Ritmo' },
+                          { id: 'mini-rotina' as const, label: 'Ação' },
+                          { id: 'pausas' as const, label: 'Pausa' },
+                          { id: 'para-voce' as const, label: 'Fechar' },
+                        ] as const
+                      ).map((it) => {
+                        const active = step === it.id
+                        return (
+                          <button
+                            key={it.id}
+                            onClick={() => go(it.id)}
+                            className={[
+                              'rounded-full px-3 py-1.5 text-[12px] border transition',
+                              active
+                                ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
+                                : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                            ].join(' ')}
+                          >
+                            {it.label}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
-                ) : null}
 
-                {/* 3) Pausas */}
-                {step === 'pausas' ? (
-                  <div id="pausas" className="space-y-4">
-                    <div className="text-[14px] text-[#2f3a56] font-semibold">Escolha uma pausa (curta)</div>
+                  {/* Body */}
+                  <div className="px-5 md:px-6 py-5 md:py-6">
+                    {/* 1) Meu Ritmo Hoje */}
+                    {step === 'ritmo' ? (
+                      <div id="ritmo" className="space-y-4">
+                        <div className="text-[14px] text-[#545454] font-semibold">Como você está chegando agora?</div>
 
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                      <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                        {routine.pauseDeck[pauseIndex]?.label}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
+                            const active = ritmo === r
+                            return (
+                              <button
+                                key={r}
+                                onClick={() => onSelectRitmo(r)}
+                                className={[
+                                  'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
+                                  active
+                                    ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#545454]'
+                                    : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                ].join(' ')}
+                              >
+                                {r}
+                              </button>
+                            )
+                          })}
+                        </div>
+
+                        <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                          <div className="text-[14px] font-semibold text-[#545454]">{ritmoTitle(ritmo)}</div>
+                          <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
+
+                          <div className="mt-4 text-[13px] text-[#545454] font-semibold">Quanto tempo dá agora?</div>
+                          <div className="mt-2 grid grid-cols-3 gap-2">
+                            {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
+                              const active = focus === f
+                              return (
+                                <button
+                                  key={f}
+                                  onClick={() => onSelectFocus(f)}
+                                  className={[
+                                    'rounded-2xl border p-3 text-left transition',
+                                    active
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                      : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
+                                  <div className="text-[13px] font-semibold text-[#545454]">{focusTitle(f)}</div>
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
+                          <div className="mt-4 flex gap-2">
+                            <button
+                              onClick={() => go('mini-rotina')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Aplicar e começar
+                            </button>
+                            <button
+                              onClick={() => go('pausas')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Só uma pausa rápida
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-[12px] text-[#6a6a6a] mt-2">
-                        Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
-                      </div>
+                    ) : null}
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          onClick={nextPause}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Outra pausa
-                        </button>
-                        <button
-                          onClick={() => go('mini-rotina')}
-                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Voltar para a ação
-                        </button>
-                        <button
-                          onClick={() => go('para-voce')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Concluir
-                        </button>
-                      </div>
-                    </div>
+                    {/* 2) Mini Rotina */}
+                    {step === 'mini-rotina' ? (
+                      <div id="mini-rotina" className="space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[14px] text-[#545454] font-semibold">Faça isso agora</div>
+                            <div className="text-[12px] text-[#6a6a6a]">
+                              Progresso: <span className="font-semibold text-[#545454]">{progress}</span>/4
+                            </div>
+                          </div>
 
-                    <div className="text-[12px] text-[#6a6a6a]">Regra do Materna: uma pausa já conta. Não precisa fazer tudo.</div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => go('pausas')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Preciso pausar
+                            </button>
+                            <button
+                              onClick={() => go('para-voce')}
+                              className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Concluir
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {routine.steps.slice(0, 4).map((s, i) => (
+                            <button
+                              key={s}
+                              onClick={() => toggleStep(i)}
+                              className={[
+                                'rounded-3xl border p-4 text-left transition',
+                                checked[i]
+                                  ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                  : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                              ].join(' ')}
+                            >
+                              <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                                passo {i + 1}
+                              </div>
+                              <div className="text-[13px] text-[#545454] mt-1 leading-relaxed">{s}</div>
+                              <div className="text-[12px] text-[#6a6a6a] mt-3">
+                                {checked[i] ? 'feito ✓' : 'marcar como feito'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                          <div className="text-[13px] text-[#545454] font-semibold">Se estiver corrido:</div>
+                          <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
+                            Faça só o passo 1. Isso já ajuda.
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => go('pausas')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ir para Pausas rápidas
+                            </button>
+                            <button
+                              onClick={() => go('para-voce')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Finalizar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* 3) Pausas */}
+                    {step === 'pausas' ? (
+                      <div id="pausas" className="space-y-4">
+                        <div className="text-[14px] text-[#545454] font-semibold">Escolha uma pausa (curta)</div>
+
+                        <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
+                          <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
+                            {routine.pauseDeck[pauseIndex]?.label}
+                          </div>
+                          <div className="text-[12px] text-[#6a6a6a] mt-2">
+                            Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={nextPause}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Outra pausa
+                            </button>
+                            <button
+                              onClick={() => go('mini-rotina')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Voltar para a ação
+                            </button>
+                            <button
+                              onClick={() => go('para-voce')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Concluir
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="text-[12px] text-[#6a6a6a]">
+                          Regra do Materna: uma pausa já conta. Não precisa fazer tudo.
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* 4) Fechar */}
+                    {step === 'para-voce' ? (
+                      <div id="para-voce" className="space-y-4">
+                        <div className="text-[14px] text-[#545454] font-semibold">Fechamento</div>
+
+                        <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
+                          <div className="text-[16px] md:text-[18px] font-semibold text-[#545454] mt-2 leading-relaxed">
+                            {routine.close}
+                          </div>
+                          <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
+
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => go('mini-rotina')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Repetir (mesma opção)
+                            </button>
+                            <Link
+                              href="/maternar/meu-filho"
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ir para Meu Filho
+                            </Link>
+                            <button
+                              onClick={() => go('ritmo')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#545454] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ajustar e trocar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </section>
+              </Reveal>
+            </div>
 
-                {/* 4) Fechamento */}
-                {step === 'para-voce' ? (
-                  <div id="para-voce" className="space-y-4">
-                    <div className="text-[14px] text-[#2f3a56] font-semibold">Fechamento</div>
-
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                      <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                        {routine.close}
-                      </div>
-                      <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
-
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <button
-                          onClick={() => go('mini-rotina')}
-                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Repetir (mesma opção)
-                        </button>
-                        <Link
-                          href="/maternar/meu-filho"
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ir para Meu Filho
-                        </Link>
-                        <button
-                          onClick={() => go('ritmo')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ajustar e trocar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          </Reveal>
-
-          <div className="mt-8">
-            <LegalFooter />
+            <div className="mt-4">
+              <LegalFooter />
+            </div>
           </div>
         </div>
       </ClientOnly>
