@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import AppShell from '@/components/common/AppShell'
@@ -26,13 +26,92 @@ type WeeklyInsightContext = {
     daysWithPlanner?: number
     moodCheckins?: number
     unlockedAchievements?: number
+    todayMissionsDone?: number
+    weekPoints?: number
+    totalPoints?: number
+    streak?: number
   }
 }
 
-// Busca insight semanal emocional com fallback carinhoso e contexto opcional
-async function fetchWeeklyInsight(
-  context: WeeklyInsightContext,
-): Promise<WeeklyInsight> {
+/** ======= LocalStorage (mesmo namespace do Minha Jornada / Missões) ======= */
+type MissionId = 'autocuidado' | 'conexao' | 'apoio' | 'limite'
+const MISSION_IDS: MissionId[] = ['autocuidado', 'conexao', 'apoio', 'limite']
+
+const LS = {
+  pointsTotal: 'mj_points_total',
+  dayPrefix: 'mj_day_', // mj_day_YYYY-MM-DD = number
+  donePrefix: 'mj_done_', // mj_done_YYYY-MM-DD_autocuidado = 1
+  streak: 'mj_streak',
+}
+
+type Badge = {
+  id: string
+  title: string
+  minPoints: number
+}
+
+const BADGES: Badge[] = [
+  { id: 'b-1', title: 'Primeiro passo', minPoints: 10 },
+  { id: 'b-2', title: 'Dia possível', minPoints: 22 },
+  { id: 'b-3', title: 'Presença real', minPoints: 40 },
+  { id: 'b-4', title: 'Rotina mais leve', minPoints: 70 },
+]
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeParseInt(v: string | null, fallback = 0) {
+  const n = Number.parseInt(String(v ?? ''), 10)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function todayKey() {
+  const d = new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function addDaysKey(date: Date, delta: number) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + delta)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function getWeekKeys(anchor = new Date()) {
+  const keys: string[] = []
+  for (let i = -6; i <= 0; i++) keys.push(addDaysKey(anchor, i))
+  return keys
+}
+
+function readDayPoints(dayKey: string) {
+  return safeParseInt(safeGetLS(LS.dayPrefix + dayKey), 0)
+}
+
+function readTotalPoints() {
+  return safeParseInt(safeGetLS(LS.pointsTotal), 0)
+}
+
+function readStreak() {
+  return safeParseInt(safeGetLS(LS.streak), 0)
+}
+
+function readDone(dayKey: string, missionId: MissionId) {
+  return safeGetLS(`${LS.donePrefix}${dayKey}_${missionId}`) === '1'
+}
+
+/** ======= Insight semanal ======= */
+async function fetchWeeklyInsight(context: WeeklyInsightContext): Promise<WeeklyInsight> {
   try {
     track('ai.request', {
       feature: 'weekly_overview',
@@ -40,6 +119,10 @@ async function fetchWeeklyInsight(
       daysWithPlanner: context.stats?.daysWithPlanner ?? null,
       moodCheckins: context.stats?.moodCheckins ?? null,
       unlockedAchievements: context.stats?.unlockedAchievements ?? null,
+      todayMissionsDone: context.stats?.todayMissionsDone ?? null,
+      weekPoints: context.stats?.weekPoints ?? null,
+      totalPoints: context.stats?.totalPoints ?? null,
+      streak: context.stats?.streak ?? null,
     })
 
     const res = await fetch('/api/ai/emocional', {
@@ -52,22 +135,17 @@ async function fetchWeeklyInsight(
       }),
     })
 
-    if (!res.ok) {
-      throw new Error('Resposta inválida da IA')
-    }
+    if (!res.ok) throw new Error('Resposta inválida')
 
     const data = await res.json()
     const insight = data?.weeklyInsight
-
-    if (!insight || typeof insight !== 'object') {
-      throw new Error('Insight semanal vazio')
-    }
+    if (!insight || typeof insight !== 'object') throw new Error('Insight vazio')
 
     return {
       title: insight.title ?? 'Seu resumo emocional da semana',
       summary:
         insight.summary ??
-        'Pelos seus registros recentes, esta semana parece ter sido marcada por momentos de cansaço, mas também por pequenas vitórias.',
+        'Pelos seus registros recentes, esta semana teve cansaço, mas também pequenas vitórias.',
       suggestions:
         Array.isArray(insight.suggestions) && insight.suggestions.length > 0
           ? insight.suggestions
@@ -77,17 +155,14 @@ async function fetchWeeklyInsight(
             ],
     }
   } catch (error) {
-    console.error(
-      '[Eu360] Erro ao buscar insight semanal, usando fallback:',
-      error,
-    )
+    console.error('[Eu360] fallback insight semanal:', error)
     return {
       title: 'Seu resumo emocional da semana',
       summary:
-        'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.',
+        'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos.',
       suggestions: [
         'Proteja ao menos um momento do dia que te faz bem, mesmo que sejam 10 minutos.',
-        'Perceba quais situações estão drenando demais sua energia e veja o que pode ser simplificado.',
+        'Perceba o que está drenando sua energia e veja o que pode ser simplificado.',
       ],
     }
   }
@@ -104,13 +179,89 @@ export default function Eu360Client() {
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
   const [loadingInsight, setLoadingInsight] = useState(false)
 
-  // mockzinho de métricas até conectar com Minhas conquistas
-  const mockStats = {
-    daysWithPlanner: 7,
-    moodCheckins: 4,
-    unlockedAchievements: 3,
+  /** ======= Stats reais (derivadas do mesmo LS das Missões/Jornada) ======= */
+  const [stats, setStats] = useState<WeeklyInsightContext['stats']>({
+    daysWithPlanner: 0,
+    moodCheckins: 0,
+    unlockedAchievements: 0,
+    todayMissionsDone: 0,
+    weekPoints: 0,
+    totalPoints: 0,
+    streak: 0,
+  })
+
+  const computed = useMemo(() => {
+    const t = todayKey()
+    const weekKeys = getWeekKeys(new Date())
+
+    const totalPoints = readTotalPoints()
+    const weekPoints = weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0)
+
+    // “Dias com planner” aqui vira: dias ativos com missão/pontos.
+    // (Quando conectarmos planner real, trocamos sem quebrar UI.)
+    const daysWithPlanner = weekKeys.filter(k => readDayPoints(k) > 0).length
+
+    // “Check-ins de humor” ainda não existe fonte real explícita;
+    // por enquanto, usamos “missões feitas hoje” como sinal de presença (e deixamos pronto para trocar).
+    const todayMissionsDone = MISSION_IDS.filter(id => readDone(t, id)).length
+
+    const unlockedAchievements = BADGES.filter(b => totalPoints >= b.minPoints).length
+    const streak = readStreak()
+
+    return {
+      daysWithPlanner,
+      moodCheckins: 0,
+      unlockedAchievements,
+      todayMissionsDone,
+      weekPoints,
+      totalPoints,
+      streak,
+    }
+  }, [])
+
+  function refreshStats() {
+    // recalcula a partir do LS; simples e seguro
+    const t = todayKey()
+    const weekKeys = getWeekKeys(new Date())
+    const totalPoints = readTotalPoints()
+    const weekPoints = weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0)
+    const daysWithPlanner = weekKeys.filter(k => readDayPoints(k) > 0).length
+    const todayMissionsDone = MISSION_IDS.filter(id => readDone(t, id)).length
+    const unlockedAchievements = BADGES.filter(b => totalPoints >= b.minPoints).length
+    const streak = readStreak()
+
+    setStats({
+      daysWithPlanner,
+      moodCheckins: 0,
+      unlockedAchievements,
+      todayMissionsDone,
+      weekPoints,
+      totalPoints,
+      streak,
+    })
   }
 
+  useEffect(() => {
+    // inicializa
+    setStats(computed)
+
+    // atualiza ao voltar para a aba (usuária marcou missões no Meu Dia e voltou)
+    const onFocus = () => refreshStats()
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refreshStats()
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /** ======= Insight semanal alimentado por stats reais ======= */
   useEffect(() => {
     let isMounted = true
 
@@ -119,15 +270,11 @@ export default function Eu360Client() {
       try {
         const result = await fetchWeeklyInsight({
           firstName,
-          stats: mockStats,
+          stats,
         })
-        if (isMounted) {
-          setWeeklyInsight(result)
-        }
+        if (isMounted) setWeeklyInsight(result)
       } finally {
-        if (isMounted) {
-          setLoadingInsight(false)
-        }
+        if (isMounted) setLoadingInsight(false)
       }
     }
 
@@ -138,9 +285,13 @@ export default function Eu360Client() {
     }
   }, [
     firstName,
-    mockStats.daysWithPlanner,
-    mockStats.moodCheckins,
-    mockStats.unlockedAchievements,
+    stats.daysWithPlanner,
+    stats.moodCheckins,
+    stats.unlockedAchievements,
+    stats.todayMissionsDone,
+    stats.weekPoints,
+    stats.totalPoints,
+    stats.streak,
   ])
 
   const content = (
@@ -157,7 +308,7 @@ export default function Eu360Client() {
         bg-[linear-gradient(to_bottom,#2f3a56_0%,#553a62_10%,#8b3563_22%,#fd2597_40%,#fdbed7_68%,#ffe1f1_88%,#fff7fa_100%)]
       "
     >
-      {/* overlays premium (acabamento, sem mexer no layout interno) */}
+      {/* overlays premium */}
       <div
         aria-hidden="true"
         className="
@@ -205,7 +356,7 @@ export default function Eu360Client() {
           {/* 1 — WIZARD DO PERFIL */}
           <ProfileForm />
 
-          {/* 2 — PAINEL DA JORNADA */}
+          {/* 2 — PAINEL DA JORNADA (conectado) */}
           <SectionWrapper>
             <Reveal>
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
@@ -215,8 +366,11 @@ export default function Eu360Client() {
                       Painel da sua jornada
                     </p>
                     <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
-                      Um olhar rápido sobre como você vem cuidando de vocês
+                      Um olhar rápido sobre como você vem caminhando
                     </h2>
+                    <p className="mt-1 text-[12px] text-[var(--color-ink-muted)] leading-relaxed">
+                      {firstName}, isso aqui é para trazer clareza — não cobrança.
+                    </p>
                   </div>
                   <AppIcon
                     name="sparkles"
@@ -228,19 +382,19 @@ export default function Eu360Client() {
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
                   <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
                     <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">
-                      Dias com planner
+                      Dias ativos (7)
                     </p>
                     <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
-                      {mockStats.daysWithPlanner}
+                      {stats.daysWithPlanner ?? 0}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
                     <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">
-                      Check-ins de humor
+                      Missões hoje
                     </p>
                     <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
-                      {mockStats.moodCheckins}
+                      {stats.todayMissionsDone ?? 0}/4
                     </p>
                   </div>
 
@@ -249,9 +403,40 @@ export default function Eu360Client() {
                       Conquistas
                     </p>
                     <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">
-                      {mockStats.unlockedAchievements}
+                      {stats.unlockedAchievements ?? 0}
                     </p>
                   </div>
+                </div>
+
+                {/* CTAs de conexão (o que conversa com o resto do app) */}
+                <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+                  <Link href="/meu-dia" className="w-full md:w-auto">
+                    <button
+                      type="button"
+                      className="w-full inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] hover:opacity-95 transition"
+                      onClick={() => {
+                        try {
+                          track('eu360.cta', { target: 'meu-dia' })
+                        } catch {}
+                      }}
+                    >
+                      Ir para Meu Dia (missões e planner)
+                    </button>
+                  </Link>
+
+                  <Link href="/maternar/minha-jornada" className="w-full md:w-auto">
+                    <button
+                      type="button"
+                      className="w-full inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold bg-white text-[var(--color-ink)] border border-[#F5D7E5] hover:bg-[#ffe1f1] transition"
+                      onClick={() => {
+                        try {
+                          track('eu360.cta', { target: 'minha-jornada' })
+                        } catch {}
+                      }}
+                    >
+                      Ver Minha Jornada (selos e progresso)
+                    </button>
+                  </Link>
                 </div>
 
                 {/* insight emocional da semana */}
@@ -271,13 +456,10 @@ export default function Eu360Client() {
                           Olhar carinhoso sobre a sua semana
                         </p>
                         <h3 className="text-base md:text-lg font-semibold text-[var(--color-ink)] leading-snug">
-                          {weeklyInsight?.title ||
-                            'Seu resumo emocional da semana'}
+                          {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
                         <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
-                          {firstName}, este espaço é para te ajudar a enxergar
-                          seus últimos dias com mais gentileza, não para te
-                          cobrar mais nada.
+                          {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com mais gentileza.
                         </p>
                       </div>
                     </div>
@@ -285,34 +467,30 @@ export default function Eu360Client() {
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
                         <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
-                          Estou olhando com carinho para a sua semana para
-                          trazer uma reflexão pra você…
+                          Estou olhando com carinho para a sua semana para trazer uma reflexão…
                         </p>
                       ) : (
                         <>
                           <p className="text-sm leading-relaxed text-[var(--color-ink)]">
                             {weeklyInsight?.summary ??
-                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
+                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo.'}
                           </p>
 
-                          {weeklyInsight?.suggestions &&
-                            weeklyInsight.suggestions.length > 0 && (
-                              <div className="space-y-1.5">
-                                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-[0.16em]">
-                                  Pequenos passos para os próximos dias
-                                </p>
-                                <ul className="space-y-1.5 text-sm text-[var(--color-ink)]">
-                                  {weeklyInsight.suggestions.map((item, idx) => (
-                                    <li key={idx}>• {item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                          {weeklyInsight?.suggestions && weeklyInsight.suggestions.length > 0 && (
+                            <div className="space-y-1.5">
+                              <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-[0.16em]">
+                                Pequenos passos para os próximos dias
+                              </p>
+                              <ul className="space-y-1.5 text-sm text-[var(--color-ink)]">
+                                {weeklyInsight.suggestions.map((item, idx) => (
+                                  <li key={idx}>• {item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
 
                           <p className="text-[11px] text-[var(--color-ink-muted)] mt-2 leading-relaxed">
-                            Isso não é um diagnóstico, e sim um convite para
-                            você se observar com mais leveza e cuidado. Um passo
-                            de cada vez já é muito.
+                            Isso não é um diagnóstico. É um convite para se observar com mais leveza e cuidado.
                           </p>
                         </>
                       )}
@@ -337,9 +515,7 @@ export default function Eu360Client() {
                       Leve o Materna360 para o próximo nível
                     </h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                      Desbloqueie conteúdos exclusivos, acompanhamento mais
-                      próximo e ferramentas avançadas para cuidar de você, da
-                      sua rotina e da sua família.
+                      Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas avançadas.
                     </p>
                   </div>
 
@@ -353,8 +529,7 @@ export default function Eu360Client() {
                       </button>
                     </Link>
                     <p className="text-[11px] text-white/85 md:text-right max-w-xs">
-                      Planos pensados para diferentes fases da maternidade —
-                      você escolhe o que faz mais sentido agora.
+                      Planos pensados para diferentes fases — você escolhe o que faz sentido agora.
                     </p>
                   </div>
                 </div>
@@ -364,7 +539,6 @@ export default function Eu360Client() {
         </div>
       </div>
 
-      {/* Rodapé legal padrão */}
       <LegalFooter />
     </main>
   )
