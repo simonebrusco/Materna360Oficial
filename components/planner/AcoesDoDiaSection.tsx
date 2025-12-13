@@ -2,21 +2,11 @@
 
 import React, { useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
+import type { PlannerTask } from './types'
+
 
 // ✅ Tipagem local para não depender do MeuDiaPremium
 // (mantém o build estável mesmo que a estrutura de task evolua)
-export type PlannerTask = {
-  id: string
-  title?: string
-  text?: string
-  done?: boolean
-  completed?: boolean
-  date?: string
-  time?: string
-  // permite campos adicionais sem quebrar tipagem
-  [key: string]: unknown
-}
-
 interface AcoesDoDiaSectionProps {
   tasks: PlannerTask[]
 }

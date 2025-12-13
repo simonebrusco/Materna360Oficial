@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - isolated-vm
+
+onlyBuiltDependencies:
+  - esbuild
+  - unrs-resolver

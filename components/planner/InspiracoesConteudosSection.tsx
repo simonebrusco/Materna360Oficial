@@ -2,7 +2,7 @@
 
 import React from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import type { PlannerContent } from './MeuDiaPremium'
+import type { PlannerContent } from './types'
 
 interface InspiracoesConteudosSectionProps {
   contents: PlannerContent[]
