@@ -148,7 +148,7 @@ export default function MaternarClient() {
                     Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
                   </p>
 
-                  {/* Mini cards */}
+                  {/* Mini cards (enxuto) */}
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                     <MiniTile
                       label="Meu ritmo hoje"
@@ -156,19 +156,9 @@ export default function MaternarClient() {
                       tag="check-in"
                     />
                     <MiniTile
-                      label="Mini rotina de cuidado"
-                      href="/maternar/cuidar-de-mim#mini-rotina"
-                      tag="3–5 minutos"
-                    />
-                    <MiniTile
                       label="Pausas rápidas"
                       href="/maternar/cuidar-de-mim#pausas"
                       tag="respirar"
-                    />
-                    <MiniTile
-                      label="Para você hoje"
-                      href="/maternar/cuidar-de-mim#para-voce"
-                      tag="gesto gentil"
                     />
                   </div>
 
@@ -219,16 +209,6 @@ export default function MaternarClient() {
                       label="Brincadeiras do dia"
                       href="/maternar/meu-filho#brincadeiras"
                       tag="ideias"
-                    />
-                    <MiniTile
-                      label="Desenvolvimento por fase"
-                      href="/maternar/meu-filho#desenvolvimento"
-                      tag="fases"
-                    />
-                    <MiniTile
-                      label="Rotina leve da criança"
-                      href="/maternar/meu-filho#rotina"
-                      tag="ritmo"
                     />
                     <MiniTile
                       label="Gestos de conexão"
@@ -290,16 +270,6 @@ export default function MaternarClient() {
                       href="/maternar/meu-dia-leve#ideias"
                       tag="rápido"
                     />
-                    <MiniTile
-                      label="Receitas leves"
-                      href="/maternar/meu-dia-leve#receitas"
-                      tag="cozinha"
-                    />
-                    <MiniTile
-                      label="Passo leve do dia"
-                      href="/maternar/meu-dia-leve#passo-leve"
-                      tag="ação"
-                    />
                   </div>
 
                   <div className="mt-4 pt-1">
@@ -355,16 +325,6 @@ export default function MaternarClient() {
                       href="/maternar/minha-jornada#missoes"
                       tag="pequenos passos"
                     />
-                    <MiniTile
-                      label="Selos & medalhas"
-                      href="/maternar/minha-jornada#selos"
-                      tag="reconhecimento"
-                    />
-                    <MiniTile
-                      label="Progresso mensal"
-                      href="/maternar/minha-jornada#progresso"
-                      tag="mensal"
-                    />
                   </div>
 
                   <div className="mt-4 pt-1">
@@ -378,7 +338,7 @@ export default function MaternarClient() {
               </Reveal>
             </div>
 
-            {/* BLOCO FINAL: Serviços Materna360 */}
+            {/* BLOCO FINAL: Mais ferramentas (rotas reais, menos ruído) */}
             <Reveal>
               <SoftCard
                 className="
@@ -395,27 +355,54 @@ export default function MaternarClient() {
                   </div>
                   <div className="space-y-1">
                     <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                      Serviços
+                      Mais ferramentas
                     </span>
                     <h2 className="text-lg font-semibold text-[#2f3a56]">
-                      Serviços Materna360
+                      Outros espaços do Maternar
                     </h2>
                     <p className="text-[15px] text-[#545454] leading-relaxed">
-                      Tudo do Materna360 em um só lugar.
+                      Acesse quando fizer sentido, sem pesar seu começo do dia.
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 pt-2">
-                  <Link href="/maternar/servicos/materna-plus">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                  <Link href="/maternar/biblioteca-materna">
                     <Button
                       variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
+                      Biblioteca Materna
+                    </Button>
+                  </Link>
+
+                  <Link href="/maternar/ferramentas/ajuda-e-parcerias">
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
+                      Ajuda & Parcerias
+                    </Button>
+                  </Link>
+
+                  <Link href="/maternar/minhas-conquistas">
+                    <Button
+                      variant="secondary"
+                      className="w-full text-[12px] md:text-[13px]"
+                    >
+                      Minhas Conquistas
+                    </Button>
+                  </Link>
+
+                  <Link href="/maternar/materna-plus">
+                    <Button
                       className="w-full text-[12px] md:text-[13px]"
                     >
                       Materna+
                     </Button>
                   </Link>
-                  <Link href="/maternar/servicos/materna-box">
+
+                  <Link href="/maternar/materna-plus/maternabox">
                     <Button
                       variant="secondary"
                       className="w-full text-[12px] md:text-[13px]"
@@ -423,36 +410,13 @@ export default function MaternarClient() {
                       MaternaBox
                     </Button>
                   </Link>
-                  <Link href="/maternar/servicos/biblioteca">
-                    <Button
-                      variant="secondary"
-                      className="w-full text-[12px] md:text-[13px]"
-                    >
-                      Biblioteca
-                    </Button>
-                  </Link>
-                  <Link href="/maternar/servicos/planos">
+
+                  <Link href="/planos">
                     <Button
                       variant="secondary"
                       className="w-full text-[12px] md:text-[13px]"
                     >
                       Planos
-                    </Button>
-                  </Link>
-                  <Link href="/maternar/servicos/parcerias">
-                    <Button
-                      variant="secondary"
-                      className="w-full text-[12px] md:text-[13px]"
-                    >
-                      Parcerias
-                    </Button>
-                  </Link>
-                  <Link href="/maternar/servicos/ajuda">
-                    <Button
-                      variant="secondary"
-                      className="w-full text-[12px] md:text-[13px]"
-                    >
-                      Ajuda
                     </Button>
                   </Link>
                 </div>
