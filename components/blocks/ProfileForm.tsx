@@ -6,19 +6,25 @@ import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
+import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
 /**
  * =========================================================
  * EXPORTS NECESSÁRIOS PARA OS BLOCKS (fix do build)
  * =========================================================
- * AboutYouBlock.tsx importa:
- *  - ProfileFormState
- *  - FormErrors
  */
 export type FormErrors = Record<string, string | undefined>
 
+/**
+ * Compatibilidade:
+ * - AboutYouBlock usa form.figurinha
+ * - Este ProfileForm já usava draft.sticker
+ * Para evitar regressões, suportamos os DOIS.
+ */
 export type ProfileFormState = {
-  sticker?: StickerId
+  figurinha?: ProfileStickerId
+  sticker?: ProfileStickerId
+
   name?: string
   preferredName?: string
   role?: string
@@ -26,14 +32,6 @@ export type ProfileFormState = {
   biggestPain?: string[]
   energy?: string
 }
-
-type StickerId =
-  | 'carinhosa'
-  | 'leve'
-  | 'determinada'
-  | 'criativa'
-  | 'tranquila'
-  | 'resiliente'
 
 type ProfileDraft = ProfileFormState
 
@@ -61,20 +59,6 @@ function safeParseJSON<T>(raw: string | null): T | null {
     return null
   }
 }
-
-const STICKERS_V2: Array<{
-  id: StickerId
-  title: string
-  subtitle: string
-  emoji: string
-}> = [
-  { id: 'carinhosa', title: 'Mãe Carinhosa', subtitle: 'Amo meu jeito protetor.', emoji: '🧸' },
-  { id: 'leve', title: 'Mãe Leve', subtitle: 'Equilíbrio e presença.', emoji: '🌿' },
-  { id: 'determinada', title: 'Mãe Determinada', subtitle: 'Faço com coragem.', emoji: '✨' },
-  { id: 'criativa', title: 'Mãe Criativa', subtitle: 'Invento e transformo.', emoji: '🎨' },
-  { id: 'tranquila', title: 'Mãe Tranquila', subtitle: 'Gentileza e acolhimento.', emoji: '🕊️' },
-  { id: 'resiliente', title: 'Mãe Resiliente', subtitle: 'Caio, levanto e recomeço.', emoji: '🌸' },
-]
 
 function StepPill({
   active,
@@ -114,7 +98,21 @@ export default function ProfileForm() {
 
   useEffect(() => {
     const saved = safeParseJSON<ProfileDraft>(safeGetLS(LS_KEY))
-    if (saved) setDraft(saved)
+    if (saved) {
+      // Normaliza: se vier "sticker" antigo, espelha em "figurinha"
+      const normalized: ProfileDraft = { ...saved }
+
+      if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
+        normalized.figurinha = normalized.sticker
+      }
+
+      // Se vier figurinha, espelha em sticker (compat)
+      if (!normalized.sticker && normalized.figurinha && isProfileStickerId(normalized.figurinha)) {
+        normalized.sticker = normalized.figurinha
+      }
+
+      setDraft(normalized)
+    }
   }, [])
 
   useEffect(() => {
@@ -145,11 +143,14 @@ export default function ProfileForm() {
   function saveAndContinue() {
     try {
       track('eu360.profile.saved', {
-        sticker: draft.sticker ?? null,
+        figurinha: draft.figurinha ?? null,
         hasName: Boolean(draft.name),
       })
     } catch {}
   }
+
+  // Sempre ler a figurinha pelo campo oficial (compat)
+  const activeStickerId = draft.figurinha ?? draft.sticker ?? undefined
 
   return (
     <SectionWrapper>
@@ -189,14 +190,18 @@ export default function ProfileForm() {
               <p className="text-[11px] text-[#6a6a6a]">Escolha a vibe que mais combina com você hoje.</p>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {STICKERS_V2.map(s => {
-                  const active = draft.sticker === s.id
+                {STICKER_OPTIONS.map(s => {
+                  const active = activeStickerId === s.id
                   return (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => {
-                        setDraft(prev => ({ ...prev, sticker: s.id }))
+                        if (!isProfileStickerId(s.id)) return
+
+                        // Grava nos dois campos (compat total)
+                        setDraft(prev => ({ ...prev, figurinha: s.id, sticker: s.id }))
+
                         try {
                           track('eu360.profile.sticker_selected', { id: s.id })
                         } catch {}
