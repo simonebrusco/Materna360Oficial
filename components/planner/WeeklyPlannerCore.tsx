@@ -48,6 +48,12 @@ type WeekDaySummary = {
   familyCount: number
 }
 
+type MonthCell = {
+  date: Date
+  dateKey: string
+  inMonth: boolean
+}
+
 function safeId() {
   try {
     return crypto.randomUUID()
@@ -129,6 +135,47 @@ function dateLabel(dateKey: string) {
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
 }
 
+function toFirstOfMonth(d: Date) {
+  const x = new Date(d)
+  x.setDate(1)
+  x.setHours(0, 0, 0, 0)
+  return x
+}
+
+function addMonths(base: Date, delta: number) {
+  const d = new Date(base)
+  d.setMonth(d.getMonth() + delta)
+  d.setDate(1)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function generateMonthMatrix(monthBase: Date): MonthCell[][] {
+  const first = toFirstOfMonth(monthBase)
+  const month = first.getMonth()
+  const year = first.getFullYear()
+
+  // Queremos grade começando em SEG (Monday)
+  const start = startOfWeekMonday(first)
+
+  const rows: MonthCell[][] = []
+  for (let r = 0; r < 6; r++) {
+    const row: MonthCell[] = []
+    for (let c = 0; c < 7; c++) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + r * 7 + c)
+      const inMonth = d.getMonth() === month && d.getFullYear() === year
+      row.push({
+        date: d,
+        dateKey: getBrazilDateKey(d),
+        inMonth,
+      })
+    }
+    rows.push(row)
+  }
+  return rows
+}
+
 // =======================================================
 // COMPONENTE PRINCIPAL
 // =======================================================
@@ -149,12 +196,17 @@ export default function WeeklyPlannerCore() {
   const [appointmentModalMode, setAppointmentModalMode] = useState<'create' | 'edit'>('create')
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
+  // Sheet premium: calendário mensal
+  const [monthSheetOpen, setMonthSheetOpen] = useState(false)
+  const [monthCursor, setMonthCursor] = useState<Date>(toFirstOfMonth(new Date()))
+
   // ======================================================
   // HYDRATION
   // ======================================================
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
+    setMonthCursor(toFirstOfMonth(new Date()))
     setIsHydrated(true)
 
     try {
@@ -168,12 +220,9 @@ export default function WeeklyPlannerCore() {
   useEffect(() => {
     if (!isHydrated || !selectedDateKey) return
 
-    const loadedAppointments =
-      load<Appointment[]>('planner/appointments/all', []) ?? []
-    const loadedTasks =
-      load<TaskItem[]>(`planner/tasks/${selectedDateKey}`, []) ?? []
-    const loadedNotes =
-      load<string>(`planner/notes/${selectedDateKey}`, '') ?? ''
+    const loadedAppointments = load<Appointment[]>('planner/appointments/all', []) ?? []
+    const loadedTasks = load<TaskItem[]>(`planner/tasks/${selectedDateKey}`, []) ?? []
+    const loadedNotes = load<string>(`planner/notes/${selectedDateKey}`, '') ?? ''
 
     setPlannerData({
       appointments: loadedAppointments,
@@ -206,6 +255,7 @@ export default function WeeklyPlannerCore() {
   const handleDateSelect = useCallback((date: Date) => {
     const key = getBrazilDateKey(date)
     setSelectedDateKey(key)
+    setMonthCursor(toFirstOfMonth(date))
 
     try {
       track('planner.date_clicked', { tab: 'meu-dia', dateKey: key })
@@ -277,28 +327,36 @@ export default function WeeklyPlannerCore() {
   // ======================================================
   // MODAL OPENERS
   // ======================================================
-  const openCreateAppointmentModal = useCallback(
-    (dateKey?: string) => {
-      setAppointmentModalMode('create')
-      setEditingAppointment(null)
-      if (dateKey) setSelectedDateKey(dateKey)
-      setAppointmentModalOpen(true)
+  const openCreateAppointmentModal = useCallback((dateKey?: string) => {
+    setAppointmentModalMode('create')
+    setEditingAppointment(null)
+    if (dateKey) setSelectedDateKey(dateKey)
+    setAppointmentModalOpen(true)
 
-      try {
-        track('planner.appointment_modal_opened', { tab: 'meu-dia', mode: 'create' })
-      } catch {}
-    },
-    [],
-  )
+    try {
+      track('planner.appointment_modal_opened', { tab: 'meu-dia', mode: 'create' })
+    } catch {}
+  }, [])
 
   const openEditAppointmentModal = useCallback((appt: Appointment) => {
     setAppointmentModalMode('edit')
     setEditingAppointment(appt)
     setSelectedDateKey(appt.dateKey)
+    setMonthCursor(toFirstOfMonth(new Date(appt.dateKey + 'T00:00:00')))
+
     setAppointmentModalOpen(true)
 
     try {
       track('planner.appointment_modal_opened', { tab: 'meu-dia', mode: 'edit' })
+    } catch {}
+  }, [])
+
+  const openMonthSheet = useCallback(() => {
+    setMonthCursor(toFirstOfMonth(selectedDate))
+    setMonthSheetOpen(true)
+
+    try {
+      track('planner.month_sheet_opened', { tab: 'meu-dia' })
     } catch {}
   }, [])
 
@@ -318,6 +376,18 @@ export default function WeeklyPlannerCore() {
     [plannerData.appointments],
   )
 
+  const appointmentsByDateKey = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const a of plannerData.appointments) {
+      map.set(a.dateKey, (map.get(a.dateKey) ?? 0) + 1)
+    }
+    return map
+  }, [plannerData.appointments])
+
+  const monthMatrix = useMemo(() => generateMonthMatrix(monthCursor), [monthCursor])
+
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
   if (!isHydrated) return null
 
   // ======================================================
@@ -327,10 +397,15 @@ export default function WeeklyPlannerCore() {
     <>
       <Reveal>
         <div className="space-y-6 md:space-y-8">
-          {/* Top bar */}
+          {/* Top bar (mantém layout do print) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openMonthSheet}
+                className="flex items-center gap-2 text-left group"
+                aria-label="Abrir calendário do mês"
+              >
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
                   <AppIcon name="calendar" className="h-4 w-4 text-[var(--color-brand)]" />
                 </span>
@@ -338,11 +413,11 @@ export default function WeeklyPlannerCore() {
                   <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                     Planner
                   </p>
-                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
+                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize group-hover:text-[var(--color-brand)] transition-colors">
                     {selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h2>
                 </div>
-              </div>
+              </button>
 
               <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
                 <button
@@ -371,10 +446,10 @@ export default function WeeklyPlannerCore() {
             </div>
           </SoftCard>
 
-          {/* WEEK VIEW */}
+          {/* WEEK VIEW (intocado: somente weekData) */}
           {viewMode === 'week' && <WeekView weekData={weekData} />}
 
-          {/* DAY VIEW */}
+          {/* DAY VIEW (mantém layout do print) */}
           {viewMode === 'day' && (
             <div className="space-y-6">
               {/* LEMBRETES */}
@@ -500,9 +575,7 @@ export default function WeeklyPlannerCore() {
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {sortedAppointments.length === 0 ? (
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      Você ainda não marcou nenhum compromisso.
-                    </p>
+                    <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
                   ) : (
                     sortedAppointments.map(appt => (
                       <button
@@ -526,9 +599,7 @@ export default function WeeklyPlannerCore() {
                           </div>
                         </div>
 
-                        <span className="text-[11px] text-[var(--color-text-muted)]">
-                          Editar
-                        </span>
+                        <span className="text-[11px] text-[var(--color-text-muted)]">Editar</span>
                       </button>
                     ))
                   )}
@@ -537,7 +608,7 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* Navegação rápida de data (mínimo) */}
+          {/* Navegação rápida de data (mantém layout do print) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -553,9 +624,7 @@ export default function WeeklyPlannerCore() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold text-[var(--color-text-main)]">
-                {selectedDate.toLocaleDateString('pt-BR')}
-              </div>
+              <div className="text-sm font-semibold text-[var(--color-text-main)]">{selectedDate.toLocaleDateString('pt-BR')}</div>
 
               <button
                 type="button"
@@ -573,6 +642,144 @@ export default function WeeklyPlannerCore() {
           </SoftCard>
         </div>
       </Reveal>
+
+      {/* ===================================================== */}
+      {/* SHEET PREMIUM — CALENDÁRIO DO MÊS (mantém layout)      */}
+      {/* ===================================================== */}
+      {monthSheetOpen && (
+        <div
+          className="fixed inset-0 z-[60]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Calendário do mês"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+            onClick={() => setMonthSheetOpen(false)}
+            aria-label="Fechar"
+          />
+
+          <div className="absolute left-1/2 top-[10%] w-[92%] max-w-md -translate-x-1/2">
+            <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                    Calendário
+                  </p>
+                  <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
+                    {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                  </h3>
+                  <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                    Toque em um dia para selecionar e já criar um compromisso.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                    onClick={() => setMonthCursor(prev => addMonths(prev, -1))}
+                    aria-label="Mês anterior"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                    onClick={() => setMonthCursor(prev => addMonths(prev, 1))}
+                    aria-label="Próximo mês"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-7 gap-2 text-[10px] font-semibold text-[var(--color-text-muted)] mb-2">
+                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => (
+                  <div key={d} className="text-center">
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                {monthMatrix.map((row, idx) => (
+                  <div key={idx} className="grid grid-cols-7 gap-2">
+                    {row.map(cell => {
+                      const isSelected = cell.dateKey === selectedDateKey
+                      const isToday = cell.dateKey === todayKey
+                      const hasAppt = (appointmentsByDateKey.get(cell.dateKey) ?? 0) > 0
+
+                      return (
+                        <button
+                          key={cell.dateKey}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDateKey(cell.dateKey)
+                            setMonthCursor(toFirstOfMonth(cell.date))
+                            setMonthSheetOpen(false)
+                            openCreateAppointmentModal(cell.dateKey)
+                          }}
+                          className={`relative h-10 rounded-2xl border text-sm font-semibold transition-all ${
+                            isSelected
+                              ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_10px_26px_rgba(253,37,151,0.35)]'
+                              : cell.inMonth
+                                ? 'bg-white text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
+                                : 'bg-white/60 text-[var(--color-text-muted)] border-[var(--color-soft-strong)]'
+                          }`}
+                          aria-label={`Selecionar dia ${cell.date.toLocaleDateString('pt-BR')}`}
+                        >
+                          <span className="inline-flex items-center justify-center w-full">
+                            {cell.date.getDate()}
+                          </span>
+
+                          {/* marcador HOJE */}
+                          {isToday && !isSelected && (
+                            <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                          )}
+
+                          {/* dot compromissos */}
+                          {hasAppt && (
+                            <span
+                              className={`absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full ${
+                                isSelected ? 'bg-white' : 'bg-[var(--color-brand)]'
+                              }`}
+                            />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const d = new Date()
+                    setSelectedDateKey(getBrazilDateKey(d))
+                    setMonthCursor(toFirstOfMonth(d))
+                    setMonthSheetOpen(false)
+                  }}
+                  className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+                >
+                  Ir para hoje
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMonthSheetOpen(false)}
+                  className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
+                >
+                  Fechar
+                </button>
+              </div>
+            </SoftCard>
+          </div>
+        </div>
+      )}
 
       {/* ===================================================== */}
       {/* MODAL PREMIUM — CREATE / EDIT                           */}
@@ -596,14 +803,24 @@ export default function WeeklyPlannerCore() {
               time: data.time,
             })
 
-            // 2) cria lembrete correspondente (sem duplicar se já existir igual)
+            // 2) cria lembrete correspondente NO DIA CERTO (persistência por dateKey)
             const label = data.time ? `${data.time} · ${data.title}` : data.title
-            setPlannerData(prev => {
-              const exists = prev.tasks.some(t => t.origin === 'agenda' && t.title === label)
-              if (exists) return prev
-              const t: TaskItem = { id: safeId(), title: label, done: false, origin: 'agenda' }
-              return { ...prev, tasks: [...prev.tasks, t] }
-            })
+            try {
+              const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
+              const exists = existing.some(t => t.origin === 'agenda' && t.title === label)
+              if (!exists) {
+                const t: TaskItem = { id: safeId(), title: label, done: false, origin: 'agenda' }
+                save(`planner/tasks/${data.dateKey}`, [...existing, t])
+              }
+            } catch {
+              // fallback para não quebrar fluxo
+              setPlannerData(prev => {
+                const exists = prev.tasks.some(t => t.origin === 'agenda' && t.title === label)
+                if (exists) return prev
+                const t: TaskItem = { id: safeId(), title: label, done: false, origin: 'agenda' }
+                return { ...prev, tasks: [...prev.tasks, t] }
+              })
+            }
           } else if (editingAppointment) {
             const updated: Appointment = {
               ...editingAppointment,
@@ -616,6 +833,7 @@ export default function WeeklyPlannerCore() {
 
           // mantém date selecionada em sync
           setSelectedDateKey(data.dateKey)
+          setMonthCursor(toFirstOfMonth(new Date(data.dateKey + 'T00:00:00')))
 
           try {
             track('planner.appointment_modal_saved', { tab: 'meu-dia', mode: appointmentModalMode })
@@ -627,9 +845,7 @@ export default function WeeklyPlannerCore() {
         onDelete={
           appointmentModalMode === 'edit' && editingAppointment
             ? () => {
-                const ok = window.confirm(
-                  'Tem certeza que deseja excluir este compromisso? Essa ação não pode ser desfeita.',
-                )
+                const ok = window.confirm('Tem certeza que deseja excluir este compromisso? Essa ação não pode ser desfeita.')
                 if (!ok) return
 
                 deleteAppointment(editingAppointment.id)
