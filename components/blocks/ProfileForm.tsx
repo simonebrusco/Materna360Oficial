@@ -9,7 +9,7 @@ import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
 import { isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
-// Blocks (atenção: imports como NAMED, para evitar erro de default export)
+// Blocks (imports NAMED)
 import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
 import { ChildrenBlock } from './ProfileFormBlocks/ChildrenBlock'
 import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
@@ -20,9 +20,8 @@ import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
  * =========================================================
  */
 
-// errors genéricos + filhos por id
-export type FormErrors = {
-  [key: string]: string | undefined
+// ✅ Fix definitivo do conflito de index signature
+export type FormErrors = Record<string, string | undefined> & {
   filhos?: Record<string, string | undefined>
 }
 
@@ -33,16 +32,12 @@ export type ChildProfile = {
   idadeMeses?: number
 }
 
-/**
- * ProfileFormState = contrato de compatibilidade entre blocks.
- * Mantemos campos "canônicos" + campos legados que ainda existem nos blocks.
- */
 export type ProfileFormState = {
   // ✅ Figurinhas (compat)
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
-  // ✅ Canônicos (mais novos)
+  // ✅ Canônicos
   name?: string
   preferredName?: string
   role?: string
@@ -53,7 +48,7 @@ export type ProfileFormState = {
   contentPreferences?: string[]
   notificationPreferences?: string[]
 
-  // ✅ Legados (ainda usados em alguns blocks)
+  // ✅ Legados (ainda usados em blocks)
   nomeMae?: string
   userPreferredName?: string
   userRole?: string
@@ -61,7 +56,7 @@ export type ProfileFormState = {
   userMainChallenges?: string[]
   userEnergyPeakTime?: string
 
-  // ✅ Preferências (erro atual do PreferencesBlock)
+  // ✅ Preferências (PreferencesBlock)
   userContentPreferences?: string[]
   userNotificationPreferences?: string[]
 }
@@ -93,18 +88,10 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
-function safeId() {
-  try {
-    return crypto.randomUUID()
-  } catch {
-    return Math.random().toString(36).slice(2, 10)
-  }
-}
-
 function normalizeDraft(input: ProfileFormState): ProfileFormState {
   const next: ProfileFormState = { ...input }
 
-  // figurinha <-> sticker (compat)
+  // figurinha <-> sticker
   if (!next.figurinha && next.sticker && isProfileStickerId(next.sticker)) {
     next.figurinha = next.sticker
   }
@@ -112,7 +99,7 @@ function normalizeDraft(input: ProfileFormState): ProfileFormState {
     next.sticker = next.figurinha
   }
 
-  // preferredName compat (legado -> canônico)
+  // preferredName compat
   if (!next.preferredName && next.userPreferredName) next.preferredName = next.userPreferredName
   if (!next.userPreferredName && next.preferredName) next.userPreferredName = next.preferredName
 
@@ -143,7 +130,7 @@ function normalizeDraft(input: ProfileFormState): ProfileFormState {
   if (!next.notificationPreferences && next.userNotificationPreferences) next.notificationPreferences = next.userNotificationPreferences
   if (!next.userNotificationPreferences && next.notificationPreferences) next.userNotificationPreferences = next.notificationPreferences
 
-  // defaults seguros
+  // defaults
   if (!Array.isArray(next.biggestPain)) next.biggestPain = []
   if (!Array.isArray(next.userMainChallenges)) next.userMainChallenges = next.biggestPain ?? []
   if (!Array.isArray(next.contentPreferences)) next.contentPreferences = []
@@ -215,11 +202,8 @@ export default function ProfileForm() {
   }
 
   const step = useMemo(() => {
-    // heurística simples: se tiver filhos -> pelo menos step 2
     if ((form.filhos?.length ?? 0) > 0) return 2
-    // se tiver prefs -> step 4
     if ((form.userContentPreferences?.length ?? 0) > 0 || (form.userNotificationPreferences?.length ?? 0) > 0) return 4
-    // se tiver o básico do “Você”
     if (form.figurinha || form.nomeMae || form.userPreferredName || form.userRole) return 1
     return 1
   }, [form])
@@ -227,13 +211,10 @@ export default function ProfileForm() {
   function validate(): FormErrors {
     const next: FormErrors = {}
 
-    // Mantemos como “soft”: só validamos nome se o block exigir required no input.
-    // (AboutYouBlock tem required em alguns cenários)
     if (!form.nomeMae || form.nomeMae.trim().length < 2) {
       next.nomeMae = 'Digite seu nome para continuar.'
     }
 
-    // filhos: se existir campo idadeMeses e vier inválido, marca por id
     const childErrors: Record<string, string> = {}
     for (const c of form.filhos ?? []) {
       if (typeof c.idadeMeses === 'number' && c.idadeMeses < 0) {
@@ -241,12 +222,6 @@ export default function ProfileForm() {
       }
     }
     if (Object.keys(childErrors).length > 0) next.filhos = childErrors
-
-    // desafios (se o block marcar como obrigatório)
-    if ((form.userMainChallenges?.length ?? 0) === 0 && (form.biggestPain?.length ?? 0) === 0) {
-      // não bloqueia hard; só sinaliza se você quiser
-      // next.userMainChallenges = 'Selecione pelo menos um desafio.'
-    }
 
     return next
   }
@@ -289,7 +264,6 @@ export default function ProfileForm() {
             </span>
           </div>
 
-          {/* Pills (visual) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active={step === 1} number={1} label="Você" />
             <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
@@ -297,9 +271,7 @@ export default function ProfileForm() {
             <StepPill active={step === 4} number={4} label="Rede & preferências" />
           </div>
 
-          {/* Card interno */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-5">
-            {/* 1) VOCÊ */}
             <div className="space-y-3">
               <div>
                 <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Sobre você</h3>
@@ -313,7 +285,6 @@ export default function ProfileForm() {
 
             <div className="pt-2 border-t border-[#F5D7E5]" />
 
-            {/* 2) FILHOS */}
             <div className="space-y-3">
               <div>
                 <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Seu(s) filho(s)</h3>
@@ -327,7 +298,6 @@ export default function ProfileForm() {
 
             <div className="pt-2 border-t border-[#F5D7E5]" />
 
-            {/* 3) PREFERÊNCIAS */}
             <div className="space-y-3">
               <div>
                 <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Preferências</h3>
@@ -340,7 +310,6 @@ export default function ProfileForm() {
             </div>
           </SoftCard>
 
-          {/* CTA */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.08)] p-4 md:p-5">
             <button
               type="button"
