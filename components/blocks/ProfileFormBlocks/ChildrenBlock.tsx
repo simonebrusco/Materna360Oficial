@@ -1,192 +1,154 @@
 'use client'
 
+import React, { useMemo } from 'react'
 import { FormErrors, ProfileFormState, ChildProfile } from '../ProfileForm'
 
 interface Props {
   form: ProfileFormState
   errors: FormErrors
-  babyBirthdate: string
-  todayISO: string
-  onBirthdateChange: (value: string) => void
-  onUpdateChild: (id: string, key: keyof ChildProfile, value: string | number | string[]) => void
-  onAddChild: () => void
-  onRemoveChild: (id: string) => void
+  onChange: (updates: Partial<ProfileFormState>) => void
 }
 
-export function ChildrenBlock({
-  form,
-  errors,
-  babyBirthdate,
-  todayISO,
-  onBirthdateChange,
-  onUpdateChild,
-  onAddChild,
-  onRemoveChild,
-}: Props) {
+function makeId() {
+  // sem depender de crypto.randomUUID (compatível com mais ambientes)
+  return `child_${Date.now()}_${Math.random().toString(16).slice(2)}`
+}
+
+export function ChildrenBlock({ form, errors, onChange }: Props) {
+  const filhos = useMemo(() => (Array.isArray(form.filhos) ? form.filhos : []), [form.filhos])
+
+  function setFilhos(next: ChildProfile[]) {
+    onChange({ filhos: next })
+  }
+
+  function addChild() {
+    const next: ChildProfile = {
+      id: makeId(),
+      nome: '',
+      genero: '',
+      idadeMeses: undefined,
+    }
+    setFilhos([...filhos, next])
+  }
+
+  function removeChild(id: string) {
+    setFilhos(filhos.filter(c => c.id !== id))
+  }
+
+  function updateChild<K extends keyof ChildProfile>(id: string, key: K, value: ChildProfile[K]) {
+    setFilhos(
+      filhos.map(c => {
+        if (c.id !== id) return c
+        return { ...c, [key]: value }
+      }),
+    )
+  }
+
   return (
     <div className="space-y-4">
-
-      {form.filhos.map((child, index) => (
-        <div key={child.id} className="border-t border-gray-200 pt-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-gray-800">Filho {index + 1}</h3>
-            {form.filhos.length > 1 && (
-              <button
-                type="button"
-                onClick={() => onRemoveChild(child.id)}
-                className="text-[11px] text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Remover
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor={`child-name-${index}`} className="text-xs font-medium text-gray-800">
-                Nome ou apelido
-              </label>
-              <input
-                id={`child-name-${index}`}
-                type="text"
-                value={child.nome}
-                onChange={(event) => onUpdateChild(child.id, 'nome', event.target.value)}
-                placeholder="Opcional"
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-gender-${index}`} className="text-xs font-medium text-gray-800">
-                Gênero
-              </label>
-              <select
-                id={`child-gender-${index}`}
-                value={child.genero}
-                onChange={(event) => onUpdateChild(child.id, 'genero', event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
-              >
-                <option value="menino">Menino</option>
-                <option value="menina">Menina</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-age-${index}`} className="text-xs font-medium text-gray-800">
-                Idade (meses)
-              </label>
-              <input
-                id={`child-age-${index}`}
-                type="number"
-                min={0}
-                inputMode="numeric"
-                value={child.idadeMeses}
-                onChange={(event) => onUpdateChild(child.id, 'idadeMeses', event.target.value)}
-                className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 ${
-                  errors.filhos?.[child.id] ? 'border-primary-400 ring-1 ring-primary-300' : ''
-                }`}
-              />
-              {errors.filhos?.[child.id] && (
-                <p className="text-[11px] text-primary-600 font-medium">{errors.filhos[child.id]}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-age-range-${index}`} className="text-xs font-medium text-gray-800">
-                Faixa etária
-              </label>
-              <select
-                id={`child-age-range-${index}`}
-                value={child.ageRange || ''}
-                onChange={(event) => onUpdateChild(child.id, 'ageRange', event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
-              >
-                <option value="">Selecione...</option>
-                <option value="0-1">0–1 ano</option>
-                <option value="1-3">1–3 anos</option>
-                <option value="3-6">3–6 anos</option>
-                <option value="6-8">6–8 anos</option>
-                <option value="8+">8+ anos</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-phase-${index}`} className="text-xs font-medium text-gray-800">
-                Qual fase mais desafia vocês?
-              </label>
-              <select
-                id={`child-phase-${index}`}
-                value={child.currentPhase || ''}
-                onChange={(event) => onUpdateChild(child.id, 'currentPhase', event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
-              >
-                <option value="">Selecione...</option>
-                <option value="sono">Sono</option>
-                <option value="birras">Birras / emoções intensas</option>
-                <option value="escolar">Rotina escolar</option>
-                <option value="socializacao">Socialização / amizade</option>
-                <option value="alimentacao">Alimentação</option>
-              </select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor={`child-notes-${index}`} className="text-xs font-medium text-gray-800">
-                Algo importante que você acha que eu deveria saber?
-              </label>
-              <textarea
-                id={`child-notes-${index}`}
-                value={child.notes || ''}
-                onChange={(event) => onUpdateChild(child.id, 'notes', event.target.value)}
-                placeholder="Escreva algo que nos ajude a entender melhor..."
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 resize-none"
-                rows={3}
-              />
-              <p className="text-[11px] text-gray-500">Opcional, mas muito valioso para personalizar.</p>
-            </div>
-
-            {index === 0 && (
-              <div className="space-y-2 md:col-span-2">
-                <label htmlFor="baby-birthdate" className="text-xs font-medium text-gray-800">
-                  Data de nascimento do bebê
-                </label>
-                <input
-                  id="baby-birthdate"
-                  type="date"
-                  value={babyBirthdate}
-                  onChange={(event) => onBirthdateChange(event.target.value)}
-                  max={todayISO}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-                />
-                <p className="text-[11px] text-gray-500">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
-              </div>
-            )}
-
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor={`child-allergies-${index}`} className="text-xs font-medium text-gray-800">
-                Alergias (separe por vírgula)
-              </label>
-              <input
-                id={`child-allergies-${index}`}
-                type="text"
-                value={child.alergias.join(', ')}
-                onChange={(event) => onUpdateChild(child.id, 'alergias', event.target.value)}
-                placeholder="Ex.: leite, ovo, amendoim"
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-              />
-            </div>
-          </div>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xs font-semibold text-[var(--color-text-main)]">Seu(s) filho(s)</h3>
+          <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+            Isso ajuda o app a sugerir rotinas e conteúdos compatíveis com a fase.
+          </p>
         </div>
-      ))}
 
-      {errors.general && <p className="text-[11px] text-primary-600 font-medium">{errors.general}</p>}
+        <button
+          type="button"
+          onClick={addChild}
+          className="shrink-0 rounded-full bg-white border border-[#f5d7e5] px-3 py-2 text-[11px] font-semibold text-[#2f3a56] hover:bg-[#fff3f8] transition"
+        >
+          + Adicionar
+        </button>
+      </div>
 
-      <button
-        type="button"
-        onClick={onAddChild}
-        className="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline"
-      >
-        + Adicionar outro filho
-      </button>
+      {filhos.length === 0 ? (
+        <div className="rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3">
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            Você pode adicionar agora ou deixar para depois.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filhos.map((child, index) => {
+            const childError = errors.filhos?.[child.id]
+            return (
+              <div
+                key={child.id}
+                className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-4 space-y-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-[#2f3a56]">
+                    Filho {index + 1}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => removeChild(child.id)}
+                    className="text-[11px] font-semibold text-[#fd2597] hover:opacity-80 transition"
+                  >
+                    Remover
+                  </button>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  {/* Nome */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#2f3a56]">Nome (opcional)</label>
+                    <input
+                      type="text"
+                      value={child.nome ?? ''}
+                      onChange={e => updateChild(child.id, 'nome', e.target.value)}
+                      placeholder="Opcional"
+                      className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-xs text-[#2f3a56] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+                    />
+                  </div>
+
+                  {/* Gênero */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#2f3a56]">Gênero</label>
+                    <select
+                      value={child.genero ?? ''}
+                      onChange={e => updateChild(child.id, 'genero', e.target.value)}
+                      className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-xs text-[#2f3a56] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
+                    >
+                      <option value="">Selecione…</option>
+                      <option value="menina">Menina</option>
+                      <option value="menino">Menino</option>
+                      <option value="outro">Outro / Prefiro não dizer</option>
+                    </select>
+                  </div>
+
+                  {/* Idade em meses */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#2f3a56]">Idade (em meses)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={typeof child.idadeMeses === 'number' ? String(child.idadeMeses) : ''}
+                      onChange={e => {
+                        const raw = e.target.value
+                        const num = raw === '' ? undefined : Number(raw)
+                        updateChild(child.id, 'idadeMeses', Number.isFinite(num as number) ? (num as number) : undefined)
+                      }}
+                      placeholder="Ex.: 24"
+                      className={[
+                        'w-full rounded-xl border bg-white px-3 py-2 text-xs text-[#2f3a56] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30',
+                        childError ? 'border-[#fd2597] ring-2 ring-[#fd2597]/20' : 'border-[#f5d7e5]',
+                      ].join(' ')}
+                      aria-invalid={Boolean(childError)}
+                    />
+                    {childError ? (
+                      <p className="text-[11px] text-[#fd2597] font-medium">{childError}</p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
