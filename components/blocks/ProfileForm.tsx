@@ -7,15 +7,17 @@ import { Reveal } from '@/components/ui/Reveal'
 import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
 
-type StickerId =
-  | 'carinhosa'
-  | 'leve'
-  | 'determinada'
-  | 'criativa'
-  | 'tranquila'
-  | 'resiliente'
+/**
+ * =========================================================
+ * EXPORTS NECESSÁRIOS PARA OS BLOCKS (fix do build)
+ * =========================================================
+ * AboutYouBlock.tsx importa:
+ *  - ProfileFormState
+ *  - FormErrors
+ */
+export type FormErrors = Record<string, string | undefined>
 
-type ProfileDraft = {
+export type ProfileFormState = {
   sticker?: StickerId
   name?: string
   preferredName?: string
@@ -24,6 +26,16 @@ type ProfileDraft = {
   biggestPain?: string[]
   energy?: string
 }
+
+type StickerId =
+  | 'carinhosa'
+  | 'leve'
+  | 'determinada'
+  | 'criativa'
+  | 'tranquila'
+  | 'resiliente'
+
+type ProfileDraft = ProfileFormState
 
 const LS_KEY = 'eu360_profile_v1'
 
@@ -174,9 +186,7 @@ export default function ProfileForm() {
 
             <div className="space-y-2">
               <p className="text-[12px] font-semibold text-[#2f3a56]">Escolha uma figurinha de perfil</p>
-              <p className="text-[11px] text-[#6a6a6a]">
-                Escolha a vibe que mais combina com você hoje.
-              </p>
+              <p className="text-[11px] text-[#6a6a6a]">Escolha a vibe que mais combina com você hoje.</p>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {STICKERS_V2.map(s => {
