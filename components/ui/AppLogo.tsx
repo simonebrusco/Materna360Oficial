@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 
 interface AppLogoProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: number
@@ -21,11 +22,12 @@ export function AppLogo({
       aria-label="Materna360"
       {...props}
     >
-      <img
+      <Image
         src="/images/logo-principal.png"
         alt="Materna360"
         width={width}
         height={height}
+        priority={priority}
         style={{ maxWidth: '100%', height: 'auto' }}
       />
     </div>
