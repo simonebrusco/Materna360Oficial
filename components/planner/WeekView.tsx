@@ -22,7 +22,6 @@ function hasAnyActivity(day: WeekDaySummary) {
 }
 
 function normWeekdayShort(name: string) {
-  // "seg.", "seg" -> "SEG."
   const base = (name || '').replace('.', '').trim().slice(0, 3).toUpperCase()
   return base ? `${base}.` : '—'
 }
@@ -112,9 +111,9 @@ export default function WeekView({ weekData }: WeekViewProps) {
                   />
                 </div>
 
-                {/* Mensagem suave quando está vazio */}
+                {/* AJUSTE: evita repetição da mensagem no mobile */}
                 {!hasAnyActivity(day) && (
-                  <p className="mt-3 text-[10px] md:text-[11px] text-[var(--color-text-muted)]">
+                  <p className="mt-3 text-[10px] md:text-[11px] text-[var(--color-text-muted)] md:block hidden">
                     Esse dia ainda está em branco. Você pode começar pelos atalhos do planner ou adicionando um compromisso no calendário.
                   </p>
                 )}
