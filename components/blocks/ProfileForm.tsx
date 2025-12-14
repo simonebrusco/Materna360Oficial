@@ -18,22 +18,31 @@ export type FormErrors = Record<string, string | undefined>
 
 /**
  * =========================================================
- * ProfileFormState — CONTRATO “UNIFICADO”
+ * ChildProfile — CONTRATO PARA ChildrenBlock
  * ---------------------------------------------------------
- * Este tipo precisa suportar:
- * 1) Os campos usados nos Blocks atuais (ex.: AboutYouBlock)
- * 2) Campos legados/alternativos usados em versões anteriores
- * 3) Persistência sem quebrar o app (localStorage)
- *
- * Estratégia: manter os campos "novos" + aliases legados,
- * e normalizar/espelhar automaticamente (normalizeDraft()).
+ * Mantém um shape estável e “neutro” (sem tom clínico).
+ * Se o ChildrenBlock precisar de mais campos depois, a gente
+ * adiciona aqui de forma compatível (opcional).
+ * =========================================================
+ */
+export type ChildProfile = {
+  id: string
+  name?: string
+  age?: number
+  birthYear?: number
+  schoolStage?: 'bebe' | 'infantil' | 'fundamental' | 'outro' | string
+}
+
+/**
+ * =========================================================
+ * ProfileFormState — CONTRATO “UNIFICADO”
  * =========================================================
  */
 export type ProfileFormState = {
   /**
    * Stickers (perfil)
    * - AboutYouBlock usa: figurinha
-   * - Algumas telas/versões antigas usavam: sticker
+   * - versões antigas usavam: sticker
    */
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
@@ -41,7 +50,7 @@ export type ProfileFormState = {
   /**
    * Nome
    * - AboutYouBlock usa: nomeMae
-   * - Algumas telas usam: name
+   * - outras telas usam: name
    */
   nomeMae?: string
   name?: string
@@ -49,8 +58,8 @@ export type ProfileFormState = {
   /**
    * Como prefere ser chamada
    * - AboutYouBlock usa: userPreferredName
-   * - Versões “novas” usam: preferredName
-   * - Alguns rascunhos antigos: nomePreferido
+   * - versões novas usam: preferredName
+   * - rascunhos antigos: nomePreferido
    */
   userPreferredName?: string
   preferredName?: string
@@ -59,7 +68,7 @@ export type ProfileFormState = {
   /**
    * Você é:
    * - AboutYouBlock usa: userRole
-   * - Algumas telas usam: role
+   * - outras telas usam: role
    */
   userRole?: 'mae' | 'pai' | 'outro' | string
   role?: 'mae' | 'pai' | 'cuidador' | 'outro' | string
@@ -67,7 +76,7 @@ export type ProfileFormState = {
   /**
    * Base emocional
    * - AboutYouBlock usa: userEmotionalBaseline
-   * - Algumas telas usam: feeling
+   * - outras telas usam: feeling
    */
   userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve' | string
   feeling?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia' | string
@@ -75,7 +84,7 @@ export type ProfileFormState = {
   /**
    * Desafios
    * - AboutYouBlock usa: userMainChallenges (array)
-   * - Algumas telas usam: biggestPain (array)
+   * - outras telas usam: biggestPain (array)
    */
   userMainChallenges?: string[]
   biggestPain?: string[]
@@ -83,10 +92,18 @@ export type ProfileFormState = {
   /**
    * Pico de energia
    * - AboutYouBlock usa: userEnergyPeakTime
-   * - Algumas telas usam: energy
+   * - outras telas usam: energy
    */
   userEnergyPeakTime?: 'manha' | 'tarde' | 'noite' | 'varia' | string
   energy?: 'manha' | 'tarde' | 'noite' | 'varia' | string
+
+  /**
+   * Filhos (ChildrenBlock)
+   * - shape atual: children
+   * - compat: kids (caso exista em versões antigas)
+   */
+  children?: ChildProfile[]
+  kids?: ChildProfile[]
 }
 
 type ProfileDraft = ProfileFormState
@@ -121,34 +138,23 @@ function safeParseJSON<T>(raw: string | null): T | null {
 /**
  * =========================================================
  * NORMALIZAÇÃO / COMPATIBILIDADE
- * ---------------------------------------------------------
- * Espelha campos entre versões/blocks para:
- * - parar a cascata de erros
- * - evitar “campo fantasma” em UI diferente
- * - manter localStorage coerente
  * =========================================================
  */
 function normalizeDraft(input: ProfileDraft): ProfileDraft {
   const d: ProfileDraft = { ...input }
 
-  // ---------------------------
   // figurinha <-> sticker
-  // ---------------------------
   if (d.figurinha && isProfileStickerId(d.figurinha)) {
     d.sticker = d.figurinha
   } else if (d.sticker && isProfileStickerId(d.sticker)) {
     d.figurinha = d.sticker
   }
 
-  // ---------------------------
   // nomeMae <-> name
-  // ---------------------------
   if (typeof d.nomeMae === 'string' && !d.name) d.name = d.nomeMae
   if (typeof d.name === 'string' && !d.nomeMae) d.nomeMae = d.name
 
-  // ---------------------------
-  // userPreferredName <-> preferredName <-> nomePreferido
-  // ---------------------------
+  // preferred name aliases
   const preferred =
     d.userPreferredName?.trim() ||
     d.preferredName?.trim() ||
@@ -161,22 +167,15 @@ function normalizeDraft(input: ProfileDraft): ProfileDraft {
     d.nomePreferido = preferred
   }
 
-  // ---------------------------
-  // userRole <-> role
-  // ---------------------------
+  // role alias
   if (d.userRole && !d.role) d.role = d.userRole
   if (d.role && !d.userRole) d.userRole = d.role
 
-  // ---------------------------
-  // userEmotionalBaseline <-> feeling
-  // (mantém ambos; não tenta “converter” valores diferentes)
-  // ---------------------------
+  // emotional baseline alias (não converte valores)
   if (d.userEmotionalBaseline && !d.feeling) d.feeling = d.userEmotionalBaseline
   if (d.feeling && !d.userEmotionalBaseline) d.userEmotionalBaseline = d.feeling
 
-  // ---------------------------
-  // userMainChallenges <-> biggestPain
-  // ---------------------------
+  // challenges alias
   if (Array.isArray(d.userMainChallenges) && (!d.biggestPain || !Array.isArray(d.biggestPain))) {
     d.biggestPain = d.userMainChallenges
   }
@@ -184,15 +183,19 @@ function normalizeDraft(input: ProfileDraft): ProfileDraft {
     d.userMainChallenges = d.biggestPain
   }
 
-  // ---------------------------
-  // userEnergyPeakTime <-> energy
-  // ---------------------------
+  // energy alias
   if (d.userEnergyPeakTime && !d.energy) d.energy = d.userEnergyPeakTime
   if (d.energy && !d.userEnergyPeakTime) d.userEnergyPeakTime = d.energy
 
-  // Garantias de array
+  // children <-> kids
+  if (Array.isArray(d.children) && (!d.kids || !Array.isArray(d.kids))) d.kids = d.children
+  if (Array.isArray(d.kids) && (!d.children || !Array.isArray(d.children))) d.children = d.kids
+
+  // guarantees
   if (!Array.isArray(d.userMainChallenges)) d.userMainChallenges = []
   if (!Array.isArray(d.biggestPain)) d.biggestPain = []
+  if (!Array.isArray(d.children)) d.children = []
+  if (!Array.isArray(d.kids)) d.kids = d.children
 
   return d
 }
@@ -233,6 +236,8 @@ export default function ProfileForm() {
     normalizeDraft({
       userMainChallenges: [],
       biggestPain: [],
+      children: [],
+      kids: [],
     }),
   )
 
@@ -250,7 +255,6 @@ export default function ProfileForm() {
   const onChange = (updates: Partial<ProfileFormState>) => {
     setForm(prev => normalizeDraft({ ...prev, ...updates }))
     setErrors(prev => {
-      // limpa erros dos campos alterados
       const next = { ...prev }
       for (const k of Object.keys(updates)) next[k] = undefined
       return next
@@ -258,8 +262,6 @@ export default function ProfileForm() {
   }
 
   const canSave = useMemo(() => {
-    // validações mínimas para não travar UX
-    // nome obrigatório apenas se o block estiver exigindo
     return Boolean((form.nomeMae || form.name || '').trim())
   }, [form.nomeMae, form.name])
 
@@ -270,19 +272,14 @@ export default function ProfileForm() {
       nextErrors.nomeMae = 'Por favor, preencha seu nome.'
     }
 
-    // (opcional) role obrigatório se quiser reforçar
-    if (!form.userRole && !form.role) {
-      // não bloqueia, mas você pode ligar depois
-    }
-
     setErrors(nextErrors)
-
     if (Object.values(nextErrors).some(Boolean)) return
 
     try {
       track('eu360.profile.saved', {
         figurinha: form.figurinha ?? null,
         hasName: Boolean((form.nomeMae || form.name || '').trim()),
+        childrenCount: Array.isArray(form.children) ? form.children.length : 0,
       })
     } catch {}
   }
@@ -303,7 +300,6 @@ export default function ProfileForm() {
             </p>
           </div>
 
-          {/* Pills (visual only; mantém a pegada do print) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active number={1} label="Você" />
             <StepPill number={2} label="Seu(s) filho(s)" />
@@ -311,7 +307,6 @@ export default function ProfileForm() {
             <StepPill number={4} label="Rede & preferências" />
           </div>
 
-          {/* Card interno (conteúdo do Step 1) */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             <div>
               <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Sobre você</h3>
