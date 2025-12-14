@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -45,12 +45,14 @@ function safeGetLS(key: string): string | null {
     return null
   }
 }
+
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
   } catch {}
 }
+
 function safeParseJSON<T>(raw: string | null): T | null {
   try {
     if (!raw) return null
@@ -99,9 +101,9 @@ export default function ProfileForm() {
   useEffect(() => {
     const saved = safeParseJSON<ProfileDraft>(safeGetLS(LS_KEY))
     if (saved) {
-      // Normaliza: se vier "sticker" antigo, espelha em "figurinha"
       const normalized: ProfileDraft = { ...saved }
 
+      // Normaliza: se vier "sticker" antigo, espelha em "figurinha"
       if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
         normalized.figurinha = normalized.sticker
       }
@@ -340,7 +342,7 @@ export default function ProfileForm() {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-1">
       <p className="text-[11px] font-semibold text-[#2f3a56]">{label}</p>
