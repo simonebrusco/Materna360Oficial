@@ -64,49 +64,57 @@ function safeParseJSON<T>(raw: string | null): T | null {
 
 /**
  * =========================================================
- * COPY LOCAL (não depende do shape do StickerInfo)
- * - Mantém o “conceito das figurinhas” sem quebrar tipagem
- * - Se o time quiser, depois isso pode virar fonte única no /app/lib/stickers
+ * COPY (robusto e “à prova” de mudança de ids)
+ * - NÃO tipa por ProfileStickerId para não quebrar build
+ * - Se achar no map: usa copy bonito
+ * - Se não achar: humaniza o id real
  * =========================================================
  */
-const STICKER_COPY: Record<
-  ProfileStickerId,
+const STICKER_COPY_BY_ID: Record<string, { title: string; subtitle: string; icon?: React.ComponentProps<typeof AppIcon>['name'] }> =
   {
-    title: string
-    subtitle: string
-    icon: React.ComponentProps<typeof AppIcon>['name']
+    // exemplos (se os ids baterem, ótimo; se não baterem, não quebra)
+    carinhosa: { title: 'Mãe Carinhosa', subtitle: 'Amo meu jeito protetor.', icon: 'heart' },
+    leve: { title: 'Mãe Leve', subtitle: 'Equilíbrio e presença.', icon: 'sparkles' },
+    determinada: { title: 'Mãe Determinada', subtitle: 'Faço com coragem.', icon: 'target' },
+    criativa: { title: 'Mãe Criativa', subtitle: 'Invento e transformo.', icon: 'sparkles' },
+    tranquila: { title: 'Mãe Tranquila', subtitle: 'Gentileza e acolhimento.', icon: 'smile' },
+    resiliente: { title: 'Mãe Resiliente', subtitle: 'Caio, levanto e recomeço.', icon: 'sparkles' },
   }
-> = {
-  carinhosa: {
-    title: 'Mãe Carinhosa',
-    subtitle: 'Amo meu jeito protetor.',
-    icon: 'heart',
-  },
-  leve: {
-    title: 'Mãe Leve',
-    subtitle: 'Equilíbrio e presença.',
-    icon: 'sparkles',
-  },
-  determinada: {
-    title: 'Mãe Determinada',
-    subtitle: 'Faço com coragem.',
-    icon: 'target',
-  },
-  criativa: {
-    title: 'Mãe Criativa',
-    subtitle: 'Invento e transformo.',
-    icon: 'sparkles',
-  },
-  tranquila: {
-    title: 'Mãe Tranquila',
-    subtitle: 'Gentileza e acolhimento.',
-    icon: 'smile',
-  },
-  resiliente: {
-    title: 'Mãe Resiliente',
-    subtitle: 'Caio, levanto e recomeço.',
-    icon: 'sparkles',
-  },
+
+function humanizeStickerId(id: string) {
+  // ex: "mae-carinhosa" / "mae_carinhosa" / "carinhosaV2" -> "Mae Carinhosa" / "Carinhosa V2"
+  const spaced = id
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .trim()
+
+  if (!spaced) return 'Sua figurinha'
+
+  // Title Case simples (pt-BR friendly)
+  return spaced
+    .split(' ')
+    .filter(Boolean)
+    .map(w => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase()))
+    .join(' ')
+}
+
+function getStickerMeta(id: ProfileStickerId) {
+  const key = String(id)
+  const hit = STICKER_COPY_BY_ID[key]
+  if (hit) {
+    return {
+      title: hit.title,
+      subtitle: hit.subtitle,
+      icon: hit.icon ?? 'sparkles',
+    }
+  }
+
+  // fallback premium (neutro, sem “inventar” demais)
+  return {
+    title: humanizeStickerId(key),
+    subtitle: 'Uma escolha leve para representar seu momento.',
+    icon: 'sparkles' as React.ComponentProps<typeof AppIcon>['name'],
+  }
 }
 
 function StepPill({
@@ -200,15 +208,15 @@ export default function ProfileForm() {
 
   const activeStickerId = draft.figurinha ?? draft.sticker ?? undefined
 
-  // View model seguro: filtra apenas ids válidos + injeta copy local
   const stickerCards = useMemo(() => {
+    // Usa STICKER_OPTIONS como fonte oficial, mas só renderiza ids válidos
     return STICKER_OPTIONS
       .map(s => s.id)
       .filter(isProfileStickerId)
-      .map(id => ({
-        id,
-        ...STICKER_COPY[id],
-      }))
+      .map(id => {
+        const meta = getStickerMeta(id)
+        return { id, ...meta }
+      })
   }, [])
 
   return (
@@ -254,7 +262,7 @@ export default function ProfileForm() {
 
                   return (
                     <button
-                      key={s.id}
+                      key={String(s.id)}
                       type="button"
                       onClick={() => {
                         setDraft(prev => ({ ...prev, figurinha: s.id, sticker: s.id }))
