@@ -6,56 +6,113 @@ import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { track } from '@/app/lib/telemetry'
 
-/* =========================================================
-   TIPOS — CONTRATO DEFINITIVO ENTRE OS BLOCKS
-   ========================================================= */
+// Blocks (eles importam types deste arquivo)
+import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
+import { ChildrenBlock } from './ProfileFormBlocks/ChildrenBlock'
+import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
 
 /**
- * Erros:
- * - campos simples → string
- * - filhos → erros indexados por id
+ * =========================================================
+ * TIPOS EXPORTADOS (contrato oficial dos Blocks)
+ * =========================================================
  */
-export type FormErrors = {
-  [key: string]: string | undefined | Record<string, string | undefined>
-  filhos?: Record<string, string | undefined>
-}
+
+export type ChildGender = 'menino' | 'menina' | 'nao-informar'
 
 export type ChildProfile = {
   id: string
   nome?: string
-  genero?: string
+  genero?: ChildGender
   idadeMeses?: number
 }
 
-/**
- * ProfileFormState = contrato de compatibilidade
- * (campos novos + legados usados nos blocks)
- */
 export type ProfileFormState = {
-  /* Figurinhas */
+  // compat com versões antigas / transição
   figurinha?: string
   sticker?: string
 
-  /* About you */
+  // AboutYouBlock (campos exigidos nos erros que você mandou)
   nomeMae?: string
   userPreferredName?: string
-  userRole?: string
-  userEmotionalBaseline?: string
+  userRole?: 'mae' | 'pai' | 'outro'
+  userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
+
   userMainChallenges?: string[]
-  userEnergyPeakTime?: string
+  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite'
 
-  /* Children */
-  filhos?: ChildProfile[]
+  // ChildrenBlock
+  filhos: ChildProfile[]
 
-  /* Preferences */
+  // PreferencesBlock
   userContentPreferences?: string[]
   userNotificationPreferences?: string[]
 }
 
-/* =========================================================
-   COMPONENTES AUXILIARES
-   ========================================================= */
+/**
+ * IMPORTANTE:
+ * - SEM index signature genérico.
+ * - Cada field é string | undefined (renderizável).
+ * - filhos é um mapa por child.id (string -> string|undefined).
+ */
+export type FormErrors = {
+  nomeMae?: string
+  userPreferredName?: string
+  userRole?: string
+  userEmotionalBaseline?: string
+  userMainChallenges?: string
+  userEnergyPeakTime?: string
 
+  userContentPreferences?: string
+  userNotificationPreferences?: string
+
+  filhos?: Record<string, string | undefined>
+}
+
+/**
+ * =========================================================
+ * STORAGE
+ * =========================================================
+ */
+const LS_KEY = 'materna360_profile_form_v2'
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function safeId() {
+  try {
+    return crypto.randomUUID()
+  } catch {
+    return Math.random().toString(36).slice(2, 10)
+  }
+}
+
+/**
+ * =========================================================
+ * UI helpers
+ * =========================================================
+ */
 function StepPill({
   active,
   number,
@@ -87,93 +144,129 @@ function StepPill({
   )
 }
 
-/* =========================================================
-   PROFILE FORM (ORQUESTRADOR)
-   ========================================================= */
-
+/**
+ * =========================================================
+ * COMPONENT
+ * =========================================================
+ */
 export default function ProfileForm() {
-  const [form, setForm] = useState<ProfileFormState>({
-    filhos: [],
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+
+  const [form, setForm] = useState<ProfileFormState>(() => ({
+    filhos: [{ id: safeId(), genero: 'nao-informar' }],
     userMainChallenges: [],
     userContentPreferences: [],
     userNotificationPreferences: [],
-  })
+  }))
 
-  const [errors] = useState<FormErrors>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
-  /* Persistência simples */
+  // Load
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('eu360_profile')
-      if (raw) setForm(JSON.parse(raw))
-    } catch {}
+    const saved = safeParseJSON<Partial<ProfileFormState>>(safeGetLS(LS_KEY))
+    if (!saved) return
+
+    // normaliza filhos
+    const filhos = Array.isArray(saved.filhos) && saved.filhos.length > 0
+      ? saved.filhos.map((c) => ({
+          id: c.id || safeId(),
+          nome: c.nome ?? '',
+          genero: (c.genero as ChildGender) ?? 'nao-informar',
+          idadeMeses: typeof c.idadeMeses === 'number' ? c.idadeMeses : undefined,
+        }))
+      : [{ id: safeId(), genero: 'nao-informar' }]
+
+    setForm(prev => ({
+      ...prev,
+      ...saved,
+      filhos,
+      userMainChallenges: Array.isArray(saved.userMainChallenges) ? saved.userMainChallenges : (prev.userMainChallenges ?? []),
+      userContentPreferences: Array.isArray(saved.userContentPreferences) ? saved.userContentPreferences : (prev.userContentPreferences ?? []),
+      userNotificationPreferences: Array.isArray(saved.userNotificationPreferences) ? saved.userNotificationPreferences : (prev.userNotificationPreferences ?? []),
+    }))
   }, [])
 
+  // Save
   useEffect(() => {
-    try {
-      localStorage.setItem('eu360_profile', JSON.stringify(form))
-    } catch {}
+    safeSetLS(LS_KEY, JSON.stringify(form))
   }, [form])
 
   const onChange = (updates: Partial<ProfileFormState>) => {
-    setForm((prev) => ({ ...prev, ...updates }))
+    setForm(prev => {
+      const next = { ...prev, ...updates }
+
+      // garantias mínimas
+      if (!Array.isArray(next.filhos)) next.filhos = [{ id: safeId(), genero: 'nao-informar' }]
+      if (!Array.isArray(next.userMainChallenges)) next.userMainChallenges = []
+      if (!Array.isArray(next.userContentPreferences)) next.userContentPreferences = []
+      if (!Array.isArray(next.userNotificationPreferences)) next.userNotificationPreferences = []
+
+      return next
+    })
   }
 
-  /* =========================================================
-     STEP ATIVO — TIPADO CORRETAMENTE (1 | 2 | 3 | 4)
-     ========================================================= */
+  const canNext = useMemo(() => {
+    // validação leve por etapa (sem travar demais)
+    if (step === 1) return true
+    if (step === 2) return true
+    if (step === 3) return true
+    if (step === 4) return true
+    return true
+  }, [step])
 
-  const step = useMemo<1 | 2 | 3 | 4>(() => {
-    const hasAbout =
-      Boolean(form.figurinha) ||
-      Boolean(form.nomeMae) ||
-      Boolean(form.userPreferredName) ||
-      Boolean(form.userRole)
+  const goNext = () => setStep(s => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s))
+  const goPrev = () => setStep(s => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : s))
 
-    const hasChildren = (form.filhos?.length ?? 0) > 0
+  function validateAndSave() {
+    const nextErrors: FormErrors = {}
 
-    const hasPrefs =
-      (form.userContentPreferences?.length ?? 0) > 0 ||
-      (form.userNotificationPreferences?.length ?? 0) > 0
+    // validação mínima: nomeMae (se você quiser opcional, basta remover)
+    if (!form.nomeMae || String(form.nomeMae).trim().length < 2) {
+      nextErrors.nomeMae = 'Por favor, preencha seu nome.'
+    }
 
-    if (hasPrefs) return 4
-    if (hasChildren) return 2
-    if (hasAbout) return 1
-    return 1
-  }, [
-    form.figurinha,
-    form.nomeMae,
-    form.userPreferredName,
-    form.userRole,
-    form.filhos,
-    form.userContentPreferences,
-    form.userNotificationPreferences,
-  ])
+    // exemplo de validação de filhos (sem exagero)
+    if (form.filhos?.length) {
+      const childErrs: Record<string, string | undefined> = {}
+      for (const c of form.filhos) {
+        if (typeof c.idadeMeses === 'number' && c.idadeMeses < 0) {
+          childErrs[c.id] = 'Idade em meses inválida.'
+        }
+      }
+      if (Object.keys(childErrs).length > 0) nextErrors.filhos = childErrs
+    }
 
-  /* ========================================================= */
+    setErrors(nextErrors)
 
-  function saveAndContinue() {
+    const ok = Object.keys(nextErrors).length === 0
+    if (!ok) return
+
     try {
-      track('eu360.profile.saved', { step })
+      track('eu360.profile.saved', {
+        step: 4,
+        hasNomeMae: Boolean(form.nomeMae),
+        filhos: form.filhos?.length ?? 0,
+      })
     } catch {}
   }
 
   return (
     <SectionWrapper>
       <Reveal>
-        <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-6">
-
-          {/* Header */}
+        <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
           <div>
             <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
               Seu perfil
             </p>
-            <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)]">
+            <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
               Sobre você (sem pressa)
             </h2>
+            <p className="mt-1 text-[13px] text-[var(--color-ink-muted)] leading-relaxed">
+              Isso nos ajuda a adaptar o tom e as sugestões para a sua rotina real.
+            </p>
           </div>
 
-          {/* Pills */}
+          {/* Steps */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active={step === 1} number={1} label="Você" />
             <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
@@ -181,18 +274,76 @@ export default function ProfileForm() {
             <StepPill active={step === 4} number={4} label="Rede & preferências" />
           </div>
 
-          {/* Aqui entram os BLOCKS */}
-          {/* AboutYouBlock / ChildrenBlock / PreferencesBlock */}
-          {/* Eles recebem form, errors e onChange */}
+          {/* Body */}
+          <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-5">
+            {step === 1 ? (
+              <AboutYouBlock form={form} errors={errors} onChange={onChange} />
+            ) : null}
 
-          <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] p-4 md:p-6">
-            <button
-              type="button"
-              onClick={saveAndContinue}
-              className="w-full rounded-full bg-[#fd2597] text-white px-5 py-3 text-[13px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.30)]"
-            >
-              Salvar e continuar
-            </button>
+            {step === 2 ? (
+              <ChildrenBlock form={form} errors={errors} onChange={onChange} />
+            ) : null}
+
+            {step === 3 ? (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-[var(--color-text-main)]">
+                  Rotina (em construção)
+                </h3>
+                <p className="text-[11px] text-[var(--color-text-muted)]">
+                  Vamos manter esta etapa simples por enquanto para estabilizar o build. Depois alinhamos com o layout premium.
+                </p>
+              </div>
+            ) : null}
+
+            {step === 4 ? (
+              <PreferencesBlock form={form} errors={errors} onChange={onChange} />
+            ) : null}
+
+            {/* Nav */}
+            <div className="pt-2 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={goPrev}
+                disabled={step === 1}
+                className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Voltar
+              </button>
+
+              {step < 4 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!canNext) return
+                    goNext()
+                  }}
+                  className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                >
+                  Próximo
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={validateAndSave}
+                  className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                >
+                  Salvar e continuar
+                </button>
+              )}
+            </div>
+
+            {/* Erro global simples (se existir) */}
+            {errors.nomeMae ? (
+              <p className="text-[11px] text-[var(--color-brand)] font-medium">
+                {errors.nomeMae}
+              </p>
+            ) : null}
+          </SoftCard>
+
+          <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.08)] p-4 md:p-5">
+            <p className="text-center text-[10px] text-[#6a6a6a]">
+              Você poderá editar essas informações no seu Perfil.
+            </p>
           </SoftCard>
         </SoftCard>
       </Reveal>
