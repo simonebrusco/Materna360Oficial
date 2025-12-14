@@ -62,6 +62,53 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
+/**
+ * =========================================================
+ * COPY LOCAL (não depende do shape do StickerInfo)
+ * - Mantém o “conceito das figurinhas” sem quebrar tipagem
+ * - Se o time quiser, depois isso pode virar fonte única no /app/lib/stickers
+ * =========================================================
+ */
+const STICKER_COPY: Record<
+  ProfileStickerId,
+  {
+    title: string
+    subtitle: string
+    icon: React.ComponentProps<typeof AppIcon>['name']
+  }
+> = {
+  carinhosa: {
+    title: 'Mãe Carinhosa',
+    subtitle: 'Amo meu jeito protetor.',
+    icon: 'heart',
+  },
+  leve: {
+    title: 'Mãe Leve',
+    subtitle: 'Equilíbrio e presença.',
+    icon: 'sparkles',
+  },
+  determinada: {
+    title: 'Mãe Determinada',
+    subtitle: 'Faço com coragem.',
+    icon: 'target',
+  },
+  criativa: {
+    title: 'Mãe Criativa',
+    subtitle: 'Invento e transformo.',
+    icon: 'sparkles',
+  },
+  tranquila: {
+    title: 'Mãe Tranquila',
+    subtitle: 'Gentileza e acolhimento.',
+    icon: 'smile',
+  },
+  resiliente: {
+    title: 'Mãe Resiliente',
+    subtitle: 'Caio, levanto e recomeço.',
+    icon: 'sparkles',
+  },
+}
+
 function StepPill({
   active,
   number,
@@ -153,6 +200,17 @@ export default function ProfileForm() {
 
   const activeStickerId = draft.figurinha ?? draft.sticker ?? undefined
 
+  // View model seguro: filtra apenas ids válidos + injeta copy local
+  const stickerCards = useMemo(() => {
+    return STICKER_OPTIONS
+      .map(s => s.id)
+      .filter(isProfileStickerId)
+      .map(id => ({
+        id,
+        ...STICKER_COPY[id],
+      }))
+  }, [])
+
   return (
     <SectionWrapper>
       <Reveal>
@@ -169,7 +227,7 @@ export default function ProfileForm() {
             </p>
           </div>
 
-          {/* Pills (visual only; mantém a pegada do print) */}
+          {/* Pills (visual only) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active number={1} label="Você" />
             <StepPill number={2} label="Seu(s) filho(s)" />
@@ -191,7 +249,7 @@ export default function ProfileForm() {
               <p className="text-[11px] text-[#6a6a6a]">Escolha a vibe que mais combina com você hoje.</p>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {STICKER_OPTIONS.map(s => {
+                {stickerCards.map(s => {
                   const active = activeStickerId === s.id
 
                   return (
@@ -199,7 +257,6 @@ export default function ProfileForm() {
                       key={s.id}
                       type="button"
                       onClick={() => {
-                        if (!isProfileStickerId(s.id)) return
                         setDraft(prev => ({ ...prev, figurinha: s.id, sticker: s.id }))
                         try {
                           track('eu360.profile.sticker_selected', { id: s.id })
@@ -221,7 +278,7 @@ export default function ProfileForm() {
                           aria-hidden="true"
                         >
                           <AppIcon
-                            name="sparkles"
+                            name={s.icon}
                             className={active ? 'h-5 w-5 text-[#fd2597]' : 'h-5 w-5 text-[#fd2597]/90'}
                             decorative
                           />
