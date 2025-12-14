@@ -18,7 +18,7 @@ export type FormErrors = Record<string, string | undefined>
 /**
  * Compatibilidade:
  * - AboutYouBlock usa form.figurinha
- * - Este ProfileForm já usava draft.sticker
+ * - Algumas telas antigas podem ter usado "sticker"
  * Para evitar regressões, suportamos os DOIS.
  */
 export type ProfileFormState = {
@@ -89,6 +89,20 @@ function StepPill({
       <span>{label}</span>
     </span>
   )
+}
+
+function stickerIconFor(id: ProfileStickerId): React.ComponentProps<typeof AppIcon>['name'] {
+  // Ícones DS: mantendo algo “emocional”/neutro (sem emoji).
+  // Se quiser mapear 1:1 depois, podemos criar um map oficial no /app/lib/stickers.
+  const map: Partial<Record<ProfileStickerId, React.ComponentProps<typeof AppIcon>['name']>> = {
+    carinhosa: 'heart',
+    leve: 'sparkles',
+    determinada: 'target',
+    criativa: 'sparkles',
+    tranquila: 'smile',
+    resiliente: 'sparkles',
+  }
+  return map[id] ?? 'sparkles'
 }
 
 export default function ProfileForm() {
@@ -192,6 +206,8 @@ export default function ProfileForm() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {STICKER_OPTIONS.map(s => {
                   const active = activeStickerId === s.id
+                  const iconName = stickerIconFor(s.id)
+
                   return (
                     <button
                       key={s.id}
@@ -219,9 +235,15 @@ export default function ProfileForm() {
                             'h-10 w-10 rounded-full flex items-center justify-center',
                             active ? 'bg-white' : 'bg-[#ffe1f1]',
                           ].join(' ')}
+                          aria-hidden="true"
                         >
-                          <span className="text-lg">{s.emoji}</span>
+                          <AppIcon
+                            name={iconName}
+                            className={active ? 'h-5 w-5 text-[#fd2597]' : 'h-5 w-5 text-[#fd2597]/90'}
+                            decorative
+                          />
                         </div>
+
                         <div className="min-w-0">
                           <p className="text-[12px] font-semibold text-[#2f3a56] truncate">{s.title}</p>
                           <p className="text-[10px] text-[#6a6a6a] leading-snug">{s.subtitle}</p>
