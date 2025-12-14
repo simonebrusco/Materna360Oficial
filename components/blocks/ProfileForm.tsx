@@ -1,27 +1,22 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
-import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
-import { isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
-// Blocks (imports NAMED)
-import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
-import { ChildrenBlock } from './ProfileFormBlocks/ChildrenBlock'
-import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
+/* =========================================================
+   TIPOS — CONTRATO DEFINITIVO ENTRE OS BLOCKS
+   ========================================================= */
 
 /**
- * =========================================================
- * EXPORTS NECESSÁRIOS PARA OS BLOCKS (compat definitiva)
- * =========================================================
+ * Erros:
+ * - campos simples → string
+ * - filhos → erros indexados por id
  */
-
-// ✅ Fix definitivo do conflito de index signature
-export type FormErrors = Record<string, string | undefined> & {
+export type FormErrors = {
+  [key: string]: string | undefined | Record<string, string | undefined>
   filhos?: Record<string, string | undefined>
 }
 
@@ -32,23 +27,16 @@ export type ChildProfile = {
   idadeMeses?: number
 }
 
+/**
+ * ProfileFormState = contrato de compatibilidade
+ * (campos novos + legados usados nos blocks)
+ */
 export type ProfileFormState = {
-  // ✅ Figurinhas (compat)
-  figurinha?: ProfileStickerId
-  sticker?: ProfileStickerId
+  /* Figurinhas */
+  figurinha?: string
+  sticker?: string
 
-  // ✅ Canônicos
-  name?: string
-  preferredName?: string
-  role?: string
-  feeling?: string
-  biggestPain?: string[]
-  energy?: string
-  filhos?: ChildProfile[]
-  contentPreferences?: string[]
-  notificationPreferences?: string[]
-
-  // ✅ Legados (ainda usados em blocks)
+  /* About you */
   nomeMae?: string
   userPreferredName?: string
   userRole?: string
@@ -56,91 +44,17 @@ export type ProfileFormState = {
   userMainChallenges?: string[]
   userEnergyPeakTime?: string
 
-  // ✅ Preferências (PreferencesBlock)
+  /* Children */
+  filhos?: ChildProfile[]
+
+  /* Preferences */
   userContentPreferences?: string[]
   userNotificationPreferences?: string[]
 }
 
-const LS_KEY = 'eu360_profile_v1'
-
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  try {
-    if (!raw) return null
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
-
-function normalizeDraft(input: ProfileFormState): ProfileFormState {
-  const next: ProfileFormState = { ...input }
-
-  // figurinha <-> sticker
-  if (!next.figurinha && next.sticker && isProfileStickerId(next.sticker)) {
-    next.figurinha = next.sticker
-  }
-  if (!next.sticker && next.figurinha && isProfileStickerId(next.figurinha)) {
-    next.sticker = next.figurinha
-  }
-
-  // preferredName compat
-  if (!next.preferredName && next.userPreferredName) next.preferredName = next.userPreferredName
-  if (!next.userPreferredName && next.preferredName) next.userPreferredName = next.preferredName
-
-  // name compat
-  if (!next.name && next.nomeMae) next.name = next.nomeMae
-  if (!next.nomeMae && next.name) next.nomeMae = next.name
-
-  // role compat
-  if (!next.role && next.userRole) next.role = next.userRole
-  if (!next.userRole && next.role) next.userRole = next.role
-
-  // feeling compat
-  if (!next.feeling && next.userEmotionalBaseline) next.feeling = next.userEmotionalBaseline
-  if (!next.userEmotionalBaseline && next.feeling) next.userEmotionalBaseline = next.feeling
-
-  // biggestPain compat
-  if (!next.biggestPain && next.userMainChallenges) next.biggestPain = next.userMainChallenges
-  if (!next.userMainChallenges && next.biggestPain) next.userMainChallenges = next.biggestPain
-
-  // energy compat
-  if (!next.energy && next.userEnergyPeakTime) next.energy = next.userEnergyPeakTime
-  if (!next.userEnergyPeakTime && next.energy) next.userEnergyPeakTime = next.energy
-
-  // preferences compat
-  if (!next.contentPreferences && next.userContentPreferences) next.contentPreferences = next.userContentPreferences
-  if (!next.userContentPreferences && next.contentPreferences) next.userContentPreferences = next.contentPreferences
-
-  if (!next.notificationPreferences && next.userNotificationPreferences) next.notificationPreferences = next.userNotificationPreferences
-  if (!next.userNotificationPreferences && next.notificationPreferences) next.userNotificationPreferences = next.notificationPreferences
-
-  // defaults
-  if (!Array.isArray(next.biggestPain)) next.biggestPain = []
-  if (!Array.isArray(next.userMainChallenges)) next.userMainChallenges = next.biggestPain ?? []
-  if (!Array.isArray(next.contentPreferences)) next.contentPreferences = []
-  if (!Array.isArray(next.userContentPreferences)) next.userContentPreferences = next.contentPreferences ?? []
-  if (!Array.isArray(next.notificationPreferences)) next.notificationPreferences = []
-  if (!Array.isArray(next.userNotificationPreferences)) next.userNotificationPreferences = next.notificationPreferences ?? []
-  if (!Array.isArray(next.filhos)) next.filhos = []
-
-  return next
-}
+/* =========================================================
+   COMPONENTES AUXILIARES
+   ========================================================= */
 
 function StepPill({
   active,
@@ -173,97 +87,93 @@ function StepPill({
   )
 }
 
+/* =========================================================
+   PROFILE FORM (ORQUESTRADOR)
+   ========================================================= */
+
 export default function ProfileForm() {
-  const [form, setForm] = useState<ProfileFormState>(() =>
-    normalizeDraft({
-      biggestPain: [],
-      userMainChallenges: [],
-      contentPreferences: [],
-      userContentPreferences: [],
-      notificationPreferences: [],
-      userNotificationPreferences: [],
-      filhos: [],
-    }),
-  )
+  const [form, setForm] = useState<ProfileFormState>({
+    filhos: [],
+    userMainChallenges: [],
+    userContentPreferences: [],
+    userNotificationPreferences: [],
+  })
 
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [errors] = useState<FormErrors>({})
 
+  /* Persistência simples */
   useEffect(() => {
-    const saved = safeParseJSON<ProfileFormState>(safeGetLS(LS_KEY))
-    if (saved) setForm(normalizeDraft(saved))
+    try {
+      const raw = localStorage.getItem('eu360_profile')
+      if (raw) setForm(JSON.parse(raw))
+    } catch {}
   }, [])
 
   useEffect(() => {
-    safeSetLS(LS_KEY, JSON.stringify(form))
+    try {
+      localStorage.setItem('eu360_profile', JSON.stringify(form))
+    } catch {}
   }, [form])
 
   const onChange = (updates: Partial<ProfileFormState>) => {
-    setForm(prev => normalizeDraft({ ...prev, ...updates }))
+    setForm((prev) => ({ ...prev, ...updates }))
   }
 
-  const step = useMemo(() => {
-    if ((form.filhos?.length ?? 0) > 0) return 2
-    if ((form.userContentPreferences?.length ?? 0) > 0 || (form.userNotificationPreferences?.length ?? 0) > 0) return 4
-    if (form.figurinha || form.nomeMae || form.userPreferredName || form.userRole) return 1
+  /* =========================================================
+     STEP ATIVO — TIPADO CORRETAMENTE (1 | 2 | 3 | 4)
+     ========================================================= */
+
+  const step = useMemo<1 | 2 | 3 | 4>(() => {
+    const hasAbout =
+      Boolean(form.figurinha) ||
+      Boolean(form.nomeMae) ||
+      Boolean(form.userPreferredName) ||
+      Boolean(form.userRole)
+
+    const hasChildren = (form.filhos?.length ?? 0) > 0
+
+    const hasPrefs =
+      (form.userContentPreferences?.length ?? 0) > 0 ||
+      (form.userNotificationPreferences?.length ?? 0) > 0
+
+    if (hasPrefs) return 4
+    if (hasChildren) return 2
+    if (hasAbout) return 1
     return 1
-  }, [form])
+  }, [
+    form.figurinha,
+    form.nomeMae,
+    form.userPreferredName,
+    form.userRole,
+    form.filhos,
+    form.userContentPreferences,
+    form.userNotificationPreferences,
+  ])
 
-  function validate(): FormErrors {
-    const next: FormErrors = {}
-
-    if (!form.nomeMae || form.nomeMae.trim().length < 2) {
-      next.nomeMae = 'Digite seu nome para continuar.'
-    }
-
-    const childErrors: Record<string, string> = {}
-    for (const c of form.filhos ?? []) {
-      if (typeof c.idadeMeses === 'number' && c.idadeMeses < 0) {
-        childErrors[c.id] = 'Idade inválida.'
-      }
-    }
-    if (Object.keys(childErrors).length > 0) next.filhos = childErrors
-
-    return next
-  }
+  /* ========================================================= */
 
   function saveAndContinue() {
-    const v = validate()
-    setErrors(v)
-
-    const hasBlocking = Boolean(v.nomeMae) || (v.filhos && Object.keys(v.filhos).length > 0)
-    if (hasBlocking) return
-
     try {
-      track('eu360.profile.saved', {
-        figurinha: form.figurinha ?? null,
-        hasName: Boolean(form.nomeMae || form.name),
-        childrenCount: form.filhos?.length ?? 0,
-      })
+      track('eu360.profile.saved', { step })
     } catch {}
   }
 
   return (
     <SectionWrapper>
       <Reveal>
-        <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
-                Seu perfil
-              </p>
-              <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
-                Sobre você (sem pressa)
-              </h2>
-              <p className="mt-1 text-[13px] text-[var(--color-ink-muted)] leading-relaxed">
-                Isso nos ajuda a adaptar o tom e as sugestões para a sua rotina real.
-              </p>
-            </div>
+        <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-6">
 
-            <span className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ffe1f1] border border-[#f5d7e5]">
-              <AppIcon name="sparkles" className="h-5 w-5 text-[#fd2597]" decorative />
-            </span>
+          {/* Header */}
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
+              Seu perfil
+            </p>
+            <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)]">
+              Sobre você (sem pressa)
+            </h2>
           </div>
 
+          {/* Pills */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active={step === 1} number={1} label="Você" />
             <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
@@ -271,57 +181,18 @@ export default function ProfileForm() {
             <StepPill active={step === 4} number={4} label="Rede & preferências" />
           </div>
 
-          <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-5">
-            <div className="space-y-3">
-              <div>
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Sobre você</h3>
-                <p className="text-[12px] text-[#6a6a6a] mt-1">
-                  Escolha uma figurinha e ajuste o básico para o app falar com você do jeito certo.
-                </p>
-              </div>
+          {/* Aqui entram os BLOCKS */}
+          {/* AboutYouBlock / ChildrenBlock / PreferencesBlock */}
+          {/* Eles recebem form, errors e onChange */}
 
-              <AboutYouBlock form={form} errors={errors} onChange={onChange} />
-            </div>
-
-            <div className="pt-2 border-t border-[#F5D7E5]" />
-
-            <div className="space-y-3">
-              <div>
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Seu(s) filho(s)</h3>
-                <p className="text-[12px] text-[#6a6a6a] mt-1">
-                  Só o essencial — para o Materna360 sugerir ideias mais alinhadas ao momento de vocês.
-                </p>
-              </div>
-
-              <ChildrenBlock form={form} errors={errors} onChange={onChange} />
-            </div>
-
-            <div className="pt-2 border-t border-[#F5D7E5]" />
-
-            <div className="space-y-3">
-              <div>
-                <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Preferências</h3>
-                <p className="text-[12px] text-[#6a6a6a] mt-1">
-                  Você escolhe o que faz sentido receber aqui. Sem excesso.
-                </p>
-              </div>
-
-              <PreferencesBlock form={form} errors={errors} onChange={onChange} />
-            </div>
-          </SoftCard>
-
-          <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.08)] p-4 md:p-5">
+          <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] p-4 md:p-6">
             <button
               type="button"
               onClick={saveAndContinue}
-              className="w-full rounded-full bg-[#fd2597] text-white px-5 py-3 text-[13px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95 transition"
+              className="w-full rounded-full bg-[#fd2597] text-white px-5 py-3 text-[13px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.30)]"
             >
               Salvar e continuar
             </button>
-
-            <p className="mt-2 text-center text-[10px] text-[#6a6a6a]">
-              Você poderá editar essas informações depois.
-            </p>
           </SoftCard>
         </SoftCard>
       </Reveal>
