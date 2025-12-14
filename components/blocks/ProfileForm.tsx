@@ -19,10 +19,6 @@ export type FormErrors = Record<string, string | undefined>
 /**
  * =========================================================
  * ChildProfile — CONTRATO PARA ChildrenBlock
- * ---------------------------------------------------------
- * Mantém um shape estável e “neutro” (sem tom clínico).
- * Se o ChildrenBlock precisar de mais campos depois, a gente
- * adiciona aqui de forma compatível (opcional).
  * =========================================================
  */
 export type ChildProfile = {
@@ -99,9 +95,10 @@ export type ProfileFormState = {
 
   /**
    * Filhos (ChildrenBlock)
-   * - shape atual: children
-   * - compat: kids (caso exista em versões antigas)
+   * - ChildrenBlock atual usa: filhos
+   * - compat: children / kids (outras versões)
    */
+  filhos?: ChildProfile[]
   children?: ChildProfile[]
   kids?: ChildProfile[]
 }
@@ -187,15 +184,29 @@ function normalizeDraft(input: ProfileDraft): ProfileDraft {
   if (d.userEnergyPeakTime && !d.energy) d.energy = d.userEnergyPeakTime
   if (d.energy && !d.userEnergyPeakTime) d.userEnergyPeakTime = d.energy
 
-  // children <-> kids
-  if (Array.isArray(d.children) && (!d.kids || !Array.isArray(d.kids))) d.kids = d.children
-  if (Array.isArray(d.kids) && (!d.children || !Array.isArray(d.children))) d.children = d.kids
+  // filhos <-> children <-> kids (tríplice compat)
+  // prioridade: filhos (porque é o que o ChildrenBlock usa agora)
+  if (Array.isArray(d.filhos)) {
+    if (!Array.isArray(d.children)) d.children = d.filhos
+    if (!Array.isArray(d.kids)) d.kids = d.filhos
+  } else if (Array.isArray(d.children)) {
+    d.filhos = d.children
+    if (!Array.isArray(d.kids)) d.kids = d.children
+  } else if (Array.isArray(d.kids)) {
+    d.filhos = d.kids
+    if (!Array.isArray(d.children)) d.children = d.kids
+  } else {
+    d.filhos = []
+    d.children = []
+    d.kids = []
+  }
 
   // guarantees
   if (!Array.isArray(d.userMainChallenges)) d.userMainChallenges = []
   if (!Array.isArray(d.biggestPain)) d.biggestPain = []
-  if (!Array.isArray(d.children)) d.children = []
-  if (!Array.isArray(d.kids)) d.kids = d.children
+  if (!Array.isArray(d.filhos)) d.filhos = []
+  if (!Array.isArray(d.children)) d.children = d.filhos
+  if (!Array.isArray(d.kids)) d.kids = d.filhos
 
   return d
 }
@@ -236,6 +247,7 @@ export default function ProfileForm() {
     normalizeDraft({
       userMainChallenges: [],
       biggestPain: [],
+      filhos: [],
       children: [],
       kids: [],
     }),
@@ -279,7 +291,7 @@ export default function ProfileForm() {
       track('eu360.profile.saved', {
         figurinha: form.figurinha ?? null,
         hasName: Boolean((form.nomeMae || form.name || '').trim()),
-        childrenCount: Array.isArray(form.children) ? form.children.length : 0,
+        filhosCount: Array.isArray(form.filhos) ? form.filhos.length : 0,
       })
     } catch {}
   }
