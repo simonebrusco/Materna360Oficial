@@ -88,8 +88,6 @@ function buildWeekData(baseDate: Date, plannerData: PlannerData): WeekDaySummary
     agendaCountByKey[a.dateKey] = (agendaCountByKey[a.dateKey] ?? 0) + 1
   }
 
-  // Persistência atual de tasks é por selectedDateKey, então o resumo semanal
-  // é “leve”: mostra contagens somente no dia selecionado.
   const selectedKey = getBrazilDateKey(baseDate)
   const counts = { top3: 0, selfcare: 0, family: 0 }
   for (const t of plannerData.tasks) {
@@ -155,7 +153,6 @@ function generateMonthMatrix(monthBase: Date): MonthCell[][] {
   const month = first.getMonth()
   const year = first.getFullYear()
 
-  // Queremos grade começando em SEG (Monday)
   const start = startOfWeekMonday(first)
 
   const rows: MonthCell[][] = []
@@ -371,10 +368,7 @@ export default function WeeklyPlannerCore() {
 
   const weekData = useMemo(() => buildWeekData(selectedDate, plannerData), [selectedDate, plannerData])
 
-  const sortedAppointments = useMemo(
-    () => sortAppointments(plannerData.appointments),
-    [plannerData.appointments],
-  )
+  const sortedAppointments = useMemo(() => sortAppointments(plannerData.appointments), [plannerData.appointments])
 
   const appointmentsByDateKey = useMemo(() => {
     const map = new Map<string, number>()
@@ -419,11 +413,12 @@ export default function WeeklyPlannerCore() {
                 </div>
               </button>
 
+              {/* Toggle (AJUSTE: remove outline azul, mantém premium) */}
               <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
                 <button
                   type="button"
                   onClick={() => setViewMode('day')}
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all outline-none focus:outline-none focus-visible:outline-none ${
                     viewMode === 'day'
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
@@ -434,7 +429,7 @@ export default function WeeklyPlannerCore() {
                 <button
                   type="button"
                   onClick={() => setViewMode('week')}
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all outline-none focus:outline-none focus-visible:outline-none ${
                     viewMode === 'week'
                       ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
@@ -446,10 +441,10 @@ export default function WeeklyPlannerCore() {
             </div>
           </SoftCard>
 
-          {/* WEEK VIEW (intocado: somente weekData) */}
+          {/* WEEK VIEW (somente weekData) */}
           {viewMode === 'week' && <WeekView weekData={weekData} />}
 
-          {/* DAY VIEW (mantém layout do print) */}
+          {/* DAY VIEW */}
           {viewMode === 'day' && (
             <div className="space-y-6">
               {/* LEMBRETES */}
@@ -608,7 +603,7 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* Navegação rápida de data (mantém layout do print) */}
+          {/* Navegação rápida de data */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -644,15 +639,10 @@ export default function WeeklyPlannerCore() {
       </Reveal>
 
       {/* ===================================================== */}
-      {/* SHEET PREMIUM — CALENDÁRIO DO MÊS (mantém layout)      */}
+      {/* SHEET PREMIUM — CALENDÁRIO DO MÊS                      */}
       {/* ===================================================== */}
       {monthSheetOpen && (
-        <div
-          className="fixed inset-0 z-[60]"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Calendário do mês"
-        >
+        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Calendário do mês">
           <button
             type="button"
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
@@ -664,9 +654,7 @@ export default function WeeklyPlannerCore() {
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                    Calendário
-                  </p>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Calendário</p>
                   <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
                     {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h3>
@@ -730,16 +718,12 @@ export default function WeeklyPlannerCore() {
                           }`}
                           aria-label={`Selecionar dia ${cell.date.toLocaleDateString('pt-BR')}`}
                         >
-                          <span className="inline-flex items-center justify-center w-full">
-                            {cell.date.getDate()}
-                          </span>
+                          <span className="inline-flex items-center justify-center w-full">{cell.date.getDate()}</span>
 
-                          {/* marcador HOJE */}
                           {isToday && !isSelected && (
                             <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
                           )}
 
-                          {/* dot compromissos */}
                           {hasAppt && (
                             <span
                               className={`absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full ${
@@ -796,14 +780,13 @@ export default function WeeklyPlannerCore() {
         }}
         onSubmit={data => {
           if (appointmentModalMode === 'create') {
-            // 1) salva compromisso
             addAppointment({
               dateKey: data.dateKey,
               title: data.title,
               time: data.time,
             })
 
-            // 2) cria lembrete correspondente NO DIA CERTO (persistência por dateKey)
+            // salva lembrete "agenda" no dia correto (persistência por dateKey)
             const label = data.time ? `${data.time} · ${data.title}` : data.title
             try {
               const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
@@ -813,7 +796,7 @@ export default function WeeklyPlannerCore() {
                 save(`planner/tasks/${data.dateKey}`, [...existing, t])
               }
             } catch {
-              // fallback para não quebrar fluxo
+              // fallback não quebra fluxo
               setPlannerData(prev => {
                 const exists = prev.tasks.some(t => t.origin === 'agenda' && t.title === label)
                 if (exists) return prev
@@ -831,7 +814,6 @@ export default function WeeklyPlannerCore() {
             updateAppointment(updated)
           }
 
-          // mantém date selecionada em sync
           setSelectedDateKey(data.dateKey)
           setMonthCursor(toFirstOfMonth(new Date(data.dateKey + 'T00:00:00')))
 
