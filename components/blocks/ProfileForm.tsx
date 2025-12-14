@@ -91,20 +91,6 @@ function StepPill({
   )
 }
 
-function stickerIconFor(id: ProfileStickerId): React.ComponentProps<typeof AppIcon>['name'] {
-  // Ícones DS: mantendo algo “emocional”/neutro (sem emoji).
-  // Se quiser mapear 1:1 depois, podemos criar um map oficial no /app/lib/stickers.
-  const map: Partial<Record<ProfileStickerId, React.ComponentProps<typeof AppIcon>['name']>> = {
-    carinhosa: 'heart',
-    leve: 'sparkles',
-    determinada: 'target',
-    criativa: 'sparkles',
-    tranquila: 'smile',
-    resiliente: 'sparkles',
-  }
-  return map[id] ?? 'sparkles'
-}
-
 export default function ProfileForm() {
   const [draft, setDraft] = useState<ProfileDraft>({
     biggestPain: [],
@@ -163,7 +149,6 @@ export default function ProfileForm() {
     } catch {}
   }
 
-  // Sempre ler a figurinha pelo campo oficial (compat)
   const activeStickerId = draft.figurinha ?? draft.sticker ?? undefined
 
   return (
@@ -206,7 +191,6 @@ export default function ProfileForm() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {STICKER_OPTIONS.map(s => {
                   const active = activeStickerId === s.id
-                  const iconName = stickerIconFor(s.id)
 
                   return (
                     <button
@@ -214,10 +198,7 @@ export default function ProfileForm() {
                       type="button"
                       onClick={() => {
                         if (!isProfileStickerId(s.id)) return
-
-                        // Grava nos dois campos (compat total)
                         setDraft(prev => ({ ...prev, figurinha: s.id, sticker: s.id }))
-
                         try {
                           track('eu360.profile.sticker_selected', { id: s.id })
                         } catch {}
@@ -238,7 +219,7 @@ export default function ProfileForm() {
                           aria-hidden="true"
                         >
                           <AppIcon
-                            name={iconName}
+                            name="sparkles"
                             className={active ? 'h-5 w-5 text-[#fd2597]' : 'h-5 w-5 text-[#fd2597]/90'}
                             decorative
                           />
