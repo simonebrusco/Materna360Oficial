@@ -9,18 +9,8 @@ import { isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
 import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
 
-/**
- * =========================================================
- * EXPORTS NECESSÁRIOS PARA OS BLOCKS (fix do build)
- * =========================================================
- */
 export type FormErrors = Record<string, string | undefined>
 
-/**
- * =========================================================
- * ChildProfile — CONTRATO PARA ChildrenBlock
- * =========================================================
- */
 export type ChildProfile = {
   id: string
   name?: string
@@ -29,76 +19,31 @@ export type ChildProfile = {
   schoolStage?: 'bebe' | 'infantil' | 'fundamental' | 'outro' | string
 }
 
-/**
- * =========================================================
- * ProfileFormState — CONTRATO “UNIFICADO”
- * =========================================================
- */
 export type ProfileFormState = {
-  /**
-   * Stickers (perfil)
-   * - AboutYouBlock usa: figurinha
-   * - versões antigas usavam: sticker
-   */
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
-  /**
-   * Nome
-   * - AboutYouBlock usa: nomeMae
-   * - outras telas usam: name
-   */
   nomeMae?: string
   name?: string
 
-  /**
-   * Como prefere ser chamada
-   * - AboutYouBlock usa: userPreferredName
-   * - versões novas usam: preferredName
-   * - rascunhos antigos: nomePreferido
-   */
   userPreferredName?: string
   preferredName?: string
   nomePreferido?: string
 
-  /**
-   * Você é:
-   * - AboutYouBlock usa: userRole
-   * - outras telas usam: role
-   */
   userRole?: 'mae' | 'pai' | 'outro' | string
   role?: 'mae' | 'pai' | 'cuidador' | 'outro' | string
 
-  /**
-   * Base emocional
-   * - AboutYouBlock usa: userEmotionalBaseline
-   * - outras telas usam: feeling
-   */
   userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve' | string
   feeling?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia' | string
 
-  /**
-   * Desafios
-   * - AboutYouBlock usa: userMainChallenges (array)
-   * - outras telas usam: biggestPain (array)
-   */
   userMainChallenges?: string[]
   biggestPain?: string[]
 
-  /**
-   * Pico de energia
-   * - AboutYouBlock usa: userEnergyPeakTime
-   * - outras telas usam: energy
-   */
   userEnergyPeakTime?: 'manha' | 'tarde' | 'noite' | 'varia' | string
   energy?: 'manha' | 'tarde' | 'noite' | 'varia' | string
 
-  /**
-   * Filhos (ChildrenBlock)
-   * - ChildrenBlock atual usa: filhos
-   * - compat: children / kids (outras versões)
-   */
-  filhos?: ChildProfile[]
+  // ✅ agora é obrigatório (fix do ChildrenBlock)
+  filhos: ChildProfile[]
   children?: ChildProfile[]
   kids?: ChildProfile[]
 }
@@ -132,13 +77,11 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
-/**
- * =========================================================
- * NORMALIZAÇÃO / COMPATIBILIDADE
- * =========================================================
- */
-function normalizeDraft(input: ProfileDraft): ProfileDraft {
-  const d: ProfileDraft = { ...input }
+function normalizeDraft(input: Partial<ProfileDraft>): ProfileDraft {
+  const d: ProfileDraft = {
+    filhos: [],
+    ...input,
+  } as ProfileDraft
 
   // figurinha <-> sticker
   if (d.figurinha && isProfileStickerId(d.figurinha)) {
@@ -168,7 +111,7 @@ function normalizeDraft(input: ProfileDraft): ProfileDraft {
   if (d.userRole && !d.role) d.role = d.userRole
   if (d.role && !d.userRole) d.userRole = d.role
 
-  // emotional baseline alias (não converte valores)
+  // emotional baseline alias
   if (d.userEmotionalBaseline && !d.feeling) d.feeling = d.userEmotionalBaseline
   if (d.feeling && !d.userEmotionalBaseline) d.userEmotionalBaseline = d.feeling
 
@@ -184,8 +127,7 @@ function normalizeDraft(input: ProfileDraft): ProfileDraft {
   if (d.userEnergyPeakTime && !d.energy) d.energy = d.userEnergyPeakTime
   if (d.energy && !d.userEnergyPeakTime) d.userEnergyPeakTime = d.energy
 
-  // filhos <-> children <-> kids (tríplice compat)
-  // prioridade: filhos (porque é o que o ChildrenBlock usa agora)
+  // filhos <-> children <-> kids
   if (Array.isArray(d.filhos)) {
     if (!Array.isArray(d.children)) d.children = d.filhos
     if (!Array.isArray(d.kids)) d.kids = d.filhos
@@ -201,7 +143,6 @@ function normalizeDraft(input: ProfileDraft): ProfileDraft {
     d.kids = []
   }
 
-  // guarantees
   if (!Array.isArray(d.userMainChallenges)) d.userMainChallenges = []
   if (!Array.isArray(d.biggestPain)) d.biggestPain = []
   if (!Array.isArray(d.filhos)) d.filhos = []
@@ -256,7 +197,7 @@ export default function ProfileForm() {
   const [errors, setErrors] = useState<FormErrors>({})
 
   useEffect(() => {
-    const saved = safeParseJSON<ProfileDraft>(safeGetLS(LS_KEY))
+    const saved = safeParseJSON<Partial<ProfileDraft>>(safeGetLS(LS_KEY))
     if (saved) setForm(normalizeDraft(saved))
   }, [])
 
@@ -291,7 +232,7 @@ export default function ProfileForm() {
       track('eu360.profile.saved', {
         figurinha: form.figurinha ?? null,
         hasName: Boolean((form.nomeMae || form.name || '').trim()),
-        filhosCount: Array.isArray(form.filhos) ? form.filhos.length : 0,
+        filhosCount: form.filhos.length,
       })
     } catch {}
   }
