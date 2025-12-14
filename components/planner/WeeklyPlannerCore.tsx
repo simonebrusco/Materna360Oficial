@@ -47,8 +47,10 @@ type WeekDaySummary = {
   familyCount: number
 }
 
+// =======================================================
+// HELPERS
+// =======================================================
 function safeId() {
-  // crypto.randomUUID pode falhar em alguns ambientes; fallback seguro
   try {
     return crypto.randomUUID()
   } catch {
@@ -65,10 +67,7 @@ function startOfWeekMonday(base: Date) {
   return d
 }
 
-function buildWeekData(
-  baseDate: Date,
-  plannerData: PlannerData,
-): WeekDaySummary[] {
+function buildWeekData(baseDate: Date, plannerData: PlannerData): WeekDaySummary[] {
   const monday = startOfWeekMonday(baseDate)
 
   const weekDates = Array.from({ length: 7 }, (_, i) => {
@@ -85,17 +84,18 @@ function buildWeekData(
     agendaCountByKey[a.dateKey] = (agendaCountByKey[a.dateKey] ?? 0) + 1
   }
 
-  const taskCountByKey = {
+  const taskCountByOrigin = {
     top3: 0,
     selfcare: 0,
     family: 0,
   }
 
-  // tasks são do selectedDateKey (persistência atual)
+  // Persistência atual: tasks carregam por selectedDateKey.
+  // Resumo “leve” na semana: mostra counts apenas no dia selecionado.
   for (const t of plannerData.tasks) {
-    if (t.origin === 'top3') taskCountByKey.top3 += 1
-    if (t.origin === 'selfcare') taskCountByKey.selfcare += 1
-    if (t.origin === 'family') taskCountByKey.family += 1
+    if (t.origin === 'top3') taskCountByOrigin.top3 += 1
+    if (t.origin === 'selfcare') taskCountByOrigin.selfcare += 1
+    if (t.origin === 'family') taskCountByOrigin.family += 1
   }
 
   const baseKey = getBrazilDateKey(baseDate)
@@ -106,11 +106,29 @@ function buildWeekData(
       dayNumber: d.getDate(),
       dayName: d.toLocaleDateString('pt-BR', { weekday: 'short' }),
       agendaCount: agendaCountByKey[key] ?? 0,
-      top3Count: key === baseKey ? taskCountByKey.top3 : 0,
-      careCount: key === baseKey ? taskCountByKey.selfcare : 0,
-      familyCount: key === baseKey ? taskCountByKey.family : 0,
+      top3Count: key === baseKey ? taskCountByOrigin.top3 : 0,
+      careCount: key === baseKey ? taskCountByOrigin.selfcare : 0,
+      familyCount: key === baseKey ? taskCountByOrigin.family : 0,
     }
   })
+}
+
+function generateMonthMatrix(currentDate: Date): (Date | null)[] {
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+
+  const matrix: (Date | null)[] = []
+  // seg=0 ... dom=6
+  const offset = (firstDay.getDay() + 6) % 7
+
+  for (let i = 0; i < offset; i++) matrix.push(null)
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    matrix.push(new Date(year, month, d))
+  }
+
+  return matrix
 }
 
 // =======================================================
@@ -241,7 +259,9 @@ export default function WeeklyPlannerCore() {
   const toggleTask = useCallback((id: string) => {
     setPlannerData(prev => ({
       ...prev,
-      tasks: prev.tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t)),
+      tasks: prev.tasks.map(t =>
+        t.id === id ? { ...t, done: !t.done } : t,
+      ),
     }))
   }, [])
 
@@ -253,6 +273,24 @@ export default function WeeklyPlannerCore() {
     const [y, m, d] = selectedDateKey.split('-').map(Number)
     return new Date(y, m - 1, d)
   }, [selectedDateKey])
+
+  // “mês exibido” trava no mês do dia selecionado (UX padrão)
+  const monthBase = useMemo(() => {
+    const d = new Date(selectedDate)
+    d.setDate(1)
+    d.setHours(0, 0, 0, 0)
+    return d
+  }, [selectedDate])
+
+  const monthMatrix = useMemo(() => generateMonthMatrix(monthBase), [monthBase])
+
+  const hasAppointmentsByDateKey = useMemo(() => {
+    const map: Record<string, boolean> = {}
+    for (const a of plannerData.appointments) {
+      map[a.dateKey] = true
+    }
+    return map
+  }, [plannerData.appointments])
 
   const weekData = useMemo(
     () => buildWeekData(selectedDate, plannerData),
@@ -267,8 +305,9 @@ export default function WeeklyPlannerCore() {
   return (
     <Reveal>
       <div className="space-y-6 md:space-y-8">
-        {/* Top bar */}
-        <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
+        {/* PLANNER (CALENDÁRIO + DIA/SEMANA) */}
+        <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_18px_40px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4 md:space-y-6">
+          {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-soft-strong)]">
@@ -281,15 +320,46 @@ export default function WeeklyPlannerCore() {
                 <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                   Planner
                 </p>
-                <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                  {selectedDate.toLocaleDateString('pt-BR', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </h2>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+                    onClick={() => {
+                      const d = new Date(monthBase)
+                      d.setMonth(d.getMonth() - 1)
+                      // mantém “dia selecionado” no mês novo (primeiro dia)
+                      handleDateSelect(d)
+                    }}
+                    aria-label="Mês anterior"
+                  >
+                    ‹
+                  </button>
+
+                  <h2 className="text-base md:text-lg font-semibold text-[var(--color-text-main)] capitalize">
+                    {monthBase.toLocaleDateString('pt-BR', {
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </h2>
+
+                  <button
+                    type="button"
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-soft-strong)]/70 text-sm"
+                    onClick={() => {
+                      const d = new Date(monthBase)
+                      d.setMonth(d.getMonth() + 1)
+                      handleDateSelect(d)
+                    }}
+                    aria-label="Próximo mês"
+                  >
+                    ›
+                  </button>
+                </div>
               </div>
             </div>
 
+            {/* Dia / Semana */}
             <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
               <button
                 type="button"
@@ -315,6 +385,53 @@ export default function WeeklyPlannerCore() {
               </button>
             </div>
           </div>
+
+          {/* Dias da semana */}
+          <div className="space-y-2 md:space-y-3">
+            <div className="grid grid-cols-7 text-[10px] md:text-xs font-semibold text-[var(--color-text-muted)] text-center uppercase tracking-wide">
+              <span>Seg</span>
+              <span>Ter</span>
+              <span>Qua</span>
+              <span>Qui</span>
+              <span>Sex</span>
+              <span>Sáb</span>
+              <span>Dom</span>
+            </div>
+
+            {/* Grade do mês */}
+            <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+              {monthMatrix.map((day, i) => {
+                if (!day) return <div key={i} className="h-8 md:h-9" />
+
+                const dayKey = getBrazilDateKey(day)
+                const isSelected = dayKey === selectedDateKey
+                const hasAppointments = !!hasAppointmentsByDateKey[dayKey]
+
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleDateSelect(day)}
+                    className={`h-8 md:h-9 rounded-full text-xs md:text-sm flex flex-col items-center justify-center transition-all border ${
+                      isSelected
+                        ? 'bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-[0_6px_18px_rgba(253,37,151,0.45)]'
+                        : 'bg-white/80 text-[var(--color-text-main)] border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-strong)]/70'
+                    }`}
+                    aria-label={`Selecionar dia ${day.getDate()}`}
+                  >
+                    <span>{day.getDate()}</span>
+                    {hasAppointments && (
+                      <span
+                        className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
+                          isSelected ? 'bg-white' : 'bg-[var(--color-brand)]'
+                        }`}
+                      />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </SoftCard>
 
         {/* WEEK VIEW */}
@@ -322,7 +439,7 @@ export default function WeeklyPlannerCore() {
 
         {/* DAY VIEW */}
         {viewMode === 'day' && (
-          <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 space-y-4">
+          <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
@@ -332,8 +449,7 @@ export default function WeeklyPlannerCore() {
                   Lembretes do dia
                 </h3>
                 <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
-                  Ações práticas do seu dia — organizadas a partir da sua rotina
-                  real.
+                  Ações práticas do seu dia — organizadas a partir da sua rotina real.
                 </p>
               </div>
 
@@ -346,7 +462,7 @@ export default function WeeklyPlannerCore() {
                     time: '',
                   })
                 }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
                 aria-label="Adicionar compromisso"
               >
                 +
@@ -356,8 +472,7 @@ export default function WeeklyPlannerCore() {
             <div className="space-y-2">
               {plannerData.tasks.length === 0 ? (
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  Ainda não há lembretes para hoje. Use os atalhos abaixo ou
-                  registre algo que faça sentido para a sua rotina.
+                  Ainda não há lembretes para hoje. Use os atalhos abaixo ou registre algo que faça sentido para a sua rotina.
                 </p>
               ) : (
                 plannerData.tasks.map(task => (
@@ -381,9 +496,6 @@ export default function WeeklyPlannerCore() {
                       {task.done ? '✓' : ''}
                     </span>
                     <span className="flex-1">{task.title}</span>
-                    <span className="text-[10px] text-[var(--color-text-muted)]">
-                      {task.origin}
-                    </span>
                   </button>
                 ))
               )}
@@ -414,7 +526,7 @@ export default function WeeklyPlannerCore() {
 
               <button
                 type="button"
-                onClick={() => addTask('Pequeno gesto de autocuidado', 'selfcare')}
+                onClick={() => addTask('Pequenos gestos de autocuidado', 'selfcare')}
                 className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
               >
                 Pequenos gestos de autocuidado
@@ -422,24 +534,21 @@ export default function WeeklyPlannerCore() {
 
               <button
                 type="button"
-                onClick={() =>
-                  addTask('Momento ou cuidado importante', 'family')
-                }
+                onClick={() => addTask('Momentos e cuidados importantes', 'family')}
                 className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
               >
                 Momentos e cuidados importantes
               </button>
             </div>
 
-            <p className="text-[11px] md:text-xs text-[var(--color-text-muted)] pt-1">
-              Esses lembretes podem vir das trilhas do Maternar ou ser criados
-              por você.
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              Esses lembretes podem vir das trilhas do Maternar ou ser criados por você.
             </p>
           </SoftCard>
         )}
 
         {/* Navegação rápida de data */}
-        <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
+        <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] shadow-[0_16px_38px_rgba(0,0,0,0.06)] p-4 md:p-6">
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
