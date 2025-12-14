@@ -4,21 +4,31 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
+import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
-import { isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
-
-import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
-
-export type FormErrors = Record<string, string | undefined>
+import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
 /**
  * =========================================================
- * ChildProfile — compat total com os blocks atuais
+ * EXPORTS NECESSÁRIOS PARA OS BLOCKS (fix do build)
  * =========================================================
- * Alguns blocks usam PT-BR (nome, idade, etc).
- * Outros podem usar EN (name, age, etc).
- * Mantemos ambos para evitar regressões.
  */
+export type FormErrors = {
+  figurinha?: string
+  nomeMae?: string
+  userPreferredName?: string
+  userRole?: string
+  userEmotionalBaseline?: string
+  userMainChallenges?: string
+  userEnergyPeakTime?: string
+
+  // ChildrenBlock: erros por filho (indexado por id)
+  filhos?: Record<string, string | undefined>
+
+  // fallback seguro p/ outros blocks/keys que existirem no repo
+  [key: string]: any
+}
+
 export type ChildProfile = {
   id: string
 
@@ -39,33 +49,35 @@ export type ChildProfile = {
   gender?: string
 }
 
+/**
+ * Compatibilidade ampla para evitar regressões:
+ * - AboutYouBlock usa: figurinha, nomeMae, userPreferredName, userRole, userEmotionalBaseline, userMainChallenges, userEnergyPeakTime
+ * - UI nova já vinha com: name, preferredName, role, feeling, biggestPain, energy (mantemos também)
+ * - ChildrenBlock usa: filhos: ChildProfile[]
+ */
 export type ProfileFormState = {
+  // sticker / figurinha (compat)
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
+  // campos PT-BR (blocks)
   nomeMae?: string
-  name?: string
-
   userPreferredName?: string
-  preferredName?: string
-  nomePreferido?: string
-
   userRole?: 'mae' | 'pai' | 'outro' | string
-  role?: 'mae' | 'pai' | 'cuidador' | 'outro' | string
-
   userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve' | string
-  feeling?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia' | string
-
   userMainChallenges?: string[]
+  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite' | string
+
+  // campos EN/antigos (compat)
+  name?: string
+  preferredName?: string
+  role?: string
+  feeling?: string
   biggestPain?: string[]
+  energy?: string
 
-  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite' | 'varia' | string
-  energy?: 'manha' | 'tarde' | 'noite' | 'varia' | string
-
-  // obrigatório (fix do ChildrenBlock)
-  filhos: ChildProfile[]
-  children?: ChildProfile[]
-  kids?: ChildProfile[]
+  // filhos (blocks)
+  filhos?: ChildProfile[]
 }
 
 type ProfileDraft = ProfileFormState
@@ -95,81 +107,6 @@ function safeParseJSON<T>(raw: string | null): T | null {
   } catch {
     return null
   }
-}
-
-function normalizeDraft(input: Partial<ProfileDraft>): ProfileDraft {
-  const d: ProfileDraft = {
-    filhos: [],
-    ...input,
-  } as ProfileDraft
-
-  // figurinha <-> sticker
-  if (d.figurinha && isProfileStickerId(d.figurinha)) {
-    d.sticker = d.figurinha
-  } else if (d.sticker && isProfileStickerId(d.sticker)) {
-    d.figurinha = d.sticker
-  }
-
-  // nomeMae <-> name
-  if (typeof d.nomeMae === 'string' && !d.name) d.name = d.nomeMae
-  if (typeof d.name === 'string' && !d.nomeMae) d.nomeMae = d.name
-
-  // preferred name aliases
-  const preferred =
-    d.userPreferredName?.trim() ||
-    d.preferredName?.trim() ||
-    d.nomePreferido?.trim() ||
-    ''
-
-  if (preferred) {
-    d.userPreferredName = preferred
-    d.preferredName = preferred
-    d.nomePreferido = preferred
-  }
-
-  // role alias
-  if (d.userRole && !d.role) d.role = d.userRole
-  if (d.role && !d.userRole) d.userRole = d.role
-
-  // emotional baseline alias
-  if (d.userEmotionalBaseline && !d.feeling) d.feeling = d.userEmotionalBaseline
-  if (d.feeling && !d.userEmotionalBaseline) d.userEmotionalBaseline = d.feeling
-
-  // challenges alias
-  if (Array.isArray(d.userMainChallenges) && (!d.biggestPain || !Array.isArray(d.biggestPain))) {
-    d.biggestPain = d.userMainChallenges
-  }
-  if (Array.isArray(d.biggestPain) && (!d.userMainChallenges || !Array.isArray(d.userMainChallenges))) {
-    d.userMainChallenges = d.biggestPain
-  }
-
-  // energy alias
-  if (d.userEnergyPeakTime && !d.energy) d.energy = d.userEnergyPeakTime
-  if (d.energy && !d.userEnergyPeakTime) d.userEnergyPeakTime = d.energy
-
-  // filhos <-> children <-> kids
-  if (Array.isArray(d.filhos)) {
-    if (!Array.isArray(d.children)) d.children = d.filhos
-    if (!Array.isArray(d.kids)) d.kids = d.filhos
-  } else if (Array.isArray(d.children)) {
-    d.filhos = d.children
-    if (!Array.isArray(d.kids)) d.kids = d.children
-  } else if (Array.isArray(d.kids)) {
-    d.filhos = d.kids
-    if (!Array.isArray(d.children)) d.children = d.kids
-  } else {
-    d.filhos = []
-    d.children = []
-    d.kids = []
-  }
-
-  if (!Array.isArray(d.userMainChallenges)) d.userMainChallenges = []
-  if (!Array.isArray(d.biggestPain)) d.biggestPain = []
-  if (!Array.isArray(d.filhos)) d.filhos = []
-  if (!Array.isArray(d.children)) d.children = d.filhos
-  if (!Array.isArray(d.kids)) d.kids = d.filhos
-
-  return d
 }
 
 function StepPill({
@@ -204,58 +141,84 @@ function StepPill({
 }
 
 export default function ProfileForm() {
-  const [form, setForm] = useState<ProfileDraft>(() =>
-    normalizeDraft({
-      userMainChallenges: [],
-      biggestPain: [],
-      filhos: [],
-      children: [],
-      kids: [],
-    }),
-  )
-
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [draft, setDraft] = useState<ProfileDraft>({
+    biggestPain: [],
+    userMainChallenges: [],
+    filhos: [],
+  })
 
   useEffect(() => {
-    const saved = safeParseJSON<Partial<ProfileDraft>>(safeGetLS(LS_KEY))
-    if (saved) setForm(normalizeDraft(saved))
+    const saved = safeParseJSON<ProfileDraft>(safeGetLS(LS_KEY))
+    if (saved) {
+      const normalized: ProfileDraft = { ...saved }
+
+      // normaliza sticker/figurinha
+      if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
+        normalized.figurinha = normalized.sticker
+      }
+      if (!normalized.sticker && normalized.figurinha && isProfileStickerId(normalized.figurinha)) {
+        normalized.sticker = normalized.figurinha
+      }
+
+      // espelha nomes (se um existir e o outro não)
+      if (!normalized.nomeMae && normalized.name) normalized.nomeMae = normalized.name
+      if (!normalized.name && normalized.nomeMae) normalized.name = normalized.nomeMae
+
+      if (!normalized.preferredName && normalized.userPreferredName)
+        normalized.preferredName = normalized.userPreferredName
+      if (!normalized.userPreferredName && normalized.preferredName)
+        normalized.userPreferredName = normalized.preferredName
+
+      // arrays default
+      normalized.biggestPain = normalized.biggestPain ?? []
+      normalized.userMainChallenges = normalized.userMainChallenges ?? []
+      normalized.filhos = normalized.filhos ?? []
+
+      setDraft(normalized)
+    }
   }, [])
 
   useEffect(() => {
-    safeSetLS(LS_KEY, JSON.stringify(form))
-  }, [form])
+    safeSetLS(LS_KEY, JSON.stringify(draft))
+  }, [draft])
 
-  const onChange = (updates: Partial<ProfileFormState>) => {
-    setForm(prev => normalizeDraft({ ...prev, ...updates }))
-    setErrors(prev => {
-      const next = { ...prev }
-      for (const k of Object.keys(updates)) next[k] = undefined
-      return next
+  const painOptions = useMemo(
+    () => [
+      'Falta de tempo',
+      'Culpa',
+      'Organização da rotina',
+      'Comportamento do filho',
+      'Cansaço físico',
+      'Relação com parceiro(a) / família',
+    ],
+    [],
+  )
+
+  function togglePain(label: string) {
+    // mantém compat: biggestPain e userMainChallenges
+    setDraft(prev => {
+      const curr = prev.biggestPain ?? []
+      const exists = curr.includes(label)
+      const next = exists ? curr.filter(x => x !== label) : [...curr, label]
+
+      const curr2 = prev.userMainChallenges ?? []
+      const exists2 = curr2.includes(label)
+      const next2 = exists2 ? curr2.filter(x => x !== label) : [...curr2, label]
+
+      return { ...prev, biggestPain: next, userMainChallenges: next2 }
     })
   }
 
-  const canSave = useMemo(() => {
-    return Boolean((form.nomeMae || form.name || '').trim())
-  }, [form.nomeMae, form.name])
-
-  const saveAndContinue = () => {
-    const nextErrors: FormErrors = {}
-
-    if (!((form.nomeMae || form.name || '').trim())) {
-      nextErrors.nomeMae = 'Por favor, preencha seu nome.'
-    }
-
-    setErrors(nextErrors)
-    if (Object.values(nextErrors).some(Boolean)) return
-
+  function saveAndContinue() {
     try {
       track('eu360.profile.saved', {
-        figurinha: form.figurinha ?? null,
-        hasName: Boolean((form.nomeMae || form.name || '').trim()),
-        filhosCount: form.filhos.length,
+        figurinha: draft.figurinha ?? null,
+        hasName: Boolean(draft.nomeMae || draft.name),
       })
     } catch {}
   }
+
+  const activeStickerId = (draft.figurinha ?? draft.sticker ?? undefined) as ProfileStickerId | undefined
 
   return (
     <SectionWrapper>
@@ -273,6 +236,7 @@ export default function ProfileForm() {
             </p>
           </div>
 
+          {/* Pills (visual only; mantém a pegada do print) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active number={1} label="Você" />
             <StepPill number={2} label="Seu(s) filho(s)" />
@@ -280,28 +244,208 @@ export default function ProfileForm() {
             <StepPill number={4} label="Rede & preferências" />
           </div>
 
+          {/* Card interno */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             <div>
               <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Sobre você</h3>
               <p className="text-[12px] text-[#6a6a6a] mt-1">
-                Escolhas rápidas para o app conversar com a sua fase de um jeito mais leve.
+                Isso nos ajuda a adaptar as sugestões à sua rotina real.
               </p>
             </div>
 
-            <AboutYouBlock form={form} errors={errors} onChange={onChange} />
+            <div className="space-y-2">
+              <p className="text-[12px] font-semibold text-[#2f3a56]">Escolha uma figurinha de perfil</p>
+              <p className="text-[11px] text-[#6a6a6a]">Escolha a vibe que mais combina com você hoje.</p>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {STICKER_OPTIONS.map(s => {
+                  const active = activeStickerId === s.id
+
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        if (!isProfileStickerId(s.id)) return
+                        setDraft(prev => ({ ...prev, figurinha: s.id, sticker: s.id }))
+                        try {
+                          track('eu360.profile.sticker_selected', { id: s.id })
+                        } catch {}
+                      }}
+                      className={[
+                        'rounded-2xl border px-3 py-3 text-left transition',
+                        active
+                          ? 'border-[#fd2597] bg-[#ffd8e6]/70 shadow-[0_10px_22px_rgba(253,37,151,0.18)]'
+                          : 'border-[#f5d7e5] bg-white hover:bg-[#fff3f8]',
+                      ].join(' ')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={[
+                            'h-10 w-10 rounded-full flex items-center justify-center overflow-hidden',
+                            active ? 'bg-white' : 'bg-[#ffe1f1]',
+                          ].join(' ')}
+                          aria-hidden="true"
+                        >
+                          {/* Se o sticker tiver asset, usamos imagem. Senão, ícone seguro. */}
+                          {'asset' in (s as any) && (s as any).asset ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={(s as any).asset}
+                              alt={(s as any).label ?? 'Figurinha'}
+                              className="h-7 w-7 object-contain"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <AppIcon
+                              name="sparkles"
+                              className={active ? 'h-5 w-5 text-[#fd2597]' : 'h-5 w-5 text-[#fd2597]/90'}
+                              decorative
+                            />
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-semibold text-[#2f3a56] truncate">
+                            {'label' in (s as any) ? (s as any).label : String(s.id)}
+                          </p>
+                          {'description' in (s as any) && (s as any).description ? (
+                            <p className="text-[10px] text-[#6a6a6a] leading-snug">
+                              {(s as any).description}
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-[#6a6a6a] leading-snug">
+                              Toque para selecionar
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="grid gap-3 pt-2">
+              <Field label="Seu nome">
+                <input
+                  value={draft.nomeMae ?? draft.name ?? ''}
+                  onChange={e =>
+                    setDraft(prev => ({
+                      ...prev,
+                      nomeMae: e.target.value,
+                      name: e.target.value,
+                    }))
+                  }
+                  placeholder=""
+                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
+                />
+              </Field>
+
+              <Field label="Como você prefere ser chamada?">
+                <input
+                  value={draft.userPreferredName ?? draft.preferredName ?? ''}
+                  onChange={e =>
+                    setDraft(prev => ({
+                      ...prev,
+                      userPreferredName: e.target.value,
+                      preferredName: e.target.value,
+                    }))
+                  }
+                  placeholder="Ex.: Ju, Mãe, Simone…"
+                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
+                />
+                <p className="mt-1 text-[10px] text-[#6a6a6a]">Opcional, mas traz tudo mais pessoal.</p>
+              </Field>
+
+              <Field label="Você é:">
+                <select
+                  value={draft.userRole ?? draft.role ?? ''}
+                  onChange={e =>
+                    setDraft(prev => ({
+                      ...prev,
+                      userRole: e.target.value,
+                      role: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
+                >
+                  <option value="">Selecione…</option>
+                  <option value="mae">Mãe</option>
+                  <option value="pai">Pai</option>
+                  <option value="cuidador">Cuidador(a)</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </Field>
+
+              <Field label="Como você se sente na maior parte dos dias com a maternidade?">
+                <select
+                  value={draft.userEmotionalBaseline ?? draft.feeling ?? ''}
+                  onChange={e =>
+                    setDraft(prev => ({
+                      ...prev,
+                      userEmotionalBaseline: e.target.value,
+                      feeling: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
+                >
+                  <option value="">Selecione…</option>
+                  <option value="sobrecarregada">Muito sobrecarregada</option>
+                  <option value="cansada">Cansada, mas dando conta</option>
+                  <option value="equilibrada">Equilibrada na maior parte do tempo</option>
+                  <option value="leve">Em uma fase mais leve</option>
+                </select>
+                <p className="mt-1 text-[10px] text-[#6a6a6a]">Opcional, mas ajuda a personalizar sugestões.</p>
+              </Field>
+
+              <div className="pt-1">
+                <p className="text-[12px] font-semibold text-[#2f3a56]">Qual é o seu maior desafio hoje?</p>
+                <div className="mt-2 grid gap-1.5">
+                  {painOptions.map(label => {
+                    const checked = (draft.userMainChallenges ?? draft.biggestPain ?? []).includes(label)
+                    return (
+                      <label key={label} className="flex items-center gap-2 text-[12px] text-[#2f3a56]">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => togglePain(label)}
+                          className="h-4 w-4 accent-[#fd2597]"
+                        />
+                        <span>{label}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <Field label="Quando você sente mais energia?">
+                <select
+                  value={draft.userEnergyPeakTime ?? draft.energy ?? ''}
+                  onChange={e =>
+                    setDraft(prev => ({
+                      ...prev,
+                      userEnergyPeakTime: e.target.value,
+                      energy: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
+                >
+                  <option value="">Selecione…</option>
+                  <option value="manha">Manhã</option>
+                  <option value="tarde">Tarde</option>
+                  <option value="noite">Noite</option>
+                  <option value="varia">Varia muito</option>
+                </select>
+              </Field>
+            </div>
           </SoftCard>
 
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.08)] p-4 md:p-5">
             <button
               type="button"
               onClick={saveAndContinue}
-              disabled={!canSave}
-              className={[
-                'w-full rounded-full px-5 py-3 text-[13px] font-semibold transition',
-                canSave
-                  ? 'bg-[#fd2597] text-white shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95'
-                  : 'bg-[#ffd8e6] text-[#2f3a56] opacity-70 cursor-not-allowed',
-              ].join(' ')}
+              className="w-full rounded-full bg-[#fd2597] text-white px-5 py-3 text-[13px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95 transition"
             >
               Salvar e continuar
             </button>
@@ -312,5 +456,14 @@ export default function ProfileForm() {
         </SoftCard>
       </Reveal>
     </SectionWrapper>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[11px] font-semibold text-[#2f3a56]">{label}</p>
+      {children}
+    </div>
   )
 }
