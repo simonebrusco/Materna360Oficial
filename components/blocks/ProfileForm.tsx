@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
-import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
-import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
+import { isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
+
+import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
 
 /**
  * =========================================================
@@ -17,43 +18,75 @@ export type FormErrors = Record<string, string | undefined>
 
 /**
  * =========================================================
- * ProfileFormState — compat máxima com os blocks existentes
+ * ProfileFormState — CONTRATO “UNIFICADO”
  * ---------------------------------------------------------
- * Alguns blocks antigos usam nomes em PT-BR:
- * - nomeMae, nomePreferido, comoSeSente, etc.
- * Outros usam nomes "internos":
- * - name, preferredName, feeling, etc.
+ * Este tipo precisa suportar:
+ * 1) Os campos usados nos Blocks atuais (ex.: AboutYouBlock)
+ * 2) Campos legados/alternativos usados em versões anteriores
+ * 3) Persistência sem quebrar o app (localStorage)
  *
- * Para evitar regressões e erros de tipagem em cadeia,
- * mantemos ambos como opcionais.
+ * Estratégia: manter os campos "novos" + aliases legados,
+ * e normalizar/espelhar automaticamente (normalizeDraft()).
  * =========================================================
  */
 export type ProfileFormState = {
-  // Figurinha (novo + compat)
+  /**
+   * Stickers (perfil)
+   * - AboutYouBlock usa: figurinha
+   * - Algumas telas/versões antigas usavam: sticker
+   */
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
-  // Campos “internos”
-  name?: string
-  preferredName?: string
-  role?: string
-  feeling?: string
-  biggestPain?: string[]
-  energy?: string
-
-  // Aliases em PT-BR (usados por alguns blocks)
+  /**
+   * Nome
+   * - AboutYouBlock usa: nomeMae
+   * - Algumas telas usam: name
+   */
   nomeMae?: string
-  nomePreferido?: string
-  papel?: string
-  comoSeSente?: string
-  maiorDesafio?: string[]
-  energia?: string
+  name?: string
 
-  // Outros campos comuns em flows de perfil (deixa preparado)
-  filhosCount?: number
-  filhosIdades?: string
-  cidade?: string
-  estado?: string
+  /**
+   * Como prefere ser chamada
+   * - AboutYouBlock usa: userPreferredName
+   * - Versões “novas” usam: preferredName
+   * - Alguns rascunhos antigos: nomePreferido
+   */
+  userPreferredName?: string
+  preferredName?: string
+  nomePreferido?: string
+
+  /**
+   * Você é:
+   * - AboutYouBlock usa: userRole
+   * - Algumas telas usam: role
+   */
+  userRole?: 'mae' | 'pai' | 'outro' | string
+  role?: 'mae' | 'pai' | 'cuidador' | 'outro' | string
+
+  /**
+   * Base emocional
+   * - AboutYouBlock usa: userEmotionalBaseline
+   * - Algumas telas usam: feeling
+   */
+  userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve' | string
+  feeling?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia' | string
+
+  /**
+   * Desafios
+   * - AboutYouBlock usa: userMainChallenges (array)
+   * - Algumas telas usam: biggestPain (array)
+   */
+  userMainChallenges?: string[]
+  biggestPain?: string[]
+
+  /**
+   * Pico de energia
+   * - AboutYouBlock usa: userEnergyPeakTime
+   * - Algumas telas usam: energy
+   */
+  userEnergyPeakTime?: 'manha' | 'tarde' | 'noite' | 'varia' | string
+  energy?: 'manha' | 'tarde' | 'noite' | 'varia' | string
 }
 
 type ProfileDraft = ProfileFormState
@@ -87,48 +120,81 @@ function safeParseJSON<T>(raw: string | null): T | null {
 
 /**
  * =========================================================
- * COPY (robusto e “à prova” de mudança de ids)
+ * NORMALIZAÇÃO / COMPATIBILIDADE
+ * ---------------------------------------------------------
+ * Espelha campos entre versões/blocks para:
+ * - parar a cascata de erros
+ * - evitar “campo fantasma” em UI diferente
+ * - manter localStorage coerente
  * =========================================================
  */
-const STICKER_COPY_BY_ID: Record<
-  string,
-  { title: string; subtitle: string; icon?: React.ComponentProps<typeof AppIcon>['name'] }
-> = {
-  // exemplos (se os ids baterem, ótimo; se não baterem, não quebra)
-  carinhosa: { title: 'Mãe Carinhosa', subtitle: 'Amo meu jeito protetor.', icon: 'heart' },
-  leve: { title: 'Mãe Leve', subtitle: 'Equilíbrio e presença.', icon: 'sparkles' },
-  determinada: { title: 'Mãe Determinada', subtitle: 'Faço com coragem.', icon: 'target' },
-  criativa: { title: 'Mãe Criativa', subtitle: 'Invento e transformo.', icon: 'sparkles' },
-  tranquila: { title: 'Mãe Tranquila', subtitle: 'Gentileza e acolhimento.', icon: 'smile' },
-  resiliente: { title: 'Mãe Resiliente', subtitle: 'Caio, levanto e recomeço.', icon: 'sparkles' },
-}
+function normalizeDraft(input: ProfileDraft): ProfileDraft {
+  const d: ProfileDraft = { ...input }
 
-function humanizeStickerId(id: string) {
-  const spaced = id
-    .replace(/[_-]+/g, ' ')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .trim()
-
-  if (!spaced) return 'Sua figurinha'
-
-  return spaced
-    .split(' ')
-    .filter(Boolean)
-    .map(w => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase()))
-    .join(' ')
-}
-
-function getStickerMeta(id: ProfileStickerId) {
-  const key = String(id)
-  const hit = STICKER_COPY_BY_ID[key]
-  if (hit) {
-    return { title: hit.title, subtitle: hit.subtitle, icon: hit.icon ?? 'sparkles' }
+  // ---------------------------
+  // figurinha <-> sticker
+  // ---------------------------
+  if (d.figurinha && isProfileStickerId(d.figurinha)) {
+    d.sticker = d.figurinha
+  } else if (d.sticker && isProfileStickerId(d.sticker)) {
+    d.figurinha = d.sticker
   }
-  return {
-    title: humanizeStickerId(key),
-    subtitle: 'Uma escolha leve para representar seu momento.',
-    icon: 'sparkles' as React.ComponentProps<typeof AppIcon>['name'],
+
+  // ---------------------------
+  // nomeMae <-> name
+  // ---------------------------
+  if (typeof d.nomeMae === 'string' && !d.name) d.name = d.nomeMae
+  if (typeof d.name === 'string' && !d.nomeMae) d.nomeMae = d.name
+
+  // ---------------------------
+  // userPreferredName <-> preferredName <-> nomePreferido
+  // ---------------------------
+  const preferred =
+    d.userPreferredName?.trim() ||
+    d.preferredName?.trim() ||
+    d.nomePreferido?.trim() ||
+    ''
+
+  if (preferred) {
+    d.userPreferredName = preferred
+    d.preferredName = preferred
+    d.nomePreferido = preferred
   }
+
+  // ---------------------------
+  // userRole <-> role
+  // ---------------------------
+  if (d.userRole && !d.role) d.role = d.userRole
+  if (d.role && !d.userRole) d.userRole = d.role
+
+  // ---------------------------
+  // userEmotionalBaseline <-> feeling
+  // (mantém ambos; não tenta “converter” valores diferentes)
+  // ---------------------------
+  if (d.userEmotionalBaseline && !d.feeling) d.feeling = d.userEmotionalBaseline
+  if (d.feeling && !d.userEmotionalBaseline) d.userEmotionalBaseline = d.feeling
+
+  // ---------------------------
+  // userMainChallenges <-> biggestPain
+  // ---------------------------
+  if (Array.isArray(d.userMainChallenges) && (!d.biggestPain || !Array.isArray(d.biggestPain))) {
+    d.biggestPain = d.userMainChallenges
+  }
+  if (Array.isArray(d.biggestPain) && (!d.userMainChallenges || !Array.isArray(d.userMainChallenges))) {
+    d.userMainChallenges = d.biggestPain
+  }
+
+  // ---------------------------
+  // userEnergyPeakTime <-> energy
+  // ---------------------------
+  if (d.userEnergyPeakTime && !d.energy) d.energy = d.userEnergyPeakTime
+  if (d.energy && !d.userEnergyPeakTime) d.userEnergyPeakTime = d.energy
+
+  // Garantias de array
+  if (!Array.isArray(d.userMainChallenges)) d.userMainChallenges = []
+  if (!Array.isArray(d.biggestPain)) d.biggestPain = []
+
+  return d
 }
 
 function StepPill({
@@ -162,103 +228,64 @@ function StepPill({
   )
 }
 
-function normalizeDraft(saved: ProfileDraft): ProfileDraft {
-  const normalized: ProfileDraft = { ...saved }
-
-  // 1) figurinha/sticker compat
-  if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
-    normalized.figurinha = normalized.sticker
-  }
-  if (!normalized.sticker && normalized.figurinha && isProfileStickerId(normalized.figurinha)) {
-    normalized.sticker = normalized.figurinha
-  }
-
-  // 2) aliases PT-BR -> internos (mantém ambos em sync, sem sobrescrever se já tiver)
-  if (!normalized.name && normalized.nomeMae) normalized.name = normalized.nomeMae
-  if (!normalized.nomeMae && normalized.name) normalized.nomeMae = normalized.name
-
-  if (!normalized.preferredName && normalized.nomePreferido) normalized.preferredName = normalized.nomePreferido
-  if (!normalized.nomePreferido && normalized.preferredName) normalized.nomePreferido = normalized.preferredName
-
-  if (!normalized.role && normalized.papel) normalized.role = normalized.papel
-  if (!normalized.papel && normalized.role) normalized.papel = normalized.role
-
-  if (!normalized.feeling && normalized.comoSeSente) normalized.feeling = normalized.comoSeSente
-  if (!normalized.comoSeSente && normalized.feeling) normalized.comoSeSente = normalized.feeling
-
-  if ((!normalized.biggestPain || normalized.biggestPain.length === 0) && normalized.maiorDesafio?.length) {
-    normalized.biggestPain = normalized.maiorDesafio
-  }
-  if ((!normalized.maiorDesafio || normalized.maiorDesafio.length === 0) && normalized.biggestPain?.length) {
-    normalized.maiorDesafio = normalized.biggestPain
-  }
-
-  if (!normalized.energy && normalized.energia) normalized.energy = normalized.energia
-  if (!normalized.energia && normalized.energy) normalized.energia = normalized.energy
-
-  // garantias
-  if (!normalized.biggestPain) normalized.biggestPain = []
-  if (!normalized.maiorDesafio) normalized.maiorDesafio = normalized.biggestPain
-
-  return normalized
-}
-
 export default function ProfileForm() {
-  const [draft, setDraft] = useState<ProfileDraft>({
-    biggestPain: [],
-    maiorDesafio: [],
-  })
+  const [form, setForm] = useState<ProfileDraft>(() =>
+    normalizeDraft({
+      userMainChallenges: [],
+      biggestPain: [],
+    }),
+  )
+
+  const [errors, setErrors] = useState<FormErrors>({})
 
   useEffect(() => {
     const saved = safeParseJSON<ProfileDraft>(safeGetLS(LS_KEY))
-    if (saved) setDraft(normalizeDraft(saved))
+    if (saved) setForm(normalizeDraft(saved))
   }, [])
 
   useEffect(() => {
-    safeSetLS(LS_KEY, JSON.stringify(normalizeDraft(draft)))
-  }, [draft])
+    safeSetLS(LS_KEY, JSON.stringify(form))
+  }, [form])
 
-  const painOptions = useMemo(
-    () => [
-      'Falta de tempo',
-      'Culpa',
-      'Organização da rotina',
-      'Comportamento do filho',
-      'Cansaço físico',
-      'Relação com parceiro(a) / família',
-    ],
-    [],
-  )
-
-  function togglePain(label: string) {
-    setDraft(prev => {
-      const curr = prev.biggestPain ?? []
-      const exists = curr.includes(label)
-      const next = exists ? curr.filter(x => x !== label) : [...curr, label]
-      const nextDraft = { ...prev, biggestPain: next, maiorDesafio: next }
-      return normalizeDraft(nextDraft)
+  const onChange = (updates: Partial<ProfileFormState>) => {
+    setForm(prev => normalizeDraft({ ...prev, ...updates }))
+    setErrors(prev => {
+      // limpa erros dos campos alterados
+      const next = { ...prev }
+      for (const k of Object.keys(updates)) next[k] = undefined
+      return next
     })
   }
 
-  function saveAndContinue() {
+  const canSave = useMemo(() => {
+    // validações mínimas para não travar UX
+    // nome obrigatório apenas se o block estiver exigindo
+    return Boolean((form.nomeMae || form.name || '').trim())
+  }, [form.nomeMae, form.name])
+
+  const saveAndContinue = () => {
+    const nextErrors: FormErrors = {}
+
+    if (!((form.nomeMae || form.name || '').trim())) {
+      nextErrors.nomeMae = 'Por favor, preencha seu nome.'
+    }
+
+    // (opcional) role obrigatório se quiser reforçar
+    if (!form.userRole && !form.role) {
+      // não bloqueia, mas você pode ligar depois
+    }
+
+    setErrors(nextErrors)
+
+    if (Object.values(nextErrors).some(Boolean)) return
+
     try {
       track('eu360.profile.saved', {
-        figurinha: draft.figurinha ?? null,
-        hasName: Boolean(draft.name || draft.nomeMae),
+        figurinha: form.figurinha ?? null,
+        hasName: Boolean((form.nomeMae || form.name || '').trim()),
       })
     } catch {}
   }
-
-  const activeStickerId = draft.figurinha ?? draft.sticker ?? undefined
-
-  const stickerCards = useMemo(() => {
-    return STICKER_OPTIONS.map(s => s.id)
-      .filter(isProfileStickerId)
-      .map(id => {
-        const meta = getStickerMeta(id)
-        return { id, ...meta }
-      })
-  }, [])
 
   return (
     <SectionWrapper>
@@ -276,6 +303,7 @@ export default function ProfileForm() {
             </p>
           </div>
 
+          {/* Pills (visual only; mantém a pegada do print) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active number={1} label="Você" />
             <StepPill number={2} label="Seu(s) filho(s)" />
@@ -283,161 +311,29 @@ export default function ProfileForm() {
             <StepPill number={4} label="Rede & preferências" />
           </div>
 
+          {/* Card interno (conteúdo do Step 1) */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             <div>
               <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Sobre você</h3>
               <p className="text-[12px] text-[#6a6a6a] mt-1">
-                Isso nos ajuda a adaptar as sugestões à sua rotina real.
+                Escolhas rápidas para o app conversar com a sua fase de um jeito mais leve.
               </p>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-[12px] font-semibold text-[#2f3a56]">Escolha uma figurinha de perfil</p>
-              <p className="text-[11px] text-[#6a6a6a]">Escolha a vibe que mais combina com você hoje.</p>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {stickerCards.map(s => {
-                  const active = activeStickerId === s.id
-                  return (
-                    <button
-                      key={String(s.id)}
-                      type="button"
-                      onClick={() => {
-                        setDraft(prev => normalizeDraft({ ...prev, figurinha: s.id, sticker: s.id }))
-                        try {
-                          track('eu360.profile.sticker_selected', { id: s.id })
-                        } catch {}
-                      }}
-                      className={[
-                        'rounded-2xl border px-3 py-3 text-left transition',
-                        active
-                          ? 'border-[#fd2597] bg-[#ffd8e6]/70 shadow-[0_10px_22px_rgba(253,37,151,0.18)]'
-                          : 'border-[#f5d7e5] bg-white hover:bg-[#fff3f8]',
-                      ].join(' ')}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={[
-                            'h-10 w-10 rounded-full flex items-center justify-center',
-                            active ? 'bg-white' : 'bg-[#ffe1f1]',
-                          ].join(' ')}
-                          aria-hidden="true"
-                        >
-                          <AppIcon
-                            name={s.icon}
-                            className={active ? 'h-5 w-5 text-[#fd2597]' : 'h-5 w-5 text-[#fd2597]/90'}
-                            decorative
-                          />
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-semibold text-[#2f3a56] truncate">{s.title}</p>
-                          <p className="text-[10px] text-[#6a6a6a] leading-snug">{s.subtitle}</p>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="grid gap-3 pt-2">
-              <Field label="Seu nome">
-                <input
-                  value={draft.nomeMae ?? draft.name ?? ''}
-                  onChange={e => setDraft(prev => normalizeDraft({ ...prev, nomeMae: e.target.value, name: e.target.value }))}
-                  placeholder=""
-                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
-                />
-              </Field>
-
-              <Field label="Como você prefere ser chamada?">
-                <input
-                  value={draft.nomePreferido ?? draft.preferredName ?? ''}
-                  onChange={e =>
-                    setDraft(prev =>
-                      normalizeDraft({ ...prev, nomePreferido: e.target.value, preferredName: e.target.value }),
-                    )
-                  }
-                  placeholder="Ex.: Ju, Mãe, Simone…"
-                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
-                />
-                <p className="mt-1 text-[10px] text-[#6a6a6a]">Opcional, mas traz tudo mais pessoal.</p>
-              </Field>
-
-              <Field label="Você é:">
-                <select
-                  value={draft.papel ?? draft.role ?? ''}
-                  onChange={e => setDraft(prev => normalizeDraft({ ...prev, papel: e.target.value, role: e.target.value }))}
-                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
-                >
-                  <option value="">Selecione…</option>
-                  <option value="mae">Mãe</option>
-                  <option value="pai">Pai</option>
-                  <option value="cuidador">Cuidador(a)</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </Field>
-
-              <Field label="Como você se sente na maior parte dos dias com a maternidade?">
-                <select
-                  value={draft.comoSeSente ?? draft.feeling ?? ''}
-                  onChange={e =>
-                    setDraft(prev => normalizeDraft({ ...prev, comoSeSente: e.target.value, feeling: e.target.value }))
-                  }
-                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
-                >
-                  <option value="">Selecione…</option>
-                  <option value="exausta">Exausta</option>
-                  <option value="cansada">Cansada, mas dando conta</option>
-                  <option value="oscilando">Oscilando</option>
-                  <option value="equilibrada">Mais equilibrada</option>
-                  <option value="energia">Com energia para mais</option>
-                </select>
-                <p className="mt-1 text-[10px] text-[#6a6a6a]">Opcional, mas ajuda a personalizar sugestões.</p>
-              </Field>
-
-              <div className="pt-1">
-                <p className="text-[12px] font-semibold text-[#2f3a56]">Qual é o seu maior desafio hoje?</p>
-                <div className="mt-2 grid gap-1.5">
-                  {painOptions.map(label => {
-                    const checked = (draft.biggestPain ?? []).includes(label)
-                    return (
-                      <label key={label} className="flex items-center gap-2 text-[12px] text-[#2f3a56]">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => togglePain(label)}
-                          className="h-4 w-4 accent-[#fd2597]"
-                        />
-                        <span>{label}</span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <Field label="Quando você sente mais energia?">
-                <select
-                  value={draft.energia ?? draft.energy ?? ''}
-                  onChange={e => setDraft(prev => normalizeDraft({ ...prev, energia: e.target.value, energy: e.target.value }))}
-                  className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
-                >
-                  <option value="">Selecione…</option>
-                  <option value="manha">Manhã</option>
-                  <option value="tarde">Tarde</option>
-                  <option value="noite">Noite</option>
-                  <option value="varia">Varia muito</option>
-                </select>
-              </Field>
-            </div>
+            <AboutYouBlock form={form} errors={errors} onChange={onChange} />
           </SoftCard>
 
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.08)] p-4 md:p-5">
             <button
               type="button"
               onClick={saveAndContinue}
-              className="w-full rounded-full bg-[#fd2597] text-white px-5 py-3 text-[13px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95 transition"
+              disabled={!canSave}
+              className={[
+                'w-full rounded-full px-5 py-3 text-[13px] font-semibold transition',
+                canSave
+                  ? 'bg-[#fd2597] text-white shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95'
+                  : 'bg-[#ffd8e6] text-[#2f3a56] opacity-70 cursor-not-allowed',
+              ].join(' ')}
             >
               Salvar e continuar
             </button>
@@ -448,14 +344,5 @@ export default function ProfileForm() {
         </SoftCard>
       </Reveal>
     </SectionWrapper>
-  )
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-[11px] font-semibold text-[#2f3a56]">{label}</p>
-      {children}
-    </div>
   )
 }
