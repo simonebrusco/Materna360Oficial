@@ -6,7 +6,7 @@ import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
 import { track } from '@/app/lib/telemetry'
 
-// Blocks (eles importam types deste arquivo)
+// Blocks
 import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
 import { ChildrenBlock } from './ProfileFormBlocks/ChildrenBlock'
 import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
@@ -27,11 +27,9 @@ export type ChildProfile = {
 }
 
 export type ProfileFormState = {
-  // compat com versões antigas / transição
   figurinha?: string
   sticker?: string
 
-  // AboutYouBlock (campos exigidos nos erros que você mandou)
   nomeMae?: string
   userPreferredName?: string
   userRole?: 'mae' | 'pai' | 'outro'
@@ -40,19 +38,15 @@ export type ProfileFormState = {
   userMainChallenges?: string[]
   userEnergyPeakTime?: 'manha' | 'tarde' | 'noite'
 
-  // ChildrenBlock
   filhos: ChildProfile[]
 
-  // PreferencesBlock
   userContentPreferences?: string[]
   userNotificationPreferences?: string[]
 }
 
 /**
- * IMPORTANTE:
- * - SEM index signature genérico.
- * - Cada field é string | undefined (renderizável).
- * - filhos é um mapa por child.id (string -> string|undefined).
+ * - Sem index signature genérico
+ * - filhos é um map por child.id
  */
 export type FormErrors = {
   nomeMae?: string
@@ -108,6 +102,10 @@ function safeId() {
   }
 }
 
+function isChildGender(value: unknown): value is ChildGender {
+  return value === 'menino' || value === 'menina' || value === 'nao-informar'
+}
+
 /**
  * =========================================================
  * UI helpers
@@ -153,7 +151,7 @@ export default function ProfileForm() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
 
   const [form, setForm] = useState<ProfileFormState>(() => ({
-    filhos: [{ id: safeId(), genero: 'nao-informar' }],
+    filhos: [{ id: safeId(), genero: 'nao-informar' as ChildGender }],
     userMainChallenges: [],
     userContentPreferences: [],
     userNotificationPreferences: [],
@@ -166,23 +164,36 @@ export default function ProfileForm() {
     const saved = safeParseJSON<Partial<ProfileFormState>>(safeGetLS(LS_KEY))
     if (!saved) return
 
-    // normaliza filhos
-    const filhos = Array.isArray(saved.filhos) && saved.filhos.length > 0
-      ? saved.filhos.map((c) => ({
-          id: c.id || safeId(),
-          nome: c.nome ?? '',
-          genero: (c.genero as ChildGender) ?? 'nao-informar',
-          idadeMeses: typeof c.idadeMeses === 'number' ? c.idadeMeses : undefined,
-        }))
-      : [{ id: safeId(), genero: 'nao-informar' }]
+    // ✅ filhos SEM union: sempre ChildProfile[]
+    const filhos: ChildProfile[] =
+      Array.isArray(saved.filhos) && saved.filhos.length > 0
+        ? saved.filhos.map((c) => {
+            const genero: ChildGender = isChildGender(c.genero)
+              ? c.genero
+              : ('nao-informar' as ChildGender)
 
-    setForm(prev => ({
+            return {
+              id: c.id || safeId(),
+              nome: c.nome ?? '',
+              genero,
+              idadeMeses: typeof c.idadeMeses === 'number' ? c.idadeMeses : undefined,
+            }
+          })
+        : [{ id: safeId(), genero: 'nao-informar' as ChildGender }]
+
+    setForm((prev) => ({
       ...prev,
       ...saved,
       filhos,
-      userMainChallenges: Array.isArray(saved.userMainChallenges) ? saved.userMainChallenges : (prev.userMainChallenges ?? []),
-      userContentPreferences: Array.isArray(saved.userContentPreferences) ? saved.userContentPreferences : (prev.userContentPreferences ?? []),
-      userNotificationPreferences: Array.isArray(saved.userNotificationPreferences) ? saved.userNotificationPreferences : (prev.userNotificationPreferences ?? []),
+      userMainChallenges: Array.isArray(saved.userMainChallenges)
+        ? saved.userMainChallenges
+        : prev.userMainChallenges ?? [],
+      userContentPreferences: Array.isArray(saved.userContentPreferences)
+        ? saved.userContentPreferences
+        : prev.userContentPreferences ?? [],
+      userNotificationPreferences: Array.isArray(saved.userNotificationPreferences)
+        ? saved.userNotificationPreferences
+        : prev.userNotificationPreferences ?? [],
     }))
   }, [])
 
@@ -192,21 +203,34 @@ export default function ProfileForm() {
   }, [form])
 
   const onChange = (updates: Partial<ProfileFormState>) => {
-    setForm(prev => {
-      const next = { ...prev, ...updates }
+    setForm((prev) => {
+      const next: ProfileFormState = {
+        ...prev,
+        ...updates,
+        filhos: Array.isArray((updates as ProfileFormState).filhos)
+          ? (updates as ProfileFormState).filhos
+          : prev.filhos,
+        userMainChallenges: Array.isArray(updates.userMainChallenges)
+          ? updates.userMainChallenges
+          : prev.userMainChallenges ?? [],
+        userContentPreferences: Array.isArray(updates.userContentPreferences)
+          ? updates.userContentPreferences
+          : prev.userContentPreferences ?? [],
+        userNotificationPreferences: Array.isArray(updates.userNotificationPreferences)
+          ? updates.userNotificationPreferences
+          : prev.userNotificationPreferences ?? [],
+      }
 
-      // garantias mínimas
-      if (!Array.isArray(next.filhos)) next.filhos = [{ id: safeId(), genero: 'nao-informar' }]
-      if (!Array.isArray(next.userMainChallenges)) next.userMainChallenges = []
-      if (!Array.isArray(next.userContentPreferences)) next.userContentPreferences = []
-      if (!Array.isArray(next.userNotificationPreferences)) next.userNotificationPreferences = []
+      // garantias mínimas (nunca undefined)
+      if (!Array.isArray(next.filhos) || next.filhos.length === 0) {
+        next.filhos = [{ id: safeId(), genero: 'nao-informar' as ChildGender }]
+      }
 
       return next
     })
   }
 
   const canNext = useMemo(() => {
-    // validação leve por etapa (sem travar demais)
     if (step === 1) return true
     if (step === 2) return true
     if (step === 3) return true
@@ -214,18 +238,16 @@ export default function ProfileForm() {
     return true
   }, [step])
 
-  const goNext = () => setStep(s => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s))
-  const goPrev = () => setStep(s => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : s))
+  const goNext = () => setStep((s) => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s))
+  const goPrev = () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : s))
 
   function validateAndSave() {
     const nextErrors: FormErrors = {}
 
-    // validação mínima: nomeMae (se você quiser opcional, basta remover)
     if (!form.nomeMae || String(form.nomeMae).trim().length < 2) {
       nextErrors.nomeMae = 'Por favor, preencha seu nome.'
     }
 
-    // exemplo de validação de filhos (sem exagero)
     if (form.filhos?.length) {
       const childErrs: Record<string, string | undefined> = {}
       for (const c of form.filhos) {
@@ -237,7 +259,6 @@ export default function ProfileForm() {
     }
 
     setErrors(nextErrors)
-
     const ok = Object.keys(nextErrors).length === 0
     if (!ok) return
 
@@ -266,7 +287,6 @@ export default function ProfileForm() {
             </p>
           </div>
 
-          {/* Steps */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active={step === 1} number={1} label="Você" />
             <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
@@ -274,15 +294,9 @@ export default function ProfileForm() {
             <StepPill active={step === 4} number={4} label="Rede & preferências" />
           </div>
 
-          {/* Body */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-5">
-            {step === 1 ? (
-              <AboutYouBlock form={form} errors={errors} onChange={onChange} />
-            ) : null}
-
-            {step === 2 ? (
-              <ChildrenBlock form={form} errors={errors} onChange={onChange} />
-            ) : null}
+            {step === 1 ? <AboutYouBlock form={form} errors={errors} onChange={onChange} /> : null}
+            {step === 2 ? <ChildrenBlock form={form} errors={errors} onChange={onChange} /> : null}
 
             {step === 3 ? (
               <div className="space-y-3">
@@ -295,11 +309,8 @@ export default function ProfileForm() {
               </div>
             ) : null}
 
-            {step === 4 ? (
-              <PreferencesBlock form={form} errors={errors} onChange={onChange} />
-            ) : null}
+            {step === 4 ? <PreferencesBlock form={form} errors={errors} onChange={onChange} /> : null}
 
-            {/* Nav */}
             <div className="pt-2 flex items-center justify-between gap-2">
               <button
                 type="button"
@@ -332,11 +343,8 @@ export default function ProfileForm() {
               )}
             </div>
 
-            {/* Erro global simples (se existir) */}
             {errors.nomeMae ? (
-              <p className="text-[11px] text-[var(--color-brand)] font-medium">
-                {errors.nomeMae}
-              </p>
+              <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.nomeMae}</p>
             ) : null}
           </SoftCard>
 
