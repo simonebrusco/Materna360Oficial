@@ -8,7 +8,7 @@ import { track } from '@/app/lib/telemetry'
 import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
 import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
-import ChildrenBlock from './ProfileFormBlocks/ChildrenBlock'
+import { ChildrenBlock } from './ProfileFormBlocks/ChildrenBlock'
 
 /**
  * =========================================================
