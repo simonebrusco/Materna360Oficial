@@ -25,6 +25,7 @@ export type ChildProfile = {
   // PT-BR (usado pelos blocks atuais)
   nome?: string
   idade?: number
+  idadeMeses?: number
   anoNascimento?: number
   etapaEscolar?: string
   genero?: string
@@ -32,6 +33,7 @@ export type ChildProfile = {
   // EN (compat legado)
   name?: string
   age?: number
+  ageMonths?: number
   birthYear?: number
   schoolStage?: 'bebe' | 'infantil' | 'fundamental' | 'outro' | string
   gender?: string
