@@ -22,17 +22,19 @@ export type FormErrors = Record<string, string | undefined>
 export type ChildProfile = {
   id: string
 
-  // PT-BR (o ChildrenBlock usa "nome")
+  // PT-BR (usado pelos blocks atuais)
   nome?: string
   idade?: number
   anoNascimento?: number
   etapaEscolar?: string
+  genero?: string
 
   // EN (compat legado)
   name?: string
   age?: number
   birthYear?: number
   schoolStage?: 'bebe' | 'infantil' | 'fundamental' | 'outro' | string
+  gender?: string
 }
 
 export type ProfileFormState = {
