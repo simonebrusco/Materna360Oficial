@@ -16,21 +16,44 @@ import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/ap
 export type FormErrors = Record<string, string | undefined>
 
 /**
- * Compatibilidade:
- * - AboutYouBlock usa form.figurinha
- * - Algumas telas antigas podem ter usado "sticker"
- * Para evitar regressões, suportamos os DOIS.
+ * =========================================================
+ * ProfileFormState — compat máxima com os blocks existentes
+ * ---------------------------------------------------------
+ * Alguns blocks antigos usam nomes em PT-BR:
+ * - nomeMae, nomePreferido, comoSeSente, etc.
+ * Outros usam nomes "internos":
+ * - name, preferredName, feeling, etc.
+ *
+ * Para evitar regressões e erros de tipagem em cadeia,
+ * mantemos ambos como opcionais.
+ * =========================================================
  */
 export type ProfileFormState = {
+  // Figurinha (novo + compat)
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
+  // Campos “internos”
   name?: string
   preferredName?: string
   role?: string
   feeling?: string
   biggestPain?: string[]
   energy?: string
+
+  // Aliases em PT-BR (usados por alguns blocks)
+  nomeMae?: string
+  nomePreferido?: string
+  papel?: string
+  comoSeSente?: string
+  maiorDesafio?: string[]
+  energia?: string
+
+  // Outros campos comuns em flows de perfil (deixa preparado)
+  filhosCount?: number
+  filhosIdades?: string
+  cidade?: string
+  estado?: string
 }
 
 type ProfileDraft = ProfileFormState
@@ -65,24 +88,22 @@ function safeParseJSON<T>(raw: string | null): T | null {
 /**
  * =========================================================
  * COPY (robusto e “à prova” de mudança de ids)
- * - NÃO tipa por ProfileStickerId para não quebrar build
- * - Se achar no map: usa copy bonito
- * - Se não achar: humaniza o id real
  * =========================================================
  */
-const STICKER_COPY_BY_ID: Record<string, { title: string; subtitle: string; icon?: React.ComponentProps<typeof AppIcon>['name'] }> =
-  {
-    // exemplos (se os ids baterem, ótimo; se não baterem, não quebra)
-    carinhosa: { title: 'Mãe Carinhosa', subtitle: 'Amo meu jeito protetor.', icon: 'heart' },
-    leve: { title: 'Mãe Leve', subtitle: 'Equilíbrio e presença.', icon: 'sparkles' },
-    determinada: { title: 'Mãe Determinada', subtitle: 'Faço com coragem.', icon: 'target' },
-    criativa: { title: 'Mãe Criativa', subtitle: 'Invento e transformo.', icon: 'sparkles' },
-    tranquila: { title: 'Mãe Tranquila', subtitle: 'Gentileza e acolhimento.', icon: 'smile' },
-    resiliente: { title: 'Mãe Resiliente', subtitle: 'Caio, levanto e recomeço.', icon: 'sparkles' },
-  }
+const STICKER_COPY_BY_ID: Record<
+  string,
+  { title: string; subtitle: string; icon?: React.ComponentProps<typeof AppIcon>['name'] }
+> = {
+  // exemplos (se os ids baterem, ótimo; se não baterem, não quebra)
+  carinhosa: { title: 'Mãe Carinhosa', subtitle: 'Amo meu jeito protetor.', icon: 'heart' },
+  leve: { title: 'Mãe Leve', subtitle: 'Equilíbrio e presença.', icon: 'sparkles' },
+  determinada: { title: 'Mãe Determinada', subtitle: 'Faço com coragem.', icon: 'target' },
+  criativa: { title: 'Mãe Criativa', subtitle: 'Invento e transformo.', icon: 'sparkles' },
+  tranquila: { title: 'Mãe Tranquila', subtitle: 'Gentileza e acolhimento.', icon: 'smile' },
+  resiliente: { title: 'Mãe Resiliente', subtitle: 'Caio, levanto e recomeço.', icon: 'sparkles' },
+}
 
 function humanizeStickerId(id: string) {
-  // ex: "mae-carinhosa" / "mae_carinhosa" / "carinhosaV2" -> "Mae Carinhosa" / "Carinhosa V2"
   const spaced = id
     .replace(/[_-]+/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -90,7 +111,6 @@ function humanizeStickerId(id: string) {
 
   if (!spaced) return 'Sua figurinha'
 
-  // Title Case simples (pt-BR friendly)
   return spaced
     .split(' ')
     .filter(Boolean)
@@ -102,14 +122,8 @@ function getStickerMeta(id: ProfileStickerId) {
   const key = String(id)
   const hit = STICKER_COPY_BY_ID[key]
   if (hit) {
-    return {
-      title: hit.title,
-      subtitle: hit.subtitle,
-      icon: hit.icon ?? 'sparkles',
-    }
+    return { title: hit.title, subtitle: hit.subtitle, icon: hit.icon ?? 'sparkles' }
   }
-
-  // fallback premium (neutro, sem “inventar” demais)
   return {
     title: humanizeStickerId(key),
     subtitle: 'Uma escolha leve para representar seu momento.',
@@ -148,32 +162,60 @@ function StepPill({
   )
 }
 
+function normalizeDraft(saved: ProfileDraft): ProfileDraft {
+  const normalized: ProfileDraft = { ...saved }
+
+  // 1) figurinha/sticker compat
+  if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
+    normalized.figurinha = normalized.sticker
+  }
+  if (!normalized.sticker && normalized.figurinha && isProfileStickerId(normalized.figurinha)) {
+    normalized.sticker = normalized.figurinha
+  }
+
+  // 2) aliases PT-BR -> internos (mantém ambos em sync, sem sobrescrever se já tiver)
+  if (!normalized.name && normalized.nomeMae) normalized.name = normalized.nomeMae
+  if (!normalized.nomeMae && normalized.name) normalized.nomeMae = normalized.name
+
+  if (!normalized.preferredName && normalized.nomePreferido) normalized.preferredName = normalized.nomePreferido
+  if (!normalized.nomePreferido && normalized.preferredName) normalized.nomePreferido = normalized.preferredName
+
+  if (!normalized.role && normalized.papel) normalized.role = normalized.papel
+  if (!normalized.papel && normalized.role) normalized.papel = normalized.role
+
+  if (!normalized.feeling && normalized.comoSeSente) normalized.feeling = normalized.comoSeSente
+  if (!normalized.comoSeSente && normalized.feeling) normalized.comoSeSente = normalized.feeling
+
+  if ((!normalized.biggestPain || normalized.biggestPain.length === 0) && normalized.maiorDesafio?.length) {
+    normalized.biggestPain = normalized.maiorDesafio
+  }
+  if ((!normalized.maiorDesafio || normalized.maiorDesafio.length === 0) && normalized.biggestPain?.length) {
+    normalized.maiorDesafio = normalized.biggestPain
+  }
+
+  if (!normalized.energy && normalized.energia) normalized.energy = normalized.energia
+  if (!normalized.energia && normalized.energy) normalized.energia = normalized.energy
+
+  // garantias
+  if (!normalized.biggestPain) normalized.biggestPain = []
+  if (!normalized.maiorDesafio) normalized.maiorDesafio = normalized.biggestPain
+
+  return normalized
+}
+
 export default function ProfileForm() {
   const [draft, setDraft] = useState<ProfileDraft>({
     biggestPain: [],
+    maiorDesafio: [],
   })
 
   useEffect(() => {
     const saved = safeParseJSON<ProfileDraft>(safeGetLS(LS_KEY))
-    if (saved) {
-      const normalized: ProfileDraft = { ...saved }
-
-      // Normaliza: se vier "sticker" antigo, espelha em "figurinha"
-      if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
-        normalized.figurinha = normalized.sticker
-      }
-
-      // Se vier figurinha, espelha em sticker (compat)
-      if (!normalized.sticker && normalized.figurinha && isProfileStickerId(normalized.figurinha)) {
-        normalized.sticker = normalized.figurinha
-      }
-
-      setDraft(normalized)
-    }
+    if (saved) setDraft(normalizeDraft(saved))
   }, [])
 
   useEffect(() => {
-    safeSetLS(LS_KEY, JSON.stringify(draft))
+    safeSetLS(LS_KEY, JSON.stringify(normalizeDraft(draft)))
   }, [draft])
 
   const painOptions = useMemo(
@@ -193,7 +235,8 @@ export default function ProfileForm() {
       const curr = prev.biggestPain ?? []
       const exists = curr.includes(label)
       const next = exists ? curr.filter(x => x !== label) : [...curr, label]
-      return { ...prev, biggestPain: next }
+      const nextDraft = { ...prev, biggestPain: next, maiorDesafio: next }
+      return normalizeDraft(nextDraft)
     })
   }
 
@@ -201,7 +244,7 @@ export default function ProfileForm() {
     try {
       track('eu360.profile.saved', {
         figurinha: draft.figurinha ?? null,
-        hasName: Boolean(draft.name),
+        hasName: Boolean(draft.name || draft.nomeMae),
       })
     } catch {}
   }
@@ -209,9 +252,7 @@ export default function ProfileForm() {
   const activeStickerId = draft.figurinha ?? draft.sticker ?? undefined
 
   const stickerCards = useMemo(() => {
-    // Usa STICKER_OPTIONS como fonte oficial, mas só renderiza ids válidos
-    return STICKER_OPTIONS
-      .map(s => s.id)
+    return STICKER_OPTIONS.map(s => s.id)
       .filter(isProfileStickerId)
       .map(id => {
         const meta = getStickerMeta(id)
@@ -235,7 +276,6 @@ export default function ProfileForm() {
             </p>
           </div>
 
-          {/* Pills (visual only) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active number={1} label="Você" />
             <StepPill number={2} label="Seu(s) filho(s)" />
@@ -243,7 +283,6 @@ export default function ProfileForm() {
             <StepPill number={4} label="Rede & preferências" />
           </div>
 
-          {/* Card interno */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             <div>
               <h3 className="text-base md:text-lg font-semibold text-[#2f3a56]">Sobre você</h3>
@@ -259,13 +298,12 @@ export default function ProfileForm() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {stickerCards.map(s => {
                   const active = activeStickerId === s.id
-
                   return (
                     <button
                       key={String(s.id)}
                       type="button"
                       onClick={() => {
-                        setDraft(prev => ({ ...prev, figurinha: s.id, sticker: s.id }))
+                        setDraft(prev => normalizeDraft({ ...prev, figurinha: s.id, sticker: s.id }))
                         try {
                           track('eu360.profile.sticker_selected', { id: s.id })
                         } catch {}
@@ -306,8 +344,8 @@ export default function ProfileForm() {
             <div className="grid gap-3 pt-2">
               <Field label="Seu nome">
                 <input
-                  value={draft.name ?? ''}
-                  onChange={e => setDraft(prev => ({ ...prev, name: e.target.value }))}
+                  value={draft.nomeMae ?? draft.name ?? ''}
+                  onChange={e => setDraft(prev => normalizeDraft({ ...prev, nomeMae: e.target.value, name: e.target.value }))}
                   placeholder=""
                   className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
                 />
@@ -315,8 +353,12 @@ export default function ProfileForm() {
 
               <Field label="Como você prefere ser chamada?">
                 <input
-                  value={draft.preferredName ?? ''}
-                  onChange={e => setDraft(prev => ({ ...prev, preferredName: e.target.value }))}
+                  value={draft.nomePreferido ?? draft.preferredName ?? ''}
+                  onChange={e =>
+                    setDraft(prev =>
+                      normalizeDraft({ ...prev, nomePreferido: e.target.value, preferredName: e.target.value }),
+                    )
+                  }
                   placeholder="Ex.: Ju, Mãe, Simone…"
                   className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
                 />
@@ -325,8 +367,8 @@ export default function ProfileForm() {
 
               <Field label="Você é:">
                 <select
-                  value={draft.role ?? ''}
-                  onChange={e => setDraft(prev => ({ ...prev, role: e.target.value }))}
+                  value={draft.papel ?? draft.role ?? ''}
+                  onChange={e => setDraft(prev => normalizeDraft({ ...prev, papel: e.target.value, role: e.target.value }))}
                   className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
                 >
                   <option value="">Selecione…</option>
@@ -339,8 +381,10 @@ export default function ProfileForm() {
 
               <Field label="Como você se sente na maior parte dos dias com a maternidade?">
                 <select
-                  value={draft.feeling ?? ''}
-                  onChange={e => setDraft(prev => ({ ...prev, feeling: e.target.value }))}
+                  value={draft.comoSeSente ?? draft.feeling ?? ''}
+                  onChange={e =>
+                    setDraft(prev => normalizeDraft({ ...prev, comoSeSente: e.target.value, feeling: e.target.value }))
+                  }
                   className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
                 >
                   <option value="">Selecione…</option>
@@ -375,8 +419,8 @@ export default function ProfileForm() {
 
               <Field label="Quando você sente mais energia?">
                 <select
-                  value={draft.energy ?? ''}
-                  onChange={e => setDraft(prev => ({ ...prev, energy: e.target.value }))}
+                  value={draft.energia ?? draft.energy ?? ''}
+                  onChange={e => setDraft(prev => normalizeDraft({ ...prev, energia: e.target.value, energy: e.target.value }))}
                   className="w-full rounded-xl border border-[#f5d7e5] bg-white px-3 py-2 text-[13px] text-[#2f3a56] outline-none focus:border-[#fd2597]/60"
                 >
                   <option value="">Selecione…</option>
