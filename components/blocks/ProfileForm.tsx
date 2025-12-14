@@ -11,8 +11,24 @@ import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
 
 export type FormErrors = Record<string, string | undefined>
 
+/**
+ * =========================================================
+ * ChildProfile — compat total com os blocks atuais
+ * =========================================================
+ * Alguns blocks usam PT-BR (nome, idade, etc).
+ * Outros podem usar EN (name, age, etc).
+ * Mantemos ambos para evitar regressões.
+ */
 export type ChildProfile = {
   id: string
+
+  // PT-BR (o ChildrenBlock usa "nome")
+  nome?: string
+  idade?: number
+  anoNascimento?: number
+  etapaEscolar?: string
+
+  // EN (compat legado)
   name?: string
   age?: number
   birthYear?: number
@@ -42,7 +58,7 @@ export type ProfileFormState = {
   userEnergyPeakTime?: 'manha' | 'tarde' | 'noite' | 'varia' | string
   energy?: 'manha' | 'tarde' | 'noite' | 'varia' | string
 
-  // ✅ agora é obrigatório (fix do ChildrenBlock)
+  // obrigatório (fix do ChildrenBlock)
   filhos: ChildProfile[]
   children?: ChildProfile[]
   kids?: ChildProfile[]
