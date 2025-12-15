@@ -246,6 +246,7 @@ export const revalidate = 0
 
 export default function Eu360Client() {
   const questionnaireRef = useRef<HTMLDivElement | null>(null)
+  const profileRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     track('nav.click', { tab: 'eu360', dest: '/eu360' })
@@ -271,6 +272,9 @@ export default function Eu360Client() {
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({})
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
+
+  // ✅ controla se o perfil está aberto/fechado (para não “voltar como antes”)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   useEffect(() => {
     const saved = readPersonaFromLS()
@@ -370,8 +374,27 @@ export default function Eu360Client() {
     questionnaireRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  function openProfile() {
+    setIsProfileOpen(true)
+    try {
+      track('eu360.profile.open', { origin: 'profile_summary' })
+    } catch {}
+    // aguarda render para scroll
+    setTimeout(() => {
+      profileRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
+  }
+
+  function closeProfile() {
+    setIsProfileOpen(false)
+    try {
+      track('eu360.profile.close', { origin: 'profile_form' })
+    } catch {}
+  }
+
   const heroTitle = 'Seu mundo em perspectiva'
-  const heroSubtitle = 'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+  const heroSubtitle =
+    'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
 
   const content = (
     <main
@@ -428,7 +451,7 @@ export default function Eu360Client() {
             {heroSubtitle}
           </p>
 
-          {/* HERO GLASS CARD (B) */}
+          {/* HERO GLASS CARD */}
           <div className="mt-4 rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-4 md:px-5 md:py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -474,7 +497,7 @@ export default function Eu360Client() {
                 className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2"
               >
                 <AppIcon name="sparkles" size={16} decorative />
-                <span>{personaResult ? 'Ajustar novamente' : 'Personalizar perfil'}</span>
+                <span>{personaResult ? 'Ajustar novamente' : 'Fazer agora (2 min)'}</span>
               </button>
 
               <Link
@@ -485,17 +508,60 @@ export default function Eu360Client() {
                 <AppIcon name="arrow-right" size={16} decorative />
               </Link>
             </div>
-
-            {/* microcopy: deixa explícito que é ação e que é rápido */}
-            <p className="mt-2 text-[11px] text-white/80 leading-relaxed">
-              Leva menos de 2 minutos. Você pode parar quando quiser.
-            </p>
           </div>
         </header>
 
         <div className="space-y-6 md:space-y-7 pb-8">
-          {/* 1 — PERFIL (COM FIGURINHAS V2 DENTRO DO ProfileForm) */}
-          <ProfileForm />
+          {/* 1 — AJUSTE DO PERFIL (RESUMO + CTA CLARO) */}
+          <SectionWrapper>
+            <Reveal>
+              <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
+                      Ajuste do perfil
+                    </p>
+                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
+                      Personalizar sem cansar
+                    </h2>
+                    <p className="text-[13px] text-[var(--color-ink-muted)] leading-relaxed max-w-xl">
+                      Só o que for útil para o app te entregar sugestões melhores.
+                    </p>
+
+                    <div className="mt-3 rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-3">
+                      <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
+                        Dica: você pode preencher aos poucos. Não precisa fazer tudo hoje.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isProfileOpen) {
+                        closeProfile()
+                        return
+                      }
+                      openProfile()
+                    }}
+                    className="shrink-0 inline-flex items-center gap-2 rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.26)] hover:opacity-95 transition"
+                    aria-expanded={isProfileOpen}
+                    aria-controls="eu360-profile-form"
+                  >
+                    <AppIcon name={isProfileOpen ? 'x' : 'edit'} size={16} decorative />
+                    <span>{isProfileOpen ? 'Fechar' : 'Abrir meu perfil'}</span>
+                  </button>
+                </div>
+              </SoftCard>
+            </Reveal>
+          </SectionWrapper>
+
+          {/* FORM DO PERFIL (só aparece quando abrir) */}
+          {isProfileOpen ? (
+            <div id="eu360-profile-form" ref={profileRef}>
+              <ProfileForm />
+            </div>
+          ) : null}
 
           {/* 2 — QUESTIONÁRIO */}
           <div ref={questionnaireRef} />
@@ -552,7 +618,8 @@ export default function Eu360Client() {
                       <div>
                         <p className="text-[12px] font-semibold text-[#2f3a56]">Questionário concluído</p>
                         <p className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                          A partir de agora, o Materna360 pode calibrar o tom, o volume de sugestões e o ritmo do app para você.
+                          A partir de agora, o Materna360 pode calibrar o tom, o volume de sugestões e o
+                          ritmo do app para você.
                         </p>
                       </div>
                     </div>
