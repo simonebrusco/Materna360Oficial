@@ -10,12 +10,7 @@ export type PageTemplateProps = {
   children: ReactNode
 }
 
-export function PageTemplate({
-  label,
-  title,
-  subtitle,
-  children,
-}: PageTemplateProps) {
+export function PageTemplate({ label, title, subtitle, children }: PageTemplateProps) {
   return (
     <main
       data-layout="page-template-v1"
@@ -68,9 +63,7 @@ export function PageTemplate({
         </header>
 
         {/* Conteúdo específico da página */}
-        <div className="space-y-6 md:space-y-7 pb-6">
-          {children}
-        </div>
+        <div className="space-y-6 md:space-y-7 pb-6">{children}</div>
 
         {/* Rodapé legal global – fica acima da bottom nav */}
         <div className="mt-4 md:mt-6">
@@ -81,5 +74,4 @@ export function PageTemplate({
   )
 }
 
-// 👇 Mantém compatível com import default e import nomeado
 export default PageTemplate
