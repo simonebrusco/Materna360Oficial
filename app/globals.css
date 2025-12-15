@@ -7,6 +7,9 @@ html,
 body {
   color-scheme: light;
   color: #111;
+
+  /* ✅ IMPORTANTE: elimina o “rosa por trás” quando puxa/overscroll */
+  background: #ffffff;
 }
 
 /* ===== NEW MATERNA360 COLOR SYSTEM (Official) ===== */
@@ -199,6 +202,9 @@ body {
   body {
     height: 100%;
     color: rgb(var(--support-1));
+
+    /* ✅ reforço contra “fundo estranho” em scroll/overscroll */
+    background: var(--color-page-bg);
   }
 
   html {
@@ -208,7 +214,9 @@ body {
   body {
     @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
-    background-color: #fdbed7; /* fundo neutro rosa suave */
+
+    /* ✅ ERA #fdbed7 (isso criava o rosa “nada a ver” atrás). Agora branco. */
+    background-color: var(--color-page-bg);
   }
 
   img {
