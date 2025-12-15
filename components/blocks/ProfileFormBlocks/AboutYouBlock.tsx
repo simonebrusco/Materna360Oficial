@@ -15,15 +15,6 @@ interface Props {
   onChange: (updates: Partial<ProfileFormState>) => void
 }
 
-const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
-  'mae-carinhosa': 'Amor nos pequenos gestos.',
-  'mae-leve': 'Equilíbrio e presença.',
-  'mae-determinada': 'Força com doçura.',
-  'mae-criativa': 'Inventa e transforma.',
-  'mae-tranquila': 'Serenidade e autocuidado.',
-  'mae-resiliente': 'Cai, respira fundo e recomeça.',
-}
-
 const MAIN_CHALLENGES = [
   'Falta de tempo',
   'Culpa',
@@ -65,16 +56,17 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       <div className="space-y-3 pt-2">
         <div>
           <h3 className="text-xs font-semibold text-[var(--color-text-main)]">
-            Escolha uma figurinha de perfil
+            Escolha sua vibe de perfil
           </h3>
           <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-            Escolha a vibe que mais combina com você hoje.
+            Um toque pessoal para o app ajustar sugestões ao seu momento.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 max-w-3xl">
           {STICKER_OPTIONS.map((sticker) => {
             const isActive = form.figurinha === sticker.id
+            const Icon = sticker.Icon
 
             return (
               <button
@@ -103,21 +95,18 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                       ].join(' '),
                 ].join(' ')}
                 aria-pressed={isActive}
-                aria-label={`Selecionar figurinha ${sticker.label}`}
+                aria-label={`Selecionar vibe ${sticker.label}`}
               >
                 <span
                   className={[
-                    'inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full flex-shrink-0',
+                    'inline-flex h-16 w-16 items-center justify-center rounded-full flex-shrink-0',
                     'transition-colors duration-200',
                     isActive ? 'bg-white' : 'bg-[var(--color-soft-bg)]',
                   ].join(' ')}
                 >
-                  <img
-                    src={sticker.asset}
-                    alt={sticker.label}
-                    className="h-11 w-11 object-contain"
-                    loading="lazy"
-                  />
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--color-bg-pinksoft)]">
+                    <Icon className="h-5 w-5 text-[var(--color-plum)]" />
+                  </span>
                 </span>
 
                 <div className="flex flex-col items-center gap-0.5 min-h-[32px] flex-1 justify-center">
@@ -125,7 +114,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                     {sticker.label}
                   </span>
                   <span className="text-[8px] text-[var(--color-text-muted)] line-clamp-1 text-center">
-                    {STICKER_DESCRIPTIONS[sticker.id]}
+                    {sticker.subtitle}
                   </span>
                 </div>
 
@@ -243,7 +232,9 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">Quando você sente mais energia?</label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">
+          Quando você sente mais energia?
+        </label>
         <select
           value={form.userEnergyPeakTime || ''}
           onChange={(event) => onSelectEnergyPeakTime(event.target.value)}
