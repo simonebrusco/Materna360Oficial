@@ -1,7 +1,13 @@
 'use client'
 
-import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
-import { FormErrors, ProfileFormState } from '../ProfileForm'
+import { STICKER_OPTIONS, type ProfileStickerId } from '@/app/lib/stickers'
+import type {
+  EmotionalBaseline,
+  EnergyPeakTime,
+  FormErrors,
+  ProfileFormState,
+  UserRole,
+} from '../ProfileForm'
 
 interface Props {
   form: ProfileFormState
@@ -18,13 +24,40 @@ const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
   'mae-resiliente': 'Cai, respira fundo e recomeça.',
 }
 
+const MAIN_CHALLENGES = [
+  'Falta de tempo',
+  'Culpa',
+  'Organização da rotina',
+  'Comportamento do filho',
+  'Cansaço físico',
+  'Relação com parceiro(a) / família',
+] as const
+
+type MainChallenge = (typeof MAIN_CHALLENGES)[number]
+
 export function AboutYouBlock({ form, errors, onChange }: Props) {
-  const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
-    const current = form[fieldName] as string[] | undefined
-    const updated = (current || []).includes(value)
-      ? (current || []).filter((item) => item !== value)
-      : [...(current || []), value]
-    onChange({ [fieldName]: updated })
+  // Toggle restrito apenas ao campo correto (evita casts perigosos)
+  const toggleMainChallenge = (value: MainChallenge) => {
+    const current = form.userMainChallenges ?? []
+    const updated = current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value]
+    onChange({ userMainChallenges: updated })
+  }
+
+  const onSelectRole = (raw: string) => {
+    const value = raw as UserRole
+    onChange({ userRole: raw ? value : undefined })
+  }
+
+  const onSelectEmotionalBaseline = (raw: string) => {
+    const value = raw as EmotionalBaseline
+    onChange({ userEmotionalBaseline: raw ? value : undefined })
+  }
+
+  const onSelectEnergyPeakTime = (raw: string) => {
+    const value = raw as EnergyPeakTime
+    onChange({ userEnergyPeakTime: raw ? value : undefined })
   }
 
   return (
@@ -39,7 +72,6 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           </p>
         </div>
 
-        {/* ⬇⬇⬇ AQUI mudamos o grid para ficar 2 colunas no mobile e 3 no desktop */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 max-w-3xl">
           {STICKER_OPTIONS.map((sticker) => {
             const isActive = form.figurinha === sticker.id
@@ -83,10 +115,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label
-          htmlFor="mother-name"
-          className="text-xs font-medium text-[var(--color-text-main)]"
-        >
+        <label htmlFor="mother-name" className="text-xs font-medium text-[var(--color-text-main)]">
           Seu nome
         </label>
         <input
@@ -103,43 +132,30 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           aria-invalid={Boolean(errors.nomeMae)}
         />
         {errors.nomeMae && (
-          <p className="text-[11px] text-[var(--color-brand)] font-medium">
-            {errors.nomeMae}
-          </p>
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.nomeMae}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label
-          htmlFor="preferred-name"
-          className="text-xs font-medium text-[var(--color-text-main)]"
-        >
+        <label htmlFor="preferred-name" className="text-xs font-medium text-[var(--color-text-main)]">
           Como você prefere ser chamada?
         </label>
         <input
           id="preferred-name"
           type="text"
           value={form.userPreferredName || ''}
-          onChange={(event) =>
-            onChange({ userPreferredName: event.target.value })
-          }
+          onChange={(event) => onChange({ userPreferredName: event.target.value })}
           placeholder="Ex.: Ju, Mãe, Simone..."
           className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
         />
-        <p className="text-[11px] text-[var(--color-text-muted)]">
-          Opcional, mas faz tudo mais pessoal.
-        </p>
+        <p className="text-[11px] text-[var(--color-text-muted)]">Opcional, mas faz tudo mais pessoal.</p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">
-          Você é:
-        </label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">Você é:</label>
         <select
           value={form.userRole || ''}
-          onChange={(event) =>
-            onChange({ userRole: event.target.value as any })
-          }
+          onChange={(event) => onSelectRole(event.target.value)}
           className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none ${
             errors.userRole
               ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30'
@@ -152,9 +168,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <option value="outro">Outro cuidador</option>
         </select>
         {errors.userRole && (
-          <p className="text-[11px] text-[var(--color-brand)] font-medium">
-            {errors.userRole}
-          </p>
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userRole}</p>
         )}
       </div>
 
@@ -164,9 +178,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         </label>
         <select
           value={form.userEmotionalBaseline || ''}
-          onChange={(event) =>
-            onChange({ userEmotionalBaseline: event.target.value as any })
-          }
+          onChange={(event) => onSelectEmotionalBaseline(event.target.value)}
           className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
         >
           <option value="">Selecione...</option>
@@ -181,52 +193,30 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">
-          Qual é o seu maior desafio hoje?
-        </label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">Qual é o seu maior desafio hoje?</label>
         <div className="space-y-2">
-          {[
-            'Falta de tempo',
-            'Culpa',
-            'Organização da rotina',
-            'Comportamento do filho',
-            'Cansaço físico',
-            'Relação com parceiro(a) / família',
-          ].map((challenge) => (
-            <label
-              key={challenge}
-              className="flex items-center gap-2 cursor-pointer"
-            >
+          {MAIN_CHALLENGES.map((challenge) => (
+            <label key={challenge} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={(form.userMainChallenges || []).includes(challenge)}
-                onChange={() =>
-                  toggleArrayField('userMainChallenges', challenge)
-                }
+                onChange={() => toggleMainChallenge(challenge)}
                 className="h-4 w-4 rounded border-[var(--color-border-soft)] text-[var(--color-brand)] focus:ring-[var(--color-brand)]/30"
               />
-              <span className="text-xs text-[var(--color-text-main)]">
-                {challenge}
-              </span>
+              <span className="text-xs text-[var(--color-text-main)]">{challenge}</span>
             </label>
           ))}
         </div>
         {errors.userMainChallenges && (
-          <p className="text-[11px] text-[var(--color-brand)] font-medium">
-            {errors.userMainChallenges}
-          </p>
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userMainChallenges}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">
-          Quando você sente mais energia?
-        </label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">Quando você sente mais energia?</label>
         <select
           value={form.userEnergyPeakTime || ''}
-          onChange={(event) =>
-            onChange({ userEnergyPeakTime: event.target.value as any })
-          }
+          onChange={(event) => onSelectEnergyPeakTime(event.target.value)}
           className={`w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none ${
             errors.userEnergyPeakTime
               ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/30'
@@ -239,9 +229,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <option value="noite">Noite (depois que crianças dormem)</option>
         </select>
         {errors.userEnergyPeakTime && (
-          <p className="text-[11px] text-[var(--color-brand)] font-medium">
-            {errors.userEnergyPeakTime}
-          </p>
+          <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userEnergyPeakTime}</p>
         )}
       </div>
     </div>
