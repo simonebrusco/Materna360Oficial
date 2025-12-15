@@ -6,7 +6,6 @@ import Link from 'next/link'
 
 import {
   DEFAULT_STICKER_ID,
-  STICKERS,
   isProfileStickerId,
   resolveSticker,
 } from '@/app/lib/stickers'
@@ -22,7 +21,6 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
   const [isLoadingSticker, setIsLoadingSticker] = useState(false)
-  const [imageSrc, setImageSrc] = useState<string>(STICKERS[DEFAULT_STICKER_ID].asset)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
@@ -56,21 +54,18 @@ export function Header({ title, showNotification = false }: HeaderProps) {
         }
 
         const data = await response.json()
-        if (!isMounted) {
-          return
-        }
+        if (!isMounted) return
 
-        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
+        const nextStickerId = isProfileStickerId(data?.figurinha)
+          ? data.figurinha
+          : DEFAULT_STICKER_ID
+
         setStickerId(nextStickerId)
       } catch (error) {
-        console.error('Não foi possível obter o perfil para a figurinha:', error)
-        if (isMounted) {
-          setStickerId(DEFAULT_STICKER_ID)
-        }
+        console.error('Não foi possível obter o perfil para a vibe:', error)
+        if (isMounted) setStickerId(DEFAULT_STICKER_ID)
       } finally {
-        if (isMounted) {
-          setIsLoadingSticker(false)
-        }
+        if (isMounted) setIsLoadingSticker(false)
       }
     }
 
@@ -90,14 +85,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   }, [showNotification])
 
   const sticker = useMemo(() => resolveSticker(stickerId), [stickerId])
-
-  useEffect(() => {
-    setImageSrc(sticker.asset)
-  }, [sticker.asset])
-
-  const handleImageError = () => {
-    setImageSrc(STICKERS[DEFAULT_STICKER_ID].asset)
-  }
+  const Icon = sticker.Icon
 
   return (
     <header
@@ -134,22 +122,17 @@ export function Header({ title, showNotification = false }: HeaderProps) {
               href="/eu360"
               prefetch={false}
               className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
-              aria-label={`Figurinha de perfil: ${sticker.label}`}
+              aria-label={`Vibe de perfil: ${sticker.label}`}
             >
               <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
               <span className="absolute inset-0 rounded-full border border-white/60" aria-hidden />
+
               {isLoadingSticker ? (
                 <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
               ) : (
-                <Image
-                  key={imageSrc}
-                  src={imageSrc}
-                  alt={sticker.label}
-                  width={44}
-                  height={44}
-                  className="h-7 w-7 shrink-0 rounded-full object-cover"
-                  onError={handleImageError}
-                />
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-bg-pinksoft)]">
+                  <Icon className="h-4.5 w-4.5 text-[var(--color-plum)]" />
+                </span>
               )}
             </Link>
 
