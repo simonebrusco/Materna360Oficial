@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { STICKER_OPTIONS, type ProfileStickerId } from '@/app/lib/stickers'
 import type {
   EmotionalBaseline,
@@ -15,6 +16,15 @@ interface Props {
   onChange: (updates: Partial<ProfileFormState>) => void
 }
 
+const STICKER_DESCRIPTIONS: Record<ProfileStickerId, string> = {
+  'mae-carinhosa': 'Amor nos pequenos gestos.',
+  'mae-leve': 'Equilíbrio e presença.',
+  'mae-determinada': 'Força com doçura.',
+  'mae-criativa': 'Inventa e transforma.',
+  'mae-tranquila': 'Serenidade e autocuidado.',
+  'mae-resiliente': 'Cai, respira fundo e recomeça.',
+}
+
 const MAIN_CHALLENGES = [
   'Falta de tempo',
   'Culpa',
@@ -27,7 +37,13 @@ const MAIN_CHALLENGES = [
 type MainChallenge = (typeof MAIN_CHALLENGES)[number]
 
 export function AboutYouBlock({ form, errors, onChange }: Props) {
-  // Toggle restrito apenas ao campo correto (evita casts perigosos)
+  const [isVibePickerOpen, setIsVibePickerOpen] = useState(false)
+
+  const selectedSticker = useMemo(() => {
+    const found = STICKER_OPTIONS.find((s) => s.id === form.figurinha)
+    return found ?? null
+  }, [form.figurinha])
+
   const toggleMainChallenge = (value: MainChallenge) => {
     const current = form.userMainChallenges ?? []
     const updated = current.includes(value)
@@ -52,85 +68,103 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-3 pt-2">
+    <div className="space-y-6">
+      {/* VIBE / FIGURINHA (compacta + opcional abrir) */}
+      <div className="space-y-3">
         <div>
-          <h3 className="text-xs font-semibold text-[var(--color-text-main)]">
-            Escolha sua vibe de perfil
-          </h3>
+          <h3 className="text-xs font-semibold text-[var(--color-text-main)]">Sua vibe</h3>
           <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-            Um toque pessoal para o app ajustar sugestões ao seu momento.
+            Um toque discreto no seu perfil — o app usa isso para ajustar o tom.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 max-w-3xl">
-          {STICKER_OPTIONS.map((sticker) => {
-            const isActive = form.figurinha === sticker.id
-            const Icon = sticker.Icon
+        {/* Resumo compacto da vibe selecionada */}
+        <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[#fff7fb] px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#ffd8e6]">
+                {selectedSticker ? (
+                  <selectedSticker.Icon className="h-4.5 w-4.5 text-[#2f3a56]" />
+                ) : (
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#fd2597]" aria-hidden />
+                )}
+              </span>
 
-            return (
-              <button
-                key={sticker.id}
-                type="button"
-                onClick={() => onChange({ figurinha: sticker.id })}
-                className={[
-                  'group relative flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border aspect-square',
-                  'transition-colors duration-200',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-                  isActive
-                    ? [
-                        // ✅ Active refinado (discreto + DS)
-                        'border-[var(--color-brand)]/40',
-                        'bg-[var(--color-soft-bg)]',
-                        'shadow-[0_6px_18px_rgba(0,0,0,0.06)]',
-                        'focus-visible:ring-[var(--color-brand)]',
-                      ].join(' ')
-                    : [
-                        'border-[var(--color-border-soft)]',
-                        'bg-white',
-                        'hover:border-[var(--color-brand)]/25',
-                        'hover:bg-[var(--color-soft-bg)]/40',
-                        'hover:shadow-[0_6px_18px_rgba(0,0,0,0.05)]',
-                        'focus-visible:ring-[var(--color-brand)]',
-                      ].join(' '),
-                ].join(' ')}
-                aria-pressed={isActive}
-                aria-label={`Selecionar vibe ${sticker.label}`}
-              >
-                <span
-                  className={[
-                    'inline-flex h-16 w-16 items-center justify-center rounded-full flex-shrink-0',
-                    'transition-colors duration-200',
-                    isActive ? 'bg-white' : 'bg-[var(--color-soft-bg)]',
-                  ].join(' ')}
-                >
-                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--color-bg-pinksoft)]">
-                    <Icon className="h-5 w-5 text-[var(--color-plum)]" />
-                  </span>
-                </span>
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold text-[var(--color-text-main)]">
+                  {selectedSticker ? selectedSticker.label : 'Escolha uma vibe'}
+                </p>
+                <p className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">
+                  {selectedSticker ? STICKER_DESCRIPTIONS[selectedSticker.id] : 'Você pode escolher agora ou depois.'}
+                </p>
+              </div>
+            </div>
 
-                <div className="flex flex-col items-center gap-0.5 min-h-[32px] flex-1 justify-center">
-                  <span className="text-[9px] font-bold text-[var(--color-text-main)] line-clamp-2 text-center leading-tight">
-                    {sticker.label}
-                  </span>
-                  <span className="text-[8px] text-[var(--color-text-muted)] line-clamp-1 text-center">
-                    {sticker.subtitle}
-                  </span>
-                </div>
+            <button
+              type="button"
+              onClick={() => setIsVibePickerOpen((v) => !v)}
+              className="rounded-full bg-white border border-[var(--color-border-soft)] px-3 py-2 text-[11px] font-semibold text-[#2f3a56] hover:bg-[#ffe1f1] transition"
+            >
+              {isVibePickerOpen ? 'Fechar' : 'Trocar vibe'}
+            </button>
+          </div>
 
-                {/* ✅ micro-indicador de seleção (bem sutil) */}
-                {isActive ? (
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-[var(--color-brand)]/55"
-                  />
-                ) : null}
-              </button>
-            )
-          })}
+          {errors.figurinha && (
+            <p className="mt-2 text-[11px] text-[var(--color-brand)] font-medium">{errors.figurinha}</p>
+          )}
+
+          {/* Picker compactado */}
+          {isVibePickerOpen ? (
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {STICKER_OPTIONS.map((sticker) => {
+                const isActive = form.figurinha === sticker.id
+                const Icon = sticker.Icon
+
+                return (
+                  <button
+                    key={sticker.id}
+                    type="button"
+                    onClick={() => {
+                      onChange({ figurinha: sticker.id })
+                      setIsVibePickerOpen(false)
+                    }}
+                    className={[
+                      'group w-full rounded-2xl border px-3 py-2 text-left transition',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-brand)]',
+                      isActive
+                        ? 'border-[var(--color-brand)]/45 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.06)]'
+                        : 'border-[var(--color-border-soft)] bg-white hover:bg-[#fff7fb] hover:border-[var(--color-brand)]/25',
+                    ].join(' ')}
+                    aria-pressed={isActive}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          'grid h-8 w-8 place-items-center rounded-full transition',
+                          isActive ? 'bg-[#ffd8e6]' : 'bg-[var(--color-soft-bg)]',
+                        ].join(' ')}
+                      >
+                        <Icon className="h-4 w-4 text-[#2f3a56]" />
+                      </span>
+
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-[var(--color-text-main)] leading-tight">
+                          {sticker.label}
+                        </p>
+                        <p className="text-[10px] text-[var(--color-text-muted)] line-clamp-1">
+                          {STICKER_DESCRIPTIONS[sticker.id]}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
 
+      {/* Nome */}
       <div className="space-y-2">
         <label htmlFor="mother-name" className="text-xs font-medium text-[var(--color-text-main)]">
           Seu nome
@@ -153,6 +187,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         )}
       </div>
 
+      {/* Preferência de nome */}
       <div className="space-y-2">
         <label htmlFor="preferred-name" className="text-xs font-medium text-[var(--color-text-main)]">
           Como você prefere ser chamada?
@@ -168,6 +203,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         <p className="text-[11px] text-[var(--color-text-muted)]">Opcional, mas faz tudo mais pessoal.</p>
       </div>
 
+      {/* Papel */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-[var(--color-text-main)]">Você é:</label>
         <select
@@ -182,16 +218,18 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
           <option value="">Selecione...</option>
           <option value="mae">Mãe</option>
           <option value="pai">Pai</option>
-          <option value="outro">Outro cuidador</option>
+          <option value="cuidador">Cuidador(a)</option>
+          <option value="outro">Outro</option>
         </select>
         {errors.userRole && (
           <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userRole}</p>
         )}
       </div>
 
+      {/* Baseline emocional */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-[var(--color-text-main)]">
-          Como você se sente na maior parte dos dias com a maternidade?
+          Como você se sente na maior parte dos dias?
         </label>
         <select
           value={form.userEmotionalBaseline || ''}
@@ -209,6 +247,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         </p>
       </div>
 
+      {/* Desafio principal */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-[var(--color-text-main)]">
           Qual é o seu maior desafio hoje?
@@ -231,6 +270,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         )}
       </div>
 
+      {/* Pico de energia */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-[var(--color-text-main)]">
           Quando você sente mais energia?
