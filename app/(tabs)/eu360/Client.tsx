@@ -246,7 +246,6 @@ export const revalidate = 0
 
 export default function Eu360Client() {
   const questionnaireRef = useRef<HTMLDivElement | null>(null)
-  const profileRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     track('nav.click', { tab: 'eu360', dest: '/eu360' })
@@ -272,9 +271,6 @@ export default function Eu360Client() {
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({})
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
-
-  // ✅ controla se o perfil está aberto/fechado (para não “voltar como antes”)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   useEffect(() => {
     const saved = readPersonaFromLS()
@@ -314,14 +310,14 @@ export default function Eu360Client() {
 
   const totalAnswered = useMemo(() => {
     const keys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] as const
-    return keys.filter((k) => Boolean(answers[k])).length
+    return keys.filter(k => Boolean(answers[k])).length
   }, [answers])
 
   function setAnswer<K extends keyof QuestionnaireAnswers>(
     key: K,
     value: NonNullable<QuestionnaireAnswers[K]>,
   ) {
-    setAnswers((prev) => ({ ...prev, [key]: value }))
+    setAnswers(prev => ({ ...prev, [key]: value }))
   }
 
   function canGoNext() {
@@ -331,16 +327,16 @@ export default function Eu360Client() {
 
   function goNext() {
     if (!canGoNext()) return
-    setQStep((s) => Math.min(6, s + 1))
+    setQStep(s => Math.min(6, s + 1))
   }
 
   function goPrev() {
-    setQStep((s) => Math.max(1, s - 1))
+    setQStep(s => Math.max(1, s - 1))
   }
 
   async function finishQuestionnaire() {
     const required: (keyof QuestionnaireAnswers)[] = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6']
-    const ok = required.every((k) => Boolean(answers[k]))
+    const ok = required.every(k => Boolean(answers[k]))
     if (!ok) return
 
     setSaving(true)
@@ -374,27 +370,15 @@ export default function Eu360Client() {
     questionnaireRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  function openProfile() {
-    setIsProfileOpen(true)
-    try {
-      track('eu360.profile.open', { origin: 'profile_summary' })
-    } catch {}
-    // aguarda render para scroll
-    setTimeout(() => {
-      profileRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 60)
-  }
-
-  function closeProfile() {
-    setIsProfileOpen(false)
-    try {
-      track('eu360.profile.close', { origin: 'profile_form' })
-    } catch {}
-  }
-
   const heroTitle = 'Seu mundo em perspectiva'
-  const heroSubtitle =
-    'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+  const heroSubtitle = 'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+
+  const heroCardTitle = 'Seu ajuste do Eu360'
+  const heroCardSubtitle =
+    'O app usa esse “momento” para calibrar sugestões, ritmo e linguagem — sem te cobrar.'
+
+  const heroPrimaryCtaLabel = personaResult ? 'Ajustar meu momento' : 'Descobrir meu momento'
+  const heroSecondaryCtaLabel = 'Ir para Meu Dia'
 
   const content = (
     <main
@@ -454,12 +438,14 @@ export default function Eu360Client() {
           {/* HERO GLASS CARD */}
           <div className="mt-4 rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-4 md:px-5 md:py-5">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
-                  Seu momento (ajuste interno do app)
+              <div className="max-w-[520px]">
+                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/85">
+                  {heroCardTitle}
                 </p>
 
-                <div className="mt-2 flex items-start gap-2">
+                <p className="mt-1 text-[12px] text-white/80 leading-relaxed">{heroCardSubtitle}</p>
+
+                <div className="mt-3 flex items-start gap-2">
                   <AppIcon name="sparkles" size={18} className="text-white" decorative />
                   <div>
                     <p className="text-sm font-semibold text-white">
@@ -470,10 +456,14 @@ export default function Eu360Client() {
                     </p>
                   </div>
                 </div>
+
+                <p className="mt-2 text-[11px] text-white/70">
+                  Leva menos de 2 minutos. Você pode parar quando quiser.
+                </p>
               </div>
 
               <div className="hidden md:flex items-center gap-1 pt-1">
-                {[1, 2, 3, 4, 5, 6].map((n) => (
+                {[1, 2, 3, 4, 5, 6].map(n => (
                   <StepDot key={n} active={personaResult ? n === 6 : n === qStep} />
                 ))}
               </div>
@@ -497,14 +487,14 @@ export default function Eu360Client() {
                 className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2"
               >
                 <AppIcon name="sparkles" size={16} decorative />
-                <span>{personaResult ? 'Ajustar novamente' : 'Fazer agora (2 min)'}</span>
+                <span>{heroPrimaryCtaLabel}</span>
               </button>
 
               <Link
                 href="/meu-dia"
                 className="rounded-full bg-[#fd2597] hover:opacity-95 text-white px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2"
               >
-                <span>Ir para Meu Dia</span>
+                <span>{heroSecondaryCtaLabel}</span>
                 <AppIcon name="arrow-right" size={16} decorative />
               </Link>
             </div>
@@ -512,56 +502,8 @@ export default function Eu360Client() {
         </header>
 
         <div className="space-y-6 md:space-y-7 pb-8">
-          {/* 1 — AJUSTE DO PERFIL (RESUMO + CTA CLARO) */}
-          <SectionWrapper>
-            <Reveal>
-              <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
-                      Ajuste do perfil
-                    </p>
-                    <h2 className="text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
-                      Personalizar sem cansar
-                    </h2>
-                    <p className="text-[13px] text-[var(--color-ink-muted)] leading-relaxed max-w-xl">
-                      Só o que for útil para o app te entregar sugestões melhores.
-                    </p>
-
-                    <div className="mt-3 rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-3">
-                      <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
-                        Dica: você pode preencher aos poucos. Não precisa fazer tudo hoje.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isProfileOpen) {
-                        closeProfile()
-                        return
-                      }
-                      openProfile()
-                    }}
-                    className="shrink-0 inline-flex items-center gap-2 rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.26)] hover:opacity-95 transition"
-                    aria-expanded={isProfileOpen}
-                    aria-controls="eu360-profile-form"
-                  >
-                    <AppIcon name={isProfileOpen ? 'x' : 'edit'} size={16} decorative />
-                    <span>{isProfileOpen ? 'Fechar' : 'Abrir meu perfil'}</span>
-                  </button>
-                </div>
-              </SoftCard>
-            </Reveal>
-          </SectionWrapper>
-
-          {/* FORM DO PERFIL (só aparece quando abrir) */}
-          {isProfileOpen ? (
-            <div id="eu360-profile-form" ref={profileRef}>
-              <ProfileForm />
-            </div>
-          ) : null}
+          {/* 1 — PERFIL */}
+          <ProfileForm />
 
           {/* 2 — QUESTIONÁRIO */}
           <div ref={questionnaireRef} />
@@ -583,7 +525,7 @@ export default function Eu360Client() {
                   </div>
 
                   <div className="hidden md:flex items-center gap-1">
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                    {[1, 2, 3, 4, 5, 6].map(n => (
                       <StepDot key={n} active={personaResult ? n === 6 : n === qStep} />
                     ))}
                   </div>
@@ -603,8 +545,7 @@ export default function Eu360Client() {
                     </div>
 
                     <p className="mt-2 text-[11px] text-[#6a6a6a]">
-                      Progresso:{' '}
-                      <span className="font-semibold text-[#2f3a56]">{totalAnswered}/6</span>
+                      Progresso: <span className="font-semibold text-[#2f3a56]">{totalAnswered}/6</span>
                     </p>
                   </div>
                 ) : null}
@@ -618,8 +559,7 @@ export default function Eu360Client() {
                       <div>
                         <p className="text-[12px] font-semibold text-[#2f3a56]">Questionário concluído</p>
                         <p className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                          A partir de agora, o Materna360 pode calibrar o tom, o volume de sugestões e o
-                          ritmo do app para você.
+                          A partir de agora, o Materna360 pode calibrar o tom, o volume de sugestões e o ritmo do app para você.
                         </p>
                       </div>
                     </div>
@@ -632,31 +572,11 @@ export default function Eu360Client() {
                           1) Como você tem se sentido na maior parte dos dias?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q1 === 'exausta'}
-                            label="Exausta"
-                            onClick={() => setAnswer('q1', 'exausta')}
-                          />
-                          <OptionButton
-                            active={answers.q1 === 'cansada'}
-                            label="Cansada, mas dando conta"
-                            onClick={() => setAnswer('q1', 'cansada')}
-                          />
-                          <OptionButton
-                            active={answers.q1 === 'oscilando'}
-                            label="Oscilando"
-                            onClick={() => setAnswer('q1', 'oscilando')}
-                          />
-                          <OptionButton
-                            active={answers.q1 === 'equilibrada'}
-                            label="Mais equilibrada"
-                            onClick={() => setAnswer('q1', 'equilibrada')}
-                          />
-                          <OptionButton
-                            active={answers.q1 === 'energia'}
-                            label="Com energia para mais"
-                            onClick={() => setAnswer('q1', 'energia')}
-                          />
+                          <OptionButton active={answers.q1 === 'exausta'} label="Exausta" onClick={() => setAnswer('q1', 'exausta')} />
+                          <OptionButton active={answers.q1 === 'cansada'} label="Cansada, mas dando conta" onClick={() => setAnswer('q1', 'cansada')} />
+                          <OptionButton active={answers.q1 === 'oscilando'} label="Oscilando" onClick={() => setAnswer('q1', 'oscilando')} />
+                          <OptionButton active={answers.q1 === 'equilibrada'} label="Mais equilibrada" onClick={() => setAnswer('q1', 'equilibrada')} />
+                          <OptionButton active={answers.q1 === 'energia'} label="Com energia para mais" onClick={() => setAnswer('q1', 'energia')} />
                         </div>
                       </div>
                     ) : null}
@@ -667,26 +587,10 @@ export default function Eu360Client() {
                           2) Quanto tempo, de verdade, você costuma ter para você por dia?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q2 === 'nenhum'}
-                            label="Quase nenhum"
-                            onClick={() => setAnswer('q2', 'nenhum')}
-                          />
-                          <OptionButton
-                            active={answers.q2 === '5a10'}
-                            label="5 a 10 minutos"
-                            onClick={() => setAnswer('q2', '5a10')}
-                          />
-                          <OptionButton
-                            active={answers.q2 === '15a30'}
-                            label="15 a 30 minutos"
-                            onClick={() => setAnswer('q2', '15a30')}
-                          />
-                          <OptionButton
-                            active={answers.q2 === 'mais30'}
-                            label="Mais de 30 minutos"
-                            onClick={() => setAnswer('q2', 'mais30')}
-                          />
+                          <OptionButton active={answers.q2 === 'nenhum'} label="Quase nenhum" onClick={() => setAnswer('q2', 'nenhum')} />
+                          <OptionButton active={answers.q2 === '5a10'} label="5 a 10 minutos" onClick={() => setAnswer('q2', '5a10')} />
+                          <OptionButton active={answers.q2 === '15a30'} label="15 a 30 minutos" onClick={() => setAnswer('q2', '15a30')} />
+                          <OptionButton active={answers.q2 === 'mais30'} label="Mais de 30 minutos" onClick={() => setAnswer('q2', 'mais30')} />
                         </div>
                       </div>
                     ) : null}
@@ -697,31 +601,11 @@ export default function Eu360Client() {
                           3) Hoje, o que mais pesa na sua rotina?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q3 === 'tempo'}
-                            label="Falta de tempo"
-                            onClick={() => setAnswer('q3', 'tempo')}
-                          />
-                          <OptionButton
-                            active={answers.q3 === 'emocional'}
-                            label="Cansaço emocional"
-                            onClick={() => setAnswer('q3', 'emocional')}
-                          />
-                          <OptionButton
-                            active={answers.q3 === 'organizacao'}
-                            label="Organização"
-                            onClick={() => setAnswer('q3', 'organizacao')}
-                          />
-                          <OptionButton
-                            active={answers.q3 === 'conexao'}
-                            label="Conexão com meu filho"
-                            onClick={() => setAnswer('q3', 'conexao')}
-                          />
-                          <OptionButton
-                            active={answers.q3 === 'tudo'}
-                            label="Tudo um pouco"
-                            onClick={() => setAnswer('q3', 'tudo')}
-                          />
+                          <OptionButton active={answers.q3 === 'tempo'} label="Falta de tempo" onClick={() => setAnswer('q3', 'tempo')} />
+                          <OptionButton active={answers.q3 === 'emocional'} label="Cansaço emocional" onClick={() => setAnswer('q3', 'emocional')} />
+                          <OptionButton active={answers.q3 === 'organizacao'} label="Organização" onClick={() => setAnswer('q3', 'organizacao')} />
+                          <OptionButton active={answers.q3 === 'conexao'} label="Conexão com meu filho" onClick={() => setAnswer('q3', 'conexao')} />
+                          <OptionButton active={answers.q3 === 'tudo'} label="Tudo um pouco" onClick={() => setAnswer('q3', 'tudo')} />
                         </div>
                       </div>
                     ) : null}
@@ -732,31 +616,11 @@ export default function Eu360Client() {
                           4) Quando pensa na sua rotina como mãe, o que mais descreve?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q4 === 'sobrevivencia'}
-                            label="Sobrevivência"
-                            onClick={() => setAnswer('q4', 'sobrevivencia')}
-                          />
-                          <OptionButton
-                            active={answers.q4 === 'organizar'}
-                            label="Tentando organizar"
-                            onClick={() => setAnswer('q4', 'organizar')}
-                          />
-                          <OptionButton
-                            active={answers.q4 === 'conexao'}
-                            label="Buscando conexão"
-                            onClick={() => setAnswer('q4', 'conexao')}
-                          />
-                          <OptionButton
-                            active={answers.q4 === 'equilibrio'}
-                            label="Encontrando equilíbrio"
-                            onClick={() => setAnswer('q4', 'equilibrio')}
-                          />
-                          <OptionButton
-                            active={answers.q4 === 'alem'}
-                            label="Querendo ir além"
-                            onClick={() => setAnswer('q4', 'alem')}
-                          />
+                          <OptionButton active={answers.q4 === 'sobrevivencia'} label="Sobrevivência" onClick={() => setAnswer('q4', 'sobrevivencia')} />
+                          <OptionButton active={answers.q4 === 'organizar'} label="Tentando organizar" onClick={() => setAnswer('q4', 'organizar')} />
+                          <OptionButton active={answers.q4 === 'conexao'} label="Buscando conexão" onClick={() => setAnswer('q4', 'conexao')} />
+                          <OptionButton active={answers.q4 === 'equilibrio'} label="Encontrando equilíbrio" onClick={() => setAnswer('q4', 'equilibrio')} />
+                          <OptionButton active={answers.q4 === 'alem'} label="Querendo ir além" onClick={() => setAnswer('q4', 'alem')} />
                         </div>
                       </div>
                     ) : null}
@@ -767,21 +631,9 @@ export default function Eu360Client() {
                           5) Como você prefere receber ajuda aqui?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q5 === 'diretas'}
-                            label="Poucas sugestões, bem diretas"
-                            onClick={() => setAnswer('q5', 'diretas')}
-                          />
-                          <OptionButton
-                            active={answers.q5 === 'guiadas'}
-                            label="Algumas opções, mas guiadas"
-                            onClick={() => setAnswer('q5', 'guiadas')}
-                          />
-                          <OptionButton
-                            active={answers.q5 === 'explorar'}
-                            label="Gosto de explorar com calma"
-                            onClick={() => setAnswer('q5', 'explorar')}
-                          />
+                          <OptionButton active={answers.q5 === 'diretas'} label="Poucas sugestões, bem diretas" onClick={() => setAnswer('q5', 'diretas')} />
+                          <OptionButton active={answers.q5 === 'guiadas'} label="Algumas opções, mas guiadas" onClick={() => setAnswer('q5', 'guiadas')} />
+                          <OptionButton active={answers.q5 === 'explorar'} label="Gosto de explorar com calma" onClick={() => setAnswer('q5', 'explorar')} />
                         </div>
                       </div>
                     ) : null}
@@ -792,31 +644,11 @@ export default function Eu360Client() {
                           6) Se hoje fosse um bom dia, o que já seria suficiente?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q6 === 'passar'}
-                            label="Conseguir passar pelo dia"
-                            onClick={() => setAnswer('q6', 'passar')}
-                          />
-                          <OptionButton
-                            active={answers.q6 === 'basico'}
-                            label="Cumprir o básico sem culpa"
-                            onClick={() => setAnswer('q6', 'basico')}
-                          />
-                          <OptionButton
-                            active={answers.q6 === 'momento'}
-                            label="Ter um momento bom com meu filho"
-                            onClick={() => setAnswer('q6', 'momento')}
-                          />
-                          <OptionButton
-                            active={answers.q6 === 'organizada'}
-                            label="Me sentir mais organizada"
-                            onClick={() => setAnswer('q6', 'organizada')}
-                          />
-                          <OptionButton
-                            active={answers.q6 === 'avancar'}
-                            label="Avançar um pouco mais"
-                            onClick={() => setAnswer('q6', 'avancar')}
-                          />
+                          <OptionButton active={answers.q6 === 'passar'} label="Conseguir passar pelo dia" onClick={() => setAnswer('q6', 'passar')} />
+                          <OptionButton active={answers.q6 === 'basico'} label="Cumprir o básico sem culpa" onClick={() => setAnswer('q6', 'basico')} />
+                          <OptionButton active={answers.q6 === 'momento'} label="Ter um momento bom com meu filho" onClick={() => setAnswer('q6', 'momento')} />
+                          <OptionButton active={answers.q6 === 'organizada'} label="Me sentir mais organizada" onClick={() => setAnswer('q6', 'organizada')} />
+                          <OptionButton active={answers.q6 === 'avancar'} label="Avançar um pouco mais" onClick={() => setAnswer('q6', 'avancar')} />
                         </div>
                       </div>
                     ) : null}
