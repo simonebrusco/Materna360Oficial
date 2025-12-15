@@ -3,6 +3,8 @@
 import React from 'react'
 import type { FormErrors, ProfileFormState } from '../ProfileForm'
 
+type RoutineArrayField = 'routineChaosMoments' | 'routineSupportNeeds'
+
 interface Props {
   form: ProfileFormState
   errors: FormErrors
@@ -12,16 +14,25 @@ interface Props {
    * ✅ Opcional para evitar cascata de erros
    * Se não vier, o bloco faz o toggle via onChange.
    */
-  onToggleArrayField?: (fieldName: keyof ProfileFormState, value: string) => void
+  onToggleArrayField?: (fieldName: RoutineArrayField, value: string) => void
 }
 
 export function RoutineBlock({ form, errors, onChange, onToggleArrayField }: Props) {
-  const toggle = (fieldName: keyof ProfileFormState, value: string) => {
-    if (onToggleArrayField) return onToggleArrayField(fieldName, value)
+  const toggle = (fieldName: RoutineArrayField, value: string) => {
+    if (onToggleArrayField) {
+      onToggleArrayField(fieldName, value)
+      return
+    }
 
-    const current = (form[fieldName] as string[] | undefined) ?? []
-    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
-    onChange({ [fieldName]: next } as Partial<ProfileFormState>)
+    const current = form[fieldName] ?? []
+    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+
+    if (fieldName === 'routineChaosMoments') {
+      onChange({ routineChaosMoments: next })
+      return
+    }
+
+    onChange({ routineSupportNeeds: next })
   }
 
   const chaosMoments = [
@@ -58,7 +69,7 @@ export function RoutineBlock({ form, errors, onChange, onToggleArrayField }: Pro
         </p>
 
         <div className="space-y-2">
-          {chaosMoments.map(moment => {
+          {chaosMoments.map((moment) => {
             const checked = (form.routineChaosMoments ?? []).includes(moment)
             return (
               <label key={moment} className="flex items-center gap-2 cursor-pointer">
@@ -86,7 +97,7 @@ export function RoutineBlock({ form, errors, onChange, onToggleArrayField }: Pro
         </p>
 
         <div className="space-y-2">
-          {supportNeeds.map(item => {
+          {supportNeeds.map((item) => {
             const checked = (form.routineSupportNeeds ?? []).includes(item)
             return (
               <label key={item} className="flex items-center gap-2 cursor-pointer">
