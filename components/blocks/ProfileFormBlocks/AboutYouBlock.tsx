@@ -75,23 +75,42 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 max-w-3xl">
           {STICKER_OPTIONS.map((sticker) => {
             const isActive = form.figurinha === sticker.id
+
             return (
               <button
                 key={sticker.id}
                 type="button"
                 onClick={() => onChange({ figurinha: sticker.id })}
-                className={`group relative flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all duration-300 aspect-square focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                className={[
+                  'group relative flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border aspect-square',
+                  'transition-colors duration-200',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
                   isActive
-                    ? 'border-[#9B4D96] bg-[#9B4D96]/8 shadow-[0_4px_16px_rgba(155,77,150,0.15)] focus-visible:ring-[#9B4D96]'
-                    : 'border-[var(--color-border-soft)] bg-white hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_12px_rgba(255,20,117,0.08)] focus-visible:ring-[var(--color-brand)]'
-                }`}
+                    ? [
+                        // ✅ Active refinado (discreto + DS)
+                        'border-[var(--color-brand)]/40',
+                        'bg-[var(--color-soft-bg)]',
+                        'shadow-[0_6px_18px_rgba(0,0,0,0.06)]',
+                        'focus-visible:ring-[var(--color-brand)]',
+                      ].join(' ')
+                    : [
+                        'border-[var(--color-border-soft)]',
+                        'bg-white',
+                        'hover:border-[var(--color-brand)]/25',
+                        'hover:bg-[var(--color-soft-bg)]/40',
+                        'hover:shadow-[0_6px_18px_rgba(0,0,0,0.05)]',
+                        'focus-visible:ring-[var(--color-brand)]',
+                      ].join(' '),
+                ].join(' ')}
                 aria-pressed={isActive}
                 aria-label={`Selecionar figurinha ${sticker.label}`}
               >
                 <span
-                  className={`inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full transition-all duration-300 flex-shrink-0 ${
-                    isActive ? 'bg-[#9B4D96]/12' : 'bg-[var(--color-soft-bg)]'
-                  }`}
+                  className={[
+                    'inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full flex-shrink-0',
+                    'transition-colors duration-200',
+                    isActive ? 'bg-white' : 'bg-[var(--color-soft-bg)]',
+                  ].join(' ')}
                 >
                   <img
                     src={sticker.asset}
@@ -100,6 +119,7 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                     loading="lazy"
                   />
                 </span>
+
                 <div className="flex flex-col items-center gap-0.5 min-h-[32px] flex-1 justify-center">
                   <span className="text-[9px] font-bold text-[var(--color-text-main)] line-clamp-2 text-center leading-tight">
                     {sticker.label}
@@ -108,6 +128,14 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
                     {STICKER_DESCRIPTIONS[sticker.id]}
                   </span>
                 </div>
+
+                {/* ✅ micro-indicador de seleção (bem sutil) */}
+                {isActive ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-[var(--color-brand)]/55"
+                  />
+                ) : null}
               </button>
             )
           })}
@@ -193,7 +221,9 @@ export function AboutYouBlock({ form, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[var(--color-text-main)]">Qual é o seu maior desafio hoje?</label>
+        <label className="text-xs font-medium text-[var(--color-text-main)]">
+          Qual é o seu maior desafio hoje?
+        </label>
         <div className="space-y-2">
           {MAIN_CHALLENGES.map((challenge) => (
             <label key={challenge} className="flex items-center gap-2 cursor-pointer">
