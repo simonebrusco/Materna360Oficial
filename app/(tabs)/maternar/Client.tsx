@@ -78,9 +78,9 @@ export default function MaternarClient() {
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
+        eu360-hub-bg
         relative min-h-[100dvh]
         pb-32
-        bg-transparent
       "
     >
       <ClientOnly>
