@@ -19,6 +19,7 @@ export default function MeuDiaClient() {
   const [greeting, setGreeting] = useState('')
   const [dailyMessage, setDailyMessage] = useState('…')
 
+  // tracking
   useEffect(() => {
     track('nav.click', {
       tab: 'meu-dia',
@@ -26,6 +27,7 @@ export default function MeuDiaClient() {
     })
   }, [])
 
+  // saudação
   useEffect(() => {
     const firstName = name ? name.split(' ')[0] : ''
     const updateGreeting = () => setGreeting(getTimeGreeting(firstName))
@@ -34,11 +36,13 @@ export default function MeuDiaClient() {
     return () => window.clearInterval(interval)
   }, [name])
 
+  // mensagem do dia
   useEffect(() => {
     const index = getDailyIndex(new Date(), DAILY_MESSAGES.length)
     setDailyMessage(DAILY_MESSAGES[index] ?? '…')
   }, [])
 
+  // reload meia-noite
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
@@ -52,11 +56,12 @@ export default function MeuDiaClient() {
       data-layout="page-template-v1"
       data-tab="meu-dia"
       className="
+        eu360-hub-bg
         relative min-h-[100dvh] pb-24 flex flex-col overflow-hidden
-        bg-transparent
       "
     >
       <div className="relative z-10 flex-1 mx-auto max-w-3xl px-4 md:px-6">
+        {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
             MEU DIA
@@ -84,6 +89,7 @@ export default function MeuDiaClient() {
           </div>
         </header>
 
+        {/* PLANNER */}
         <section
           className="
             rounded-3xl
@@ -97,11 +103,13 @@ export default function MeuDiaClient() {
           <WeeklyPlannerShell />
         </section>
 
+        {/* FOOTER MOTIVACIONAL */}
         <div className="mt-8 md:mt-10">
           <MotivationalFooter routeKey="meu-dia-hub" />
         </div>
       </div>
 
+      {/* RODAPÉ LEGAL */}
       <footer className="relative z-10 w-full text-center pt-4 pb-2 px-4 text-[12px] text-[#6A6A6A]/85">
         <p>© 2025 Materna360®. Todos os direitos reservados.</p>
         <p>Proibida a reprodução total ou parcial sem autorização.</p>
