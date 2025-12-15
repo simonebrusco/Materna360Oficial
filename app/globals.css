@@ -7,7 +7,6 @@ html,
 body {
   color-scheme: light;
   color: #111;
-  background: #ffffff; /* <- garante que nunca “vaze” rosa no overscroll */
 }
 
 /* ===== NEW MATERNA360 COLOR SYSTEM (Official) ===== */
@@ -34,15 +33,14 @@ body {
   --color-border-muted: #eec2d6;   /* bordas mais fortes / campos */
 
   /* ===== Legacy Materna360 token fallbacks (ajustados à nova paleta) ===== */
-  /* Page background - soft luxury aesthetic */
-  --soft-page-bg: #fff7fb; /* muito claro, ainda aceitável */
+  --soft-page-bg: #fff7fb;
 
   /* RGB triplets for Tailwind color mapping */
-  --primary: 253 37 151;       /* #fd2597 → Pink Materna360 */
-  --support-1: 84 84 84;       /* #545454 → texto principal */
-  --support-2: 106 106 106;    /* #6A6A6A → texto suave */
-  --neutral-1: 248 249 250;    /* #F8F9FA → bg soft */
-  --neutral-2: 255 255 255;    /* #FFFFFF → white */
+  --primary: 253 37 151;       /* #fd2597 */
+  --support-1: 84 84 84;       /* #545454 */
+  --support-2: 106 106 106;    /* #6A6A6A */
+  --neutral-1: 248 249 250;    /* #F8F9FA */
+  --neutral-2: 255 255 255;    /* #FFFFFF */
 
   /* Soft Luxury Design Tokens */
   --space-xs: 8px;
@@ -63,10 +61,10 @@ body {
   --border-soft-gray: #e9ecf2;
 
   /* Legacy aliases (mapped to new palette) */
-  --color-primary: #fd2597;        /* Pink Materna360 – primary */
-  --color-primary-weak: #fdbed7;   /* Rosa suave – secondary */
-  --color-ink-1: #545454;          /* texto principal */
-  --color-ink-2: #6a6a6a;          /* texto suave */
+  --color-primary: #fd2597;
+  --color-primary-weak: #fdbed7;
+  --color-ink-1: #545454;
+  --color-ink-2: #6a6a6a;
 
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
@@ -76,21 +74,27 @@ body {
   --text-title-page: 22px/28px;
   --text-title-page-md: 28px/34px;
   /* MATERNA360 TYPOGRAPHY TOKENS END */
+
   --rhythm-section-d: 56px;
   --rhythm-section-t: 48px;
   --rhythm-section-m: 32px;
+
   --rhythm-grid-col-d: 24px;
   --rhythm-grid-col-t: 16px;
   --rhythm-grid-col-m: 12px;
+
   --rhythm-grid-row-d: 24px;
   --rhythm-grid-row-t: 20px;
   --rhythm-grid-row-m: 16px;
+
   --rhythm-card-pad-d: 20px;
   --rhythm-card-pad-t: 16px;
   --rhythm-card-pad-m: 14px;
+
   --safearea-bottom-d: 80px;
   --safearea-bottom-t: 72px;
   --safearea-bottom-m: 64px;
+
   /* Premium editorial shadows */
   --shadow-card-base: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-card-hover-neutral: 0 8px 24px rgba(0, 0, 0, 0.1);
@@ -103,14 +107,46 @@ body {
   background: #ffffff;
 }
 
-/* Materna360 — Fundo Premium / Meu Dia – amanhecer calmo (atualizado) */
-.materna360-premium-bg {
+/* ============================================================
+   ✅ FUNDO ÚNICO OFICIAL (IGUAL AO EU360) — aplicado no APP TODO
+   Motivo: header é translúcido e "vaza" o background do body.
+   Se o body ficar rosa/claro, aparece a faixa no topo.
+   ============================================================ */
+html,
+body {
   background-color: #ffffff;
   background-image: linear-gradient(
     180deg,
     #b8236b 0%,
-    #fd2597 40%,
-    #ffe1f1 78%,
+    #fd2597 42%,
+    #ffe1f1 80%,
+    #fdbed7 100%
+  );
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+/* ✅ Garantia: páginas não criam "camada" de fundo própria por acidente */
+main[data-layout="page-template-v1"],
+main[data-layout="page-template-v2"] {
+  background: transparent !important;
+}
+
+/* ============================================================
+   ✅ UNIFICAÇÃO TOTAL DOS HUBS
+   Mesmo que algum lugar ainda aplique classes antigas,
+   elas agora ficam iguais (Meu Dia = Maternar = Eu360).
+   ============================================================ */
+
+/* Materna360 — Fundo Premium (alias do Eu360) */
+.materna360-premium-bg {
+  background-color: transparent;
+  background-image: linear-gradient(
+    180deg,
+    #b8236b 0%,
+    #fd2597 42%,
+    #ffe1f1 80%,
     #fdbed7 100%
   );
   background-repeat: no-repeat;
@@ -119,26 +155,24 @@ body {
 }
 
 @layer utilities {
-  /* Fundo premium do hub Maternar – com pink vibrante dentro da paleta oficial */
+  /* Fundo do hub Maternar — agora igual ao Eu360 */
   .maternar-hub-bg {
-    background-color: #ffffff;
-    background-image:
-      radial-gradient(
-        circle at 0% 0%,
-        rgba(184, 35, 107, 0.95) 0%,
-        rgba(184, 35, 107, 0.8) 16%,
-        rgba(253, 37, 151, 0.9) 38%,
-        rgba(255, 225, 241, 0.96) 64%,
-        #fdbed7 100%
-      );
+    background-color: transparent;
+    background-image: linear-gradient(
+      180deg,
+      #b8236b 0%,
+      #fd2597 42%,
+      #ffe1f1 80%,
+      #fdbed7 100%
+    );
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-size: cover;
   }
 
-  /* Fundo premium do hub Eu360 – fim de tarde / reflexão */
+  /* Fundo do hub Eu360 — mantido como referência */
   .eu360-hub-bg {
-    background-color: #ffffff;
+    background-color: transparent;
     background-image: linear-gradient(
       180deg,
       #b8236b 0%,
@@ -185,11 +219,9 @@ body {
   .materna360-premium-bg header {
     padding-left: 24px;
   }
-
   .materna360-premium-bg header h1 {
     font-size: 28px;
   }
-
   .materna360-premium-bg header p {
     font-size: 14px;
   }
@@ -200,7 +232,6 @@ body {
   body {
     height: 100%;
     color: rgb(var(--support-1));
-    background: #ffffff; /* <- reforço */
   }
 
   html {
@@ -210,7 +241,7 @@ body {
   body {
     @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
-    background-color: #ffffff; /* <- ERA #fdbed7, aqui estava o “culpado” */
+    /* ✅ removido: background-color rosa fixo (era a faixa/topo) */
   }
 
   img {
