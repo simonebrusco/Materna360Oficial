@@ -4,11 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import {
-  DEFAULT_STICKER_ID,
-  isProfileStickerId,
-  resolveSticker,
-} from '@/app/lib/stickers'
+import { DEFAULT_STICKER_ID, isProfileStickerId, resolveSticker } from '@/app/lib/stickers'
 
 interface HeaderProps {
   title: string
@@ -30,9 +26,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   }, [])
 
   useEffect(() => {
-    if (!showNotification) {
-      return undefined
-    }
+    if (!showNotification) return undefined
 
     // Skip profile fetch if FullStory is detected (avoids fetch interception issues)
     if (typeof window !== 'undefined' && (window as any).FS) {
