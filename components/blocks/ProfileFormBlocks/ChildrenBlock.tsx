@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { FormErrors, ProfileFormState, ChildProfile, ChildGender } from '../ProfileForm'
+import type { ChildGender, ChildProfile, FormErrors, ProfileFormState } from '../ProfileForm'
 
 interface Props {
   form: ProfileFormState
@@ -11,6 +11,11 @@ interface Props {
 
 function makeId() {
   return `child_${Math.random().toString(16).slice(2)}_${Date.now()}`
+}
+
+function parseChildGender(raw: string): ChildGender {
+  if (raw === 'feminino' || raw === 'masculino' || raw === 'nao-informar') return raw
+  return 'nao-informar'
 }
 
 export function ChildrenBlock({ form, errors, onChange }: Props) {
@@ -28,12 +33,12 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
   }
 
   function removeChild(childId: string) {
-    onChange({ filhos: filhos.filter(c => c.id !== childId) })
+    onChange({ filhos: filhos.filter((c) => c.id !== childId) })
   }
 
   function updateChild<K extends keyof ChildProfile>(childId: string, key: K, value: ChildProfile[K]) {
     onChange({
-      filhos: filhos.map(c => (c.id === childId ? { ...c, [key]: value } : c)),
+      filhos: filhos.map((c) => (c.id === childId ? { ...c, [key]: value } : c)),
     })
   }
 
@@ -56,9 +61,7 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
               className="rounded-2xl border border-[var(--color-border-soft)] bg-white p-4 space-y-3"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold text-[var(--color-text-main)]">
-                  Filho {index + 1}
-                </p>
+                <p className="text-xs font-semibold text-[var(--color-text-main)]">Filho {index + 1}</p>
 
                 {filhos.length > 1 ? (
                   <button
@@ -73,12 +76,10 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
 
               {/* Nome (opcional) */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--color-text-main)]">
-                  Nome (opcional)
-                </label>
+                <label className="text-[11px] font-medium text-[var(--color-text-main)]">Nome (opcional)</label>
                 <input
                   value={child.nome ?? ''}
-                  onChange={e => updateChild(child.id, 'nome', e.target.value)}
+                  onChange={(e) => updateChild(child.id, 'nome', e.target.value)}
                   placeholder="Opcional"
                   className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
                 />
@@ -86,12 +87,10 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
 
               {/* Gênero */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--color-text-main)]">
-                  Gênero
-                </label>
+                <label className="text-[11px] font-medium text-[var(--color-text-main)]">Gênero</label>
                 <select
-                  value={(child.genero ?? 'nao-informar') as ChildGender}
-                  onChange={e => updateChild(child.id, 'genero', e.target.value as ChildGender)}
+                  value={child.genero ?? 'nao-informar'}
+                  onChange={(e) => updateChild(child.id, 'genero', parseChildGender(e.target.value))}
                   className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
                 >
                   <option value="nao-informar">Prefiro não informar</option>
@@ -111,10 +110,14 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
                   min={0}
                   inputMode="numeric"
                   value={typeof child.idadeMeses === 'number' ? child.idadeMeses : ''}
-                  onChange={e => {
+                  onChange={(e) => {
                     const raw = e.target.value
-                    const n = raw === '' ? undefined : Number(raw)
-                    updateChild(child.id, 'idadeMeses', Number.isFinite(n as number) ? (n as number) : undefined)
+                    if (raw === '') {
+                      updateChild(child.id, 'idadeMeses', undefined)
+                      return
+                    }
+                    const n = Number(raw)
+                    updateChild(child.id, 'idadeMeses', Number.isFinite(n) ? n : undefined)
                   }}
                   className={[
                     'w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30',
