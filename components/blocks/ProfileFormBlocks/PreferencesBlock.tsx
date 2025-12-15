@@ -10,45 +10,88 @@ interface Props {
   errors: FormErrors
   onChange: (updates: Partial<ProfileFormState>) => void
 
-  /**
-   * Opcional: se não vier, o bloco resolve sozinho
-   */
   onToggleArrayField?: (fieldName: PreferencesArrayField, value: string) => void
 }
 
+const CONTENT_PREFS = [
+  'Rotina & organização leve',
+  'Parentalidade sem culpa',
+  'Atividades rápidas com filhos',
+  'Emoções & autorregulação',
+  'Autocuidado possível',
+  'Comunicação respeitosa',
+] as const
+
+const NOTIFICATION_PREFS = [
+  'Lembretes gentis (1x ao dia)',
+  'Resumo semanal',
+  'Sugestões rápidas (2–3 por semana)',
+  'Sem notificações por enquanto',
+] as const
+
+function Chip({
+  active,
+  label,
+  onClick,
+}: {
+  active?: boolean
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={[
+        'w-full text-left rounded-2xl border px-3 py-2 text-[12px] transition',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-brand)]/40',
+        active
+          ? 'border-[var(--color-brand)]/40 bg-[#ffd8e6] text-[#2f3a56] shadow-[0_10px_22px_rgba(0,0,0,0.06)]'
+          : 'border-[var(--color-border-soft)] bg-white text-[#2f3a56] hover:bg-[#fff7fb] hover:border-[var(--color-brand)]/20',
+      ].join(' ')}
+    >
+      {label}
+    </button>
+  )
+}
+
 export function PreferencesBlock({ form, errors, onChange, onToggleArrayField }: Props) {
-  const toggle = (fieldName: PreferencesArrayField, value: string) => {
-    if (onToggleArrayField) {
-      onToggleArrayField(fieldName, value)
-      return
-    }
-
+  const toggleLocal = (fieldName: PreferencesArrayField, value: string) => {
     const current = form[fieldName] ?? []
-    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+    const isOn = current.includes(value)
 
-    if (fieldName === 'userContentPreferences') {
-      onChange({ userContentPreferences: next })
+    // regra: "Sem notificações por enquanto" é exclusiva
+    if (fieldName === 'userNotificationsPreferences') {
+      const NONE = 'Sem notificações por enquanto'
+
+      if (value === NONE) {
+        const next = isOn ? [] : [NONE]
+        onChange({ userNotificationsPreferences: next })
+        return
+      }
+
+      // se marcou qualquer outra, remove "Sem notificações"
+      const cleaned = current.filter((v) => v !== NONE)
+      const next = isOn ? cleaned.filter((v) => v !== value) : [...cleaned, value]
+      onChange({ userNotificationsPreferences: next })
       return
     }
 
-    onChange({ userNotificationsPreferences: next })
+    // conteúdo: toggle simples
+    const next = isOn ? current.filter((v) => v !== value) : [...current, value]
+    onChange({ userContentPreferences: next })
   }
 
-  const contentPrefs = [
-    'Rotina & organização leve',
-    'Parentalidade sem culpa',
-    'Atividades rápidas com filhos',
-    'Emoções & autorregulação',
-    'Autocuidado possível',
-    'Comunicação respeitosa',
-  ]
-
-  const notificationPrefs = [
-    'Lembretes gentis (1x ao dia)',
-    'Resumo semanal',
-    'Sugestões rápidas (2–3 por semana)',
-    'Sem notificações por enquanto',
-  ]
+  const toggle = (fieldName: PreferencesArrayField, value: string) => {
+    if (onToggleArrayField) {
+      // Observação: se o pai estiver controlando, ainda aplicamos a regra de exclusividade
+      // aqui somente quando não houver callback externo. Para manter previsível, usamos local.
+      toggleLocal(fieldName, value)
+      return
+    }
+    toggleLocal(fieldName, value)
+  }
 
   return (
     <div className="space-y-6">
@@ -59,24 +102,20 @@ export function PreferencesBlock({ form, errors, onChange, onToggleArrayField }:
         </p>
       </div>
 
-      {/* Preferências de conteúdo */}
+      {/* Conteúdo */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-[var(--color-text-main)]">Que tipo de conteúdo você quer ver mais?</p>
+        <p className="text-xs font-medium text-[var(--color-text-main)]">Conteúdos que você quer ver mais</p>
 
-        <div className="space-y-2">
-          {contentPrefs.map((pref) => {
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {CONTENT_PREFS.map((pref) => {
             const checked = (form.userContentPreferences ?? []).includes(pref)
-
             return (
-              <label key={pref} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggle('userContentPreferences', pref)}
-                  className="h-4 w-4 rounded border-[var(--color-soft-strong)] text-[var(--color-brand)] focus:ring-[var(--color-brand)]/40"
-                />
-                <span className="text-xs text-[var(--color-text-main)]">{pref}</span>
-              </label>
+              <Chip
+                key={pref}
+                active={checked}
+                label={pref}
+                onClick={() => toggle('userContentPreferences', pref)}
+              />
             )
           })}
         </div>
@@ -84,26 +123,26 @@ export function PreferencesBlock({ form, errors, onChange, onToggleArrayField }:
         {errors.userContentPreferences ? (
           <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.userContentPreferences}</p>
         ) : null}
+
+        <p className="text-[11px] text-[var(--color-text-muted)]">
+          Dica: você pode escolher só 1 ou 2. Menos, mas mais alinhado, costuma funcionar melhor.
+        </p>
       </div>
 
-      {/* Preferências de notificação */}
+      {/* Notificações */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-[var(--color-text-main)]">Como você prefere receber lembretes?</p>
 
-        <div className="space-y-2">
-          {notificationPrefs.map((pref) => {
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {NOTIFICATION_PREFS.map((pref) => {
             const checked = (form.userNotificationsPreferences ?? []).includes(pref)
-
             return (
-              <label key={pref} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggle('userNotificationsPreferences', pref)}
-                  className="h-4 w-4 rounded border-[var(--color-soft-strong)] text-[var(--color-brand)] focus:ring-[var(--color-brand)]/40"
-                />
-                <span className="text-xs text-[var(--color-text-main)]">{pref}</span>
-              </label>
+              <Chip
+                key={pref}
+                active={checked}
+                label={pref}
+                onClick={() => toggle('userNotificationsPreferences', pref)}
+              />
             )
           })}
         </div>
@@ -113,6 +152,10 @@ export function PreferencesBlock({ form, errors, onChange, onToggleArrayField }:
             {errors.userNotificationsPreferences}
           </p>
         ) : null}
+
+        <p className="text-[11px] text-[var(--color-text-muted)]">
+          Se você marcar “Sem notificações”, o app não te interrompe — e você pode mudar isso quando quiser.
+        </p>
       </div>
     </div>
   )
