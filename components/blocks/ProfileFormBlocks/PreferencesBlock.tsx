@@ -15,7 +15,7 @@ interface Props {
   onToggleArrayField?: (fieldName: keyof ProfileFormState, value: string) => void
 }
 
-export function PreferencesBlock({ form, errors, onChange, onToggleArrayField }: Props) {
+import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
   const toggle = (fieldName: keyof ProfileFormState, value: string) => {
     if (onToggleArrayField) return onToggleArrayField(fieldName, value)
 
