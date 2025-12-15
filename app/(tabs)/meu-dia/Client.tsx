@@ -56,23 +56,10 @@ export default function MeuDiaClient() {
       data-layout="page-template-v1"
       data-tab="meu-dia"
       className="
-        relative min-h-[100dvh] pb-24 flex flex-col overflow-hidden
-        bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#2f3a56_0%,#553a62_10%,#8b3563_22%,#fd2597_40%,#fdbed7_68%,#ffe1f1_88%,#fff7fa_100%)]
+        relative min-h-[100dvh] pb-24 flex flex-col
+        bg-transparent
       "
     >
-      {/* overlays */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0
-        bg-[radial-gradient(900px_520px_at_18%_10%,rgba(255,216,230,0.40)_0%,rgba(255,216,230,0.00)_60%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0
-        bg-[radial-gradient(820px_520px_at_78%_22%,rgba(253,37,151,0.26)_0%,rgba(253,37,151,0.00)_62%)]"
-      />
-
       <div className="relative z-10 flex-1 mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
