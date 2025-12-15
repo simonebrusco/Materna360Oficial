@@ -1,19 +1,60 @@
 'use client'
 
-import React, { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import LegalFooter from '@/components/common/LegalFooter'
 
-type AppShellProps = {
+export type PageTemplateProps = {
+  label: string
+  title: string
+  subtitle?: string
   children: ReactNode
 }
 
-const AppShell: React.FC<AppShellProps> = ({ children }) => {
-  // AppShell controla apenas layout/altura/safe-area.
-  // O FUNDO ÚNICO GLOBAL fica no RootLayout (app/layout.tsx).
+export function PageTemplate({ label, title, subtitle, children }: PageTemplateProps) {
   return (
-    <div className="relative min-h-[100dvh] pb-24 overflow-hidden">
-      <div className="relative z-10">{children}</div>
-    </div>
+    <main
+      data-layout="page-template-v1"
+      className="
+        min-h-[100dvh]
+        bg-transparent
+      "
+    >
+      <div className="mx-auto max-w-3xl px-4 md:px-6 pb-20">
+        {/* HERO padrão */}
+        <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
+          <span
+            className="
+              inline-flex items-center rounded-full
+              border border-[#F5D7E5]
+              bg-white/85
+              px-3 py-1
+              text-[10px] font-semibold tracking-[0.24em] uppercase
+              text-[#b8236b]
+              backdrop-blur-md
+            "
+          >
+            {label}
+          </span>
+
+          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold leading-tight text-[#ffffff]">
+            {title}
+          </h1>
+
+          {subtitle && (
+            <p className="mt-2 text-sm md:text-base leading-relaxed max-w-2xl text-white/90">
+              {subtitle}
+            </p>
+          )}
+        </header>
+
+        <div className="space-y-6 md:space-y-7 pb-6">{children}</div>
+
+        <div className="mt-4 md:mt-6">
+          <LegalFooter />
+        </div>
+      </div>
+    </main>
   )
 }
 
-export default AppShell
+export default PageTemplate
