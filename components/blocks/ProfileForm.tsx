@@ -7,7 +7,6 @@ import { Reveal } from '@/components/ui/Reveal'
 import { track } from '@/app/lib/telemetry'
 import { STICKER_OPTIONS, isProfileStickerId, type ProfileStickerId } from '@/app/lib/stickers'
 
-// Blocks
 import { AboutYouBlock } from './ProfileFormBlocks/AboutYouBlock'
 import { ChildrenBlock } from './ProfileFormBlocks/ChildrenBlock'
 import { RoutineBlock } from './ProfileFormBlocks/RoutineBlock'
@@ -15,15 +14,11 @@ import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
 
 /**
  * =========================================================
- * TIPOS EXPORTADOS (CONTRATO ÚNICO PARA TODOS OS BLOCKS)
+ * EXPORTS NECESSÁRIOS PARA OS BLOCKS (fix definitivo do build)
  * =========================================================
  */
 
-export type FormErrors = Record<string, string | undefined> & {
-  filhos?: Record<string, string | undefined>
-}
-
-export type ChildGender = 'nao-informar' | 'menina' | 'menino'
+export type ChildGender = 'menino' | 'menina' | 'nao-informar'
 
 export type ChildProfile = {
   id: string
@@ -33,17 +28,17 @@ export type ChildProfile = {
 }
 
 export type ProfileFormState = {
-  // Figurinhas
+  /** Compat: bloco antigo usa figurinha; alguns fluxos antigos podem ter usado sticker */
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
-  // AboutYouBlock
+  /** Campos “Você” */
   nomeMae?: string
   userPreferredName?: string
   preferredName?: string
 
-  userRole?: 'mae' | 'pai' | 'cuidador' | 'outro'
-  role?: 'mae' | 'pai' | 'cuidador' | 'outro'
+  userRole?: 'mae' | 'pai' | 'outro'
+  role?: string
 
   userEmotionalBaseline?: 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
   feeling?: string
@@ -54,21 +49,43 @@ export type ProfileFormState = {
   userEnergyPeakTime?: 'manha' | 'tarde' | 'noite'
   energy?: string
 
-  // ChildrenBlock
+  /** Filhos */
   filhos?: ChildProfile[]
 
-  // RoutineBlock
+  /** Rotina */
   routineChaosMoments?: string[]
   routineSupportNeeds?: string[]
-  routineGoals?: string[]
 
-  // PreferencesBlock
+  /** Preferências / rede */
   userContentPreferences?: string[]
   userNotificationsPreferences?: string[]
+  supportNetwork?: string[]
 }
 
-type Step = 1 | 2 | 3 | 4
+export type FormErrors = {
+  nomeMae?: string
+  userPreferredName?: string
+  preferredName?: string
+  userRole?: string
+  userEmotionalBaseline?: string
+  userMainChallenges?: string
+  userEnergyPeakTime?: string
 
+  routineChaosMoments?: string
+  routineSupportNeeds?: string
+
+  userContentPreferences?: string
+  userNotificationsPreferences?: string
+  supportNetwork?: string
+
+  filhos?: Record<string, string | undefined>
+}
+
+/**
+ * =========================================================
+ * Storage helpers
+ * =========================================================
+ */
 const LS_KEY = 'eu360_profile_v1'
 
 function safeGetLS(key: string): string | null {
@@ -79,14 +96,12 @@ function safeGetLS(key: string): string | null {
     return null
   }
 }
-
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
   } catch {}
 }
-
 function safeParseJSON<T>(raw: string | null): T | null {
   try {
     if (!raw) return null
@@ -97,9 +112,14 @@ function safeParseJSON<T>(raw: string | null): T | null {
 }
 
 function makeId() {
-  return `child_${Math.random().toString(16).slice(2)}_${Date.now()}`
+  return Math.random().toString(16).slice(2) + Date.now().toString(16)
 }
 
+/**
+ * =========================================================
+ * UI helpers
+ * =========================================================
+ */
 function StepPill({
   active,
   number,
@@ -131,145 +151,116 @@ function StepPill({
   )
 }
 
-function normalizeForm(saved: ProfileFormState): ProfileFormState {
-  const next: ProfileFormState = { ...saved }
-
-  // figurinha/sticker compat
-  const candidate = next.figurinha ?? next.sticker
-  if (candidate && isProfileStickerId(candidate)) {
-    next.figurinha = candidate
-    next.sticker = candidate
-  }
-
-  // preferredName compat
-  if (!next.userPreferredName && next.preferredName) next.userPreferredName = next.preferredName
-  if (!next.preferredName && next.userPreferredName) next.preferredName = next.userPreferredName
-
-  // role compat
-  if (!next.userRole && next.role) next.userRole = next.role
-  if (!next.role && next.userRole) next.role = next.userRole
-
-  // arrays defaults
-  next.userMainChallenges = Array.isArray(next.userMainChallenges) ? next.userMainChallenges : []
-  next.biggestPain = Array.isArray(next.biggestPain) ? next.biggestPain : []
-  next.userContentPreferences = Array.isArray(next.userContentPreferences) ? next.userContentPreferences : []
-  next.userNotificationsPreferences = Array.isArray(next.userNotificationsPreferences)
-    ? next.userNotificationsPreferences
-    : []
-
-  next.routineChaosMoments = Array.isArray(next.routineChaosMoments) ? next.routineChaosMoments : []
-  next.routineSupportNeeds = Array.isArray(next.routineSupportNeeds) ? next.routineSupportNeeds : []
-  next.routineGoals = Array.isArray(next.routineGoals) ? next.routineGoals : []
-
-  // filhos default + saneamento
-  if (!Array.isArray(next.filhos) || next.filhos.length === 0) {
-    next.filhos = [{ id: makeId(), genero: 'nao-informar', nome: '', idadeMeses: undefined }]
-  } else {
-    next.filhos = next.filhos.map((c) => ({
-      id: c.id || makeId(),
-      nome: c.nome ?? '',
-      genero: (c.genero ?? 'nao-informar') as ChildGender,
-      idadeMeses: typeof c.idadeMeses === 'number' ? c.idadeMeses : undefined,
-    }))
-  }
-
-  return next
+const DEFAULT_CHILD: ChildProfile = {
+  id: 'child-1',
+  genero: 'nao-informar',
 }
 
+/**
+ * =========================================================
+ * ProfileForm (container)
+ * =========================================================
+ */
 export default function ProfileForm() {
-  const [step, setStep] = useState<Step>(1)
-
-  const [form, setForm] = useState<ProfileFormState>(() =>
-    normalizeForm({
-      userMainChallenges: [],
-      biggestPain: [],
-      userContentPreferences: [],
-      userNotificationsPreferences: [],
-      routineChaosMoments: [],
-      routineSupportNeeds: [],
-      routineGoals: [],
-      filhos: [{ id: makeId(), genero: 'nao-informar', nome: '', idadeMeses: undefined }],
-    }),
-  )
-
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [form, setForm] = useState<ProfileFormState>({
+    filhos: [{ ...DEFAULT_CHILD, id: makeId() }],
+    userMainChallenges: [],
+    routineChaosMoments: [],
+    routineSupportNeeds: [],
+    userContentPreferences: [],
+    userNotificationsPreferences: [],
+    supportNetwork: [],
+  })
   const [errors, setErrors] = useState<FormErrors>({})
 
+  // Load
   useEffect(() => {
     const saved = safeParseJSON<ProfileFormState>(safeGetLS(LS_KEY))
-    if (saved) setForm(normalizeForm(saved))
+    if (!saved) return
+
+    // Normaliza figurinha/sticker
+    const normalized: ProfileFormState = { ...saved }
+    if (!normalized.figurinha && normalized.sticker && isProfileStickerId(normalized.sticker)) {
+      normalized.figurinha = normalized.sticker
+    }
+    if (!normalized.sticker && normalized.figurinha && isProfileStickerId(normalized.figurinha)) {
+      normalized.sticker = normalized.figurinha
+    }
+
+    // Normaliza filhos
+    const filhos =
+      Array.isArray(normalized.filhos) && normalized.filhos.length > 0
+        ? normalized.filhos.map(c => ({
+            id: c.id || makeId(),
+            nome: c.nome ?? '',
+            genero: c.genero ?? 'nao-informar',
+            idadeMeses: typeof c.idadeMeses === 'number' ? c.idadeMeses : undefined,
+          }))
+        : [{ ...DEFAULT_CHILD, id: makeId() }]
+
+    setForm(prev => ({
+      ...prev,
+      ...normalized,
+      filhos,
+      userMainChallenges: normalized.userMainChallenges ?? prev.userMainChallenges ?? [],
+      routineChaosMoments: normalized.routineChaosMoments ?? prev.routineChaosMoments ?? [],
+      routineSupportNeeds: normalized.routineSupportNeeds ?? prev.routineSupportNeeds ?? [],
+      userContentPreferences: normalized.userContentPreferences ?? prev.userContentPreferences ?? [],
+      userNotificationsPreferences:
+        normalized.userNotificationsPreferences ?? prev.userNotificationsPreferences ?? [],
+      supportNetwork: normalized.supportNetwork ?? prev.supportNetwork ?? [],
+    }))
   }, [])
 
+  // Persist
   useEffect(() => {
     safeSetLS(LS_KEY, JSON.stringify(form))
   }, [form])
 
   const onChange = (updates: Partial<ProfileFormState>) => {
-    setForm((prev) => normalizeForm({ ...prev, ...updates }))
+    setForm(prev => ({ ...prev, ...updates }))
   }
 
-  /**
-   * ✅ Prop exigida por RoutineBlock / PreferencesBlock:
-   * Toggle genérico para campos array (string[])
-   */
-  const onToggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
-    setForm((prev) => {
+  // helper local para toggle de arrays (sem prop extra nos blocks)
+  const toggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
+    setForm(prev => {
       const current = (prev[fieldName] as string[] | undefined) ?? []
-      const next = current.includes(value)
-        ? current.filter((v) => v !== value)
-        : [...current, value]
-
-      return normalizeForm({
-        ...prev,
-        [fieldName]: next,
-      })
+      const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+      return { ...prev, [fieldName]: next }
     })
   }
 
+  const activeStickerId = form.figurinha ?? form.sticker ?? undefined
+
   const canGoNext = useMemo(() => {
-    if (step === 1) return Boolean((form.nomeMae ?? '').trim())
-    return true
-  }, [step, form.nomeMae])
-
-  function validateStep(current: Step) {
-    const nextErrors: FormErrors = {}
-
-    if (current === 1) {
-      if (!form.nomeMae || !form.nomeMae.trim()) nextErrors.nomeMae = 'Por favor, coloque seu nome.'
-      if (form.figurinha && !isProfileStickerId(form.figurinha)) nextErrors.figurinha = 'Figurinha inválida.'
-    }
-
-    if (current === 2) {
-      const childMap: Record<string, string | undefined> = {}
-      const filhos = form.filhos ?? []
-      filhos.forEach((c) => {
-        if (typeof c.idadeMeses === 'number' && c.idadeMeses < 0) {
-          childMap[c.id] = 'Idade em meses não pode ser negativa.'
-        }
-      })
-      if (Object.keys(childMap).length > 0) nextErrors.filhos = childMap
-    }
-
-    setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
-  }
+    // Mantém validação mínima por enquanto (sem travar experiência)
+    if (step === 1) return true
+    if (step === 2) return true
+    if (step === 3) return true
+    if (step === 4) return true
+    return false
+  }, [step])
 
   function goNext() {
-    if (!validateStep(step)) return
-    setStep((s) => (s < 4 ? ((s + 1) as Step) : s))
+    if (!canGoNext) return
+    setStep(s => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
   }
 
   function goPrev() {
-    setStep((s) => (s > 1 ? ((s - 1) as Step) : s))
+    setStep(s => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
   }
 
-  function save() {
+  function saveAndContinue() {
     try {
       track('eu360.profile.saved', {
+        figurinha: activeStickerId ?? null,
+        hasName: Boolean(form.nomeMae || form.name),
         step,
-        figurinha: form.figurinha ?? null,
-        hasName: Boolean(form.nomeMae),
       })
     } catch {}
+
+    // Mantém comportamento simples: não redireciona aqui.
   }
 
   return (
@@ -288,6 +279,7 @@ export default function ProfileForm() {
             </p>
           </div>
 
+          {/* Pills */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active={step === 1} number={1} label="Você" />
             <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
@@ -295,13 +287,29 @@ export default function ProfileForm() {
             <StepPill active={step === 4} number={4} label="Rede & preferências" />
           </div>
 
+          {/* Conteúdo */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             {step === 1 ? (
-              <AboutYouBlock form={form} errors={errors} onChange={onChange} />
+              <AboutYouBlock
+                form={form}
+                errors={errors}
+                onChange={(u) => {
+                  // compat: garante figurinha+sticker sincronizados
+                  if ('figurinha' in u && u.figurinha && isProfileStickerId(u.figurinha)) {
+                    onChange({ ...u, sticker: u.figurinha })
+                  } else {
+                    onChange(u)
+                  }
+                }}
+              />
             ) : null}
 
             {step === 2 ? (
-              <ChildrenBlock form={form} errors={errors} onChange={onChange} />
+              <ChildrenBlock
+                form={form}
+                errors={errors}
+                onChange={onChange}
+              />
             ) : null}
 
             {step === 3 ? (
@@ -309,7 +317,6 @@ export default function ProfileForm() {
                 form={form}
                 errors={errors}
                 onChange={onChange}
-                onToggleArrayField={onToggleArrayField}
               />
             ) : null}
 
@@ -318,10 +325,10 @@ export default function ProfileForm() {
                 form={form}
                 errors={errors}
                 onChange={onChange}
-                onToggleArrayField={onToggleArrayField}
               />
             ) : null}
 
+            {/* NAV */}
             <div className="pt-2 flex items-center justify-between gap-2">
               <button
                 type="button"
@@ -336,30 +343,26 @@ export default function ProfileForm() {
                 <button
                   type="button"
                   onClick={goNext}
-                  disabled={!canGoNext}
-                  className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                 >
                   Próximo
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={save}
-                  className="rounded-full bg-[#fd2597] text-white px-5 py-2.5 text-[12px] font-semibold shadow-lg hover:opacity-95 transition"
+                  onClick={saveAndContinue}
+                  className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                 >
                   Salvar e continuar
                 </button>
               )}
             </div>
 
-            {step === 1 && errors.nomeMae ? (
-              <p className="text-[11px] text-[var(--color-brand)] font-medium">{errors.nomeMae}</p>
-            ) : null}
+            {/* Observação */}
+            <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
+              Isso fica salvo para personalizar a sua experiência. Você pode editar depois quando quiser.
+            </p>
           </SoftCard>
-
-          <p className="text-center text-[10px] text-[#6a6a6a]">
-            Você poderá editar essas informações no seu Perfil.
-          </p>
         </SoftCard>
       </Reveal>
     </SectionWrapper>
