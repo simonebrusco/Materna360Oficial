@@ -2,58 +2,36 @@
 
 import React from 'react'
 import { useProfile } from '@/app/hooks/useProfile'
-import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
 /**
  * Global translucent header that appears on all tabs
- * - Left: Materna360 logo (white)
- * - Right: user avatar + name greeting
+ * - Left: Materna360 logo (branco)
+ * - Right: "Olá, Nome"
  */
 export function GlobalHeader() {
-  const { name, avatar, isLoading } = useProfile()
-
-  const initial = (name?.trim()?.charAt(0) || 'U').toUpperCase()
+  const { name, isLoading } = useProfile()
+  const firstName = (name || '').trim().split(' ')[0] || ''
 
   return (
     <header
       className="
         sticky top-0 z-50
-        bg-white/10 backdrop-blur-xl
-        border-b border-white/20
-        shadow-[0_10px_30px_rgba(0,0,0,0.10)]
+        bg-white/70 backdrop-blur-xl
+        border-b border-white/60
+        shadow-[0_10px_30px_rgba(0,0,0,0.08)]
       "
     >
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
-        <AppLogo width={128} height={32} variant="white" priority />
+        <AppLogo variant="white" width={128} height={32} priority />
 
-        <div className="flex items-center gap-3">
-          {!isLoading && name && (
-            <ClientOnly>
-              <div className="hidden sm:block text-right">
-                <p className="text-[12px] leading-[16px] font-medium text-white/90">
-                  {getTimeGreeting(name)}
-                </p>
-              </div>
-            </ClientOnly>
-          )}
-
-          {/* AVATAR ("figurinha") */}
-          {avatar ? (
-            <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-white/25 shadow-[0_10px_26px_rgba(0,0,0,0.20)]">
-              <img
-                src={avatar}
-                alt={name || 'Avatar'}
-                className="h-full w-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-white/15 ring-2 ring-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-[0_10px_26px_rgba(0,0,0,0.20)]">
-              <span className="font-semibold text-sm">{initial}</span>
-            </div>
-          )}
+        <div className="flex items-center">
+          <ClientOnly>
+            <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+              {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
+            </p>
+          </ClientOnly>
         </div>
       </div>
     </header>
