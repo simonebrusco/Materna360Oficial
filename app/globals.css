@@ -792,3 +792,52 @@ main[data-layout="page-template-v2"] {
   justify-content: space-between;
   gap: 8px;
 }
+/* ============================================================
+   FORCE: Fundo único (Eu360) em TODO o app + elimina "faixa" no topo
+   ============================================================ */
+:root {
+  --m360-app-bg: linear-gradient(
+    180deg,
+    #b8236b 0%,
+    #fd2597 42%,
+    #ffe1f1 80%,
+    #fdbed7 100%
+  );
+}
+
+/* Fundo oficial aplicado na raiz (o header translucido sempre vê isso) */
+html,
+body {
+  background-color: #ffffff !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  min-height: 100%;
+}
+
+/* Zera QUALQUER camada do Next / wrappers que estejam pintando por cima */
+body > div:first-child,
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  background: transparent !important;
+  min-height: 100%;
+}
+
+/* Zera fundos de containers comuns do layout */
+main,
+section,
+article {
+  background: transparent !important;
+}
+
+/* Se algum hub ainda aplicar classe diferente, força tudo ficar igual */
+.materna360-premium-bg,
+.maternar-hub-bg,
+.eu360-hub-bg {
+  background-color: transparent !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+}
