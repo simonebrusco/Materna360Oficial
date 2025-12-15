@@ -1,60 +1,15 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import LegalFooter from '@/components/common/LegalFooter'
+import React, { type ReactNode } from 'react'
 
-export type PageTemplateProps = {
-  label: string
-  title: string
-  subtitle?: string
+type AppShellProps = {
   children: ReactNode
 }
 
-export function PageTemplate({ label, title, subtitle, children }: PageTemplateProps) {
-  return (
-    <main
-      data-layout="page-template-v1"
-      className="
-        min-h-[100dvh]
-        bg-transparent
-      "
-    >
-      <div className="mx-auto max-w-3xl px-4 md:px-6 pb-20">
-        {/* HERO padrão */}
-        <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
-          <span
-            className="
-              inline-flex items-center rounded-full
-              border border-[#F5D7E5]
-              bg-white/85
-              px-3 py-1
-              text-[10px] font-semibold tracking-[0.24em] uppercase
-              text-[#b8236b]
-              backdrop-blur-md
-            "
-          >
-            {label}
-          </span>
-
-          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold leading-tight text-[#ffffff]">
-            {title}
-          </h1>
-
-          {subtitle && (
-            <p className="mt-2 text-sm md:text-base leading-relaxed max-w-2xl text-white/90">
-              {subtitle}
-            </p>
-          )}
-        </header>
-
-        <div className="space-y-6 md:space-y-7 pb-6">{children}</div>
-
-        <div className="mt-4 md:mt-6">
-          <LegalFooter />
-        </div>
-      </div>
-    </main>
-  )
+const AppShell: React.FC<AppShellProps> = ({ children }) => {
+  // AppShell agora é APENAS estrutura/spacing.
+  // Fundo oficial do app está exclusivamente em app/globals.css (fonte da verdade).
+  return <div className="relative min-h-[100dvh] pb-24">{children}</div>
 }
 
-export default PageTemplate
+export default AppShell
