@@ -21,7 +21,7 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className="
         min-h-[100dvh]
-        bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]
+        bg-transparent
       "
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6 pb-20">
