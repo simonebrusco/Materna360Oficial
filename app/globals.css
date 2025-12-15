@@ -100,6 +100,18 @@ body {
   --shadow-card-hover-neutral: 0 8px 24px rgba(0, 0, 0, 0.1);
   --shadow-card-active: 0 6px 20px rgba(0, 0, 0, 0.09);
   --glow-pink: 0 8px 24px rgba(253, 37, 151, 0.12);
+
+  /* ============================================================
+     ✅ FUNDO ÚNICO OFICIAL — Fonte da Verdade (App inteiro)
+     ============================================================ */
+  --m360-app-bg: linear-gradient(
+    to bottom,
+    #b8236b 0%,
+    #fd2597 38%,
+    #fdbed7 68%,
+    #ffe1f1 88%,
+    #ffffff 100%
+  );
 }
 
 /* Soft page background utility - now pure white */
@@ -108,123 +120,41 @@ body {
 }
 
 /* ============================================================
-   ✅ FUNDO ÚNICO OFICIAL (IGUAL AO EU360) — aplicado no APP TODO
-   Motivo: header é translúcido e "vaza" o background do body.
-   Se o body ficar rosa/claro, aparece a faixa no topo.
+   ✅ FUNDO ÚNICO: aplicado na raiz (o header translúcido vê isso)
    ============================================================ */
 html,
 body {
-  background-color: #ffffff;
-  background-image: linear-gradient(
-    180deg,
-    #b8236b 0%,
-    #fd2597 42%,
-    #ffe1f1 80%,
-    #fdbed7 100%
-  );
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
+  background-color: #ffffff !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  min-height: 100%;
 }
 
-/* ✅ Garantia: páginas não criam "camada" de fundo própria por acidente */
+/* Zera QUALQUER camada do Next / wrappers que estejam pintando por cima */
+body > div:first-child,
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  background: transparent !important;
+  min-height: 100%;
+}
+
+/* Pages/templates não podem competir com o fundo global */
 main[data-layout="page-template-v1"],
 main[data-layout="page-template-v2"] {
   background: transparent !important;
 }
 
-/* ============================================================
-   ✅ UNIFICAÇÃO TOTAL DOS HUBS
-   Mesmo que algum lugar ainda aplique classes antigas,
-   elas agora ficam iguais (Meu Dia = Maternar = Eu360).
-   ============================================================ */
-
-/* Materna360 — Fundo Premium (alias do Eu360) */
-.materna360-premium-bg {
-  background-color: transparent;
-  background-image: linear-gradient(
-    180deg,
-    #b8236b 0%,
-    #fd2597 42%,
-    #ffe1f1 80%,
-    #fdbed7 100%
-  );
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
-}
-
-@layer utilities {
-  /* Fundo do hub Maternar — agora igual ao Eu360 */
-  .maternar-hub-bg {
-    background-color: transparent;
-    background-image: linear-gradient(
-      180deg,
-      #b8236b 0%,
-      #fd2597 42%,
-      #ffe1f1 80%,
-      #fdbed7 100%
-    );
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-  }
-
-  /* Fundo do hub Eu360 — mantido como referência */
-  .eu360-hub-bg {
-    background-color: transparent;
-    background-image: linear-gradient(
-      180deg,
-      #b8236b 0%,
-      #fd2597 42%,
-      #ffe1f1 80%,
-      #fdbed7 100%
-    );
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-  }
-}
-
-/* ===== Hero do Meu Dia — texto branco alinhado à esquerda ===== */
-.materna360-premium-bg header {
-  max-width: 720px;
-  margin: 0;
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-  align-items: flex-start;
-}
-
-/* Título */
-.materna360-premium-bg header h1 {
-  color: #ffffff !important;
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 600;
-  margin: 0;
-}
-
-/* Subtítulo */
-.materna360-premium-bg header p {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: 13px;
-  line-height: 1.4;
-  margin: 0;
-}
-
-@media (min-width: 768px) {
-  .materna360-premium-bg header {
-    padding-left: 24px;
-  }
-  .materna360-premium-bg header h1 {
-    font-size: 28px;
-  }
-  .materna360-premium-bg header p {
-    font-size: 14px;
-  }
+/* Se algum hub ainda aplicar classe antiga, força tudo ficar igual */
+.materna360-premium-bg,
+.maternar-hub-bg,
+.eu360-hub-bg {
+  background-color: transparent !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
 }
 
 @layer base {
@@ -241,7 +171,7 @@ main[data-layout="page-template-v2"] {
   body {
     @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
-    /* ✅ removido: background-color rosa fixo (era a faixa/topo) */
+    /* NÃO colocar background aqui (fonte da verdade já está acima) */
   }
 
   img {
@@ -612,6 +542,7 @@ main[data-layout="page-template-v2"] {
   }
 }
 
+/* ==== Seus utilitários extras (mantidos) ==== */
 .DebugTarget {
   outline: 2px dashed #00c2ff !important;
   outline-offset: 4px !important;
@@ -791,53 +722,4 @@ main[data-layout="page-template-v2"] {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-/* ============================================================
-   FORCE: Fundo único (Eu360) em TODO o app + elimina "faixa" no topo
-   ============================================================ */
-:root {
-  --m360-app-bg: linear-gradient(
-    180deg,
-    #b8236b 0%,
-    #fd2597 42%,
-    #ffe1f1 80%,
-    #fdbed7 100%
-  );
-}
-
-/* Fundo oficial aplicado na raiz (o header translucido sempre vê isso) */
-html,
-body {
-  background-color: #ffffff !important;
-  background-image: var(--m360-app-bg) !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  min-height: 100%;
-}
-
-/* Zera QUALQUER camada do Next / wrappers que estejam pintando por cima */
-body > div:first-child,
-#__next,
-[data-nextjs-scroll-focus-boundary] {
-  background: transparent !important;
-  min-height: 100%;
-}
-
-/* Zera fundos de containers comuns do layout */
-main,
-section,
-article {
-  background: transparent !important;
-}
-
-/* Se algum hub ainda aplicar classe diferente, força tudo ficar igual */
-.materna360-premium-bg,
-.maternar-hub-bg,
-.eu360-hub-bg {
-  background-color: transparent !important;
-  background-image: var(--m360-app-bg) !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
 }
