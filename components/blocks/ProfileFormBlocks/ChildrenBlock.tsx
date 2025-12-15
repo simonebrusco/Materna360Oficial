@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { FormErrors, ProfileFormState, ChildProfile, ChildGender } from '../ProfileForm'
+import type { FormErrors, ProfileFormState, ChildProfile, ChildGender } from '../ProfileForm'
 
 interface Props {
   form: ProfileFormState
@@ -14,20 +14,13 @@ function makeId() {
 }
 
 export function ChildrenBlock({ form, errors, onChange }: Props) {
+  // Garantia extra — embora no ProfileFormState filhos seja obrigatório
   const filhos: ChildProfile[] = Array.isArray(form.filhos) ? form.filhos : []
-
-  // Se seu FormErrors for indexado, isso pode ser string | undefined.
-  // Aqui tratamos como um "map" opcional para evitar erro de TS na UI.
-  const filhosErrors =
-    (errors as any)?.filhos && typeof (errors as any).filhos === 'object'
-      ? ((errors as any).filhos as Record<string, string | undefined>)
-      : undefined
 
   function addChild() {
     const next: ChildProfile = {
       id: makeId(),
       nome: '',
-      // ✅ CORREÇÃO: não pode ser '' — precisa ser um valor válido do ChildGender
       genero: 'nao-informar',
       idadeMeses: undefined,
     }
@@ -55,10 +48,13 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
 
       <div className="space-y-5">
         {filhos.map((child, index) => {
-          const childError = filhosErrors?.[child.id]
+          const childError = errors.filhos?.[child.id]
 
           return (
-            <div key={child.id} className="rounded-2xl border border-[var(--color-border-soft)] bg-white p-4 space-y-3">
+            <div
+              key={child.id}
+              className="rounded-2xl border border-[var(--color-border-soft)] bg-white p-4 space-y-3"
+            >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-[var(--color-text-main)]">
                   Filho {index + 1}
@@ -99,8 +95,8 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
                   className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
                 >
                   <option value="nao-informar">Prefiro não informar</option>
-                  <option value="menina">Menina</option>
-                  <option value="menino">Menino</option>
+                  <option value="feminino">Feminino</option>
+                  <option value="masculino">Masculino</option>
                 </select>
               </div>
 
@@ -109,6 +105,7 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
                 <label className="text-[11px] font-medium text-[var(--color-text-main)]">
                   Idade em meses (opcional)
                 </label>
+
                 <input
                   type="number"
                   min={0}
@@ -121,14 +118,14 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
                   }}
                   className={[
                     'w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30',
-                    childError ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20' : 'border-[var(--color-border-soft)]',
+                    childError
+                      ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20'
+                      : 'border-[var(--color-border-soft)]',
                   ].join(' ')}
                 />
 
                 {childError ? (
-                  <p className="text-[11px] text-[var(--color-brand)] font-medium">
-                    {childError}
-                  </p>
+                  <p className="text-[11px] text-[var(--color-brand)] font-medium">{childError}</p>
                 ) : null}
               </div>
             </div>
