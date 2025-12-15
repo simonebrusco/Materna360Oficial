@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { resolveSticker, isProfileStickerId, DEFAULT_STICKER_ID } from '@/app/lib/stickers'
+import { isProfileStickerId, DEFAULT_STICKER_ID } from '@/app/lib/stickers'
 
 export interface ProfileData {
   name: string
   /**
-   * Agora, avatar guarda o ID da vibe/sticker (ex: "mae-leve"),
+   * avatar guarda o ID da vibe/sticker (ex: "mae-leve"),
    * não mais a URL de imagem.
    */
   avatar?: string
@@ -70,10 +70,6 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
           const validStickerId = isProfileStickerId(figurinhaId)
             ? figurinhaId
             : DEFAULT_STICKER_ID
-
-          // Garante fallback robusto (e valida que existe no mapa),
-          // mesmo que o retorno não seja usado diretamente aqui.
-          resolveSticker(validStickerId)
 
           setProfile({
             name: savedName.trim(),
