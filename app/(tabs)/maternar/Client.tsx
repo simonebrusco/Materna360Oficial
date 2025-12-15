@@ -10,6 +10,7 @@ import LegalFooter from '@/components/common/LegalFooter'
 import { Button } from '@/components/ui/Button'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+import { TabPill } from '@/components/common/TabPill'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -81,6 +82,7 @@ export default function MaternarClient() {
         eu360-hub-bg
         relative min-h-[100dvh]
         pb-32
+        bg-transparent
       "
     >
       <ClientOnly>
@@ -88,6 +90,8 @@ export default function MaternarClient() {
           {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
+              <TabPill>MATERNAR</TabPill>
+
               <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 Maternar
               </h1>
