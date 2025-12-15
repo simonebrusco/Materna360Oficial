@@ -78,11 +78,9 @@ export default function MaternarClient() {
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
-        min-h-[100dvh]
+        relative min-h-[100dvh]
         pb-32
-
-        bg-[#fff7fa]
-        bg-[linear-gradient(to_bottom,#2f3a56_0%,#4a355f_14%,#7a3a66_28%,#b8236b_44%,#fd2597_60%,#fdbed7_80%,#fff7fa_100%)]
+        bg-transparent
       "
     >
       <ClientOnly>
@@ -175,16 +173,8 @@ export default function MaternarClient() {
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <MiniTile
-                              label="Meu ritmo hoje"
-                              href="/maternar/cuidar-de-mim#ritmo"
-                              tag="check-in"
-                            />
-                            <MiniTile
-                              label="Pausas rápidas"
-                              href="/maternar/cuidar-de-mim#pausas"
-                              tag="respirar"
-                            />
+                            <MiniTile label="Meu ritmo hoje" href="/maternar/cuidar-de-mim#ritmo" tag="check-in" />
+                            <MiniTile label="Pausas rápidas" href="/maternar/cuidar-de-mim#pausas" tag="respirar" />
                           </div>
 
                           <div className="mt-4 pt-1">
@@ -236,16 +226,8 @@ export default function MaternarClient() {
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <MiniTile
-                              label="Brincadeiras do dia"
-                              href="/maternar/meu-filho#brincadeiras"
-                              tag="ideias"
-                            />
-                            <MiniTile
-                              label="Gestos de conexão"
-                              href="/maternar/meu-filho#conexao"
-                              tag="vínculo"
-                            />
+                            <MiniTile label="Brincadeiras do dia" href="/maternar/meu-filho#brincadeiras" tag="ideias" />
+                            <MiniTile label="Gestos de conexão" href="/maternar/meu-filho#conexao" tag="vínculo" />
                           </div>
 
                           <div className="mt-4 pt-1">
@@ -297,16 +279,8 @@ export default function MaternarClient() {
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <MiniTile
-                              label="Inspiração do dia"
-                              href="/maternar/meu-dia-leve#inspiracao"
-                              tag="frase"
-                            />
-                            <MiniTile
-                              label="Ideias rápidas"
-                              href="/maternar/meu-dia-leve#ideias"
-                              tag="rápido"
-                            />
+                            <MiniTile label="Inspiração do dia" href="/maternar/meu-dia-leve#inspiracao" tag="frase" />
+                            <MiniTile label="Ideias rápidas" href="/maternar/meu-dia-leve#ideias" tag="rápido" />
                           </div>
 
                           <div className="mt-4 pt-1">
@@ -358,16 +332,8 @@ export default function MaternarClient() {
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <MiniTile
-                              label="Painel da jornada"
-                              href="/maternar/minha-jornada#painel"
-                              tag="visão geral"
-                            />
-                            <MiniTile
-                              label="Missões do dia"
-                              href="/maternar/minha-jornada#missoes"
-                              tag="pequenos passos"
-                            />
+                            <MiniTile label="Painel da jornada" href="/maternar/minha-jornada#painel" tag="visão geral" />
+                            <MiniTile label="Missões do dia" href="/maternar/minha-jornada#missoes" tag="pequenos passos" />
                           </div>
 
                           <div className="mt-4 pt-1">
@@ -385,7 +351,7 @@ export default function MaternarClient() {
               </Reveal>
             </div>
 
-            {/* BLOCO FINAL: Mais ferramentas (rotas reais, menos ruído) */}
+            {/* BLOCO FINAL */}
             <Reveal>
               <SoftCard
                 className="
