@@ -18,11 +18,9 @@ export function GlobalHeader() {
     <header
       className="
         sticky top-0 z-50
-        bg-white/55
-        supports-[backdrop-filter]:bg-white/35
-        backdrop-blur-xl
-        border-b border-white/40
-        shadow-[0_8px_24px_rgba(0,0,0,0.10)]
+        bg-white/85 backdrop-blur-xl
+        border-b border-black/5
+        shadow-[0_8px_24px_rgba(0,0,0,0.06)]
       "
     >
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
