@@ -7,6 +7,7 @@ html,
 body {
   color-scheme: light;
   color: #111;
+  background: #ffffff; /* <- garante que nunca “vaze” rosa no overscroll */
 }
 
 /* ===== NEW MATERNA360 COLOR SYSTEM (Official) ===== */
@@ -33,14 +34,15 @@ body {
   --color-border-muted: #eec2d6;   /* bordas mais fortes / campos */
 
   /* ===== Legacy Materna360 token fallbacks (ajustados à nova paleta) ===== */
-  --soft-page-bg: #fff7fb;
+  /* Page background - soft luxury aesthetic */
+  --soft-page-bg: #fff7fb; /* muito claro, ainda aceitável */
 
   /* RGB triplets for Tailwind color mapping */
-  --primary: 253 37 151;
-  --support-1: 84 84 84;
-  --support-2: 106 106 106;
-  --neutral-1: 248 249 250;
-  --neutral-2: 255 255 255;
+  --primary: 253 37 151;       /* #fd2597 → Pink Materna360 */
+  --support-1: 84 84 84;       /* #545454 → texto principal */
+  --support-2: 106 106 106;    /* #6A6A6A → texto suave */
+  --neutral-1: 248 249 250;    /* #F8F9FA → bg soft */
+  --neutral-2: 255 255 255;    /* #FFFFFF → white */
 
   /* Soft Luxury Design Tokens */
   --space-xs: 8px;
@@ -61,10 +63,10 @@ body {
   --border-soft-gray: #e9ecf2;
 
   /* Legacy aliases (mapped to new palette) */
-  --color-primary: #fd2597;
-  --color-primary-weak: #fdbed7;
-  --color-ink-1: #545454;
-  --color-ink-2: #6a6a6a;
+  --color-primary: #fd2597;        /* Pink Materna360 – primary */
+  --color-primary-weak: #fdbed7;   /* Rosa suave – secondary */
+  --color-ink-1: #545454;          /* texto principal */
+  --color-ink-2: #6a6a6a;          /* texto suave */
 
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
@@ -74,7 +76,6 @@ body {
   --text-title-page: 22px/28px;
   --text-title-page-md: 28px/34px;
   /* MATERNA360 TYPOGRAPHY TOKENS END */
-
   --rhythm-section-d: 56px;
   --rhythm-section-t: 48px;
   --rhythm-section-m: 32px;
@@ -90,7 +91,6 @@ body {
   --safearea-bottom-d: 80px;
   --safearea-bottom-t: 72px;
   --safearea-bottom-m: 64px;
-
   /* Premium editorial shadows */
   --shadow-card-base: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-card-hover-neutral: 0 8px 24px rgba(0, 0, 0, 0.1);
@@ -103,24 +103,7 @@ body {
   background: #ffffff;
 }
 
-/* ===== FUNDO ÚNICO PARA TODAS AS TABS (APROVADO — EU360) =====
-   Aplique APENAS no wrapper de app/(tabs)/layout.tsx via className "tabs-app-bg"
-*/
-.tabs-app-bg {
-  background-color: #ffffff;
-  background-image: linear-gradient(
-    180deg,
-    #b8236b 0%,
-    #fd2597 42%,
-    #ffe1f1 80%,
-    #fdbed7 100%
-  );
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
-}
-
-/* Materna360 — Fundo Premium / Meu Dia – amanhecer calmo (mantido) */
+/* Materna360 — Fundo Premium / Meu Dia – amanhecer calmo (atualizado) */
 .materna360-premium-bg {
   background-color: #ffffff;
   background-image: linear-gradient(
@@ -136,7 +119,7 @@ body {
 }
 
 @layer utilities {
-  /* Fundo premium do hub Maternar (mantido) */
+  /* Fundo premium do hub Maternar – com pink vibrante dentro da paleta oficial */
   .maternar-hub-bg {
     background-color: #ffffff;
     background-image:
@@ -153,7 +136,7 @@ body {
     background-size: cover;
   }
 
-  /* Fundo premium do hub Eu360 (mantido) */
+  /* Fundo premium do hub Eu360 – fim de tarde / reflexão */
   .eu360-hub-bg {
     background-color: #ffffff;
     background-image: linear-gradient(
@@ -181,6 +164,7 @@ body {
   align-items: flex-start;
 }
 
+/* Título */
 .materna360-premium-bg header h1 {
   color: #ffffff !important;
   font-size: 24px;
@@ -189,6 +173,7 @@ body {
   margin: 0;
 }
 
+/* Subtítulo */
 .materna360-premium-bg header p {
   color: rgba(255, 255, 255, 0.9) !important;
   font-size: 13px;
@@ -215,7 +200,7 @@ body {
   body {
     height: 100%;
     color: rgb(var(--support-1));
-    background-color: var(--color-page-bg);
+    background: #ffffff; /* <- reforço */
   }
 
   html {
@@ -225,9 +210,7 @@ body {
   body {
     @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
-
-    /* CRÍTICO: remove o “rosa por trás” quando puxa a página */
-    background-color: #ffffff;
+    background-color: #ffffff; /* <- ERA #fdbed7, aqui estava o “culpado” */
   }
 
   img {
@@ -564,6 +547,7 @@ body {
     }
   }
 
+  /* ===== Typography Scale Variants ===== */
   .text-title-page {
     font-size: 22px;
     line-height: 28px;
