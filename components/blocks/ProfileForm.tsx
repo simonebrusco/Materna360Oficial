@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import { SoftCard } from '@/components/ui/card'
 import { Reveal } from '@/components/ui/Reveal'
@@ -33,7 +33,7 @@ export type EmotionalBaseline = 'sobrecarregada' | 'cansada' | 'equilibrada' | '
 export type EnergyPeakTime = 'manha' | 'tarde' | 'noite'
 
 export type ProfileFormState = {
-  /** Vibe (Sticker) */
+  /** Figurinhas */
   figurinha?: ProfileStickerId
 
   /** Step 1 (AboutYouBlock) */
@@ -72,7 +72,6 @@ export type FormErrors = Partial<Record<Exclude<keyof ProfileFormState, 'filhos'
  * =========================================================
  */
 const LS_KEY = 'eu360_profile_v1'
-const PROFILE_UPDATED_EVENT = 'materna:profile-updated'
 
 function safeGetLS(key: string): string | null {
   try {
@@ -82,14 +81,12 @@ function safeGetLS(key: string): string | null {
     return null
   }
 }
-
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
   } catch {}
 }
-
 function safeParseJSON<T>(raw: string | null): T | null {
   try {
     if (!raw) return null
@@ -127,22 +124,31 @@ function defaultState(): ProfileFormState {
 
 /**
  * =========================================================
- * UI: Pills
+ * UI: Pills (clicáveis)
  * =========================================================
  */
 function StepPill({
   active,
   number,
   label,
+  disabled,
+  onClick,
 }: {
   active?: boolean
   number: number
   label: string
+  disabled?: boolean
+  onClick?: () => void
 }) {
   return (
-    <span
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
       className={[
         'inline-flex items-center gap-2 rounded-full px-3 py-2 border text-[11px] font-semibold transition',
+        disabled ? 'opacity-55 cursor-not-allowed' : 'hover:-translate-y-[1px]',
         active
           ? 'bg-[#ffd8e6] border-[#fd2597]/40 text-[#2f3a56]'
           : 'bg-white/70 border-[#f5d7e5] text-[#6a6a6a]',
@@ -157,7 +163,7 @@ function StepPill({
         {number}
       </span>
       <span>{label}</span>
-    </span>
+    </button>
   )
 }
 
@@ -179,14 +185,14 @@ export default function ProfileForm() {
     const merged: ProfileFormState = {
       ...defaultState(),
       ...saved,
-      // normalizações
+
       nomeMae: typeof saved.nomeMae === 'string' ? saved.nomeMae : '',
-      userPreferredName: typeof saved.userPreferredName === 'string' ? saved.userPreferredName : '',
       userMainChallenges: Array.isArray(saved.userMainChallenges) ? saved.userMainChallenges : [],
       filhos:
         Array.isArray(saved.filhos) && saved.filhos.length > 0
           ? saved.filhos
           : defaultState().filhos,
+
       routineChaosMoments: Array.isArray(saved.routineChaosMoments) ? saved.routineChaosMoments : [],
       routineSupportNeeds: Array.isArray(saved.routineSupportNeeds) ? saved.routineSupportNeeds : [],
       supportNetwork: Array.isArray(saved.supportNetwork) ? saved.supportNetwork : [],
@@ -196,7 +202,6 @@ export default function ProfileForm() {
         : [],
     }
 
-    // Garantir figurinha válida
     if (merged.figurinha && !isProfileStickerId(merged.figurinha)) {
       merged.figurinha = undefined
     }
@@ -210,16 +215,14 @@ export default function ProfileForm() {
   }, [form])
 
   function onChange(updates: Partial<ProfileFormState>) {
-    setForm((prev) => ({ ...prev, ...updates }))
+    setForm(prev => ({ ...prev, ...updates }))
   }
 
   function onToggleArrayField(fieldName: keyof ProfileFormState, value: string) {
     const current = (form[fieldName] as unknown as string[] | undefined) ?? []
-    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
-    setForm((prev) => ({ ...prev, [fieldName]: next } as ProfileFormState))
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    setForm(prev => ({ ...prev, [fieldName]: next } as ProfileFormState))
   }
-
-  const activeStickerId = form.figurinha
 
   const canGoNext = useMemo(() => {
     if (step === 1) return Boolean(form.nomeMae?.trim())
@@ -227,17 +230,17 @@ export default function ProfileForm() {
     return true
   }, [step, form.nomeMae, form.filhos])
 
-  function validateStep(): boolean {
+  function validateStep(s: 1 | 2 | 3 | 4 = step): boolean {
     const nextErrors: FormErrors = {}
 
-    if (step === 1) {
+    if (s === 1) {
       if (!form.nomeMae?.trim()) nextErrors.nomeMae = 'Por favor, preencha seu nome.'
       if (form.figurinha && !isProfileStickerId(form.figurinha)) {
-        nextErrors.figurinha = 'Selecione uma vibe válida.'
+        nextErrors.figurinha = 'Selecione uma figurinha válida.'
       }
     }
 
-    if (step === 2) {
+    if (s === 2) {
       const childErrors: Record<string, string | undefined> = {}
       for (const c of form.filhos) {
         if (typeof c.idadeMeses === 'number' && c.idadeMeses < 0) {
@@ -251,32 +254,63 @@ export default function ProfileForm() {
     return Object.keys(nextErrors).length === 0
   }
 
+  // ✅ Gate para navegação pelos pills
+  function canJumpTo(target: 1 | 2 | 3 | 4) {
+    const hasName = Boolean(form.nomeMae?.trim())
+    const hasChild = (form.filhos?.length ?? 0) >= 1
+
+    if (target === 1) return true
+    if (target === 2) return hasName
+    if (target === 3) return hasName && hasChild
+    return hasName && hasChild
+  }
+
+  function jumpTo(target: 1 | 2 | 3 | 4) {
+    // voltar sempre pode
+    if (target < step) {
+      setErrors({})
+      setStep(target)
+      try {
+        track('eu360.profile.step_jump', { from: step, to: target, direction: 'back' })
+      } catch {}
+      return
+    }
+
+    // para frente: valida etapa atual e requisitos mínimos
+    const okCurrent = validateStep(step)
+    const okTarget = canJumpTo(target)
+
+    if (!okCurrent || !okTarget) {
+      try {
+        track('eu360.profile.step_jump_blocked', { from: step, to: target })
+      } catch {}
+      return
+    }
+
+    setErrors({})
+    setStep(target)
+    try {
+      track('eu360.profile.step_jump', { from: step, to: target, direction: 'forward' })
+    } catch {}
+  }
+
   function goNext() {
-    if (!validateStep()) return
-    setStep((s) => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
+    if (!validateStep(step)) return
+    setStep(s => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
   }
 
   function goPrev() {
     setErrors({})
-    setStep((s) => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
+    setStep(s => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
   }
 
   function saveAndContinue() {
     try {
       track('eu360.profile.saved', {
-        figurinha: activeStickerId ?? null,
+        figurinha: form.figurinha ?? null,
         hasName: Boolean(form.nomeMae?.trim()),
         step,
       })
-    } catch {}
-
-    // Atualiza Header/Badge sem refresh
-    try {
-      window.dispatchEvent(
-        new CustomEvent(PROFILE_UPDATED_EVENT, {
-          detail: { figurinha: activeStickerId ?? null },
-        }),
-      )
     } catch {}
   }
 
@@ -297,12 +331,30 @@ export default function ProfileForm() {
             </p>
           </div>
 
-          {/* Pills */}
+          {/* Pills (clicáveis) */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
-            <StepPill active={step === 1} number={1} label="Você" />
-            <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
-            <StepPill active={step === 3} number={3} label="Rotina" />
-            <StepPill active={step === 4} number={4} label="Rede & preferências" />
+            <StepPill active={step === 1} number={1} label="Você" onClick={() => jumpTo(1)} />
+            <StepPill
+              active={step === 2}
+              number={2}
+              label="Seu(s) filho(s)"
+              disabled={!canJumpTo(2)}
+              onClick={() => jumpTo(2)}
+            />
+            <StepPill
+              active={step === 3}
+              number={3}
+              label="Rotina"
+              disabled={!canJumpTo(3)}
+              onClick={() => jumpTo(3)}
+            />
+            <StepPill
+              active={step === 4}
+              number={4}
+              label="Rede & preferências"
+              disabled={!canJumpTo(4)}
+              onClick={() => jumpTo(4)}
+            />
           </div>
 
           {/* Body */}
@@ -325,7 +377,7 @@ export default function ProfileForm() {
                 form={form}
                 errors={errors}
                 onChange={onChange}
-                onToggleArrayField={onToggleArrayField}
+                onToggleArrayField={onToggleArrayField as any}
               />
             ) : null}
 
@@ -364,9 +416,12 @@ export default function ProfileForm() {
             </p>
           </SoftCard>
 
+          {/* Nota visual sutil */}
           <div className="flex items-start gap-2 text-[11px] text-[#6a6a6a]">
             <AppIcon name="sparkles" size={16} className="text-[#fd2597]" decorative />
-            <p>Esse formulário salva automaticamente e é usado apenas para personalizar sua experiência no Materna360.</p>
+            <p>
+              Esse formulário salva automaticamente e é usado apenas para personalizar sua experiência no Materna360.
+            </p>
           </div>
         </SoftCard>
       </Reveal>
