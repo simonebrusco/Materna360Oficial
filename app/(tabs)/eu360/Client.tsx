@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 
-import AppShell from '@/components/common/AppShell'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
 import ProfileForm from '@/components/blocks/ProfileForm'
@@ -248,9 +247,7 @@ export default function Eu360Client() {
   const questionnaireRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    try {
-      track('nav.click', { tab: 'eu360', dest: '/eu360' })
-    } catch {}
+    track('nav.click', { tab: 'eu360', dest: '/eu360' })
   }, [])
 
   const { name } = useProfile()
@@ -373,8 +370,7 @@ export default function Eu360Client() {
   }
 
   const heroTitle = 'Seu mundo em perspectiva'
-  const heroSubtitle =
-    'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+  const heroSubtitle = 'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
 
   const content = (
     <main
@@ -384,6 +380,7 @@ export default function Eu360Client() {
         relative
         min-h-[100dvh]
         pb-24
+        overflow-hidden
         bg-transparent
       "
     >
@@ -474,13 +471,13 @@ export default function Eu360Client() {
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
                       Questionário rápido (2 min)
                     </p>
-                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
                       Para o app se ajustar ao seu momento real
                     </h2>
-                    <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
+                    <p className="mt-1 text-[13px] text-[var(--color-ink-muted)] leading-relaxed">
                       Sem teste, sem diagnóstico. Só contexto para o Materna360 te entregar menos peso e mais clareza.
                     </p>
                   </div>
@@ -506,8 +503,7 @@ export default function Eu360Client() {
                     </div>
 
                     <p className="mt-2 text-[11px] text-[#6a6a6a]">
-                      Progresso:{' '}
-                      <span className="font-semibold text-[#2f3a56]">{totalAnswered}/6</span>
+                      Progresso: <span className="font-semibold text-[#2f3a56]">{totalAnswered}/6</span>
                     </p>
                   </div>
                 ) : null}
@@ -661,28 +657,28 @@ export default function Eu360Client() {
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-ink-muted)]">
                       Painel da sua jornada
                     </p>
-                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[var(--color-ink)] leading-snug">
                       Um olhar rápido sobre como você vem cuidando de vocês
                     </h2>
                   </div>
-                  <AppIcon name="sparkles" className="h-6 w-6 text-[#fd2597] hidden md:block" />
+                  <AppIcon name="sparkles" className="h-6 w-6 text-[var(--color-brand)] hidden md:block" />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
-                  <div className="rounded-2xl bg-[#ffe1f1] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                    <p className="text-[11px] font-medium text-[#6a6a6a]">Dias com planner</p>
-                    <p className="mt-1 text-xl font-semibold text-[#fd2597]">{stats.daysWithPlanner}</p>
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">Dias com planner</p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">{stats.daysWithPlanner}</p>
                   </div>
-                  <div className="rounded-2xl bg-[#ffe1f1] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                    <p className="text-[11px] font-medium text-[#6a6a6a]">Check-ins de humor</p>
-                    <p className="mt-1 text-xl font-semibold text-[#fd2597]">{stats.moodCheckins}</p>
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">Check-ins de humor</p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">{stats.moodCheckins}</p>
                   </div>
-                  <div className="rounded-2xl bg-[#ffe1f1] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                    <p className="text-[11px] font-medium text-[#6a6a6a]">Conquistas</p>
-                    <p className="mt-1 text-xl font-semibold text-[#fd2597]">{stats.unlockedAchievements}</p>
+                  <div className="rounded-2xl bg-[var(--color-soft-bg)] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                    <p className="text-[11px] font-medium text-[var(--color-ink-muted)]">Conquistas</p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-brand)]">{stats.unlockedAchievements}</p>
                   </div>
                 </div>
 
@@ -690,16 +686,16 @@ export default function Eu360Client() {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">
-                        <AppIcon name="heart" size={20} className="text-[#fd2597]" decorative />
+                        <AppIcon name="heart" size={20} className="text-[var(--color-brand)]" decorative />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
+                        <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-[0.16em]">
                           Olhar carinhoso sobre a sua semana
                         </p>
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
+                        <h3 className="text-base md:text-lg font-semibold text-[var(--color-ink)] leading-snug">
                           {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
-                        <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
+                        <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
                           {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com mais gentileza — não para te cobrar.
                         </p>
                       </div>
@@ -707,22 +703,22 @@ export default function Eu360Client() {
 
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
-                        <p className="text-sm text-[#6a6a6a] leading-relaxed">
+                        <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
                           Estou olhando com carinho para a sua semana para trazer uma reflexão…
                         </p>
                       ) : (
                         <>
-                          <p className="text-sm leading-relaxed text-[#2f3a56]">
+                          <p className="text-sm leading-relaxed text-[var(--color-ink)]">
                             {weeklyInsight?.summary ??
                               'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
                           </p>
 
                           {weeklyInsight?.suggestions && weeklyInsight.suggestions.length > 0 && (
                             <div className="space-y-1.5">
-                              <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
+                              <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-[0.16em]">
                                 Pequenos passos para os próximos dias
                               </p>
-                              <ul className="space-y-1.5 text-sm text-[#2f3a56]">
+                              <ul className="space-y-1.5 text-sm text-[var(--color-ink)]">
                                 {weeklyInsight.suggestions.map((item, idx) => (
                                   <li key={idx}>• {item}</li>
                                 ))}
@@ -730,7 +726,7 @@ export default function Eu360Client() {
                             </div>
                           )}
 
-                          <p className="text-[11px] text-[#6a6a6a] mt-2 leading-relaxed">
+                          <p className="text-[11px] text-[var(--color-ink-muted)] mt-2 leading-relaxed">
                             Isso não é um diagnóstico — é um convite para você se observar com cuidado. Um passo por vez já é muito.
                           </p>
                         </>
@@ -765,7 +761,7 @@ export default function Eu360Client() {
                     <Link href="/planos">
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-white text-[#fd2597] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#ffe1f1] transition-colors"
+                        className="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-white text-[var(--color-brand)] shadow-[0_10px_26px_rgba(0,0,0,0.24)] hover:bg-[#ffe1f1] transition-colors"
                       >
                         Conhecer os planos
                       </button>
@@ -778,18 +774,12 @@ export default function Eu360Client() {
               </SoftCard>
             </Reveal>
           </SectionWrapper>
-
-          <div className="pb-6">
-            <LegalFooter />
-          </div>
         </div>
       </div>
+
+      <LegalFooter />
     </main>
   )
 
-  return (
-    <AppShell>
-      <ClientOnly>{content}</ClientOnly>
-    </AppShell>
-  )
+  return <ClientOnly>{content}</ClientOnly>
 }
