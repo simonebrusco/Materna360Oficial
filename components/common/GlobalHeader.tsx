@@ -6,46 +6,52 @@ import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
+/**
+ * Global translucent header that appears on all tabs
+ * - Left: Materna360 logo (white)
+ * - Right: user avatar + name greeting
+ */
 export function GlobalHeader() {
   const { name, avatar, isLoading } = useProfile()
+
+  const initial = (name?.trim()?.charAt(0) || 'U').toUpperCase()
 
   return (
     <header
       className="
         sticky top-0 z-50
-        bg-[rgba(184,35,107,0.18)]
-        backdrop-blur-xl
-        border-b border-white/25
+        bg-white/10 backdrop-blur-xl
+        border-b border-white/20
         shadow-[0_10px_30px_rgba(0,0,0,0.10)]
       "
     >
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
-        <AppLogo width={128} height={32} />
+        <AppLogo width={128} height={32} variant="white" priority />
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {!isLoading && name && (
             <ClientOnly>
               <div className="hidden sm:block text-right">
-                <p className="m360-micro font-medium text-white/90">
+                <p className="text-[12px] leading-[16px] font-medium text-white/90">
                   {getTimeGreeting(name)}
                 </p>
               </div>
             </ClientOnly>
           )}
 
+          {/* AVATAR ("figurinha") */}
           {avatar ? (
-            <div className="flex-shrink-0 overflow-hidden">
+            <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-white/25 shadow-[0_10px_26px_rgba(0,0,0,0.20)]">
               <img
                 src={avatar}
                 alt={name || 'Avatar'}
-                className="h-10 w-10 rounded-full object-cover"
+                className="h-full w-full object-cover"
+                referrerPolicy="no-referrer"
               />
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-full bg-[#fd2597] text-white flex items-center justify-center flex-shrink-0 shadow-[0_6px_16px_rgba(253,37,151,0.28)]">
-              <span className="font-semibold text-sm">
-                {name ? name.charAt(0) : 'U'}
-              </span>
+            <div className="h-10 w-10 rounded-full bg-white/15 ring-2 ring-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-[0_10px_26px_rgba(0,0,0,0.20)]">
+              <span className="font-semibold text-sm">{initial}</span>
             </div>
           )}
         </div>
