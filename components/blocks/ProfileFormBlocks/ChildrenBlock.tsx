@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import type { ChildGender, ChildProfile, FormErrors, ProfileFormState } from '../ProfileForm'
 
 interface Props {
@@ -18,9 +18,43 @@ function parseChildGender(raw: string): ChildGender {
   return 'nao-informar'
 }
 
+function formatAgeInMonths(age?: number) {
+  if (typeof age !== 'number' || !Number.isFinite(age) || age < 0) return null
+  if (age === 0) return 'Recém-nascido'
+  if (age < 12) return `${age} mês${age === 1 ? '' : 'es'}`
+  const years = Math.floor(age / 12)
+  const months = age % 12
+  if (months === 0) return `${years} ano${years === 1 ? '' : 's'}`
+  return `${years}a ${months}m`
+}
+
+function ChildSummary({ child, index }: { child: ChildProfile; index: number }) {
+  const name = (child.nome ?? '').trim()
+  const ageLabel = formatAgeInMonths(child.idadeMeses)
+  const gender =
+    child.genero === 'feminino' ? 'Feminino' : child.genero === 'masculino' ? 'Masculino' : '—'
+
+  const line = [name ? name : `Filho ${index + 1}`, ageLabel ? ageLabel : null, gender !== '—' ? gender : null]
+    .filter(Boolean)
+    .join(' • ')
+
+  return <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">{line || `Filho ${index + 1}`}</span>
+}
+
 export function ChildrenBlock({ form, errors, onChange }: Props) {
-  // Garantia extra — embora no ProfileFormState filhos seja obrigatório
   const filhos: ChildProfile[] = Array.isArray(form.filhos) ? form.filhos : []
+
+  // controla expansão por filho (compacto por padrão quando há mais de 1)
+  const [openById, setOpenById] = useState<Record<string, boolean>>({})
+
+  const anyChildHasError = useMemo(() => {
+    const map = errors.filhos ?? {}
+    return Object.keys(map).some((id) => Boolean(map[id]))
+  }, [errors.filhos])
+
+  function setOpen(childId: string, next: boolean) {
+    setOpenById((prev) => ({ ...prev, [childId]: next }))
+  }
 
   function addChild() {
     const next: ChildProfile = {
@@ -30,10 +64,16 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
       idadeMeses: undefined,
     }
     onChange({ filhos: [...filhos, next] })
+    setOpen(next.id, true)
   }
 
   function removeChild(childId: string) {
     onChange({ filhos: filhos.filter((c) => c.id !== childId) })
+    setOpenById((prev) => {
+      const clone = { ...prev }
+      delete clone[childId]
+      return clone
+    })
   }
 
   function updateChild<K extends keyof ChildProfile>(childId: string, key: K, value: ChildProfile[K]) {
@@ -51,91 +91,146 @@ export function ChildrenBlock({ form, errors, onChange }: Props) {
         </p>
       </div>
 
-      <div className="space-y-5">
+      {/* resumo leve */}
+      <div
+        className={[
+          'rounded-2xl border bg-[#fff7fb] px-3 py-3 flex items-center justify-between gap-3',
+          anyChildHasError ? 'border-[var(--color-brand)]/35' : 'border-[var(--color-border-soft)]',
+        ].join(' ')}
+      >
+        <div className="min-w-0">
+          <p className="text-[12px] font-semibold text-[var(--color-text-main)]">
+            {filhos.length} {filhos.length === 1 ? 'criança' : 'crianças'} cadastrada{filhos.length === 1 ? '' : 's'}
+          </p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            Você pode preencher aos poucos. O nome e a idade são opcionais.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={addChild}
+          className="shrink-0 rounded-full bg-white border border-[var(--color-border-soft)] px-3 py-2 text-[11px] font-semibold text-[var(--color-brand)] hover:bg-[var(--color-soft-bg)] transition"
+        >
+          + Adicionar
+        </button>
+      </div>
+
+      <div className="space-y-3">
         {filhos.map((child, index) => {
           const childError = errors.filhos?.[child.id]
+          const isOpen =
+            openById[child.id] ??
+            // padrão: se tiver 1 filho abre; se tiver mais de 1 fica fechado (exceto se houver erro)
+            (filhos.length === 1 || Boolean(childError))
 
           return (
             <div
               key={child.id}
-              className="rounded-2xl border border-[var(--color-border-soft)] bg-white p-4 space-y-3"
+              className={[
+                'rounded-2xl border bg-white',
+                childError ? 'border-[var(--color-brand)]/35' : 'border-[var(--color-border-soft)]',
+              ].join(' ')}
             >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold text-[var(--color-text-main)]">Filho {index + 1}</p>
+              {/* header compacto */}
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-[var(--color-text-main)]">
+                    Filho {index + 1}
+                  </p>
+                  <ChildSummary child={child} index={index} />
+                </div>
 
-                {filhos.length > 1 ? (
+                <div className="flex items-center gap-3">
+                  {filhos.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => removeChild(child.id)}
+                      className="text-[11px] font-semibold text-[var(--color-brand)] hover:opacity-80"
+                    >
+                      Remover
+                    </button>
+                  ) : null}
+
                   <button
                     type="button"
-                    onClick={() => removeChild(child.id)}
-                    className="text-[11px] font-semibold text-[var(--color-brand)] hover:opacity-80"
+                    onClick={() => setOpen(child.id, !isOpen)}
+                    className="rounded-full bg-white border border-[var(--color-border-soft)] px-3 py-2 text-[11px] font-semibold text-[#2f3a56] hover:bg-[#fff7fb] transition"
+                    aria-expanded={isOpen}
                   >
-                    Remover
+                    {isOpen ? 'Ocultar' : 'Editar'}
                   </button>
-                ) : null}
+                </div>
               </div>
 
-              {/* Nome (opcional) */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--color-text-main)]">Nome (opcional)</label>
-                <input
-                  value={child.nome ?? ''}
-                  onChange={(e) => updateChild(child.id, 'nome', e.target.value)}
-                  placeholder="Opcional"
-                  className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
-                />
-              </div>
+              {/* body (expandível) */}
+              {isOpen ? (
+                <div className="px-4 pb-4 space-y-3">
+                  {/* Nome (opcional) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-[var(--color-text-main)]">Nome (opcional)</label>
+                    <input
+                      value={child.nome ?? ''}
+                      onChange={(e) => updateChild(child.id, 'nome', e.target.value)}
+                      placeholder="Opcional"
+                      className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+                    />
+                  </div>
 
-              {/* Gênero */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--color-text-main)]">Gênero</label>
-                <select
-                  value={child.genero ?? 'nao-informar'}
-                  onChange={(e) => updateChild(child.id, 'genero', parseChildGender(e.target.value))}
-                  className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
-                >
-                  <option value="nao-informar">Prefiro não informar</option>
-                  <option value="feminino">Feminino</option>
-                  <option value="masculino">Masculino</option>
-                </select>
-              </div>
+                  {/* Gênero */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-[var(--color-text-main)]">Gênero</label>
+                    <select
+                      value={child.genero ?? 'nao-informar'}
+                      onChange={(e) => updateChild(child.id, 'genero', parseChildGender(e.target.value))}
+                      className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
+                    >
+                      <option value="nao-informar">Prefiro não informar</option>
+                      <option value="feminino">Feminino</option>
+                      <option value="masculino">Masculino</option>
+                    </select>
+                  </div>
 
-              {/* Idade em meses */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[var(--color-text-main)]">
-                  Idade em meses (opcional)
-                </label>
+                  {/* Idade em meses */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-[var(--color-text-main)]">
+                      Idade em meses (opcional)
+                    </label>
 
-                <input
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  value={typeof child.idadeMeses === 'number' ? child.idadeMeses : ''}
-                  onChange={(e) => {
-                    const raw = e.target.value
-                    if (raw === '') {
-                      updateChild(child.id, 'idadeMeses', undefined)
-                      return
-                    }
-                    const n = Number(raw)
-                    updateChild(child.id, 'idadeMeses', Number.isFinite(n) ? n : undefined)
-                  }}
-                  className={[
-                    'w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30',
-                    childError
-                      ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20'
-                      : 'border-[var(--color-border-soft)]',
-                  ].join(' ')}
-                />
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={typeof child.idadeMeses === 'number' ? child.idadeMeses : ''}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        if (raw === '') {
+                          updateChild(child.id, 'idadeMeses', undefined)
+                          return
+                        }
+                        const n = Number(raw)
+                        updateChild(child.id, 'idadeMeses', Number.isFinite(n) ? n : undefined)
+                      }}
+                      className={[
+                        'w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30',
+                        childError
+                          ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20'
+                          : 'border-[var(--color-border-soft)]',
+                      ].join(' ')}
+                    />
 
-                {childError ? (
-                  <p className="text-[11px] text-[var(--color-brand)] font-medium">{childError}</p>
-                ) : null}
-              </div>
+                    {childError ? (
+                      <p className="text-[11px] text-[var(--color-brand)] font-medium">{childError}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )
         })}
       </div>
 
+      {/* botão secundário (mantém, mas menos pesado) */}
       <button
         type="button"
         onClick={addChild}
