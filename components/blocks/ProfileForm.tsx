@@ -19,7 +19,6 @@ import { PreferencesBlock } from './ProfileFormBlocks/PreferencesBlock'
  * =========================================================
  */
 
-// ✅ FormErrors: precisa aceitar "filhos" como objeto sem quebrar o index signature
 export type FormErrors = Record<string, string | undefined> & {
   filhos?: Record<string, string | undefined>
 }
@@ -33,17 +32,12 @@ export type ChildProfile = {
   idadeMeses?: number
 }
 
-/**
- * Compatibilidade e evolução:
- * - Blocks antigos/atuais usam chaves diferentes
- * - Para parar a cascata de erros, este type inclui TODAS as chaves usadas nos Blocks.
- */
 export type ProfileFormState = {
   // Figurinhas
   figurinha?: ProfileStickerId
   sticker?: ProfileStickerId
 
-  // AboutYouBlock (campos que apareceram nos erros)
+  // AboutYouBlock
   nomeMae?: string
   userPreferredName?: string
   preferredName?: string
@@ -63,7 +57,7 @@ export type ProfileFormState = {
   // ChildrenBlock
   filhos?: ChildProfile[]
 
-  // RoutineBlock (erro atual)
+  // RoutineBlock
   routineChaosMoments?: string[]
   routineSupportNeeds?: string[]
   routineGoals?: string[]
@@ -159,10 +153,13 @@ function normalizeForm(saved: ProfileFormState): ProfileFormState {
   next.userMainChallenges = Array.isArray(next.userMainChallenges) ? next.userMainChallenges : []
   next.biggestPain = Array.isArray(next.biggestPain) ? next.biggestPain : []
   next.userContentPreferences = Array.isArray(next.userContentPreferences) ? next.userContentPreferences : []
+  next.userNotificationsPreferences = Array.isArray(next.userNotificationsPreferences)
+    ? next.userNotificationsPreferences
+    : []
+
   next.routineChaosMoments = Array.isArray(next.routineChaosMoments) ? next.routineChaosMoments : []
   next.routineSupportNeeds = Array.isArray(next.routineSupportNeeds) ? next.routineSupportNeeds : []
   next.routineGoals = Array.isArray(next.routineGoals) ? next.routineGoals : []
-  next.userNotificationsPreferences = Array.isArray(next.userNotificationsPreferences) ? next.userNotificationsPreferences : []
 
   // filhos default + saneamento
   if (!Array.isArray(next.filhos) || next.filhos.length === 0) {
@@ -210,8 +207,25 @@ export default function ProfileForm() {
     setForm((prev) => normalizeForm({ ...prev, ...updates }))
   }
 
+  /**
+   * ✅ Prop exigida por RoutineBlock / PreferencesBlock:
+   * Toggle genérico para campos array (string[])
+   */
+  const onToggleArrayField = (fieldName: keyof ProfileFormState, value: string) => {
+    setForm((prev) => {
+      const current = (prev[fieldName] as string[] | undefined) ?? []
+      const next = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value]
+
+      return normalizeForm({
+        ...prev,
+        [fieldName]: next,
+      })
+    })
+  }
+
   const canGoNext = useMemo(() => {
-    // mínimo para evitar fricção: só exige nome no passo 1 (se você quiser)
     if (step === 1) return Boolean((form.nomeMae ?? '').trim())
     return true
   }, [step, form.nomeMae])
@@ -224,7 +238,6 @@ export default function ProfileForm() {
       if (form.figurinha && !isProfileStickerId(form.figurinha)) nextErrors.figurinha = 'Figurinha inválida.'
     }
 
-    // Exemplo de validação de filhos (leve)
     if (current === 2) {
       const childMap: Record<string, string | undefined> = {}
       const filhos = form.filhos ?? []
@@ -250,7 +263,6 @@ export default function ProfileForm() {
   }
 
   function save() {
-    // salva já acontece pelo useEffect, aqui é “CTA” + tracking
     try {
       track('eu360.profile.saved', {
         step,
@@ -276,7 +288,6 @@ export default function ProfileForm() {
             </p>
           </div>
 
-          {/* Pills */}
           <div className="flex flex-wrap gap-2 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-3 py-3">
             <StepPill active={step === 1} number={1} label="Você" />
             <StepPill active={step === 2} number={2} label="Seu(s) filho(s)" />
@@ -284,12 +295,32 @@ export default function ProfileForm() {
             <StepPill active={step === 4} number={4} label="Rede & preferências" />
           </div>
 
-          {/* Conteúdo */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
-            {step === 1 ? <AboutYouBlock form={form} errors={errors} onChange={onChange} /> : null}
-            {step === 2 ? <ChildrenBlock form={form} errors={errors} onChange={onChange} /> : null}
-            {step === 3 ? <RoutineBlock form={form} errors={errors} onChange={onChange} /> : null}
-            {step === 4 ? <PreferencesBlock form={form} errors={errors} onChange={onChange} /> : null}
+            {step === 1 ? (
+              <AboutYouBlock form={form} errors={errors} onChange={onChange} />
+            ) : null}
+
+            {step === 2 ? (
+              <ChildrenBlock form={form} errors={errors} onChange={onChange} />
+            ) : null}
+
+            {step === 3 ? (
+              <RoutineBlock
+                form={form}
+                errors={errors}
+                onChange={onChange}
+                onToggleArrayField={onToggleArrayField}
+              />
+            ) : null}
+
+            {step === 4 ? (
+              <PreferencesBlock
+                form={form}
+                errors={errors}
+                onChange={onChange}
+                onToggleArrayField={onToggleArrayField}
+              />
+            ) : null}
 
             <div className="pt-2 flex items-center justify-between gap-2">
               <button
