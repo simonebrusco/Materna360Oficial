@@ -6,11 +6,6 @@ import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
-/**
- * Global translucent header that appears on all tabs
- * - Left: Materna360 logo
- * - Right: user avatar + name greeting
- */
 export function GlobalHeader() {
   const { name, avatar, isLoading } = useProfile()
 
@@ -18,9 +13,10 @@ export function GlobalHeader() {
     <header
       className="
         sticky top-0 z-50
-        bg-white/85 backdrop-blur-xl
-        border-b border-black/5
-        shadow-[0_8px_24px_rgba(0,0,0,0.06)]
+        bg-[rgba(184,35,107,0.18)]
+        backdrop-blur-xl
+        border-b border-white/25
+        shadow-[0_10px_30px_rgba(0,0,0,0.10)]
       "
     >
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
@@ -30,7 +26,7 @@ export function GlobalHeader() {
           {!isLoading && name && (
             <ClientOnly>
               <div className="hidden sm:block text-right">
-                <p className="m360-micro font-medium text-[#2f3a56]">
+                <p className="m360-micro font-medium text-white/90">
                   {getTimeGreeting(name)}
                 </p>
               </div>
