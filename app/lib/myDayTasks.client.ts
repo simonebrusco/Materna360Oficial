@@ -9,6 +9,7 @@ import { track } from '@/app/lib/telemetry'
  * - Compatível com tarefas antigas (migração silenciosa)
  * - Inclui base P8: status, snoozeUntil, createdAt, source
  * - Mantém export addTaskToMyDay para os clients (Meu Filho, Meu Dia Leve, Cuidar de Mim)
+ * - Mantém compat com Planner: export TaskItem (alias de MyDayTaskItem)
  */
 
 /** Sources (telemetria + agrupamento fino no futuro) */
@@ -42,6 +43,12 @@ export type MyDayTaskItem = {
   createdAt?: string // ISO
   source?: MyDaySource
 }
+
+/**
+ * Compat: Planner antigo importa TaskItem.
+ * NÃO removemos/renomeamos o contrato antigo — só apontamos pro tipo novo.
+ */
+export type TaskItem = MyDayTaskItem
 
 /** Entrada padrão para salvar no Meu Dia */
 export type AddToMyDayInput = {
@@ -101,6 +108,18 @@ function storageKeyForDateKey(dateKey: string) {
   return `planner/tasks/${dateKey}`
 }
 
+function isTaskStatus(v: unknown): v is TaskStatus {
+  return v === 'active' || v === 'done' || v === 'snoozed'
+}
+
+function isTaskOrigin(v: unknown): v is TaskOrigin {
+  return v === 'today' || v === 'family' || v === 'selfcare' || v === 'home' || v === 'other'
+}
+
+function isMyDaySource(v: unknown): v is MyDaySource {
+  return typeof v === 'string' && (Object.values(MY_DAY_SOURCES) as string[]).includes(v)
+}
+
 function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
   if (typeof window === 'undefined') return []
   const key = storageKeyForDateKey(dateKey)
@@ -112,29 +131,19 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
   const normalized: MyDayTaskItem[] = parsed
     .map((it: any) => {
       if (!it) return null
+
       const id = typeof it.id === 'string' ? it.id : ''
       const title = typeof it.title === 'string' ? it.title : ''
-      const origin: TaskOrigin =
-        it.origin === 'today' || it.origin === 'family' || it.origin === 'selfcare' || it.origin === 'home' || it.origin === 'other'
-          ? it.origin
-          : 'other'
+      const origin: TaskOrigin = isTaskOrigin(it.origin) ? it.origin : 'other'
 
       if (!id || !title) return null
 
-      const status: TaskStatus | undefined =
-        it.status === 'active' || it.status === 'done' || it.status === 'snoozed' ? it.status : undefined
-
+      const status: TaskStatus | undefined = isTaskStatus(it.status) ? it.status : undefined
       const snoozeUntil = typeof it.snoozeUntil === 'string' ? it.snoozeUntil : undefined
       const createdAt = typeof it.createdAt === 'string' ? it.createdAt : undefined
+      const source: MyDaySource | undefined = isMyDaySource(it.source) ? it.source : undefined
 
-      const source: MyDaySource | undefined =
-        typeof it.source === 'string'
-          ? (Object.values(MY_DAY_SOURCES) as string[]).includes(it.source)
-            ? (it.source as MyDaySource)
-            : undefined
-          : undefined
-
-      return {
+      const item: MyDayTaskItem = {
         id,
         title,
         origin,
@@ -142,7 +151,9 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
         snoozeUntil,
         createdAt,
         source,
-      } satisfies MyDayTaskItem
+      }
+
+      return item
     })
     .filter(Boolean) as MyDayTaskItem[]
 
@@ -168,8 +179,8 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     const tasks = readTasksByDateKey(dk)
 
     const title = (input.title ?? '').trim()
-    const origin = input.origin ?? 'other'
-    const source = input.source ?? MY_DAY_SOURCES.UNKNOWN
+    const origin: TaskOrigin = input.origin ?? 'other'
+    const source: MyDaySource = input.source ?? MY_DAY_SOURCES.UNKNOWN
 
     if (!title) return { ok: false }
 
@@ -233,10 +244,10 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
-    const next = tasks.map((t) => {
+    const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
       const nextStatus: TaskStatus = t.status === 'done' ? 'active' : 'done'
-      return { ...t, status: nextStatus } satisfies MyDayTaskItem
+      return { ...t, status: nextStatus }
     })
 
     writeTasksByDateKey(dk, next)
@@ -254,7 +265,11 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
   }
 }
 
-export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean; snoozeUntil?: string } {
+export function snoozeTask(
+  taskId: string,
+  days = 1,
+  date?: Date
+): { ok: boolean; snoozeUntil?: string } {
   try {
     const base = date ?? new Date()
     const dk = makeDateKey(base)
@@ -265,9 +280,9 @@ export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean
 
     const tasks = readTasksByDateKey(dk)
 
-    const next = tasks.map((t) => {
+    const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
-      return { ...t, status: 'snoozed' as const, snoozeUntil: untilKey } satisfies MyDayTaskItem
+      return { ...t, status: 'snoozed', snoozeUntil: untilKey }
     })
 
     writeTasksByDateKey(dk, next)
@@ -290,7 +305,7 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
-    const next = tasks.filter((t) => t.id !== taskId)
+    const next: MyDayTaskItem[] = tasks.filter((t) => t.id !== taskId)
     writeTasksByDateKey(dk, next)
 
     try {
@@ -311,15 +326,13 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
  * Aqui só retorna a estrutura agrupada.
  */
 export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
-  const init = (): GroupedTasks => ({
+  const grouped: GroupedTasks = {
     'para-hoje': { id: 'para-hoje', title: 'Para hoje (simples e real)', items: [] },
     familia: { id: 'familia', title: 'Família & conexão', items: [] },
     autocuidado: { id: 'autocuidado', title: 'Autocuidado', items: [] },
     'rotina-casa': { id: 'rotina-casa', title: 'Rotina & casa', items: [] },
     outros: { id: 'outros', title: 'Outros', items: [] },
-  })
-
-  const grouped = init()
+  }
 
   for (const t of tasks) {
     const origin = t.origin ?? 'other'
