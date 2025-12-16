@@ -10,6 +10,7 @@ import { getDailyIndex } from '@/app/lib/dailyMessage'
 import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import { MyDayGroups } from '@/components/my-day/MyDayGroups'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -72,26 +73,25 @@ export default function MeuDiaClient() {
           </h1>
 
           <p className="mt-1 text-sm md:text-base text-white/90 max-w-xl">
-            Aqui você organiza compromissos, lembretes e tudo que salvou no app —
-            sem precisar procurar.
+            Aqui você organiza compromissos, lembretes e tudo que salvou no app — sem precisar procurar.
           </p>
 
           <div className="pt-4 space-y-1">
             <ClientOnly>
-              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">
-                {greeting || 'Bom dia'}
-              </h2>
+              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
             </ClientOnly>
 
-            <p className="text-sm md:text-base text-white/95 max-w-xl">
-              “{dailyMessage}”
-            </p>
+            <p className="text-sm md:text-base text-white/95 max-w-xl">“{dailyMessage}”</p>
           </div>
         </header>
 
-        {/* PLANNER */}
+        {/* P8 — BLOCOS ORGANIZADOS (NOVO) */}
+        <MyDayGroups />
+
+        {/* PLANNER (legado protegido) */}
         <section
           className="
+            mt-6 md:mt-8
             rounded-3xl
             bg-white/10
             border border-white/35
