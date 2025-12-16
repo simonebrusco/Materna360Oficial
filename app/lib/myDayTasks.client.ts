@@ -29,9 +29,9 @@ export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
 
 /**
  * Origem/Intenção
- * Inclui 'top3' (Planner) + origens P8.
+ * Inclui origens do Planner (top3, agenda) + origens P8.
  */
-export type TaskOrigin = 'today' | 'top3' | 'family' | 'selfcare' | 'home' | 'other'
+export type TaskOrigin = 'today' | 'top3' | 'agenda' | 'family' | 'selfcare' | 'home' | 'other'
 
 /**
  * Shape DO PLANNER (não mudar):
@@ -123,7 +123,15 @@ function storageKeyForDateKey(dateKey: string) {
 }
 
 function isTaskOrigin(v: unknown): v is TaskOrigin {
-  return v === 'today' || v === 'top3' || v === 'family' || v === 'selfcare' || v === 'home' || v === 'other'
+  return (
+    v === 'today' ||
+    v === 'top3' ||
+    v === 'agenda' ||
+    v === 'family' ||
+    v === 'selfcare' ||
+    v === 'home' ||
+    v === 'other'
+  )
 }
 
 function isTaskStatus(v: unknown): v is TaskStatus {
@@ -155,8 +163,7 @@ function normalizeStoredTask(it: any): MyDayTaskItem | null {
 
   // Migração silenciosa: se veio do Planner (done=true/false) e não tem status, cria status coerente.
   const computedStatus: TaskStatus | undefined =
-    status ??
-    (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : undefined)
+    status ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : undefined)
 
   return {
     id,
@@ -188,10 +195,6 @@ function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
 
 /** ---------- API pública (P7 + P8) ---------- */
 
-/**
- * Salva uma tarefa no Meu Dia do dateKey alvo.
- * Dedup: por (title + origin)
- */
 export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
   try {
     const dk = makeDateKey(input.date ?? new Date())
@@ -256,7 +259,8 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
 
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
-      const nextStatus: TaskStatus = (t.status ?? (t.done ? 'done' : 'active')) === 'done' ? 'active' : 'done'
+      const baseStatus = t.status ?? (t.done ? 'done' : 'active')
+      const nextStatus: TaskStatus = baseStatus === 'done' ? 'active' : 'done'
       return { ...t, status: nextStatus, done: nextStatus === 'done' }
     })
 
@@ -324,7 +328,7 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
 
 /**
  * P8: agrupamento por intenção/origin.
- * (top3 entra em "Para hoje")
+ * - top3 e agenda entram em "Para hoje"
  */
 export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
   const grouped: GroupedTasks = {
@@ -337,7 +341,7 @@ export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
 
   for (const t of tasks) {
     const origin = t.origin ?? 'other'
-    if (origin === 'today' || origin === 'top3') grouped['para-hoje'].items.push(t)
+    if (origin === 'today' || origin === 'top3' || origin === 'agenda') grouped['para-hoje'].items.push(t)
     else if (origin === 'family') grouped.familia.items.push(t)
     else if (origin === 'selfcare') grouped.autocuidado.items.push(t)
     else if (origin === 'home') grouped['rotina-casa'].items.push(t)
