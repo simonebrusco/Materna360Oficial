@@ -2,6 +2,7 @@
 
 import { save, load } from '@/app/lib/persist'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { track } from '@/app/lib/telemetry'
 
 /**
  * Origins (o "porquê" / área semântica da task)
@@ -16,9 +17,10 @@ export type TaskOrigin = 'top3' | 'agenda' | 'selfcare' | 'family' | 'manual'
  */
 export const MY_DAY_SOURCES = {
   maternarMeuFilho: 'maternar.meu-filho',
-  // Próximos hubs entram aqui na P7/P8, sem inventar strings soltas:
-  // matern arRotinaLeve: 'maternar.rotina-leve',
-  // matern arBiblioteca: 'maternar.biblioteca',
+  // Próximos hubs entram aqui (P7/P8) — sem inventar strings soltas:
+  // maternarRotinaLeve: 'maternar.rotina-leve',
+  // maternarMeuCorpo: 'maternar.meu-corpo',
+  // maternarBiblioteca: 'maternar.biblioteca',
 } as const
 
 export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
@@ -84,4 +86,25 @@ export function addTaskToMyDay(
 
   save(key, [...existing, next])
   return { id, dateKey, created: true }
+}
+
+/**
+ * Wrapper padrão da P7:
+ * - cria a task no Meu Dia (com dedupe por default)
+ * - dispara telemetry consistente
+ * - NÃO muda persistência (escopo P7)
+ */
+export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDaySource }) {
+  const res = addTaskToMyDay(input)
+
+  try {
+    track('my_day.add_task', {
+      source: input.source,
+      origin: input.origin,
+      dateKey: res.dateKey,
+      created: res.created,
+    })
+  } catch {}
+
+  return res
 }
