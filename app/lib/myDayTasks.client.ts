@@ -142,39 +142,76 @@ function isMyDaySource(v: unknown): v is MyDaySource {
   return typeof v === 'string' && (Object.values(MY_DAY_SOURCES) as string[]).includes(v)
 }
 
+function makeId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `t_${Math.random().toString(16).slice(2)}_${Date.now()}`
+}
+
 /**
  * Normaliza tarefas vindas do storage (que pode conter:
  * - TaskItem do Planner (done)
  * - MyDayTaskItem do Meu Dia (status)
+ *
+ * Retorna também se houve migração silenciosa (para persistir no próximo write).
  */
-function normalizeStoredTask(it: any): MyDayTaskItem | null {
-  if (!it) return null
+function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | null; changed: boolean } {
+  if (!it) return { item: null, changed: false }
 
-  const id = typeof it.id === 'string' ? it.id : ''
+  let changed = false
+
   const title = typeof it.title === 'string' ? it.title : ''
+  if (!title) return { item: null, changed: false }
+
   const origin: TaskOrigin = isTaskOrigin(it.origin) ? it.origin : 'other'
-  if (!id || !title) return null
+  if (!isTaskOrigin(it.origin)) changed = true
+
+  // ✅ Checklist: se não tiver id → gerar no read e persistir
+  let id = typeof it.id === 'string' ? it.id : ''
+  if (!id) {
+    id = makeId()
+    changed = true
+  }
 
   const doneLegacy: boolean | undefined = typeof it.done === 'boolean' ? it.done : undefined
-  const status: TaskStatus | undefined = isTaskStatus(it.status) ? it.status : undefined
+  const statusRaw: TaskStatus | undefined = isTaskStatus(it.status) ? it.status : undefined
   const snoozeUntil = typeof it.snoozeUntil === 'string' ? it.snoozeUntil : undefined
-  const createdAt = typeof it.createdAt === 'string' ? it.createdAt : undefined
+  const createdAtRaw = typeof it.createdAt === 'string' ? it.createdAt : undefined
   const source: MyDaySource | undefined = isMyDaySource(it.source) ? it.source : undefined
 
-  // Migração silenciosa: se veio do Planner (done=true/false) e não tem status, cria status coerente.
-  const computedStatus: TaskStatus | undefined =
-    status ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : undefined)
+  // ✅ Checklist: se não tiver status → assumir active (ou coerente com done legado)
+  const computedStatus: TaskStatus =
+    statusRaw ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : 'active')
 
-  return {
+  if (statusRaw !== computedStatus) changed = true
+
+  // ✅ Checklist: se não tiver createdAt → assumir now
+  const createdAt = createdAtRaw ?? nowISO
+  if (!createdAtRaw) changed = true
+
+  // Coerência mínima status <-> done (para convivência com Planner)
+  let done: boolean | undefined = doneLegacy
+  if (computedStatus === 'done' && doneLegacy !== true) {
+    done = true
+    changed = true
+  }
+  if (computedStatus !== 'done' && doneLegacy === true) {
+    done = false
+    changed = true
+  }
+
+  const item: MyDayTaskItem = {
     id,
     title,
     origin,
-    done: doneLegacy,
+    done,
     status: computedStatus,
     snoozeUntil,
     createdAt,
     source,
   }
+
+  return { item, changed }
 }
 
 function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
@@ -183,7 +220,25 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
   const parsed = safeParseJSON<unknown>(window.localStorage.getItem(key))
   if (!Array.isArray(parsed)) return []
 
-  const normalized: MyDayTaskItem[] = parsed.map(normalizeStoredTask).filter(Boolean) as MyDayTaskItem[]
+  const nowISO = new Date().toISOString()
+  let changed = false
+
+  const normalized: MyDayTaskItem[] = []
+  for (const raw of parsed) {
+    const res = normalizeStoredTask(raw, nowISO)
+    if (res.item) normalized.push(res.item)
+    if (res.changed) changed = true
+  }
+
+  // ✅ Migração silenciosa: persistimos imediatamente se corrigimos id/createdAt/status etc.
+  if (changed) {
+    try {
+      window.localStorage.setItem(key, safeStringifyJSON(normalized))
+    } catch {
+      // se falhar, não quebra a leitura
+    }
+  }
+
   return normalized
 }
 
@@ -209,10 +264,7 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     const exists = tasks.some((t) => t.title.trim().toLowerCase() === title.toLowerCase() && t.origin === origin)
     if (exists) return { ok: true, created: false, dateKey: dk }
 
-    const id =
-      typeof crypto !== 'undefined' && 'randomUUID' in crypto
-        ? crypto.randomUUID()
-        : `t_${Math.random().toString(16).slice(2)}_${Date.now()}`
+    const id = makeId()
 
     const next: MyDayTaskItem[] = [
       ...tasks,
