@@ -257,24 +257,29 @@ export function listMyDayTasks(date?: Date): MyDayTaskItem[] {
   const tasks = readTasksByDateKey(dk)
 
   let changed = false
-  const next = tasks.map((t) => {
-    const status = t.status ?? (t.done ? 'done' : 'active')
 
+  const next: MyDayTaskItem[] = tasks.map((t): MyDayTaskItem => {
+    const status: TaskStatus = (t.status ?? (t.done ? 'done' : 'active')) as TaskStatus
+
+    // auto-unsnooze quando o dia chegou
     if (status === 'snoozed' && t.snoozeUntil && dk >= t.snoozeUntil) {
       changed = true
       return { ...t, status: 'active', snoozeUntil: undefined, done: false }
     }
 
-    // garante coerência mínima status <-> done (sem reescrever tudo)
+    // coerência mínima status <-> done
     if (t.done === true && status !== 'done') {
       changed = true
       return { ...t, status: 'done' }
     }
+
     if (t.done === false && status === 'done') {
       changed = true
       return { ...t, done: true }
     }
 
+    // garante status tipado, sem widening para string
+    if (t.status !== status) changed = true
     return { ...t, status }
   })
 
