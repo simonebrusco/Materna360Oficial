@@ -3,7 +3,25 @@
 import { save, load } from '@/app/lib/persist'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 
+/**
+ * Origins (o "porquê" / área semântica da task)
+ * - Deve ser curto, estável e reutilizável em todos os hubs.
+ */
 export type TaskOrigin = 'top3' | 'agenda' | 'selfcare' | 'family' | 'manual'
+
+/**
+ * Sources (o "de onde veio" / ponto do produto)
+ * - Usado apenas para tracking/telemetry.
+ * - NÃO é persistido no storage do Meu Dia na P7 (escopo).
+ */
+export const MY_DAY_SOURCES = {
+  maternarMeuFilho: 'maternar.meu-filho',
+  // Próximos hubs entram aqui na P7/P8, sem inventar strings soltas:
+  // matern arRotinaLeve: 'maternar.rotina-leve',
+  // matern arBiblioteca: 'maternar.biblioteca',
+} as const
+
+export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
 
 export type TaskItem = {
   id: string
@@ -18,6 +36,14 @@ function safeId() {
   } catch {
     return Math.random().toString(36).slice(2, 10)
   }
+}
+
+function normalizeTitle(title: string) {
+  return (title ?? '').trim()
+}
+
+function makeDedupeKey(origin: TaskOrigin, title: string) {
+  return `${origin}::${normalizeTitle(title)}`.toLowerCase()
 }
 
 type AddToMyDayInput = {
@@ -39,21 +65,19 @@ export function addTaskToMyDay(
 
   const existing = load<TaskItem[]>(key, []) ?? []
 
-  const normalizedTitle = (input.title ?? '').trim()
-  const normalizedKey = `${input.origin}::${normalizedTitle}`.toLowerCase()
+  const rawTitle = normalizeTitle(input.title)
+  const titleFinal = rawTitle || 'Tarefa'
+  const normalizedKey = makeDedupeKey(input.origin, titleFinal)
 
   if (input.dedupe !== false) {
-    const has = existing.some(
-      (t) =>
-        `${t.origin}::${(t.title ?? '').trim()}`.toLowerCase() === normalizedKey
-    )
+    const has = existing.some((t) => makeDedupeKey(t.origin, t.title) === normalizedKey)
     if (has) return { id: '', dateKey, created: false }
   }
 
   const id = safeId()
   const next: TaskItem = {
     id,
-    title: normalizedTitle || 'Tarefa',
+    title: titleFinal,
     done: false,
     origin: input.origin,
   }
