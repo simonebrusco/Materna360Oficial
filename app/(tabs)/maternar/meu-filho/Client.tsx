@@ -32,8 +32,7 @@ type Kit = {
   subtitle: string
   time: TimeMode
   plan: { a: PlanItem; b: PlanItem; c: PlanItem }
-  development: { label: string; n
-ote: string }
+  development: { label: string; note: string }
   routine: { label: string; note: string }
   connection: { label: string; note: string }
 }
