@@ -4,6 +4,8 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
+import { toast } from '@/app/lib/toast'
+import { addTaskToMyDay } from '@/app/lib/myDayTasks.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -30,7 +32,8 @@ type Kit = {
   subtitle: string
   time: TimeMode
   plan: { a: PlanItem; b: PlanItem; c: PlanItem }
-  development: { label: string; note: string }
+  development: { label: string; n
+ote: string }
   routine: { label: string; note: string }
   connection: { label: string; note: string }
 }
@@ -550,7 +553,34 @@ export default function MeuFilhoClient() {
                           >
                             Fechar com conexão
                           </button>
+                          
                           <button
+                            type="button"
+                            onClick={() => {
+                              const res = addTaskToMyDay({
+                                title: selected.title,
+                                origin: 'family',
+                              })
+
+                              if (res.created) toast.success('Salvo no Meu Dia')
+                              else toast.info('Já estava no Meu Dia')
+
+                              try {
+                                track('my_day.add_task', {
+                                  source: 'maternar.meu-filho',
+                                  origin: 'family',
+                                  dateKey: res.dateKey,
+                                  created: res.created,
+                                })
+                              } catch {}
+                            }}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            title="Salvar esta sugestão no Meu Dia"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+
+<button
                             onClick={() => go('rotina')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
