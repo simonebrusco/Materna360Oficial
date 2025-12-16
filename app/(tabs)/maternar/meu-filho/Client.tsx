@@ -557,7 +557,7 @@ export default function MeuFilhoClient() {
                             type="button"
                             onClick={() => {
                               const ORIGIN = 'family' as const
-                              const SOURCE = MY_DAY_SOURCES.maternarMeuFilho
+                              const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
 
                               const res = addTaskToMyDay({
                                 title: selected.title,
