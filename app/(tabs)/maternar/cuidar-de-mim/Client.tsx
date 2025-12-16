@@ -247,7 +247,7 @@ export default function Client() {
       const res = addTaskToMyDayAndTrack({
         title,
         origin,
-        source: MY_DAY_SOURCES.maternarMeuFilho, // temporário (telemetria)
+        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
       })
 
       if (res?.created) setSaveFeedback('Salvo no Meu Dia.')
