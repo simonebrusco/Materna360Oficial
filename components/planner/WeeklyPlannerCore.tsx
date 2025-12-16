@@ -6,6 +6,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
+import type { TaskItem, TaskOrigin } from '@/app/lib/myDayTasks.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { SoftCard } from '@/components/ui/card'
@@ -22,15 +23,6 @@ type Appointment = {
   dateKey: string
   time: string
   title: string
-}
-
-type TaskOrigin = 'top3' | 'agenda' | 'selfcare' | 'family' | 'manual'
-
-type TaskItem = {
-  id: string
-  title: string
-  done: boolean
-  origin: TaskOrigin
 }
 
 type PlannerData = {
@@ -80,7 +72,7 @@ function buildWeekData(baseDate: Date, plannerData: PlannerData): WeekDaySummary
     return d
   })
 
-  const weekKeys = new Set(weekDates.map(d => getBrazilDateKey(d)))
+  const weekKeys = new Set(weekDates.map((d) => getBrazilDateKey(d)))
 
   const agendaCountByKey: Record<string, number> = {}
   for (const a of plannerData.appointments) {
@@ -96,7 +88,7 @@ function buildWeekData(baseDate: Date, plannerData: PlannerData): WeekDaySummary
     if (t.origin === 'family') counts.family += 1
   }
 
-  return weekDates.map(d => {
+  return weekDates.map((d) => {
     const key = getBrazilDateKey(d)
     return {
       dayNumber: d.getDate(),
@@ -267,7 +259,7 @@ export default function WeeklyPlannerCore() {
       time: data.time,
     }
 
-    setPlannerData(prev => ({ ...prev, appointments: [...prev.appointments, a] }))
+    setPlannerData((prev) => ({ ...prev, appointments: [...prev.appointments, a] }))
 
     try {
       track('planner.appointment_added', { tab: 'meu-dia', dateKey: data.dateKey })
@@ -279,9 +271,9 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const updateAppointment = useCallback((updated: Appointment) => {
-    setPlannerData(prev => ({
+    setPlannerData((prev) => ({
       ...prev,
-      appointments: prev.appointments.map(a => (a.id === updated.id ? updated : a)),
+      appointments: prev.appointments.map((a) => (a.id === updated.id ? updated : a)),
     }))
 
     try {
@@ -290,9 +282,9 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const deleteAppointment = useCallback((id: string) => {
-    setPlannerData(prev => ({
+    setPlannerData((prev) => ({
       ...prev,
-      appointments: prev.appointments.filter(a => a.id !== id),
+      appointments: prev.appointments.filter((a) => a.id !== id),
     }))
 
     try {
@@ -301,8 +293,9 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const addTask = useCallback((title: string, origin: TaskOrigin) => {
-    const t: TaskItem = { id: safeId(), title, done: false, origin }
-    setPlannerData(prev => ({ ...prev, tasks: [...prev.tasks, t] }))
+    const normalizedTitle = (title ?? '').trim() || 'Tarefa'
+    const t: TaskItem = { id: safeId(), title: normalizedTitle, done: false, origin }
+    setPlannerData((prev) => ({ ...prev, tasks: [...prev.tasks, t] }))
 
     try {
       track('planner.task_added', { tab: 'meu-dia', origin })
@@ -315,9 +308,9 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const toggleTask = useCallback((id: string) => {
-    setPlannerData(prev => ({
+    setPlannerData((prev) => ({
       ...prev,
-      tasks: prev.tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t)),
+      tasks: prev.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
     }))
   }, [])
 
@@ -355,7 +348,7 @@ export default function WeeklyPlannerCore() {
     try {
       track('planner.month_sheet_opened', { tab: 'meu-dia' })
     } catch {}
-  }, [])
+  }, [selectedDate])
 
   // ======================================================
   // DERIVED
@@ -478,7 +471,7 @@ export default function WeeklyPlannerCore() {
                       Ainda não há lembretes para hoje. Use os atalhos abaixo ou registre algo que faça sentido para a sua rotina.
                     </p>
                   ) : (
-                    plannerData.tasks.map(task => (
+                    plannerData.tasks.map((task) => (
                       <button
                         key={task.id}
                         type="button"
@@ -572,7 +565,7 @@ export default function WeeklyPlannerCore() {
                   {sortedAppointments.length === 0 ? (
                     <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
                   ) : (
-                    sortedAppointments.map(appt => (
+                    sortedAppointments.map((appt) => (
                       <button
                         key={appt.id}
                         type="button"
@@ -619,7 +612,9 @@ export default function WeeklyPlannerCore() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold text-[var(--color-text-main)]">{selectedDate.toLocaleDateString('pt-BR')}</div>
+              <div className="text-sm font-semibold text-[var(--color-text-main)]">
+                {selectedDate.toLocaleDateString('pt-BR')}
+              </div>
 
               <button
                 type="button"
@@ -654,7 +649,9 @@ export default function WeeklyPlannerCore() {
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Calendário</p>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                    Calendário
+                  </p>
                   <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
                     {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h3>
@@ -667,7 +664,7 @@ export default function WeeklyPlannerCore() {
                   <button
                     type="button"
                     className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-                    onClick={() => setMonthCursor(prev => addMonths(prev, -1))}
+                    onClick={() => setMonthCursor((prev) => addMonths(prev, -1))}
                     aria-label="Mês anterior"
                   >
                     ‹
@@ -675,7 +672,7 @@ export default function WeeklyPlannerCore() {
                   <button
                     type="button"
                     className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-                    onClick={() => setMonthCursor(prev => addMonths(prev, 1))}
+                    onClick={() => setMonthCursor((prev) => addMonths(prev, 1))}
                     aria-label="Próximo mês"
                   >
                     ›
@@ -684,7 +681,7 @@ export default function WeeklyPlannerCore() {
               </div>
 
               <div className="grid grid-cols-7 gap-2 text-[10px] font-semibold text-[var(--color-text-muted)] mb-2">
-                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => (
+                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((d) => (
                   <div key={d} className="text-center">
                     {d}
                   </div>
@@ -694,7 +691,7 @@ export default function WeeklyPlannerCore() {
               <div className="space-y-2">
                 {monthMatrix.map((row, idx) => (
                   <div key={idx} className="grid grid-cols-7 gap-2">
-                    {row.map(cell => {
+                    {row.map((cell) => {
                       const isSelected = cell.dateKey === selectedDateKey
                       const isToday = cell.dateKey === todayKey
                       const hasAppt = (appointmentsByDateKey.get(cell.dateKey) ?? 0) > 0
@@ -778,7 +775,7 @@ export default function WeeklyPlannerCore() {
           setAppointmentModalOpen(false)
           setEditingAppointment(null)
         }}
-        onSubmit={data => {
+        onSubmit={(data) => {
           if (appointmentModalMode === 'create') {
             addAppointment({
               dateKey: data.dateKey,
@@ -790,17 +787,17 @@ export default function WeeklyPlannerCore() {
             const label = data.time ? `${data.time} · ${data.title}` : data.title
             try {
               const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
-              const exists = existing.some(t => t.origin === 'agenda' && t.title === label)
+              const exists = existing.some((t) => t.origin === 'agenda' && t.title === label)
               if (!exists) {
-                const t: TaskItem = { id: safeId(), title: label, done: false, origin: 'agenda' }
+                const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
                 save(`planner/tasks/${data.dateKey}`, [...existing, t])
               }
             } catch {
               // fallback não quebra fluxo
-              setPlannerData(prev => {
-                const exists = prev.tasks.some(t => t.origin === 'agenda' && t.title === label)
+              setPlannerData((prev) => {
+                const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
                 if (exists) return prev
-                const t: TaskItem = { id: safeId(), title: label, done: false, origin: 'agenda' }
+                const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
                 return { ...prev, tasks: [...prev.tasks, t] }
               })
             }
