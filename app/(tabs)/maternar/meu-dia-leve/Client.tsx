@@ -259,10 +259,10 @@ export default function MeuDiaLeveClient() {
       const res = addTaskToMyDayAndTrack({
         title,
         origin,
-        source: MY_DAY_SOURCES.maternarMeuFilho,
+        source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
       })
 
-      if (res?.created) {
+      if (res?.ok) {
         setSaveFeedback('Salvo no Meu Dia.')
       } else {
         setSaveFeedback('Essa tarefa já está no Meu Dia.')
