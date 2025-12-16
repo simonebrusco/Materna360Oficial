@@ -2,58 +2,36 @@
 
 import React from 'react'
 import { useProfile } from '@/app/hooks/useProfile'
-import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
 /**
  * Global translucent header that appears on all tabs
- * - Left: Materna360 logo
- * - Right: user avatar + name greeting
+ * - Left: Materna360 logo (branco)
+ * - Right: "Olá, Nome"
  */
 export function GlobalHeader() {
-  const { name, avatar, isLoading } = useProfile()
+  const { name, isLoading } = useProfile()
+  const firstName = (name || '').trim().split(' ')[0] || ''
 
   return (
     <header
       className="
         sticky top-0 z-50
-        bg-transparent
-        backdrop-blur-lg
-        border-b border-white/40
+        bg-white/70 backdrop-blur-xl
+        border-b border-white/60
+        shadow-[0_10px_30px_rgba(0,0,0,0.08)]
       "
     >
       <div className="mx-auto w-full px-4 h-16 flex items-center justify-between">
-        {/* Left: Logo */}
-        <AppLogo width={128} height={32} />
+        <AppLogo variant="white" width={128} height={32} priority />
 
-        {/* Right: User greeting + avatar */}
-        <div className="flex items-center gap-4">
-          {!isLoading && name && (
-            <ClientOnly>
-              <div className="hidden sm:block text-right">
-                <p className="m360-micro font-medium">
-                  {getTimeGreeting(name)}
-                </p>
-              </div>
-            </ClientOnly>
-          )}
-
-          {avatar ? (
-            <div className="flex-shrink-0 overflow-hidden">
-              <img
-                src={avatar}
-                alt={name || 'Avatar'}
-                className="h-10 w-10 rounded-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-[#fd2597] text-white flex items-center justify-center flex-shrink-0">
-              <span className="font-semibold text-sm">
-                {name ? name.charAt(0) : 'U'}
-              </span>
-            </div>
-          )}
+        <div className="flex items-center">
+          <ClientOnly>
+            <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+              {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
+            </p>
+          </ClientOnly>
         </div>
       </div>
     </header>

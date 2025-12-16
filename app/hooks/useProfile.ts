@@ -1,16 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { resolveSticker, isProfileStickerId, DEFAULT_STICKER_ID } from '@/app/lib/stickers'
+import { isProfileStickerId, DEFAULT_STICKER_ID } from '@/app/lib/stickers'
 
 export interface ProfileData {
   name: string
+  /**
+   * avatar guarda o ID da vibe/sticker (ex: "mae-leve"),
+   * não mais a URL de imagem.
+   */
   avatar?: string
   children: string[]
 }
 
 /**
- * Hook to safely fetch mother's name, avatar, and children names from profile.
+ * Hook to safely fetch mother's name, avatar (sticker id), and children names from profile.
  * Uses guards to avoid hydration errors.
  */
 export function useProfile(): ProfileData & { isLoading: boolean } {
@@ -18,9 +22,7 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
+    if (typeof window === 'undefined') return
 
     let isMounted = true
 
@@ -63,13 +65,16 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
 
           const children = Array.isArray(data?.children) ? data.children : []
 
+          // figurinha/vibe: aceita somente ids válidos
           const figurinhaId = data?.figurinha
-          const validStickerId = isProfileStickerId(figurinhaId) ? figurinhaId : DEFAULT_STICKER_ID
-          const sticker = resolveSticker(validStickerId)
+          const validStickerId = isProfileStickerId(figurinhaId)
+            ? figurinhaId
+            : DEFAULT_STICKER_ID
 
           setProfile({
             name: savedName.trim(),
-            avatar: sticker.asset,
+            // avatar agora é o ID (ex.: "mae-leve"), usado pela UI para resolver o ícone.
+            avatar: validStickerId,
             children,
           })
         } else if (isMounted) {
@@ -82,9 +87,7 @@ export function useProfile(): ProfileData & { isLoading: boolean } {
           // Keep default empty profile on error
         }
       } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
+        if (isMounted) setIsLoading(false)
       }
     }
 

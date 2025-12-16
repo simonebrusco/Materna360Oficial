@@ -33,15 +33,14 @@ body {
   --color-border-muted: #eec2d6;   /* bordas mais fortes / campos */
 
   /* ===== Legacy Materna360 token fallbacks (ajustados à nova paleta) ===== */
-  /* Page background - soft luxury aesthetic */
-  --soft-page-bg: #fff7fb; /* muito claro, ainda aceitável */
+  --soft-page-bg: #fff7fb;
 
   /* RGB triplets for Tailwind color mapping */
-  --primary: 253 37 151;       /* #fd2597 → Pink Materna360 */
-  --support-1: 84 84 84;       /* #545454 → texto principal */
-  --support-2: 106 106 106;    /* #6A6A6A → texto suave */
-  --neutral-1: 248 249 250;    /* #F8F9FA → bg soft */
-  --neutral-2: 255 255 255;    /* #FFFFFF → white */
+  --primary: 253 37 151;       /* #fd2597 */
+  --support-1: 84 84 84;       /* #545454 */
+  --support-2: 106 106 106;    /* #6A6A6A */
+  --neutral-1: 248 249 250;    /* #F8F9FA */
+  --neutral-2: 255 255 255;    /* #FFFFFF */
 
   /* Soft Luxury Design Tokens */
   --space-xs: 8px;
@@ -62,10 +61,10 @@ body {
   --border-soft-gray: #e9ecf2;
 
   /* Legacy aliases (mapped to new palette) */
-  --color-primary: #fd2597;        /* Pink Materna360 – primary */
-  --color-primary-weak: #fdbed7;   /* Rosa suave – secondary */
-  --color-ink-1: #545454;          /* texto principal */
-  --color-ink-2: #6a6a6a;          /* texto suave */
+  --color-primary: #fd2597;
+  --color-primary-weak: #fdbed7;
+  --color-ink-1: #545454;
+  --color-ink-2: #6a6a6a;
 
   color-scheme: light;
   --font-primary: 'Poppins', sans-serif;
@@ -75,26 +74,44 @@ body {
   --text-title-page: 22px/28px;
   --text-title-page-md: 28px/34px;
   /* MATERNA360 TYPOGRAPHY TOKENS END */
+
   --rhythm-section-d: 56px;
   --rhythm-section-t: 48px;
   --rhythm-section-m: 32px;
+
   --rhythm-grid-col-d: 24px;
   --rhythm-grid-col-t: 16px;
   --rhythm-grid-col-m: 12px;
+
   --rhythm-grid-row-d: 24px;
   --rhythm-grid-row-t: 20px;
   --rhythm-grid-row-m: 16px;
+
   --rhythm-card-pad-d: 20px;
   --rhythm-card-pad-t: 16px;
   --rhythm-card-pad-m: 14px;
+
   --safearea-bottom-d: 80px;
   --safearea-bottom-t: 72px;
   --safearea-bottom-m: 64px;
+
   /* Premium editorial shadows */
   --shadow-card-base: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-card-hover-neutral: 0 8px 24px rgba(0, 0, 0, 0.1);
   --shadow-card-active: 0 6px 20px rgba(0, 0, 0, 0.09);
   --glow-pink: 0 8px 24px rgba(253, 37, 151, 0.12);
+
+  /* ============================================================
+     ✅ FUNDO ÚNICO OFICIAL — Fonte da Verdade (App inteiro)
+     ============================================================ */
+  --m360-app-bg: linear-gradient(
+    to bottom,
+    #b8236b 0%,
+    #fd2597 38%,
+    #fdbed7 68%,
+    #ffe1f1 88%,
+    #ffffff 100%
+  );
 }
 
 /* Soft page background utility - now pure white */
@@ -102,96 +119,42 @@ body {
   background: #ffffff;
 }
 
-/* Materna360 — Fundo Premium / Meu Dia – amanhecer calmo (atualizado) */
-.materna360-premium-bg {
-  background-color: #ffffff;
-  background-image: linear-gradient(
-    180deg,
-    #b8236b 0%,     /* plum/ameixa no topo */
-    #fd2597 40%,    /* Pink Materna360 */
-    #ffe1f1 78%,    /* Pink Snow */
-    #fdbed7 100%    /* rosa suave na base */
-  );
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
+/* ============================================================
+   ✅ FUNDO ÚNICO: aplicado na raiz (o header translúcido vê isso)
+   ============================================================ */
+html,
+body {
+  background-color: #ffffff !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  min-height: 100%;
 }
 
-@layer utilities {
-  /* Fundo premium do hub Maternar – com pink vibrante dentro da paleta oficial */
-  .maternar-hub-bg {
-    background-color: #ffffff;
-    background-image:
-      radial-gradient(
-        circle at 0% 0%,
-        rgba(184, 35, 107, 0.95) 0%,
-        rgba(184, 35, 107, 0.8) 16%,
-        rgba(253, 37, 151, 0.9) 38%,
-        rgba(255, 225, 241, 0.96) 64%,
-        #fdbed7 100%
-      );
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-  }
-
-  /* Fundo premium do hub Eu360 – fim de tarde / reflexão */
-  .eu360-hub-bg {
-    background-color: #ffffff;
-    background-image: linear-gradient(
-      180deg,
-      #b8236b 0%,    /* ameixa no topo */
-      #fd2597 42%,   /* Pink Materna360 */
-      #ffe1f1 80%,   /* rosa suave */
-      #fdbed7 100%   /* base rosa suave */
-    );
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-  }
+/* Zera QUALQUER camada do Next / wrappers que estejam pintando por cima */
+body > div:first-child,
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  background: transparent !important;
+  min-height: 100%;
 }
 
-/* ===== Hero do Meu Dia — texto branco alinhado à esquerda ===== */
-.materna360-premium-bg header {
-  max-width: 720px;
-  margin: 0;
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-  align-items: flex-start;
+/* Pages/templates não podem competir com o fundo global */
+main[data-layout="page-template-v1"],
+main[data-layout="page-template-v2"] {
+  background: transparent !important;
 }
 
-/* Título */
-.materna360-premium-bg header h1 {
-  color: #ffffff !important;
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 600;
-  margin: 0;
-}
-
-/* Subtítulo */
-.materna360-premium-bg header p {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: 13px;
-  line-height: 1.4;
-  margin: 0;
-}
-
-@media (min-width: 768px) {
-  .materna360-premium-bg header {
-    padding-left: 24px;
-  }
-
-  .materna360-premium-bg header h1 {
-    font-size: 28px;
-  }
-
-  .materna360-premium-bg header p {
-    font-size: 14px;
-  }
+/* Se algum hub ainda aplicar classe antiga, força tudo ficar igual */
+.materna360-premium-bg,
+.maternar-hub-bg,
+.eu360-hub-bg {
+  background-color: transparent !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
 }
 
 @layer base {
@@ -208,7 +171,7 @@ body {
   body {
     @apply min-h-screen text-support-1 antialiased font-sans;
     font-family: var(--font-primary);
-    background-color: #fdbed7; /* fundo neutro rosa suave */
+    /* NÃO colocar background aqui (fonte da verdade já está acima) */
   }
 
   img {
@@ -579,6 +542,7 @@ body {
   }
 }
 
+/* ==== Seus utilitários extras (mantidos) ==== */
 .DebugTarget {
   outline: 2px dashed #00c2ff !important;
   outline-offset: 4px !important;

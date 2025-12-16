@@ -1,191 +1,242 @@
 'use client'
 
-import { FormErrors, ProfileFormState, ChildProfile } from '../ProfileForm'
+import React, { useMemo, useState } from 'react'
+import type { ChildGender, ChildProfile, FormErrors, ProfileFormState } from '../ProfileForm'
 
 interface Props {
   form: ProfileFormState
   errors: FormErrors
-  babyBirthdate: string
-  todayISO: string
-  onBirthdateChange: (value: string) => void
-  onUpdateChild: (id: string, key: keyof ChildProfile, value: string | number | string[]) => void
-  onAddChild: () => void
-  onRemoveChild: (id: string) => void
+  onChange: (updates: Partial<ProfileFormState>) => void
 }
 
-export function ChildrenBlock({
-  form,
-  errors,
-  babyBirthdate,
-  todayISO,
-  onBirthdateChange,
-  onUpdateChild,
-  onAddChild,
-  onRemoveChild,
-}: Props) {
+function makeId() {
+  return `child_${Math.random().toString(16).slice(2)}_${Date.now()}`
+}
+
+function parseChildGender(raw: string): ChildGender {
+  if (raw === 'feminino' || raw === 'masculino' || raw === 'nao-informar') return raw
+  return 'nao-informar'
+}
+
+function formatAgeInMonths(age?: number) {
+  if (typeof age !== 'number' || !Number.isFinite(age) || age < 0) return null
+  if (age === 0) return 'Recém-nascido'
+  if (age < 12) return `${age} mês${age === 1 ? '' : 'es'}`
+  const years = Math.floor(age / 12)
+  const months = age % 12
+  if (months === 0) return `${years} ano${years === 1 ? '' : 's'}`
+  return `${years}a ${months}m`
+}
+
+function ChildSummary({ child, index }: { child: ChildProfile; index: number }) {
+  const name = (child.nome ?? '').trim()
+  const ageLabel = formatAgeInMonths(child.idadeMeses)
+  const gender =
+    child.genero === 'feminino' ? 'Feminino' : child.genero === 'masculino' ? 'Masculino' : '—'
+
+  const line = [name ? name : `Filho ${index + 1}`, ageLabel ? ageLabel : null, gender !== '—' ? gender : null]
+    .filter(Boolean)
+    .join(' • ')
+
+  return <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">{line || `Filho ${index + 1}`}</span>
+}
+
+export function ChildrenBlock({ form, errors, onChange }: Props) {
+  const filhos: ChildProfile[] = Array.isArray(form.filhos) ? form.filhos : []
+
+  // controla expansão por filho (compacto por padrão quando há mais de 1)
+  const [openById, setOpenById] = useState<Record<string, boolean>>({})
+
+  const anyChildHasError = useMemo(() => {
+    const map = errors.filhos ?? {}
+    return Object.keys(map).some((id) => Boolean(map[id]))
+  }, [errors.filhos])
+
+  function setOpen(childId: string, next: boolean) {
+    setOpenById((prev) => ({ ...prev, [childId]: next }))
+  }
+
+  function addChild() {
+    const next: ChildProfile = {
+      id: makeId(),
+      nome: '',
+      genero: 'nao-informar',
+      idadeMeses: undefined,
+    }
+    onChange({ filhos: [...filhos, next] })
+    setOpen(next.id, true)
+  }
+
+  function removeChild(childId: string) {
+    onChange({ filhos: filhos.filter((c) => c.id !== childId) })
+    setOpenById((prev) => {
+      const clone = { ...prev }
+      delete clone[childId]
+      return clone
+    })
+  }
+
+  function updateChild<K extends keyof ChildProfile>(childId: string, key: K, value: ChildProfile[K]) {
+    onChange({
+      filhos: filhos.map((c) => (c.id === childId ? { ...c, [key]: value } : c)),
+    })
+  }
+
   return (
     <div className="space-y-4">
+      <div>
+        <h3 className="text-xs font-semibold text-[var(--color-text-main)]">Seu(s) filho(s)</h3>
+        <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+          Isso ajuda o app a sugerir rotinas e conteúdos mais alinhados à sua realidade.
+        </p>
+      </div>
 
-      {form.filhos.map((child, index) => (
-        <div key={child.id} className="border-t border-gray-200 pt-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-gray-800">Filho {index + 1}</h3>
-            {form.filhos.length > 1 && (
-              <button
-                type="button"
-                onClick={() => onRemoveChild(child.id)}
-                className="text-[11px] text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Remover
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor={`child-name-${index}`} className="text-xs font-medium text-gray-800">
-                Nome ou apelido
-              </label>
-              <input
-                id={`child-name-${index}`}
-                type="text"
-                value={child.nome}
-                onChange={(event) => onUpdateChild(child.id, 'nome', event.target.value)}
-                placeholder="Opcional"
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-gender-${index}`} className="text-xs font-medium text-gray-800">
-                Gênero
-              </label>
-              <select
-                id={`child-gender-${index}`}
-                value={child.genero}
-                onChange={(event) => onUpdateChild(child.id, 'genero', event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
-              >
-                <option value="menino">Menino</option>
-                <option value="menina">Menina</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-age-${index}`} className="text-xs font-medium text-gray-800">
-                Idade (meses)
-              </label>
-              <input
-                id={`child-age-${index}`}
-                type="number"
-                min={0}
-                inputMode="numeric"
-                value={child.idadeMeses}
-                onChange={(event) => onUpdateChild(child.id, 'idadeMeses', event.target.value)}
-                className={`w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 ${
-                  errors.filhos?.[child.id] ? 'border-primary-400 ring-1 ring-primary-300' : ''
-                }`}
-              />
-              {errors.filhos?.[child.id] && (
-                <p className="text-[11px] text-primary-600 font-medium">{errors.filhos[child.id]}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-age-range-${index}`} className="text-xs font-medium text-gray-800">
-                Faixa etária
-              </label>
-              <select
-                id={`child-age-range-${index}`}
-                value={child.ageRange || ''}
-                onChange={(event) => onUpdateChild(child.id, 'ageRange', event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
-              >
-                <option value="">Selecione...</option>
-                <option value="0-1">0–1 ano</option>
-                <option value="1-3">1–3 anos</option>
-                <option value="3-6">3–6 anos</option>
-                <option value="6-8">6–8 anos</option>
-                <option value="8+">8+ anos</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor={`child-phase-${index}`} className="text-xs font-medium text-gray-800">
-                Qual fase mais desafia vocês?
-              </label>
-              <select
-                id={`child-phase-${index}`}
-                value={child.currentPhase || ''}
-                onChange={(event) => onUpdateChild(child.id, 'currentPhase', event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 appearance-none"
-              >
-                <option value="">Selecione...</option>
-                <option value="sono">Sono</option>
-                <option value="birras">Birras / emoções intensas</option>
-                <option value="escolar">Rotina escolar</option>
-                <option value="socializacao">Socialização / amizade</option>
-                <option value="alimentacao">Alimentação</option>
-              </select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor={`child-notes-${index}`} className="text-xs font-medium text-gray-800">
-                Algo importante que você acha que eu deveria saber?
-              </label>
-              <textarea
-                id={`child-notes-${index}`}
-                value={child.notes || ''}
-                onChange={(event) => onUpdateChild(child.id, 'notes', event.target.value)}
-                placeholder="Escreva algo que nos ajude a entender melhor..."
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200 resize-none"
-                rows={3}
-              />
-              <p className="text-[11px] text-gray-500">Opcional, mas muito valioso para personalizar.</p>
-            </div>
-
-            {index === 0 && (
-              <div className="space-y-2 md:col-span-2">
-                <label htmlFor="baby-birthdate" className="text-xs font-medium text-gray-800">
-                  Data de nascimento do bebê
-                </label>
-                <input
-                  id="baby-birthdate"
-                  type="date"
-                  value={babyBirthdate}
-                  onChange={(event) => onBirthdateChange(event.target.value)}
-                  max={todayISO}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-                />
-                <p className="text-[11px] text-gray-500">Opcional, mas ajuda a personalizar receitas e conteúdos.</p>
-              </div>
-            )}
-
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor={`child-allergies-${index}`} className="text-xs font-medium text-gray-800">
-                Alergias (separe por vírgula)
-              </label>
-              <input
-                id={`child-allergies-${index}`}
-                type="text"
-                value={child.alergias.join(', ')}
-                onChange={(event) => onUpdateChild(child.id, 'alergias', event.target.value)}
-                placeholder="Ex.: leite, ovo, amendoim"
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-200"
-              />
-            </div>
-          </div>
+      {/* resumo leve */}
+      <div
+        className={[
+          'rounded-2xl border bg-[#fff7fb] px-3 py-3 flex items-center justify-between gap-3',
+          anyChildHasError ? 'border-[var(--color-brand)]/35' : 'border-[var(--color-border-soft)]',
+        ].join(' ')}
+      >
+        <div className="min-w-0">
+          <p className="text-[12px] font-semibold text-[var(--color-text-main)]">
+            {filhos.length} {filhos.length === 1 ? 'criança' : 'crianças'} cadastrada{filhos.length === 1 ? '' : 's'}
+          </p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            Você pode preencher aos poucos. O nome e a idade são opcionais.
+          </p>
         </div>
-      ))}
 
-      {errors.general && <p className="text-[11px] text-primary-600 font-medium">{errors.general}</p>}
+        <button
+          type="button"
+          onClick={addChild}
+          className="shrink-0 rounded-full bg-white border border-[var(--color-border-soft)] px-3 py-2 text-[11px] font-semibold text-[var(--color-brand)] hover:bg-[var(--color-soft-bg)] transition"
+        >
+          + Adicionar
+        </button>
+      </div>
 
+      <div className="space-y-3">
+        {filhos.map((child, index) => {
+          const childError = errors.filhos?.[child.id]
+          const isOpen =
+            openById[child.id] ??
+            // padrão: se tiver 1 filho abre; se tiver mais de 1 fica fechado (exceto se houver erro)
+            (filhos.length === 1 || Boolean(childError))
+
+          return (
+            <div
+              key={child.id}
+              className={[
+                'rounded-2xl border bg-white',
+                childError ? 'border-[var(--color-brand)]/35' : 'border-[var(--color-border-soft)]',
+              ].join(' ')}
+            >
+              {/* header compacto */}
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-[var(--color-text-main)]">
+                    Filho {index + 1}
+                  </p>
+                  <ChildSummary child={child} index={index} />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {filhos.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => removeChild(child.id)}
+                      className="text-[11px] font-semibold text-[var(--color-brand)] hover:opacity-80"
+                    >
+                      Remover
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setOpen(child.id, !isOpen)}
+                    className="rounded-full bg-white border border-[var(--color-border-soft)] px-3 py-2 text-[11px] font-semibold text-[#2f3a56] hover:bg-[#fff7fb] transition"
+                    aria-expanded={isOpen}
+                  >
+                    {isOpen ? 'Ocultar' : 'Editar'}
+                  </button>
+                </div>
+              </div>
+
+              {/* body (expandível) */}
+              {isOpen ? (
+                <div className="px-4 pb-4 space-y-3">
+                  {/* Nome (opcional) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-[var(--color-text-main)]">Nome (opcional)</label>
+                    <input
+                      value={child.nome ?? ''}
+                      onChange={(e) => updateChild(child.id, 'nome', e.target.value)}
+                      placeholder="Opcional"
+                      className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30"
+                    />
+                  </div>
+
+                  {/* Gênero */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-[var(--color-text-main)]">Gênero</label>
+                    <select
+                      value={child.genero ?? 'nao-informar'}
+                      onChange={(e) => updateChild(child.id, 'genero', parseChildGender(e.target.value))}
+                      className="w-full rounded-xl border border-[var(--color-border-soft)] bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 appearance-none"
+                    >
+                      <option value="nao-informar">Prefiro não informar</option>
+                      <option value="feminino">Feminino</option>
+                      <option value="masculino">Masculino</option>
+                    </select>
+                  </div>
+
+                  {/* Idade em meses */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-[var(--color-text-main)]">
+                      Idade em meses (opcional)
+                    </label>
+
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={typeof child.idadeMeses === 'number' ? child.idadeMeses : ''}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        if (raw === '') {
+                          updateChild(child.id, 'idadeMeses', undefined)
+                          return
+                        }
+                        const n = Number(raw)
+                        updateChild(child.id, 'idadeMeses', Number.isFinite(n) ? n : undefined)
+                      }}
+                      className={[
+                        'w-full rounded-xl border bg-white px-3 py-2 text-xs text-[var(--color-text-main)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30',
+                        childError
+                          ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20'
+                          : 'border-[var(--color-border-soft)]',
+                      ].join(' ')}
+                    />
+
+                    {childError ? (
+                      <p className="text-[11px] text-[var(--color-brand)] font-medium">{childError}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* botão secundário (mantém, mas menos pesado) */}
       <button
         type="button"
-        onClick={onAddChild}
-        className="text-xs font-semibold text-primary-600 hover:text-primary-700 hover:underline"
+        onClick={addChild}
+        className="w-full rounded-full border border-[var(--color-brand)] bg-white px-4 py-3 text-[12px] font-semibold text-[var(--color-brand)] shadow-sm hover:bg-[var(--color-soft-bg)] transition"
       >
-        + Adicionar outro filho
+        Adicionar outro filho
       </button>
     </div>
   )

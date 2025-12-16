@@ -2,6 +2,12 @@
 
 import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
+import { ClientOnly } from '@/components/common/ClientOnly'
+import { SoftCard } from '@/components/ui/card'
+import { Reveal } from '@/components/ui/Reveal'
+import { Button } from '@/components/ui/Button'
+import AppIcon from '@/components/ui/AppIcon'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 
 type PartnershipType =
   | 'profissional_saude'
@@ -23,11 +29,20 @@ const initialFormState: PartnershipFormState = {
   message: '',
 }
 
+type HubSectionId = 'parcerias' | 'ajuda'
+
+const HUB_SECTIONS: { id: HubSectionId; label: string; hint: string }[] = [
+  { id: 'parcerias', label: 'Parcerias', hint: 'Vamos construir juntas.' },
+  { id: 'ajuda', label: 'Ajuda', hint: 'Suporte simples e direto.' },
+]
+
 export default function AjudaEParceriasPage() {
   const [form, setForm] = useState<PartnershipFormState>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const [activeSection, setActiveSection] = useState<HubSectionId>('parcerias')
 
   const handleChange = (
     event: ChangeEvent<
@@ -50,9 +65,7 @@ export default function AjudaEParceriasPage() {
     try {
       const response = await fetch('/api/maternar/parcerias', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
 
@@ -62,7 +75,6 @@ export default function AjudaEParceriasPage() {
           data && typeof data.message === 'string'
             ? data.message
             : 'Algo não saiu como esperado.'
-
         throw new Error(messageFromApi)
       }
 
@@ -80,241 +92,364 @@ export default function AjudaEParceriasPage() {
     }
   }
 
+  const scrollTo = (id: HubSectionId) => {
+    if (typeof window === 'undefined') return
+    const el = document.getElementById(`ajuda-parcerias-${id}`)
+    if (!el) return
+
+    const headerOffset = 88
+    const rect = el.getBoundingClientRect()
+    const offsetTop = rect.top + window.scrollY - headerOffset
+
+    window.scrollTo({ top: offsetTop, behavior: 'smooth' })
+  }
+
+  const Pill = ({ id, label }: { id: HubSectionId; label: string }) => {
+    const isActive = activeSection === id
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setActiveSection(id)
+          scrollTo(id)
+        }}
+        className={[
+          'rounded-full border px-3 py-1.5 text-[12px] md:text-[13px] font-medium transition-colors',
+          isActive
+            ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
+            : 'border-[#F5D7E5] bg-white/70 text-[#545454] hover:border-[#fd2597] hover:bg-[#ffe1f1]',
+        ].join(' ')}
+      >
+        {label}
+      </button>
+    )
+  }
+
   return (
     <PageTemplate
       label="MATERNAR"
       title="Ajuda & Parcerias"
-      subtitle="Um lugar seguro para tirar dúvidas, pedir ajuda e se conectar com o Materna360 de forma leve."
+      subtitle="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
     >
-      <div className="mx-auto max-w-5xl px-4 pb-16 pt-4 md:px-6">
-        <section className="flex flex-col gap-8 lg:flex-row">
-          {/* Coluna esquerda – Ajuda & suporte */}
-          <div className="flex-1">
-            <div className="h-full rounded-3xl border border-[#F5D7E5] bg-white/98 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.12)] backdrop-blur-md md:p-7">
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <p className="text-[12px] font-semibold tracking-[0.24em] text-[#fd2597]/85 uppercase">
-                    AJUDA &amp; SUPORTE
+      <ClientOnly>
+        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+          {/* HERO HUB-LIKE: dá ênfase em Parcerias e deixa Ajuda como secundário */}
+          <Reveal>
+            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+              <div className="space-y-5 md:space-y-6">
+                <div className="max-w-3xl space-y-2.5">
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+                    AJUDA & PARCERIAS
                   </p>
-                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
-                    Quando algo não está funcionando bem
+
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                    Parcerias em primeiro plano. Ajuda quando precisar.
                   </h2>
-                  <p className="text-[14px] md:text-[15px] leading-relaxed text-[#545454]">
-                    Se alguma parte do app estiver diferente do esperado ou se
-                    você tiver dúvidas sobre como usar um mini-hub, você não
-                    precisa resolver isso sozinha. Aqui é o seu ponto de apoio.
+
+                  <p className="text-sm md:text-[15px] text-[#545454] leading-relaxed">
+                    Se você é profissional, criadora de conteúdo ou marca alinhada ao universo materno, este é o caminho.
+                    O suporte do app fica aqui também, mas de forma mais direta e enxuta.
                   </p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl bg-[#fdbed7]/80 p-4">
-                    <h3 className="mb-1 text-[18px] font-semibold text-[#545454]">
-                      Dúvidas sobre o app
-                    </h3>
-                    <p className="text-[13px] leading-relaxed text-[#545454]">
-                      Que tal anotar o que está confuso para você? Pode ser
-                      sobre o Planner, XP, MaternaBox ou qualquer mini-hub. Isso
-                      nos ajuda a melhorar a sua experiência.
-                    </p>
+                {/* MINI MENU */}
+                <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                    MENU
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {HUB_SECTIONS.map(s => (
+                      <Pill key={s.id} id={s.id} label={s.label} />
+                    ))}
                   </div>
 
-                  <div className="rounded-2xl bg-[#fdbed7]/60 p-4">
-                    <h3 className="mb-1 text-[18px] font-semibold text-[#545454]">
-                      Suporte técnico
-                    </h3>
-                    <p className="text-[13px] leading-relaxed text-[#545454]">
-                      Se o app travar, não carregar ou algo estranho acontecer,
-                      respire fundo. Você pode registrar o problema e nós
-                      investigamos por aqui.
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[12px] text-[#545454]">
+                      Recomendação: comece por <span className="font-semibold">Parcerias</span>.
                     </p>
+
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="text-[13px] px-5 py-2"
+                      onClick={() => scrollTo('parcerias')}
+                    >
+                      Abrir formulário de parcerias
+                    </Button>
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-[#F5D7E5] bg-white/98 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-                  <p className="text-[12px] font-semibold tracking-[0.18em] text-[#6A6A6A] uppercase">
-                    FAQ rápido
-                  </p>
-                  <div className="space-y-3 text-[#545454]">
-                    <details className="group rounded-xl bg-[#fdbed7]/30 p-3">
-                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#545454]">
-                        O que eu faço se o app não carregar?
-                      </summary>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
-                        Primeiro, verifique sua conexão com a internet e feche o
-                        app por alguns segundos. Se ainda assim não funcionar,
-                        você pode registrar o problema nesta área de suporte ou
-                        entrar em contato pelo canal oficial quando estiver
-                        disponível.
-                      </p>
-                    </details>
+                {/* Cards curtos */}
+                <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
+                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Profissionais</p>
+                    <p className="text-[13px] text-[#545454] leading-snug">
+                      Especialistas alinhados ao cuidado real.
+                    </p>
+                  </div>
 
-                    <details className="group rounded-xl bg-[#fdbed7]/30 p-3">
-                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#545454]">
-                        Onde vejo os conteúdos que salvei no Planner?
-                      </summary>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
-                        Tudo o que você salva em mini-hubs como “Como Estou
-                        Hoje”, “Rotina Leve” ou “Cuidar com Amor” fica
-                        organizado dentro do Planner, na aba Meu Dia ou Eu360,
-                        sempre identificado pela origem.
-                      </p>
-                    </details>
+                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Criadoras</p>
+                    <p className="text-[13px] text-[#545454] leading-snug">
+                      Conteúdo com responsabilidade e afeto.
+                    </p>
+                  </div>
 
-                    <details className="group rounded-xl bg-[#fdbed7]/30 p-3">
-                      <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#545454]">
-                        Ainda estou com dúvidas. E agora?
-                      </summary>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
-                        Está tudo bem ter dúvidas. Em breve, esta área terá um
-                        canal direto de contato com o time Materna360. Por
-                        enquanto, você pode anotar suas perguntas aqui para não
-                        esquecer e revisitar quando quiser.
-                      </p>
-                    </details>
+                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Marcas</p>
+                    <p className="text-[13px] text-[#545454] leading-snug">
+                      Produtos/serviços que respeitam mães reais.
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </SoftCard>
+          </Reveal>
 
-          {/* Coluna direita – Parcerias */}
-          <div className="flex-1">
-            <div className="h-full rounded-3xl border border-[#F5D7E5] bg-white/98 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.12)] backdrop-blur-md md:p-7">
+          {/* PARCERIAS — destaque visual (mais “premium”) */}
+          <Reveal delay={20}>
+            <SoftCard
+              id="ajuda-parcerias-parcerias"
+              className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
+            >
               <div className="space-y-5">
-                <div className="space-y-2">
-                  <p className="text-[12px] font-semibold tracking-[0.24em] text-[#fd2597]/85 uppercase">
+                <header className="space-y-2">
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                     PARCERIAS
                   </p>
-                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#545454]">
-                    Conecte sua jornada ao Materna360
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                    Vamos construir algo bonito e útil para mães reais.
                   </h2>
-                  <p className="text-[14px] md:text-[15px] leading-relaxed text-[#545454]">
-                    Se você é profissional, criadora de conteúdo ou representa
-                    uma marca que conversa com o universo materno, este é o
-                    espaço para se aproximar da nossa comunidade.
+                  <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
+                    Conte rapidamente quem você é e como imagina essa parceria. A gente responde com calma, no tempo certo.
                   </p>
+                </header>
+
+                <div className="grid gap-5 md:grid-cols-[1.2fr,0.8fr]">
+                  {/* FORM */}
+                  <form className="space-y-4" onSubmit={handleSubmit}>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="partnershipType"
+                        className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                      >
+                        Tipo de parceria
+                      </label>
+                      <select
+                        id="partnershipType"
+                        name="partnershipType"
+                        value={form.partnershipType}
+                        onChange={handleChange}
+                        className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                        disabled={isSubmitting}
+                      >
+                        <option value="profissional_saude">
+                          Profissional da saúde / desenvolvimento infantil
+                        </option>
+                        <option value="criadora_conteudo">Criadora de conteúdo</option>
+                        <option value="marca_produto">
+                          Marca / produto para mães ou crianças
+                        </option>
+                        <option value="outros">Outro tipo de parceria</option>
+                      </select>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="name"
+                          className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                        >
+                          Nome
+                        </label>
+                        <input
+                          id="name"
+                          name="name"
+                          type="text"
+                          value={form.name}
+                          onChange={handleChange}
+                          placeholder="Como você gostaria de ser chamada?"
+                          className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="email"
+                          className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                        >
+                          E-mail
+                        </label>
+                        <input
+                          id="email"
+                          name="email"
+                          type="email"
+                          required
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder="Seu melhor e-mail"
+                          className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="message"
+                        className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                      >
+                        Mensagem
+                      </label>
+                      <textarea
+                        id="message"
+                        name="message"
+                        rows={4}
+                        value={form.message}
+                        onChange={handleChange}
+                        placeholder="Qual parceria faz sentido? (objetivo, público, formato, como imagina a entrega)"
+                        className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    {successMessage && (
+                      <p className="rounded-2xl bg-[#ffe1f1] px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                        {successMessage}
+                      </p>
+                    )}
+
+                    {errorMessage && (
+                      <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                        {errorMessage}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="inline-flex w-full items-center justify-center rounded-2xl bg-[#fd2597] px-4 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#e0218c] disabled:cursor-not-allowed disabled:bg-[#fd2597]/60"
+                    >
+                      {isSubmitting ? 'Enviando...' : 'Enviar proposta de parceria'}
+                    </button>
+
+                    <p className="text-[12px] leading-relaxed text-[#6A6A6A]">
+                      Ao enviar, você não assume compromisso. É o primeiro passo para uma conversa.
+                    </p>
+                  </form>
+
+                  {/* SIDE: por que fazer parceria */}
+                  <div className="space-y-3">
+                    <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1]/70 p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                        O QUE A GENTE VALORIZA
+                      </p>
+
+                      <div className="mt-3 space-y-2 text-[13px] text-[#545454]">
+                        <p className="flex items-start gap-2">
+                          <span className="mt-0.5 h-7 w-7 rounded-full bg-white border border-[#F5D7E5] flex items-center justify-center">
+                            <AppIcon name="heart" className="h-4 w-4 text-[#fd2597]" />
+                          </span>
+                          <span>Conteúdo/serviço com cuidado emocional.</span>
+                        </p>
+                        <p className="flex items-start gap-2">
+                          <span className="mt-0.5 h-7 w-7 rounded-full bg-white border border-[#F5D7E5] flex items-center justify-center">
+                            <AppIcon name="sparkles" className="h-4 w-4 text-[#fd2597]" />
+                          </span>
+                          <span>Aplicável na rotina (sem promessas mágicas).</span>
+                        </p>
+                        <p className="flex items-start gap-2">
+                          <span className="mt-0.5 h-7 w-7 rounded-full bg-white border border-[#F5D7E5] flex items-center justify-center">
+                            <AppIcon name="shield" className="h-4 w-4 text-[#fd2597]" />
+                          </span>
+                          <span>Responsabilidade e ética (principalmente com mães e crianças).</span>
+                        </p>
+                      </div>
+                    </SoftCard>
+
+                    <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+                        EXEMPLOS
+                      </p>
+                      <div className="mt-2 space-y-1 text-[13px] text-[#545454]">
+                        <p>• Profissionais para rede Materna+</p>
+                        <p>• Conteúdos e guias para Biblioteca Materna</p>
+                        <p>• Benefícios para assinantes (Materna+)</p>
+                        <p>• Marcas alinhadas a “rotina real”</p>
+                      </div>
+                    </SoftCard>
+                  </div>
+                </div>
+              </div>
+            </SoftCard>
+          </Reveal>
+
+          {/* AJUDA — secundário, mais enxuto */}
+          <Reveal delay={60}>
+            <SoftCard
+              id="ajuda-parcerias-ajuda"
+              className="rounded-3xl border border-[#F5D7E5] bg-white/96 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
+            >
+              <div className="space-y-4">
+                <header className="space-y-2">
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]">
+                    AJUDA (BÁSICO)
+                  </p>
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                    Se algo não estiver funcionando
+                  </h2>
+                  <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
+                    Um FAQ rápido para resolver o essencial — sem virar uma página enorme.
+                  </p>
+                </header>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <details className="group rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/45 p-4">
+                    <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                      App não carrega / travou
+                    </summary>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
+                      Verifique a internet e feche/abra o app. Se persistir, volte mais tarde: estamos evoluindo com cuidado.
+                    </p>
+                  </details>
+
+                  <details className="group rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/45 p-4">
+                    <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
+                      Onde ficam meus registros?
+                    </summary>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
+                      O que você faz nos mini-hubs aparece no Planner (Meu Dia / Eu360), sempre com a origem do registro.
+                    </p>
+                  </details>
                 </div>
 
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="partnershipType"
-                      className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                    >
-                      Tipo de parceria
-                    </label>
-                    <select
-                      id="partnershipType"
-                      name="partnershipType"
-                      value={form.partnershipType}
-                      onChange={handleChange}
-                      className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-3 py-2 text-[14px] text-[#545454] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
-                      disabled={isSubmitting}
-                    >
-                      <option value="profissional_saude">
-                        Profissional da saúde / desenvolvimento infantil
-                      </option>
-                      <option value="criadora_conteudo">
-                        Criadora de conteúdo
-                      </option>
-                      <option value="marca_produto">
-                        Marca / produto para mães ou crianças
-                      </option>
-                      <option value="outros">Outro tipo de parceria</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="name"
-                      className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                    >
-                      Nome completo
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={form.name}
-                      onChange={handleChange}
-                      placeholder="Como você gostaria de ser chamada?"
-                      className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-3 py-2 text-[14px] text-[#545454] placeholder:text-[#A0A0A0] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="email"
-                      className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                    >
-                      E-mail
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="Seu melhor e-mail para contato"
-                      className="w-full rounded-2xl border border-[#F5D7E5] bg:white px-3 py-2 text-[14px] text-[#545454] placeholder:text-[#A0A0A0] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="message"
-                      className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                    >
-                      Como você gostaria de se conectar?
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      rows={4}
-                      value={form.message}
-                      onChange={handleChange}
-                      placeholder="Conte, com calma, que tipo de parceria faz sentido para você e como imagina essa construção junto com o Materna360."
-                      className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#545454] placeholder:text-[#A0A0A0] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {successMessage && (
-                    <p className="rounded-2xl bg-[#fdbed7]/80 px-4 py-2 text-[12px] leading-relaxed text-[#545454]">
-                      {successMessage}
-                    </p>
-                  )}
-
-                  {errorMessage && (
-                    <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#545454]">
-                      {errorMessage}
-                    </p>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[#fd2597] px-4 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#b8236b] disabled:cursor-not-allowed disabled:bg-[#fd2597]/60"
-                  >
-                    {isSubmitting
-                      ? 'Enviando com carinho...'
-                      : 'Quero falar sobre parcerias'}
-                  </button>
-
-                  <p className="text-[12px] leading-relaxed text-[#6A6A6A]">
-                    Ao enviar este formulário, você não assume nenhum compromisso
-                    imediato. É apenas o primeiro passo para uma conversa com
-                    calma sobre como caminhar junto com o Materna360.
+                <SoftCard className="rounded-2xl border border-[#F5D7E5] bg-white p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                  <p className="text-[12px] font-semibold tracking-[0.18em] text-[#6A6A6A] uppercase">
+                    Dica rápida
                   </p>
-                </form>
+                  <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
+                    Se você quiser, anote em uma frase: “o que eu esperava” vs “o que aconteceu”.
+                    Isso ajuda muito quando o canal direto de suporte estiver ativo.
+                  </p>
+                </SoftCard>
+
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+                  <p className="text-[12px] text-[#6A6A6A]">
+                    Precisa propor algo para o Materna360? Use Parcerias.
+                  </p>
+                  <Button variant="secondary" size="sm" onClick={() => scrollTo('parcerias')}>
+                    Voltar para Parcerias
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
-      </div>
+            </SoftCard>
+          </Reveal>
+
+          <MotivationalFooter routeKey="ajuda-parcerias" />
+        </div>
+      </ClientOnly>
     </PageTemplate>
   )
 }

@@ -6,7 +6,8 @@ import { inter, poppins } from '@/app/fonts'
 
 export const metadata: Metadata = {
   title: 'Materna360',
-  description: 'Uma plataforma acolhedora para apoiar você em cada etapa da maternidade',
+  description:
+    'Uma plataforma acolhedora para apoiar você em cada etapa da maternidade',
   icons: {
     icon: '/images/favicon-materna.png',
     shortcut: '/images/favicon-materna.png',
@@ -23,18 +24,33 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={`${poppins.variable} ${inter.variable}`}>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${poppins.variable} ${inter.variable}`}
+    >
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <meta name="theme-color" content="#FD2597" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <meta name="apple-mobile-web-app-title" content="Materna360" />
         <link rel="manifest" href="/manifest.json" />
+
         {/* Service Worker registration for PWA */}
         <Script id="sw-register" strategy="afterInteractive">
           {`
@@ -45,7 +61,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }
           `}
         </Script>
-        {/* FullStory fetch interception fix: capture native fetch before FullStory wraps it */}
+
+        {/* FullStory fetch interception fix */}
         <Script id="fullstory-fetch-fix" strategy="beforeInteractive">
           {`
             (function() {
@@ -53,12 +70,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               let fsDetected = false;
 
               window.fetch = function(...args) {
-                // Detect FullStory presence at call time
                 if (!fsDetected && typeof window.FS !== 'undefined') {
                   fsDetected = true;
                 }
 
-                // If FullStory is present, use XMLHttpRequest instead
                 if (fsDetected) {
                   const url = args[0];
                   const init = args[1] || {};
@@ -91,9 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   });
                 }
 
-                // Try native fetch first
                 return nativeFetch.apply(this, args).catch(err => {
-                  // If we get "Failed to fetch" from FullStory, switch to XHR
                   if (err instanceof TypeError && err.message === 'Failed to fetch' && !fsDetected) {
                     fsDetected = true;
                     return window.fetch.apply(this, args);
@@ -102,7 +115,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 });
               };
 
-              // Disable prefetch links that may trigger FullStory issues
               if (typeof window.FS !== 'undefined') {
                 document.addEventListener('mouseover', (e) => {
                   const link = e.target.closest('a[rel~="prefetch"]');
@@ -113,11 +125,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `}
         </Script>
       </head>
-      <body>
-        {/* Page content */}
+
+      {/* IMPORTANTE: body vira "casca" neutra; fundo único fica no layer fixo abaixo */}
+      <body className="relative min-h-[100dvh] bg-transparent">
+        {/* FUNDO ÚNICO GLOBAL — usar EXATAMENTE o “clima” do Eu360 */}
+        <div
+          aria-hidden="true"
+          className="
+            fixed inset-0 -z-10
+            bg-[#ffe1f1]
+            bg-[linear-gradient(180deg,#b8236b_0%,#fd2597_42%,#ffe1f1_80%,#fdbed7_100%)]
+            bg-no-repeat bg-cover
+          "
+        />
+
+        {/* overlays premium sutis (opcional, mas consistente) */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none fixed inset-0 -z-10
+            bg-[radial-gradient(920px_520px_at_18%_10%,rgba(255,216,230,0.22)_0%,rgba(255,216,230,0)_60%)]
+          "
+        />
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none fixed inset-0 -z-10
+            bg-[radial-gradient(820px_520px_at_78%_22%,rgba(253,37,151,0.14)_0%,rgba(253,37,151,0)_62%)]
+          "
+        />
+
         {children}
 
-        {/* Global, non-blocking toasts */}
         <ToastHost />
       </body>
     </html>

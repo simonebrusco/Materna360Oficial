@@ -1,3 +1,7 @@
+// app/lib/stickers.ts
+import type { LucideIcon } from 'lucide-react'
+import { Feather, Shield, Sparkles, Target, Heart, Palette } from 'lucide-react'
+
 export type ProfileStickerId =
   | 'mae-carinhosa'
   | 'mae-leve'
@@ -6,16 +10,48 @@ export type ProfileStickerId =
   | 'mae-tranquila'
   | 'mae-resiliente'
 
-export type StickerInfo = { label: string; asset: string }
+export type StickerInfo = {
+  label: string
+  subtitle: string
+  Icon: LucideIcon
+}
 
 export const STICKERS = {
-  'mae-carinhosa': { label: 'Mãe Carinhosa', asset: '/stickers/mae-carinhosa.png' },
-  'mae-leve': { label: 'Mãe Leve', asset: '/stickers/mae-leve.png' },
-  'mae-determinada': { label: 'Mãe Determinada', asset: '/stickers/mae-determinada.png' },
-  'mae-criativa': { label: 'Mãe Criativa', asset: '/stickers/mae-criativa.png' },
-  'mae-tranquila': { label: 'Mãe Tranquila', asset: '/stickers/mae-tranquila.png' },
-  'mae-resiliente': { label: 'Mãe Resiliente', asset: 'https://cdn.builder.io/api/v1/image/assets%2F7d9c3331dcd74ab1a9d29c625c41f24c%2Fd686ed8748a644e982e17f3551c2bb34' },
-  default: { label: 'Minha Figurinha', asset: '/stickers/mae-carinhosa.png' },
+  'mae-carinhosa': {
+    label: 'Mãe Carinhosa',
+    subtitle: 'Amor nos pequenos gestos.',
+    Icon: Heart,
+  },
+  'mae-leve': {
+    label: 'Mãe Leve',
+    subtitle: 'Equilíbrio e presença.',
+    Icon: Feather,
+  },
+  'mae-determinada': {
+    label: 'Mãe Determinada',
+    subtitle: 'Força com doçura.',
+    Icon: Target,
+  },
+  'mae-criativa': {
+    label: 'Mãe Criativa',
+    subtitle: 'Inventa e transforma.',
+    Icon: Palette,
+  },
+  'mae-tranquila': {
+    label: 'Mãe Tranquila',
+    subtitle: 'Serenidade e autocuidado.',
+    Icon: Sparkles,
+  },
+  'mae-resiliente': {
+    label: 'Mãe Resiliente',
+    subtitle: 'Cai, respira fundo e recomeça.',
+    Icon: Shield,
+  },
+  default: {
+    label: 'Minha vibe',
+    subtitle: 'Um toque pessoal no seu perfil.',
+    Icon: Sparkles,
+  },
 } as const
 
 export const DEFAULT_STICKER_ID = 'default' as const
