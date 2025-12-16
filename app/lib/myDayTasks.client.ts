@@ -1,31 +1,13 @@
 'use client'
 
 import { track } from '@/app/lib/telemetry'
-import { dateKey as makeDateKey } from '@/app/lib/dateKey'
 
 /**
- * P7/P8 — Fonte única de persistência do Meu Dia
- * Persistência local: localStorage em `planner/tasks/${dateKey}`
- *
- * Regras:
- * - migração silenciosa (tarefas antigas continuam funcionando)
- * - normalização garante id/status/createdAt/source
- * - sem acoplamento duro com Eu360/Planner
+ * My Day — single source of truth (client storage).
+ * - Persistência local por dia: planner/tasks/YYYY-MM-DD
+ * - Migração silenciosa: tarefas antigas continuam válidas
+ * - Sem acoplamento duro com Planner (guardrails anti-regressão)
  */
-
-/* =========================
-   TIPOS / CONSTANTES
-========================= */
-
-type TaskStatus = 'active' | 'done' | 'snoozed'
-
-export type MyDaySource =
-  | 'maternar.meu-filho'
-  | 'maternar.meu-dia-leve'
-  | 'maternar.cuidar-de-mim'
-  | 'planner'
-  | 'manual'
-  | 'unknown'
 
 export const MY_DAY_SOURCES = {
   MATERNAR_MEU_FILHO: 'maternar.meu-filho',
@@ -36,29 +18,52 @@ export const MY_DAY_SOURCES = {
   UNKNOWN: 'unknown',
 } as const
 
-export type TaskItem = {
+export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
+
+/**
+ * Origin = intenção (usada para agrupamento “leve”).
+ * Observação: no Meu Filho você já usa ORIGIN = 'family'.
+ */
+export type TaskOrigin = 'today' | 'family' | 'self' | 'home' | 'other'
+
+export type TaskStatus = 'active' | 'done' | 'snoozed'
+
+export type MyDayTask = {
   id: string
   title: string
-  status?: TaskStatus
-  snoozeUntil?: string // dateKey
-  createdAt?: string // ISO
-  source?: MyDaySource
 
-  // legado (se existir em dados antigos)
-  origin?: string
+  // intenção / agrupamento
+  origin?: TaskOrigin
+
+  // P8: estados leves
+  status?: TaskStatus
+  snoozeUntil?: string // dateKey (YYYY-MM-DD)
+  createdAt?: string // ISO
+
+  // rastreio de origem (telemetria e agrupamento por “fonte”)
+  source?: MyDaySource | string
+
+  // extensível (sem depender disso)
+  meta?: Record<string, unknown>
 }
 
 export type AddToMyDayInput = {
   title: string
+  origin?: TaskOrigin
+  source?: MyDaySource | string
   date?: Date
-  dateKey?: string
-  source?: MyDaySource
-  origin?: string // legado (se algum lugar ainda mandar)
+  meta?: Record<string, unknown>
 }
 
-/* =========================
-   STORAGE SAFE
-========================= */
+export type AddToMyDayResult = {
+  ok: boolean
+  id?: string
+  created: boolean
+}
+
+/** -----------------------------
+ *  Low-level helpers
+ *  ----------------------------- */
 
 function safeGetLS(key: string): string | null {
   try {
@@ -76,306 +81,259 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
-/* =========================
-   HELPERS (ID / DATE)
-========================= */
-
-function makeId() {
-  return `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+function safeNowISO() {
+  try {
+    return new Date().toISOString()
+  } catch {
+    return undefined
+  }
 }
 
-function asIsoNow() {
-  return new Date().toISOString()
+/**
+ * dateKey local (YYYY-MM-DD), sem depender de export externo.
+ * Evita os erros “dateKey não exportado” nos clients.
+ */
+export function makeDateKey(d: Date = new Date()): string {
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
-function storageKeyForDateKey(dateKey: string) {
+function storageKeyFor(dateKey: string) {
   return `planner/tasks/${dateKey}`
 }
 
-function resolveDateKey(input?: { date?: Date; dateKey?: string }) {
-  if (input?.dateKey && input.dateKey.trim().length > 0) return input.dateKey.trim()
-  return makeDateKey(input?.date ?? new Date())
+function parseTasks(raw: string | null): MyDayTask[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    // migração silenciosa: normaliza shape
+    return parsed
+      .map((t: any) => {
+        if (!t) return null
+        const id = typeof t.id === 'string' ? t.id : ''
+        const title = typeof t.title === 'string' ? t.title : ''
+        if (!id || !title) return null
+
+        const origin: TaskOrigin | undefined =
+          t.origin === 'today' || t.origin === 'family' || t.origin === 'self' || t.origin === 'home' || t.origin === 'other'
+            ? t.origin
+            : undefined
+
+        const status: TaskStatus | undefined =
+          t.status === 'active' || t.status === 'done' || t.status === 'snoozed' ? t.status : undefined
+
+        const snoozeUntil = typeof t.snoozeUntil === 'string' ? t.snoozeUntil : undefined
+        const createdAt = typeof t.createdAt === 'string' ? t.createdAt : undefined
+        const source = typeof t.source === 'string' ? t.source : undefined
+        const meta = typeof t.meta === 'object' && t.meta ? t.meta : undefined
+
+        return { id, title, origin, status, snoozeUntil, createdAt, source, meta } satisfies MyDayTask
+      })
+      .filter(Boolean) as MyDayTask[]
+  } catch {
+    return []
+  }
 }
 
-/* =========================
-   MIGRAÇÃO SILENCIOSA
-========================= */
+function readTasks(date: Date = new Date()): MyDayTask[] {
+  const key = storageKeyFor(makeDateKey(date))
+  return parseTasks(safeGetLS(key))
+}
 
-function normalizeSource(input?: string): MyDaySource {
-  if (!input) return 'unknown'
+function writeTasks(tasks: MyDayTask[], date: Date = new Date()) {
+  const key = storageKeyFor(makeDateKey(date))
+  safeSetLS(key, JSON.stringify(tasks))
+}
 
-  // Já no formato novo?
-  if (
-    input === 'maternar.meu-filho' ||
-    input === 'maternar.meu-dia-leve' ||
-    input === 'maternar.cuidar-de-mim' ||
-    input === 'planner' ||
-    input === 'manual' ||
-    input === 'unknown'
-  ) {
-    return input
+function normalizeTitle(title: string) {
+  return title.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+function stableId(title: string, origin?: TaskOrigin, source?: string) {
+  const base = `${normalizeTitle(title)}|${origin ?? ''}|${source ?? ''}`
+  // hash leve e determinístico (sem crypto)
+  let h = 2166136261
+  for (let i = 0; i < base.length; i++) {
+    h ^= base.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return `t_${(h >>> 0).toString(16)}`
+}
+
+/** -----------------------------
+ *  Public API (Etapa 1/2 P8)
+ *  ----------------------------- */
+
+export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
+  const date = input.date ?? new Date()
+  const title = (input.title ?? '').trim()
+  if (!title) return { ok: false, created: false }
+
+  const origin = input.origin
+  const source = input.source ?? MY_DAY_SOURCES.UNKNOWN
+
+  const id = stableId(title, origin, String(source))
+  const tasks = readTasks(date)
+
+  // já existe?
+  const exists = tasks.some((t) => t.id === id)
+  if (exists) {
+    return { ok: true, id, created: false }
   }
 
-  // Migração de valores legados (best effort)
-  const v = input.toLowerCase()
-
-  if (v.includes('meu-filho')) return 'maternar.meu-filho'
-  if (v.includes('meu-dia-leve')) return 'maternar.meu-dia-leve'
-  if (v.includes('meu-dia')) return 'maternar.meu-dia-leve'
-  if (v.includes('cuidar')) return 'maternar.cuidar-de-mim'
-  if (v.includes('auto')) return 'maternar.cuidar-de-mim'
-  if (v.includes('planner')) return 'planner'
-  if (v.includes('manual')) return 'manual'
-
-  return 'unknown'
-}
-
-function normalizeTask(raw: any): TaskItem {
-  const title = typeof raw?.title === 'string' ? raw.title : ''
-
-  const id =
-    typeof raw?.id === 'string' && raw.id.trim().length > 0 ? raw.id : makeId()
-
-  const createdAt =
-    typeof raw?.createdAt === 'string' && raw.createdAt.trim().length > 0
-      ? raw.createdAt
-      : asIsoNow()
-
-  const status: TaskStatus =
-    raw?.status === 'done' || raw?.status === 'snoozed' || raw?.status === 'active'
-      ? raw.status
-      : 'active'
-
-  const source = normalizeSource(raw?.source ?? raw?.origin)
-
-  const snoozeUntil =
-    typeof raw?.snoozeUntil === 'string' && raw.snoozeUntil.trim().length > 0
-      ? raw.snoozeUntil
-      : undefined
-
-  return {
+  const createdAt = safeNowISO()
+  const next: MyDayTask = {
     id,
     title,
+    origin,
+    source: String(source),
+    status: 'active',
     createdAt,
-    status,
-    snoozeUntil,
-    source,
+    meta: input.meta,
   }
+
+  writeTasks([next, ...tasks], date)
+  return { ok: true, id, created: true }
 }
-
-function normalizeTaskList(rawList: any): TaskItem[] {
-  const list = Array.isArray(rawList) ? rawList : []
-  return list
-    .map(normalizeTask)
-    .filter((t) => typeof t.title === 'string' && t.title.trim().length > 0)
-}
-
-/* =========================
-   LEITURA / ESCRITA ÚNICAS
-========================= */
-
-function readTasks(dateKey: string): TaskItem[] {
-  const key = storageKeyForDateKey(dateKey)
-  const raw = safeGetLS(key)
-  const parsed = raw ? safeJsonParse(raw, []) : []
-  return normalizeTaskList(parsed)
-}
-
-function writeTasks(dateKey: string, tasks: TaskItem[]) {
-  const key = storageKeyForDateKey(dateKey)
-  const next = normalizeTaskList(tasks)
-  safeSetLS(key, JSON.stringify(next))
-}
-
-function safeJsonParse<T>(raw: string, fallback: T): T {
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-/* =========================
-   API PRINCIPAL (P7)
-========================= */
 
 /**
- * addTaskToMyDay — usado pelo Maternar (P7)
- * - cria no formato P8 (status/createdAt/source)
- * - mantém compatibilidade com origin legado
+ * Wrapper com telemetria padronizada (sem dados sensíveis).
  */
-export function addTaskToMyDay(input: AddToMyDayInput): { ok: boolean; id?: string } {
-  const dk = resolveDateKey({ date: input.date, dateKey: input.dateKey })
-  const tasks = readTasks(dk)
-
-  const title = (input.title ?? '').trim()
-  if (!title) return { ok: false }
-
-  const newTask: TaskItem = normalizeTask({
-    id: makeId(),
-    title,
-    createdAt: asIsoNow(),
-    status: 'active',
-    source: normalizeSource(input.source ?? input.origin),
-  })
-
-  // Evitar duplicação “igual” imediata (leve, sem rigidez)
-  const already = tasks.some((t) => t.title.trim().toLowerCase() === title.toLowerCase())
-  const next = already ? tasks : [newTask, ...tasks]
-
-  writeTasks(dk, next)
-  return { ok: true, id: newTask.id }
-}
-
-export type MyDaySourceForTrack = MyDaySource | string
-
-export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDaySourceForTrack }) {
+export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDaySource | string }) {
   const res = addTaskToMyDay(input)
   try {
-    track('my_day.task.add', {
+    track('my_day.add_task', {
+      created: res.created,
       ok: res.ok,
-      source: normalizeSource(input.source),
-      hasId: Boolean(res.id),
+      origin: input.origin ?? 'other',
+      source: String(input.source ?? MY_DAY_SOURCES.UNKNOWN),
     })
   } catch {}
   return res
 }
 
-/* =========================
-   API P8 (ETAPA 2)
-========================= */
+/**
+ * Lista as tarefas do dia (já aplicando regra leve de snooze):
+ * - status snoozed só aparece quando snoozeUntil <= hoje (ou inexistente)
+ */
+export function listMyDayTasks(date: Date = new Date()): MyDayTask[] {
+  const todayKey = makeDateKey(date)
+  const tasks = readTasks(date)
 
-export function listMyDayTasks(date?: Date): TaskItem[] {
-  const dk = makeDateKey(date ?? new Date())
-  const tasks = readTasks(dk)
-
-  // Regra do snooze: “não é pra hoje” não aparece quando snoozeUntil > hoje
-  // (mas mantém no storage para voltar depois).
   return tasks.filter((t) => {
     if (t.status !== 'snoozed') return true
     if (!t.snoozeUntil) return true
-    // se snoozeUntil <= hoje, volta a aparecer
-    return t.snoozeUntil <= dk
+    return t.snoozeUntil <= todayKey
   })
 }
 
-export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
-  const dk = makeDateKey(date ?? new Date())
-  const tasks = readTasks(dk)
-
+export function toggleDone(taskId: string, date: Date = new Date()): { ok: boolean } {
+  const tasks = readTasks(date)
   const idx = tasks.findIndex((t) => t.id === taskId)
   if (idx < 0) return { ok: false }
 
-  const t = tasks[idx]
-  const nextStatus: TaskStatus = t.status === 'done' ? 'active' : 'done'
+  const cur = tasks[idx]
+  const nextStatus: TaskStatus = cur.status === 'done' ? 'active' : 'done'
+  const next: MyDayTask = { ...cur, status: nextStatus }
 
-  tasks[idx] = normalizeTask({
-    ...t,
-    status: nextStatus,
-    // done não carrega snooze
-    snoozeUntil: nextStatus === 'done' ? undefined : t.snoozeUntil,
-  })
-
-  writeTasks(dk, tasks)
+  const out = [...tasks]
+  out[idx] = next
+  writeTasks(out, date)
 
   try {
-    track('my_day.task.toggle_done', {
-      status: nextStatus,
-      source: normalizeSource(tasks[idx].source),
-    })
+    track('my_day.toggle_done', { to: nextStatus })
   } catch {}
 
   return { ok: true }
 }
 
-export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean; snoozeUntil?: string } {
-  const dk = makeDateKey(date ?? new Date())
-  const tasks = readTasks(dk)
-
+/**
+ * Snooze leve: “não é pra hoje”
+ * - por padrão empurra para amanhã (days=1)
+ */
+export function snoozeTask(taskId: string, days: number = 1, date: Date = new Date()): { ok: boolean } {
+  const tasks = readTasks(date)
   const idx = tasks.findIndex((t) => t.id === taskId)
   if (idx < 0) return { ok: false }
 
-  // Snooze leve: empurra visibilidade para um dateKey futuro
-  const until = makeDateKey(addDays(date ?? new Date(), Math.max(1, days)))
+  const cur = tasks[idx]
+  const until = new Date(date)
+  until.setDate(until.getDate() + Math.max(1, Math.floor(days)))
 
-  const t = tasks[idx]
-  tasks[idx] = normalizeTask({
-    ...t,
+  const next: MyDayTask = {
+    ...cur,
     status: 'snoozed',
-    snoozeUntil: until,
-  })
+    snoozeUntil: makeDateKey(until),
+  }
 
-  writeTasks(dk, tasks)
-
-  try {
-    track('my_day.task.snooze', {
-      days: Math.max(1, days),
-      snoozeUntil: until,
-      source: normalizeSource(tasks[idx].source),
-    })
-  } catch {}
-
-  return { ok: true, snoozeUntil: until }
-}
-
-export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
-  const dk = makeDateKey(date ?? new Date())
-  const tasks = readTasks(dk)
-
-  const idx = tasks.findIndex((t) => t.id === taskId)
-  if (idx < 0) return { ok: false }
-
-  const t = tasks[idx]
-  tasks[idx] = normalizeTask({
-    ...t,
-    status: 'active',
-    snoozeUntil: undefined,
-  })
-
-  writeTasks(dk, tasks)
+  const out = [...tasks]
+  out[idx] = next
+  writeTasks(out, date)
 
   try {
-    track('my_day.task.unsnooze', {
-      source: normalizeSource(tasks[idx].source),
-    })
+    track('my_day.snooze', { days: Math.max(1, Math.floor(days)) })
   } catch {}
 
   return { ok: true }
 }
 
-export function removeTask(taskId: string, date?: Date): { ok: boolean } {
-  const dk = makeDateKey(date ?? new Date())
-  const tasks = readTasks(dk)
-
+export function removeTask(taskId: string, date: Date = new Date()): { ok: boolean } {
+  const tasks = readTasks(date)
   const before = tasks.length
-  const next = tasks.filter((t) => t.id !== taskId)
-  if (next.length === before) return { ok: false }
+  const out = tasks.filter((t) => t.id !== taskId)
+  if (out.length === before) return { ok: false }
 
-  writeTasks(dk, next)
+  writeTasks(out, date)
 
   try {
-    track('my_day.task.remove', { count: 1 })
+    track('my_day.remove', {})
   } catch {}
 
   return { ok: true }
 }
 
-/* =========================
-   AGRUPAMENTO (P8)
-========================= */
+/** -----------------------------
+ *  Grouping (P8 — por intenção)
+ *  ----------------------------- */
 
-export type TaskGroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
+export type MyDayGroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
 
-export type GroupedTasks = Array<{
-  id: TaskGroupId
+export type MyDayGroup = {
+  id: MyDayGroupId
   title: string
-  items: TaskItem[]
-}>
+  items: MyDayTask[]
+}
 
-export function groupTasks(tasks: TaskItem[]): GroupedTasks {
-  const normalized = normalizeTaskList(tasks)
+function inferOriginFromSource(source?: string): TaskOrigin | undefined {
+  if (!source) return undefined
+  if (source === MY_DAY_SOURCES.MATERNAR_MEU_FILHO) return 'family'
+  if (source === MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM) return 'self'
+  if (source === MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE) return 'today'
+  if (source === MY_DAY_SOURCES.PLANNER) return 'today'
+  return undefined
+}
 
-  const buckets: Record<TaskGroupId, TaskItem[]> = {
+function groupIdFromOrigin(origin?: TaskOrigin): MyDayGroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'self') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
+}
+
+function groupTitle(id: MyDayGroupId) {
+  if (id === 'para-hoje') return 'Para hoje (simples e real)'
+  if (id === 'familia') return 'Família & conexão'
+  if (id === 'autocuidado') return 'Autocuidado'
+  if (id === 'rotina-casa') return 'Rotina & casa'
+  return 'Outros'
+}
+
+export function groupTasks(tasks: MyDayTask[]): MyDayGroup[] {
+  const buckets: Record<MyDayGroupId, MyDayTask[]> = {
     'para-hoje': [],
     familia: [],
     autocuidado: [],
@@ -383,72 +341,12 @@ export function groupTasks(tasks: TaskItem[]): GroupedTasks {
     outros: [],
   }
 
-  for (const t of normalized) {
-    const src = normalizeSource(t.source)
-
-    // Mapeamento por intenção (sem “produtividade fria”)
-    if (src === 'maternar.meu-filho') {
-      buckets.familia.push(t)
-      continue
-    }
-
-    if (src === 'maternar.cuidar-de-mim') {
-      buckets.autocuidado.push(t)
-      continue
-    }
-
-    if (src === 'maternar.meu-dia-leve') {
-      buckets['para-hoje'].push(t)
-      continue
-    }
-
-    if (src === 'planner') {
-      buckets['para-hoje'].push(t)
-      continue
-    }
-
-    if (src === 'manual') {
-      buckets['para-hoje'].push(t)
-      continue
-    }
-
-    buckets.outros.push(t)
+  for (const t of tasks) {
+    const origin = t.origin ?? inferOriginFromSource(String(t.source ?? ''))
+    const gid = groupIdFromOrigin(origin)
+    buckets[gid].push({ ...t, origin: origin ?? t.origin })
   }
 
-  // Ordenação leve:
-  // - active primeiro, depois snoozed, depois done
-  // - mais recente primeiro por createdAt
-  const sortGroup = (a: TaskItem, b: TaskItem) => {
-    const wa = weightStatus(a.status)
-    const wb = weightStatus(b.status)
-    if (wa !== wb) return wa - wb
-
-    const ca = a.createdAt ? Date.parse(a.createdAt) : 0
-    const cb = b.createdAt ? Date.parse(b.createdAt) : 0
-    return cb - ca
-  }
-
-  const groups: GroupedTasks = [
-    { id: 'para-hoje', title: 'Para hoje (simples e real)', items: buckets['para-hoje'].sort(sortGroup) },
-    { id: 'familia', title: 'Família & conexão', items: buckets.familia.sort(sortGroup) },
-    { id: 'autocuidado', title: 'Autocuidado', items: buckets.autocuidado.sort(sortGroup) },
-    { id: 'rotina-casa', title: 'Rotina & casa', items: buckets['rotina-casa'].sort(sortGroup) },
-    { id: 'outros', title: 'Outros', items: buckets.outros.sort(sortGroup) },
-  ]
-
-  // Remover grupos vazios (UI agradece)
-  return groups.filter((g) => g.items.length > 0)
-}
-
-function weightStatus(s?: TaskStatus) {
-  // active (0) -> snoozed (1) -> done (2)
-  if (s === 'active' || !s) return 0
-  if (s === 'snoozed') return 1
-  return 2
-}
-
-function addDays(d: Date, days: number) {
-  const x = new Date(d)
-  x.setDate(x.getDate() + days)
-  return x
+  const ordered: MyDayGroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
+  return ordered.map((id) => ({ id, title: groupTitle(id), items: buckets[id] }))
 }
