@@ -342,13 +342,20 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const openMonthSheet = useCallback(() => {
-    setMonthCursor(toFirstOfMonth(selectedDate))
+    // Evita depender de selectedDate (que é derivado e declarado depois).
+    // Usa o selectedDateKey atual para manter o mesmo comportamento.
+    const base =
+      selectedDateKey && /^\d{4}-\d{2}-\d{2}$/.test(selectedDateKey)
+        ? new Date(selectedDateKey + 'T00:00:00')
+        : new Date()
+
+    setMonthCursor(toFirstOfMonth(base))
     setMonthSheetOpen(true)
 
     try {
       track('planner.month_sheet_opened', { tab: 'meu-dia' })
     } catch {}
-  }, [selectedDate])
+  }, [selectedDateKey])
 
   // ======================================================
   // DERIVED
@@ -543,9 +550,7 @@ export default function WeeklyPlannerCore() {
                     <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                       Agenda
                     </p>
-                    <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">
-                      Compromissos
-                    </h3>
+                    <h3 className="text-base md:text-lg font-semibold text-[var(--color-text-main)]">Compromissos</h3>
                     <p className="text-xs md:text-sm text-[var(--color-text-muted)]">
                       Compromissos salvos no Materna360 (todos os dias).
                     </p>
@@ -612,9 +617,7 @@ export default function WeeklyPlannerCore() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold text-[var(--color-text-main)]">
-                {selectedDate.toLocaleDateString('pt-BR')}
-              </div>
+              <div className="text-sm font-semibold text-[var(--color-text-main)]">{selectedDate.toLocaleDateString('pt-BR')}</div>
 
               <button
                 type="button"
@@ -649,9 +652,7 @@ export default function WeeklyPlannerCore() {
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                    Calendário
-                  </p>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Calendário</p>
                   <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
                     {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h3>
