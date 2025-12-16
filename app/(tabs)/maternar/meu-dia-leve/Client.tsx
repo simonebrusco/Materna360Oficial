@@ -4,12 +4,12 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
-import { addTaskToMyDayAndTrack, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -68,32 +68,16 @@ function focusTitle(f: Focus) {
 }
 
 function inferContext(): { slot: Slot; mood: Mood; focus: Focus } {
-  /**
-   * Best effort com Eu360 (sem acoplamento duro):
-   * - eu360_day_slot: "3" | "5" | "10"
-   * - eu360_mood: "no-limite" | "corrida" | "ok" | "leve"
-   * - eu360_focus_today: "casa" | "voce" | "filho" | "comida"
-   *
-   * Defaults pensados para mãe ocupada:
-   * - slot: 5
-   * - mood: corrida
-   * - focus: filho
-   */
   const slotRaw = safeGetLS('eu360_day_slot')
   const moodRaw = safeGetLS('eu360_mood')
   const focusRaw = safeGetLS('eu360_focus_today')
 
   const slot: Slot = slotRaw === '3' || slotRaw === '5' || slotRaw === '10' ? slotRaw : '5'
   const mood: Mood =
-    moodRaw === 'no-limite' || moodRaw === 'corrida' || moodRaw === 'ok' || moodRaw === 'leve'
-      ? moodRaw
-      : 'corrida'
+    moodRaw === 'no-limite' || moodRaw === 'corrida' || moodRaw === 'ok' || moodRaw === 'leve' ? moodRaw : 'corrida'
   const focus: Focus =
-    focusRaw === 'casa' || focusRaw === 'voce' || focusRaw === 'filho' || focusRaw === 'comida'
-      ? focusRaw
-      : 'filho'
+    focusRaw === 'casa' || focusRaw === 'voce' || focusRaw === 'filho' || focusRaw === 'comida' ? focusRaw : 'filho'
 
-  // Heurística operacional (produto, não terapia):
   if (mood === 'no-limite') return { slot: '3', mood, focus }
   return { slot, mood, focus }
 }
@@ -103,65 +87,19 @@ type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }> = {
-  'no-limite': {
-    title: 'Para agora',
-    line: 'Escolha uma coisa só. O resto pode esperar.',
-    action: 'Defina 1 prioridade mínima.',
-  },
-  corrida: {
-    title: 'Para hoje',
-    line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.',
-    action: 'Escolha o próximo passo.',
-  },
-  ok: {
-    title: 'Para manter',
-    line: 'Quando você simplifica, você ganha tempo de verdade.',
-    action: 'Corte uma exigência.',
-  },
-  leve: {
-    title: 'Para aproveitar',
-    line: 'Dia leve não é dia perfeito. É dia bem conduzido.',
-    action: 'Faça o básico bem feito.',
-  },
+  'no-limite': { title: 'Para agora', line: 'Escolha uma coisa só. O resto pode esperar.', action: 'Defina 1 prioridade mínima.' },
+  corrida: { title: 'Para hoje', line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.', action: 'Escolha o próximo passo.' },
+  ok: { title: 'Para manter', line: 'Quando você simplifica, você ganha tempo de verdade.', action: 'Corte uma exigência.' },
+  leve: { title: 'Para aproveitar', line: 'Dia leve não é dia perfeito. É dia bem conduzido.', action: 'Faça o básico bem feito.' },
 }
 
 const IDEIAS: QuickIdea[] = [
-  {
-    tag: '3 min',
-    title: 'Respirar + ombros para baixo',
-    how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.',
-    slot: '3',
-    focus: 'voce',
-  },
-  {
-    tag: '3 min',
-    title: 'Mensagem curta que resolve',
-    how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.',
-    slot: '3',
-    focus: 'casa',
-  },
-  {
-    tag: '5 min',
-    title: 'Conexão com o filho (sem inventar)',
-    how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.',
-    slot: '5',
-    focus: 'filho',
-  },
+  { tag: '3 min', title: 'Respirar + ombros para baixo', how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.', slot: '3', focus: 'voce' },
+  { tag: '3 min', title: 'Mensagem curta que resolve', how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.', slot: '3', focus: 'casa' },
+  { tag: '5 min', title: 'Conexão com o filho (sem inventar)', how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.', slot: '5', focus: 'filho' },
   { tag: '5 min', title: 'Organizar um ponto só', how: 'Uma bancada ou mesa. Não a casa toda.', slot: '5', focus: 'casa' },
-  {
-    tag: '10 min',
-    title: 'Música + tarefa que já existe',
-    how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.',
-    slot: '10',
-    focus: 'voce',
-  },
-  {
-    tag: '10 min',
-    title: 'Banho/escova em modo leve',
-    how: 'Transforme a rotina em “missão” rápida e sem discussão.',
-    slot: '10',
-    focus: 'filho',
-  },
+  { tag: '10 min', title: 'Música + tarefa que já existe', how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.', slot: '10', focus: 'voce' },
+  { tag: '10 min', title: 'Banho/escova em modo leve', how: 'Transforme a rotina em “missão” rápida e sem discussão.', slot: '10', focus: 'filho' },
   { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo pronto. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
 ]
 
@@ -179,15 +117,7 @@ const PASSO_LEVE: DayLine[] = [
   { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
 ]
 
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active?: boolean
-  onClick?: () => void
-  children: React.ReactNode
-}) {
+function Pill({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -233,51 +163,17 @@ function CardChoice({
   )
 }
 
-function originFromFocus(f: Focus) {
-  // TaskOrigin = 'top3' | 'agenda' | 'selfcare' | 'family' | 'manual'
-  if (f === 'voce') return 'selfcare' as const
-  if (f === 'filho') return 'family' as const
-  return 'agenda' as const // casa / comida
-}
-
 export default function MeuDiaLeveClient() {
   const [step, setStep] = useState<Step>('inspiracao')
   const [slot, setSlot] = useState<Slot>('5')
   const [mood, setMood] = useState<Mood>('corrida')
   const [focus, setFocus] = useState<Focus>('filho')
 
-  // seleções por etapa (para não virar catálogo)
   const [pickedIdea, setPickedIdea] = useState<number>(0)
   const [pickedRecipe, setPickedRecipe] = useState<number>(0)
   const [pickedPasso, setPickedPasso] = useState<number>(0)
 
   const [saveFeedback, setSaveFeedback] = useState<string>('')
-
-  function saveToMyDay(title: string, origin: ReturnType<typeof originFromFocus>) {
-    try {
-      // Source (telemetria): hoje temos só maternarMeuFilho cadastrado no enum — reaproveitando temporariamente.
-      const res = addTaskToMyDayAndTrack({
-        title,
-        origin,
-        source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
-      })
-
-      if (res?.ok) {
-        setSaveFeedback('Salvo no Meu Dia.')
-      } else {
-        setSaveFeedback('Essa tarefa já está no Meu Dia.')
-      }
-
-      try {
-        track('meu_dia_leve.save_to_my_day', { origin, created: !!res?.created, title })
-      } catch {}
-
-      window.setTimeout(() => setSaveFeedback(''), 2200)
-    } catch {
-      setSaveFeedback('Não foi possível salvar agora.')
-      window.setTimeout(() => setSaveFeedback(''), 2200)
-    }
-  }
 
   useEffect(() => {
     try {
@@ -300,7 +196,6 @@ export default function MeuDiaLeveClient() {
   const inspiration = useMemo(() => INSPIRATIONS[mood], [mood])
 
   const ideasForNow = useMemo(() => {
-    // reduz escolha: filtra por slot + foco; se faltar, relaxa foco; se faltar, relaxa slot
     const strict = IDEIAS.filter((i) => i.slot === slot && i.focus === focus)
     if (strict.length >= 2) return strict.slice(0, 3)
 
@@ -341,7 +236,6 @@ export default function MeuDiaLeveClient() {
   function onSelectMood(next: Mood) {
     setMood(next)
     safeSetLS('eu360_mood', next)
-    // heurística: se no limite, encurta
     if (next === 'no-limite') {
       setSlot('3')
       safeSetLS('eu360_day_slot', '3')
@@ -366,6 +260,24 @@ export default function MeuDiaLeveClient() {
   const selectedRecipe = recipesForNow[clampIndex(pickedRecipe, recipesForNow.length)]
   const selectedPasso = passosForNow[clampIndex(pickedPasso, passosForNow.length)]
 
+  async function saveToMyDay(title: string, origin: string) {
+    // origin aqui é “intenção”; se no futuro você tipar TaskOrigin, basta trocar este cast.
+    const res = addTaskToMyDay({
+      title,
+      origin: origin as any,
+      source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
+    } as any)
+
+    if (res?.ok) setSaveFeedback('Salvo no Meu Dia.')
+    else setSaveFeedback('Essa tarefa já está no Meu Dia.')
+
+    try {
+      track('meu_dia_leve.save_to_my_day', { origin, ok: !!res?.ok, title })
+    } catch {}
+
+    window.setTimeout(() => setSaveFeedback(''), 2200)
+  }
+
   return (
     <main
       data-layout="page-template-v1"
@@ -379,7 +291,6 @@ export default function MeuDiaLeveClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
-          {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
@@ -397,7 +308,6 @@ export default function MeuDiaLeveClient() {
             </div>
           </header>
 
-          {/* EXPERIÊNCIA ÚNICA (um container) */}
           <Reveal>
             <section
               className="
@@ -409,7 +319,6 @@ export default function MeuDiaLeveClient() {
                 overflow-hidden
               "
             >
-              {/* Top bar: contexto + trilha */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -424,7 +333,9 @@ export default function MeuDiaLeveClient() {
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sugestão pronta para o seu agora
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{slotHint(slot)}</div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
+                        {slotHint(slot)}
+                      </div>
                     </div>
                   </div>
 
@@ -442,7 +353,6 @@ export default function MeuDiaLeveClient() {
                   </button>
                 </div>
 
-                {/* Ajustes rápidos (secundários) */}
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
                     <div className="text-[12px] text-white/85 mb-2">Quanto tempo dá?</div>
@@ -478,7 +388,6 @@ export default function MeuDiaLeveClient() {
                   </div>
                 </div>
 
-                {/* Stepper */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(
                     [
@@ -495,7 +404,9 @@ export default function MeuDiaLeveClient() {
                         onClick={() => go(it.id)}
                         className={[
                           'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                          active
+                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                            : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                         ].join(' ')}
                       >
                         {it.label}
@@ -505,16 +416,13 @@ export default function MeuDiaLeveClient() {
                 </div>
               </div>
 
-              {/* Conteúdo muda dentro do mesmo container */}
               <div className="p-4 md:p-6">
-                {/* Feedback discreto (sem toast externo) */}
                 {saveFeedback ? (
-                  <div className="mb-3 rounded-2xl bg-white/85 border border-white/60 px-4 py-2 text-[12px] text-[#2f3a56]">
+                  <div className="mb-4 rounded-2xl bg-white/90 border border-white/60 px-4 py-3 text-[12px] text-[#2f3a56]">
                     {saveFeedback}
                   </div>
                 ) : null}
 
-                {/* 1) INSPIRAÇÃO DO DIA */}
                 {step === 'inspiracao' ? (
                   <div id="inspiracao" className="space-y-4">
                     <SoftCard
@@ -542,7 +450,9 @@ export default function MeuDiaLeveClient() {
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
-                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">{inspiration.line}</div>
+                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">
+                          {inspiration.line}
+                        </div>
                         <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
                           Ação: <span className="font-semibold text-[#2f3a56]">{inspiration.action}</span>
                         </div>
@@ -566,7 +476,6 @@ export default function MeuDiaLeveClient() {
                   </div>
                 ) : null}
 
-                {/* 2) IDEIAS RÁPIDAS */}
                 {step === 'ideias' ? (
                   <div id="ideias" className="space-y-4">
                     <SoftCard
@@ -610,7 +519,6 @@ export default function MeuDiaLeveClient() {
                         ))}
                       </div>
 
-                      {/* Faça agora (destaque) */}
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{selectedIdea?.title}</div>
@@ -618,19 +526,17 @@ export default function MeuDiaLeveClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => saveToMyDay(selectedIdea?.title ?? 'Ideia do Meu Dia Leve', originFromFocus(selectedIdea?.focus ?? focus))}
-                            className="rounded-full bg-[#2f3a56] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            onClick={() => saveToMyDay(selectedIdea?.title ?? 'Ideia rápida', `maternar.ideia.${focus}`)}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Salvar no Meu Dia
                           </button>
-
                           <button
                             onClick={() => go('passo')}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
                             Fechar com um passo leve
                           </button>
-
                           <button
                             onClick={() => go('receitas')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
@@ -643,7 +549,6 @@ export default function MeuDiaLeveClient() {
                   </div>
                 ) : null}
 
-                {/* 3) RECEITAS RÁPIDAS */}
                 {step === 'receitas' ? (
                   <div id="receitas" className="space-y-4">
                     <SoftCard
@@ -707,19 +612,17 @@ export default function MeuDiaLeveClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => saveToMyDay(selectedRecipe?.title ?? 'Receita rápida (Meu Dia Leve)', 'agenda')}
-                            className="rounded-full bg-[#2f3a56] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            onClick={() => saveToMyDay(selectedRecipe?.title ?? 'Receita rápida', 'maternar.comida')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Salvar no Meu Dia
                           </button>
-
                           <button
                             onClick={() => go('passo')}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
                             Fechar com o passo leve
                           </button>
-
                           <button
                             onClick={() => go('ideias')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
@@ -732,7 +635,6 @@ export default function MeuDiaLeveClient() {
                   </div>
                 ) : null}
 
-                {/* 4) PASSO LEVE */}
                 {step === 'passo' ? (
                   <div id="passo" className="space-y-4">
                     <SoftCard
@@ -783,13 +685,8 @@ export default function MeuDiaLeveClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() =>
-                              saveToMyDay(
-                                selectedPasso?.title ?? 'Passo leve do dia',
-                                originFromFocus(selectedPasso?.focus ?? focus)
-                              )
-                            }
-                            className="rounded-full bg-[#2f3a56] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            onClick={() => saveToMyDay(selectedPasso?.title ?? 'Passo leve', `maternar.passo.${selectedPasso?.focus ?? 'outros'}`)}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Salvar no Meu Dia
                           </button>
