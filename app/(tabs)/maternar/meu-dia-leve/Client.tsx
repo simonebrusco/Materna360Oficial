@@ -19,6 +19,8 @@ type Slot = '3' | '5' | '10'
 type Mood = 'no-limite' | 'corrida' | 'ok' | 'leve'
 type Focus = 'casa' | 'voce' | 'filho' | 'comida'
 
+type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
@@ -87,10 +89,26 @@ type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }> = {
-  'no-limite': { title: 'Para agora', line: 'Escolha uma coisa só. O resto pode esperar.', action: 'Defina 1 prioridade mínima.' },
-  corrida: { title: 'Para hoje', line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.', action: 'Escolha o próximo passo.' },
-  ok: { title: 'Para manter', line: 'Quando você simplifica, você ganha tempo de verdade.', action: 'Corte uma exigência.' },
-  leve: { title: 'Para aproveitar', line: 'Dia leve não é dia perfeito. É dia bem conduzido.', action: 'Faça o básico bem feito.' },
+  'no-limite': {
+    title: 'Para agora',
+    line: 'Escolha uma coisa só. O resto pode esperar.',
+    action: 'Defina 1 prioridade mínima.',
+  },
+  corrida: {
+    title: 'Para hoje',
+    line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.',
+    action: 'Escolha o próximo passo.',
+  },
+  ok: {
+    title: 'Para manter',
+    line: 'Quando você simplifica, você ganha tempo de verdade.',
+    action: 'Corte uma exigência.',
+  },
+  leve: {
+    title: 'Para aproveitar',
+    line: 'Dia leve não é dia perfeito. É dia bem conduzido.',
+    action: 'Faça o básico bem feito.',
+  },
 }
 
 const IDEIAS: QuickIdea[] = [
@@ -117,7 +135,15 @@ const PASSO_LEVE: DayLine[] = [
   { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
 ]
 
-function Pill({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) {
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean
+  onClick?: () => void
+  children: React.ReactNode
+}) {
   return (
     <button
       type="button"
@@ -161,6 +187,21 @@ function CardChoice({
       <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{subtitle}</div>
     </button>
   )
+}
+
+function clampIndex(i: number, len: number) {
+  if (len <= 0) return 0
+  if (i < 0) return 0
+  if (i >= len) return len - 1
+  return i
+}
+
+function originFromFocus(f: Focus): TaskOrigin {
+  if (f === 'filho') return 'family'
+  if (f === 'voce') return 'selfcare'
+  if (f === 'casa') return 'home'
+  if (f === 'comida') return 'today'
+  return 'other'
 }
 
 export default function MeuDiaLeveClient() {
@@ -260,19 +301,24 @@ export default function MeuDiaLeveClient() {
   const selectedRecipe = recipesForNow[clampIndex(pickedRecipe, recipesForNow.length)]
   const selectedPasso = passosForNow[clampIndex(pickedPasso, passosForNow.length)]
 
-  async function saveToMyDay(title: string, origin: string) {
-    // origin aqui é “intenção”; se no futuro você tipar TaskOrigin, basta trocar este cast.
+  function saveCurrentToMyDay(title: string) {
+    const origin = originFromFocus(focus)
     const res = addTaskToMyDay({
       title,
-      origin: origin as any,
+      origin,
       source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
-    } as any)
+    })
 
-    if (res?.ok) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Essa tarefa já está no Meu Dia.')
+    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
+    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
 
     try {
-      track('meu_dia_leve.save_to_my_day', { origin, ok: !!res?.ok, title })
+      track('meu_dia_leve.save_to_my_day', {
+        origin,
+        created: res.created,
+        dateKey: res.dateKey,
+        source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
+      })
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
@@ -293,7 +339,10 @@ export default function MeuDiaLeveClient() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -418,7 +467,7 @@ export default function MeuDiaLeveClient() {
 
               <div className="p-4 md:p-6">
                 {saveFeedback ? (
-                  <div className="mb-4 rounded-2xl bg-white/90 border border-white/60 px-4 py-3 text-[12px] text-[#2f3a56]">
+                  <div className="mb-4 rounded-2xl bg-white/80 border border-white/50 px-4 py-3 text-[12px] text-[#2f3a56]">
                     {saveFeedback}
                   </div>
                 ) : null}
@@ -449,7 +498,9 @@ export default function MeuDiaLeveClient() {
                       </div>
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          {inspiration.title}
+                        </div>
                         <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">
                           {inspiration.line}
                         </div>
@@ -526,17 +577,21 @@ export default function MeuDiaLeveClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => saveToMyDay(selectedIdea?.title ?? 'Ideia rápida', `maternar.ideia.${focus}`)}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            onClick={() => {
+                              if (selectedIdea?.title) saveCurrentToMyDay(selectedIdea.title)
+                            }}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
                             Salvar no Meu Dia
                           </button>
+
                           <button
                             onClick={() => go('passo')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Fechar com um passo leve
                           </button>
+
                           <button
                             onClick={() => go('receitas')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
@@ -612,17 +667,21 @@ export default function MeuDiaLeveClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => saveToMyDay(selectedRecipe?.title ?? 'Receita rápida', 'maternar.comida')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            onClick={() => {
+                              if (selectedRecipe?.title) saveCurrentToMyDay(selectedRecipe.title)
+                            }}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
                             Salvar no Meu Dia
                           </button>
+
                           <button
                             onClick={() => go('passo')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Fechar com o passo leve
                           </button>
+
                           <button
                             onClick={() => go('ideias')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
@@ -685,15 +744,17 @@ export default function MeuDiaLeveClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => saveToMyDay(selectedPasso?.title ?? 'Passo leve', `maternar.passo.${selectedPasso?.focus ?? 'outros'}`)}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            onClick={() => {
+                              if (selectedPasso?.title) saveCurrentToMyDay(selectedPasso.title)
+                            }}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
                             Salvar no Meu Dia
                           </button>
 
                           <Link
                             href="/maternar/meu-filho"
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Ir para Meu Filho
                           </Link>
@@ -713,7 +774,9 @@ export default function MeuDiaLeveClient() {
                           </Link>
                         </div>
 
-                        <div className="mt-4 text-[12px] text-[#6a6a6a]">Fechou. Um passo leve já é progresso no Materna360.</div>
+                        <div className="mt-4 text-[12px] text-[#6a6a6a]">
+                          Fechou. Um passo leve já é progresso no Materna360.
+                        </div>
                       </div>
                     </SoftCard>
                   </div>
@@ -729,11 +792,4 @@ export default function MeuDiaLeveClient() {
       </ClientOnly>
     </main>
   )
-}
-
-function clampIndex(i: number, len: number) {
-  if (len <= 0) return 0
-  if (i < 0) return 0
-  if (i >= len) return len - 1
-  return i
 }
