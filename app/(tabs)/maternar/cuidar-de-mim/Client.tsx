@@ -18,6 +18,8 @@ type Step = 'ritmo' | 'mini-rotina' | 'pausas' | 'para-voce'
 type FocusMode = '1min' | '3min' | '5min'
 type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
 
+type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+
 type Routine = {
   id: string
   title: string
@@ -147,6 +149,10 @@ function pickRoutine(focus: FocusMode) {
   return ROUTINES.find((r) => r.focus === focus) ?? ROUTINES[1]
 }
 
+function originForCuidarDeMim(): TaskOrigin {
+  return 'selfcare'
+}
+
 export default function Client() {
   const [step, setStep] = useState<Step>('mini-rotina')
   const [focus, setFocus] = useState<FocusMode>('3min')
@@ -229,21 +235,24 @@ export default function Client() {
     } catch {}
   }
 
-  function saveRoutineToMyDay() {
-    const title = routine.title
-    const origin = 'maternar.autocuidado'
-
+  function saveToMyDay(title: string) {
+    const origin = originForCuidarDeMim()
     const res = addTaskToMyDay({
       title,
-      origin: origin as any,
+      origin,
       source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-    } as any)
+    })
 
-    if (res?.ok) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Essa tarefa já está no Meu Dia.')
+    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
+    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
 
     try {
-      track('cuidar_de_mim.save_to_my_day', { origin, ok: !!res?.ok, title })
+      track('cuidar_de_mim.save_to_my_day', {
+        origin,
+        created: res.created,
+        dateKey: res.dateKey,
+        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+      })
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
@@ -271,7 +280,10 @@ export default function Client() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -285,12 +297,6 @@ export default function Client() {
               </p>
             </div>
           </header>
-
-          {saveFeedback ? (
-            <div className="mb-4 rounded-2xl bg-white/90 border border-white/60 px-4 py-3 text-[12px] text-[#2f3a56]">
-              {saveFeedback}
-            </div>
-          ) : null}
 
           <div className="space-y-7 md:space-y-8 pb-10">
             <div
@@ -329,13 +335,15 @@ export default function Client() {
                           Sugestão pronta para agora: {routine.title}
                         </div>
 
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">{routine.subtitle}</div>
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">
+                          {routine.subtitle}
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={saveRoutineToMyDay}
+                        onClick={() => go('ritmo')}
                         className="
                           rounded-full
                           bg-white/90 hover:bg-white
@@ -343,20 +351,6 @@ export default function Client() {
                           px-4 py-2
                           text-[12px]
                           shadow-[0_6px_18px_rgba(0,0,0,0.12)]
-                          transition
-                        "
-                      >
-                        Salvar no Meu Dia
-                      </button>
-                      <button
-                        onClick={() => go('ritmo')}
-                        className="
-                          rounded-full
-                          bg-white/20 hover:bg-white/25
-                          text-white
-                          px-4 py-2
-                          text-[12px]
-                          border border-white/30
                           transition
                         "
                       >
@@ -411,9 +405,17 @@ export default function Client() {
                     shadow-[0_10px_28px_rgba(184,35,107,0.12)]
                   "
                 >
+                  {saveFeedback ? (
+                    <div className="mb-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] px-4 py-3 text-[12px] text-[#2f3a56]">
+                      {saveFeedback}
+                    </div>
+                  ) : null}
+
                   {step === 'ritmo' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido (pra eu pensar melhor por você)</div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">
+                        Ajuste rápido (pra eu pensar melhor por você)
+                      </div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
@@ -512,30 +514,46 @@ export default function Client() {
                             onClick={() => toggleStep(i)}
                             className={[
                               'rounded-3xl border p-4 text-left transition',
-                              checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                              checked[i]
+                                ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                             ].join(' ')}
                           >
-                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">passo {i + 1}</div>
+                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                              passo {i + 1}
+                            </div>
                             <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
+                            <div className="text-[12px] text-[#6a6a6a] mt-3">
+                              {checked[i] ? 'feito ✓' : 'marcar como feito'}
+                            </div>
                           </button>
                         ))}
                       </div>
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
+                          Faça só o passo 1. Isso já ajuda.
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => saveToMyDay(routine.title)}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+
                           <button
                             onClick={() => go('pausas')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Ir para Pausas rápidas
                           </button>
+
                           <button
                             onClick={() => go('para-voce')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Finalizar
                           </button>
@@ -553,7 +571,9 @@ export default function Client() {
                         <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
                           {routine.pauseDeck[pauseIndex]?.label}
                         </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-2">Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min</div>
+                        <div className="text-[12px] text-[#6a6a6a] mt-2">
+                          Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -562,22 +582,26 @@ export default function Client() {
                           >
                             Outra pausa
                           </button>
+
                           <button
-                            onClick={() => go('mini-rotina')}
+                            onClick={() => saveToMyDay(routine.pauseDeck[pauseIndex]?.label ?? routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Voltar para a ação
+                            Salvar no Meu Dia
                           </button>
+
                           <button
-                            onClick={() => go('para-voce')}
+                            onClick={() => go('mini-rotina')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Concluir
+                            Voltar para a ação
                           </button>
                         </div>
                       </div>
 
-                      <div className="text-[12px] text-[#6a6a6a]">Regra do Materna: uma pausa já conta. Não precisa fazer tudo.</div>
+                      <div className="text-[12px] text-[#6a6a6a]">
+                        Regra do Materna: uma pausa já conta. Não precisa fazer tudo.
+                      </div>
                     </div>
                   ) : null}
 
@@ -594,17 +618,26 @@ export default function Client() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => go('mini-rotina')}
+                            onClick={() => saveToMyDay(routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+
+                          <button
+                            onClick={() => go('mini-rotina')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Repetir (mesma opção)
                           </button>
+
                           <Link
                             href="/maternar/meu-filho"
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Ir para Meu Filho
                           </Link>
+
                           <button
                             onClick={() => go('ritmo')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
