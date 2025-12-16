@@ -8,7 +8,7 @@ import { track } from '@/app/lib/telemetry'
  *
  * - Compatível com tarefas antigas (migração silenciosa)
  * - Inclui base P8: status, snoozeUntil, createdAt, source
- * - Mantém export addTaskToMyDay para os clients (Meu Filho, Meu Dia Leve, Cuidar de Mim)
+ * - Mantém exports usados por Clients e Planner (TaskItem/TaskOrigin)
  */
 
 /** Sources (telemetria + agrupamento fino no futuro) */
@@ -25,7 +25,7 @@ export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
 
 /**
  * Origem/Intenção (P8)
- * IMPORTANTE: inclui "top3" para compatibilidade com o WeeklyPlanner (evita erro de build).
+ * IMPORTANTE: inclui "top3" para compatibilidade com WeeklyPlanner.
  */
 export type TaskOrigin = 'today' | 'top3' | 'family' | 'selfcare' | 'home' | 'other'
 
@@ -42,6 +42,12 @@ export type MyDayTaskItem = {
   createdAt?: string // ISO
   source?: MyDaySource
 }
+
+/**
+ * Compatibilidade com o Planner:
+ * WeeklyPlannerCore importa TaskItem e TaskOrigin daqui.
+ */
+export type TaskItem = MyDayTaskItem
 
 /** Entrada padrão para salvar no Meu Dia */
 export type AddToMyDayInput = {
@@ -129,7 +135,6 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
       const title = typeof it.title === 'string' ? it.title : ''
 
       const origin: TaskOrigin = isTaskOrigin(it.origin) ? it.origin : 'other'
-
       if (!id || !title) return null
 
       const status: TaskStatus | undefined = isTaskStatus(it.status) ? it.status : undefined
@@ -180,9 +185,7 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
 
     const exists = tasks.some((t) => t.title.trim().toLowerCase() === title.toLowerCase() && t.origin === origin)
 
-    if (exists) {
-      return { ok: true, created: false, dateKey: dk }
-    }
+    if (exists) return { ok: true, created: false, dateKey: dk }
 
     const id =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -210,7 +213,7 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
 }
 
 /**
- * Wrapper com telemetria (útil se você quiser padronizar em P8)
+ * Wrapper com telemetria (opcional)
  */
 export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDaySource }) {
   const res = addTaskToMyDay(input)
@@ -310,8 +313,7 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
 }
 
 /**
- * P8: agrupamento por intenção/origin (com guardrails na UI depois).
- * Aqui só retorna a estrutura agrupada.
+ * P8: agrupamento por intenção/origin (UI aplica guardrails depois).
  */
 export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
   const grouped: GroupedTasks = {
