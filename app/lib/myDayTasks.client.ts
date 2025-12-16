@@ -247,9 +247,39 @@ export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDayS
   return res
 }
 
+/**
+ * P8: leitura do dia, com auto-normalização leve
+ * - Se uma tarefa estava snoozed e o snoozeUntil chegou/venceu, ela volta para active automaticamente.
+ * - Persistimos apenas se houve mudança real.
+ */
 export function listMyDayTasks(date?: Date): MyDayTaskItem[] {
   const dk = makeDateKey(date ?? new Date())
-  return readTasksByDateKey(dk)
+  const tasks = readTasksByDateKey(dk)
+
+  let changed = false
+  const next = tasks.map((t) => {
+    const status = t.status ?? (t.done ? 'done' : 'active')
+
+    if (status === 'snoozed' && t.snoozeUntil && dk >= t.snoozeUntil) {
+      changed = true
+      return { ...t, status: 'active', snoozeUntil: undefined, done: false }
+    }
+
+    // garante coerência mínima status <-> done (sem reescrever tudo)
+    if (t.done === true && status !== 'done') {
+      changed = true
+      return { ...t, status: 'done' }
+    }
+    if (t.done === false && status === 'done') {
+      changed = true
+      return { ...t, done: true }
+    }
+
+    return { ...t, status }
+  })
+
+  if (changed) writeTasksByDateKey(dk, next)
+  return next
 }
 
 export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
@@ -301,6 +331,30 @@ export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean
   } catch {
     try {
       track('my_day.task.snooze', { ok: false, days })
+    } catch {}
+    return { ok: false }
+  }
+}
+
+/** P8: “Voltar para hoje” (unsnooze) */
+export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
+  try {
+    const dk = makeDateKey(date ?? new Date())
+    const tasks = readTasksByDateKey(dk)
+
+    const next: MyDayTaskItem[] = tasks.map((t) => {
+      if (t.id !== taskId) return t
+      return { ...t, status: 'active', snoozeUntil: undefined, done: false }
+    })
+
+    writeTasksByDateKey(dk, next)
+    try {
+      track('my_day.task.unsnooze', { ok: true })
+    } catch {}
+    return { ok: true }
+  } catch {
+    try {
+      track('my_day.task.unsnooze', { ok: false })
     } catch {}
     return { ok: false }
   }
