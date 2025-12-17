@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
+
 import { track } from '@/app/lib/telemetry'
 import {
   groupTasks,
@@ -16,6 +17,7 @@ import {
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
 
 type GroupId = keyof GroupedTasks
 
@@ -26,13 +28,6 @@ const DEFAULT_LIMIT = 5
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
-
-function safeDateKey(d = new Date()) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 function safeGetLS(key: string): string | null {
   try {
@@ -209,7 +204,9 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   // P13 — linha de continuidade (no máximo 1x/dia)
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
 
-  const dateKey = useMemo(() => safeDateKey(new Date()), [])
+  // ✅ padroniza com “Brasil” igual o resto do app
+  const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const totalCount = useMemo(() => tasks.length, [tasks])
 
@@ -279,7 +276,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     } catch {
       setContinuityLine(null)
     }
-  }, [dateKey, euSignal])
+  }, [dateKey, euSignal?.tone])
 
   // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
   useEffect(() => {
