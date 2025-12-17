@@ -13,15 +13,12 @@ import {
   type GroupedTasks,
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
-import {
-  getEu360Signal,
-  getRecentMyDaySave,
-  clearRecentMyDaySave,
-  groupIdFromOrigin,
-  type GroupId,
-} from '@/app/lib/eu360Signals.client'
+
+type GroupId = keyof GroupedTasks
+export type MyDayGroupId = GroupId
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
+const LIMIT = 5
 
 // P9.2 — Trilhas leves (micro-orientação sem cobrança)
 const GROUP_HINTS: Partial<Record<GroupId, string>> = {
@@ -69,17 +66,18 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
-export function MyDayGroups() {
+type Props = {
+  highlightGroupId?: GroupId
+}
+
+export function MyDayGroups({ highlightGroupId }: Props) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [focusGroup, setFocusGroup] = useState<GroupId | null>(null)
-  const [showSavedBanner, setShowSavedBanner] = useState(false)
+  const [pulseOn, setPulseOn] = useState(false)
 
-  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const highlightRef = useRef<HTMLDivElement | null>(null)
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
-  const signal = useMemo(() => getEu360Signal(), [])
-
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const totalCount = useMemo(() => tasks.length, [tasks])
 
@@ -100,25 +98,26 @@ export function MyDayGroups() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // se veio de “Salvar no Meu Dia” (ex.: Meu Dia Leve), abrir o bloco certo e mostrar frase
+  // se vier highlight, abrir + scroll + pulse
   useEffect(() => {
-    const recent = getRecentMyDaySave()
-    if (!recent) return
+    if (!highlightGroupId) return
 
-    const gid = groupIdFromOrigin(recent.origin)
-    setFocusGroup(gid)
-    setExpanded((prev) => ({ ...prev, [gid]: true }))
-    setShowSavedBanner(true)
+    setExpanded((prev) => ({ ...prev, [highlightGroupId]: true }))
+    setPulseOn(true)
 
-    // rolar até o bloco (depois do paint)
-    window.setTimeout(() => {
-      const el = groupRefs.current[gid]
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 150)
+    const t1 = window.setTimeout(() => {
+      try {
+        highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } catch {}
+    }, 120)
 
-    // limpa o “sinal” para não ficar repetindo em todo refresh
-    clearRecentMyDaySave()
-  }, [])
+    const t2 = window.setTimeout(() => setPulseOn(false), 2200)
+
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [highlightGroupId])
 
   function toggleGroup(id: GroupId) {
     setExpanded((prev) => {
@@ -171,35 +170,9 @@ export function MyDayGroups() {
   }
 
   const hasAny = totalCount > 0
-  const LIMIT = Math.max(3, Math.min(7, signal.listLimit)) // guarda-rail
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* Banner de chegada (com contraste bom) */}
-      {showSavedBanner && signal.showLessLine ? (
-        <div className="rounded-3xl border border-white/35 bg-white/14 backdrop-blur-md px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[12px] font-semibold text-white leading-snug">
-                Hoje pode ser menos. O essencial já está aqui.
-              </p>
-              <p className="mt-1 text-[11px] text-white/85">
-                Eu já organizei o que você salvou — escolha só o próximo passo.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowSavedBanner(false)}
-              className="shrink-0 rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-3 py-1.5 text-[12px] font-semibold transition"
-              aria-label="Fechar mensagem"
-            >
-              Ok
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <div className="flex items-end justify-between gap-3">
         <div>
           <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">
@@ -238,18 +211,16 @@ export function MyDayGroups() {
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
-            const isFocused = focusGroup === groupId
+            const isHighlight = highlightGroupId === groupId
 
             return (
               <div
                 key={groupId}
-                ref={(el) => {
-                  groupRefs.current[groupId] = el
-                }}
-                data-group={groupId}
+                ref={isHighlight ? highlightRef : undefined}
                 className={cx(
                   'bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]',
-                  isFocused && 'ring-2 ring-[#ffd8e6]'
+                  isHighlight && 'border-[#fd2597]',
+                  isHighlight && pulseOn && 'ring-2 ring-[#fd2597]/35'
                 )}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -264,7 +235,7 @@ export function MyDayGroups() {
 
                     <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
                       {count} {count === 1 ? 'tarefa' : 'tarefas'}
-                      {hasMore && !isExpanded ? ' • mostrando só o essencial agora.' : ''}
+                      {hasMore && !isExpanded ? ' • talvez você não precise olhar tudo agora.' : ''}
                     </p>
                   </div>
 
