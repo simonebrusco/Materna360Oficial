@@ -5,6 +5,7 @@ import { safeGetLS, safeParseJSON } from '@/app/lib/ai/storageSafe'
 export type AiPersonaContext = {
   persona?: string
   label?: string
+  microCopy?: string
   updatedAtISO?: string
 }
 
@@ -30,19 +31,28 @@ const LS_KEYS = {
   daySlot: 'eu360_day_slot',
 }
 
+function normalizeText(v: unknown): string | undefined {
+  if (typeof v !== 'string') return undefined
+  const s = v.trim()
+  return s ? s : undefined
+}
+
 export function buildAiContext(): AiLightContext {
-  const mood = safeGetLS(LS_KEYS.mood) ?? undefined
-  const focusToday = safeGetLS(LS_KEYS.focusToday) ?? undefined
-  const daySlot = safeGetLS(LS_KEYS.daySlot) ?? undefined
+  const mood = normalizeText(safeGetLS(LS_KEYS.mood)) ?? undefined
+  const focusToday = normalizeText(safeGetLS(LS_KEYS.focusToday)) ?? undefined
+  const daySlot = normalizeText(safeGetLS(LS_KEYS.daySlot)) ?? undefined
 
   const rawPersona = safeGetLS(LS_KEYS.persona)
   const parsedPersona = safeParseJSON<PersonaResultLS>(rawPersona)
 
-  const persona: AiPersonaContext | undefined = parsedPersona
+  const personaId = normalizeText(parsedPersona?.persona)
+
+  const persona: AiPersonaContext | undefined = personaId
     ? {
-        persona: parsedPersona.persona,
-        label: parsedPersona.label,
-        updatedAtISO: parsedPersona.updatedAtISO,
+        persona: personaId,
+        label: normalizeText(parsedPersona?.label),
+        microCopy: normalizeText(parsedPersona?.microCopy),
+        updatedAtISO: normalizeText(parsedPersona?.updatedAtISO),
       }
     : undefined
 
