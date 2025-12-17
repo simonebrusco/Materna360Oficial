@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { track } from '@/app/lib/telemetry'
 import {
   groupTasks,
@@ -26,14 +26,6 @@ const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   autocuidado: 'Cuidar de você pode ser simples.',
   'rotina-casa': 'Nem tudo precisa ser feito hoje.',
   outros: 'Talvez isso possa esperar.',
-}
-
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-
-type RecentSavePayload = {
-  ts: number
-  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
-  source?: string
 }
 
 function safeDateKey(d = new Date()) {
@@ -73,45 +65,13 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
+function groupDomId(groupId: GroupId) {
+  return `myday-group-${groupId}`
 }
 
-function safeRemoveLS(key: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(key)
-  } catch {}
-}
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  try {
-    if (!raw) return null
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
-
-function groupFromOrigin(origin: RecentSavePayload['origin']): GroupId {
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  if (origin === 'today') return 'para-hoje'
-  return 'outros'
-}
-
-export function MyDayGroups() {
+export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [recentSave, setRecentSave] = useState<RecentSavePayload | null>(null)
-
-  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
@@ -131,24 +91,6 @@ export function MyDayGroups() {
       const groupsCount = GROUP_ORDER.filter((id) => (g[id]?.items?.length ?? 0) > 0).length
       track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length })
     } catch {}
-
-    // ler "salvei agora" (até 10 min)
-    const payload = safeParseJSON<RecentSavePayload>(safeGetLS(LS_RECENT_SAVE))
-    if (payload && typeof payload.ts === 'number' && Date.now() - payload.ts <= 10 * 60 * 1000) {
-      setRecentSave(payload)
-
-      const targetGroup = groupFromOrigin(payload.origin)
-      setExpanded((prev) => ({ ...prev, [targetGroup]: true }))
-
-      // scroll leve depois do render
-      window.setTimeout(() => {
-        const el = groupRefs.current[targetGroup]
-        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 350)
-    } else {
-      safeRemoveLS(LS_RECENT_SAVE)
-    }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -225,55 +167,16 @@ export function MyDayGroups() {
         </div>
       </div>
 
-      {/* P9 — vínculo (frase pós-questionário / pós-salvar) */}
-      {recentSave ? (
-  <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
-    <p className="text-[13px] md:text-[14px] font-semibold text-white">
-      Salvei pra você.
-    </p>
-    <p className="mt-1 text-[12px] md:text-[13px] text-white/90">
-      Hoje pode ser menos. O essencial já está aqui.
-    </p>
-
-    <div className="mt-3 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => {
-          const gid = groupFromOrigin(recentSave.origin)
-          setExpanded((prev) => ({ ...prev, [gid]: true }))
-          window.setTimeout(() => {
-            const el = groupRefs.current[gid]
-            el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 50)
-
-          try {
-            track('my_day.recent_save.focus', { dateKey, groupId: gid, origin: recentSave.origin })
-          } catch {}
-        }}
-        className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] font-semibold shadow-lg transition"
-      >
-        Ir para tarefa
-      </button>
-
-      <button
-        type="button"
-        onClick={() => {
-          setRecentSave(null)
-          safeRemoveLS(LS_RECENT_SAVE)
-          try {
-            track('my_day.recent_save.dismiss', { dateKey })
-          } catch {}
-        }}
-        className="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 transition"
-      >
-        Ok
-      </button>
-    </div>
-  </div>
-) : null}
-
       {!hasAny ? (
-        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            p-6
+            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+            border border-[var(--color-border-soft)]
+          "
+        >
           <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
             Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
@@ -291,13 +194,25 @@ export function MyDayGroups() {
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
+            const isHighlighted = highlightGroupId === groupId
+
             return (
               <div
                 key={groupId}
-                ref={(el) => {
-                  groupRefs.current[groupId] = el
-                }}
-                className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]"
+                id={groupDomId(groupId)}
+                className={cx(
+                  `
+                    bg-white
+                    rounded-3xl
+                    p-6
+                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                    border border-[var(--color-border-soft)]
+                    scroll-mt-24
+                    transition
+                  `,
+                  isHighlighted &&
+                    'ring-2 ring-[#fd2597]/55 shadow-[0_18px_55px_rgba(253,37,151,0.18)]'
+                )}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -316,7 +231,19 @@ export function MyDayGroups() {
                     </p>
                   </div>
 
-                  <span className="inline-flex items-center justify-center min-w-[44px] rounded-full border border-[var(--color-border-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--color-text-main)] bg-white">
+                  <span
+                    className="
+                      inline-flex items-center justify-center
+                      min-w-[44px]
+                      rounded-full
+                      border border-[var(--color-border-soft)]
+                      px-3 py-1
+                      text-[12px]
+                      font-semibold
+                      text-[var(--color-text-main)]
+                      bg-white
+                    "
+                  >
                     {count}
                   </span>
                 </div>
@@ -359,6 +286,7 @@ export function MyDayGroups() {
                         </div>
 
                         <div className="shrink-0 flex flex-col items-end gap-2">
+                          {/* CTA principal */}
                           {s !== 'done' ? (
                             <button
                               onClick={() => onDone(t.id, groupId)}
@@ -375,6 +303,7 @@ export function MyDayGroups() {
                             </button>
                           )}
 
+                          {/* Ações leves */}
                           <div className="flex items-center gap-2">
                             {s === 'snoozed' ? (
                               <button
