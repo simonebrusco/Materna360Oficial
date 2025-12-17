@@ -3,16 +3,17 @@
 import { track } from '@/app/lib/telemetry'
 
 /**
- * P7/P8 — Meu Dia Tasks (client-only)
+ * P7/P8/P12 — Meu Dia Tasks (client-only)
  * Fonte única: LocalStorage (key: planner/tasks/YYYY-MM-DD)
  *
- * Regra de compatibilidade:
- * - O PLANNER (WeeklyPlannerCore) espera TaskItem com { done: boolean }
- * - O MEU DIA (P7/P8) usa MyDayTaskItem com status/snooze etc
+ * Compatibilidade:
+ * - WeeklyPlannerCore (Planner) usa TaskItem com { done: boolean }
+ * - Meu Dia usa MyDayTaskItem com status/snooze etc.
  *
- * Portanto:
- * - Mantemos TaskItem (Planner) SEPARADO de MyDayTaskItem (Meu Dia)
- * - Persistência continua no mesmo storageKey planner/tasks/YYYY-MM-DD
+ * Estratégia:
+ * - Persistimos tudo na mesma storageKey planner/tasks/YYYY-MM-DD
+ * - Normalizamos no read (migração silenciosa)
+ * - Mantemos coerência mínima status <-> done para não quebrar o Planner
  */
 
 /** Sources (telemetria + agrupamento fino no futuro) */
@@ -29,12 +30,12 @@ export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
 
 /**
  * Origem/Intenção
- * Inclui origens do Planner (top3, agenda) + origens P8.
+ * Inclui origens do Planner + origens do Meu Dia.
  */
 export type TaskOrigin = 'today' | 'top3' | 'agenda' | 'family' | 'selfcare' | 'home' | 'other'
 
 /**
- * Shape DO PLANNER (não mudar):
+ * Shape do PLANNER (não mudar):
  * WeeklyPlannerCore cria TaskItem com "done".
  */
 export type TaskItem = {
@@ -45,8 +46,8 @@ export type TaskItem = {
 }
 
 /**
- * Shape DO MEU DIA (P7/P8):
- * Evolução sem quebrar Planner.
+ * Shape do MEU DIA (evolutivo):
+ * Mantém compatibilidade com dados antigos.
  */
 export type TaskStatus = 'active' | 'done' | 'snoozed'
 
@@ -58,7 +59,7 @@ export type MyDayTaskItem = {
   /** legado (Planner) — pode existir em dados antigos */
   done?: boolean
 
-  /** P8 (opcionais — migração silenciosa) */
+  /** P8+ */
   status?: TaskStatus
   snoozeUntil?: string // YYYY-MM-DD
   createdAt?: string // ISO
@@ -149,7 +150,7 @@ function makeId(): string {
 }
 
 /**
- * Normaliza tarefas vindas do storage (que pode conter:
+ * Normaliza tarefas vindas do storage (que pode conter):
  * - TaskItem do Planner (done)
  * - MyDayTaskItem do Meu Dia (status)
  *
@@ -166,7 +167,7 @@ function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | n
   const origin: TaskOrigin = isTaskOrigin(it.origin) ? it.origin : 'other'
   if (!isTaskOrigin(it.origin)) changed = true
 
-  // ✅ Checklist: se não tiver id → gerar no read e persistir
+  // se não tiver id → gerar e persistir
   let id = typeof it.id === 'string' ? it.id : ''
   if (!id) {
     id = makeId()
@@ -179,17 +180,17 @@ function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | n
   const createdAtRaw = typeof it.createdAt === 'string' ? it.createdAt : undefined
   const source: MyDaySource | undefined = isMyDaySource(it.source) ? it.source : undefined
 
-  // ✅ Checklist: se não tiver status → assumir active (ou coerente com done legado)
+  // se não tiver status → inferir (coerente com done legado)
   const computedStatus: TaskStatus =
     statusRaw ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : 'active')
 
   if (statusRaw !== computedStatus) changed = true
 
-  // ✅ Checklist: se não tiver createdAt → assumir now
+  // se não tiver createdAt → now
   const createdAt = createdAtRaw ?? nowISO
   if (!createdAtRaw) changed = true
 
-  // Coerência mínima status <-> done (para convivência com Planner)
+  // coerência mínima status <-> done
   let done: boolean | undefined = doneLegacy
   if (computedStatus === 'done' && doneLegacy !== true) {
     done = true
@@ -230,13 +231,11 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
     if (res.changed) changed = true
   }
 
-  // ✅ Migração silenciosa: persistimos imediatamente se corrigimos id/createdAt/status etc.
+  // migração silenciosa
   if (changed) {
     try {
       window.localStorage.setItem(key, safeStringifyJSON(normalized))
-    } catch {
-      // se falhar, não quebra a leitura
-    }
+    } catch {}
   }
 
   return normalized
@@ -248,7 +247,7 @@ function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
   window.localStorage.setItem(key, safeStringifyJSON(tasks))
 }
 
-/** ---------- API pública (P7 + P8) ---------- */
+/** ---------- API pública ---------- */
 
 export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
   try {
@@ -300,9 +299,9 @@ export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDayS
 }
 
 /**
- * P8: leitura do dia, com auto-normalização leve
- * - Se uma tarefa estava snoozed e o snoozeUntil chegou/venceu, ela volta para active automaticamente.
- * - Persistimos apenas se houve mudança real.
+ * Leitura do dia com auto-normalização:
+ * - Se estava snoozed e o snoozeUntil chegou/venceu, volta para active.
+ * - Persistimos só se houver mudança real.
  */
 export function listMyDayTasks(date?: Date): MyDayTaskItem[] {
   const dk = makeDateKey(date ?? new Date())
@@ -330,7 +329,6 @@ export function listMyDayTasks(date?: Date): MyDayTaskItem[] {
       return { ...t, done: true }
     }
 
-    // garante status tipado, sem widening para string
     if (t.status !== status) changed = true
     return { ...t, status }
   })
@@ -364,6 +362,10 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
   }
 }
 
+/**
+ * P8/P12 — Snooze: empurra a tarefa para frente (não some, só “não agora”).
+ * Export obrigatório (MyDayGroups importa isso).
+ */
 export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean; snoozeUntil?: string } {
   try {
     const base = date ?? new Date()
@@ -393,7 +395,10 @@ export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean
   }
 }
 
-/** P8: “Voltar para hoje” (unsnooze) */
+/**
+ * P8/P12 — Unsnooze: “Voltar para hoje”.
+ * Export obrigatório (MyDayGroups importa isso).
+ */
 export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
   try {
     const dk = makeDateKey(date ?? new Date())
@@ -417,6 +422,10 @@ export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
   }
 }
 
+/**
+ * Remove definitivo.
+ * Export obrigatório (MyDayGroups importa isso).
+ */
 export function removeTask(taskId: string, date?: Date): { ok: boolean } {
   try {
     const dk = makeDateKey(date ?? new Date())
@@ -438,7 +447,7 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
 }
 
 /**
- * P8: agrupamento por intenção/origin.
+ * Agrupamento por intenção/origin.
  * - top3 e agenda entram em "Para hoje"
  */
 export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {

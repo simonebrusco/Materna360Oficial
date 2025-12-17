@@ -7,6 +7,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
 import type { TaskItem, TaskOrigin } from '@/app/lib/myDayTasks.client'
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { SoftCard } from '@/components/ui/card'
@@ -180,6 +181,58 @@ export default function WeeklyPlannerCore() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
+  // P12 — Inteligência de Ritmo (reativa)
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+
+  const [showAllReminders, setShowAllReminders] = useState(false)
+  const [showAllAppointments, setShowAllAppointments] = useState(false)
+
+  const isGentleTone = euSignal.tone === 'gentil'
+
+  const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
+  const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
+  const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
+  const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
+
+  const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
+
+  // Atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        setEuSignal(getEu360Signal())
+      } catch {
+        // nunca quebra render
+      }
+    }
+
+    const onStorage = (_e: StorageEvent) => {
+      refresh()
+    }
+
+    const onCustom = () => {
+      refresh()
+    }
+
+    try {
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+      } catch {}
+    }
+  }, [])
+
+  // Reset do "mostrar tudo" quando troca o dia (ritmo não empurra excesso)
+  useEffect(() => {
+    setShowAllReminders(false)
+    setShowAllAppointments(false)
+  }, [selectedDateKey])
+
   // Modal premium (create/edit)
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false)
   const [appointmentModalMode, setAppointmentModalMode] = useState<'create' | 'edit'>('create')
@@ -197,6 +250,10 @@ export default function WeeklyPlannerCore() {
     setSelectedDateKey(dateKey)
     setMonthCursor(toFirstOfMonth(new Date()))
     setIsHydrated(true)
+
+    try {
+      setEuSignal(getEu360Signal())
+    } catch {}
 
     try {
       track('planner.opened', { tab: 'meu-dia', dateKey })
@@ -342,8 +399,6 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const openMonthSheet = useCallback(() => {
-    // Evita depender de selectedDate (que é derivado e declarado depois).
-    // Usa o selectedDateKey atual para manter o mesmo comportamento.
     const base =
       selectedDateKey && /^\d{4}-\d{2}-\d{2}$/.test(selectedDateKey)
         ? new Date(selectedDateKey + 'T00:00:00')
@@ -391,7 +446,6 @@ export default function WeeklyPlannerCore() {
     <>
       <Reveal>
         <div className="space-y-6 md:space-y-8">
-          {/* Top bar (mantém layout do print) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-3">
               <button
@@ -413,7 +467,6 @@ export default function WeeklyPlannerCore() {
                 </div>
               </button>
 
-              {/* Toggle (AJUSTE: remove outline azul, mantém premium) */}
               <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
                 <button
                   type="button"
@@ -441,10 +494,8 @@ export default function WeeklyPlannerCore() {
             </div>
           </SoftCard>
 
-          {/* WEEK VIEW (somente weekData) */}
           {viewMode === 'week' && <WeekView weekData={weekData} />}
 
-          {/* DAY VIEW */}
           {viewMode === 'day' && (
             <div className="space-y-6">
               {/* LEMBRETES */}
@@ -460,6 +511,12 @@ export default function WeeklyPlannerCore() {
                     <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
                       Ações práticas do seu dia — organizadas a partir da sua rotina real.
                     </p>
+
+                    {euSignal.showLessLine && (
+                      <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
+                        {lessLine}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -478,29 +535,60 @@ export default function WeeklyPlannerCore() {
                       Ainda não há lembretes para hoje. Use os atalhos abaixo ou registre algo que faça sentido para a sua rotina.
                     </p>
                   ) : (
-                    plannerData.tasks.map((task) => (
-                      <button
-                        key={task.id}
-                        type="button"
-                        onClick={() => toggleTask(task.id)}
-                        className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
-                          task.done
-                            ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
-                            : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
-                        }`}
-                      >
-                        <span
-                          className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                            task.done
-                              ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                              : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                          }`}
-                        >
-                          {task.done ? '✓' : ''}
-                        </span>
-                        <span className="flex-1">{task.title}</span>
-                      </button>
-                    ))
+                    (() => {
+                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const all = plannerData.tasks
+                      const visible = showAllReminders ? all : all.slice(0, limit)
+                      const hasMore = all.length > visible.length
+
+                      return (
+                        <>
+                          {visible.map((task) => (
+                            <button
+                              key={task.id}
+                              type="button"
+                              onClick={() => toggleTask(task.id)}
+                              className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                                task.done
+                                  ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
+                                  : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
+                              }`}
+                            >
+                              <span
+                                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                                  task.done
+                                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                                }`}
+                              >
+                                {task.done ? '✓' : ''}
+                              </span>
+                              <span className="flex-1">{task.title}</span>
+                            </button>
+                          ))}
+
+                          {hasMore && !showAllReminders && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllReminders(true)}
+                              className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
+                            >
+                              Mostrar o restante quando fizer sentido
+                            </button>
+                          )}
+
+                          {showAllReminders && all.length > limit && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllReminders(false)}
+                              className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
+                            >
+                              Voltar para a versão leve
+                            </button>
+                          )}
+                        </>
+                      )
+                    })()
                   )}
                 </div>
 
@@ -510,7 +598,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => addTask('O que realmente importa hoje', 'top3')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    O que realmente importa hoje
+                    {shortcutLabelTop3}
                   </button>
 
                   <button
@@ -518,7 +606,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => openCreateAppointmentModal(selectedDateKey)}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    Compromissos e combinados
+                    {shortcutLabelAgenda}
                   </button>
 
                   <button
@@ -526,7 +614,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => addTask('Pequenos gestos de autocuidado', 'selfcare')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    Pequenos gestos de autocuidado
+                    {shortcutLabelSelfcare}
                   </button>
 
                   <button
@@ -534,7 +622,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => addTask('Momentos e cuidados importantes', 'family')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    Momentos e cuidados importantes
+                    {shortcutLabelFamily}
                   </button>
                 </div>
 
@@ -570,38 +658,68 @@ export default function WeeklyPlannerCore() {
                   {sortedAppointments.length === 0 ? (
                     <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
                   ) : (
-                    sortedAppointments.map((appt) => (
-                      <button
-                        key={appt.id}
-                        type="button"
-                        onClick={() => openEditAppointmentModal(appt)}
-                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex h-7 min-w-[44px] items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)] px-2">
-                            {appt.time || '--:--'}
-                          </span>
+                    (() => {
+                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const all = sortedAppointments
+                      const visible = showAllAppointments ? all : all.slice(0, limit)
+                      const hasMore = all.length > visible.length
 
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-[var(--color-text-main)]">
-                              {appt.title || 'Compromisso'}
-                            </span>
-                            <span className="text-[11px] text-[var(--color-text-muted)]">
-                              {appt.time ? `Horário: ${appt.time}` : 'Sem horário definido'} · {dateLabel(appt.dateKey)}
-                            </span>
-                          </div>
-                        </div>
+                      return (
+                        <>
+                          {visible.map((appt) => (
+                            <button
+                              key={appt.id}
+                              type="button"
+                              onClick={() => openEditAppointmentModal(appt)}
+                              className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex h-7 min-w-[44px] items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)] px-2">
+                                  {appt.time || '--:--'}
+                                </span>
 
-                        <span className="text-[11px] text-[var(--color-text-muted)]">Editar</span>
-                      </button>
-                    ))
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-[var(--color-text-main)]">
+                                    {appt.title || 'Compromisso'}
+                                  </span>
+                                  <span className="text-[11px] text-[var(--color-text-muted)]">
+                                    {appt.time ? `Horário: ${appt.time}` : 'Sem horário definido'} · {dateLabel(appt.dateKey)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <span className="text-[11px] text-[var(--color-text-muted)]">Editar</span>
+                            </button>
+                          ))}
+
+                          {hasMore && !showAllAppointments && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllAppointments(true)}
+                              className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
+                            >
+                              Mostrar o restante quando fizer sentido
+                            </button>
+                          )}
+
+                          {showAllAppointments && all.length > limit && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllAppointments(false)}
+                              className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
+                            >
+                              Voltar para a versão leve
+                            </button>
+                          )}
+                        </>
+                      )
+                    })()
                   )}
                 </div>
               </SoftCard>
             </div>
           )}
 
-          {/* Navegação rápida de data */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -636,9 +754,6 @@ export default function WeeklyPlannerCore() {
         </div>
       </Reveal>
 
-      {/* ===================================================== */}
-      {/* SHEET PREMIUM — CALENDÁRIO DO MÊS                      */}
-      {/* ===================================================== */}
       {monthSheetOpen && (
         <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Calendário do mês">
           <button
@@ -763,9 +878,6 @@ export default function WeeklyPlannerCore() {
         </div>
       )}
 
-      {/* ===================================================== */}
-      {/* MODAL PREMIUM — CREATE / EDIT                           */}
-      {/* ===================================================== */}
       <AppointmentModal
         open={appointmentModalOpen}
         mode={appointmentModalMode}
@@ -784,23 +896,45 @@ export default function WeeklyPlannerCore() {
               time: data.time,
             })
 
-            // salva lembrete "agenda" no dia correto (persistência por dateKey)
+            // ======================================================
+            // P12 — agenda -> também entra como tarefa do dia
+            // (storage + sync determinístico no state se for o dia selecionado)
+            // ======================================================
             const label = data.time ? `${data.time} · ${data.title}` : data.title
+
             try {
               const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
               const exists = existing.some((t) => t.origin === 'agenda' && t.title === label)
+
               if (!exists) {
-                const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
-                save(`planner/tasks/${data.dateKey}`, [...existing, t])
+                const t: TaskItem = {
+                  id: safeId(),
+                  title: (label ?? '').trim() || 'Tarefa',
+                  done: false,
+                  origin: 'agenda',
+                }
+                const next = [...existing, t]
+                save(`planner/tasks/${data.dateKey}`, next)
+
+                // ✅ Sync imediato no state quando o usuário está no mesmo dia
+                if (data.dateKey === selectedDateKey) {
+                  setPlannerData((prev) => {
+                    const already = prev.tasks.some((x) => x.origin === 'agenda' && x.title === t.title)
+                    if (already) return prev
+                    return { ...prev, tasks: [...prev.tasks, t] }
+                  })
+                }
               }
             } catch {
-              // fallback não quebra fluxo
-              setPlannerData((prev) => {
-                const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
-                if (exists) return prev
-                const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
-                return { ...prev, tasks: [...prev.tasks, t] }
-              })
+              // fallback: mantém UX funcionando mesmo se persist falhar
+              if (data.dateKey === selectedDateKey) {
+                setPlannerData((prev) => {
+                  const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
+                  if (exists) return prev
+                  const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
+                  return { ...prev, tasks: [...prev.tasks, t] }
+                })
+              }
             }
           } else if (editingAppointment) {
             const updated: Appointment = {
