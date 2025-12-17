@@ -61,6 +61,16 @@ function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, x))
 }
 
+function isPersonaId(p: unknown): p is PersonaId {
+  return (
+    p === 'sobrevivencia' ||
+    p === 'organizacao' ||
+    p === 'conexao' ||
+    p === 'equilibrio' ||
+    p === 'expansao'
+  )
+}
+
 /**
  * Mapeamento oficial do ritmo por persona.
  * Você pode ajustar esses números sem risco de quebrar tipagem/UI.
@@ -118,14 +128,9 @@ export function getEu360Signal(): Eu360Signal {
   const parsed = safeParseJSON<PersonaResult>(raw)
 
   const persona = parsed?.persona
-  if (
-    persona !== 'sobrevivencia' &&
-    persona !== 'organizacao' &&
-    persona !== 'conexao' &&
-    persona !== 'equilibrio' &&
-    persona !== 'expansao'
-  ) {
-    return defaultSignal()
+  if (!isPersonaId(persona)) {
+    const d = defaultSignal()
+    return { ...d, listLimit: clampInt(d.listLimit, 1, 12) }
   }
 
   const mapped = mapPersonaToSignal(persona)
