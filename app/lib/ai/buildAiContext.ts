@@ -1,48 +1,55 @@
 'use client'
 
-import { safeGetLS, safeParseJSON } from '@/app/lib/storageSafe'
+import { safeGetLS, safeParseJSON } from '@/app/lib/ai/storageSafe'
 
 export type AiPersonaContext = {
   persona?: string
-  personaLabel?: string
-  mood?: string
-  daySlot?: string
-  focusToday?: string
-  lastUpdated?: string
+  label?: string
+  updatedAtISO?: string
 }
 
-export type AiContext = {
-  source: 'eu360' | 'meu-dia' | 'maternar'
-  timestamp: string
+export type AiLightContext = {
   persona?: AiPersonaContext
+  mood?: string
+  focusToday?: string
+  daySlot?: string
 }
 
-export function buildAiContext(source: AiContext['source']): AiContext {
-  const personaRaw = safeGetLS('eu360_persona_v1')
-  const mood = safeGetLS('eu360_mood')
-  const daySlot = safeGetLS('eu360_day_slot')
-  const focusToday = safeGetLS('eu360_focus_today')
+type PersonaResultLS = {
+  persona?: string
+  label?: string
+  microCopy?: string
+  updatedAtISO?: string
+  answers?: Record<string, unknown>
+}
 
-  const parsed = safeParseJSON<{
-    persona?: string
-    label?: string
-    updatedAtISO?: string
-  }>(personaRaw)
+const LS_KEYS = {
+  persona: 'eu360_persona_v1',
+  mood: 'eu360_mood',
+  focusToday: 'eu360_focus_today',
+  daySlot: 'eu360_day_slot',
+}
 
-  const persona: AiPersonaContext | undefined = parsed
+export function buildAiContext(): AiLightContext {
+  const mood = safeGetLS(LS_KEYS.mood) ?? undefined
+  const focusToday = safeGetLS(LS_KEYS.focusToday) ?? undefined
+  const daySlot = safeGetLS(LS_KEYS.daySlot) ?? undefined
+
+  const rawPersona = safeGetLS(LS_KEYS.persona)
+  const parsedPersona = safeParseJSON<PersonaResultLS>(rawPersona)
+
+  const persona: AiPersonaContext | undefined = parsedPersona
     ? {
-        persona: parsed.persona,
-        personaLabel: parsed.label,
-        lastUpdated: parsed.updatedAtISO,
-        mood: mood ?? undefined,
-        daySlot: daySlot ?? undefined,
-        focusToday: focusToday ?? undefined,
+        persona: parsedPersona.persona,
+        label: parsedPersona.label,
+        updatedAtISO: parsedPersona.updatedAtISO,
       }
     : undefined
 
   return {
-    source,
-    timestamp: new Date().toISOString(),
     persona,
+    mood,
+    focusToday,
+    daySlot,
   }
 }
