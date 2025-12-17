@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-
+import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import AppShell from '@/components/common/AppShell'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SectionWrapper } from '@/components/common/SectionWrapper'
