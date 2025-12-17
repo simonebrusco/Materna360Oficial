@@ -28,7 +28,7 @@ export type Eu360Signal = {
   label: string
   microCopy: string
 
-  // ajustes de UX (sem “IA forte” ainda)
+  // P12 — ajustes de UX (sem “IA forte” ainda)
   listLimit: number // quantos itens mostrar por lista no Meu Dia
   tone: 'gentil' | 'direto'
   showLessLine: boolean // se mostra frase “Hoje pode ser menos…”
@@ -43,6 +43,20 @@ export type RecentSavePayload = {
   ts: number
   origin: TaskOrigin
   source: string
+}
+
+const DEFAULT_MAX_AGE_MS = 10 * 60 * 1000
+
+const LIST_LIMIT_MIN = 1
+const LIST_LIMIT_MAX = 12
+
+function clampInt(v: unknown, min: number, max: number, fallback: number) {
+  const n = typeof v === 'number' ? v : Number(v)
+  if (!Number.isFinite(n)) return fallback
+  const x = Math.trunc(n)
+  if (x < min) return min
+  if (x > max) return max
+  return x
 }
 
 function safeGetLS(key: string): string | null {
@@ -77,6 +91,29 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
+/**
+ * Normalização premium: garante shape mínimo e evita widening/valores inválidos.
+ */
+function normalizePersonaResult(input: PersonaResult | null): PersonaResult {
+  const fallback = fallbackPersona()
+  if (!input || typeof input !== 'object') return fallback
+
+  const persona = (input.persona as PersonaId) ?? fallback.persona
+  const allowedPersona: PersonaId[] = ['sobrevivencia', 'organizacao', 'conexao', 'equilibrio', 'expansao']
+  const safePersona: PersonaId = allowedPersona.includes(persona) ? persona : fallback.persona
+
+  const label = typeof input.label === 'string' && input.label.trim() ? input.label.trim() : fallback.label
+  const microCopy =
+    typeof input.microCopy === 'string' && input.microCopy.trim() ? input.microCopy.trim() : fallback.microCopy
+
+  const updatedAtISO =
+    typeof input.updatedAtISO === 'string' && input.updatedAtISO.trim() ? input.updatedAtISO : fallback.updatedAtISO
+
+  const answers = (input.answers && typeof input.answers === 'object' ? input.answers : {}) as QuestionnaireAnswers
+
+  return { persona: safePersona, label, microCopy, updatedAtISO, answers }
+}
+
 function fallbackPersona(): PersonaResult {
   return {
     persona: 'organizacao',
@@ -89,9 +126,8 @@ function fallbackPersona(): PersonaResult {
 
 /**
  * P12 — Mapeamento oficial de persona → signal
- * Nota:
- * - Sobrevivência/Organização/Conexão = tom gentil + “menos peso”
- * - Equilíbrio/Expansão = tom mais direto + mais volume (sem microcopy do “menos”)
+ * - Sobrevivência/Organização/Conexão: “proteção de carga” (tom gentil + menos volume + frase do menos)
+ * - Equilíbrio/Expansão: “ritmo de avanço” (tom direto + mais volume)
  */
 function signalFromPersona(result: PersonaResult): Eu360Signal {
   const base: Eu360Signal = {
@@ -103,51 +139,71 @@ function signalFromPersona(result: PersonaResult): Eu360Signal {
     showLessLine: false,
   }
 
-  if (result.persona === 'sobrevivencia') {
-    return { ...base, listLimit: 3, tone: 'gentil', showLessLine: true }
+  let s: Eu360Signal
+
+  switch (result.persona) {
+    case 'sobrevivencia':
+      s = { ...base, listLimit: 3, tone: 'gentil', showLessLine: true }
+      break
+    case 'organizacao':
+      // premium: ainda gentil, porque a mãe já está no modo “segurar a rotina”, não “performance”
+      s = { ...base, listLimit: 4, tone: 'gentil', showLessLine: true }
+      break
+    case 'conexao':
+      s = { ...base, listLimit: 5, tone: 'gentil', showLessLine: true }
+      break
+    case 'equilibrio':
+      s = { ...base, listLimit: 6, tone: 'direto', showLessLine: false }
+      break
+    case 'expansao':
+    default:
+      s = { ...base, listLimit: 7, tone: 'direto', showLessLine: false }
+      break
   }
 
-  if (result.persona === 'organizacao') {
-    return { ...base, listLimit: 4, tone: 'gentil', showLessLine: true }
-  }
-
-  if (result.persona === 'conexao') {
-    return { ...base, listLimit: 5, tone: 'gentil', showLessLine: true }
-  }
-
-  if (result.persona === 'equilibrio') {
-    return { ...base, listLimit: 6, tone: 'direto', showLessLine: false }
-  }
-
-  // expansao
-  return { ...base, listLimit: 7, tone: 'direto', showLessLine: false }
+  // Hard safety: evita listLimit fora do range (caso alguém altere mapping no futuro)
+  return { ...s, listLimit: clampInt(s.listLimit, LIST_LIMIT_MIN, LIST_LIMIT_MAX, 5) }
 }
 
 export function getEu360Signal(): Eu360Signal {
   const raw = safeGetLS(LS_KEYS.eu360Persona)
   const stored = safeParseJSON<PersonaResult>(raw)
-  const result = stored ?? fallbackPersona()
-  return signalFromPersona(result)
+  const normalized = normalizePersonaResult(stored)
+  return signalFromPersona(normalized)
 }
 
+/**
+ * Agrupamento de origens:
+ * - "Para hoje" inclui origens do Planner: top3 e agenda
+ */
 export function groupIdFromOrigin(origin: TaskOrigin): GroupId {
-  // Para hoje (inclui origens do Planner também)
   if (origin === 'today' || origin === 'top3' || origin === 'agenda') return 'para-hoje'
-
   if (origin === 'family') return 'familia'
   if (origin === 'selfcare') return 'autocuidado'
   if (origin === 'home') return 'rotina-casa'
-
   return 'outros'
 }
 
-export function getRecentMyDaySave(maxAgeMs = 10 * 60 * 1000): RecentSavePayload | null {
+function isFiniteTs(ts: unknown): ts is number {
+  return typeof ts === 'number' && Number.isFinite(ts)
+}
+
+export function getRecentMyDaySave(maxAgeMs = DEFAULT_MAX_AGE_MS): RecentSavePayload | null {
   const raw = safeGetLS(LS_KEYS.recentSave)
   const payload = safeParseJSON<RecentSavePayload>(raw)
-  if (!payload) return null
+  if (!payload || typeof payload !== 'object') return null
 
-  const age = Date.now() - (payload.ts || 0)
-  if (!Number.isFinite(age) || age < 0 || age > maxAgeMs) return null
+  const ts = payload.ts
+  if (!isFiniteTs(ts)) return null
+
+  const age = Date.now() - ts
+  if (!Number.isFinite(age) || age < 0) return null
+
+  const maxAge = clampInt(maxAgeMs, 500, 24 * 60 * 60 * 1000, DEFAULT_MAX_AGE_MS)
+  if (age > maxAge) return null
+
+  if (typeof payload.source !== 'string') return null
+  if (typeof payload.origin !== 'string') return null
 
   return payload
 }
@@ -157,5 +213,15 @@ export function clearRecentMyDaySave() {
 }
 
 export function setRecentMyDaySave(payload: RecentSavePayload) {
-  safeSetLS(LS_KEYS.recentSave, JSON.stringify(payload))
+  // premium: só grava se parecer minimamente válido, para não “sujar” o LS
+  try {
+    if (!payload || typeof payload !== 'object') return
+    if (!isFiniteTs(payload.ts)) return
+    if (typeof payload.origin !== 'string') return
+    if (typeof payload.source !== 'string') return
+
+    safeSetLS(LS_KEYS.recentSave, JSON.stringify(payload))
+  } catch {
+    // nunca quebra fluxo
+  }
 }
