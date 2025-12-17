@@ -21,6 +21,14 @@ type Focus = 'casa' | 'voce' | 'filho' | 'comida'
 
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+
+type RecentSavePayload = {
+  ts: number
+  origin: TaskOrigin
+  source: string
+}
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
@@ -34,6 +42,12 @@ function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
+  } catch {}
+}
+
+function safeSetJSON(key: string, value: unknown) {
+  try {
+    safeSetLS(key, JSON.stringify(value))
   } catch {}
 }
 
@@ -303,11 +317,20 @@ export default function MeuDiaLeveClient() {
 
   function saveCurrentToMyDay(title: string) {
     const origin = originFromFocus(focus)
+
     const res = addTaskToMyDay({
       title,
       origin,
       source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
     })
+
+    // sinal para o Meu Dia abrir o bloco certo + mostrar frase (sem conteúdo sensível)
+    const payload: RecentSavePayload = {
+      ts: Date.now(),
+      origin,
+      source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
+    }
+    safeSetJSON(LS_RECENT_SAVE, payload)
 
     if (res.created) setSaveFeedback('Salvo no Meu Dia.')
     else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
@@ -467,21 +490,21 @@ export default function MeuDiaLeveClient() {
 
               <div className="p-4 md:p-6">
                 {saveFeedback ? (
-                  <div className="mb-4 rounded-2xl bg-white/80 border border-white/50 px-4 py-3 text-[12px] text-[#2f3a56]">
-                    {saveFeedback}
+                  <div className="mb-4 rounded-2xl bg-white/80 border border-white/50 px-4 py-3 text-[12px] text-[#2f3a56] flex items-center justify-between gap-3">
+                    <span>{saveFeedback}</span>
+                    <Link
+                      href="/meu-dia"
+                      className="rounded-full bg-[#fd2597] text-white px-3 py-1.5 text-[12px] font-semibold shadow-lg hover:opacity-95 transition"
+                    >
+                      Ir para Meu Dia
+                    </Link>
                   </div>
                 ) : null}
 
+                {/* INSPIRACAO */}
                 {step === 'inspiracao' ? (
                   <div id="inspiracao" className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
                           <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
@@ -491,16 +514,12 @@ export default function MeuDiaLeveClient() {
                             Inspiração do dia
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{moodTitle(mood)}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Aqui é facilitador: uma linha para organizar o próximo passo. Sem discurso longo.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Aqui é facilitador: uma linha para organizar o próximo passo. Sem discurso longo.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          {inspiration.title}
-                        </div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
                         <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">
                           {inspiration.line}
                         </div>
@@ -527,16 +546,10 @@ export default function MeuDiaLeveClient() {
                   </div>
                 ) : null}
 
+                {/* IDEIAS */}
                 {step === 'ideias' ? (
                   <div id="ideias" className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
                           <AppIcon name="sun" size={22} className="text-[#fd2597]" />
@@ -563,7 +576,7 @@ export default function MeuDiaLeveClient() {
                             onClick={() => {
                               setPickedIdea(idx)
                               try {
-                                track('meu_dia_leve.idea.pick', { idx, title: i.title })
+                                track('meu_dia_leve.idea.pick', { idx })
                               } catch {}
                             }}
                           />
@@ -604,16 +617,10 @@ export default function MeuDiaLeveClient() {
                   </div>
                 ) : null}
 
+                {/* RECEITAS */}
                 {step === 'receitas' ? (
                   <div id="receitas" className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
                           <AppIcon name="heart" size={22} className="text-[#fd2597]" />
@@ -623,9 +630,7 @@ export default function MeuDiaLeveClient() {
                             Receitas rápidas
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Escolha uma solução e siga</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.</p>
                         </div>
                       </div>
 
@@ -638,7 +643,7 @@ export default function MeuDiaLeveClient() {
                               onClick={() => {
                                 setPickedRecipe(idx)
                                 try {
-                                  track('meu_dia_leve.recipe.pick', { idx, title: r.title })
+                                  track('meu_dia_leve.recipe.pick', { idx })
                                 } catch {}
                               }}
                               className={[
@@ -694,16 +699,10 @@ export default function MeuDiaLeveClient() {
                   </div>
                 ) : null}
 
+                {/* PASSO */}
                 {step === 'passo' ? (
                   <div id="passo" className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
                           <AppIcon name="star" size={22} className="text-[#fd2597]" />
@@ -713,9 +712,7 @@ export default function MeuDiaLeveClient() {
                             Passo leve do dia
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Escolha um (e encerre)</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Um passo pequeno já muda o clima do dia. Não precisa “dar conta de tudo”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Um passo pequeno já muda o clima do dia. Não precisa “dar conta de tudo”.</p>
                         </div>
                       </div>
 
@@ -730,7 +727,7 @@ export default function MeuDiaLeveClient() {
                             onClick={() => {
                               setPickedPasso(idx)
                               try {
-                                track('meu_dia_leve.passo.pick', { idx, title: p.title })
+                                track('meu_dia_leve.passo.pick', { idx })
                               } catch {}
                             }}
                           />
@@ -753,18 +750,11 @@ export default function MeuDiaLeveClient() {
                           </button>
 
                           <Link
-                            href="/maternar/meu-filho"
+                            href="/meu-dia"
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Ir para Meu Filho
+                            Ir para Meu Dia
                           </Link>
-
-                          <button
-                            onClick={() => go('ideias')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Trocar ideia rápida
-                          </button>
 
                           <Link
                             href="/maternar"

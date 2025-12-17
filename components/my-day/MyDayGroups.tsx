@@ -19,6 +19,15 @@ type GroupId = keyof GroupedTasks
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const LIMIT = 5
 
+// P9.2 — Trilhas leves (micro-orientação sem cobrança)
+const GROUP_HINTS: Partial<Record<GroupId, string>> = {
+  'para-hoje': 'Se der, escolha só uma coisa.',
+  familia: 'Um pequeno gesto já conta.',
+  autocuidado: 'Cuidar de você pode ser simples.',
+  'rotina-casa': 'Nem tudo precisa ser feito hoje.',
+  outros: 'Talvez isso possa esperar.',
+}
+
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -56,14 +65,16 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
-export function MyDayGroups() {
+function groupDomId(groupId: GroupId) {
+  return `myday-group-${groupId}`
+}
+
+export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
-
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
-
   const totalCount = useMemo(() => tasks.length, [tasks])
 
   function refresh() {
@@ -74,7 +85,6 @@ export function MyDayGroups() {
   useEffect(() => {
     refresh()
 
-    // telemetria mínima: render do agrupamento (sem conteúdo sensível)
     try {
       const current = listMyDayTasks()
       const g = groupTasks(current)
@@ -184,22 +194,37 @@ export function MyDayGroups() {
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
+            const isHighlighted = highlightGroupId === groupId
+
             return (
               <div
                 key={groupId}
-                className="
-                  bg-white
-                  rounded-3xl
-                  p-6
-                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                  border border-[var(--color-border-soft)]
-                "
+                id={groupDomId(groupId)}
+                className={cx(
+                  `
+                    bg-white
+                    rounded-3xl
+                    p-6
+                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                    border border-[var(--color-border-soft)]
+                    scroll-mt-24
+                    transition
+                  `,
+                  isHighlighted &&
+                    'ring-2 ring-[#fd2597]/55 shadow-[0_18px_55px_rgba(253,37,151,0.18)]'
+                )}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
                       {group.title}
                     </h4>
+
+                    {/* P9.2 — trilha leve */}
+                    {GROUP_HINTS[groupId] ? (
+                      <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{GROUP_HINTS[groupId]}</p>
+                    ) : null}
+
                     <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
                       {count} {count === 1 ? 'tarefa' : 'tarefas'}
                       {hasMore && !isExpanded ? ' • talvez você não precise olhar tudo agora.' : ''}
