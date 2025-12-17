@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { track } from '@/app/lib/telemetry'
 import {
   groupTasks,
@@ -15,12 +15,11 @@ import {
 } from '@/app/lib/myDayTasks.client'
 
 type GroupId = keyof GroupedTasks
-export type MyDayGroupId = GroupId
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const LIMIT = 5
 
-// P9.2 — Trilhas leves (micro-orientação sem cobrança)
+// P9 — micro orientação por bloco
 const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   'para-hoje': 'Se der, escolha só uma coisa.',
   familia: 'Um pequeno gesto já conta.',
@@ -29,11 +28,47 @@ const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   outros: 'Talvez isso possa esperar.',
 }
 
+// P9 — sinal de “acabou de salvar” (vem do Maternar/Meu Dia Leve)
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+
+type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+
+type RecentSavePayload = {
+  ts: number
+  origin: TaskOrigin
+  source: string
+}
+
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
 }
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
@@ -66,16 +101,21 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
-type Props = {
-  highlightGroupId?: GroupId
+function groupIdFromOrigin(origin: TaskOrigin): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
-export function MyDayGroups({ highlightGroupId }: Props) {
+export function MyDayGroups() {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [pulseOn, setPulseOn] = useState(false)
 
-  const highlightRef = useRef<HTMLDivElement | null>(null)
+  // P9 UI state
+  const [recentBanner, setRecentBanner] = useState(false)
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
@@ -98,26 +138,37 @@ export function MyDayGroups({ highlightGroupId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // se vier highlight, abrir + scroll + pulse
+  // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
   useEffect(() => {
-    if (!highlightGroupId) return
+    const raw = safeGetLS(LS_RECENT_SAVE)
+    const payload = safeParseJSON<RecentSavePayload>(raw)
+    if (!payload?.ts || !payload.origin) return
 
-    setExpanded((prev) => ({ ...prev, [highlightGroupId]: true }))
-    setPulseOn(true)
+    // validade curta (evita reaparecer horas depois)
+    const ageMs = Date.now() - payload.ts
+    if (ageMs > 2 * 60_000) {
+      safeRemoveLS(LS_RECENT_SAVE)
+      return
+    }
 
-    const t1 = window.setTimeout(() => {
-      try {
-        highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      } catch {}
-    }, 120)
+    const gid = groupIdFromOrigin(payload.origin)
 
-    const t2 = window.setTimeout(() => setPulseOn(false), 2200)
+    // mostra banner + abre grupo + destaca
+    setRecentBanner(true)
+    setHighlightGroup(gid)
+    setExpanded((prev) => ({ ...prev, [gid]: true }))
 
+    // limpa sinal para não repetir
+    safeRemoveLS(LS_RECENT_SAVE)
+
+    // apaga destaque depois de alguns segundos
+    const t1 = window.setTimeout(() => setRecentBanner(false), 6500)
+    const t2 = window.setTimeout(() => setHighlightGroup(null), 6500)
     return () => {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
     }
-  }, [highlightGroupId])
+  }, [])
 
   function toggleGroup(id: GroupId) {
     setExpanded((prev) => {
@@ -192,8 +243,28 @@ export function MyDayGroups({ highlightGroupId }: Props) {
         </div>
       </div>
 
+      {/* P9 — banner de acolhimento pós-salvar */}
+      {recentBanner ? (
+        <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+          <p className="text-[13px] md:text-[14px] font-semibold text-white">
+            Hoje pode ser menos. O essencial já está aqui.
+          </p>
+          <p className="mt-1 text-[12px] text-white/85">
+            Eu coloquei no bloco certo para você não precisar procurar.
+          </p>
+        </div>
+      ) : null}
+
       {!hasAny ? (
-        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            p-6
+            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+            border border-[var(--color-border-soft)]
+          "
+        >
           <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
             Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
@@ -211,16 +282,22 @@ export function MyDayGroups({ highlightGroupId }: Props) {
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
-            const isHighlight = highlightGroupId === groupId
+            const isHighlighted = highlightGroup === groupId
 
             return (
               <div
                 key={groupId}
-                ref={isHighlight ? highlightRef : undefined}
                 className={cx(
-                  'bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]',
-                  isHighlight && 'border-[#fd2597]',
-                  isHighlight && pulseOn && 'ring-2 ring-[#fd2597]/35'
+                  `
+                    bg-white
+                    rounded-3xl
+                    p-6
+                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                    border
+                    border-[var(--color-border-soft)]
+                    transition
+                  `,
+                  isHighlighted && 'ring-2 ring-[#fd2597] shadow-[0_16px_40px_rgba(253,37,151,0.18)]'
                 )}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -239,7 +316,19 @@ export function MyDayGroups({ highlightGroupId }: Props) {
                     </p>
                   </div>
 
-                  <span className="inline-flex items-center justify-center min-w-[44px] rounded-full border border-[var(--color-border-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--color-text-main)] bg-white">
+                  <span
+                    className="
+                      inline-flex items-center justify-center
+                      min-w-[44px]
+                      rounded-full
+                      border border-[var(--color-border-soft)]
+                      px-3 py-1
+                      text-[12px]
+                      font-semibold
+                      text-[var(--color-text-main)]
+                      bg-white
+                    "
+                  >
                     {count}
                   </span>
                 </div>
