@@ -7,6 +7,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
 import type { TaskItem, TaskOrigin } from '@/app/lib/myDayTasks.client'
+import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { SoftCard } from '@/components/ui/card'
@@ -179,6 +180,15 @@ export default function WeeklyPlannerCore() {
   })
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+
+  // P12 — Inteligência de Ritmo (visibilidade leve)
+  const euSignal = useMemo(() => getEu360Signal(), [])
+  const [showAllReminders, setShowAllReminders] = useState(false)
+
+  // Reset do "mostrar tudo" quando troca o dia (ritmo não empurra excesso)
+  useEffect(() => {
+    setShowAllReminders(false)
+  }, [selectedDateKey])
 
   // Modal premium (create/edit)
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false)
@@ -478,29 +488,60 @@ export default function WeeklyPlannerCore() {
                       Ainda não há lembretes para hoje. Use os atalhos abaixo ou registre algo que faça sentido para a sua rotina.
                     </p>
                   ) : (
-                    plannerData.tasks.map((task) => (
-                      <button
-                        key={task.id}
-                        type="button"
-                        onClick={() => toggleTask(task.id)}
-                        className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
-                          task.done
-                            ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
-                            : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
-                        }`}
-                      >
-                        <span
-                          className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                            task.done
-                              ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                              : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                          }`}
-                        >
-                          {task.done ? '✓' : ''}
-                        </span>
-                        <span className="flex-1">{task.title}</span>
-                      </button>
-                    ))
+                    (() => {
+                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const all = plannerData.tasks
+                      const visible = showAllReminders ? all : all.slice(0, limit)
+                      const hasMore = all.length > visible.length
+
+                      return (
+                        <>
+                          {visible.map((task) => (
+                            <button
+                              key={task.id}
+                              type="button"
+                              onClick={() => toggleTask(task.id)}
+                              className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                                task.done
+                                  ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)] line-through'
+                                  : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
+                              }`}
+                            >
+                              <span
+                                className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
+                                  task.done
+                                    ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                    : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                                }`}
+                              >
+                                {task.done ? '✓' : ''}
+                              </span>
+                              <span className="flex-1">{task.title}</span>
+                            </button>
+                          ))}
+
+                          {hasMore && !showAllReminders && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllReminders(true)}
+                              className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
+                            >
+                              Mostrar o restante quando fizer sentido
+                            </button>
+                          )}
+
+                          {showAllReminders && all.length > limit && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllReminders(false)}
+                              className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
+                            >
+                              Voltar para a versão leve
+                            </button>
+                          )}
+                        </>
+                      )
+                    })()
                   )}
                 </div>
 
