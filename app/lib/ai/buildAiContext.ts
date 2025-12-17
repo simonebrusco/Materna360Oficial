@@ -1,6 +1,6 @@
 'use client'
 
-import { safeGetLS } from '@/app/lib/ai/storageSafe'
+import { safeGetLS, safeParseJSON } from '@/app/lib/storageSafe'
 
 export type AiPersonaContext = {
   persona?: string
